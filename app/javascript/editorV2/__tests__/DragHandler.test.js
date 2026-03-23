@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import DragHandler from '../handlers/DragHandler.js'
 import Store from '../state/Store.js'
-import History from '../state/History.js'
 import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
 
@@ -15,7 +14,6 @@ class MockSyncManager {
 
 describe('DragHandler', () => {
   let store
-  let history
   let syncManager
   let dragHandler
   let mockElement
@@ -23,41 +21,45 @@ describe('DragHandler', () => {
 
   beforeEach(() => {
     store = new Store()
-    history = new History(store)
     syncManager = new MockSyncManager()
-    // dragHandler = new DragHandler(store, syncManager, history)
     viewport = {
       screenToGraphPoint: vi.fn((x, y) => ({ x, y })),
       beginInteraction: vi.fn(),
       endInteraction: vi.fn(),
-      container: document.createElement('div')
+      container: {
+        getBoundingClientRect: vi.fn(() => ({
+          left: 0,
+          top: 0,
+          right: 800,
+          bottom: 600
+        })),
+        scrollLeft: 0,
+        scrollTop: 0
+      }
     }
-
-    dragHandler = new DragHandler(store, syncManager, viewport)
-    
-    // Mock DOM elements
     mockElement = {
       addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      classList: { add: vi.fn(), remove: vi.fn() },
-      getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 50 }),
+      classList: {
+        add: vi.fn(),
+        remove: vi.fn()
+      },
       style: {},
       dataset: { clientId: 'node-1' }
     }
-    
-    // Minimal DOM mock
-    global.document = {
-      getElementById: vi.fn(() => ({
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 })
-      })),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      querySelector: vi.fn(() => mockElement)
-    }
-  })
+    vi.spyOn(document, 'addEventListener').mockImplementation(() => {})
+    vi.spyOn(document, 'removeEventListener').mockImplementation(() => {})
+    vi.spyOn(document, 'querySelector').mockImplementation(() => mockElement)
 
+    //stub autopan animations
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(() => 1)
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
+    
+    
+    dragHandler = new DragHandler(store, syncManager, viewport)
+  })
+  
   afterEach(() => {
-    vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
 
   describe('constructor', () => {
@@ -74,7 +76,14 @@ describe('DragHandler', () => {
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       store.addNode(root)
 
-      const event = { button: 0, target: { classList: { contains: vi.fn(() => false) } } }
+      const event = {
+        button: 0,
+        target: { classList: { contains: vi.fn(() => false) } },
+        clientX: 50,
+        clientY: 50,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn()
+      }
       dragHandler.handleMouseDown(event, 'root', mockElement)
 
       expect(dragHandler.isDragging).toBe(true)
