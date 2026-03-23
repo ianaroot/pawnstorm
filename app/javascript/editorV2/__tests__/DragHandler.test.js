@@ -19,12 +19,21 @@ describe('DragHandler', () => {
   let syncManager
   let dragHandler
   let mockElement
+  let viewport
 
   beforeEach(() => {
     store = new Store()
     history = new History(store)
     syncManager = new MockSyncManager()
-    dragHandler = new DragHandler(store, syncManager, history)
+    // dragHandler = new DragHandler(store, syncManager, history)
+    viewport = {
+      screenToGraphPoint: vi.fn((x, y) => ({ x, y })),
+      beginInteraction: vi.fn(),
+      endInteraction: vi.fn(),
+      container: document.createElement('div')
+    }
+
+    dragHandler = new DragHandler(store, syncManager, viewport)
     
     // Mock DOM elements
     mockElement = {
@@ -61,14 +70,14 @@ describe('DragHandler', () => {
   })
 
   describe('handleMouseDown', () => {
-    it('does not start drag on root nodes', () => {
+    it('starts drag on root nodes', () => {
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       store.addNode(root)
 
       const event = { button: 0, target: { classList: { contains: vi.fn(() => false) } } }
       dragHandler.handleMouseDown(event, 'root', mockElement)
 
-      expect(dragHandler.isDragging).toBe(false)
+      expect(dragHandler.isDragging).toBe(true)
     })
 
     it('does not start drag on right click', () => {

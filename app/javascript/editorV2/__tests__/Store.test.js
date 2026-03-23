@@ -11,6 +11,10 @@ describe('Store', () => {
   beforeEach(() => {
     store = new Store()
   })
+  
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   describe('constructor', () => {
     it('initializes with empty graph', () => {
@@ -96,7 +100,7 @@ describe('Store', () => {
       })
 
       it('warns if node not found', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         store.updateNode('nonexistent', { position: { x: 0, y: 0 } })
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('not found'))
       })
@@ -324,7 +328,7 @@ describe('Store', () => {
     })
 
     it('prevents recursive emits', () => {
-      const consoleSpy = vi.spyOn(console, 'warn')
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // Recursive emit would cause infinite loop
       store.subscribe(() => {

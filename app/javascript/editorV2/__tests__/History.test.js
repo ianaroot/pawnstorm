@@ -11,6 +11,10 @@ describe('History', () => {
     store = new Store()
     history = new History(store, 50)
   })
+  
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   describe('constructor', () => {
     it('initializes with empty history', () => {
@@ -330,7 +334,7 @@ describe('History', () => {
     })
 
     it('handles mismatched endBatch', () => {
-      const consoleSpy = vi.spyOn(console, 'error')
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       history.endBatch('No matching startBatch')
 
@@ -453,7 +457,7 @@ describe('History', () => {
     })
 
     it('handles errors in callback gracefully', () => {
-      const consoleSpy = vi.spyOn(console, 'error')
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const callback = () => { throw new Error('UI error') }
       history.setUpdateUICallback(callback)
 
