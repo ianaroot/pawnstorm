@@ -21,8 +21,8 @@ FactoryBot.define do
       data { {} }
     end
     
-    trait :connector do
-      node_type { "connector" }
+    trait :organizer do
+      node_type { "organizer" }
       data { {} }
     end
   end

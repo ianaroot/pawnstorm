@@ -63,8 +63,8 @@ class Traverser
       node_type == 'root'
     end
     
-    def connector?
-      node_type == 'connector'
+    def organizer?
+      node_type == 'organizer'
     end
   end
   

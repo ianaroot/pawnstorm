@@ -34,8 +34,8 @@ class Node < ApplicationRecord
     node_type == 'condition'
   end
   
-  def connector?
-    node_type == 'connector'
+  def organizer?
+    node_type == 'organizer'
   end
   
   # Evaluate this node's condition
@@ -66,7 +66,7 @@ class Node < ApplicationRecord
       end
     when 'action'
       :execute
-    when 'root', 'connector'
+    when 'root', 'organizer'
       true
     else
       true

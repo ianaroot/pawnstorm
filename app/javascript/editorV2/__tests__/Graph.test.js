@@ -117,8 +117,8 @@ describe('Graph', () => {
       })
 
       it('returns empty array when no nodes of type exist', () => {
-        const connectors = graph.getNodesByType('connector')
-        expect(connectors).toHaveLength(0)
+        const organizers = graph.getNodesByType('organizer')
+        expect(organizers).toHaveLength(0)
       })
 
       it('returns empty array for unknown type', () => {

@@ -20,7 +20,7 @@ class ConditionEvaluator
       evaluate_condition(children)
     when 'action'
       :execute
-    when 'root', 'connector'
+    when 'root', 'organizer'
       true
     else
       true

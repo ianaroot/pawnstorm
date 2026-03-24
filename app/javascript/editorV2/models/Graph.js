@@ -71,7 +71,7 @@ class Graph {
   
   /**
    * Get nodes by type
-   * @param {string} type - Node type (root, condition, action, connector)
+   * @param {string} type - Node type (root, condition, action, organizer)
    * @returns {Node[]} Array of matching nodes
    */
   getNodesByType(type) {

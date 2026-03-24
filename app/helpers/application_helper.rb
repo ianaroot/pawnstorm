@@ -4,7 +4,7 @@ module ApplicationHelper
     'condition' => { width: 100, height: 60 },
     'action' => { width: 100, height: 60 },
     'root' => { width: 120, height: 120 },
-    'connector' => { width: 40, height: 40 }
+    'organizer' => { width: 40, height: 40 }
   }.freeze
 
   # Calculate connector positions for a node
