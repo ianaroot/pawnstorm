@@ -2,6 +2,7 @@
 // Creates and updates connection SVG lines from state
 
 import { EVENTS, CONNECTION_COLOR, CONNECTION_STROKE_WIDTH, CONNECTION_HITAREA_WIDTH } from '../constants.js'
+import { getConnectionPoints } from './connectionGeometry.js'
 
 /**
  * ConnectionRenderer
@@ -139,66 +140,7 @@ class ConnectionRenderer {
    * @returns {{ startX: number, startY: number, endX: number, endY: number }}
    */
   getConnectionPoints(sourceNode, targetNode) {
-    // Get connector positions (offset from node top-left)
-    const sourceEl = this.container?.querySelector(`[data-client-id="${sourceNode.clientId}"]`)
-    const targetEl = this.container?.querySelector(`[data-client-id="${targetNode.clientId}"]`)
-    
-    // Default to node center if elements not found
-    const sourceOffset = sourceEl ? this.getOutputConnectorOffset(sourceEl) : { x: 0, y: 30 }
-    const targetOffset = targetEl ? this.getInputConnectorOffset(targetEl) : { x: 0, y: 0 }
-    
-    return {
-      startX: sourceNode.position.x + sourceOffset.x,
-      startY: sourceNode.position.y + sourceOffset.y,
-      endX: targetNode.position.x + targetOffset.x,
-      endY: targetNode.position.y + targetOffset.y
-    }
-  }
-  
-  /**
-   * Get output connector offset from node element
-   * @param {HTMLElement} nodeEl - Node element
-   * @returns {{ x: number, y: number }}
-   */
-  getOutputConnectorOffset(nodeEl) {
-    const outputConnector = nodeEl.querySelector('.node-connector.output')
-    if (!outputConnector) {
-      // Default: center, bottom
-      return { x: 50, y: 60 }
-    }
-    
-    const nodeRect = nodeEl.getBoundingClientRect()
-    const connRect = outputConnector.getBoundingClientRect()
-    
-    return {
-      x: (connRect.left - nodeRect.left + (connRect.width / 2)) / this.getZoom(),
-      y: (connRect.top - nodeRect.top + (connRect.height / 2)) / this.getZoom()
-    }
-  }
-  
-  /**
-   * Get input connector offset from node element
-   * @param {HTMLElement} nodeEl - Node element
-   * @returns {{ x: number, y: number }}
-   */
-  getInputConnectorOffset(nodeEl) {
-    const inputConnector = nodeEl.querySelector('.node-connector.input')
-    if (!inputConnector) {
-      // Default: center, top
-      return { x: 50, y: 0 }
-    }
-    
-    const nodeRect = nodeEl.getBoundingClientRect()
-    const connRect = inputConnector.getBoundingClientRect()
-    
-    return {
-      x: (connRect.left - nodeRect.left + (connRect.width / 2)) / this.getZoom(),
-      y: (connRect.top - nodeRect.top + (connRect.height / 2)) / this.getZoom()
-    }
-  }
-
-  getZoom() {
-    return this.viewport?.getZoom() || 1
+    return getConnectionPoints(sourceNode, targetNode)
   }
   
   /**
