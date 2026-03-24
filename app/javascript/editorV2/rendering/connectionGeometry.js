@@ -1,10 +1,11 @@
 // rendering/connectionGeometry.js
 // Shared graph-space geometry helpers for connection anchors.
 
-import { NODE_DIMENSIONS } from '../constants.js'
+import { NODE_DIMENSIONS, CONNECTOR_SIZE } from '../constants.js'
 
 const DEFAULT_INPUT_ANCHOR = { x: 0.5, y: 0 }
 const DEFAULT_OUTPUT_ANCHOR = { x: 0.5, y: 1 }
+const CONNECTOR_RADIUS = CONNECTOR_SIZE / 2
 
 // Preserve current root behavior for now. A later visual pass will move this.
 const NODE_CONNECTION_ANCHORS = {
@@ -40,8 +41,35 @@ export function getConnectionAnchorOffset(nodeType, connectorType) {
   }
 }
 
+export function getConnectionAnchorCenterOffset(nodeType, connectorType) {
+  const offset = getConnectionAnchorOffset(nodeType, connectorType)
+
+  if (nodeType === 'root' && connectorType === 'output') {
+    return {
+      x: offset.x + CONNECTOR_RADIUS,
+      y: offset.y
+    }
+  }
+
+  if (connectorType === 'input') {
+    return {
+      x: offset.x,
+      y: offset.y - CONNECTOR_RADIUS
+    }
+  }
+
+  if (connectorType === 'output') {
+    return {
+      x: offset.x,
+      y: offset.y + CONNECTOR_RADIUS
+    }
+  }
+
+  return offset
+}
+
 export function getNodeConnectionPoint(node, connectorType) {
-  const offset = getConnectionAnchorOffset(node.type, connectorType)
+  const offset = getConnectionAnchorCenterOffset(node.type, connectorType)
 
   return {
     x: node.position.x + offset.x,
