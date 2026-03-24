@@ -114,7 +114,6 @@ describe('DragHandler', () => {
   describe('handleMouseDown', () => {
     it('starts drag on root nodes', () => {
       addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
-
       const event = buildMouseEvent()
       dragHandler.handleMouseDown(event, 'root', mockElement)
 
@@ -123,7 +122,6 @@ describe('DragHandler', () => {
 
     it('does not start drag on right click', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-
       const event = buildMouseEvent({ button: 2 })
       dragHandler.handleMouseDown(event, 'node-1', mockElement)
 
@@ -132,7 +130,6 @@ describe('DragHandler', () => {
 
     it('does not start drag on connector click', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-
       const event = buildMouseEvent({ target: { classList: { contains: vi.fn(() => true) } } })
       dragHandler.handleMouseDown(event, 'node-1', mockElement)
 
@@ -141,8 +138,6 @@ describe('DragHandler', () => {
 
     it('initializes drag state for valid drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-
-      
       const event = buildMouseEvent()
       dragHandler.handleMouseDown(event, 'node-1', mockElement)
 
@@ -150,6 +145,15 @@ describe('DragHandler', () => {
       expect(dragHandler.draggedClientId).toBe('node-1')
       expect(dragHandler.startPosition).toEqual({ x: 100, y: 100 })
     })
+
+    it('calls beginInteraction on valid drag start', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+      const event = buildMouseEvent()
+      dragHandler.handleMouseDown(event, 'node-1', mockElement)
+
+      expect(viewport.beginInteraction).toHaveBeenCalledTimes(1)
+    })
+
 
     it('calculates child offsets when Shift NOT held', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
@@ -199,6 +203,83 @@ describe('DragHandler', () => {
     })
   })
 
+  describe('handleMouseUp', () => {
+    it('calls endInteraction when drag ends', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+
+      const startEvent = buildMouseEvent()
+      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+
+      const endEvent = buildMouseEvent()
+      dragHandler.handleMouseUp(endEvent)
+
+      expect(viewport.endInteraction).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls updateNodePosition for single-node drag', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+
+      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+
+      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      dragHandler.handleMouseMove(moveEvent)
+      dragHandler.handleMouseUp(endEvent)
+
+      expect(syncManager.updateNodePosition).toHaveBeenCalledTimes(1)
+      expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
+    })
+
+    it('calls batchUpdatePositions when dragging a node with descendants', () => {
+      addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
+      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
+
+      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      dragHandler.handleMouseDown(startEvent, 'parent', mockElement)
+
+      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseMove(moveEvent)
+
+      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseUp(endEvent)
+
+      expect(syncManager.batchUpdatePositions).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ clientId: 'parent', x: 150, y: 160 }),
+          expect.objectContaining({ clientId: 'child', x: 250, y: 210 })
+        ]),
+        expect.stringContaining('Move')
+      )
+      expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
+    })
+
+    it('calls updateNodePosition when dragging a node with descendants while holding Shift', () => {
+      addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
+      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
+
+      const startEvent = buildMouseEvent({
+        clientX: 100,
+        clientY: 100,
+        shiftKey: true
+      })
+      dragHandler.handleMouseDown(startEvent, 'parent', mockElement)
+
+      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseMove(moveEvent)
+
+      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseUp(endEvent)
+
+      expect(syncManager.updateNodePosition).toHaveBeenCalledWith('parent', 150, 160)
+      expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
+      expect(store.getNode('child').position).toEqual({ x: 200, y: 150 })
+    })
+
+  })
+
   describe('cancelDrag', () => {
     it('clears drag state', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
@@ -211,6 +292,17 @@ describe('DragHandler', () => {
       expect(dragHandler.isDragging).toBe(false)
       expect(dragHandler.draggedClientId).toBe(null)
       expect(dragHandler.startPosition).toBe(null)
+    })
+
+    it('calls endInteraction', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+
+      const startEvent = buildMouseEvent()
+      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+
+      dragHandler.cancelDrag()
+
+      expect(viewport.endInteraction).toHaveBeenCalledTimes(1)
     })
   })
 
