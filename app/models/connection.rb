@@ -1,6 +1,6 @@
 # == Schema Information
 #
-# Table name: node_connections
+# Table name: connections
 #
 #  id            :bigint           not null, primary key
 #  source_node_id :bigint          not null
@@ -9,8 +9,6 @@
 #  updated_at    :datetime         not null
 #
 class Connection < ApplicationRecord
-  self.table_name = 'node_connections'
-
   belongs_to :source_node, class_name: 'Node'
   belongs_to :target_node, class_name: 'Node'
 
