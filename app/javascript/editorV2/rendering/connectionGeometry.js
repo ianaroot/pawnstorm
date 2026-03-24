@@ -7,10 +7,9 @@ const DEFAULT_INPUT_ANCHOR = { x: 0.5, y: 0 }
 const DEFAULT_OUTPUT_ANCHOR = { x: 0.5, y: 1 }
 const CONNECTOR_RADIUS = CONNECTOR_SIZE / 2
 
-// Preserve current root behavior for now. A later visual pass will move this.
 const NODE_CONNECTION_ANCHORS = {
   root: {
-    output: { x: 1, y: 0.5 }
+    output: { x: 0.5, y: 1 }
   }
 }
 
@@ -44,13 +43,6 @@ export function getConnectionAnchorOffset(nodeType, connectorType) {
 export function getConnectionAnchorCenterOffset(nodeType, connectorType) {
   const offset = getConnectionAnchorOffset(nodeType, connectorType)
 
-  if (nodeType === 'root' && connectorType === 'output') {
-    return {
-      x: offset.x + CONNECTOR_RADIUS,
-      y: offset.y
-    }
-  }
-
   if (connectorType === 'input') {
     return {
       x: offset.x,
@@ -68,8 +60,16 @@ export function getConnectionAnchorCenterOffset(nodeType, connectorType) {
   return offset
 }
 
-export function getNodeConnectionPoint(node, connectorType) {
+export function getNodeConnectionPoint(node, connectorType, options = {}) {
   const offset = getConnectionAnchorCenterOffset(node.type, connectorType)
+  const { renderedOutputBottomOffset } = options
+
+  if (connectorType === 'output' && renderedOutputBottomOffset !== undefined) {
+    return {
+      x: node.position.x + offset.x,
+      y: node.position.y + renderedOutputBottomOffset + CONNECTOR_RADIUS
+    }
+  }
 
   return {
     x: node.position.x + offset.x,
@@ -77,8 +77,10 @@ export function getNodeConnectionPoint(node, connectorType) {
   }
 }
 
-export function getConnectionPoints(sourceNode, targetNode) {
-  const start = getNodeConnectionPoint(sourceNode, 'output')
+export function getConnectionPoints(sourceNode, targetNode, options = {}) {
+  const start = getNodeConnectionPoint(sourceNode, 'output', {
+    renderedOutputBottomOffset: options.sourceOutputBottomOffset
+  })
   const end = getNodeConnectionPoint(targetNode, 'input')
 
   return {

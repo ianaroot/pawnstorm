@@ -140,7 +140,18 @@ class ConnectionRenderer {
    * @returns {{ startX: number, startY: number, endX: number, endY: number }}
    */
   getConnectionPoints(sourceNode, targetNode) {
-    return getConnectionPoints(sourceNode, targetNode)
+    const sourceEl = this.container?.querySelector(`[data-client-id="${sourceNode.clientId}"]`)
+    const sourceOutputBottomOffset = this.getRenderedOutputBottomOffset(sourceNode, sourceEl)
+
+    return getConnectionPoints(sourceNode, targetNode, { sourceOutputBottomOffset })
+  }
+
+  getRenderedOutputBottomOffset(sourceNode, sourceEl) {
+    if (!sourceEl || sourceNode.type === 'root') {
+      return undefined
+    }
+
+    return sourceEl.offsetHeight
   }
   
   /**

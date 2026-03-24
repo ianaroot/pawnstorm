@@ -29,6 +29,9 @@ class NodeRenderer {
     
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(this.handleChange.bind(this))
+
+    // Optional callback for layout-dependent follow-up work (e.g. connections)
+    this.onNodeContentRendered = null
   }
   
   /**
@@ -188,6 +191,7 @@ class NodeRenderer {
         // Use textContent for simple previews
         // For HTML previews, use innerHTML (ensure server sanitizes)
         previewEl.innerHTML = html || 'Configure...'
+        this.onNodeContentRendered?.(clientId)
       }
     } catch (error) {
       // Don't show error if fetch was aborted

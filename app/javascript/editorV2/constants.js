@@ -6,7 +6,7 @@ export const NODE_WIDTH = 100
 export const NODE_HEIGHT = 60
 export const CONNECTOR_SIZE = 14
 export const NODE_DIMENSIONS = {
-  root: { width: 120, height: 120 },
+  root: { width: 100, height: 100 },
   condition: { width: 100, height: 60 },
   action: { width: 100, height: 60 },
   connector: { width: 40, height: 40 },

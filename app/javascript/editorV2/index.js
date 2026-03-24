@@ -62,6 +62,9 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const nodeRenderer = new NodeRenderer(container, store, api)
   const connectionRenderer = new ConnectionRenderer(svgContainer, store, canvasViewport)
   connectionRenderer.container = container
+  nodeRenderer.onNodeContentRendered = (clientId) => {
+    connectionRenderer.updateConnectionsForNode(clientId)
+  }
   
   // 3. Load existing bot data
   let initialGraph
