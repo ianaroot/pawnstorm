@@ -31,7 +31,8 @@ class NodeRenderer {
     this.unsubscribe = this.store.subscribe(this.handleChange.bind(this))
 
     // Optional callback for layout-dependent follow-up work (e.g. connections)
-    this.onNodeContentRendered = null
+    this.onRender = null
+    this.onContentRender = null
   }
   
   /**
@@ -60,27 +61,16 @@ class NodeRenderer {
     }
   }
   
-  /**
-   * Render a single node
-   * @param {Node} node - Node instance
-   */
   renderNode(node) {
-    // Remove existing element if present
     const existing = this.elements.get(node.clientId)
     if (existing) {
       existing.remove()
     }
     
-    // Create node element
     const element = this.createNodeElement(node)
-    
-    // Add to container
     this.container.appendChild(element)
-    
-    // Store reference
     this.elements.set(node.clientId, element)
-    
-    // Fetch preview HTML
+    this.onRender?.(node, element)
     this.fetchPreview(node.clientId)
   }
   
@@ -161,10 +151,7 @@ class NodeRenderer {
     }
   }
   
-  /**
-   * Fetch preview HTML for a node
-   * @param {string} clientId - Node client ID
-   */
+
   async fetchPreview(clientId) {
     // Cancel previous fetch for this node
     const existingController = this.previewControllers.get(clientId)
@@ -191,7 +178,7 @@ class NodeRenderer {
         // Use textContent for simple previews
         // For HTML previews, use innerHTML (ensure server sanitizes)
         previewEl.innerHTML = html || 'Configure...'
-        this.onNodeContentRendered?.(clientId)
+        this.onContentRender?.(clientId)
       }
     } catch (error) {
       // Don't show error if fetch was aborted
@@ -210,9 +197,6 @@ class NodeRenderer {
     }
   }
   
-  /**
-   * Render all nodes (for graph replace/restore)
-   */
   renderAllNodes() {
     // Clear existing
     this.clear()
