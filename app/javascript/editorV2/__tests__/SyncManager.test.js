@@ -519,6 +519,7 @@ describe('SyncManager', () => {
     })
 
     it('handles cascade-deleted connections', async () => {
+      const errorSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       const node = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'root', targetId: 'n1' })
