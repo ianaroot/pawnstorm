@@ -51,7 +51,7 @@ class ConnectionRenderer {
       
       case EVENTS.NODE_UPDATE:
         // Update connections when node position changes
-        this.updateConnectionsForNode(data.clientId)
+        this.updateConnectionsFor(data.clientId)
         break
       
       case EVENTS.NODE_REMOVE:
@@ -248,9 +248,9 @@ class ConnectionRenderer {
    * Update connection positions for a node
    * @param {string} clientId - Node client ID
    */
-  updateConnectionsForNode(clientId) {
+  updateConnectionsFor(clientId) {
     // Get all connections involving this node
-    const { outgoing, incoming } = this.store.getNodeConnections(clientId)
+    const { outgoing, incoming } = this.store.getConnectionsFor(clientId)
     const allConnections = [...outgoing, ...incoming]
     
     allConnections.forEach(conn => {

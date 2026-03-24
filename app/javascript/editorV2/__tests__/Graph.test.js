@@ -285,7 +285,7 @@ describe('Graph', () => {
       })
     })
 
-    describe('getNodeConnections', () => {
+    describe('getConnectionsFor', () => {
       it('returns outgoing and incoming connections', () => {
         const node3 = new Node({ clientId: 'n3', type: 'action', position: { x: 200, y: 200 } })
         graph = new Graph([...graph.getNodes(), node3])
@@ -293,7 +293,7 @@ describe('Graph', () => {
         const conn2 = new Connection({ clientId: 'c2', sourceId: 'n2', targetId: 'n3' })
         graph = new Graph(graph.getNodes(), [conn1, conn2])
 
-        const { outgoing, incoming } = graph.getNodeConnections('n2')
+        const { outgoing, incoming } = graph.getConnectionsFor('n2')
 
         expect(outgoing).toHaveLength(1)
         expect(outgoing[0]).toBe(conn2)
@@ -302,7 +302,7 @@ describe('Graph', () => {
       })
 
       it('returns empty arrays for node with no connections', () => {
-        const { outgoing, incoming } = graph.getNodeConnections('n1')
+        const { outgoing, incoming } = graph.getConnectionsFor('n1')
         expect(outgoing).toHaveLength(0)
         expect(incoming).toHaveLength(0)
       })

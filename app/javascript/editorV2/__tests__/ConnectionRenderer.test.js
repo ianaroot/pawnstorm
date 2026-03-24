@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import ConnectionRenderer from '../rendering/ConnectionRenderer.js'
 import Store from '../state/Store.js'
 
@@ -25,6 +25,24 @@ describe('ConnectionRenderer', () => {
       const sourceEl = { offsetHeight: 100 }
 
       expect(renderer.getRenderedOutputBottomOffset(sourceNode, sourceEl)).toBeUndefined()
+    })
+  })
+
+  describe('updateConnectionsFor', () => {
+    it('updates all incoming and outgoing connections for a node', () => {
+      const renderer = buildRenderer()
+      const store = renderer.store
+      const outgoing = { clientId: 'out-1' }
+      const incoming = { clientId: 'in-1' }
+
+      store.getConnectionsFor = vi.fn(() => ({ outgoing: [outgoing], incoming: [incoming] }))
+      vi.spyOn(renderer, 'updateConnectionPosition').mockImplementation(() => {})
+
+      renderer.updateConnectionsFor('node-1')
+
+      expect(store.getConnectionsFor).toHaveBeenCalledWith('node-1')
+      expect(renderer.updateConnectionPosition).toHaveBeenCalledWith('out-1')
+      expect(renderer.updateConnectionPosition).toHaveBeenCalledWith('in-1')
     })
   })
 })

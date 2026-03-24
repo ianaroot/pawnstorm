@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe NodeTraverser do
+RSpec.describe Traverser do
   let(:user) { create(:user) }
   let(:bot) { create(:bot, user: user) }
 
@@ -111,7 +111,7 @@ RSpec.describe NodeTraverser do
       
       it 'raises InfiniteLoopError for cycles' do
         traverser = described_class.new(bot)
-        expect { traverser.traverse }.to raise_error(NodeTraverser::InfiniteLoopError)
+        expect { traverser.traverse }.to raise_error(Traverser::InfiniteLoopError)
       end
     end
     

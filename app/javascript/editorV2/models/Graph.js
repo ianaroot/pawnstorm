@@ -197,7 +197,7 @@ class Graph {
    * @param {string} clientId - Node clientId
    * @returns {Object} { outgoing: Connection[], incoming: Connection[] }
    */
-  getNodeConnections(clientId) {
+  getConnectionsFor(clientId) {
     const outgoing = []
     const incoming = []
     

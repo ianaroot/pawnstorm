@@ -252,6 +252,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       it 'server ID changes after delete-undo-redo cycle' do
         click_button '+ Condition'
+        expect_node_count(2)
 
         node = Node.where(bot: bot, node_type: 'condition').first
         original_server_id = node.id

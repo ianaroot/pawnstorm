@@ -2,7 +2,7 @@
 
 # Service class for traversing bot node graphs and determining execution order
 # Supports DAG structures, counter-clockwise spatial ordering, and infinite loop detection
-class NodeTraverser
+class Traverser
   include NodeSortOrder
   
   # Result class to hold traversal step information
@@ -49,7 +49,7 @@ class NodeTraverser
   end
   
   # Lightweight node struct for memory efficiency
-  NodeData = Struct.new(:id, :node_type, :position_x, :position_y, :data, :bot_id) do
+  NodeSnapshot = Struct.new(:id, :node_type, :position_x, :position_y, :data, :bot_id) do
     # Type check helpers (match Node model interface)
     def condition?
       node_type == 'condition'
@@ -119,7 +119,7 @@ class NodeTraverser
   # Load nodes as lightweight Structs to reduce memory footprint
   def load_nodes_as_structs
     @bot.nodes.pluck(:id, :node_type, :position_x, :position_y, :data, :bot_id)
-        .map { |attrs| NodeData.new(*attrs) }
+        .map { |attrs| NodeSnapshot.new(*attrs) }
         .index_by(&:id)
   end
   

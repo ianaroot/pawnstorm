@@ -1,5 +1,5 @@
 module ApplicationHelper
-  # Node dimensions lookup - must match NodeTraverser::NODE_DIMENSIONS
+  # Node dimensions lookup - must match Traverser::NODE_DIMENSIONS
   NODE_DIMENSIONS = {
     'condition' => { width: 100, height: 60 },
     'action' => { width: 100, height: 60 },

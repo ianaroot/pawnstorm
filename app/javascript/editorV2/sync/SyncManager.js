@@ -449,7 +449,7 @@ class SyncManager {
     const deletedServerId = existingNode.serverId
     
     // Get connections that will be deleted
-    const { outgoing, incoming } = this.store.getNodeConnections(clientId)
+    const { outgoing, incoming } = this.store.getConnectionsFor(clientId)
     const deletedConnections = [...outgoing, ...incoming].map(conn => ({
       clientId: conn.clientId,
       serverId: conn.serverId,
