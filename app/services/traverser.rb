@@ -124,10 +124,10 @@ class Traverser
   end
   
   # Preload all connections into a hash for fast lookup
-  # Queries NodeConnection directly since @nodes are Structs without associations
+  # Queries Connection directly since @nodes are Structs without associations
   def preload_connections
     connections = Hash.new { |hash, key| hash[key] = [] }
-    NodeConnection.where(source_node_id: @nodes.keys)
+    Connection.where(source_node_id: @nodes.keys)
       .pluck(:source_node_id, :target_node_id)
       .each do |source_id, target_id|
         connections[source_id] << target_id

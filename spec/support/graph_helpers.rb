@@ -4,6 +4,6 @@ module GraphHelpers
       raise ArgumentError, 'nodes must belong to the same bot'
     end
 
-    NodeConnection.create!(source_node: source_node, target_node: target_node)
+    Connection.create!(source_node: source_node, target_node: target_node)
   end
 end

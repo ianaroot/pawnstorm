@@ -159,7 +159,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       create_connection(node1.id, node2.id)
 
       expect(connection_count).to eq(1)
-      expect(NodeConnection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(1)
+      expect(Connection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(1)
       expect_history_count(2)
     end
 
@@ -202,7 +202,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       delete_connection(node1.id, node2.id)
 
       expect(connection_count).to eq(0)
-      expect(NodeConnection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(0)
+      expect(Connection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(0)
       expect_history_count(2)
     end
   end

@@ -145,7 +145,7 @@ RSpec.describe BotNodesController, type: :request do
       
       expect {
         delete bot_node_path(bot, node1)
-      }.to change(NodeConnection, :count).by(-1)
+      }.to change(Connection, :count).by(-1)
     end
   end
 
@@ -170,7 +170,7 @@ RSpec.describe BotNodesController, type: :request do
     it 'creates a connection between nodes' do
       expect {
         post connect_bot_node_path(bot, source_node), params: { target_id: target_node.id }
-      }.to change(NodeConnection, :count).by(1)
+      }.to change(Connection, :count).by(1)
       expect(response).to have_http_status(:created)
     end
 
@@ -198,8 +198,8 @@ RSpec.describe BotNodesController, type: :request do
 
     it 'destroys the connection' do
       expect {
-        delete bot_node_connection_path(bot, source_node, connection)
-      }.to change(NodeConnection, :count).by(-1)
+        delete bot_connection_path(bot, source_node, connection)
+      }.to change(Connection, :count).by(-1)
       expect(response).to have_http_status(:no_content)
     end
   end

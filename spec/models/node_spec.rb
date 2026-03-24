@@ -45,29 +45,29 @@ RSpec.describe Node, type: :model do
     it 'has many outgoing connections' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      connection = NodeConnection.create!(source_node: node1, target_node: node2)
+      connection = Connection.create!(source_node: node1, target_node: node2)
       expect(node1.outgoing_connections).to include(connection)
     end
 
     it 'has many incoming connections' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      connection = NodeConnection.create!(source_node: node1, target_node: node2)
+      connection = Connection.create!(source_node: node1, target_node: node2)
       expect(node2.incoming_connections).to include(connection)
     end
 
     it 'destroys dependent outgoing connections when destroyed' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      NodeConnection.create!(source_node: node1, target_node: node2)
-      expect { node1.destroy }.to change { NodeConnection.count }.by(-1)
+      Connection.create!(source_node: node1, target_node: node2)
+      expect { node1.destroy }.to change { Connection.count }.by(-1)
     end
 
     it 'destroys dependent incoming connections when destroyed' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      NodeConnection.create!(source_node: node1, target_node: node2)
-      expect { node2.destroy }.to change { NodeConnection.count }.by(-1)
+      Connection.create!(source_node: node1, target_node: node2)
+      expect { node2.destroy }.to change { Connection.count }.by(-1)
     end
   end
 

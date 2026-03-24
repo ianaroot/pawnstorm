@@ -47,12 +47,12 @@ RSpec.describe Bot, type: :model do
       # -1 for the created node, -1 for the root node
     end
 
-    it 'has many node_connections through nodes' do
+    it 'has many connections through nodes' do
       bot = create(:bot)
       node1 = create(:node, bot: bot)
       node2 = create(:node, bot: bot)
-      connection = NodeConnection.create!(source_node: node1, target_node: node2)
-      expect(bot.node_connections).to include(connection)
+      connection = Connection.create!(source_node: node1, target_node: node2)
+      expect(bot.connections).to include(connection)
     end
   end
 

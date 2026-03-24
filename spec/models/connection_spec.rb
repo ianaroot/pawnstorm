@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe NodeConnection, type: :model do
+RSpec.describe Connection, type: :model do
   describe 'validations' do
     it 'is valid with source_node and target_node' do
       source_node = create(:node)

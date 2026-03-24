@@ -13,8 +13,8 @@
 #
 class Node < ApplicationRecord
   belongs_to :bot
-  has_many :outgoing_connections, class_name: 'NodeConnection', foreign_key: 'source_node_id', dependent: :destroy
-  has_many :incoming_connections, class_name: 'NodeConnection', foreign_key: 'target_node_id', dependent: :destroy
+  has_many :outgoing_connections, class_name: 'Connection', foreign_key: 'source_node_id', dependent: :destroy
+  has_many :incoming_connections, class_name: 'Connection', foreign_key: 'target_node_id', dependent: :destroy
 
   validates :node_type, presence: true
   

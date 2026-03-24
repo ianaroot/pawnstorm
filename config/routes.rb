@@ -17,7 +17,7 @@ Rails.application.routes.draw do
         post :batch_update_positions
       end
     end
-    delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :node_connection
+    delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :connection
   end
 
   resources :games, only: [:new]
