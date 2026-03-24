@@ -9,6 +9,10 @@ describe('Graph', () => {
   beforeEach(() => {
     graph = new Graph()
   })
+  
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   describe('constructor', () => {
     it('creates empty graph', () => {
@@ -143,7 +147,7 @@ describe('Graph', () => {
       })
 
       it('warns when replacing existing node', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
         const node2 = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
         graph = new Graph([node1])
@@ -168,7 +172,7 @@ describe('Graph', () => {
       })
 
       it('returns same Graph when node not found', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
         const newGraph = graph.updateNode('nonexistent', { position: { x: 0, y: 0 } })
 
@@ -200,7 +204,7 @@ describe('Graph', () => {
       })
 
       it('returns same Graph when node not found', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
         const newGraph = graph.removeNode('nonexistent')
 
@@ -403,7 +407,7 @@ describe('Graph', () => {
       })
 
       it('warns when source node does not exist', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
         graph = new Graph([node1])
         const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
@@ -415,7 +419,7 @@ describe('Graph', () => {
       })
 
       it('warns when target node does not exist', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
         graph = new Graph([node2])
         const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
@@ -427,7 +431,7 @@ describe('Graph', () => {
       })
 
       it('prevents duplicate connections', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const conn1 = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
         graph = new Graph(graph.getNodes(), [conn1])
 
@@ -451,7 +455,7 @@ describe('Graph', () => {
       })
 
       it('returns same Graph when connection not found', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
         const newGraph = graph.updateConnection('nonexistent', {})
 
@@ -472,7 +476,7 @@ describe('Graph', () => {
       })
 
       it('returns same Graph when connection not found', () => {
-        const consoleSpy = vi.spyOn(console, 'warn')
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
         const newGraph = graph.removeConnection('nonexistent')
 

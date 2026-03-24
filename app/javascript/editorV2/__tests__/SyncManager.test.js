@@ -32,6 +32,10 @@ describe('SyncManager', () => {
     
     syncManager = new SyncManager(store, history, mockApi)
   })
+  
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   describe('constructor', () => {
     it('initializes with store, history, api', () => {
@@ -398,6 +402,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.createNode.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.createNode('condition', { x: 100, y: 100 }))
@@ -438,6 +443,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.updateNodePosition.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.updateNodePosition('n1', 100, 200))
@@ -448,7 +454,7 @@ describe('SyncManager', () => {
     })
 
     it('warns when node not found', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn')
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       await syncManager.updateNodePosition('nonexistent', 100, 200)
 
@@ -480,6 +486,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.updateNode.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.updateNodeData('n1', { baz: 'qux' }))
@@ -512,6 +519,7 @@ describe('SyncManager', () => {
     })
 
     it('handles cascade-deleted connections', async () => {
+      const errorSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       const node = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'root', targetId: 'n1' })
@@ -526,6 +534,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.deleteNode.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.deleteNode('n1'))
@@ -558,7 +567,7 @@ describe('SyncManager', () => {
     })
 
     it('prevents duplicate connections', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn')
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
       store.addConnection(conn)
 
@@ -580,6 +589,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.createConnection.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.createConnection('n1', 'n2'))
@@ -615,6 +625,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.deleteConnection.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.deleteConnection('c1'))
@@ -658,6 +669,7 @@ describe('SyncManager', () => {
     })
 
     it('rolls back all on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.batchUpdatePositions.mockRejectedValue(new Error('Network error'))
 
       await expect(syncManager.batchUpdatePositions([
@@ -700,6 +712,7 @@ describe('SyncManager', () => {
     })
 
     it('throws on failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.loadBot.mockRejectedValue(new Error('Load failed'))
 
       await expect(syncManager.loadBot())
