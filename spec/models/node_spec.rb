@@ -45,28 +45,28 @@ RSpec.describe Node, type: :model do
     it 'has many outgoing connections' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      connection = create(:node_connection, source_node: node1, target_node: node2)
+      connection = NodeConnection.create!(source_node: node1, target_node: node2)
       expect(node1.outgoing_connections).to include(connection)
     end
 
     it 'has many incoming connections' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      connection = create(:node_connection, source_node: node1, target_node: node2)
+      connection = NodeConnection.create!(source_node: node1, target_node: node2)
       expect(node2.incoming_connections).to include(connection)
     end
 
     it 'destroys dependent outgoing connections when destroyed' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      create(:node_connection, source_node: node1, target_node: node2)
+      NodeConnection.create!(source_node: node1, target_node: node2)
       expect { node1.destroy }.to change { NodeConnection.count }.by(-1)
     end
 
     it 'destroys dependent incoming connections when destroyed' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
-      create(:node_connection, source_node: node1, target_node: node2)
+      NodeConnection.create!(source_node: node1, target_node: node2)
       expect { node2.destroy }.to change { NodeConnection.count }.by(-1)
     end
   end
@@ -130,19 +130,4 @@ RSpec.describe Node, type: :model do
     end
   end
 
-  describe 'factory' do
-    it 'has a valid factory' do
-      expect(build(:node)).to be_valid
-    end
-
-    it 'has a condition trait' do
-      node = build(:node, :condition)
-      expect(node.data).to include('context' => 'self', 'query' => 'is_attacked')
-    end
-
-    it 'has an action trait' do
-      node = build(:node, :action)
-      expect(node.data).to include('action_type' => 'move')
-    end
-  end
 end

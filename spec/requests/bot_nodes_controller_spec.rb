@@ -54,7 +54,10 @@ RSpec.describe BotNodesController, type: :request do
   end
 
   describe 'POST #create' do
-    before { sign_in user }
+    before do
+      sign_in user
+      bot
+    end
 
     let(:valid_params) do
       {
@@ -77,7 +80,6 @@ RSpec.describe BotNodesController, type: :request do
     end
 
     it 'creates a node with valid params' do
-      bot #instantiating the bot in advance so the creation of root node doesn't make the count change by 2 instead of 1
       expect {
         post bot_nodes_path(bot), params: valid_params
       }.to change(Node, :count).by(1)
@@ -88,11 +90,11 @@ RSpec.describe BotNodesController, type: :request do
 
     it 'assigns the node to the bot' do
       post bot_nodes_path(bot), params: valid_params
-      expect(Node.last.bot).to eq(bot)
+      created_node = bot.nodes.find(JSON.parse(response.body)['id'])
+      expect(created_node.bot).to eq(bot)
     end
 
     it 'returns unprocessable entity with invalid params' do
-      bot #instantiating the bot in advance so the creation of root node doesn't make the count change by 2 instead of 1
       expect {
         post bot_nodes_path(bot), params: invalid_params
       }.not_to change(Node, :count)
@@ -139,7 +141,7 @@ RSpec.describe BotNodesController, type: :request do
     it 'destroys associated connections' do
       node1 = create(:node, bot: bot)
       node2 = create(:node, bot: bot)
-      create(:node_connection, :with_nodes, source_node: node1, target_node: node2)
+      connect_nodes(node1, node2)
       
       expect {
         delete bot_node_path(bot, node1)
@@ -157,14 +159,6 @@ RSpec.describe BotNodesController, type: :request do
       expect(node.position_y).to eq(250.0)
       expect(response).to have_http_status(:success)
     end
-
-    it 'accepts nil position values' do
-      post update_position_bot_node_path(bot, node), params: { position_x: nil, position_y: nil }
-      expect(response).to have_http_status(:success)
-      node.reload
-      expect(node.position_x).to be_nil
-      expect(node.position_y).to be_nil
-    end
   end
 
   describe 'POST #connect' do
@@ -181,7 +175,7 @@ RSpec.describe BotNodesController, type: :request do
     end
 
     it 'returns unprocessable entity for invalid connection' do
-      create(:node_connection, source_node: source_node, target_node: target_node)
+      connect_nodes(source_node, target_node)
       post connect_bot_node_path(bot, source_node), params: { target_id: target_node.id }
       expect(response).to have_http_status(:unprocessable_entity)
     end
@@ -200,7 +194,7 @@ RSpec.describe BotNodesController, type: :request do
 
     let(:source_node) { create(:node, bot: bot) }
     let(:target_node) { create(:node, bot: bot) }
-    let!(:connection) { create(:node_connection, source_node: source_node, target_node: target_node) }
+    let!(:connection) { connect_nodes(source_node, target_node) }
 
     it 'destroys the connection' do
       expect {

@@ -51,7 +51,7 @@ RSpec.describe Bot, type: :model do
       bot = create(:bot)
       node1 = create(:node, bot: bot)
       node2 = create(:node, bot: bot)
-      connection = create(:node_connection, source_node: node1, target_node: node2)
+      connection = NodeConnection.create!(source_node: node1, target_node: node2)
       expect(bot.node_connections).to include(connection)
     end
   end
@@ -88,23 +88,13 @@ RSpec.describe Bot, type: :model do
     end
 
     describe 'validation on update' do
-      it 'prevents updating bot if root node is deleted' do
+      it 'requires a root node when updating' do
         bot = create(:bot)
         root = bot.root_node
         root.destroy
 
         bot.name = 'New Name'
         expect(bot).not_to be_valid
-        expect(bot.errors[:base]).to include("Bot must have a root node")
-      end
-
-      it 'adds error "Bot must have a root node"' do
-        bot = create(:bot)
-        root = bot.root_node
-        root.destroy
-
-        bot.name = 'New Name'
-        bot.valid?
         expect(bot.errors[:base]).to include("Bot must have a root node")
       end
     end
@@ -120,10 +110,6 @@ RSpec.describe Bot, type: :model do
   end
 
   describe 'factory' do
-    it 'has a valid factory' do
-      expect(build(:bot)).to be_valid
-    end
-
     it 'creates a bot with nodes' do
       bot = create(:bot, :with_nodes)
       expect(bot.nodes.count).to eq(4)

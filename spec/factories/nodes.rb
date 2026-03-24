@@ -25,13 +25,5 @@ FactoryBot.define do
       node_type { "connector" }
       data { {} }
     end
-    
-    # Marker traits for test stubbing
-    # Use with: allow(node).to receive(:evaluate_condition).and_return(true/false)
-    trait :stub_true do
-    end
-    
-    trait :stub_false do
-    end
   end
 end

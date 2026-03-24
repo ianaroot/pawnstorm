@@ -6,6 +6,8 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
   let(:user) { create(:user) }
   let!(:bot) { create(:bot, user: user) }
 
+  # If the repeated connection expectations grow, extract a small local helper for the
+  # common "connection exists / connection count changed" assertions instead of repeating them.
   before do
     sign_in user
     Capybara.current_driver = :selenium_chrome
@@ -125,7 +127,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     it 'deletes connected connections when node is deleted' do
       # Create nodes and connection
       action_node = create(:node, bot: bot, node_type: 'action')
-      create(:node_connection, bot: bot, source_node: condition_node, target_node: action_node)
+      connect_nodes(condition_node, action_node)
 
       visit edit_bot_path(bot)
       wait_for_editor
@@ -189,7 +191,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
   describe 'connection deletion' do
     let!(:node1) { create(:node, bot: bot, node_type: 'condition') }
     let!(:node2) { create(:node, bot: bot, node_type: 'action') }
-    let!(:connection) { create(:node_connection, bot: bot, source_node: node1, target_node: node2) }
+    let!(:connection) { connect_nodes(node1, node2) }
 
     before { visit edit_bot_path(bot) }
 
@@ -331,7 +333,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     end
 
     describe 'connection deletion' do
-      let!(:connection) { create(:node_connection, bot: bot, source_node: node1, target_node: node2) }
+      let!(:connection) { connect_nodes(node1, node2) }
 
       it 'undoes connection deletion' do
         wait_for_editor
@@ -657,8 +659,8 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     let!(:condition_node) { create(:node, bot: bot, node_type: 'condition', position_x: 100, position_y: 100) }
     let!(:action_node1) { create(:node, bot: bot, node_type: 'action', position_x: 200, position_y: 100) }
     let!(:action_node2) { create(:node, bot: bot, node_type: 'action', position_x: 200, position_y: 200) }
-    let!(:conn1) { create(:node_connection, bot: bot, source_node: condition_node, target_node: action_node1) }
-    let!(:conn2) { create(:node_connection, bot: bot, source_node: condition_node, target_node: action_node2) }
+    let!(:conn1) { connect_nodes(condition_node, action_node1) }
+    let!(:conn2) { connect_nodes(condition_node, action_node2) }
 
     before { visit edit_bot_path(bot) }
 

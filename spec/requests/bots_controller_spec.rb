@@ -41,15 +41,18 @@ RSpec.describe BotsController, type: :request do
     end
 
     context 'when authenticated' do
+      let(:user) { create(:user) }
+
       before do
-        sign_in create(:user)
+        sign_in user
       end
 
       it 'creates a bot with valid params' do
         expect {
           post bots_path, params: valid_params
         }.to change(Bot, :count).by(1)
-        expect(response).to redirect_to(edit_bot_path(Bot.last))
+        created_bot = Bot.find_by!(name: 'Test Bot')
+        expect(response).to redirect_to(edit_bot_path(created_bot))
         expect(flash[:notice]).to eq('Bot was successfully created.')
       end
 
@@ -61,9 +64,10 @@ RSpec.describe BotsController, type: :request do
       end
 
       it 'assigns the bot to the current user' do
-        user = User.last
-        post bots_path, params: valid_params
-        expect(Bot.last.user).to eq(user)
+        expect {
+          post bots_path, params: valid_params
+        }.to change { user.bots.count }.by(1)
+        expect(user.bots.find_by!(name: 'Test Bot').user).to eq(user)
       end
     end
   end
