@@ -355,6 +355,13 @@
   font-size: 10px;
 }
 
+.node-preview.legacy-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: left;
+}
+
 .node {
   --connector-input-x: 50%;
   --connector-input-y: 0px;
@@ -491,6 +498,14 @@
 .node.selected {
   box-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(168, 85, 247, 0.4);
   border-color: #C084FC;
+}
+
+.node.root.selected {
+  border-color: #F6D77A;
+  box-shadow:
+    0 0 18px rgba(252, 227, 143, 0.9),
+    0 0 34px rgba(252, 227, 143, 0.42),
+    0 0 10px rgba(192, 132, 252, 0.2);
 }
 
 .node.action:hover {

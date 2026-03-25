@@ -1,6 +1,12 @@
 <%
 data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
 
+valid_subjects = %w[moved_piece allies opponents captured_piece]
+valid_specifiers = %w[any king queen rook bishop knight pawn]
+valid_relations = %w[piece_count attacker_count defender_count shield_count mobility]
+valid_comparisons = %w[any none count greater_than less_than]
+valid_comparison_values = %w[moved_piece_value captured_piece_value prior_board_state]
+
 subject_labels = {
   'moved_piece' => 'Moved piece',
   'allies' => 'Allied pieces',
@@ -19,12 +25,6 @@ specifier_labels = {
 }
 
 relation_labels = {
-  'attacked_after_move' => 'attacker count',
-  'defended_after_move' => 'defender count',
-  'lost_defender' => 'defender count',
-  'lost_shield' => 'shield count',
-  'newly_attacked' => 'attacker count',
-  'unblocked' => 'mobility',
   'piece_count' => 'piece count',
   'attacker_count' => 'attacker count',
   'defender_count' => 'defender count',
@@ -46,20 +46,38 @@ comparison_value_labels = {
   'prior_board_state' => 'prior board state'
 }
 
-subject = subject_labels[data['subject']] || 'Moved piece'
-specifier = specifier_labels[data['specifier']] || 'any piece'
-relation = relation_labels[data['relation']] || 'attacker count'
-comparison = comparison_labels[data['comparison']] || 'any'
-comparison_value = comparison_value_labels[data['comparisonValue']] || data['comparisonValue']
+matches_new_grammar =
+  data.is_a?(Hash) &&
+  valid_subjects.include?(data['subject']) &&
+  valid_specifiers.include?(data['specifier']) &&
+  valid_relations.include?(data['relation']) &&
+  valid_comparisons.include?(data['comparison']) &&
+  (
+    data['comparisonValue'].is_a?(Numeric) ||
+    valid_comparison_values.include?(data['comparisonValue'])
+  )
 
-summary = "#{subject}: #{specifier} #{relation}"
+if matches_new_grammar
+  subject = subject_labels[data['subject']]
+  specifier = specifier_labels[data['specifier']]
+  relation = relation_labels[data['relation']]
+  comparison = comparison_labels[data['comparison']]
+  comparison_value = comparison_value_labels[data['comparisonValue']] || data['comparisonValue']
 
-if comparison == 'any'
-  summary += ' (any)'
-elsif comparison == 'none'
-  summary += ' (none)'
-elsif comparison_value.present?
-  summary += " (#{comparison} #{comparison_value})"
+  summary = "#{subject}: #{specifier} #{relation}"
+
+  if comparison == 'any'
+    summary += ' (any)'
+  elsif comparison == 'none'
+    summary += ' (none)'
+  elsif comparison_value.present?
+    summary += " (#{comparison} #{comparison_value})"
+  end
 end
 %>
-<div class="node-preview"><%= summary %></div>
+<% if matches_new_grammar %>
+  <div class="node-preview"><%= summary %></div>
+<% else %>
+  <%# Legacy fallback: display raw condition data when it does not match the new grammar. %>
+  <div class="node-preview legacy-preview"><%= JSON.pretty_generate(data) %></div>
+<% end %>
