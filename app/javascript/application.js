@@ -28,6 +28,15 @@ document.addEventListener('turbo:load', () => {
       if (document.body.dataset.environment === 'development') {
         window.gameController = gameController;
         window.api = gameController.api;
+        window.gameplay = {
+          gameController,
+          api: gameController.api,
+          board: gameController.board,
+          Board,
+          Rules,
+          MovesCalculator,
+          MoveObject
+        };
       }
     }
   });

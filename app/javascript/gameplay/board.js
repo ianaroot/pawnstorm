@@ -256,21 +256,20 @@ class Board {
   }
 
   _pawnCheck(position){
-    Board.parseSpecies( this.pieceObject(position) ) === Board.PAWN
+    return Board.parseSpecies( this.pieceObject(position) ) === Board.PAWN
   }
 
   blackPawnDoubleSteppedTo(position){// only to be called if already know the black pawn is at rank 4 and in "position"
-    var result;
+    var result = true;
     let blackMoves = this.movesNotationFor(Board.BLACK),
       square = Board.gridCalculator(position),
-      hypotheticalSingleStepSquare = square[0] + '6'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
-    if( blackMoves[blackMoves.length -1] === square ){
-      result = true;
-    } else {
+      singleStepSquare = square[0] + '6',
+      doubleStepSquare = square[0] + '5'; //e.g. if the double step would've been to a5, then the single step it may have taken would've been to a6
+    if( blackMoves[blackMoves.length -1] != doubleStepSquare ){
       return false //this means that even if it did at some point double step, it wasn't the last move to occur
     }
-    for(let i = 0; i < blackMoves; i < blackMoves.length){
-      if( blackMoves[i] === hypotheticalSingleStepSquare || blackMoves[i] === hypotheticalSingleStepSquare + "+" ){
+    for(let i = 0; i < blackMoves.length; i++){
+      if( blackMoves[i] === singleStepSquare || blackMoves[i] === singleStepSquare + "+" ){
         result = false;
         break
       }
@@ -280,17 +279,16 @@ class Board {
 
 
   whitePawnDoubleSteppedTo(position){// only to be called if already know the white pawn is at rank 4 and in "position"
-    var result;
+    var result = true;
     let whiteMoves = this.movesNotationFor(Board.WHITE),
       square = Board.gridCalculator(position),
-      hypotheticalSingleStepSquare = square[0] + '3'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
-    if( whiteMoves[whiteMoves.length -1] === square ){
-      result = true;
-    } else {
-      return false //this means that even if it did at some point double step, it wasn't the last move to occur
-    }
-    for(let i = 0; i < whiteMoves; i < whiteMoves.length){
-      if( whiteMoves[i] === hypotheticalSingleStepSquare || whiteMoves[i] === hypotheticalSingleStepSquare + "+" ){
+      singleStepSquare = square[0] + '3',
+      doubleStepSquare = square[0] + '4'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
+    if( whiteMoves[whiteMoves.length -1] != doubleStepSquare ){
+        return false //this means that even if it did at some point double step, it wasn't the last move to occur
+      }
+    for(let i = 0; i < whiteMoves.length; i++){
+      if( whiteMoves[i] === singleStepSquare || whiteMoves[i] === singleStepSquare + "+" ){
         result = false;
         break
       }
