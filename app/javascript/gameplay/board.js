@@ -446,7 +446,7 @@ class Board {
   }
 
   _squareColorsMatch(square1, square2){
-    Board.squareColor(square1) === Board.squareColor(square2)
+    return Board.squareColor(square1) === Board.squareColor(square2)
   }
 
   _downAndRightIsAttackable(startPosition){
@@ -473,7 +473,7 @@ class Board {
     if( Board._inBounds( positionUpAndLeft)){
       let pieceObject = this.pieceObject(positionUpAndLeft),
         pieceTeam = Board.parseTeam(pieceObject);
-      return this.occupiedByOpponent({position: positionUpAndLeft, teamString: Board.WHITE}) && Board.squareColor(startPosition) === Board.squareColor(positionUpAndLeft)
+      return this.occupiedByOpponent({position: positionUpAndLeft, teamString: Board.WHITE}) && this._squareColorsMatch(startPosition, positionUpAndLeft)
     } else {
       return false
     }
@@ -484,7 +484,7 @@ class Board {
     if( Board._inBounds( positionUpAndRight)){
       let pieceObject = this.layOut[positionUpAndRight],
         pieceTeam = Board.parseTeam(pieceObject);
-      return this.occupiedByOpponent({position: positionUpAndRight, teamString: Board.WHITE}) && Board.squareColor(startPosition) === Board.squareColor(positionUpAndRight)
+      return this.occupiedByOpponent({position: positionUpAndRight, teamString: Board.WHITE}) && this._squareColorsMatch(startPosition, positionUpAndRight)
     } else {
       return false
     }
