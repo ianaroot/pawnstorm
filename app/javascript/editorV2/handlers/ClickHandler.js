@@ -293,6 +293,15 @@ class ClickHandler {
       return
     }
 
+    const legacyRelationMap = {
+      attacked_after_move: 'attacker_count',
+      defended_after_move: 'defender_count',
+      lost_defender: 'defender_count',
+      lost_shield: 'shield_count',
+      newly_attacked: 'attacker_count',
+      unblocked: 'mobility'
+    }
+
     const subject = this.editorPanel.querySelector('#cond-subject')
     const specifier = this.editorPanel.querySelector('#cond-specifier')
     const relation = this.editorPanel.querySelector('#cond-relation')
@@ -302,7 +311,7 @@ class ClickHandler {
 
     if (subject) subject.value = node.data.subject || 'moved_piece'
     if (specifier) specifier.value = node.data.specifier || 'any'
-    if (relation) relation.value = node.data.relation || 'attacked_after_move'
+    if (relation) relation.value = legacyRelationMap[node.data.relation] || node.data.relation || 'attacker_count'
     if (comparison) comparison.value = node.data.comparison || 'any'
     if (typeof node.data.comparisonValue === 'number') {
       if (comparisonValueNumber) comparisonValueNumber.value = node.data.comparisonValue
@@ -371,7 +380,7 @@ class ClickHandler {
         await this.syncManager.updateNodeData(this.editingNodeId, {
           subject: this.editorPanel.querySelector('#cond-subject')?.value || 'moved_piece',
           specifier: this.editorPanel.querySelector('#cond-specifier')?.value || 'any',
-          relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacked_after_move',
+          relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacker_count',
           comparison: this.editorPanel.querySelector('#cond-comparison')?.value || 'any',
           comparisonValue: this.editorPanel.querySelector('#cond-comparison-value-source')?.value === 'exact_number'
             ? Number(this.editorPanel.querySelector('#cond-comparison-value-number')?.value || 1)

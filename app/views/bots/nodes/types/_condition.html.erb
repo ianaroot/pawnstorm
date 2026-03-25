@@ -19,11 +19,17 @@ specifier_labels = {
 }
 
 relation_labels = {
-  'attacked_after_move' => 'attacked after move',
-  'defended_after_move' => 'defended after move',
-  'lost_defense' => 'lose defense',
-  'newly_attacked' => 'newly attacked',
-  'unblocked' => 'unblocked'
+  'attacked_after_move' => 'attacker count',
+  'defended_after_move' => 'defender count',
+  'lost_defender' => 'defender count',
+  'lost_shield' => 'shield count',
+  'newly_attacked' => 'attacker count',
+  'unblocked' => 'mobility',
+  'piece_count' => 'piece count',
+  'attacker_count' => 'attacker count',
+  'defender_count' => 'defender count',
+  'shield_count' => 'shield count',
+  'mobility' => 'mobility'
 }
 
 comparison_labels = {
@@ -36,12 +42,13 @@ comparison_labels = {
 
 comparison_value_labels = {
   'moved_piece_value' => 'value of moved piece',
-  'captured_piece_value' => 'value of captured piece'
+  'captured_piece_value' => 'value of captured piece',
+  'prior_board_state' => 'prior board state'
 }
 
 subject = subject_labels[data['subject']] || 'Moved piece'
 specifier = specifier_labels[data['specifier']] || 'any piece'
-relation = relation_labels[data['relation']] || 'attacked after move'
+relation = relation_labels[data['relation']] || 'attacker count'
 comparison = comparison_labels[data['comparison']] || 'any'
 comparison_value = comparison_value_labels[data['comparisonValue']] || data['comparisonValue']
 

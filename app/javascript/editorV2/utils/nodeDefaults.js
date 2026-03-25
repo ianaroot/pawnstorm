@@ -1,7 +1,7 @@
 export const DEFAULT_CONDITION_DATA = Object.freeze({
   subject: 'moved_piece',
   specifier: 'any',
-  relation: 'attacked_after_move',
+  relation: 'attacker_count',
   comparison: 'any',
   comparisonValue: 1
 })

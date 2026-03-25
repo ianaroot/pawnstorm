@@ -411,8 +411,12 @@ class SyncManager {
     try {
       // 2. Sync with server
       await this.api.updateNode(clientId, { data: data })
+
+      // 3. Re-emit the data update after the server save completes so
+      // preview rendering refetches against committed server state.
+      this.store.updateNode(clientId, { data: newData })
       
-      // 3. Push to history after success
+      // 4. Push to history after success
       this.history.push('Update node', {
         type: 'updateNodeData',
         clientId,
