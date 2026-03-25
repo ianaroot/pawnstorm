@@ -6,6 +6,7 @@ import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
 import { showError } from '../utils/errors.js'
 import { showErrorDialog } from '../utils/ErrorDialog.js'
+import { normalizeNodeData } from '../utils/nodeDefaults.js'
 
 /**
  * SyncManager
@@ -301,18 +302,20 @@ class SyncManager {
    * @returns {Promise<string>} Client ID of created node
    */
   async createNode(type, position, data = {}) {
+    const normalizedData = normalizeNodeData(type, data)
+
     // Generate client ID
     const clientId = generateUUID()
     
     // Create node instance
-    const node = new Node({ clientId, type, position, data })
+    const node = new Node({ clientId, type, position, data: normalizedData })
     
     // 1. Optimistic update: Add to store immediately
     this.store.addNode(node)
     
     try {
       // 2. Sync with server
-      const response = await this.api.createNode({ type, position, data }, clientId)
+      const response = await this.api.createNode({ type, position, data: normalizedData }, clientId)
       
       // 3. Update with server ID
       this.store.updateNode(clientId, { serverId: response.id })
@@ -324,7 +327,7 @@ class SyncManager {
         entity: {
           type,
           position,
-          data
+          data: normalizedData
         }
       })
       

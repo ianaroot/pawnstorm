@@ -5,6 +5,7 @@ import History from '../state/History.js'
 import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
 import Graph from '../models/Graph.js'
+import { DEFAULT_CONDITION_DATA } from '../utils/nodeDefaults.js'
 
 describe('SyncManager', () => {
   let store
@@ -362,6 +363,7 @@ describe('SyncManager', () => {
       expect(clientId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       expect(store.getNode(clientId)).toBeDefined()
       expect(store.getNode(clientId).type).toBe('condition')
+      expect(store.getNode(clientId).data).toEqual(DEFAULT_CONDITION_DATA)
     })
 
     it('optimistically adds node to store', async () => {
@@ -378,6 +380,19 @@ describe('SyncManager', () => {
           type: 'condition',
           position: { x: 100, y: 100 },
           data: { foo: 'bar' }
+        }),
+        expect.any(String)
+      )
+    })
+
+    it('applies default condition data when no data is provided', async () => {
+      await syncManager.createNode('condition', { x: 100, y: 100 })
+
+      expect(mockApi.createNode).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'condition',
+          position: { x: 100, y: 100 },
+          data: DEFAULT_CONDITION_DATA
         }),
         expect.any(String)
       )
