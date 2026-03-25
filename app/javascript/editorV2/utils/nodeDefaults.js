@@ -2,7 +2,8 @@ export const DEFAULT_CONDITION_DATA = Object.freeze({
   subject: 'moved_piece',
   specifier: 'any',
   relation: 'attacked_after_move',
-  comparison: 'any'
+  comparison: 'any',
+  comparisonValue: 1
 })
 
 export function defaultNodeData(type) {

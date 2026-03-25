@@ -1,36 +1,58 @@
-<% 
+<%
 data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
-context = data['context'] || 'self'
-query = data['query'] || '?'
 
-piece_info = ""
-if data['piece_filter_type'] == 'specific'
-  piece_info = "(#{data['piece_type'] || 'any'})"
-elsif data['piece_filter_type'] == 'negative'
-  piece_info = "(not #{data['piece_negative_type'] || 'pawn'})"
-elsif data['piece_filter_type'] == 'value'
-  piece_info = "(val #{data['piece_value_op']}#{data['piece_value_num']})"
-end
+subject_labels = {
+  'moved_piece' => 'Moved piece',
+  'allies' => 'Allied pieces',
+  'opponents' => 'Opponent pieces',
+  'captured_piece' => 'Captured piece'
+}
 
-details = ""
-if query == 'is_attacked' && data['attacker_filter_type']
-  if data['attacker_filter_type'] == 'specific'
-    details = " by #{data['attacker_type']}"
-  elsif data['attacker_filter_type'] == 'value'
-    details = " by val #{data['attacker_value_op']}#{data['attacker_value_num']}"
-  end
-elsif query == 'is_attacking' && data['attacked_filter_type']
-  if data['attacked_filter_type'] == 'specific'
-    details = " -> #{data['attacked_type']}"
-  elsif data['attacked_filter_type'] == 'value'
-    details = " -> val #{data['attacked_value_op']}#{data['attacked_value_num']}"
-  end
-elsif query == 'position'
-  if data['position_type'] == 'file'
-    details = " #{data['position_file']}"
-  else
-    details = " #{data['position_op']}#{data['position_num']}"
-  end
+specifier_labels = {
+  'any' => 'any piece',
+  'king' => 'king',
+  'queen' => 'queen',
+  'rook' => 'rook',
+  'bishop' => 'bishop',
+  'knight' => 'knight',
+  'pawn' => 'pawn'
+}
+
+relation_labels = {
+  'attacked_after_move' => 'attacked after move',
+  'defended_after_move' => 'defended after move',
+  'lost_defense' => 'lose defense',
+  'newly_attacked' => 'newly attacked',
+  'unblocked' => 'unblocked'
+}
+
+comparison_labels = {
+  'any' => 'any',
+  'none' => 'none',
+  'count' => 'count',
+  'greater_than' => 'greater than',
+  'less_than' => 'less than'
+}
+
+comparison_value_labels = {
+  'moved_piece_value' => 'value of moved piece',
+  'captured_piece_value' => 'value of captured piece'
+}
+
+subject = subject_labels[data['subject']] || 'Moved piece'
+specifier = specifier_labels[data['specifier']] || 'any piece'
+relation = relation_labels[data['relation']] || 'attacked after move'
+comparison = comparison_labels[data['comparison']] || 'any'
+comparison_value = comparison_value_labels[data['comparisonValue']] || data['comparisonValue']
+
+summary = "#{subject}: #{specifier} #{relation}"
+
+if comparison == 'any'
+  summary += ' (any)'
+elsif comparison == 'none'
+  summary += ' (none)'
+elsif comparison_value.present?
+  summary += " (#{comparison} #{comparison_value})"
 end
 %>
-<div class="node-preview"><%= context %> <%= piece_info %>: <%= query %><%= details %></div>
+<div class="node-preview"><%= summary %></div>
