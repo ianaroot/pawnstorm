@@ -1,4 +1,7 @@
 <% 
-data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
+raw_data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
+data = raw_data.respond_to?(:with_indifferent_access) ? raw_data.with_indifferent_access : raw_data
+action_type = data[:actionType] || data[:action_type] || 'add'
+value = data[:value] || 1
 %>
-<div class="node-preview">Action: <%= data['action_type'] || 'move' %></div>
+<div class="node-preview"><%= action_type.to_s.humanize %>: <%= value %></div>

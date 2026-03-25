@@ -67,7 +67,20 @@
     
     <div id="action-editor" class="node-editor-section hidden">
       <h4>Action</h4>
-      <div id="action-fields"></div>
+      <div class="editor-part">
+        <label>1. Action</label>
+        <select id="action-type">
+          <option value="add">Add</option>
+          <option value="subtract">Subtract</option>
+          <option value="set">Set</option>
+          <option value="return">Return</option>
+        </select>
+      </div>
+
+      <div class="editor-part">
+        <label>2. Value</label>
+        <input id="action-value" type="number" step="1" value="1">
+      </div>
     </div>
   </div>
   <div class="panel-actions">

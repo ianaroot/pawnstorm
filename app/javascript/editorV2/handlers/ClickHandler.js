@@ -283,6 +283,8 @@ class ClickHandler {
 
     if (node.type === 'condition') {
       this.populateConditionEditor(node)
+    } else if (node.type === 'action') {
+      this.populateActionEditor(node)
     }
   }
 
@@ -337,6 +339,23 @@ class ClickHandler {
     this.updateConditionFieldVisibility()
   }
 
+  populateActionEditor(node) {
+    if (!this.editorPanel) {
+      return
+    }
+
+    const actionType = this.editorPanel.querySelector('#action-type')
+    const actionValue = this.editorPanel.querySelector('#action-value')
+
+    if (actionType) {
+      actionType.value = node.data.actionType || node.data.action_type || 'add'
+    }
+
+    if (actionValue) {
+      actionValue.value = node.data.value || 1
+    }
+  }
+
   async handleSave() {
     if (!this.editingNodeId) {
       return
@@ -357,6 +376,11 @@ class ClickHandler {
           comparisonValue: this.editorPanel.querySelector('#cond-comparison-value-source')?.value === 'exact_number'
             ? Number(this.editorPanel.querySelector('#cond-comparison-value-number')?.value || 1)
             : (this.editorPanel.querySelector('#cond-comparison-value-source')?.value || 'exact_number')
+        })
+      } else if (node.type === 'action') {
+        await this.syncManager.updateNodeData(this.editingNodeId, {
+          actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
+          value: Number(this.editorPanel.querySelector('#action-value')?.value || 1)
         })
       }
 
