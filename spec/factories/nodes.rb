@@ -3,17 +3,33 @@ FactoryBot.define do
     node_type { "condition" }
     position_x { 100.0 }
     position_y { 100.0 }
-    data { {} }
+    data do
+      {
+        subject: "moved_piece",
+        specifier: "any",
+        relation: "attacker_count",
+        comparison: "any",
+        comparisonValue: nil
+      }
+    end
     association :bot
 
     trait :condition do
       node_type { "condition" }
-      data { { context: "self", query: "is_attacked" } }
+      data do
+        {
+          subject: "moved_piece",
+          specifier: "any",
+          relation: "attacker_count",
+          comparison: "any",
+          comparisonValue: nil
+        }
+      end
     end
 
     trait :action do
       node_type { "action" }
-      data { { action_type: "move" } }
+      data { { actionType: "add", value: 1 } }
     end
 
     trait :root do

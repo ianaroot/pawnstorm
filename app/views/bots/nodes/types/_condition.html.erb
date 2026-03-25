@@ -53,6 +53,7 @@ matches_new_grammar =
   valid_relations.include?(data['relation']) &&
   valid_comparisons.include?(data['comparison']) &&
   (
+    (%w[any none].include?(data['comparison']) && data.key?('comparisonValue') && data['comparisonValue'].nil?) ||
     data['comparisonValue'].is_a?(Numeric) ||
     valid_comparison_values.include?(data['comparisonValue'])
   )

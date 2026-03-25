@@ -24,14 +24,89 @@ RSpec.describe Node, type: :model do
       expect(node.position_y).to eq(0.0)
     end
 
-    it 'is valid with empty data hash' do
-      node = build(:node, data: {})
+    it 'is valid with empty data hash for organizer nodes' do
+      node = build(:node, :organizer, data: {})
       expect(node).to be_valid
     end
 
-    it 'is valid with nil data' do
-      node = build(:node, data: nil)
+    it 'is valid with nil data for organizer nodes' do
+      node = build(:node, :organizer, data: nil)
       expect(node).to be_valid
+    end
+
+    it 'is valid with prototype condition data' do
+      node = build(:node, :condition)
+      expect(node).to be_valid
+    end
+
+    it 'rejects condition data with invalid keys' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        specifier: 'any',
+        relation: 'attacker_count',
+        comparison: 'any',
+        banana: 'crime'
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('contains invalid keys: banana')
+    end
+
+    it 'rejects condition data with invalid relation' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        specifier: 'any',
+        relation: 'attacked_after_move',
+        comparison: 'any',
+        comparisonValue: nil
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid relation')
+    end
+
+    it 'rejects comparisonValue for any comparisons' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        specifier: 'any',
+        relation: 'attacker_count',
+        comparison: 'any',
+        comparisonValue: 1
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('comparisonValue is not allowed for any/none comparisons')
+    end
+
+    it 'allows comparisonValue for less_than comparisons' do
+      node = build(:node, :condition, data: {
+        subject: 'allies',
+        specifier: 'king',
+        relation: 'shield_count',
+        comparison: 'less_than',
+        comparisonValue: 'prior_board_state'
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'is valid with prototype action data' do
+      node = build(:node, :action)
+      expect(node).to be_valid
+    end
+
+    it 'rejects action data with invalid keys' do
+      node = build(:node, :action, data: { actionType: 'add', value: 1, bonus: 4 })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('contains invalid keys: bonus')
+    end
+
+    it 'rejects action data with invalid actionType' do
+      node = build(:node, :action, data: { actionType: 'move', value: 1 })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid actionType')
     end
   end
 

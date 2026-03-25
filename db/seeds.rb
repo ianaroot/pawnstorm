@@ -58,7 +58,7 @@ heuristic_bots = [
       specifier: 'any',
       relation: 'attacker_count',
       comparison: 'any',
-      comparisonValue: 1
+      comparisonValue: nil
     },
     action: {
       action_type: 'subtract',
@@ -73,7 +73,7 @@ heuristic_bots = [
       specifier: 'queen',
       relation: 'piece_count',
       comparison: 'any',
-      comparisonValue: 1
+      comparisonValue: nil
     },
     action: {
       action_type: 'add',

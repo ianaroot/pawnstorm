@@ -1,6 +1,13 @@
 // handlers/ClickHandler.js
 // Handles node selection and editor panel
 
+import { CONDITION_DATA_KEYS, ACTION_DATA_KEYS } from '../utils/nodeDefaults.js'
+import {
+  confirmLegacyDataDiscard,
+  getLegacyKeys,
+  normalizeLegacyRelation
+} from '../utils/legacyConditionData.js'
+
 /**
  * ClickHandler
  * 
@@ -293,15 +300,6 @@ class ClickHandler {
       return
     }
 
-    const legacyRelationMap = {
-      attacked_after_move: 'attacker_count',
-      defended_after_move: 'defender_count',
-      lost_defender: 'defender_count',
-      lost_shield: 'shield_count',
-      newly_attacked: 'attacker_count',
-      unblocked: 'mobility'
-    }
-
     const subject = this.editorPanel.querySelector('#cond-subject')
     const specifier = this.editorPanel.querySelector('#cond-specifier')
     const relation = this.editorPanel.querySelector('#cond-relation')
@@ -311,7 +309,7 @@ class ClickHandler {
 
     if (subject) subject.value = node.data.subject || 'moved_piece'
     if (specifier) specifier.value = node.data.specifier || 'any'
-    if (relation) relation.value = legacyRelationMap[node.data.relation] || node.data.relation || 'attacker_count'
+    if (relation) relation.value = normalizeLegacyRelation(node.data.relation) || 'attacker_count'
     if (comparison) comparison.value = node.data.comparison || 'any'
     if (typeof node.data.comparisonValue === 'number') {
       if (comparisonValueNumber) comparisonValueNumber.value = node.data.comparisonValue
@@ -348,6 +346,33 @@ class ClickHandler {
     this.updateConditionFieldVisibility()
   }
 
+  buildConditionDataPayload() {
+    const comparison = this.editorPanel.querySelector('#cond-comparison')?.value || 'any'
+    const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')?.value || 'exact_number'
+    const comparisonValue = ['any', 'none'].includes(comparison)
+      ? null
+      : (
+          comparisonValueSource === 'exact_number'
+            ? Number(this.editorPanel.querySelector('#cond-comparison-value-number')?.value || 1)
+            : comparisonValueSource
+        )
+
+    return {
+      subject: this.editorPanel.querySelector('#cond-subject')?.value || 'moved_piece',
+      specifier: this.editorPanel.querySelector('#cond-specifier')?.value || 'any',
+      relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacker_count',
+      comparison: comparison,
+      comparisonValue: comparisonValue
+    }
+  }
+
+  buildActionDataPayload() {
+    return {
+      actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
+      value: Number(this.editorPanel.querySelector('#action-value')?.value || 1)
+    }
+  }
+
   populateActionEditor(node) {
     if (!this.editorPanel) {
       return
@@ -377,20 +402,19 @@ class ClickHandler {
 
     try {
       if (node.type === 'condition') {
-        await this.syncManager.updateNodeData(this.editingNodeId, {
-          subject: this.editorPanel.querySelector('#cond-subject')?.value || 'moved_piece',
-          specifier: this.editorPanel.querySelector('#cond-specifier')?.value || 'any',
-          relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacker_count',
-          comparison: this.editorPanel.querySelector('#cond-comparison')?.value || 'any',
-          comparisonValue: this.editorPanel.querySelector('#cond-comparison-value-source')?.value === 'exact_number'
-            ? Number(this.editorPanel.querySelector('#cond-comparison-value-number')?.value || 1)
-            : (this.editorPanel.querySelector('#cond-comparison-value-source')?.value || 'exact_number')
-        })
+        const legacyKeys = getLegacyKeys(node.data, CONDITION_DATA_KEYS)
+        if (!confirmLegacyDataDiscard(legacyKeys)) {
+          return
+        }
+
+        await this.syncManager.updateNodeData(this.editingNodeId, this.buildConditionDataPayload())
       } else if (node.type === 'action') {
-        await this.syncManager.updateNodeData(this.editingNodeId, {
-          actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
-          value: Number(this.editorPanel.querySelector('#action-value')?.value || 1)
-        })
+        const legacyKeys = getLegacyKeys(node.data, ACTION_DATA_KEYS)
+        if (!confirmLegacyDataDiscard(legacyKeys)) {
+          return
+        }
+
+        await this.syncManager.updateNodeData(this.editingNodeId, this.buildActionDataPayload())
       }
 
       this.closeEditor()
