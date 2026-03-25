@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_200000) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_24_134500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_200000) do
     t.text "description"
     t.index ["name"], name: "index_bots_on_name", unique: true
     t.index ["user_id"], name: "index_bots_on_user_id"
+  end
+
+  create_table "connections", force: :cascade do |t|
+    t.bigint "source_node_id", null: false
+    t.bigint "target_node_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "LEAST(source_node_id, target_node_id), GREATEST(source_node_id, target_node_id)", name: "idx_no_bidirectional_connections", unique: true
+    t.index ["source_node_id", "target_node_id"], name: "index_connections_on_source_node_id_and_target_node_id", unique: true
+    t.index ["source_node_id"], name: "index_connections_on_source_node_id"
+    t.index ["target_node_id"], name: "index_connections_on_target_node_id"
+    t.check_constraint "source_node_id <> target_node_id", name: "no_self_loops"
   end
 
   create_table "games", force: :cascade do |t|
@@ -40,18 +52,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_200000) do
     t.index ["bot_2_id"], name: "index_games_on_bot_2_id"
   end
 
-  create_table "node_connections", force: :cascade do |t|
-    t.bigint "source_node_id", null: false
-    t.bigint "target_node_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index "LEAST(source_node_id, target_node_id), GREATEST(source_node_id, target_node_id)", name: "idx_no_bidirectional_connections", unique: true
-    t.index ["source_node_id", "target_node_id"], name: "index_node_connections_on_source_node_id_and_target_node_id", unique: true
-    t.index ["source_node_id"], name: "index_node_connections_on_source_node_id"
-    t.index ["target_node_id"], name: "index_node_connections_on_target_node_id"
-    t.check_constraint "source_node_id <> target_node_id", name: "no_self_loops"
-  end
-
   create_table "nodes", force: :cascade do |t|
     t.bigint "bot_id", null: false
     t.string "node_type", null: false
@@ -62,7 +62,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_200000) do
     t.datetime "updated_at", null: false
     t.index ["bot_id"], name: "index_nodes_on_bot_id"
     t.index ["bot_id"], name: "index_nodes_on_bot_id_root_unique", unique: true, where: "((node_type)::text = 'root'::text)"
-    t.check_constraint "node_type::text = ANY (ARRAY['condition'::character varying, 'action'::character varying, 'root'::character varying, 'connector'::character varying]::text[])", name: "node_type_check"
+    t.check_constraint "node_type::text = ANY (ARRAY['condition'::character varying, 'action'::character varying, 'root'::character varying, 'organizer'::character varying]::text[])", name: "node_type_check"
   end
 
   create_table "users", force: :cascade do |t|
@@ -77,9 +77,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_200000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "connections", "nodes", column: "source_node_id"
+  add_foreign_key "connections", "nodes", column: "target_node_id"
   add_foreign_key "games", "bots", column: "bot_1_id"
   add_foreign_key "games", "bots", column: "bot_2_id"
-  add_foreign_key "node_connections", "nodes", column: "source_node_id"
-  add_foreign_key "node_connections", "nodes", column: "target_node_id"
   add_foreign_key "nodes", "bots"
 end

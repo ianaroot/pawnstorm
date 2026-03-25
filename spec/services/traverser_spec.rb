@@ -2,9 +2,27 @@
 
 require 'rails_helper'
 
-RSpec.describe NodeTraverser do
+RSpec.describe Traverser do
   let(:user) { create(:user) }
   let(:bot) { create(:bot, user: user) }
+
+  # If these graph setups get much bigger, add a tiny local graph-builder helper here
+  # rather than letting repeated connect_nodes chains sprawl across the file.
+  def stub_condition_results(results_by_node_id = nil, default: true)
+    results_by_node_id ||= {}
+
+    allow_any_instance_of(ConditionEvaluator).to receive(:evaluate) do |evaluator, children = []|
+      node = evaluator.instance_variable_get(:@node)
+
+      if node&.action?
+        :execute
+      elsif node && results_by_node_id.key?(node.id)
+        results_by_node_id[node.id]
+      else
+        default
+      end
+    end
+  end
   
   describe '#traverse' do
     context 'basic traversal order' do
@@ -14,13 +32,11 @@ RSpec.describe NodeTraverser do
       let!(:node_c) { create(:node, :action, bot: bot, position_x: 300, position_y: 100) }
       
       before do
-        create(:node_connection, source_node: root, target_node: node_a)
-        create(:node_connection, source_node: node_a, target_node: node_b)
-        create(:node_connection, source_node: node_b, target_node: node_c)
-        
-        # TODO: Remove this once conditions are properly evaluated
-        # Currently stubbing ConditionEvaluator to return true so traversal continues
-        allow_any_instance_of(ConditionEvaluator).to receive(:evaluate).and_return(true)
+        connect_nodes(root, node_a)
+        connect_nodes(node_a, node_b)
+        connect_nodes(node_b, node_c)
+
+        stub_condition_results
       end
       
       it 'visits all connected nodes from root' do
@@ -40,8 +56,8 @@ RSpec.describe NodeTraverser do
       
       before do
         root.update!(position_x: 100, position_y: 50)
-        create(:node_connection, source_node: root, target_node: node_left)
-        create(:node_connection, source_node: root, target_node: node_right)
+        connect_nodes(root, node_left)
+        connect_nodes(root, node_right)
       end
       
       it 'orders children counter-clockwise from midnight (straight down)' do
@@ -62,14 +78,12 @@ RSpec.describe NodeTraverser do
       let!(:grandchild) { create(:node, :action, bot: bot, position_x: 150, position_y: 340) }
       
       before do
-        create(:node_connection, source_node: root, target_node: parent)
-        create(:node_connection, source_node: parent, target_node: child_left)
-        create(:node_connection, source_node: parent, target_node: child_right)
-        create(:node_connection, source_node: child_left, target_node: grandchild)
-        
-        # TODO: Remove this once conditions are properly evaluated
-        # Currently stubbing all conditions to return true so traversal continues
-        allow_any_instance_of(ConditionEvaluator).to receive(:evaluate_condition).and_return(true)
+        connect_nodes(root, parent)
+        connect_nodes(parent, child_left)
+        connect_nodes(parent, child_right)
+        connect_nodes(child_left, grandchild)
+
+        stub_condition_results
       end
       
       it 'explores first child branch fully before second child' do
@@ -89,15 +103,15 @@ RSpec.describe NodeTraverser do
       let!(:node_c) { create(:node, :condition, bot: bot, position_x: 300, position_y: 100) }
       
       before do
-        create(:node_connection, source_node: root, target_node: node_a)
-        create(:node_connection, source_node: node_a, target_node: node_b)
-        create(:node_connection, source_node: node_b, target_node: node_c)
-        create(:node_connection, source_node: node_c, target_node: node_a)
+        connect_nodes(root, node_a)
+        connect_nodes(node_a, node_b)
+        connect_nodes(node_b, node_c)
+        connect_nodes(node_c, node_a)
       end
       
       it 'raises InfiniteLoopError for cycles' do
         traverser = described_class.new(bot)
-        expect { traverser.traverse }.to raise_error(NodeTraverser::InfiniteLoopError)
+        expect { traverser.traverse }.to raise_error(Traverser::InfiniteLoopError)
       end
     end
     
@@ -120,7 +134,7 @@ RSpec.describe NodeTraverser do
       let!(:disconnected) { create(:node, :condition, bot: bot, position_x: 500, position_y: 500) }
       
       before do
-        create(:node_connection, source_node: root, target_node: connected)
+        connect_nodes(root, connected)
       end
       
       it 'only visits nodes reachable from root' do
@@ -147,17 +161,16 @@ RSpec.describe NodeTraverser do
       before do
         
         # Connect root -> parent
-        create(:node_connection, source_node: root, target_node: parent)
+        connect_nodes(root, parent)
         
         # SCRAMBLED connection order (not by distance):
-        create(:node_connection, source_node: parent, target_node: mid)
-        create(:node_connection, source_node: parent, target_node: far)
-        create(:node_connection, source_node: parent, target_node: near2)
-        create(:node_connection, source_node: parent, target_node: near)
-        create(:node_connection, source_node: parent, target_node: mid2)
+        connect_nodes(parent, mid)
+        connect_nodes(parent, far)
+        connect_nodes(parent, near2)
+        connect_nodes(parent, near)
+        connect_nodes(parent, mid2)
         
-        # Stub to traverse into parent's children
-        allow_any_instance_of(ConditionEvaluator).to receive(:evaluate).and_return(true)
+        stub_condition_results
       end
       
       it 'orders collinear children by proximity to parent (nearest first)' do
@@ -214,12 +227,12 @@ RSpec.describe NodeTraverser do
       let!(:node_c) { create(:node, :action, bot: bot, position_x: 400, position_y: 400) }
       
       before do
-        create(:node_connection, source_node: root, target_node: node_a)
-        create(:node_connection, source_node: root, target_node: node_b)
-        create(:node_connection, source_node: node_a, target_node: node_c)
-        create(:node_connection, source_node: node_b, target_node: node_c)
-        
-        allow_any_instance_of(ConditionEvaluator).to receive(:evaluate).and_return(true)
+        connect_nodes(root, node_a)
+        connect_nodes(root, node_b)
+        connect_nodes(node_a, node_c)
+        connect_nodes(node_b, node_c)
+
+        stub_condition_results
       end
       
       it 'visits shared descendant once per parent branch' do
@@ -260,7 +273,7 @@ RSpec.describe NodeTraverser do
       let!(:action) { create(:node, :action, bot: bot, position_x: 100, position_y: 100) }
       
       before do
-        create(:node_connection, source_node: root, target_node: action)
+        connect_nodes(root, action)
       end
       
       it 'marks actions as :execute' do
@@ -273,27 +286,25 @@ RSpec.describe NodeTraverser do
     
     context 'backtracking when condition is false' do
       let!(:root) { bot.root_node }
-      let!(:parent) { create(:node, :stub_true, :condition, bot: bot, position_x: 200, position_y: 100) }
-      let!(:child_a) { create(:node, :stub_false, :condition, bot: bot, position_x: 150, position_y: 220) }
-      let!(:child_b) { create(:node, :stub_true, :condition, bot: bot, position_x: 250, position_y: 220) }
+      let!(:parent) { create(:node, :condition, bot: bot, position_x: 200, position_y: 100) }
+      let!(:child_a) { create(:node, :condition, bot: bot, position_x: 150, position_y: 220) }
+      let!(:child_b) { create(:node, :condition, bot: bot, position_x: 250, position_y: 220) }
       let!(:grandchild) { create(:node, :action, bot: bot, position_x: 150, position_y: 340) }
       
       before do
-        create(:node_connection, source_node: root, target_node: parent)
-        create(:node_connection, source_node: parent, target_node: child_a)
-        create(:node_connection, source_node: parent, target_node: child_b)
-        create(:node_connection, source_node: child_a, target_node: grandchild)
-        
-        allow(parent).to receive(:evaluate_condition).and_return(true)
-        allow(child_a).to receive(:evaluate_condition).and_return(false)
-        allow(child_b).to receive(:evaluate_condition).and_return(true)
+        connect_nodes(root, parent)
+        connect_nodes(parent, child_a)
+        connect_nodes(parent, child_b)
+        connect_nodes(child_a, grandchild)
+
+        stub_condition_results({
+          parent.id => true,
+          child_a.id => false,
+          child_b.id => true
+        })
       end
       
       it 'visits child_a then backtracks to child_b when child_a is false' do
-        allow(parent).to receive(:evaluate_condition).and_return(true)
-        allow(child_a).to receive(:evaluate_condition).and_return(false)
-        allow(child_b).to receive(:evaluate_condition).and_return(true)
-        
         traverser = described_class.new(bot)
         results = traverser.traverse
         ids = results.map(&:node_id)
@@ -310,12 +321,10 @@ RSpec.describe NodeTraverser do
       let!(:child) { create(:node, :action, bot: bot, position_x: 200, position_y: 100) }
       
       before do
-        create(:node_connection, source_node: root, target_node: condition)
-        create(:node_connection, source_node: condition, target_node: child)
-        
-        # TODO: Remove this once conditions are properly evaluated
-        # Currently stubbing all conditions to return true so traversal continues
-        allow_any_instance_of(ConditionEvaluator).to receive(:evaluate_condition).and_return(true)
+        connect_nodes(root, condition)
+        connect_nodes(condition, child)
+
+        stub_condition_results
       end
       
       it 'traverses into child when condition returns true' do
@@ -333,7 +342,7 @@ RSpec.describe NodeTraverser do
     let!(:node) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }
     
     before do
-      create(:node_connection, source_node: root, target_node: node)
+      connect_nodes(root, node)
     end
     
     it 'returns formatted traversal report' do
@@ -352,7 +361,7 @@ RSpec.describe NodeTraverser do
     let!(:node) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }
     
     before do
-      create(:node_connection, source_node: root, target_node: node)
+      connect_nodes(root, node)
     end
     
     it 'returns compact comma-separated format' do

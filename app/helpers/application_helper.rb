@@ -1,10 +1,10 @@
 module ApplicationHelper
-  # Node dimensions lookup - must match NodeTraverser::NODE_DIMENSIONS
+  # Node dimensions lookup - must match Traverser::NODE_DIMENSIONS
   NODE_DIMENSIONS = {
     'condition' => { width: 100, height: 60 },
     'action' => { width: 100, height: 60 },
     'root' => { width: 120, height: 120 },
-    'connector' => { width: 40, height: 40 }
+    'organizer' => { width: 40, height: 40 }
   }.freeze
 
   # Calculate connector positions for a node

@@ -229,11 +229,11 @@
   border-radius: 4px;
 }
 
-.palette-item.connector {
+.palette-item.organizer {
   border-left: 3px solid #A855F7;
 }
 
-.palette-item.connector .node-icon {
+.palette-item.organizer .node-icon {
   background: radial-gradient(circle at 30% 30%, #C084FC, #7C3AED);
 }
 
@@ -282,21 +282,21 @@
   display: none;
 }
 
-.node.connector {
+.node.organizer {
   border-radius: 50%;
   border: 2px solid #A855F7;
   background: linear-gradient(135deg, #1a1815 0%, #252220 100%);
 }
 
-.node.connector:hover {
+.node.organizer:hover {
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
 
-.node.connector .node-connector {
+.node.organizer .node-connector {
   background: #A855F7;
 }
 
-.node.connector .node-connector:hover {
+.node.organizer .node-connector:hover {
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
 }
 

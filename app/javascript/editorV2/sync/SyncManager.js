@@ -295,7 +295,7 @@ class SyncManager {
   
   /**
    * Create a new node
-   * @param {string} type - Node type (root, condition, action, connector)
+   * @param {string} type - Node type (root, condition, action, organizer)
    * @param {Object} position - Position { x, y }
    * @param {Object} [data={}] - Node data
    * @returns {Promise<string>} Client ID of created node
@@ -449,7 +449,7 @@ class SyncManager {
     const deletedServerId = existingNode.serverId
     
     // Get connections that will be deleted
-    const { outgoing, incoming } = this.store.getNodeConnections(clientId)
+    const { outgoing, incoming } = this.store.getConnectionsFor(clientId)
     const deletedConnections = [...outgoing, ...incoming].map(conn => ({
       clientId: conn.clientId,
       serverId: conn.serverId,

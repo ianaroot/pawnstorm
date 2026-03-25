@@ -1,6 +1,6 @@
 # == Schema Information
 #
-# Table name: node_connections
+# Table name: connections
 #
 #  id            :bigint           not null, primary key
 #  source_node_id :bigint          not null
@@ -8,7 +8,7 @@
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #
-class NodeConnection < ApplicationRecord
+class Connection < ApplicationRecord
   belongs_to :source_node, class_name: 'Node'
   belongs_to :target_node, class_name: 'Node'
 
@@ -32,7 +32,7 @@ class NodeConnection < ApplicationRecord
     return unless source_node_id.present? && target_node_id.present?
     return if source_node_id == target_node_id
 
-    reverse_connection = NodeConnection.find_by(
+    reverse_connection = Connection.find_by(
       source_node_id: target_node_id,
       target_node_id: source_node_id
     )

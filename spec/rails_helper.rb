@@ -74,6 +74,7 @@ RSpec.configure do |config|
   
   # Include EditorV2 helpers for feature tests
   config.include EditorV2Helpers, type: :feature
+  config.include GraphHelpers
   
   # Tag configuration for running test subsets
   # - Default: excludes :slow tests

@@ -13,7 +13,7 @@ class Node {
    * @param {Object} params
    * @param {string} [params.clientId] - Client-side UUID (generated if not provided)
    * @param {number|null} [params.serverId] - Server/database ID (null for new nodes)
-   * @param {string} params.type - Node type (root, condition, action, connector)
+   * @param {string} params.type - Node type (root, condition, action, organizer)
    * @param {Object} params.position - Position { x, y }
    * @param {Object} [params.data={}] - Node configuration data
    */

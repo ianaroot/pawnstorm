@@ -144,7 +144,7 @@ class Store {
     }
     
     // Get connections before removal (for emit)
-    const { outgoing, incoming } = this.graph.getNodeConnections(clientId)
+    const { outgoing, incoming } = this.graph.getConnectionsFor(clientId)
     
     this.graph = this.graph.removeNode(clientId)
     this.emit(EVENTS.NODE_REMOVE, { clientId })
@@ -262,8 +262,8 @@ class Store {
    * @param {string} clientId - Node clientId
    * @returns {Object} { outgoing: Connection[], incoming: Connection[] }
    */
-  getNodeConnections(clientId) {
-    return this.graph.getNodeConnections(clientId)
+  getConnectionsFor(clientId) {
+    return this.graph.getConnectionsFor(clientId)
   }
   
   /**

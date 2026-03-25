@@ -79,7 +79,7 @@ class BotNodesController < ApplicationController
       return
     end
     
-    connection = NodeConnection.new(
+    connection = Connection.new(
       source_node: source_node,
       target_node: target_node
     )
@@ -92,7 +92,7 @@ class BotNodesController < ApplicationController
   end
 
   def disconnect
-    connection = NodeConnection.find(params[:id])
+    connection = Connection.find(params[:id])
     if connection.source_node.bot_id == @bot.id || connection.target_node.bot_id == @bot.id
       connection.destroy
       head :no_content

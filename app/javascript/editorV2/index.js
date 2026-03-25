@@ -1,7 +1,3 @@
-// index.js
-// Entry point for editorV2
-// Wires together all components with explicit dependency injection
-
 import Store from './state/Store.js'
 import History from './state/History.js'
 import API from './api.js'
@@ -17,18 +13,7 @@ import { MAX_HISTORY } from './constants.js'
 import { showError } from './utils/errors.js'
 import ToolbarHandler from './handlers/ToolbarHandler.js'
 
-/**
- * Initialize the node editor
- * @param {number} botId - Bot ID to load
- * @param {HTMLElement} container - Container element for nodes
- * @param {SVGSVGElement} svgContainer - SVG element for connections
- * @param {HTMLElement} editorPanel - Editor panel element (optional)
- * @returns {Promise<Object>} API for external access
- */
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
-  console.log('Initializing editorV2 for bot', botId)
-  
-  // Validate required elements
   if (!container) {
     throw new Error('Container element is required')
   }
@@ -44,7 +29,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     throw new Error('Canvas viewport elements are required')
   }
   
-  // 1. Initialize core components (explicit dependencies, no circular refs)
+  // 1. Initialize core state/services
   const api = new API(botId)
   const store = new Store()
   const history = new History(store, MAX_HISTORY)
@@ -58,99 +43,45 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     store
   )
   
-  // 2. Initialize renderers BEFORE loading data (so they receive GRAPH_REPLACE event)
+  // 2. Initialize renderers
   const nodeRenderer = new NodeRenderer(container, store, api)
   const connectionRenderer = new ConnectionRenderer(svgContainer, store, canvasViewport)
   connectionRenderer.container = container
-  nodeRenderer.onNodeContentRendered = (clientId) => {
-    connectionRenderer.updateConnectionsForNode(clientId)
-  }
   
-  // 3. Load existing bot data
-  let initialGraph
-  try {
-    initialGraph = await syncManager.loadBot()
-    console.log(`Loaded ${initialGraph.nodes.size} nodes and ${initialGraph.connections.size} connections`)
-  } catch (error) {
-    showError('Failed to load bot data. Please refresh the page.')
-    console.error('Failed to load bot:', error)
-    throw error
-  }
-  
-// 4. Initialize handlers
+  // 3. Initialize Handlers
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
   const connectionHandler = new ConnectionHandler(store, syncManager, connectionRenderer, canvasViewport)
   const clickHandler = new ClickHandler(store, history, editorPanel)
   const keyboardHandler = new KeyboardHandler(store, history, syncManager)
   const toolbarHandler = new ToolbarHandler(store, history, syncManager, container, clickHandler, canvasViewport)
-  
-  // Set syncManager on clickHandler for delete
-  clickHandler.setSyncManager(syncManager)
-  
-  // Setup click handler global handlers
-  clickHandler.setupGlobalHandlers()
-  
-  // Setup keyboard handler
-  keyboardHandler.attach()
-  
-  // Setup toolbar handler
-  toolbarHandler.attach()
-  
-  // Wire up selection callbacks to update toolbar delete button
-  clickHandler.onNodeSelected = () => toolbarHandler.updateButtons()
-  clickHandler.onNodeDeselected = () => toolbarHandler.updateButtons()
-  
-  // Setup connection delete handler (on canvas-container, where delete buttons are appended)
-  const deleteButtonContainer = svgContainer.parentElement
-  connectionHandler.setupDeleteHandler(deleteButtonContainer)
-  
-  // 5. Helper functions for attaching handlers to nodes
   function attachHandlersToNode(element, clientId) {
     dragHandler.attach(element, clientId)
     connectionHandler.attach(element, clientId)
     clickHandler.attach(element, clientId)
   }
-  
-  function attachHandlersToAllNodes() {
-    store.getNodes().forEach(node => {
-      const element = container.querySelector(`[data-client-id="${node.clientId}"]`)
-      if (element) {
-        attachHandlersToNode(element, node.clientId)
-      }
-    })
+
+  // 4. Wire renderer callbacks
+  nodeRenderer.onRender = (node, element) => {
+    attachHandlersToNode(element, node.clientId)
   }
+  nodeRenderer.onContentRender = (clientId) => {
+    connectionRenderer.updateConnectionsFor(clientId)
+  }
+
+  // 5. Load initial graph
+  await syncManager.loadBot()
   
-  // 6. Attach handlers to initial nodes (rendered by NodeRenderer during loadBot)
-  initialGraph.nodes.forEach((node, clientId) => {
-    setTimeout(() => {
-      const element = container.querySelector(`[data-client-id="${clientId}"]`)
-      if (element) {
-        attachHandlersToNode(element, clientId)
-      }
-    }, 0)
-  })
-  
-  // 7. Subscribe to store events for handler re-attachment
-  store.subscribe((event, data) => {
-    // New nodes need handlers attached
-    if (event === 'node:add') {
-      setTimeout(() => {
-        const element = container.querySelector(`[data-client-id="${data.clientId}"]`)
-        if (element) {
-          attachHandlersToNode(element, data.clientId)
-        }
-      }, 0)
-    }
-    
-    // Undo/redo or graph replacement requires re-attaching all handlers
-    if (event === 'graph:replace' || event === 'graph:restore') {
-      setTimeout(() => {
-        attachHandlersToAllNodes()
-      }, 0)
-    }
-  })
-  
-  // 7. Initialize undo/redo UI callback
+  // 6. Attach Global UI handlers
+  clickHandler.setSyncManager(syncManager)
+  clickHandler.setupGlobalHandlers()
+  keyboardHandler.attach()
+  toolbarHandler.attach()
+  clickHandler.onNodeSelected = () => toolbarHandler.updateButtons()
+  clickHandler.onNodeDeselected = () => toolbarHandler.updateButtons()
+  const deleteButtonContainer = svgContainer.parentElement
+  connectionHandler.setupDeleteHandler(deleteButtonContainer)
+
+  // 7. Initialize Undo/Redo UI Callbacks
   history.setUpdateUICallback(() => {
     updateUndoRedoUI(history)
   })
@@ -173,7 +104,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     connectionHandler,
     clickHandler,
     keyboardHandler,
-    ToolbarHandler,
+    toolbarHandler,
     
     // Convenience methods
     createNode: (type, position, data) => syncManager.createNode(type, position, data),
@@ -212,18 +143,10 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   }
 }
 
-/**
- * Update undo/redo button UI
- * @param {History} history - History instance
- */
 function updateUndoRedoUI(history) {
   const undoBtn = document.querySelector('.btn-undo')
   const redoBtn = document.querySelector('.btn-redo')
   const countDisplay = document.querySelector('.undo-count')
-  
-  // Get syncManager from global or passed context
-  // Note: syncManager is not passed here, so we need to check the loading state differently
-  // The buttons will be updated via KeyboardHandler.updateUndoRedoUI() which has access to syncManager
   
   if (undoBtn) {
     undoBtn.disabled = !history.canUndo()
@@ -235,8 +158,3 @@ function updateUndoRedoUI(history) {
     countDisplay.textContent = history.getHistoryDisplay()
   }
 }
-
-// Expose globally for Rails views
-window.initEditor = initEditor
-
-console.log('editorV2 loaded')

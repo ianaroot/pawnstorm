@@ -71,7 +71,7 @@ class Graph {
   
   /**
    * Get nodes by type
-   * @param {string} type - Node type (root, condition, action, connector)
+   * @param {string} type - Node type (root, condition, action, organizer)
    * @returns {Node[]} Array of matching nodes
    */
   getNodesByType(type) {
@@ -197,7 +197,7 @@ class Graph {
    * @param {string} clientId - Node clientId
    * @returns {Object} { outgoing: Connection[], incoming: Connection[] }
    */
-  getNodeConnections(clientId) {
+  getConnectionsFor(clientId) {
     const outgoing = []
     const incoming = []
     

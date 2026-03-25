@@ -272,7 +272,7 @@ describe('Store', () => {
       })
     })
 
-    describe('getNodeConnections', () => {
+    describe('getConnectionsFor', () => {
       it('returns outgoing and incoming connections for a node', () => {
         // Use different IDs than beforeEach to avoid conflicts
         const source = new Node({ clientId: 'src', type: 'root', position: { x: 0, y: 0 } })
@@ -287,7 +287,7 @@ describe('Store', () => {
         store.addConnection(conn1)
         store.addConnection(conn2)
 
-        const { outgoing, incoming } = store.getNodeConnections('mid')
+        const { outgoing, incoming } = store.getConnectionsFor('mid')
 
         expect(outgoing).toHaveLength(1)
         expect(outgoing[0]).toBe(conn2)
