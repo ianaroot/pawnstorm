@@ -1,0 +1,154 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe BotCompiler do
+  let(:user) { create(:user) }
+  let(:bot) { create(:bot, user: user) }
+
+  describe '#compile' do
+    context 'simple chain' do
+      let!(:root) { bot.root_node }
+      let!(:condition) do
+        create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
+          subject: 'moved_piece',
+          specifier: 'any',
+          relation: 'attacker_count',
+          comparison: 'any',
+          comparisonValue: nil
+        })
+      end
+      let!(:action) do
+        create(:node, :action, bot: bot, position_x: 100, position_y: 220, data: {
+          actionType: 'subtract',
+          value: 5
+        })
+      end
+
+      before do
+        connect_nodes(root, condition)
+        connect_nodes(condition, action)
+      end
+
+      it 'emits a versioned compiled program rooted at the bot root' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:version]).to eq(1)
+        expect(compiled[:root]).to eq(root.id.to_s)
+        expect(compiled[:nodes].keys).to include(root.id.to_s, condition.id.to_s, action.id.to_s)
+      end
+
+      it 'preserves node type, normalized data, and ordered children' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][condition.id.to_s]).to eq(
+          {
+            id: condition.id.to_s,
+            type: 'condition',
+            data: {
+              subject: 'moved_piece',
+              specifier: 'any',
+              relation: 'attacker_count',
+              comparison: 'any',
+              comparisonValue: nil
+            },
+            children: [action.id.to_s]
+          }
+        )
+      end
+    end
+
+    context 'disconnected nodes' do
+      let!(:root) { bot.root_node }
+      let!(:connected) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }
+      let!(:disconnected) { create(:node, :condition, bot: bot, position_x: 500, position_y: 500) }
+
+      before do
+        connect_nodes(root, connected)
+      end
+
+      it 'only compiles nodes reachable from root' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes].keys).to include(root.id.to_s, connected.id.to_s)
+        expect(compiled[:nodes].keys).not_to include(disconnected.id.to_s)
+      end
+    end
+
+    context 'ordered siblings' do
+      let!(:root) { bot.root_node }
+      let!(:left) { create(:node, :condition, bot: bot, position_x: 50, position_y: 200) }
+      let!(:right) { create(:node, :condition, bot: bot, position_x: 150, position_y: 200) }
+
+      before do
+        root.update!(position_x: 100, position_y: 50)
+        connect_nodes(root, left)
+        connect_nodes(root, right)
+      end
+
+      it 'preserves NodeSortOrder child ordering in the compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][root.id.to_s][:children]).to eq([left.id.to_s, right.id.to_s])
+      end
+    end
+
+    context 'shared descendants in a DAG' do
+      let!(:root) { bot.root_node }
+      let!(:node_a) { create(:node, :condition, bot: bot, position_x: 200, position_y: 200) }
+      let!(:node_b) { create(:node, :condition, bot: bot, position_x: 600, position_y: 200) }
+      let!(:shared) { create(:node, :action, bot: bot, position_x: 400, position_y: 400, data: { actionType: 'add', value: 3 }) }
+
+      before do
+        connect_nodes(root, node_a)
+        connect_nodes(root, node_b)
+        connect_nodes(node_a, shared)
+        connect_nodes(node_b, shared)
+      end
+
+      it 'stores the shared node once and references it from both parents' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes].keys.count(shared.id.to_s)).to eq(1)
+        expect(compiled[:nodes][node_a.id.to_s][:children]).to include(shared.id.to_s)
+        expect(compiled[:nodes][node_b.id.to_s][:children]).to include(shared.id.to_s)
+      end
+    end
+
+    context 'organizer nodes' do
+      let!(:root) { bot.root_node }
+      let!(:organizer) { create(:node, :organizer, bot: bot, position_x: 100, position_y: 100) }
+      let!(:condition) { create(:node, :condition, bot: bot, position_x: 100, position_y: 220) }
+
+      before do
+        connect_nodes(root, organizer)
+        connect_nodes(organizer, condition)
+      end
+
+      it 'preserves organizers in the compiled graph as pass-through structure' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][organizer.id.to_s][:type]).to eq('organizer')
+        expect(compiled[:nodes][organizer.id.to_s][:children]).to eq([condition.id.to_s])
+      end
+    end
+
+    context 'cycles' do
+      let!(:root) { bot.root_node }
+      let!(:node_a) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }
+      let!(:node_b) { create(:node, :condition, bot: bot, position_x: 200, position_y: 100) }
+      let!(:node_c) { create(:node, :condition, bot: bot, position_x: 300, position_y: 100) }
+
+      before do
+        connect_nodes(root, node_a)
+        connect_nodes(node_a, node_b)
+        connect_nodes(node_b, node_c)
+        connect_nodes(node_c, node_a)
+      end
+
+      it 'raises InfiniteLoopError when compilation encounters a cycle' do
+        expect { described_class.new(bot).compile }.to raise_error(BotCompiler::InfiniteLoopError)
+      end
+    end
+  end
+end
