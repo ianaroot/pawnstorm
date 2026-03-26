@@ -116,4 +116,59 @@ RSpec.describe Bot, type: :model do
       # 1 root node + 3 additional nodes from trait
     end
   end
+
+  describe 'compiled program lifecycle' do
+    it 'compiles a program and clears the stale flag' do
+      bot = create(:bot)
+      condition = create(:node, :condition, bot: bot)
+      connect_nodes(bot.root_node, condition)
+
+      bot.compile_program!
+      bot.reload
+
+      expect(bot.compiled_program).to be_present
+      expect(bot.compiled_program_stale).to be(false)
+    end
+
+    it 'marks the bot stale when a node position changes' do
+      bot = create(:bot)
+      node = create(:node, :condition, bot: bot)
+      connect_nodes(bot.root_node, node)
+      bot.compile_program!
+
+      node.update!(position_x: 999)
+      expect(bot.reload.compiled_program_stale).to be(true)
+    end
+
+    it 'marks the bot stale when node data changes' do
+      bot = create(:bot)
+      node = create(:node, :condition, bot: bot)
+      connect_nodes(bot.root_node, node)
+      bot.compile_program!
+
+      node.update!(data: {
+        subject: 'allies',
+        specifier: 'rook',
+        relation: 'mobility',
+        comparison: 'greater_than',
+        comparisonValue: 'prior_board_state'
+      })
+
+      expect(bot.reload.compiled_program_stale).to be(true)
+    end
+
+    it 'marks the bot stale when a connection is created or destroyed' do
+      bot = create(:bot)
+      source = create(:node, :condition, bot: bot)
+      target = create(:node, :action, bot: bot)
+      bot.compile_program!
+
+      connection = Connection.create!(source_node: source, target_node: target)
+      expect(bot.reload.compiled_program_stale).to be(true)
+
+      bot.compile_program!
+      connection.destroy!
+      expect(bot.reload.compiled_program_stale).to be(true)
+    end
+  end
 end

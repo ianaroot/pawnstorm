@@ -31,6 +31,8 @@ class Node < ApplicationRecord
   # Ensure only one root per bot (DB has unique index, this validates before save)
   validate :single_root_per_bot, if: -> { node_type == 'root' }
   validate :data_matches_schema, if: :validate_node_data?
+
+  after_commit :mark_bot_compiled_program_stale_if_needed, on: [:create, :update, :destroy]
   
   # Node type helpers
   def root?
@@ -123,6 +125,12 @@ class Node < ApplicationRecord
 
     errors.add(:data, 'has invalid actionType') unless ACTION_TYPES.include?(action_type)
     errors.add(:data, 'value must be numeric') unless value.is_a?(Numeric)
+  end
+
+  def mark_bot_compiled_program_stale_if_needed
+    return if previously_persisted? && destroyed? == false && !saved_change_to_position_x? && !saved_change_to_position_y? && !saved_change_to_data?
+
+    Bot.where(id: bot_id).find_each(&:mark_compiled_program_stale!)
   end
   
   def single_root_per_bot

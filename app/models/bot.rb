@@ -11,7 +11,6 @@
 #  description :text
 #
 class Bot < ApplicationRecord
-  
   belongs_to :user
   has_many :games
   has_many :nodes, dependent: :destroy
@@ -25,6 +24,20 @@ class Bot < ApplicationRecord
   
   def root_node
     nodes.find_by(node_type: 'root')
+  end
+
+  def compile_program!
+    update_columns(
+      compiled_program: BotCompiler.new(self).compile,
+      compiled_program_stale: false
+    )
+  end
+
+  def mark_compiled_program_stale!
+    return unless persisted?
+    return if compiled_program_stale?
+
+    update_column(:compiled_program_stale, true)
   end
   
   private
