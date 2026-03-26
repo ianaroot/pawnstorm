@@ -6,6 +6,13 @@ import Board from "gameplay/board"
 import BotClass from "gameplay/bot"
 // import NodeEditor from "editor/node_editor"
 import GameController from "gameplay/game_controller"
+import {
+  DEBUG_SCENARIOS,
+  loadScenario,
+  resetScenarioBoard,
+  runScenarioMoves,
+  scenarioNames
+} from "gameplay/debug_scenarios"
 import Layout from "gameplay/layout"
 import MoveObject from "gameplay/move_object"
 import MovementType from "gameplay/movement_type"
@@ -35,7 +42,12 @@ document.addEventListener('turbo:load', () => {
           Board,
           Rules,
           MovesCalculator,
-          MoveObject
+          MoveObject,
+          scenarios: DEBUG_SCENARIOS,
+          scenarioNames,
+          resetScenarioBoard: () => resetScenarioBoard(gameController),
+          runScenarioMoves: (moveArray, delay) => runScenarioMoves(gameController, moveArray, delay),
+          loadScenario: (name, options) => loadScenario(gameController, name, options)
         };
       }
     }
