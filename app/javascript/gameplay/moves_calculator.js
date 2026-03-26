@@ -1,6 +1,7 @@
 import MovementType from "gameplay/movement_type"
 import Board from "gameplay/board"
 import MoveObject from "gameplay/move_object"
+import { squareClassification, pawnAttackPositions } from "gameplay/board_query_utils"
 
 class MovesCalculator {
   constructor({  startPosition: startPosition, board: board, moveObjects: moveObjects, movementTypes: movementTypes, ignoreCastles: ignoreCastles//, countDefense: countDefense//, endPosition: endPosition
@@ -45,7 +46,7 @@ class MovesCalculator {
           break
         }
         
-        const squareState = this.squareClassification(currentPosition, teamString)
+        const squareState = squareClassification({position: currentPosition, movingTeam: teamString, board: this.board})
 
         if ( squareState.isEmpty ){
           this.moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: movementType.captureNotation}) )
@@ -60,34 +61,8 @@ class MovesCalculator {
     }
   }
 
-  squareClassification(position, movingTeam) {
-    const pieceObject = this.board.pieceObject(position)
-    const pieceType = Board.parseSpecies(pieceObject)
-    const teamString = Board.parseTeam(pieceObject)
-   return {
-      position,
-      pieceObject: pieceObject,
-      pieceType: pieceType,
-      teamString: teamString,
-      isEmpty: teamString === Board.EMPTY,
-      isTeammate: teamString === movingTeam,
-      isOpponent: teamString !== Board.EMPTY && teamString !== movingTeam
-    }
-  }
 
-  pawnAttackPositions(startPosition) {
-    const teamString = this.board.teamAt(startPosition)
 
-    if (teamString === Board.WHITE) {
-      return [startPosition + 7, startPosition + 9].filter(position => Board._inBounds(position))
-    }
-
-    if (teamString === Board.BLACK) {
-      return [startPosition - 9, startPosition - 7].filter(position => Board._inBounds(position))
-    }
-
-    return []
-  }
 
   static get verticalUpIncrement(){ return 8 }
   static get verticalDownIncrement(){ return -8 }
@@ -105,7 +80,6 @@ class MovesCalculator {
   static get nightHorizontalRightDownIncrement(){ return -10 }
   static get horizontalRightIncrement(){ return 1 }
   static get horizontalLeftIncrement(){ return -1 }
-
 
 // TODO this is a movementType Factory
   static genericMovements({increment: increment, rangeLimit: rangeLimit, pieceNotation: pieceNotation, startPosition: startPosition}){
@@ -382,9 +356,7 @@ class MovesCalculator {
                 nonAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.verticalDownIncrement}),
                 singleStepCheck: board._oneSpaceDownIsEmpty(startPosition),
                 doubleStepCheck: Board.isSeventhRank(startPosition) && board._twoSpacesDownIsEmpty(startPosition) && board._oneSpaceDownIsEmpty(startPosition),
-                leftAttackCheck: board._downAndLeftIsAttackable(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashDownIncrement}),
-                rightAttackCheck: board._downAndRightIsAttackable(startPosition),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashDownIncrement}),
                 rightEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition + 1) && board.whitePawnDoubleSteppedTo(startPosition + 1),//board.whitePawnDoubleSteppedFrom(startPosition - 15),
                 leftEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition - 1) && board.whitePawnDoubleSteppedTo(startPosition - 1)// board.whitePawnDoubleSteppedFrom(startPosition - 17),
@@ -394,9 +366,7 @@ class MovesCalculator {
                 nonAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.verticalUpIncrement}),
                 singleStepCheck: board._oneSpaceUpIsEmpty(startPosition),
                 doubleStepCheck: Board.isSecondRank(startPosition) && board._twoSpacesUpIsEmpty( startPosition ) && board._oneSpaceUpIsEmpty(startPosition),
-                leftAttackCheck: board._upAndLeftIsAttackable(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashUpIncrement}),
-                rightAttackCheck: board._upAndRightIsAttackable(startPosition ),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashUpIncrement}),
                 leftEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition - 1) && board.blackPawnDoubleSteppedTo(startPosition - 1),//board.blackPawnDoubleSteppedFrom(startPosition + 15),
                 rightEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition + 1) && board.blackPawnDoubleSteppedTo(startPosition + 1)//board.blackPawnDoubleSteppedFrom(startPosition + 17),
@@ -416,19 +386,26 @@ class MovesCalculator {
             movementType.startPosition = startPosition
             movementTypes.push(movementType)
           }
-          if ( pawnVars.leftAttackCheck ) {
-            let movementType = pawnVars.leftAttackMove
-            movementType.rangeLimit = 1
-            movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)
-            movementTypes.push(movementType)
+          const attackPositions = pawnAttackPositions({startPosition, board})
+          if (attackPositions.left !== null) {
+            const leftSquare = squareClassification({position: attackPositions.left, movingTeam: teamString, board})
+            if (leftSquare.isOpponent) {
+              const movementType = pawnVars.leftAttackMove
+              movementType.rangeLimit = 1
+              movementType.startPosition = startPosition
+              movementType.pieceNotation = Board.file(startPosition)
+              movementTypes.push(movementType)
+            }
           }
-          if( pawnVars.rightAttackCheck ) {
-            let movementType = pawnVars.rightAttackMove
-            movementType.rangeLimit = 1
-            movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)
-            movementTypes.push(movementType)
+          if (attackPositions.right !== null) {
+            const rightSquare = squareClassification({position: attackPositions.right, movingTeam: teamString, board})
+            if (rightSquare.isOpponent) {
+              const movementType = pawnVars.rightAttackMove
+              movementType.rangeLimit = 1
+              movementType.startPosition = startPosition
+              movementType.pieceNotation = Board.file(startPosition)
+              movementTypes.push(movementType)
+            }
           }
           if( pawnVars.rightEnPassantCheck ){
             let movementType = pawnVars.rightAttackMove

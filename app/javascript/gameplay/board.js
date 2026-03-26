@@ -431,33 +431,8 @@ class Board {
     return this.positionEmpty(position - 16)
   }
 
-  _downAndLeftIsAttackable(startPosition){
-    let positionDownAndLeft = startPosition - 9;
-    if( Board._inBounds( positionDownAndLeft )){
-      let pieceObject = this.layOut[positionDownAndLeft],
-        pieceTeam = Board.parseTeam(pieceObject);
-        // after the && operator is checking whether the move is pushing a dark square bishop to a light square or something comparable
-        // that might be unnecessary, and definitely could be a separate function
-      return this.occupiedByOpponent({position: positionDownAndLeft, teamString: Board.BLACK}) && this._squareColorsMatch(startPosition, positionDownAndLeft)
-
-    } else { // down and left would be off board
-      return false
-    }
-  }
-
   _squareColorsMatch(square1, square2){
     return Board.squareColor(square1) === Board.squareColor(square2)
-  }
-
-  _downAndRightIsAttackable(startPosition){
-    let positionDownAndRight = startPosition - 7;
-    if( Board._inBounds( positionDownAndRight ) ){
-      let pieceObject = this.layOut[positionDownAndRight],
-        pieceTeam = Board.parseTeam(pieceObject);
-      return this.occupiedByOpponent({position: positionDownAndRight, teamString: Board.BLACK}) && this._squareColorsMatch(startPosition, positionDownAndRight)
-    } else {
-      return false
-    }
   }
 
   _twoSpacesUpIsEmpty(position){
@@ -468,28 +443,6 @@ class Board {
     return this.positionEmpty( position + 8)
   }
 
-  _upAndLeftIsAttackable(startPosition){
-    let positionUpAndLeft = startPosition + 7;
-    if( Board._inBounds( positionUpAndLeft)){
-      let pieceObject = this.pieceObject(positionUpAndLeft),
-        pieceTeam = Board.parseTeam(pieceObject);
-      return this.occupiedByOpponent({position: positionUpAndLeft, teamString: Board.WHITE}) && this._squareColorsMatch(startPosition, positionUpAndLeft)
-    } else {
-      return false
-    }
-  }
-
-  _upAndRightIsAttackable(startPosition){
-    let positionUpAndRight = startPosition + 9;
-    if( Board._inBounds( positionUpAndRight)){
-      let pieceObject = this.layOut[positionUpAndRight],
-        pieceTeam = Board.parseTeam(pieceObject);
-      return this.occupiedByOpponent({position: positionUpAndRight, teamString: Board.WHITE}) && this._squareColorsMatch(startPosition, positionUpAndRight)
-    } else {
-      return false
-    }
-  }
-
   // static backRankFor(team){
   //   let rankArray = {
   //     black: 8,
@@ -498,6 +451,33 @@ class Board {
   //   return rankArray[team]
   // }
 
+
+
+  castleSquaresAreEmpty(squares){
+    for (let i = 0; i < squares.length; i++) {
+      if (!this.positionEmpty(squares[i])) { return false }
+    }
+    return true
+  }
+
+  castlePathIsSafe(startPosition, pathSquares){
+    const king = this.pieceObject(startPosition)
+
+    for (let i = 0; i < pathSquares.length; i++) {
+      const square = pathSquares[i]
+      const testBoard = this.deepCopy()
+
+      testBoard._emptify(startPosition)
+      testBoard._placePiece({ position: square, pieceObject: king })
+
+      if (Rules.pieceIsAttacked({ board: testBoard, defensePosition: square })) {
+        return false
+      }
+    }
+
+    return true
+  }
+  
   kingSideCastleViableFor(team, startPosition){
     if( this.pieceObject(startPosition + 3) !== team + Board.ROOK ){ return false }
     if (Rules.checkQuery({board: this, teamString: this.allowedToMove}) ){ return false }
@@ -515,9 +495,9 @@ class Board {
     } else {
       alert('bad input for board.kingSideCastleViableFor :' + team)
     }
-    for( let i = 0; i < necessaryEmptyPositions.length; i++){
-      let necessaryEmptyPosition = necessaryEmptyPositions[i];
-      if( !this.positionEmpty( necessaryEmptyPosition ) ){ return false }
+    if (!this.castleSquaresAreEmpty(necessaryEmptyPositions)) { return false }
+    if (!this.castlePathIsSafe(startPosition, [startPosition + 1, startPosition + 2])) {
+      return false
     }
     for(let j = 0; j < moveNotations.length; j++){
       let notation = moveNotations[j];
@@ -546,9 +526,9 @@ class Board {
     } else {
       alert('bad input for board.kingSideCastleViableFor :' + team)
     }
-    for( let i = 0; i < necessaryEmptyPositions.length; i++){
-      let necessaryEmptyPosition = necessaryEmptyPositions[i];
-      if( !this.positionEmpty( necessaryEmptyPosition ) ){ return false }
+    if (!this.castleSquaresAreEmpty(necessaryEmptyPositions)) { return false }
+    if (!this.castlePathIsSafe(startPosition, [startPosition + 1, startPosition + 2])) {
+      return false
     }
     for(let j = 0; j < moveNotations.length; j++){
       let notation = moveNotations[j];

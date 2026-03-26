@@ -87,7 +87,7 @@ class Rules {
         return true
       }
     };
-
+    return false
   }
 
   static positionsControlledByTeam({board: board, team: team}){
