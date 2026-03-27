@@ -18,6 +18,10 @@ class CandidateMoveAnalysis {
     return this._afterBoard
   }
 
+  boardForScope(boardScope = 'after') {
+    return boardScope === 'prior' ? this.board : this.afterBoard()
+  }
+
   movedPieceTeam() {
     return this.board.teamAt(this.moveObject.startPosition)
   }
@@ -35,7 +39,7 @@ class CandidateMoveAnalysis {
     })
   }
 
-  queryValue(query) {
+  queryValue(query, boardScope = 'after') {
     if (query.subject === 'captured_piece') {
       // Captured pieces are currently the only subject resolved from move-event state
       // rather than a live position on the after-board. If more such subjects appear,
@@ -44,7 +48,7 @@ class CandidateMoveAnalysis {
     }
 
     const positions = this.subjectPositions(query)
-    return this.positionalQueryValue(query, positions)
+    return this.positionalQueryValue(query, positions, boardScope)
   }
 
   relationValue(conditionNode) {
@@ -71,7 +75,7 @@ class CandidateMoveAnalysis {
     }
   }
 
-  positionalQueryValue(query, positions) {
+  positionalQueryValue(query, positions, boardScope = 'after') {
     switch (query.relation) {
       case 'piece_count':
         return positions.length
@@ -80,14 +84,16 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'attacker_count',
           team: Board.opposingTeam(this.movedPieceTeam()),
-          relationSpecifier: query.relationSpecifier
+          relationSpecifier: query.relationSpecifier,
+          boardScope
         })
       case 'defender_count':
         return this.aggregatePositionRelationValue({
           positions,
           relation: 'defender_count',
           team: this.movedPieceTeam(),
-          relationSpecifier: query.relationSpecifier
+          relationSpecifier: query.relationSpecifier,
+          boardScope
         })
       default:
         throw new Error(`CandidateMoveAnalysis does not yet support positional relation: ${query.relation}`)
@@ -109,31 +115,33 @@ class CandidateMoveAnalysis {
       : []
   }
 
-  aggregatePositionRelationValue({ positions, relation, team, relationSpecifier }) {
+  aggregatePositionRelationValue({ positions, relation, team, relationSpecifier, boardScope = 'after' }) {
     return positions.reduce((sum, targetPosition) => {
       return sum + this.positionRelationValue({
         relation,
         targetPosition,
         team,
-        relationSpecifier
+        relationSpecifier,
+        boardScope
       })
     }, 0)
   }
 
-  positionRelationValue({ relation, targetPosition, team, relationSpecifier }) {
+  positionRelationValue({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
     const species = this.specifierToSpecies(relationSpecifier)
+    const board = this.boardForScope(boardScope)
 
     switch (relation) {
       case 'attacker_count':
         return attackerCount({
-          board: this.afterBoard(),
+          board,
           targetPosition,
           team,
           species
         })
       case 'defender_count':
         return defenderCount({
-          board: this.afterBoard(),
+          board,
           targetPosition,
           team,
           species
