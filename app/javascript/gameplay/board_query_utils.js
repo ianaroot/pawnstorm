@@ -1,54 +1,7 @@
- import Board from "gameplay/board"
+import Board from "gameplay/board"
 
-export function squareClassification({ board, position, movingTeam }) {
 
-    const pieceObject = board.pieceObject(position)
-    const pieceType = Board.parseSpecies(pieceObject)
-    const teamString = Board.parseTeam(pieceObject)
-    return {
-        position,
-        pieceObject: pieceObject,
-        pieceType: pieceType,
-        teamString: teamString,
-        isEmpty: teamString === Board.EMPTY,
-        isTeammate: teamString === movingTeam,
-        isOpponent: teamString !== Board.EMPTY && teamString !== movingTeam
-    }
-}
-
-export function validDiagonal(startPosition, candidatePosition) {
-    return (
-        Board._inBounds(candidatePosition) &&
-        Math.abs((candidatePosition % 8) - (startPosition % 8)) === 1
-    )
-}
-
-export function pawnAttackPositions({ board, startPosition }) {
-    const teamString = board.teamAt(startPosition)
-
-    if (teamString === Board.WHITE) {
-        const left = startPosition + 7
-        const right = startPosition + 9
-        return {
-            left: validDiagonal(startPosition, left) ? left : null,
-            right: validDiagonal(startPosition, right) ? right : null
-        }
-    }
-
-    if (teamString === Board.BLACK) {
-        const left = startPosition - 9
-        const right = startPosition - 7
-        return {
-            left: validDiagonal(startPosition, left) ? left : null,
-            right: validDiagonal(startPosition, right) ? right : null
-        }
-    }
-
-    return {
-        left: null,
-        right: null
-    }
-}
+// -------------------  INTERNAL HELPERS ----------------------------------- // 
 
 function knightControlsSquare(attackerPosition, targetPosition) {
     const fileDiff = Math.abs((targetPosition % 8) - (attackerPosition % 8))
@@ -115,6 +68,97 @@ function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
+
+function pieceValue(species) {
+    switch (species) {
+        case Board.PAWN:
+        return 1
+        case Board.NIGHT:
+        case Board.BISHOP:
+        return 3
+        case Board.ROOK:
+        return 5
+        case Board.QUEEN:
+        return 9
+        case Board.KING:
+        return Infinity
+        default:
+        return 0
+    }
+}
+
+// -------------------  EXPORTED HELPERS ----------------------------------- // 
+
+export function materialValue(pieceObjectOrSpecies) {
+    const species = pieceObjectOrSpecies.length === 2 ? Board.parseSpecies(pieceObjectOrSpecies) : pieceObjectOrSpecies
+    return pieceValue(species)
+}
+
+export function defendingPositions({ board, targetPosition, team, species = null }) {
+    return controllingPositions({ board, targetPosition, team, species }).filter(position => position !== targetPosition)
+}
+
+export function attackingPositions({ board, targetPosition, team, species = null }) {
+    return controllingPositions({ board, targetPosition, team, species })
+}
+
+export function defenderCount(args) {
+    return defendingPositions(args).length
+}
+
+export function attackerCount(args) {
+    return attackingPositions(args).length
+}
+
+export function squareClassification({ board, position, movingTeam }) {
+
+    const pieceObject = board.pieceObject(position)
+    const pieceType = Board.parseSpecies(pieceObject)
+    const teamString = Board.parseTeam(pieceObject)
+    return {
+        position,
+        pieceObject: pieceObject,
+        pieceType: pieceType,
+        teamString: teamString,
+        isEmpty: teamString === Board.EMPTY,
+        isTeammate: teamString === movingTeam,
+        isOpponent: teamString !== Board.EMPTY && teamString !== movingTeam
+    }
+}
+
+export function validDiagonal(startPosition, candidatePosition) {
+    return (
+        Board._inBounds(candidatePosition) &&
+        Math.abs((candidatePosition % 8) - (startPosition % 8)) === 1
+    )
+}
+
+export function pawnAttackPositions({ board, startPosition }) {
+    const teamString = board.teamAt(startPosition)
+
+    if (teamString === Board.WHITE) {
+        const left = startPosition + 7
+        const right = startPosition + 9
+        return {
+            left: validDiagonal(startPosition, left) ? left : null,
+            right: validDiagonal(startPosition, right) ? right : null
+        }
+    }
+
+    if (teamString === Board.BLACK) {
+        const left = startPosition - 9
+        const right = startPosition - 7
+        return {
+            left: validDiagonal(startPosition, left) ? left : null,
+            right: validDiagonal(startPosition, right) ? right : null
+        }
+    }
+
+    return {
+        left: null,
+        right: null
+    }
+}
 
 export function pieceControlsSquare({ board, attackerPosition, targetPosition }) {
     const attacker = board.pieceObject(attackerPosition)

@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { controllingPositions } from 'gameplay/board_query_utils'
+import { controllingPositions, materialValue } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -38,17 +38,86 @@ class CandidateMoveAnalysis {
   }
 
   relationValue(conditionNode) {
-    if (conditionNode.subject !== 'moved_piece') {
-      throw new Error(`CandidateMoveAnalysis does not yet support subject: ${conditionNode.subject}`)
+    switch (conditionNode.subject) {
+      case 'moved_piece':
+        return this.movedPieceRelationValue(conditionNode.relation)
+      case 'captured_piece':
+        return this.capturedPieceRelationValue(conditionNode.relation)
+      default:
+        throw new Error(`CandidateMoveAnalysis does not yet support subject: ${conditionNode.subject}`)
     }
+  }
 
-    switch (conditionNode.relation) {
+  capturedPieceRelationValue(relation) {
+    switch (relation) {
+      case 'presence':
+        return this.capturedPiecePresent()
+      case 'absence':
+        return this.capturedPieceAbsent()
+      case 'piece_value':
+        return this.capturedPieceValue()
+      default:
+        throw new Error(`captured_piece does not support relation: ${relation}`)
+    }
+  }
+
+  movedPieceRelationValue(relation) {
+    switch (relation) {
       case 'attacker_count':
         return this.movedPieceAttackerCount()
       default:
-        throw new Error(`CandidateMoveAnalysis does not yet support relation: ${conditionNode.relation}`)
+        throw new Error(`moved_piece does not yet support relation: ${relation}`)
     }
   }
+
+  capturedPiecePresent() {
+    return this.capturedPiecePosition() !== null
+  }
+
+  capturedPieceAbsent() {
+    return !this.capturedPiecePresent()
+  }
+
+  capturedPiecePosition() {
+    const startPosition = this.moveObject.startPosition
+    const endPosition = this.moveObject.endPosition
+    const movedPieceType = this.board.pieceTypeAt(startPosition)
+
+    if (this.board.teamAt(endPosition) !== Board.EMPTY) {
+      return endPosition
+    }
+
+    const changedFiles = Board.file(startPosition) !== Board.file(endPosition)
+
+    if (movedPieceType === Board.PAWN && changedFiles) {
+      return this.movedPieceTeam() === Board.WHITE
+        ? endPosition - 8
+        : endPosition + 8
+    }
+
+    return null
+  }
+
+  capturedPieceObject() {
+    const capturedPosition = this.capturedPiecePosition()
+    if (capturedPosition === null) { return null }
+    return this.board.pieceObject(capturedPosition)
+  }
+
+  capturedPieceValue() {
+    const species = this.capturedPieceSpecies()
+    if (species === null) {
+      return 0
+    }
+
+    return materialValue(species)
+  }
+  capturedPieceSpecies() {
+    const capturedPiece = this.capturedPieceObject()
+    if (capturedPiece === null) { return null }
+    return Board.parseSpecies(capturedPiece)
+  }
+
 }
 
 export default CandidateMoveAnalysis

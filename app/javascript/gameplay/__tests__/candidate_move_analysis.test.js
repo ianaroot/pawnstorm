@@ -161,4 +161,70 @@ describe('CandidateMoveAnalysis', () => {
       ).toThrow(/does not yet support relation/)
     })
   })
+
+  describe('captured_piece helpers', () => {
+    it('reports absence and zero value when the move is not a capture', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(analysis.capturedPiecePresent()).toBe(false)
+      expect(analysis.capturedPieceAbsent()).toBe(true)
+      expect(analysis.capturedPiecePosition()).toBe(null)
+      expect(analysis.capturedPieceObject()).toBe(null)
+      expect(analysis.capturedPieceSpecies()).toBe(null)
+      expect(analysis.capturedPieceValue()).toBe(0)
+    })
+
+    it('resolves the captured piece on a normal capture', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wP',
+          d5: 'bN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e4', 'd5', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(analysis.capturedPiecePresent()).toBe(true)
+      expect(analysis.capturedPieceAbsent()).toBe(false)
+      expect(analysis.capturedPiecePosition()).toBe(position('d5'))
+      expect(analysis.capturedPieceObject()).toBe(Board.BLACK_NIGHT)
+      expect(analysis.capturedPieceSpecies()).toBe(Board.NIGHT)
+      expect(analysis.capturedPieceValue()).toBe(3)
+    })
+
+    it('resolves the captured pawn on en passant', () => {
+      const board = buildBoard({
+        allowedToMove: Board.WHITE,
+        movementNotation: ['h3', 'd5'],
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e5: 'wP',
+          d5: 'bP'
+        }
+      })
+
+      const moveObject = getMove('e5', 'd6', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(analysis.capturedPiecePresent()).toBe(true)
+      expect(analysis.capturedPieceAbsent()).toBe(false)
+      expect(analysis.capturedPiecePosition()).toBe(position('d5'))
+      expect(analysis.capturedPieceObject()).toBe(Board.BLACK_PAWN)
+      expect(analysis.capturedPieceSpecies()).toBe(Board.PAWN)
+      expect(analysis.capturedPieceValue()).toBe(1)
+    })
+  })
 })
