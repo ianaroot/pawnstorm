@@ -1,3 +1,23 @@
+ # == Schema Information
+ #
+ # Table name: matches
+ #
+ #  id                :bigint           not null, primary key
+ #  allowed_to_move   :string           default("W"), not null
+ #  captured_pieces   :json
+ #  lay_out           :json
+ #  movement_notation :json
+ #  previous_layouts  :json
+ #  result            :integer
+ #  status            :integer          default("pending"), not null
+ #  created_at        :datetime         not null
+ #  updated_at        :datetime         not null
+ #  creator_id        :bigint
+ #  white_player_type :string
+ #  white_player_id   :bigint
+ #  black_player_type :string
+ #  black_player_id   :bigint
+ #
 class Match < ApplicationRecord
   enum :status, {
     pending: 0,
