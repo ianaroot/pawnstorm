@@ -11,6 +11,16 @@ import {
   position
 } from 'gameplay/__tests__/helpers'
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function expectNotation(board, notation) {
+  expect(board.movementNotation.at(-1)).toMatch(
+    new RegExp(`^(\\d+\\. )?${escapeRegExp(notation)}$`)
+  )
+}
+
 describe('Rules en passant', () => {
   it('returns a legal en passant move for white after a black double step', () => {
     const board = buildBoard({
@@ -34,7 +44,7 @@ describe('Rules en passant', () => {
 
     expect(board.pieceObject(position('d6'))).toBe(Board.WHITE_PAWN)
     expect(board.pieceObject(position('d5'))).toBe(Board.EMPTY_SQUARE)
-    expect(board.movementNotation.at(-1)).toBe('exd6e.p.')
+    expectNotation(board, 'exd6e.p.')
   })
 
   it('does not allow en passant after a black pawn reached the adjacent square by single step', () => {
@@ -94,7 +104,7 @@ describe('Rules en passant', () => {
 
     expect(board.pieceObject(position('e3'))).toBe(Board.BLACK_PAWN)
     expect(board.pieceObject(position('e4'))).toBe(Board.EMPTY_SQUARE)
-    expect(board.movementNotation.at(-1)).toBe('dxe3e.p.')
+    expectNotation(board, 'dxe3e.p.')
   })
 
   it('does not allow en passant for black after a white pawn reached the adjacent square by single step', () => {
@@ -325,5 +335,162 @@ describe('Rules castling', () => {
     const move = getMove('e1', 'g1', board)
 
     expect(move.illegal).toBe(true)
+  })
+})
+
+describe('Rules notation recording', () => {
+  it('records a simple pawn move', () => {
+    const board = buildBoard({
+      pieces: {
+        e2: 'wP',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('e2', 'e4', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'e4')
+  })
+
+  it('records a simple piece move', () => {
+    const board = buildBoard({
+      pieces: {
+        g1: 'wN',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('g1', 'f3', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Nf3')
+  })
+
+  it('records a simple capture', () => {
+    const board = buildBoard({
+      pieces: {
+        d1: 'wQ',
+        d4: 'bP',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('d1', 'd4', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Qxd4')
+  })
+
+  it('records a check suffix', () => {
+    const board = buildBoard({
+      pieces: {
+        d1: 'wQ',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('d1', 'h5', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Qh5+')
+  })
+
+  it('records castling in movement notation', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        h1: 'wR',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('e1', 'g1', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'O-O')
+  })
+
+  it('will eventually record move numbers alongside notation', () => {
+    const board = buildBoard({
+      pieces: {
+        e2: 'wP',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('e2', 'e4', board)
+    board._officiallyMovePiece(move)
+
+    expect(board.movementNotation.at(-1)).toBe('1. e4')
+  })
+
+  it('will eventually disambiguate rook moves that share a destination', () => {
+    const board = buildBoard({
+      pieces: {
+        a4: 'wR',
+        h4: 'wR',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('a4', 'd4', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Rad4')
+  })
+
+  it('will eventually disambiguate knight moves that share a destination', () => {
+    const board = buildBoard({
+      pieces: {
+        c5: 'wN',
+        g5: 'wN',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('c5', 'e4', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Nce4')
+  })
+
+  it('will eventually disambiguate bishop moves that share a destination', () => {
+    const board = buildBoard({
+      pieces: {
+        b3: 'wB',
+        f3: 'wB',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('b3', 'd5', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Bbd5')
+  })
+
+  it('will eventually disambiguate queen moves that share a destination', () => {
+    const board = buildBoard({
+      pieces: {
+        d1: 'wQ',
+        d5: 'wQ',
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('d1', 'd3', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'Q1d3')
   })
 })

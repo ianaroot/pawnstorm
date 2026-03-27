@@ -356,7 +356,11 @@ class Board {
 
     }
 
-    this.movementNotation.push( moveObject.notation() + (epNotation || "") + notationSuffix)
+    const notation = moveObject.notation() + (epNotation || "") + notationSuffix
+    const moveNumber = Math.floor(this.movementNotation.length / 2) + 1
+    const prefixedNotation = this.allowedToMove === Board.WHITE ? `${moveNumber}. ${notation}` : notation
+
+    this.movementNotation.push(prefixedNotation)
   }
 
   _hypotheticallyMovePiece( moveObject ){ // ONLY USE THIS TO SEE IF A MOVE WOULD RESULT IN MATE. there's a lot of space between _officiallyMovePiece and hypothetical. eg  not recording any data on hypothetical moves
