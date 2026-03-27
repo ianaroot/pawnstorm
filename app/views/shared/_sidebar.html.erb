@@ -57,8 +57,8 @@
           class: "sidebar__link #{'sidebar__link--active' if current_page?(root_path)}",
           data: { action: "click->sidebar#navigate" } %>
       
-      <%= link_to "Play Game", new_game_path,
-          class: "sidebar__link #{'sidebar__link--active' if current_page?(new_game_path)}",
+      <%= link_to "Play Match", new_match_path,
+          class: "sidebar__link #{'sidebar__link--active' if current_page?(new_match_path)}",
           data: { action: "click->sidebar#navigate" } %>
       
       <%= link_to "Bots", bots_path,

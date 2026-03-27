@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_25_200000) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_27_033500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -39,7 +39,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_25_200000) do
     t.check_constraint "source_node_id <> target_node_id", name: "no_self_loops"
   end
 
-  create_table "games", force: :cascade do |t|
+  create_table "matches", force: :cascade do |t|
     t.bigint "bot_1_id"
     t.bigint "bot_2_id"
     t.json "layOut"
@@ -50,8 +50,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_25_200000) do
     t.json "previousLayouts"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["bot_1_id"], name: "index_games_on_bot_1_id"
-    t.index ["bot_2_id"], name: "index_games_on_bot_2_id"
+    t.index ["bot_1_id"], name: "index_matches_on_bot_1_id"
+    t.index ["bot_2_id"], name: "index_matches_on_bot_2_id"
   end
 
   create_table "nodes", force: :cascade do |t|
@@ -81,7 +81,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_25_200000) do
 
   add_foreign_key "connections", "nodes", column: "source_node_id"
   add_foreign_key "connections", "nodes", column: "target_node_id"
-  add_foreign_key "games", "bots", column: "bot_1_id"
-  add_foreign_key "games", "bots", column: "bot_2_id"
+  add_foreign_key "matches", "bots", column: "bot_1_id"
+  add_foreign_key "matches", "bots", column: "bot_2_id"
   add_foreign_key "nodes", "bots"
 end

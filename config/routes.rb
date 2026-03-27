@@ -20,7 +20,7 @@ Rails.application.routes.draw do
     delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :connection
   end
 
-  resources :games, only: [:new]
+  resources :matches, only: [:new]
 
   # Defines the root path route ("/")
   # root "posts#index"
