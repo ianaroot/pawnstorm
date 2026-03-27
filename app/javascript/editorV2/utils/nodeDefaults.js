@@ -1,7 +1,8 @@
 export const DEFAULT_CONDITION_DATA = Object.freeze({
   subject: 'moved_piece',
-  specifier: 'any',
+  subjectSpecifier: 'any',
   relation: 'attacker_count',
+  relationSpecifier: 'any',
   comparison: 'any',
   comparisonValue: null
 })
@@ -13,8 +14,9 @@ export const DEFAULT_ACTION_DATA = Object.freeze({
 
 export const CONDITION_DATA_KEYS = Object.freeze([
   'subject',
-  'specifier',
+  'subjectSpecifier',
   'relation',
+  'relationSpecifier',
   'comparison',
   'comparisonValue'
 ])
@@ -36,5 +38,16 @@ export function defaultNodeData(type) {
 }
 
 export function normalizeNodeData(type, data = {}) {
-  return Object.keys(data).length > 0 ? { ...data } : defaultNodeData(type)
+  if (Object.keys(data).length === 0) {
+    return defaultNodeData(type)
+  }
+
+  switch (type) {
+    case 'condition':
+      return { ...DEFAULT_CONDITION_DATA, ...data }
+    case 'action':
+      return { ...DEFAULT_ACTION_DATA, ...data }
+    default:
+      return { ...data }
+  }
 }

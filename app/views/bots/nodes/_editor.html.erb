@@ -20,8 +20,8 @@
       </div>
 
       <div id="condition-specifier-group" class="editor-part hidden">
-        <label>2. Specifier</label>
-        <select id="cond-specifier">
+        <label>2. Subject specifier</label>
+        <select id="cond-subject-specifier">
           <option value="any">Any piece</option>
           <option value="king">King</option>
           <option value="queen">Queen</option>
@@ -43,8 +43,21 @@
         </select>
       </div>
 
+      <div id="condition-relation-specifier-group" class="editor-part hidden">
+        <label>4. Relation specifier</label>
+        <select id="cond-relation-specifier">
+          <option value="any">Any piece</option>
+          <option value="king">King</option>
+          <option value="queen">Queen</option>
+          <option value="rook">Rook</option>
+          <option value="bishop">Bishop</option>
+          <option value="knight">Knight</option>
+          <option value="pawn">Pawn</option>
+        </select>
+      </div>
+
       <div id="condition-comparison-group" class="editor-part hidden">
-        <label>4. Comparison</label>
+        <label>5. Comparison</label>
         <select id="cond-comparison">
           <option value="any">Any</option>
           <option value="none">None</option>
@@ -55,7 +68,7 @@
       </div>
 
       <div id="condition-comparison-value-group" class="editor-part hidden">
-        <label>5. Comparison value</label>
+        <label>6. Comparison value</label>
         <input id="cond-comparison-value-number" type="number" min="0" step="1" value="1">
         <select id="cond-comparison-value-source">
           <option value="exact_number">Exact number</option>

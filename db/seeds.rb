@@ -55,8 +55,9 @@ heuristic_bots = [
     description: 'Punishes moves where the moved piece is attacked after the move.',
     condition: {
       subject: 'moved_piece',
-      specifier: 'any',
+      subjectSpecifier: 'any',
       relation: 'attacker_count',
+      relationSpecifier: 'any',
       comparison: 'any',
       comparisonValue: nil
     },
@@ -70,8 +71,9 @@ heuristic_bots = [
     description: 'Strongly prefers moves that capture a queen.',
     condition: {
       subject: 'captured_piece',
-      specifier: 'queen',
+      subjectSpecifier: 'queen',
       relation: 'piece_count',
+      relationSpecifier: 'any',
       comparison: 'any',
       comparisonValue: nil
     },
@@ -85,8 +87,9 @@ heuristic_bots = [
     description: 'Prefers moves that increase an allied rook’s mobility.',
     condition: {
       subject: 'allies',
-      specifier: 'rook',
+      subjectSpecifier: 'rook',
       relation: 'mobility',
+      relationSpecifier: 'any',
       comparison: 'greater_than',
       comparisonValue: 'prior_board_state'
     },
@@ -100,8 +103,9 @@ heuristic_bots = [
     description: 'Avoids moves that lower defender count for allied pieces.',
     condition: {
       subject: 'allies',
-      specifier: 'any',
+      subjectSpecifier: 'any',
       relation: 'defender_count',
+      relationSpecifier: 'any',
       comparison: 'less_than',
       comparisonValue: 'prior_board_state'
     },

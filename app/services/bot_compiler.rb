@@ -96,8 +96,9 @@ class BotCompiler
     when 'condition'
       {
         subject: raw['subject'] || raw[:subject],
-        specifier: raw['specifier'] || raw[:specifier],
+        subjectSpecifier: raw['subjectSpecifier'] || raw[:subjectSpecifier],
         relation: raw['relation'] || raw[:relation],
+        relationSpecifier: raw['relationSpecifier'] || raw[:relationSpecifier],
         comparison: raw['comparison'] || raw[:comparison],
         comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
       }

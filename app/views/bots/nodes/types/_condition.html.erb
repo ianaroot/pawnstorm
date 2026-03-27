@@ -49,7 +49,7 @@ comparison_value_labels = {
 matches_new_grammar =
   data.is_a?(Hash) &&
   valid_subjects.include?(data['subject']) &&
-  valid_specifiers.include?(data['specifier']) &&
+  valid_specifiers.include?(data['subjectSpecifier']) &&
   valid_relations.include?(data['relation']) &&
   valid_comparisons.include?(data['comparison']) &&
   (
@@ -60,7 +60,7 @@ matches_new_grammar =
 
 if matches_new_grammar
   subject = subject_labels[data['subject']]
-  specifier = specifier_labels[data['specifier']]
+  specifier = specifier_labels[data['subjectSpecifier']]
   relation = relation_labels[data['relation']]
   comparison = comparison_labels[data['comparison']]
   comparison_value = comparison_value_labels[data['comparisonValue']] || data['comparisonValue']

@@ -122,8 +122,9 @@ class ClickHandler {
     this.editorPanel.querySelector('#cancel-edit')?.addEventListener('click', this.boundHandleCancel)
 
     this.editorPanel.querySelector('#cond-subject')?.addEventListener('change', this.boundHandleConditionFieldChange)
-    this.editorPanel.querySelector('#cond-specifier')?.addEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel.querySelector('#cond-subject-specifier')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-relation')?.addEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel.querySelector('#cond-relation-specifier')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-comparison')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-comparison-value-source')?.addEventListener('change', this.boundHandleConditionFieldChange)
   }
@@ -301,15 +302,17 @@ class ClickHandler {
     }
 
     const subject = this.editorPanel.querySelector('#cond-subject')
-    const specifier = this.editorPanel.querySelector('#cond-specifier')
+    const subjectSpecifier = this.editorPanel.querySelector('#cond-subject-specifier')
     const relation = this.editorPanel.querySelector('#cond-relation')
+    const relationSpecifier = this.editorPanel.querySelector('#cond-relation-specifier')
     const comparison = this.editorPanel.querySelector('#cond-comparison')
     const comparisonValueNumber = this.editorPanel.querySelector('#cond-comparison-value-number')
     const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')
 
     if (subject) subject.value = node.data.subject || 'moved_piece'
-    if (specifier) specifier.value = node.data.specifier || 'any'
+    if (subjectSpecifier) subjectSpecifier.value = node.data.subjectSpecifier || 'any'
     if (relation) relation.value = normalizeLegacyRelation(node.data.relation) || 'attacker_count'
+    if (relationSpecifier) relationSpecifier.value = node.data.relationSpecifier || 'any'
     if (comparison) comparison.value = node.data.comparison || 'any'
     if (typeof node.data.comparisonValue === 'number') {
       if (comparisonValueNumber) comparisonValueNumber.value = node.data.comparisonValue
@@ -328,17 +331,19 @@ class ClickHandler {
     }
 
     const subject = this.editorPanel.querySelector('#cond-subject')?.value
-    const specifier = this.editorPanel.querySelector('#cond-specifier')?.value
+    const subjectSpecifier = this.editorPanel.querySelector('#cond-subject-specifier')?.value
     const relation = this.editorPanel.querySelector('#cond-relation')?.value
+    const relationSpecifier = this.editorPanel.querySelector('#cond-relation-specifier')?.value
     const comparison = this.editorPanel.querySelector('#cond-comparison')?.value
     const needsComparisonValue = comparison === 'count' || comparison === 'greater_than' || comparison === 'less_than'
     const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')?.value
     const showExactNumberInput = needsComparisonValue && comparisonValueSource === 'exact_number'
 
     this.editorPanel.querySelector('#condition-specifier-group')?.classList.toggle('hidden', !subject)
-    this.editorPanel.querySelector('#condition-relation-group')?.classList.toggle('hidden', !subject || !specifier)
-    this.editorPanel.querySelector('#condition-comparison-group')?.classList.toggle('hidden', !subject || !specifier || !relation)
-    this.editorPanel.querySelector('#condition-comparison-value-group')?.classList.toggle('hidden', !subject || !specifier || !relation || !comparison || !needsComparisonValue)
+    this.editorPanel.querySelector('#condition-relation-group')?.classList.toggle('hidden', !subject || !subjectSpecifier)
+    this.editorPanel.querySelector('#condition-relation-specifier-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation)
+    this.editorPanel.querySelector('#condition-comparison-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation || !relationSpecifier)
+    this.editorPanel.querySelector('#condition-comparison-value-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation || !relationSpecifier || !comparison || !needsComparisonValue)
     this.editorPanel.querySelector('#cond-comparison-value-number')?.classList.toggle('hidden', !showExactNumberInput)
   }
 
@@ -359,8 +364,9 @@ class ClickHandler {
 
     return {
       subject: this.editorPanel.querySelector('#cond-subject')?.value || 'moved_piece',
-      specifier: this.editorPanel.querySelector('#cond-specifier')?.value || 'any',
+      subjectSpecifier: this.editorPanel.querySelector('#cond-subject-specifier')?.value || 'any',
       relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacker_count',
+      relationSpecifier: this.editorPanel.querySelector('#cond-relation-specifier')?.value || 'any',
       comparison: comparison,
       comparisonValue: comparisonValue
     }
@@ -499,8 +505,9 @@ class ClickHandler {
     this.editorPanel?.querySelector('#save-node')?.removeEventListener('click', this.boundHandleSave)
     this.editorPanel?.querySelector('#cancel-edit')?.removeEventListener('click', this.boundHandleCancel)
     this.editorPanel?.querySelector('#cond-subject')?.removeEventListener('change', this.boundHandleConditionFieldChange)
-    this.editorPanel?.querySelector('#cond-specifier')?.removeEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel?.querySelector('#cond-subject-specifier')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel?.querySelector('#cond-relation')?.removeEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel?.querySelector('#cond-relation-specifier')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel?.querySelector('#cond-comparison')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel?.querySelector('#cond-comparison-value-source')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     
