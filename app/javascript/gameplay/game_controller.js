@@ -1,5 +1,5 @@
 import Board from "gameplay/board"
-import View	from "gameplay/view"
+import LiveView from "gameplay/live_view"
 import Api	from "gameplay/api"
 import Bot	from "gameplay/bot"
 import Rules from "gameplay/rules"
@@ -10,7 +10,7 @@ const throwIfMissing = p => { throw new Error(`Missing parameter: ${p}`) }
 class GameController {
 	constructor(){
 		this.board = new Board({});
-		this.view = new View(this);
+		this.view = new LiveView(this);
 		this._paused = false
 		this.view.displayLayOut({board: this.board, alert: ""})
 		this.view.setTileClickListener()

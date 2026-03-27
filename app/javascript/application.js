@@ -18,7 +18,6 @@ import MoveObject from "gameplay/move_object"
 import MovementType from "gameplay/movement_type"
 import MovesCalculator from "gameplay/moves_calculator"
 import Rules from "gameplay/rules"
-import View from "gameplay/view"
 import Sound from "gameplay/sound"
 import {
   initializeMatchBotListScrollbars,
