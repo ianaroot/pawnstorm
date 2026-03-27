@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { controllingPositions, materialValue } from 'gameplay/board_query_utils'
+import { attackerCount, defenderCount, materialValue } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -27,46 +27,152 @@ class CandidateMoveAnalysis {
   }
 
   movedPieceAttackerCount() {
-    const movedPieceTeam = this.movedPieceTeam()
-    const opposingTeam = Board.opposingTeam(movedPieceTeam)
+    return this.queryValue({
+      subject: 'moved_piece',
+      subjectSpecifier: 'any',
+      relation: 'attacker_count',
+      relationSpecifier: 'any'
+    })
+  }
 
-    return controllingPositions({
-      board: this.afterBoard(),
-      targetPosition: this.movedPiecePosition(),
-      team: opposingTeam
-    }).length
+  queryValue(query) {
+    if (query.subject === 'captured_piece') {
+      // Captured pieces are currently the only subject resolved from move-event state
+      // rather than a live position on the after-board. If more such subjects appear,
+      // this branch may want a broader shared path later.
+      return this.capturedPieceQueryValue(query)
+    }
+
+    const positions = this.subjectPositions(query)
+    return this.positionalQueryValue(query, positions)
   }
 
   relationValue(conditionNode) {
-    switch (conditionNode.subject) {
-      case 'moved_piece':
-        return this.movedPieceRelationValue(conditionNode.relation)
-      case 'captured_piece':
-        return this.capturedPieceRelationValue(conditionNode.relation)
-      default:
-        throw new Error(`CandidateMoveAnalysis does not yet support subject: ${conditionNode.subject}`)
-    }
+    return this.queryValue({
+      subject: conditionNode.subject,
+      subjectSpecifier: conditionNode.subjectSpecifier || 'any',
+      relation: conditionNode.relation,
+      relationSpecifier: conditionNode.relationSpecifier || 'any'
+    })
   }
 
-  capturedPieceRelationValue(relation) {
-    switch (relation) {
+  capturedPieceQueryValue(query) {
+    switch (query.relation) {
       case 'presence':
-        return this.capturedPiecePresent()
+        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier)
       case 'absence':
-        return this.capturedPieceAbsent()
+        return !this.capturedPieceMatchesSpecifier(query.subjectSpecifier)
+      case 'piece_count':
+        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? 1 : 0
       case 'piece_value':
-        return this.capturedPieceValue()
+        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? this.capturedPieceValue() : 0
       default:
-        throw new Error(`captured_piece does not support relation: ${relation}`)
+        throw new Error(`captured_piece does not support relation: ${query.relation}`)
     }
   }
 
-  movedPieceRelationValue(relation) {
+  positionalQueryValue(query, positions) {
+    switch (query.relation) {
+      case 'piece_count':
+        return positions.length
+      case 'attacker_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'attacker_count',
+          team: Board.opposingTeam(this.movedPieceTeam()),
+          relationSpecifier: query.relationSpecifier
+        })
+      case 'defender_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'defender_count',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier
+        })
+      default:
+        throw new Error(`CandidateMoveAnalysis does not yet support positional relation: ${query.relation}`)
+    }
+  }
+
+  subjectPositions(query) {
+    switch (query.subject) {
+      case 'moved_piece':
+        return this.movedPiecePositions(query.subjectSpecifier)
+      default:
+        throw new Error(`CandidateMoveAnalysis does not yet support positional subject: ${query.subject}`)
+    }
+  }
+
+  movedPiecePositions(subjectSpecifier = 'any') {
+    return this.matchesSpecifier(this.board.pieceTypeAt(this.moveObject.startPosition), subjectSpecifier)
+      ? [this.movedPiecePosition()]
+      : []
+  }
+
+  aggregatePositionRelationValue({ positions, relation, team, relationSpecifier }) {
+    return positions.reduce((sum, targetPosition) => {
+      return sum + this.positionRelationValue({
+        relation,
+        targetPosition,
+        team,
+        relationSpecifier
+      })
+    }, 0)
+  }
+
+  positionRelationValue({ relation, targetPosition, team, relationSpecifier }) {
+    const species = this.specifierToSpecies(relationSpecifier)
+
     switch (relation) {
       case 'attacker_count':
-        return this.movedPieceAttackerCount()
+        return attackerCount({
+          board: this.afterBoard(),
+          targetPosition,
+          team,
+          species
+        })
+      case 'defender_count':
+        return defenderCount({
+          board: this.afterBoard(),
+          targetPosition,
+          team,
+          species
+        })
       default:
-        throw new Error(`moved_piece does not yet support relation: ${relation}`)
+        throw new Error(`Unknown positional relation: ${relation}`)
+    }
+  }
+
+  capturedPieceMatchesSpecifier(subjectSpecifier = 'any') {
+    return this.matchesSpecifier(this.capturedPieceSpecies(), subjectSpecifier)
+  }
+
+  matchesSpecifier(species, specifier = 'any') {
+    if (species === null) {
+      return false
+    }
+
+    return specifier === 'any' || species === this.specifierToSpecies(specifier)
+  }
+
+  specifierToSpecies(specifier = 'any') {
+    switch (specifier) {
+      case 'any':
+        return null
+      case 'king':
+        return Board.KING
+      case 'queen':
+        return Board.QUEEN
+      case 'rook':
+        return Board.ROOK
+      case 'bishop':
+        return Board.BISHOP
+      case 'knight':
+        return Board.NIGHT
+      case 'pawn':
+        return Board.PAWN
+      default:
+        throw new Error(`Unknown specifier: ${specifier}`)
     }
   }
 

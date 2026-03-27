@@ -1,6 +1,11 @@
 class ConditionEvaluator {
   evaluate(conditionNode, analysis) {
-    const value = analysis.relationValue(conditionNode)
+    const value = analysis.queryValue({
+      subject: conditionNode.subject,
+      subjectSpecifier: conditionNode.subjectSpecifier || 'any',
+      relation: conditionNode.relation,
+      relationSpecifier: conditionNode.relationSpecifier || 'any'
+    })
     const comparison = conditionNode.comparison
     const comparisonValue = conditionNode.comparisonValue
 
