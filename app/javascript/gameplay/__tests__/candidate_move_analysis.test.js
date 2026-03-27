@@ -437,6 +437,15 @@ describe('CandidateMoveAnalysis', () => {
           relationSpecifier: 'king'
         })
       ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'shielder_count',
+          relationSpecifier: 'moved_piece'
+        })
+      ).toBe(1)
     })
 
     it('does not count a blocker as a shielder when no enemy slider line exists', () => {

@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { attackerCount, defenderCount, materialValue, shielderCount, shieldedCount } from 'gameplay/board_query_utils'
+import { attackingPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -199,41 +199,75 @@ class CandidateMoveAnalysis {
   }
 
   positionRelationValue({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
-    const species = this.specifierToSpecies(relationSpecifier)
+    return this.relatedPositions({
+      relation,
+      targetPosition,
+      team,
+      relationSpecifier,
+      boardScope
+    }).length
+  }
+
+  relatedPositions({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
     const board = this.boardForScope(boardScope)
 
+    const positions = this.rawRelatedPositions({
+      relation,
+      targetPosition,
+      team,
+      board
+    })
+
+    return this.filterRelationPositions({
+      positions,
+      relationSpecifier,
+      boardScope
+    })
+  }
+
+  rawRelatedPositions({ relation, targetPosition, team, board }) {
     switch (relation) {
       case 'attacker_count':
-        return attackerCount({
+        return attackingPositions({
           board,
           targetPosition,
-          team,
-          species
+          team
         })
       case 'defender_count':
-        return defenderCount({
+        return defendingPositions({
           board,
           targetPosition,
-          team,
-          species
+          team
         })
       case 'shielder_count':
-        return shielderCount({
+        return shieldingPositions({
           board,
           targetPosition,
-          team,
-          species
+          team
         })
       case 'shielded_count':
-        return shieldedCount({
+        return shieldedPositions({
           board,
           sourcePosition: targetPosition,
-          team,
-          species
+          team
         })
       default:
         throw new Error(`Unknown positional relation: ${relation}`)
     }
+  }
+
+  filterRelationPositions({ positions, relationSpecifier = 'any', boardScope = 'after' }) {
+    if (relationSpecifier === 'any') {
+      return positions
+    }
+
+    if (relationSpecifier === 'moved_piece') {
+      const movedPiecePosition = this.movedPiecePosition()
+      return positions.filter(position => position === movedPiecePosition)
+    }
+
+    const board = this.boardForScope(boardScope)
+    return this.positionsMatchingSpecifier(positions, relationSpecifier, board)
   }
 
   capturedPieceMatchesSpecifier(subjectSpecifier = 'any') {
@@ -251,6 +285,8 @@ class CandidateMoveAnalysis {
   specifierToSpecies(specifier = 'any') {
     switch (specifier) {
       case 'any':
+        return null
+      case 'moved_piece':
         return null
       case 'king':
         return Board.KING
