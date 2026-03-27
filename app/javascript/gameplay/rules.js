@@ -252,9 +252,10 @@ class Rules {
         inCheck = this.checkQuery({board: board, teamString: otherTeam}),
         noMoves = this.noLegalMoves(board),
         threeFold = this.threeFoldRepetition(board, prefixNotation);
-    if( inCheck && noMoves ){ board._endGame(attackingTeam); return pawnPromotionNotation + "#" }
+    if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return pawnPromotionNotation + "#" }
     if( inCheck ){ return pawnPromotionNotation + "+" }
-    if( noMoves || threeFold ){ board._endGame(); return pawnPromotionNotation }
+    if( noMoves ){ board._endGame({ resultType: "stalemate" }); return pawnPromotionNotation }
+    if( threeFold ){ board._endGame({ resultType: "threefold_repetition" }); return pawnPromotionNotation }
     return pawnPromotionNotation
   }
 }

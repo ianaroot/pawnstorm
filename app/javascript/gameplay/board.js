@@ -3,13 +3,15 @@ import Rules from "gameplay/rules";
 
 class Board {
   // TODO might be easier to store the moveObjects and recreate notation on demand!!!
-  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, previousLayouts: previousLayouts}){
+  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, previousLayouts: previousLayouts, winner: winner, resultType: resultType}){
     this.layOut = layOut|| Layout.default()
     this.capturedPieces = capturedPieces || [];
     this.gameOver = gameOver || false;
     this.allowedToMove = allowedToMove || Board.WHITE;
     this.movementNotation = movementNotation || [];
-    this.previousLayouts = previousLayouts || JSON.stringify([])
+    this.previousLayouts = Array.isArray(previousLayouts) ? JSON.stringify(previousLayouts) : (previousLayouts || JSON.stringify([]))
+    this._winner = winner
+    this._resultType = resultType || null
   }
 
   static get WHITE()  { return "W" }
@@ -315,7 +317,7 @@ class Board {
     let newLayout = Board._deepCopy(this.layOut),
         newCaptures = Board._deepCopy(this.capturedPieces),
         newMovementNotation = Board._deepCopy(this.movementNotation),
-        newBoard = new Board({layOut: newLayout, capturedPieces: newCaptures, allowedToMove: this.allowedToMove, gameOver: this.gameOver, movementNotation: newMovementNotation, previousLayouts: this.previousLayouts});
+        newBoard = new Board({layOut: newLayout, capturedPieces: newCaptures, allowedToMove: this.allowedToMove, gameOver: this.gameOver, movementNotation: newMovementNotation, previousLayouts: this.previousLayouts, winner: this._winner, resultType: this._resultType});
     return newBoard;
   }
 
@@ -328,9 +330,10 @@ class Board {
     this.movementNotation = [];
   }
 
-  _endGame(team){
+  _endGame({ winner: winner = null, resultType: resultType = null } = {}){
     this.gameOver = true
-    this._winner = team
+    this._winner = winner
+    this._resultType = resultType
   }
 
   teamNotMoving(){
@@ -446,6 +449,9 @@ class Board {
     } else if( /\+/.exec(lastNotation) ) {
       alert = "check"
       sound = "check"
+    } else if( this._resultType === "threefold_repetition" ) {
+      alert = "threefold repetition"
+      sound = "move"
     } else if( this.gameOver === true ){
       alert = "stalemate"
       sound = "move"

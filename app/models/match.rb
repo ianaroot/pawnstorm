@@ -8,6 +8,7 @@
  #  lay_out           :json
  #  movement_notation :json
  #  previous_layouts  :json
+ #  error_message     :text
  #  result            :integer
  #  status            :integer          default("pending"), not null
  #  created_at        :datetime         not null
@@ -31,7 +32,7 @@ class Match < ApplicationRecord
     black_win: 1,
     stalemate: 2,
     threefold_repetition: 3,
-    abandoned: 4,
+    capped: 4,
     error: 5
   }, allow_nil: true
 

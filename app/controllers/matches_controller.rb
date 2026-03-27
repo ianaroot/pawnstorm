@@ -41,6 +41,8 @@ class MatchesController < ApplicationController
       previous_layouts: []
     )
 
+    ComputeMatchJob.perform_later(match.id)
+
     redirect_to match_path(match), notice: 'Match created. Generation will begin soon.'
   end
 

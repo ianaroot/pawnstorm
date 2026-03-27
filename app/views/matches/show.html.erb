@@ -1,4 +1,8 @@
 <div class="match-show-page">
+  <% if @match.pending? || @match.running? %>
+    <%= tag.meta http_equiv: 'refresh', content: '2' %>
+  <% end %>
+
   <h1>Match <%= @match.id %></h1>
 
   <p>Status: <%= @match.status %></p>
@@ -7,8 +11,14 @@
     <p>Result: <%= @match.result %></p>
   <% end %>
 
+  <% if @match.error_message.present? %>
+    <p>Error: <%= @match.error_message %></p>
+  <% end %>
+
   <% if @match.pending? || @match.running? %>
-    <p>Match generation is not wired yet, so this is still a placeholder state.</p>
+    <p>Match is generating.</p>
+  <% elsif @match.failed? %>
+    <p>Match generation failed.</p>
   <% else %>
     <p>Replay UI not built yet.</p>
   <% end %>
