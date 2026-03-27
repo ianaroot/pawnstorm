@@ -1,11 +1,13 @@
 import CandidateMoveAnalysis from 'gameplay/candidate_move_analysis'
 import ConditionEvaluator from 'gameplay/condition_evaluator'
+import Rules from 'gameplay/rules'
 
 class BotRunner {
   constructor(compiledProgram, options = {}) {
     this.compiledProgram = compiledProgram
     this.analysisFactory = options.analysisFactory || ((args) => new CandidateMoveAnalysis(args))
     this.conditionEvaluator = options.conditionEvaluator || new ConditionEvaluator()
+    this.random = options.random || Math.random
   }
 
   scoreMove({ board, moveObject }) {
@@ -21,6 +23,35 @@ class BotRunner {
     this.runNode(this.compiledProgram.root, analysis, state)
 
     return state.score
+  }
+
+  legalMoves({ board }) {
+    const movingTeam = board.allowedToMove
+    const positions = board._positionsOccupiedByTeam(movingTeam)
+
+    return positions.flatMap(startPosition => {
+      return Rules.availableMovesFrom({ board, startPosition })
+    })
+  }
+
+  scoreLegalMoves({ board }) {
+    return this.legalMoves({ board }).map(moveObject => ({
+      moveObject,
+      score: this.scoreMove({ board, moveObject })
+    }))
+  }
+
+  selectMove({ board }) {
+    const scoredMoves = this.scoreLegalMoves({ board })
+    if (scoredMoves.length === 0) {
+      return null
+    }
+
+    const topScore = Math.max(...scoredMoves.map(result => result.score))
+    const topMoves = scoredMoves.filter(result => result.score === topScore)
+    const selected = topMoves[Math.floor(this.random() * topMoves.length)]
+
+    return selected.moveObject
   }
 
   runNode(nodeId, analysis, state) {

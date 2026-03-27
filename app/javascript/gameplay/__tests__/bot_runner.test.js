@@ -187,4 +187,68 @@ describe('BotRunner', () => {
     runner.scoreMove({ board: {}, moveObject: {} })
     expect(callCount).toBe(1)
   })
+
+  it('scores all legal moves and returns move-score pairs', () => {
+    const program = buildProgram({
+      first: {
+        id: 'first',
+        type: 'action',
+        data: { actionType: 'add', value: 1 },
+        children: []
+      },
+      second: {
+        id: 'second',
+        type: 'action',
+        data: { actionType: 'add', value: 1 },
+        children: []
+      }
+    })
+
+    const moveA = { id: 'a' }
+    const moveB = { id: 'b' }
+    const runner = new BotRunner(program)
+    runner.legalMoves = () => [moveA, moveB]
+
+    expect(runner.scoreLegalMoves({ board: {} })).toEqual([
+      { moveObject: moveA, score: 2 },
+      { moveObject: moveB, score: 2 }
+    ])
+  })
+
+  it('selects the highest-scoring legal move', () => {
+    const program = buildProgram({})
+    const moveA = { id: 'a' }
+    const moveB = { id: 'b' }
+    const runner = new BotRunner(program)
+
+    runner.scoreLegalMoves = () => ([
+      { moveObject: moveA, score: 2 },
+      { moveObject: moveB, score: 5 }
+    ])
+
+    expect(runner.selectMove({ board: {} })).toBe(moveB)
+  })
+
+  it('breaks score ties using the injected random source', () => {
+    const program = buildProgram({})
+    const moveA = { id: 'a' }
+    const moveB = { id: 'b' }
+    const runner = new BotRunner(program, { random: () => 0.9 })
+
+    runner.scoreLegalMoves = () => ([
+      { moveObject: moveA, score: 5 },
+      { moveObject: moveB, score: 5 }
+    ])
+
+    expect(runner.selectMove({ board: {} })).toBe(moveB)
+  })
+
+  it('returns null when there are no legal moves to score', () => {
+    const program = buildProgram({})
+    const runner = new BotRunner(program)
+
+    runner.scoreLegalMoves = () => []
+
+    expect(runner.selectMove({ board: {} })).toBe(null)
+  })
 })
