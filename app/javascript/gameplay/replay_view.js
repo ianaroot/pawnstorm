@@ -15,18 +15,20 @@ class ReplayView {
     this.statusElement = rootElement.querySelector('[data-match-replay-target="status"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
+    this.warningElement = rootElement.querySelector('[data-match-replay-target="warning"]')
   }
 
-  renderFrame({ board, currentMoveIndex, isPlaying, movePairs, result }) {
+  renderFrame({ board, currentMoveIndex, isPlaying, movePairs, result, totalMoves, warning }) {
     renderBoardPieces(board)
     updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
     displayAlerts("")
-    this.renderStatus({ currentMoveIndex, totalMoves: board.movementNotation.length })
+    this.renderStatus({ currentMoveIndex, totalMoves })
     this.renderControls({ isPlaying })
     this.renderResult(result)
+    this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
   }
 
@@ -54,6 +56,13 @@ class ReplayView {
   renderResult(result) {
     if (!this.resultElement) { return }
     this.resultElement.innerText = result.replaceAll('_', ' ')
+  }
+
+  renderWarning(warning) {
+    if (!this.warningElement) { return }
+
+    this.warningElement.innerText = warning || ""
+    this.warningElement.hidden = !warning
   }
 
   renderNotation({ movePairs, currentMoveIndex }) {
