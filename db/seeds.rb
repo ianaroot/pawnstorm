@@ -49,74 +49,305 @@ def connect!(source, target)
   Connection.find_or_create_by!(source_node: source, target_node: target)
 end
 
-heuristic_bots = [
+def create_branch!(bot:, root:, branch_index:, conditions:, action:)
+  x = 220 + (branch_index * 180)
+  y = 180
+  previous_node = root
+
+  conditions.each do |condition_data|
+    condition = create_condition!(
+      bot: bot,
+      position_x: x,
+      position_y: y,
+      data: condition_data
+    )
+    connect!(previous_node, condition)
+    previous_node = condition
+    y += 120
+  end
+
+  action_node = create_action!(
+    bot: bot,
+    position_x: x,
+    position_y: y,
+    action_type: action[:action_type],
+    value: action[:value]
+  )
+  connect!(previous_node, action_node)
+end
+
+seed_bots = [
   {
-    name: 'Avoid Hanging Move',
-    description: 'Punishes moves where the moved piece is attacked after the move.',
-    condition: {
-      subject: 'moved_piece',
-      subjectSpecifier: 'any',
-      relation: 'attacker_count',
-      relationSpecifier: 'any',
-      comparison: 'any',
-      comparisonValue: nil
-    },
-    action: {
-      action_type: 'subtract',
-      value: 5
-    }
+    name: 'Tactical Hunter',
+    description: 'Finds immediate mate, grabs material, and increases pressure on the enemy king.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 9
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'shielded_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 7
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 3
+        }
+      }
+    ]
   },
   {
-    name: 'Capture Queens',
-    description: 'Strongly prefers moves that capture a queen.',
-    condition: {
-      subject: 'captured_piece',
-      subjectSpecifier: 'queen',
-      relation: 'piece_count',
-      relationSpecifier: 'any',
-      comparison: 'any',
-      comparisonValue: nil
-    },
-    action: {
-      action_type: 'add',
-      value: 9
-    }
-  },
-  {
-    name: 'Unblock Allied Rooks',
-    description: 'Prefers moves that increase an allied rook’s mobility.',
-    condition: {
-      subject: 'allies',
-      subjectSpecifier: 'rook',
-      relation: 'mobility',
-      relationSpecifier: 'any',
-      comparison: 'greater_than',
-      comparisonValue: 'prior_board_state'
-    },
-    action: {
-      action_type: 'add',
-      value: 3
-    }
-  },
-  {
-    name: 'Protect Valuable Allies',
-    description: 'Avoids moves that lower defender count for allied pieces.',
-    condition: {
-      subject: 'allies',
-      subjectSpecifier: 'any',
-      relation: 'defender_count',
-      relationSpecifier: 'any',
-      comparison: 'less_than',
-      comparisonValue: 'prior_board_state'
-    },
-    action: {
-      action_type: 'subtract',
-      value: 4
-    }
+    name: 'Safety First Developer',
+    description: 'Finds immediate mate, avoids hanging pieces, and improves king safety and coordination.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 7
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'coverer_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 1
+        }
+      }
+    ]
   }
 ]
 
-heuristic_bots.each do |definition|
+seed_bots.each do |definition|
   bot = user.bots.find_or_initialize_by(name: definition[:name])
   bot.description = definition[:description]
   bot.save!
@@ -124,22 +355,17 @@ heuristic_bots.each do |definition|
   reset_bot_graph!(bot)
 
   root = bot.root_node
-  condition = create_condition!(
-    bot: bot,
-    position_x: 560,
-    position_y: 180,
-    data: definition[:condition]
-  )
-  action = create_action!(
-    bot: bot,
-    position_x: 560,
-    position_y: 320,
-    action_type: definition[:action][:action_type],
-    value: definition[:action][:value]
-  )
+  definition[:branches].each_with_index do |branch, index|
+    create_branch!(
+      bot: bot,
+      root: root,
+      branch_index: index,
+      conditions: branch[:conditions],
+      action: branch[:action]
+    )
+  end
 
-  connect!(root, condition)
-  connect!(condition, action)
+  bot.compile_program!
 end
 
-puts "Seeded #{heuristic_bots.length} prototype heuristic bots for #{seed_email}"
+puts "Seeded #{seed_bots.length} heuristic bots for #{seed_email}"
