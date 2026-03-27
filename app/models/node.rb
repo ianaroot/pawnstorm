@@ -13,8 +13,18 @@
 #
 class Node < ApplicationRecord
   CONDITION_SUBJECTS = %w[moved_piece allies opponents captured_piece].freeze
-  CONDITION_SPECIFIERS = %w[any king queen rook bishop knight pawn].freeze
-  CONDITION_RELATIONS = %w[piece_count attacker_count defender_count shield_count mobility].freeze
+  CONDITION_SUBJECT_SPECIFIERS = %w[any king queen rook bishop knight pawn].freeze
+  CONDITION_RELATION_SPECIFIERS = %w[any king queen rook bishop knight pawn moved_piece].freeze
+  CONDITION_RELATIONS = %w[
+    piece_count
+    attacker_count
+    defender_count
+    shielder_count
+    shielded_count
+    coverer_count
+    covered_count
+    mobility
+  ].freeze
   CONDITION_COMPARISONS = %w[any none count greater_than less_than].freeze
   CONDITION_COMPARISON_VALUES = %w[moved_piece_value captured_piece_value prior_board_state].freeze
   CONDITION_KEYS = %w[subject subjectSpecifier relation relationSpecifier comparison comparisonValue].freeze
@@ -90,9 +100,9 @@ class Node < ApplicationRecord
     comparison_value = data['comparisonValue'] || data[:comparisonValue]
 
     errors.add(:data, 'has invalid subject') unless CONDITION_SUBJECTS.include?(subject)
-    errors.add(:data, 'has invalid subjectSpecifier') unless CONDITION_SPECIFIERS.include?(subject_specifier)
+    errors.add(:data, 'has invalid subjectSpecifier') unless CONDITION_SUBJECT_SPECIFIERS.include?(subject_specifier)
     errors.add(:data, 'has invalid relation') unless CONDITION_RELATIONS.include?(relation)
-    errors.add(:data, 'has invalid relationSpecifier') unless CONDITION_SPECIFIERS.include?(relation_specifier)
+    errors.add(:data, 'has invalid relationSpecifier') unless CONDITION_RELATION_SPECIFIERS.include?(relation_specifier)
     errors.add(:data, 'has invalid comparison') unless CONDITION_COMPARISONS.include?(comparison)
 
     if %w[any none].include?(comparison)

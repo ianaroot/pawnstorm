@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { attackingPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
+import { attackingPositions, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -114,6 +114,22 @@ class CandidateMoveAnalysis {
         return this.aggregatePositionRelationValue({
           positions,
           relation: 'shielded_count',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
+      case 'coverer_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'coverer_count',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
+      case 'covered_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'covered_count',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
@@ -247,6 +263,18 @@ class CandidateMoveAnalysis {
         })
       case 'shielded_count':
         return shieldedPositions({
+          board,
+          sourcePosition: targetPosition,
+          team
+        })
+      case 'coverer_count':
+        return coveringPositions({
+          board,
+          targetPosition,
+          team
+        })
+      case 'covered_count':
+        return coveredPositions({
           board,
           sourcePosition: targetPosition,
           team

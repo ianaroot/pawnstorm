@@ -131,6 +131,90 @@ function positionsBetween(attackerPosition, targetPosition) {
     return between
 }
 
+function raySteps() {
+    return [1, -1, 8, -8, 7, -7, 9, -9]
+}
+
+function nextPositionOnRay(position, step) {
+    const nextPosition = position + step
+    if (!Board._inBounds(nextPosition)) {
+        return null
+    }
+
+    const currentFile = position % 8
+    const nextFile = nextPosition % 8
+
+    if (Math.abs(step) === 1 && Math.abs(nextFile - currentFile) !== 1) {
+        return null
+    }
+
+    if ((Math.abs(step) === 7 || Math.abs(step) === 9) && Math.abs(nextFile - currentFile) !== 1) {
+        return null
+    }
+
+    return nextPosition
+}
+
+function compatibleSliderOnRay({ board, position, step, opposingTeam }) {
+    if (board.teamAt(position) !== opposingTeam) {
+        return false
+    }
+
+    const pieceType = board.pieceTypeAt(position)
+    const isStraight = Math.abs(step) === 1 || Math.abs(step) === 8
+    const isDiagonal = Math.abs(step) === 7 || Math.abs(step) === 9
+
+    if (pieceType === Board.QUEEN) {
+        return true
+    }
+
+    if (pieceType === Board.ROOK) {
+        return isStraight
+    }
+
+    if (pieceType === Board.BISHOP) {
+        return isDiagonal
+    }
+
+    return false
+}
+
+function firstOccupiedOnRay({ board, startPosition, step }) {
+    for (let current = nextPositionOnRay(startPosition, step); current !== null; current = nextPositionOnRay(current, step)) {
+        if (!board.positionEmpty(current)) {
+            return current
+        }
+    }
+
+    return null
+}
+
+function covererOnRay({ board, targetPosition, team, step }) {
+    const opposingTeam = Board.opposingTeam(team)
+    const blockerPosition = firstOccupiedOnRay({ board, startPosition: targetPosition, step })
+
+    if (blockerPosition === null || board.teamAt(blockerPosition) !== team) {
+        return null
+    }
+
+    const firstSquareBeyondBlocker = nextPositionOnRay(blockerPosition, step)
+    if (firstSquareBeyondBlocker === null) {
+        return null
+    }
+
+    const beyondBlocker = firstOccupiedOnRay({ board, startPosition: blockerPosition, step })
+
+    if (beyondBlocker === null) {
+        return blockerPosition
+    }
+
+    if (compatibleSliderOnRay({ board, position: beyondBlocker, step, opposingTeam })) {
+        return blockerPosition
+    }
+
+    return null
+}
+
 function pieceValue(species) {
     switch (species) {
         case Board.PAWN:
@@ -209,6 +293,25 @@ export function shieldingPositions({ board, targetPosition, team, species = null
     return Array.from(shielding)
 }
 
+export function coveringPositions({ board, targetPosition, team, species = null }) {
+    const covering = new Set()
+
+    raySteps().forEach(step => {
+        const blockerPosition = covererOnRay({ board, targetPosition, team, step })
+        if (blockerPosition === null) {
+            return
+        }
+
+        if (species !== null && board.pieceTypeAt(blockerPosition) !== species) {
+            return
+        }
+
+        covering.add(blockerPosition)
+    })
+
+    return Array.from(covering)
+}
+
 export function shieldedPositions({ board, sourcePosition, team, species = null }) {
     return board._positionsOccupiedByTeam(team).filter(targetPosition => {
         if (targetPosition === sourcePosition) {
@@ -223,12 +326,34 @@ export function shieldedPositions({ board, sourcePosition, team, species = null 
     })
 }
 
+export function coveredPositions({ board, sourcePosition, team, species = null }) {
+    return board._positionsOccupiedByTeam(team).filter(targetPosition => {
+        if (targetPosition === sourcePosition) {
+            return false
+        }
+
+        if (species !== null && board.pieceTypeAt(targetPosition) !== species) {
+            return false
+        }
+
+        return coveringPositions({ board, targetPosition, team }).includes(sourcePosition)
+    })
+}
+
 export function shielderCount(args) {
     return shieldingPositions(args).length
 }
 
 export function shieldedCount(args) {
     return shieldedPositions(args).length
+}
+
+export function covererCount(args) {
+    return coveringPositions(args).length
+}
+
+export function coveredCount(args) {
+    return coveredPositions(args).length
 }
 
 export function squareClassification({ board, position, movingTeam }) {

@@ -505,6 +505,93 @@ describe('CandidateMoveAnalysis', () => {
     })
   })
 
+  describe('covers', () => {
+    it('counts the first allied blocker on an enemy-facing ray as a coverer', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'coverer_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'pawn',
+          relation: 'covered_count',
+          relationSpecifier: 'king'
+        })
+      ).toBe(1)
+    })
+
+    it('does not count the reverse direction as cover', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'pawn',
+          relation: 'coverer_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'covered_count',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(0)
+    })
+
+    it('counts shields as a subset of covers', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'coverer_count',
+          relationSpecifier: 'moved_piece'
+        })
+      ).toBe(1)
+    })
+  })
+
   describe('captured_piece helpers', () => {
     it('reports absence and zero value when the move is not a capture', () => {
       const board = buildBoard({

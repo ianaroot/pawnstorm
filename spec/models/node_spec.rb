@@ -85,7 +85,7 @@ RSpec.describe Node, type: :model do
       node = build(:node, :condition, data: {
         subject: 'allies',
         subjectSpecifier: 'king',
-        relation: 'shield_count',
+        relation: 'shielder_count',
         relationSpecifier: 'any',
         comparison: 'less_than',
         comparisonValue: 'prior_board_state'
