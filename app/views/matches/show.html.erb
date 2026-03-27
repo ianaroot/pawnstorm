@@ -1,6 +1,6 @@
 <div class="match-show-page">
   <% if @match.pending? || @match.running? %>
-    <%= tag.meta http_equiv: 'refresh', content: '2' %>
+    <meta http-equiv="refresh" content="2">
   <% end %>
 
   <h1>Match <%= @match.id %></h1>
