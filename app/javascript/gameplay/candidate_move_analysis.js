@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import Rules from 'gameplay/rules'
 import { attackerCount, defenderCount, materialValue } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
@@ -51,7 +52,7 @@ class CandidateMoveAnalysis {
       return this.capturedPieceQueryValue(query)
     }
 
-    const positions = this.subjectPositions(query)
+    const positions = this.subjectPositions(query, boardScope)
     return this.positionalQueryValue(query, positions, boardScope)
   }
 
@@ -83,6 +84,8 @@ class CandidateMoveAnalysis {
     switch (query.relation) {
       case 'piece_count':
         return positions.length
+      case 'mobility':
+        return this.mobilityValue(positions, boardScope)
       case 'attacker_count':
         return this.aggregatePositionRelationValue({
           positions,
@@ -104,10 +107,22 @@ class CandidateMoveAnalysis {
     }
   }
 
-  subjectPositions(query) {
+  subjectPositions(query, boardScope = 'after') {
     switch (query.subject) {
       case 'moved_piece':
         return this.movedPiecePositions(query.subjectSpecifier)
+      case 'allies':
+        return this.teamPositions({
+          team: this.movedPieceTeam(),
+          subjectSpecifier: query.subjectSpecifier,
+          boardScope
+        })
+      case 'opponents':
+        return this.teamPositions({
+          team: Board.opposingTeam(this.movedPieceTeam()),
+          subjectSpecifier: query.subjectSpecifier,
+          boardScope
+        })
       default:
         throw new Error(`CandidateMoveAnalysis does not yet support positional subject: ${query.subject}`)
     }
@@ -117,6 +132,42 @@ class CandidateMoveAnalysis {
     return this.matchesSpecifier(this.board.pieceTypeAt(this.moveObject.startPosition), subjectSpecifier)
       ? [this.movedPiecePosition()]
       : []
+  }
+
+  teamPositions({ team, subjectSpecifier = 'any', boardScope = 'after' }) {
+    const board = this.boardForScope(boardScope)
+    const positions = board._positionsOccupiedByTeam(team)
+    return this.positionsMatchingSpecifier(positions, subjectSpecifier, board)
+  }
+
+  positionsMatchingSpecifier(positions, subjectSpecifier = 'any', board = this.afterBoard()) {
+    if (subjectSpecifier === 'any') {
+      return positions
+    }
+
+    return positions.filter(position => {
+      return this.matchesSpecifier(board.pieceTypeAt(position), subjectSpecifier)
+    })
+  }
+
+  mobilityValue(positions, boardScope = 'after') {
+    return positions.reduce((sum, position) => {
+      return sum + this.positionMobility(position, boardScope)
+    }, 0)
+  }
+
+  positionMobility(position, boardScope = 'after') {
+    const board = this.boardForScope(boardScope)
+    const pieceType = board.pieceTypeAt(position)
+    const moveObjects = Rules.availableMovesFrom({ board, startPosition: position })
+
+    if (pieceType === Board.PAWN) {
+      return moveObjects.some(moveObject => {
+        return Board.file(moveObject.startPosition) === Board.file(moveObject.endPosition)
+      }) ? 1 : 0
+    }
+
+    return moveObjects.length
   }
 
   aggregatePositionRelationValue({ positions, relation, team, relationSpecifier, boardScope = 'after' }) {
