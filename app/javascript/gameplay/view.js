@@ -1,11 +1,20 @@
 import Board from "gameplay/board"
 import Rules from "gameplay/rules"
+import { controlledSquares } from "gameplay/board_query_utils"
+
+const SHOW_CONTROL_PREVIEW =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.DEBUG_CONTROL_PREVIEW === true
 
 class View{
   constructor(_gameController){
     this.boundHighlightTile = this.highlightTile.bind(this)
     this.boundAttemptMove = this.attemptMove.bind(this)
     this._gameController = _gameController
+    this.controlPreviewPosition = null
+    this.controlPreviewSquares = []
+    this.controlPreviewSourceIsMovable = false
     this.unicodePieces = {
       WK: '\&#9812',
       BK: '\&#9818',
@@ -109,6 +118,15 @@ class View{
       if (target.classList.contains(Board.BLACK) || target.classList.contains(Board.WHITE) ) {
         // team = this.teamSet(img.src)
         team = this.teamSet(target.classList)
+        if (SHOW_CONTROL_PREVIEW) {
+          this.controlPreviewPosition = position
+          this.controlPreviewSquares = controlledSquares({
+            board: this._gameController.board,
+            attackerPosition: position
+          })
+          this.controlPreviewSourceIsMovable = team === this._gameController.board.allowedToMove
+          this.renderControlPreview()
+        }
         if (team === this._gameController.board.allowedToMove){
           let viables = Rules.viablePositionsFromKeysOnly( {startPosition: position, board: this._gameController.board } )
           for (let i = 0; i < viables.length; i++){
@@ -123,6 +141,19 @@ class View{
           target.classList.add("startPosition");
         }
       }
+    }
+  }
+  renderControlPreview(){
+    if (this.controlPreviewPosition === null) { return }
+
+    let sourceSquare = document.getElementById(Board.gridCalculator(this.controlPreviewPosition))
+    if (!this.controlPreviewSourceIsMovable) {
+      sourceSquare?.classList.add("control-preview-source")
+    }
+
+    for (let i = 0; i < this.controlPreviewSquares.length; i++) {
+      let previewSquare = document.getElementById(Board.gridCalculator(this.controlPreviewSquares[i]))
+      previewSquare?.classList.add("control-preview-square")
     }
   }
   retrieveTiles(){
@@ -157,7 +188,12 @@ class View{
       tile.classList.remove("startPosition");
     	tile.classList.remove("highlight1");
     	tile.classList.remove("highlight2");
+      tile.classList.remove("control-preview-source");
+      tile.classList.remove("control-preview-square");
     }
+    this.controlPreviewPosition = null
+    this.controlPreviewSquares = []
+    this.controlPreviewSourceIsMovable = false
   }
   updateTeamAllowedToMove(board){
     let span = document.getElementById("team-allowed-to-move");

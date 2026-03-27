@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import Board from 'gameplay/board'
 import {
+  controlledSquares,
+  controllingPositions,
   pawnAttackPositions,
   pieceControlsSquare,
   squareClassification
 } from 'gameplay/board_query_utils'
 
-import { buildBoard, position } from 'gameplay/__tests__/helpers'
+import { buildBoard, position, square } from 'gameplay/__tests__/helpers'
 
 describe('board_query_utils', () => {
   describe('squareClassification', () => {
@@ -260,6 +262,160 @@ describe('board_query_utils', () => {
           targetPosition: position('f5')
         })
       ).toBe(true)
+    })
+  })
+
+  describe('controllingPositions', () => {
+    it('returns the controlling rook position on an open file', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wR',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controllers = controllingPositions({
+        board,
+        targetPosition: position('e7'),
+        team: Board.WHITE
+      }).map(square)
+
+      expect(controllers).toEqual(['e2'])
+    })
+
+    it('returns no controlling rook when a blocker interrupts the line', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wR',
+          e4: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controllers = controllingPositions({
+        board,
+        targetPosition: position('e7'),
+        team: Board.WHITE
+      })
+
+      expect(controllers).toEqual([])
+    })
+
+    it('returns multiple controlling positions when two pieces attack the same square', () => {
+      const board = buildBoard({
+        pieces: {
+          d2: 'wR',
+          b2: 'wB',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controllers = controllingPositions({
+        board,
+        targetPosition: position('d4'),
+        team: Board.WHITE
+      }).map(square).sort()
+
+      expect(controllers).toEqual(['b2', 'd2'])
+    })
+
+    it('respects the species filter', () => {
+      const board = buildBoard({
+        pieces: {
+          d2: 'wR',
+          b2: 'wB',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const bishopControllers = controllingPositions({
+        board,
+        targetPosition: position('d4'),
+        team: Board.WHITE,
+        species: Board.BISHOP
+      }).map(square)
+
+      expect(bishopControllers).toEqual(['b2'])
+    })
+
+    it('returns pawn controlling positions correctly', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wP',
+          c4: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controllers = controllingPositions({
+        board,
+        targetPosition: position('d5'),
+        team: Board.WHITE,
+        species: Board.PAWN
+      }).map(square).sort()
+
+      expect(controllers).toEqual(['c4', 'e4'])
+    })
+  })
+
+  describe('controlledSquares', () => {
+    it('returns the squares a knight controls', () => {
+      const board = buildBoard({
+        pieces: {
+          g5: 'wN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controlled = controlledSquares({
+        board,
+        attackerPosition: position('g5')
+      }).map(square).sort()
+
+      expect(controlled).toEqual(['e4', 'e6', 'f3', 'f7', 'h3', 'h7'])
+    })
+
+    it('does not include squares beyond a rook blocker', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wR',
+          e4: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controlled = controlledSquares({
+        board,
+        attackerPosition: position('e2')
+      }).map(square).sort()
+
+      expect(controlled).toEqual(['a2', 'b2', 'c2', 'd2', 'e1', 'e3', 'e4', 'f2', 'g2', 'h2'])
+      expect(controlled).not.toContain('e5')
+      expect(controlled).not.toContain('e7')
+    })
+
+    it('returns only the valid edge-file diagonal for a white pawn', () => {
+      const board = buildBoard({
+        pieces: {
+          h5: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const controlled = controlledSquares({
+        board,
+        attackerPosition: position('h5')
+      }).map(square)
+
+      expect(controlled).toEqual(['g6'])
     })
   })
 })

@@ -145,3 +145,34 @@ export function pieceControlsSquare({ board, attackerPosition, targetPosition })
         return false
     }
 }
+
+
+export function controllingPositions({ board, targetPosition, team, species = null }) {
+    const positions = board._positionsOccupiedByTeam(team)
+
+    return positions.filter((attackerPosition) => {
+        if (species !== null && board.pieceTypeAt(attackerPosition) !== species) {
+        return false
+        }
+
+        return pieceControlsSquare({ board, attackerPosition, targetPosition })
+    })
+}
+
+export function controlledSquares({ board, attackerPosition }) {
+    const attacker = board.pieceObject(attackerPosition)
+
+    if (Board.parseTeam(attacker) === Board.EMPTY) {
+        return []
+    }
+
+    const controlled = []
+
+    for (let targetPosition = 0; targetPosition < 64; targetPosition++) {
+        if (pieceControlsSquare({ board, attackerPosition, targetPosition })) {
+            controlled.push(targetPosition)
+        }
+    }
+
+    return controlled
+}
