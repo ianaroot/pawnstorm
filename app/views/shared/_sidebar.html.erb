@@ -60,6 +60,12 @@
       <%= link_to "Play Match", new_match_path,
           class: "sidebar__link #{'sidebar__link--active' if current_page?(new_match_path)}",
           data: { action: "click->sidebar#navigate" } %>
+
+      <% if Rails.env.development? %>
+        <%= link_to "Match Sandbox", match_sandbox_path,
+            class: "sidebar__link #{'sidebar__link--active' if current_page?(match_sandbox_path)}",
+            data: { action: "click->sidebar#navigate" } %>
+      <% end %>
       
       <%= link_to "Bots", bots_path,
           class: "sidebar__link #{'sidebar__link--active' if controller_name == 'bots'}",

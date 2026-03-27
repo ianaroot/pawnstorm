@@ -22,6 +22,10 @@ Rails.application.routes.draw do
 
   resources :matches, only: [:new]
 
+  if Rails.env.development?
+    get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
