@@ -415,6 +415,36 @@ describe('Rules notation recording', () => {
     expectNotation(board, 'O-O')
   })
 
+  it('records queen promotion with check in movement notation', () => {
+    const board = buildBoard({
+      pieces: {
+        e7: 'wP',
+        a1: 'wK',
+        h8: 'bK'
+      }
+    })
+
+    const move = getMove('e7', 'e8', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'e8=Q+')
+  })
+
+  it('records queen promotion in movement notation when it does not give check', () => {
+    const board = buildBoard({
+      pieces: {
+        e7: 'wP',
+        a1: 'wK',
+        h7: 'bK'
+      }
+    })
+
+    const move = getMove('e7', 'e8', board)
+    board._officiallyMovePiece(move)
+
+    expectNotation(board, 'e8=Q')
+  })
+
   it('will eventually record move numbers alongside notation', () => {
     const board = buildBoard({
       pieces: {
@@ -492,5 +522,56 @@ describe('Rules notation recording', () => {
     board._officiallyMovePiece(move)
 
     expectNotation(board, 'Q1d3')
+  })
+
+  it('records a full game notation sequence from the standard starting position', () => {
+    const board = new Board({})
+
+    playMoveSequence(board, [
+      { from: 'd2', to: 'd4' },
+      { from: 'd7', to: 'd5' },
+      { from: 'c2', to: 'c4' },
+      { from: 'd5', to: 'c4' },
+      { from: 'g1', to: 'f3' },
+      { from: 'c4', to: 'c3' },
+      { from: 'e2', to: 'e3' },
+      { from: 'c3', to: 'b2' },
+      { from: 'f1', to: 'e2' },
+      { from: 'b2', to: 'a1' },
+      { from: 'e1', to: 'g1' },
+      { from: 'a1', to: 'b1' },
+      { from: 'd4', to: 'd5' },
+      { from: 'c7', to: 'c5' },
+      { from: 'd5', to: 'c6' },
+      { from: 'b1', to: 'c1' },
+      { from: 'c6', to: 'b7' },
+      { from: 'b8', to: 'c6' },
+      { from: 'b7', to: 'b8' },
+      { from: 'g8', to: 'f6' },
+      { from: 'd1', to: 'c1' },
+      { from: 'f6', to: 'd5' },
+      { from: 'c1', to: 'd2' },
+      { from: 'd5', to: 'b4' },
+      { from: 'f1', to: 'd1' },
+      { from: 'c6', to: 'a5' },
+      { from: 'd2', to: 'd8' }
+    ])
+
+    expect(board.movementNotation).toEqual([
+      '1. d4', 'd5',
+      '2. c4', 'dxc4',
+      '3. Nf3', 'c3',
+      '4. e3', 'cxb2',
+      '5. Be2', 'bxa1=Q',
+      '6. O-O', 'Qxb1',
+      '7. d5', 'c5',
+      '8. dxc6e.p.', 'Qxc1',
+      '9. cxb7', 'Nc6',
+      '10. b8=Q', 'Nf6',
+      '11. Qxc1', 'Nd5',
+      '12. Qd2', 'Ndb4',
+      '13. Rd1', 'Na5',
+      '14. Qxd8#'
+    ])
   })
 })

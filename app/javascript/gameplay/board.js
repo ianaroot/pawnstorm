@@ -343,20 +343,53 @@ class Board {
     return teamNotMoving
   }
 
-  _recordNotationFrom({ moveObject: moveObject, epNotation: epNotation, notationSuffix:  notationSuffix }){
-    // if other pieces of same species from same team could move to the same place, attach clarifying file or rank
-    // for rooks, if Rb goes to a6, is there already a rook on 6? it could've done that too
-    // if it's a queen, is there another queen? if there is another queen, is it on the right rank, file, or square color?
-    // if its a bishop, is there another bishop on the right square color?
-    // if it it's a night, is there anot
-
-    // oooh! could you bump into your teammate from the position you just assumed!! take their rank and file, compare, apply the difference... doesn't work for pawns
-    let pieceNotation = moveObject.pieceNotation
-    if( /[QNBR]/.exec(pieceNotation) ){
-
+  baseNotationFor(moveObject){
+    if( /O-O/.exec(moveObject.pieceNotation) ){
+      return moveObject.pieceNotation
     }
 
-    const notation = moveObject.notation() + (epNotation || "") + notationSuffix
+    return this.disambiguatedPieceNotation(moveObject) +
+      (moveObject.captureNotation || "") +
+      Board.gridCalculator(moveObject.endPosition)
+  }
+
+  disambiguatedPieceNotation(moveObject){
+    let pieceNotation = moveObject.pieceNotation
+    if( !/[QNBR]/.exec(pieceNotation) ){ return pieceNotation }
+
+    let competingStarts = this.competingMoveStarts(moveObject)
+    if( competingStarts.length === 0 ){ return pieceNotation }
+
+    let startFile = Board.file(moveObject.startPosition),
+      startRank = Board.rank(moveObject.startPosition),
+      fileMatches = competingStarts.filter(position => Board.file(position) === startFile)
+    if( fileMatches.length === 0 ){ return pieceNotation + startFile }
+
+    let rankMatches = competingStarts.filter(position => Board.rank(position) === startRank)
+    if( rankMatches.length === 0 ){ return pieceNotation + startRank }
+
+    return pieceNotation + Board.gridCalculator(moveObject.startPosition)
+  }
+
+  competingMoveStarts(moveObject){
+    let movingPiece = this.pieceObject(moveObject.startPosition),
+      movingTeam = Board.parseTeam(movingPiece),
+      movingSpecies = Board.parseSpecies(movingPiece),
+      endPosition = moveObject.endPosition,
+      occupiedPositions = this._positionsOccupiedByTeam(movingTeam)
+
+    return occupiedPositions.filter(position => {
+      if( position === moveObject.startPosition ){ return false }
+      if( this.pieceTypeAt(position) !== movingSpecies ){ return false }
+
+      return Rules.availableMovesFrom({ board: this, startPosition: position }).some(
+        candidateMove => candidateMove.endPosition === endPosition
+      )
+    })
+  }
+
+  _recordNotation({ baseNotation: baseNotation, epNotation: epNotation, notationSuffix: notationSuffix }){
+    const notation = baseNotation + (epNotation || "") + notationSuffix
     const moveNumber = Math.floor(this.movementNotation.length / 2) + 1
     const prefixedNotation = this.allowedToMove === Board.WHITE ? `${moveNumber}. ${notation}` : notation
 
@@ -379,16 +412,16 @@ class Board {
       endPosition = moveObject.endPosition,
       additionalActions = moveObject.additionalActions,
       pieceObject = this.pieceObject(startPosition),
-      stringyLayOut = JSON.stringify(this.layOut);
+      stringyLayOut = JSON.stringify(this.layOut),
+      baseNotation = this.baseNotationFor(moveObject);
 
     this._recordLayout(stringyLayOut)
     this._emptify(startPosition)
     if( !this.positionEmpty(endPosition) ){ this._capture(endPosition); }
     this._placePiece({ position: endPosition, pieceObject: pieceObject })
     if( additionalActions ){ var epNotation = additionalActions.call(this, startPosition) }
-    let prefixNotation = moveObject.notation(),
-        notationSuffix = Rules.postMoveQueries( this, prefixNotation );
-    this._recordNotationFrom({ moveObject: moveObject, epNotation: (epNotation || ""), notationSuffix:  notationSuffix })
+    let notationSuffix = Rules.postMoveQueries(this, baseNotation);
+    this._recordNotation({ baseNotation: baseNotation, epNotation: (epNotation || ""), notationSuffix: notationSuffix })
     if( !this.gameOver ){ this._nextTurn() }
   }
 
