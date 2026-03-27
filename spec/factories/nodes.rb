@@ -4,13 +4,24 @@ FactoryBot.define do
     position_x { 100.0 }
     position_y { 100.0 }
     data do
-      {
-        subject: "moved_piece",
-        specifier: "any",
-        relation: "attacker_count",
-        comparison: "any",
-        comparisonValue: nil
-      }
+      case node_type
+      when "condition"
+        {
+          subject: "moved_piece",
+          subjectSpecifier: "any",
+          relation: "attacker_count",
+          relationSpecifier: "any",
+          comparison: "any",
+          comparisonValue: nil
+        }
+      when "action"
+        {
+          actionType: "add",
+          value: 1
+        }
+      else
+        {}
+      end
     end
     association :bot
 
@@ -19,8 +30,9 @@ FactoryBot.define do
       data do
         {
           subject: "moved_piece",
-          specifier: "any",
+          subjectSpecifier: "any",
           relation: "attacker_count",
+          relationSpecifier: "any",
           comparison: "any",
           comparisonValue: nil
         }

@@ -42,8 +42,9 @@ RSpec.describe Node, type: :model do
     it 'rejects condition data with invalid keys' do
       node = build(:node, :condition, data: {
         subject: 'moved_piece',
-        specifier: 'any',
+        subjectSpecifier: 'any',
         relation: 'attacker_count',
+        relationSpecifier: 'any',
         comparison: 'any',
         banana: 'crime'
       })
@@ -55,8 +56,9 @@ RSpec.describe Node, type: :model do
     it 'rejects condition data with invalid relation' do
       node = build(:node, :condition, data: {
         subject: 'moved_piece',
-        specifier: 'any',
+        subjectSpecifier: 'any',
         relation: 'attacked_after_move',
+        relationSpecifier: 'any',
         comparison: 'any',
         comparisonValue: nil
       })
@@ -68,8 +70,9 @@ RSpec.describe Node, type: :model do
     it 'rejects comparisonValue for any comparisons' do
       node = build(:node, :condition, data: {
         subject: 'moved_piece',
-        specifier: 'any',
+        subjectSpecifier: 'any',
         relation: 'attacker_count',
+        relationSpecifier: 'any',
         comparison: 'any',
         comparisonValue: 1
       })
@@ -81,8 +84,9 @@ RSpec.describe Node, type: :model do
     it 'allows comparisonValue for less_than comparisons' do
       node = build(:node, :condition, data: {
         subject: 'allies',
-        specifier: 'king',
+        subjectSpecifier: 'king',
         relation: 'shield_count',
+        relationSpecifier: 'any',
         comparison: 'less_than',
         comparisonValue: 'prior_board_state'
       })

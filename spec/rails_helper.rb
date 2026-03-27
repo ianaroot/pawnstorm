@@ -80,12 +80,9 @@ RSpec.configure do |config|
   # - Default: excludes :slow tests
   # - Run slow tests: bundle exec rspec --tag slow
   # - Run all tests: bundle exec rspec --tag all
-  config.filter_run_excluding :slow unless ENV['RUN_SLOW_TESTS']
-  
-  # When --tag all is passed, run all tests regardless of :slow tag
-  if config.filter_manager.inclusions.rules[:all]
-    config.filter_run_excluding :slow
-  end
+  run_all = config.filter_manager.inclusions.rules[:all]
+  config.filter_manager.inclusions.delete(:all) if run_all
+  config.filter_run_excluding :slow unless ENV['RUN_SLOW_TESTS'] || run_all
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [

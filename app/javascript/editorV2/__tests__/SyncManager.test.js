@@ -379,7 +379,10 @@ describe('SyncManager', () => {
         expect.objectContaining({
           type: 'condition',
           position: { x: 100, y: 100 },
-          data: { foo: 'bar' }
+          data: {
+            ...DEFAULT_CONDITION_DATA,
+            foo: 'bar'
+          }
         }),
         expect.any(String)
       )

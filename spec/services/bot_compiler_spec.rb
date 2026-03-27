@@ -12,8 +12,9 @@ RSpec.describe BotCompiler do
       let!(:condition) do
         create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
           subject: 'moved_piece',
-          specifier: 'any',
+          subjectSpecifier: 'any',
           relation: 'attacker_count',
+          relationSpecifier: 'any',
           comparison: 'any',
           comparisonValue: nil
         })
@@ -47,8 +48,9 @@ RSpec.describe BotCompiler do
             type: 'condition',
             data: {
               subject: 'moved_piece',
-              specifier: 'any',
+              subjectSpecifier: 'any',
               relation: 'attacker_count',
+              relationSpecifier: 'any',
               comparison: 'any',
               comparisonValue: nil
             },

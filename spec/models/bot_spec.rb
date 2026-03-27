@@ -148,8 +148,9 @@ RSpec.describe Bot, type: :model do
 
       node.update!(data: {
         subject: 'allies',
-        specifier: 'rook',
+        subjectSpecifier: 'rook',
         relation: 'mobility',
+        relationSpecifier: 'any',
         comparison: 'greater_than',
         comparisonValue: 'prior_board_state'
       })

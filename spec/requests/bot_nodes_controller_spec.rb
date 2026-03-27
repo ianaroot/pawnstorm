@@ -64,7 +64,15 @@ RSpec.describe BotNodesController, type: :request do
         node: {
           node_type: 'condition',
           position_x: 100,
-          position_y: 200
+          position_y: 200,
+          data: {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
         }
       }
     end
@@ -108,7 +116,14 @@ RSpec.describe BotNodesController, type: :request do
     let(:valid_params) do
       {
         node: {
-          data: { context: 'allies', query: 'is_attacking' }
+          data: {
+            subject: 'allies',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
         }
       }
     end
@@ -116,8 +131,10 @@ RSpec.describe BotNodesController, type: :request do
     it 'updates the node with valid params' do
       patch bot_node_path(bot, node), params: valid_params
       node.reload
-      expect(node.data['context']).to eq('allies')
-      expect(node.data['query']).to eq('is_attacking')
+      expect(node.data['subject']).to eq('allies')
+      expect(node.data['subjectSpecifier']).to eq('any')
+      expect(node.data['relation']).to eq('attacker_count')
+      expect(node.data['relationSpecifier']).to eq('any')
       expect(response).to have_http_status(:success)
     end
 
