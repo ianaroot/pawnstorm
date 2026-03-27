@@ -256,6 +256,31 @@ export function attackerCount(args) {
     return attackingPositions(args).length
 }
 
+export function adjacentPositions({ board, targetPosition, team, species = null }) {
+    return board._positionsOccupiedByTeam(team).filter(position => {
+        if (position === targetPosition) {
+            return false
+        }
+
+        const fileDiff = Math.abs((targetPosition % 8) - (position % 8))
+        const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(position / 8))
+
+        if (Math.max(fileDiff, rankDiff) !== 1) {
+            return false
+        }
+
+        if (species !== null && board.pieceTypeAt(position) !== species) {
+            return false
+        }
+
+        return true
+    })
+}
+
+export function adjacentCount(args) {
+    return adjacentPositions(args).length
+}
+
 export function shieldingPositions({ board, targetPosition, team, species = null }) {
     const opposingTeam = Board.opposingTeam(team)
     const sliderPositions = board._positionsOccupiedByTeam(opposingTeam).filter(position => {

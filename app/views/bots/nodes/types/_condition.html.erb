@@ -4,7 +4,7 @@ data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
 valid_subjects = %w[moved_piece allies opponents captured_piece]
 valid_subject_specifiers = %w[any king queen rook bishop knight pawn]
 valid_relation_specifiers = %w[any king queen rook bishop knight pawn moved_piece]
-valid_relations = %w[piece_count attacker_count defender_count shielder_count shielded_count coverer_count covered_count mobility]
+valid_relations = %w[piece_count adjacent_count attacker_count defender_count shielder_count shielded_count coverer_count covered_count mobility]
 valid_comparisons = %w[any none count greater_than less_than]
 valid_comparison_values = %w[moved_piece_value captured_piece_value prior_board_state]
 
@@ -28,6 +28,7 @@ specifier_labels = {
 
 relation_labels = {
   'piece_count' => 'piece count',
+  'adjacent_count' => 'adjacent count',
   'attacker_count' => 'attacker count',
   'defender_count' => 'defender count',
   'shielder_count' => 'shielder count',

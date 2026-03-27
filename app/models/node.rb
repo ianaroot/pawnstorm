@@ -17,6 +17,7 @@ class Node < ApplicationRecord
   CONDITION_RELATION_SPECIFIERS = %w[any king queen rook bishop knight pawn moved_piece].freeze
   CONDITION_RELATIONS = %w[
     piece_count
+    adjacent_count
     attacker_count
     defender_count
     shielder_count

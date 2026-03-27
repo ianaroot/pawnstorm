@@ -592,6 +592,66 @@ describe('CandidateMoveAnalysis', () => {
     })
   })
 
+  describe('adjacency', () => {
+    it('counts allied adjacent pieces in the 8 neighboring squares', () => {
+      const board = buildBoard({
+        pieces: {
+          d4: 'wN',
+          d5: 'wP',
+          e5: 'wB',
+          f4: 'wR',
+          a1: 'wK',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a1', 'a2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'knight',
+          relation: 'adjacent_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(2)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'knight',
+          relation: 'adjacent_count',
+          relationSpecifier: 'bishop'
+        })
+      ).toBe(1)
+    })
+
+    it('can filter adjacent pieces by moved_piece identity', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          d4: 'wN',
+          e5: 'wB',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'knight',
+          relation: 'adjacent_count',
+          relationSpecifier: 'moved_piece'
+        })
+      ).toBe(1)
+    })
+  })
+
   describe('captured_piece helpers', () => {
     it('reports absence and zero value when the move is not a capture', () => {
       const board = buildBoard({
