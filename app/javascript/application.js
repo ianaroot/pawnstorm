@@ -27,7 +27,7 @@ import Sound from "gameplay/sound"
 // })
 
 document.addEventListener('turbo:load', () => {
-    if (document.getElementById('chess-board')) {
+    if (document.querySelector('[data-game-controller-page="true"]')) {
       var gameController = new GameController()
       
       // Expose globally for debugging in development only
