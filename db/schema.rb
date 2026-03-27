@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_27_033500) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_27_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,18 +40,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_27_033500) do
   end
 
   create_table "matches", force: :cascade do |t|
-    t.bigint "bot_1_id"
-    t.bigint "bot_2_id"
-    t.json "layOut"
-    t.json "capturedPieces"
-    t.boolean "gameOver"
-    t.boolean "allowedToMove"
-    t.json "movementNotation"
-    t.json "previousLayouts"
+    t.json "lay_out"
+    t.json "captured_pieces"
+    t.string "allowed_to_move", default: "W", null: false
+    t.json "movement_notation"
+    t.json "previous_layouts"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["bot_1_id"], name: "index_matches_on_bot_1_id"
-    t.index ["bot_2_id"], name: "index_matches_on_bot_2_id"
+    t.bigint "creator_id"
+    t.string "white_player_type"
+    t.bigint "white_player_id"
+    t.string "black_player_type"
+    t.bigint "black_player_id"
+    t.integer "status", default: 0, null: false
+    t.integer "result"
+    t.index ["black_player_type", "black_player_id"], name: "index_matches_on_black_player"
+    t.index ["creator_id"], name: "index_matches_on_creator_id"
+    t.index ["white_player_type", "white_player_id"], name: "index_matches_on_white_player"
   end
 
   create_table "nodes", force: :cascade do |t|
@@ -81,7 +86,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_27_033500) do
 
   add_foreign_key "connections", "nodes", column: "source_node_id"
   add_foreign_key "connections", "nodes", column: "target_node_id"
-  add_foreign_key "matches", "bots", column: "bot_1_id"
-  add_foreign_key "matches", "bots", column: "bot_2_id"
+  add_foreign_key "matches", "users", column: "creator_id"
   add_foreign_key "nodes", "bots"
 end

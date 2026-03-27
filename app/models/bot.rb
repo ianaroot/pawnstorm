@@ -12,8 +12,8 @@
 #
 class Bot < ApplicationRecord
   belongs_to :user
-  has_many :matches_as_bot_1, class_name: 'Match', foreign_key: 'bot_1_id', dependent: :nullify
-  has_many :matches_as_bot_2, class_name: 'Match', foreign_key: 'bot_2_id', dependent: :nullify
+  has_many :matches_as_white_player, as: :white_player, class_name: 'Match', dependent: :nullify
+  has_many :matches_as_black_player, as: :black_player, class_name: 'Match', dependent: :nullify
   has_many :nodes, dependent: :destroy
   has_many :connections, through: :nodes, source: :outgoing_connections
 
