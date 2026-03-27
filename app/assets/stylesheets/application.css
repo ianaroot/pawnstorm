@@ -223,6 +223,45 @@ button[type="submit"] {
   margin-bottom: 0.5rem;
 }
 
+.match-replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(16rem, 24rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.match-replay-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.match-replay-notation {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.match-replay-notation-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.match-replay-move {
+  color: var(--text-primary);
+}
+
+.match-replay-move--current {
+  color: var(--accent-secondary);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .match-replay-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ============================================
    FLASH MESSAGES (Notice/Alert)
    ============================================ */

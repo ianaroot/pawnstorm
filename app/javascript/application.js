@@ -19,6 +19,7 @@ import MovementType from "gameplay/movement_type"
 import MovesCalculator from "gameplay/moves_calculator"
 import Rules from "gameplay/rules"
 import Sound from "gameplay/sound"
+import MatchReplayController from "gameplay/match_replay_controller"
 import {
   initializeMatchBotListScrollbars,
   refreshMatchBotListScrollbars
@@ -31,6 +32,11 @@ import {
 
 document.addEventListener('turbo:load', () => {
     initializeMatchBotListScrollbars()
+
+    const replayRoot = document.querySelector('[data-match-replay-page="true"]')
+    if (replayRoot) {
+      new MatchReplayController({ rootElement: replayRoot })
+    }
 
     if (document.querySelector('[data-game-controller-page="true"]')) {
       var gameController = new GameController()

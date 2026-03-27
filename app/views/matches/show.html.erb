@@ -4,22 +4,55 @@
   <% end %>
 
   <h1>Match <%= @match.id %></h1>
-
   <p>Status: <%= @match.status %></p>
-
-  <% if @match.result.present? %>
-    <p>Result: <%= @match.result %></p>
-  <% end %>
 
   <% if @match.error_message.present? %>
     <p>Error: <%= @match.error_message %></p>
   <% end %>
 
   <% if @match.pending? || @match.running? %>
-    <p>Match is generating.</p>
+    <div class="match-replay-layout">
+      <div class="game-page">
+        <div id="arena">
+          <div id="notifications"></div>
+          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
+          <div id="W-captures" class="captures"><br><br><br></div>
+          <%= render partial: 'shared/chess_board' %>
+          <div id="B-captures" class="captures"><br><br><br></div>
+        </div>
+      </div>
+
+      <div class="match-replay-sidebar">
+        <p>Match is generating.</p>
+      </div>
+    </div>
   <% elsif @match.failed? %>
     <p>Match generation failed.</p>
   <% else %>
-    <p>Replay UI not built yet.</p>
+    <div
+      class="match-replay-layout"
+      data-match-replay-page="true"
+      data-previous-layouts="<%= json_escape(@match.previous_layouts.to_json) %>"
+      data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
+      data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
+      data-result="<%= @match.result %>"
+    >
+      <div class="game-page">
+        <div id="arena">
+          <div id="notifications"></div>
+          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
+          <div id="W-captures" class="captures"><br><br><br></div>
+          <%= render partial: 'shared/chess_board' %>
+          <div id="B-captures" class="captures"><br><br><br></div>
+        </div>
+      </div>
+
+      <div class="match-replay-sidebar">
+        <p data-match-replay-target="result"></p>
+        <button type="button" data-match-replay-target="play-button">Play</button>
+        <p data-match-replay-target="status"></p>
+        <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
+      </div>
+    </div>
   <% end %>
 </div>
