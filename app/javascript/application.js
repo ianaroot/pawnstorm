@@ -20,6 +20,10 @@ import MovesCalculator from "gameplay/moves_calculator"
 import Rules from "gameplay/rules"
 import View from "gameplay/view"
 import Sound from "gameplay/sound"
+import {
+  initializeMatchBotListScrollbars,
+  refreshMatchBotListScrollbars
+} from "./match_bot_list_scrollbars"
 
 // var gameController = new GameController()
 // window.addEventListener('load', function () {
@@ -27,6 +31,8 @@ import Sound from "gameplay/sound"
 // })
 
 document.addEventListener('turbo:load', () => {
+    initializeMatchBotListScrollbars()
+
     if (document.querySelector('[data-game-controller-page="true"]')) {
       var gameController = new GameController()
       
@@ -52,3 +58,7 @@ document.addEventListener('turbo:load', () => {
       }
     }
   });
+
+window.addEventListener('resize', () => {
+  refreshMatchBotListScrollbars()
+})

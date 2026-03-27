@@ -1,0 +1,15 @@
+<div class="match-show-page">
+  <h1>Match <%= @match.id %></h1>
+
+  <p>Status: <%= @match.status %></p>
+
+  <% if @match.result.present? %>
+    <p>Result: <%= @match.result %></p>
+  <% end %>
+
+  <% if @match.pending? || @match.running? %>
+    <p>Match generation is not wired yet, so this is still a placeholder state.</p>
+  <% else %>
+    <p>Replay UI not built yet.</p>
+  <% end %>
+</div>

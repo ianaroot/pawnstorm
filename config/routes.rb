@@ -20,7 +20,7 @@ Rails.application.routes.draw do
     delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :connection
   end
 
-  resources :matches, only: [:new]
+  resources :matches, only: [:new, :create, :show]
 
   if Rails.env.development?
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
