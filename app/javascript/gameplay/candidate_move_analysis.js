@@ -26,6 +26,10 @@ class CandidateMoveAnalysis {
     return this.board.teamAt(this.moveObject.startPosition)
   }
 
+  movedPieceValue() {
+    return materialValue(this.board.pieceTypeAt(this.moveObject.startPosition))
+  }
+
   movedPiecePosition() {
     return this.moveObject.endPosition
   }

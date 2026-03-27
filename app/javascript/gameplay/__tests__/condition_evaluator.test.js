@@ -65,4 +65,96 @@ describe('ConditionEvaluator', () => {
       }
     ])
   })
+
+  it('resolves moved_piece_value through analysis for numeric comparisons', () => {
+    const analysis = {
+      queryValue() {
+        return 5
+      },
+      movedPieceValue() {
+        return 3
+      }
+    }
+
+    const evaluator = new ConditionEvaluator()
+
+    expect(
+      evaluator.evaluate(
+        {
+          subject: 'moved_piece',
+          relation: 'attacker_count',
+          comparison: 'greater_than',
+          comparisonValue: 'moved_piece_value'
+        },
+        analysis
+      )
+    ).toBe(true)
+  })
+
+  it('resolves captured_piece_value through analysis for numeric comparisons', () => {
+    const analysis = {
+      queryValue() {
+        return 5
+      },
+      capturedPieceValue() {
+        return 9
+      }
+    }
+
+    const evaluator = new ConditionEvaluator()
+
+    expect(
+      evaluator.evaluate(
+        {
+          subject: 'moved_piece',
+          relation: 'attacker_count',
+          comparison: 'less_than',
+          comparisonValue: 'captured_piece_value'
+        },
+        analysis
+      )
+    ).toBe(true)
+  })
+
+  it('resolves prior_board_state by re-running the same query against the prior board scope', () => {
+    const queries = []
+    const analysis = {
+      queryValue(query, boardScope) {
+        queries.push([query, boardScope])
+        return boardScope === 'after' ? 3 : 1
+      }
+    }
+
+    const evaluator = new ConditionEvaluator()
+    const conditionNode = {
+      subject: 'moved_piece',
+      subjectSpecifier: 'rook',
+      relation: 'attacker_count',
+      relationSpecifier: 'pawn',
+      comparison: 'greater_than',
+      comparisonValue: 'prior_board_state'
+    }
+
+    expect(evaluator.evaluate(conditionNode, analysis)).toBe(true)
+    expect(queries).toEqual([
+      [
+        {
+          subject: 'moved_piece',
+          subjectSpecifier: 'rook',
+          relation: 'attacker_count',
+          relationSpecifier: 'pawn'
+        },
+        'after'
+      ],
+      [
+        {
+          subject: 'moved_piece',
+          subjectSpecifier: 'rook',
+          relation: 'attacker_count',
+          relationSpecifier: 'pawn'
+        },
+        'prior'
+      ]
+    ])
+  })
 })
