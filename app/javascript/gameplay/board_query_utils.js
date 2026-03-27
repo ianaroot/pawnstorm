@@ -68,6 +68,68 @@ function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
+function sliderStep(attackerPosition, targetPosition) {
+    const fileDiff = (targetPosition % 8) - (attackerPosition % 8)
+    const rankDiff = Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8)
+
+    if (fileDiff === 0 && rankDiff !== 0) {
+        return rankDiff > 0 ? 8 : -8
+    }
+
+    if (rankDiff === 0 && fileDiff !== 0) {
+        return fileDiff > 0 ? 1 : -1
+    }
+
+    if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
+        if (fileDiff > 0 && rankDiff > 0) return 9
+        if (fileDiff < 0 && rankDiff > 0) return 7
+        if (fileDiff > 0 && rankDiff < 0) return -7
+        if (fileDiff < 0 && rankDiff < 0) return -9
+    }
+
+    return null
+}
+
+function sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition }) {
+    const attackerType = board.pieceTypeAt(attackerPosition)
+    const step = sliderStep(attackerPosition, targetPosition)
+
+    if (step === null) {
+        return false
+    }
+
+    const isStraight = Math.abs(step) === 1 || Math.abs(step) === 8
+    const isDiagonal = Math.abs(step) === 7 || Math.abs(step) === 9
+
+    if (attackerType === Board.ROOK) {
+        return isStraight
+    }
+
+    if (attackerType === Board.BISHOP) {
+        return isDiagonal
+    }
+
+    if (attackerType === Board.QUEEN) {
+        return isStraight || isDiagonal
+    }
+
+    return false
+}
+
+function positionsBetween(attackerPosition, targetPosition) {
+    const step = sliderStep(attackerPosition, targetPosition)
+    if (step === null) {
+        return []
+    }
+
+    const between = []
+
+    for (let current = attackerPosition + step; current !== targetPosition; current += step) {
+        between.push(current)
+    }
+
+    return between
+}
 
 function pieceValue(species) {
     switch (species) {
@@ -108,6 +170,65 @@ export function defenderCount(args) {
 
 export function attackerCount(args) {
     return attackingPositions(args).length
+}
+
+export function shieldingPositions({ board, targetPosition, team, species = null }) {
+    const opposingTeam = Board.opposingTeam(team)
+    const sliderPositions = board._positionsOccupiedByTeam(opposingTeam).filter(position => {
+        const pieceType = board.pieceTypeAt(position)
+        return pieceType === Board.ROOK || pieceType === Board.BISHOP || pieceType === Board.QUEEN
+    })
+
+    const shielding = new Set()
+
+    sliderPositions.forEach(attackerPosition => {
+        if (!sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })) {
+            return
+        }
+
+        const occupiedBetween = positionsBetween(attackerPosition, targetPosition).filter(position => {
+            return !board.positionEmpty(position)
+        })
+
+        if (occupiedBetween.length !== 1) {
+            return
+        }
+
+        const blockerPosition = occupiedBetween[0]
+        if (board.teamAt(blockerPosition) !== team) {
+            return
+        }
+
+        if (species !== null && board.pieceTypeAt(blockerPosition) !== species) {
+            return
+        }
+
+        shielding.add(blockerPosition)
+    })
+
+    return Array.from(shielding)
+}
+
+export function shieldedPositions({ board, sourcePosition, team, species = null }) {
+    return board._positionsOccupiedByTeam(team).filter(targetPosition => {
+        if (targetPosition === sourcePosition) {
+            return false
+        }
+
+        if (species !== null && board.pieceTypeAt(targetPosition) !== species) {
+            return false
+        }
+
+        return shieldingPositions({ board, targetPosition, team }).includes(sourcePosition)
+    })
+}
+
+export function shielderCount(args) {
+    return shieldingPositions(args).length
+}
+
+export function shieldedCount(args) {
+    return shieldedPositions(args).length
 }
 
 export function squareClassification({ board, position, movingTeam }) {

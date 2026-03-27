@@ -406,6 +406,96 @@ describe('CandidateMoveAnalysis', () => {
     })
   })
 
+  describe('shields', () => {
+    it('counts the moved piece as a shielder when it interposes on an enemy slider line to the king', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'shielder_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'rook',
+          relation: 'shielded_count',
+          relationSpecifier: 'king'
+        })
+      ).toBe(1)
+    })
+
+    it('does not count a blocker as a shielder when no enemy slider line exists', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          g8: 'bN',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'shielder_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'rook',
+          relation: 'shielded_count',
+          relationSpecifier: 'king'
+        })
+      ).toBe(0)
+    })
+
+    it('does not count lines with multiple blockers as a shield', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e2: 'wP',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'shielder_count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+  })
+
   describe('captured_piece helpers', () => {
     it('reports absence and zero value when the move is not a capture', () => {
       const board = buildBoard({

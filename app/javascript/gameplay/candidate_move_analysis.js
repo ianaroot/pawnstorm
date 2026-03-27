@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { attackerCount, defenderCount, materialValue } from 'gameplay/board_query_utils'
+import { attackerCount, defenderCount, materialValue, shielderCount, shieldedCount } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -102,6 +102,22 @@ class CandidateMoveAnalysis {
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
+      case 'shielder_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'shielder_count',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
+      case 'shielded_count':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'shielded_count',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
       default:
         throw new Error(`CandidateMoveAnalysis does not yet support positional relation: ${query.relation}`)
     }
@@ -198,6 +214,20 @@ class CandidateMoveAnalysis {
         return defenderCount({
           board,
           targetPosition,
+          team,
+          species
+        })
+      case 'shielder_count':
+        return shielderCount({
+          board,
+          targetPosition,
+          team,
+          species
+        })
+      case 'shielded_count':
+        return shieldedCount({
+          board,
+          sourcePosition: targetPosition,
           team,
           species
         })
