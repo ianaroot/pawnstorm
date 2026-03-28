@@ -32,6 +32,8 @@ class ToolbarHandler {
     this.container = container
     this.clickHandler = clickHandler
     this.viewport = viewport
+    this.compileAndExitLink = document.getElementById('compile-and-exit-link')
+    this.editorRoot = document.querySelector('.bot-editor')
   }
   
 /**
@@ -67,6 +69,8 @@ class ToolbarHandler {
       deleteBtn.addEventListener('click', () => this.handleDeleteClick())
     }
 
+    this.syncManager.setPersistedMutationCallback(() => this.markBotStale())
+    this.updateCompileAction()
   }
   
   /**
@@ -180,6 +184,7 @@ class ToolbarHandler {
     }
     
     this.updateDeleteButton()
+    this.updateCompileAction()
   }
   
   /**
@@ -202,6 +207,24 @@ class ToolbarHandler {
     // Disable if: no selection OR root node
     const isDisabled = !selectedId || (node && node.type === 'root')
     deleteBtn.disabled = isDisabled
+  }
+
+  isBotStale() {
+    return this.editorRoot?.dataset.editorBotStaleValue === 'true'
+  }
+
+  markBotStale() {
+    if (this.editorRoot) {
+      this.editorRoot.dataset.editorBotStaleValue = 'true'
+    }
+
+    this.updateCompileAction()
+  }
+
+  updateCompileAction() {
+    if (!this.compileAndExitLink) return
+
+    this.compileAndExitLink.classList.toggle('hidden', !this.isBotStale())
   }
   
   /**

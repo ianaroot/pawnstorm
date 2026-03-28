@@ -36,6 +36,16 @@ class SyncManager {
     
     // Track in-flight operations for potential cancellation
     this.pendingOperations = new Map()
+
+    this.onPersistedMutation = null
+  }
+
+  setPersistedMutationCallback(callback) {
+    this.onPersistedMutation = callback
+  }
+
+  notifyPersistedMutation() {
+    this.onPersistedMutation?.()
   }
   
   /**
@@ -330,6 +340,8 @@ class SyncManager {
           data: normalizedData
         }
       })
+
+      this.notifyPersistedMutation()
       
       return clientId
       
@@ -376,6 +388,8 @@ class SyncManager {
         previousValue: previousPosition,
         newValue: newPosition
       })
+
+      this.notifyPersistedMutation()
       
     } catch (error) {
       // 4. Rollback on failure
@@ -423,6 +437,8 @@ class SyncManager {
         previousValue: previousData,
         newValue: data
       })
+
+      this.notifyPersistedMutation()
       
     } catch (error) {
       // 4. Rollback on failure
@@ -482,6 +498,8 @@ class SyncManager {
         entity: deletedEntity,
         connections: deletedConnections
       })
+
+      this.notifyPersistedMutation()
       
     } catch (error) {
       // 4. Rollback: Re-add the node AND connections
@@ -552,6 +570,8 @@ class SyncManager {
         sourceId: sourceClientId,
         targetId: targetClientId
       })
+
+      this.notifyPersistedMutation()
       
       return clientId
       
@@ -597,6 +617,8 @@ class SyncManager {
         sourceId,
         targetId
       })
+
+      this.notifyPersistedMutation()
       
     } catch (error) {
       // 4. Rollback: Re-add connection
@@ -646,6 +668,8 @@ class SyncManager {
         type: 'updateNodePositions',
         positions: positionsWithPrevious
       })
+
+      this.notifyPersistedMutation()
       
     } catch (error) {
       // 4. Rollback: Restore original positions

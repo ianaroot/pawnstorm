@@ -1,33 +1,36 @@
 <h1>Editing Bot: <%= @bot.name %></h1>
 
-<div class="bot-editor" data-controller="editor" data-editor-bot-id-value="<%= @bot.id %>">
+<div class="bot-editor"
+     data-controller="editor"
+     data-editor-bot-id-value="<%= @bot.id %>"
+     data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
   <div class="editor-toolbar">
     <div class="toolbar-section">
       <h3>Add Node</h3>
-      <button class="btn-add-node" data-type="condition">+ Condition</button>
-      <button class="btn-add-node" data-type="action">+ Action</button>
+      <button type="button" class="btn-add-node" data-type="condition">+ Condition</button>
+      <button type="button" class="btn-add-node" data-type="action">+ Action</button>
     </div>
     
     <div class="toolbar-section">
       <h3>Tool</h3>
-      <button class="tool-select active" data-tool="select">Select</button>
-      <button class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
+      <button type="button" class="tool-select active" data-tool="select">Select</button>
+      <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
     </div>
 
     <div class="toolbar-section">
       <h3>View</h3>
-      <button id="zoom-out" class="btn-zoom">-</button>
+      <button type="button" id="zoom-out" class="btn-zoom">-</button>
       <span id="zoom-level">100%</span>
-      <button id="zoom-in" class="btn-zoom">+</button>
-      <button id="zoom-reset" class="btn-zoom-reset">Reset</button>
+      <button type="button" id="zoom-in" class="btn-zoom">+</button>
+      <button type="button" id="zoom-reset" class="btn-zoom-reset">Reset</button>
     </div>
 
     <div class="toolbar-section">
       <h3>History</h3>
-      <button class="btn-undo" disabled title="Undo (Ctrl+Z)">
+      <button type="button" class="btn-undo" disabled title="Undo (Ctrl+Z)">
         ↩ Undo <span class="undo-count">(0/50)</span>
       </button>
-      <button class="btn-redo" disabled title="Redo (Ctrl+Y)">
+      <button type="button" class="btn-redo" disabled title="Redo (Ctrl+Y)">
         ↪ Redo
       </button>
     </div>
@@ -35,6 +38,11 @@
     <div class="toolbar-section">
       <%= link_to 'Back to Bots', bots_path, class: 'btn-back' %>
       <%= link_to 'Play Test Match', new_match_path, class: 'btn-test' %>
+      <%= link_to 'compile and exit to match setup',
+          compile_bot_path(@bot),
+          data: { turbo_method: :post },
+          class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
+          id: 'compile-and-exit-link' %>
     </div>
   </div>
 
