@@ -92,7 +92,7 @@ describe('CandidateMoveAnalysis', () => {
     })
   })
 
-  describe('moved_piece attacker_count', () => {
+  describe('moved_piece attacker', () => {
     it('counts one attacker when the moved piece lands on a square controlled by one enemy piece', () => {
       const board = buildBoard({
         pieces: {
@@ -110,7 +110,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.relationValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count'
+          relation: 'attacker'
         })
       ).toBe(1)
     })
@@ -133,7 +133,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.relationValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count'
+          relation: 'attacker'
         })
       ).toBe(2)
     })
@@ -156,7 +156,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'rook'
         })
       ).toBe(1)
@@ -165,7 +165,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'bishop'
         })
       ).toBe(1)
@@ -174,7 +174,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'knight'
         })
       ).toBe(0)
@@ -197,7 +197,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'defender_count',
+          relation: 'defender',
           relationSpecifier: 'any'
         })
       ).toBe(1)
@@ -206,7 +206,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'defender_count',
+          relation: 'defender',
           relationSpecifier: 'bishop'
         })
       ).toBe(1)
@@ -215,7 +215,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'defender_count',
+          relation: 'defender',
           relationSpecifier: 'rook'
         })
       ).toBe(0)
@@ -238,7 +238,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'pawn',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'any'
         })
       ).toBe(1)
@@ -247,7 +247,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -275,7 +275,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'rook',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(2)
@@ -284,7 +284,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'queen',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -309,7 +309,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'opponents',
           subjectSpecifier: 'rook',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(2)
@@ -318,7 +318,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'opponents',
           subjectSpecifier: 'bishop',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -341,12 +341,35 @@ describe('CandidateMoveAnalysis', () => {
           {
             subject: 'allies',
             subjectSpecifier: 'queen',
-            relation: 'piece_count',
+            relation: 'count',
             relationSpecifier: 'any'
           },
           'prior'
         )
       ).toBe(1)
+    })
+
+    it('sums material value for positional subjects', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          c1: 'wB',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a1', 'a2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'any',
+          relation: 'value',
+          relationSpecifier: 'any'
+        })
+      ).toBe(8)
     })
   })
 
@@ -446,6 +469,55 @@ describe('CandidateMoveAnalysis', () => {
     })
   })
 
+  describe('attacked and defended', () => {
+    it('counts how many allied pieces are attacked', () => {
+      const board = buildBoard({
+        pieces: {
+          d4: 'wN',
+          e4: 'wB',
+          f6: 'bN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e4', 'f5', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'any',
+          relation: 'attacked',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+
+    it('counts how many allied pieces are defended', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wB',
+          e4: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e4', 'e5', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'defended',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+  })
+
   describe('shields', () => {
     it('counts the moved piece as a shielder when it interposes on an enemy slider line to the king', () => {
       const board = buildBoard({
@@ -464,7 +536,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'shielder_count',
+          relation: 'shielder',
           relationSpecifier: 'any'
         })
       ).toBe(1)
@@ -473,7 +545,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
-          relation: 'shielded_count',
+          relation: 'shielded',
           relationSpecifier: 'king'
         })
       ).toBe(1)
@@ -482,7 +554,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'shielder_count',
+          relation: 'shielder',
           relationSpecifier: 'moved_piece'
         })
       ).toBe(1)
@@ -506,7 +578,7 @@ describe('CandidateMoveAnalysis', () => {
           {
             subject: 'allies',
             subjectSpecifier: 'king',
-            relation: 'shielder_count',
+            relation: 'shielder',
             relationSpecifier: 'moved_piece'
           },
           'prior'
@@ -531,7 +603,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'shielder_count',
+          relation: 'shielder',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -540,7 +612,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
-          relation: 'shielded_count',
+          relation: 'shielded',
           relationSpecifier: 'king'
         })
       ).toBe(0)
@@ -564,7 +636,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'shielder_count',
+          relation: 'shielder',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -588,7 +660,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'coverer_count',
+          relation: 'coverer',
           relationSpecifier: 'any'
         })
       ).toBe(1)
@@ -597,7 +669,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'pawn',
-          relation: 'covered_count',
+          relation: 'covered',
           relationSpecifier: 'king'
         })
       ).toBe(1)
@@ -619,7 +691,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'pawn',
-          relation: 'coverer_count',
+          relation: 'coverer',
           relationSpecifier: 'any'
         })
       ).toBe(0)
@@ -628,7 +700,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'covered_count',
+          relation: 'covered',
           relationSpecifier: 'pawn'
         })
       ).toBe(0)
@@ -651,7 +723,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'king',
-          relation: 'coverer_count',
+          relation: 'coverer',
           relationSpecifier: 'moved_piece'
         })
       ).toBe(1)
@@ -678,7 +750,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'knight',
-          relation: 'adjacent_count',
+          relation: 'adjacent',
           relationSpecifier: 'any'
         })
       ).toBe(2)
@@ -687,7 +759,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'knight',
-          relation: 'adjacent_count',
+          relation: 'adjacent',
           relationSpecifier: 'bishop'
         })
       ).toBe(1)
@@ -711,7 +783,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'allies',
           subjectSpecifier: 'knight',
-          relation: 'adjacent_count',
+          relation: 'adjacent',
           relationSpecifier: 'moved_piece'
         })
       ).toBe(1)
@@ -800,7 +872,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'captured_piece',
           subjectSpecifier: 'queen',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(1)
@@ -809,10 +881,33 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'captured_piece',
           subjectSpecifier: 'rook',
-          relation: 'piece_count',
+          relation: 'count',
           relationSpecifier: 'any'
         })
       ).toBe(0)
+    })
+
+    it('reports captured piece value through the normalized value relation', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wP',
+          d5: 'bQ',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e4', 'd5', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'captured_piece',
+          subjectSpecifier: 'queen',
+          relation: 'value',
+          relationSpecifier: 'any'
+        })
+      ).toBe(9)
     })
   })
 })

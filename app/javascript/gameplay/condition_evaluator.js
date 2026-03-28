@@ -11,11 +11,7 @@ class ConditionEvaluator {
     const comparisonValue = this.comparisonValueFor(conditionNode, analysis, query)
 
     switch (comparison) {
-      case 'any':
-        return Boolean(value)
-      case 'none':
-        return !value
-      case 'count':
+      case 'equal_to':
         return value === comparisonValue
       case 'greater_than':
         return value > comparisonValue

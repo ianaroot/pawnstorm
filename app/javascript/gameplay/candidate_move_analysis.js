@@ -41,7 +41,7 @@ class CandidateMoveAnalysis {
     return this.queryValue({
       subject: 'moved_piece',
       subjectSpecifier: 'any',
-      relation: 'attacker_count',
+      relation: 'attacker',
       relationSpecifier: 'any'
     })
   }
@@ -69,13 +69,9 @@ class CandidateMoveAnalysis {
 
   capturedPieceQueryValue(query) {
     switch (query.relation) {
-      case 'presence':
-        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier)
-      case 'absence':
-        return !this.capturedPieceMatchesSpecifier(query.subjectSpecifier)
-      case 'piece_count':
+      case 'count':
         return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? 1 : 0
-      case 'piece_value':
+      case 'value':
         return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? this.capturedPieceValue() : 0
       default:
         throw new Error(`captured_piece does not support relation: ${query.relation}`)
@@ -84,62 +80,80 @@ class CandidateMoveAnalysis {
 
   positionalQueryValue(query, positions, boardScope = 'after') {
     switch (query.relation) {
-      case 'piece_count':
+      case 'count':
         return positions.length
+      case 'value':
+        return this.valueOfPositions(positions, boardScope)
       case 'mobility':
         return this.mobilityValue(positions, boardScope)
-      case 'adjacent_count':
+      case 'adjacent':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'adjacent_count',
+          relation: 'adjacent',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'attacker_count':
+      case 'attacker':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'attacker_count',
+          relation: 'attacker',
           team: Board.opposingTeam(this.movedPieceTeam()),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'defender_count':
+      case 'attacked':
+        return this.countPositionsWithRelation({
+          positions,
+          relation: 'attacker',
+          team: Board.opposingTeam(this.movedPieceTeam()),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
+      case 'defender':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'defender_count',
+          relation: 'defender',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'shielder_count':
-        return this.aggregatePositionRelationValue({
+      case 'defended':
+        return this.countPositionsWithRelation({
           positions,
-          relation: 'shielder_count',
+          relation: 'defender',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'shielded_count':
+      case 'shielder':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'shielded_count',
+          relation: 'shielder',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'coverer_count':
+      case 'shielded':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'coverer_count',
+          relation: 'shielded',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
-      case 'covered_count':
+      case 'coverer':
         return this.aggregatePositionRelationValue({
           positions,
-          relation: 'covered_count',
+          relation: 'coverer',
+          team: this.movedPieceTeam(),
+          relationSpecifier: query.relationSpecifier,
+          boardScope
+        })
+      case 'covered':
+        return this.aggregatePositionRelationValue({
+          positions,
+          relation: 'covered',
           team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
@@ -198,6 +212,15 @@ class CandidateMoveAnalysis {
     }, 0)
   }
 
+  valueOfPositions(positions, boardScope = 'after') {
+    const board = this.boardForScope(boardScope)
+
+    return positions.reduce((sum, position) => {
+      const pieceValue = materialValue(board.pieceTypeAt(position))
+      return Number.isFinite(pieceValue) ? sum + pieceValue : sum
+    }, 0)
+  }
+
   positionMobility(position, boardScope = 'after') {
     const board = this.boardForScope(boardScope)
     const pieceType = board.pieceTypeAt(position)
@@ -222,6 +245,18 @@ class CandidateMoveAnalysis {
         boardScope
       })
     }, 0)
+  }
+
+  countPositionsWithRelation({ positions, relation, team, relationSpecifier, boardScope = 'after' }) {
+    return positions.filter(targetPosition => {
+      return this.positionRelationValue({
+        relation,
+        targetPosition,
+        team,
+        relationSpecifier,
+        boardScope
+      }) > 0
+    }).length
   }
 
   positionRelationValue({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
@@ -253,43 +288,43 @@ class CandidateMoveAnalysis {
 
   rawRelatedPositions({ relation, targetPosition, team, board }) {
     switch (relation) {
-      case 'attacker_count':
+      case 'attacker':
         return attackingPositions({
           board,
           targetPosition,
           team
         })
-      case 'adjacent_count':
+      case 'adjacent':
         return adjacentPositions({
           board,
           targetPosition,
           team
         })
-      case 'defender_count':
+      case 'defender':
         return defendingPositions({
           board,
           targetPosition,
           team
         })
-      case 'shielder_count':
+      case 'shielder':
         return shieldingPositions({
           board,
           targetPosition,
           team
         })
-      case 'shielded_count':
+      case 'shielded':
         return shieldedPositions({
           board,
           sourcePosition: targetPosition,
           team
         })
-      case 'coverer_count':
+      case 'coverer':
         return coveringPositions({
           board,
           targetPosition,
           team
         })
-      case 'covered_count':
+      case 'covered':
         return coveredPositions({
           board,
           sourcePosition: targetPosition,

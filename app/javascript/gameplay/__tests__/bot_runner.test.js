@@ -54,7 +54,7 @@ describe('BotRunner', () => {
       first: {
         id: 'first',
         type: 'condition',
-        data: { relation: 'pass', comparison: 'any', comparisonValue: null },
+        data: { relation: 'pass', comparison: 'greater_than', comparisonValue: 0 },
         children: ['grandchild']
       },
       grandchild: {
@@ -66,7 +66,7 @@ describe('BotRunner', () => {
       second: {
         id: 'second',
         type: 'condition',
-        data: { relation: 'fail', comparison: 'any', comparisonValue: null },
+        data: { relation: 'fail', comparison: 'greater_than', comparisonValue: 0 },
         children: ['ignored']
       },
       ignored: {

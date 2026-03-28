@@ -16,10 +16,10 @@ describe('ConditionEvaluator', () => {
     const conditionNode = {
       subject: 'moved_piece',
       subjectSpecifier: 'rook',
-      relation: 'attacker_count',
+      relation: 'attacker',
       relationSpecifier: 'pawn',
-      comparison: 'any',
-      comparisonValue: null
+      comparison: 'greater_than',
+      comparisonValue: 0
     }
 
     expect(evaluator.evaluate(conditionNode, analysis)).toBe(true)
@@ -27,7 +27,7 @@ describe('ConditionEvaluator', () => {
       {
         subject: 'moved_piece',
         subjectSpecifier: 'rook',
-        relation: 'attacker_count',
+        relation: 'attacker',
         relationSpecifier: 'pawn'
       }
     ])
@@ -48,9 +48,9 @@ describe('ConditionEvaluator', () => {
       evaluator.evaluate(
         {
           subject: 'moved_piece',
-          relation: 'attacker_count',
-          comparison: 'none',
-          comparisonValue: null
+          relation: 'attacker',
+          comparison: 'equal_to',
+          comparisonValue: 0
         },
         analysis
       )
@@ -60,7 +60,7 @@ describe('ConditionEvaluator', () => {
       {
         subject: 'moved_piece',
         subjectSpecifier: 'any',
-        relation: 'attacker_count',
+        relation: 'attacker',
         relationSpecifier: 'any'
       }
     ])
@@ -82,7 +82,7 @@ describe('ConditionEvaluator', () => {
       evaluator.evaluate(
         {
           subject: 'moved_piece',
-          relation: 'attacker_count',
+          relation: 'attacker',
           comparison: 'greater_than',
           comparisonValue: 'moved_piece_value'
         },
@@ -107,7 +107,7 @@ describe('ConditionEvaluator', () => {
       evaluator.evaluate(
         {
           subject: 'moved_piece',
-          relation: 'attacker_count',
+          relation: 'attacker',
           comparison: 'less_than',
           comparisonValue: 'captured_piece_value'
         },
@@ -129,7 +129,7 @@ describe('ConditionEvaluator', () => {
     const conditionNode = {
       subject: 'moved_piece',
       subjectSpecifier: 'rook',
-      relation: 'attacker_count',
+      relation: 'attacker',
       relationSpecifier: 'pawn',
       comparison: 'greater_than',
       comparisonValue: 'prior_board_state'
@@ -141,7 +141,7 @@ describe('ConditionEvaluator', () => {
         {
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'pawn'
         },
         'after'
@@ -150,7 +150,7 @@ describe('ConditionEvaluator', () => {
         {
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'pawn'
         },
         'prior'
