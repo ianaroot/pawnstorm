@@ -448,7 +448,7 @@
   position: absolute;
   top: 5.25rem;
   right: 1.25rem;
-  width: min(28rem, calc(100vw - 3rem));
+  width: min(36rem, calc(100vw - 3rem));
   max-height: calc(100vh - 7rem);
   display: flex;
   flex-direction: column;
@@ -521,6 +521,21 @@
   margin-top: 0.45rem;
 }
 
+.bot-guide-drawer__index-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: #e5e5e5;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bot-guide-drawer__index-link:hover {
+  color: #c084fc;
+  text-decoration: underline;
+}
+
 .bot-guide-drawer__content {
   overflow-y: auto;
   padding-right: 0.25rem;
@@ -550,7 +565,7 @@
 }
 
 .bot-guide-drawer--open ~ .node-editor-panel {
-  right: 31rem;
+  right: 39rem;
 }
 
 .btn-guide-link {

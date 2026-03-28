@@ -7,8 +7,8 @@ RSpec.describe HelpController, type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Build a Chess Bot')
-      expect(response.body).to include('Build a Bot')
-      expect(response.body).to include('Inspect Match Decisions')
+      expect(response.body).to include('What Your Bot Does')
+      expect(response.body).to include('Test and Inspect Matches')
     end
   end
 end

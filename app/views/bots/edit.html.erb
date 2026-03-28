@@ -87,12 +87,18 @@
     <nav class="bot-guide-drawer__index" aria-label="Guide sections">
       <ol>
         <% BotGuide.sections.each do |section| %>
-          <li><%= link_to section[:title], "##{section[:id]}" %></li>
+          <li>
+            <button
+              type="button"
+              class="bot-guide-drawer__index-link"
+              data-action="click->bot-guide#scrollToSection"
+              data-section-id="<%= section[:id] %>"><%= section[:title] %></button>
+          </li>
         <% end %>
       </ol>
     </nav>
 
-    <div class="bot-guide-drawer__content">
+    <div class="bot-guide-drawer__content" data-bot-guide-target="content">
       <%= render 'shared/bot_guide', sections: BotGuide.sections, mode: :drawer %>
     </div>
 

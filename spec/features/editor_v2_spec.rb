@@ -49,9 +49,9 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       click_button 'Guide'
 
       expect(page).to have_css('#bot-guide-drawer', visible: true)
-      expect(page).to have_content('In-Editor Guide')
+      expect(page).to have_css('.bot-guide-drawer__eyebrow', text: /In-Editor Guide/i)
       expect(page).to have_link('Read Full Guide', href: bot_help_path)
-      expect(page).to have_link('Build a Bot', href: '#build-a-bot')
+      expect(page).to have_button('What Your Bot Does')
     end
   end
 
