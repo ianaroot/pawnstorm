@@ -49,9 +49,19 @@ class MovesCalculator {
         const squareState = squareClassification({position: currentPosition, movingTeam: teamString, board: this.board})
 
         if ( squareState.isEmpty ){
-          this.moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: movementType.captureNotation}) )
+          this.moveObjects.push(...this.buildMoveObjects({
+            additionalActions,
+            endPosition: currentPosition,
+            pieceNotation: movementType.pieceNotation,
+            captureNotation: movementType.captureNotation
+          }))
         } else if( squareState.isOpponent ){
-          this.moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: "x"}) )// illegal may change later
+          this.moveObjects.push(...this.buildMoveObjects({
+            additionalActions,
+            endPosition: currentPosition,
+            pieceNotation: movementType.pieceNotation,
+            captureNotation: "x"
+          }))// illegal may change later
           break
         } else if( squareState.isTeammate ){
           break
@@ -59,6 +69,26 @@ class MovesCalculator {
 
       }
     }
+  }
+
+  buildMoveObjects({ additionalActions, endPosition, pieceNotation, captureNotation }) {
+    return this.promotionPiecesFor(endPosition).map(promotionPiece => {
+      return new MoveObject({
+        additionalActions,
+        endPosition,
+        startPosition: this.startPosition,
+        pieceNotation,
+        captureNotation,
+        promotionPiece
+      })
+    })
+  }
+
+  promotionPiecesFor(endPosition) {
+    if (this.pieceType !== Board.PAWN) { return [null] }
+    if (Board.rank(endPosition) !== 1 && Board.rank(endPosition) !== 8) { return [null] }
+
+    return [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT]
   }
 
 

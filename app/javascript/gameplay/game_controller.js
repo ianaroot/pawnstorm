@@ -42,7 +42,8 @@ class GameController {
 		alert = "what, are you trying to capture your own piece?"
 		} else {
 
-			var moveObject = Rules.getMoveObject(startPosition, endPosition, board);
+			// TODO: replace this queen default with explicit promotion UI.
+			var moveObject = Rules.getMoveObject(startPosition, endPosition, board, Board.QUEEN);
 			if( moveObject.illegal ){
 				alert = "illegal move attempted"
 				// also, what happens after the alert????

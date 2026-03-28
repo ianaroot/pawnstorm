@@ -442,7 +442,7 @@ describe('CandidateMoveAnalysis', () => {
           },
           'prior'
         )
-      ).toBe(2)
+      ).toBe(3)
     })
   })
 

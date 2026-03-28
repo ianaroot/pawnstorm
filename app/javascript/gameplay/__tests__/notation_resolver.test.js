@@ -53,6 +53,7 @@ describe('NotationResolver', () => {
 
     expect(square(move.startPosition)).toBe('e7')
     expect(square(move.endPosition)).toBe('e8')
+    expect(move.promotionPiece).toBe(Board.QUEEN)
   })
 
   it('resolves disambiguated knight notation', () => {
@@ -98,5 +99,6 @@ describe('NotationResolver', () => {
 
     expect(square(move.startPosition)).toBe('b7')
     expect(square(move.endPosition)).toBe('b8')
+    expect(move.promotionPiece).toBe(Board.QUEEN)
   })
 })

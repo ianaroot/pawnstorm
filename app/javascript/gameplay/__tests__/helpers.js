@@ -57,8 +57,8 @@ export function moveTargets(moveObjects) {
   return moveObjects.map(moveObject => square(moveObject.endPosition)).sort()
 }
 
-export function getMove(from, to, board) {
-  return Rules.getMoveObject(position(from), position(to), board)
+export function getMove(from, to, board, promotionPiece = Board.QUEEN) {
+  return Rules.getMoveObject(position(from), position(to), board, promotionPiece)
 }
 
 export function playMoveSequence(board, moves) {

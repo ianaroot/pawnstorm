@@ -425,9 +425,12 @@ describe('Rules notation recording', () => {
     })
 
     const move = getMove('e7', 'e8', board)
+    expect(move.promotionPiece).toBe(Board.QUEEN)
+    expect(move.notation()).toBe('e8=Q')
     board._officiallyMovePiece(move)
 
     expectNotation(board, 'e8=Q+')
+    expect(board.pieceObject(position('e8'))).toBe(Board.WHITE_QUEEN)
   })
 
   it('records queen promotion in movement notation when it does not give check', () => {
@@ -443,6 +446,85 @@ describe('Rules notation recording', () => {
     board._officiallyMovePiece(move)
 
     expectNotation(board, 'e8=Q')
+    expect(board.pieceObject(position('e8'))).toBe(Board.WHITE_QUEEN)
+  })
+
+  it('generates four promotion move objects for a pawn reaching the back rank', () => {
+    const board = buildBoard({
+      pieces: {
+        e7: 'wP',
+        a1: 'wK',
+        h8: 'bK'
+      }
+    })
+
+    const promotionMoves = Rules.availableMovesFrom({ board, startPosition: position('e7') })
+      .filter(moveObject => moveObject.endPosition === position('e8'))
+
+    expect(promotionMoves.map(moveObject => moveObject.promotionPiece).sort()).toEqual([
+      Board.BISHOP,
+      Board.NIGHT,
+      Board.QUEEN,
+      Board.ROOK
+    ])
+  })
+
+  it('can select a non-queen promotion move when multiple promotions share a destination', () => {
+    const board = buildBoard({
+      pieces: {
+        e7: 'wP',
+        a1: 'wK',
+        h8: 'bK'
+      }
+    })
+
+    const move = getMove('e7', 'e8', board, Board.NIGHT)
+    board._officiallyMovePiece(move)
+
+    expect(move.promotionPiece).toBe(Board.NIGHT)
+    expect(move.notation()).toBe('e8=N')
+    expect(board.pieceObject(position('e8'))).toBe(Board.WHITE_NIGHT)
+    expectNotation(board, 'e8=N')
+  })
+
+  it('generates capture promotions with distinct promotion pieces', () => {
+    const board = buildBoard({
+      pieces: {
+        d7: 'wP',
+        e8: 'bR',
+        a1: 'wK',
+        h8: 'bK'
+      }
+    })
+
+    const promotionCaptures = Rules.availableMovesFrom({ board, startPosition: position('d7') })
+      .filter(moveObject => moveObject.endPosition === position('e8'))
+
+    expect(promotionCaptures.map(moveObject => moveObject.promotionPiece).sort()).toEqual([
+      Board.BISHOP,
+      Board.NIGHT,
+      Board.QUEEN,
+      Board.ROOK
+    ])
+    expect(promotionCaptures.every(moveObject => moveObject.captureNotation === 'x')).toBe(true)
+  })
+
+  it('applies promotion immediately on hypothetical boards', () => {
+    const board = buildBoard({
+      pieces: {
+        e7: 'wP',
+        a1: 'wK',
+        h8: 'bK'
+      }
+    })
+
+    const move = Rules.availableMovesFrom({ board, startPosition: position('e7') })
+      .find(moveObject => moveObject.endPosition === position('e8') && moveObject.promotionPiece === Board.QUEEN)
+    const copy = board.deepCopy()
+
+    copy._hypotheticallyMovePiece(move)
+
+    expect(copy.pieceObject(position('e8'))).toBe(Board.WHITE_QUEEN)
   })
 
   it('will eventually record move numbers alongside notation', () => {

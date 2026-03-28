@@ -4,7 +4,7 @@ import MoveObject from "gameplay/move_object";
 
 class Rules {
   
-  static getMoveObject(startPosition, endPosition, board){
+  static getMoveObject(startPosition, endPosition, board, promotionPiece = Board.QUEEN){
     // if(
     //   !Board.prototype.isPrototypeOf( board ) || typeof startPosition !== "number" ||  typeof endPosition !== "number"
     // ){
@@ -22,14 +22,17 @@ class Rules {
       return moveObject
     }
     let moveObjects = new MovesCalculator({board: board, startPosition: startPosition}).moveObjects//, endPosition: endPosition});
-    for(let i = 0; i < moveObjects.length; i++){
-      let currentMoveObject = moveObjects[i],
-        queryPosition = currentMoveObject.endPosition;
-      if( endPosition === queryPosition ){
-        moveObject = currentMoveObject
-        if( this.checkQueryWithMove({board: board, moveObject: moveObject}) ){
-          moveObject.illegal = true
-        }
+    const matchingMoves = moveObjects.filter(currentMoveObject => {
+      if( currentMoveObject.endPosition !== endPosition ){ return false }
+      if( !currentMoveObject.promotionPiece ){ return true }
+      return currentMoveObject.promotionPiece === promotionPiece
+    })
+    for(let i = 0; i < matchingMoves.length; i++){
+      let currentMoveObject = matchingMoves[i]
+      moveObject = currentMoveObject
+      if( this.checkQueryWithMove({board: board, moveObject: moveObject}) ){
+        moveObject.illegal = true
+      } else {
         break;
       }
     }
@@ -124,23 +127,6 @@ class Rules {
       }
     }
     return keysOnly
-  }
-
-  static pawnPromotionQuery(board){
-    // TODO doesn't allow non-queen pawn promotion
-    for(let i = 0; i < 8; i++){
-      if ( board._blackPawnAt(i) ){
-        board._promotePawn(i)
-        return "=Q"
-      }
-    }
-    for(let i = 56; i < 64; i++){
-      if( board._whitePawnAt(i) ){
-        board._promotePawn(i)
-        return "=Q"
-      }
-    }
-    return ""
   }
 
   static noLegalMoves(board){
@@ -245,18 +231,17 @@ class Rules {
 
 
   static postMoveQueries(board, prefixNotation){
-    let pawnPromotionNotation = Rules.pawnPromotionQuery(board),
-        otherTeam = board.teamNotMoving(),
+    let otherTeam = board.teamNotMoving(),
         attackingTeam = Board.opposingTeam(otherTeam),
         kingPosition = board._kingPosition(otherTeam),
         inCheck = this.checkQuery({board: board, teamString: otherTeam}),
         noMoves = this.noLegalMoves(board),
         threeFold = this.threeFoldRepetition(board, prefixNotation);
-    if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return pawnPromotionNotation + "#" }
-    if( inCheck ){ return pawnPromotionNotation + "+" }
-    if( noMoves ){ board._endGame({ resultType: "stalemate" }); return pawnPromotionNotation }
-    if( threeFold ){ board._endGame({ resultType: "threefold_repetition" }); return pawnPromotionNotation }
-    return pawnPromotionNotation
+    if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return "#" }
+    if( inCheck ){ return "+" }
+    if( noMoves ){ board._endGame({ resultType: "stalemate" }); return "" }
+    if( threeFold ){ board._endGame({ resultType: "threefold_repetition" }); return "" }
+    return ""
   }
 }
 

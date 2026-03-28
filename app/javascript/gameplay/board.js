@@ -353,7 +353,8 @@ class Board {
 
     return this.disambiguatedPieceNotation(moveObject) +
       (moveObject.captureNotation || "") +
-      Board.gridCalculator(moveObject.endPosition)
+      Board.gridCalculator(moveObject.endPosition) +
+      (moveObject.promotionPiece ? `=${moveObject.promotionPiece}` : "")
   }
 
   disambiguatedPieceNotation(moveObject){
@@ -402,11 +403,15 @@ class Board {
   _hypotheticallyMovePiece( moveObject ){ // ONLY USE THIS TO SEE IF A MOVE WOULD RESULT IN MATE. there's a lot of space between _officiallyMovePiece and hypothetical. eg  not recording any data on hypothetical moves
     let startPosition = moveObject.startPosition,
       endPosition = moveObject.endPosition,
-      additionalActions = moveObject.additionalActions;
+      additionalActions = moveObject.additionalActions,
+      promotionPiece = moveObject.promotionPiece;
       let pieceObject = this.pieceObject(startPosition);
     this._emptify(startPosition)
     this._placePiece({ position: endPosition, pieceObject: pieceObject })
     if( additionalActions ){ additionalActions.call(this, startPosition) }
+    if( promotionPiece ){
+      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
+    }
   }
 
   _officiallyMovePiece( moveObject ){
@@ -414,6 +419,7 @@ class Board {
     let startPosition = moveObject.startPosition,
       endPosition = moveObject.endPosition,
       additionalActions = moveObject.additionalActions,
+      promotionPiece = moveObject.promotionPiece,
       pieceObject = this.pieceObject(startPosition),
       stringyLayOut = JSON.stringify(this.layOut),
       baseNotation = this.baseNotationFor(moveObject);
@@ -423,6 +429,9 @@ class Board {
     if( !this.positionEmpty(endPosition) ){ this._capture(endPosition); }
     this._placePiece({ position: endPosition, pieceObject: pieceObject })
     if( additionalActions ){ var epNotation = additionalActions.call(this, startPosition) }
+    if( promotionPiece ){
+      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
+    }
     let notationSuffix = Rules.postMoveQueries(this, baseNotation);
     this._recordNotation({ baseNotation: baseNotation, epNotation: (epNotation || ""), notationSuffix: notationSuffix })
     if( !this.gameOver ){ this._nextTurn() }
