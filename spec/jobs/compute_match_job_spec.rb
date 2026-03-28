@@ -25,10 +25,11 @@ RSpec.describe ComputeMatchJob, type: :job do
         captured_pieces: ['BP'],
         allowed_to_move: 'B',
         movement_notation: ['1. e4', 'e5'],
-        previous_layouts: [Array.new(64, 'ee')]
+        previous_layouts: []
       }
 
-      allow(Open3).to receive(:capture3).and_return([payload.to_json, '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:read_result_file).and_return(payload.to_json)
 
       described_class.perform_now(match.id)
 
@@ -39,7 +40,7 @@ RSpec.describe ComputeMatchJob, type: :job do
       expect(match.captured_pieces).to eq(payload[:captured_pieces])
       expect(match.allowed_to_move).to eq('B')
       expect(match.movement_notation).to eq(payload[:movement_notation])
-      expect(match.previous_layouts).to eq(payload[:previous_layouts])
+      expect(match.previous_layouts).to eq([])
       expect(match.error_message).to be_nil
     end
 
@@ -56,7 +57,7 @@ RSpec.describe ComputeMatchJob, type: :job do
       )
 
       status = instance_double(Process::Status, success?: false)
-      allow(Open3).to receive(:capture3).and_return(['', 'kaboom', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', 'kaboom', status])
 
       described_class.perform_now(match.id)
 
