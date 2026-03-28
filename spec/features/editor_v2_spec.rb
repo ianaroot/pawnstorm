@@ -44,6 +44,15 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       expect_node_count(1)
     end
+
+    it 'opens the in-editor guide drawer' do
+      click_button 'Guide'
+
+      expect(page).to have_css('#bot-guide-drawer', visible: true)
+      expect(page).to have_content('In-Editor Guide')
+      expect(page).to have_link('Read Full Guide', href: bot_help_path)
+      expect(page).to have_link('Build a Bot', href: '#build-a-bot')
+    end
   end
 
   # ============================================================

@@ -1,0 +1,22 @@
+<div class="bot-help-page">
+  <header class="bot-help-page__header">
+    <p class="bot-help-page__eyebrow">Public Guide</p>
+    <h1><%= @guide_title %></h1>
+    <p class="bot-help-page__intro"><%= @guide_intro %></p>
+  </header>
+
+  <div class="bot-help-layout">
+    <aside class="bot-help-index">
+      <h2>On This Page</h2>
+      <ol>
+        <% @guide_sections.each do |section| %>
+          <li><%= link_to section[:title], "##{section[:id]}" %></li>
+        <% end %>
+      </ol>
+    </aside>
+
+    <div class="bot-help-content">
+      <%= render 'shared/bot_guide', sections: @guide_sections, mode: :full %>
+    </div>
+  </div>
+</div>

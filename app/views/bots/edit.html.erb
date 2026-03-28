@@ -1,7 +1,7 @@
 <h1>Editing Bot: <%= @bot.name %></h1>
 
 <div class="bot-editor"
-     data-controller="editor"
+     data-controller="editor bot-guide"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
   <div class="editor-toolbar">
@@ -15,6 +15,13 @@
       <h3>Tool</h3>
       <button type="button" class="tool-select active" data-tool="select">Select</button>
       <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
+      <button
+        type="button"
+        class="btn-guide"
+        data-bot-guide-target="toggle"
+        data-action="click->bot-guide#toggle"
+        aria-controls="bot-guide-drawer"
+        aria-expanded="false">Guide</button>
     </div>
 
     <div class="toolbar-section">
@@ -60,6 +67,39 @@
       </div>
     </div>
   </div>
+
+  <aside id="bot-guide-drawer" class="bot-guide-drawer hidden" data-bot-guide-target="drawer">
+    <div class="bot-guide-drawer__header">
+      <div>
+        <p class="bot-guide-drawer__eyebrow">In-Editor Guide</p>
+        <h2>Build a Chess Bot</h2>
+      </div>
+
+      <button
+        type="button"
+        class="bot-guide-drawer__close"
+        data-action="click->bot-guide#close"
+        aria-label="Close guide">Close</button>
+    </div>
+
+    <p class="bot-guide-drawer__intro"><%= BotGuide.drawer_intro %></p>
+
+    <nav class="bot-guide-drawer__index" aria-label="Guide sections">
+      <ol>
+        <% BotGuide.sections.each do |section| %>
+          <li><%= link_to section[:title], "##{section[:id]}" %></li>
+        <% end %>
+      </ol>
+    </nav>
+
+    <div class="bot-guide-drawer__content">
+      <%= render 'shared/bot_guide', sections: BotGuide.sections, mode: :drawer %>
+    </div>
+
+    <div class="bot-guide-drawer__footer">
+      <%= link_to 'Read Full Guide', bot_help_path, class: 'btn-guide-link' %>
+    </div>
+  </aside>
 
   <%= render "bots/nodes/editor" %>
 </div>

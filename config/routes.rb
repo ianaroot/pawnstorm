@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   
   root to: "home#index" 
 
+  get 'help/bots', to: 'help#bots', as: :bot_help
+
   resources :bots, except: :show do
     member do
       post :compile
