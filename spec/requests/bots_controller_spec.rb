@@ -148,4 +148,24 @@ RSpec.describe BotsController, type: :request do
       }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
+
+  describe 'POST #compile' do
+    let(:bot) { create(:bot, compiled_program_stale: true) }
+
+    it 'redirects to login when not authenticated' do
+      post compile_bot_path(bot)
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it 'compiles the bot and exits to match setup' do
+      sign_in bot.user
+
+      post compile_bot_path(bot)
+
+      expect(response).to redirect_to(new_match_path(own_bot_id: bot.id))
+      expect(flash[:notice]).to eq('Bot compiled. Exiting editor to match setup.')
+      expect(bot.reload.compiled_program_stale).to be(false)
+      expect(bot.compiled_program).to be_present
+    end
+  end
 end

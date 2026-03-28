@@ -8,6 +8,9 @@ Rails.application.routes.draw do
   root to: "home#index" 
 
   resources :bots, except: :show do
+    member do
+      post :compile
+    end
     resources :nodes, controller: 'bot_nodes', except: [:index, :new] do
       member do
         post :connect

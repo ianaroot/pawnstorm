@@ -31,6 +31,17 @@ RSpec.describe MatchesController, type: :request do
       expect(response.body).to include(other_fresh_bot.name)
       expect(response.body).not_to include(other_stale_bot.name)
     end
+
+    it 'preselects an owned bot from the query string' do
+      user = create(:user)
+      own_bot = create(:bot, :compiled, user: user)
+
+      sign_in user
+      get new_match_path, params: { own_bot_id: own_bot.id }
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(%(value="#{own_bot.id}" checked="checked"))
+    end
   end
 
   describe 'POST #create' do
@@ -81,7 +92,7 @@ RSpec.describe MatchesController, type: :request do
       expect(match.black_player).to eq(own_bot)
     end
 
-    it 'rejects stale selected own bots' do
+    it 'asks whether to compile stale selected own bots before creating the match' do
       stale_bot = create(:bot, user: user, compiled_program_stale: true)
 
       expect do
@@ -95,6 +106,25 @@ RSpec.describe MatchesController, type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include('recompiled before match generation')
+    end
+
+    it 'compiles stale selected owned bots and immediately creates the match when confirmed' do
+      stale_own_bot = create(:bot, user: user, compiled_program_stale: true)
+      stale_opponent_bot = create(:bot, user: user, compiled_program_stale: true)
+
+      expect do
+        post matches_path, params: {
+          match: {
+            own_bot_id: stale_own_bot.id,
+            opponent_bot_id: stale_opponent_bot.id,
+            stale_bot_confirmation: 'compile'
+          }
+        }
+      end.to change(Match, :count).by(1)
+
+      expect(response).to redirect_to(match_path(Match.order(:created_at).last))
+      expect(stale_own_bot.reload.compiled_program_stale).to be(false)
+      expect(stale_opponent_bot.reload.compiled_program_stale).to be(false)
     end
 
     it 'rejects invalid bot selections' do
