@@ -61,7 +61,7 @@ describe('CandidateMoveAnalysis', () => {
       expect(analysis.movedPieceTeam()).toBe(Board.WHITE)
     })
 
-    it('returns the moved piece destination square', () => {
+    it('returns the moved piece destination square on the after board', () => {
       const board = buildBoard({
         pieces: {
           e2: 'wP',
@@ -74,6 +74,21 @@ describe('CandidateMoveAnalysis', () => {
       const analysis = new CandidateMoveAnalysis({ board, moveObject })
 
       expect(analysis.movedPiecePosition()).toBe(position('e4'))
+    })
+
+    it('returns the moved piece start square on the prior board', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(analysis.movedPiecePosition('prior')).toBe(position('e2'))
     })
   })
 
@@ -404,6 +419,31 @@ describe('CandidateMoveAnalysis', () => {
         })
       ).toBe(1)
     })
+
+    it('resolves moved_piece mobility on the prior board from the start square', () => {
+      const board = buildBoard({
+        pieces: {
+          b1: 'wN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('b1', 'c3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'knight',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(2)
+    })
   })
 
   describe('shields', () => {
@@ -446,6 +486,32 @@ describe('CandidateMoveAnalysis', () => {
           relationSpecifier: 'moved_piece'
         })
       ).toBe(1)
+    })
+
+    it('filters moved_piece relation specifiers against the prior-board square when requested', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'moved_piece'
+          },
+          'prior'
+        )
+      ).toBe(0)
     })
 
     it('does not count a blocker as a shielder when no enemy slider line exists', () => {

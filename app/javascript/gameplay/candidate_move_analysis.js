@@ -31,8 +31,10 @@ class CandidateMoveAnalysis {
     return materialValue(this.board.pieceTypeAt(this.moveObject.startPosition))
   }
 
-  movedPiecePosition() {
-    return this.moveObject.endPosition
+  movedPiecePosition(boardScope = 'after') {
+    return boardScope === 'prior'
+      ? this.moveObject.startPosition
+      : this.moveObject.endPosition
   }
 
   movedPieceAttackerCount() {
@@ -150,7 +152,7 @@ class CandidateMoveAnalysis {
   subjectPositions(query, boardScope = 'after') {
     switch (query.subject) {
       case 'moved_piece':
-        return this.movedPiecePositions(query.subjectSpecifier)
+        return this.movedPiecePositions(query.subjectSpecifier, boardScope)
       case 'allies':
         return this.teamPositions({
           team: this.movedPieceTeam(),
@@ -168,9 +170,9 @@ class CandidateMoveAnalysis {
     }
   }
 
-  movedPiecePositions(subjectSpecifier = 'any') {
+  movedPiecePositions(subjectSpecifier = 'any', boardScope = 'after') {
     return this.matchesSpecifier(this.board.pieceTypeAt(this.moveObject.startPosition), subjectSpecifier)
-      ? [this.movedPiecePosition()]
+      ? [this.movedPiecePosition(boardScope)]
       : []
   }
 
@@ -304,7 +306,7 @@ class CandidateMoveAnalysis {
     }
 
     if (relationSpecifier === 'moved_piece') {
-      const movedPiecePosition = this.movedPiecePosition()
+      const movedPiecePosition = this.movedPiecePosition(boardScope)
       return positions.filter(position => position === movedPiecePosition)
     }
 
