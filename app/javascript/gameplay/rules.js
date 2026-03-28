@@ -129,15 +129,9 @@ class Rules {
     return keysOnly
   }
 
-  static noLegalMoves(board){
-    let movingTeamString = board.allowedToMove,
-      noLegalMoves = true;
-    if(movingTeamString === Board.BLACK){
-      var onDeckTeamString = Board.WHITE
-    } else {
-      var onDeckTeamString = Board.BLACK
-    }
-    let occcupiedPositions = board._positionsOccupiedByTeam(onDeckTeamString);
+  static noLegalMoves({ board: board, teamString: teamString }){
+    let noLegalMoves = true,
+      occcupiedPositions = board._positionsOccupiedByTeam(teamString);
     for(let i = 0; i < occcupiedPositions.length && noLegalMoves; i++){
       let startPosition = occcupiedPositions[i],
         movesCalculator = new MovesCalculator({board: board, startPosition: startPosition});
@@ -235,7 +229,7 @@ class Rules {
         attackingTeam = Board.opposingTeam(otherTeam),
         kingPosition = board._kingPosition(otherTeam),
         inCheck = this.checkQuery({board: board, teamString: otherTeam}),
-        noMoves = this.noLegalMoves(board),
+        noMoves = this.noLegalMoves({ board: board, teamString: otherTeam }),
         threeFold = this.threeFoldRepetition(board, prefixNotation);
     if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return "#" }
     if( inCheck ){ return "+" }
