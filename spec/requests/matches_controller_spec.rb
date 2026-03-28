@@ -62,6 +62,8 @@ RSpec.describe MatchesController, type: :request do
       expect(match.captured_pieces).to eq([])
       expect(match.movement_notation).to eq([])
       expect(match.previous_layouts).to eq([])
+      expect(match.white_compiled_program_snapshot).to eq(match.white_player.compiled_program)
+      expect(match.black_compiled_program_snapshot).to eq(match.black_player.compiled_program)
       expect(ComputeMatchJob).to have_been_enqueued.with(match.id)
     end
 

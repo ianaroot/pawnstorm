@@ -1084,19 +1084,27 @@ seed_bots = [
             relationSpecifier: 'any',
             comparison: 'equal_to',
             comparisonValue: 1
-          },
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 45
+        }
+      },
+      {
+        conditions: [
           {
-            subject: 'moved_piece',
+            subject: 'captured_piece',
             subjectSpecifier: 'any',
-            relation: 'defender',
+            relation: 'value',
             relationSpecifier: 'any',
             comparison: 'greater_than',
-            comparisonValue: 0
+            comparisonValue: 'moved_piece_value'
           }
         ],
         action: {
           action_type: 'return',
-          value: 90
+          value: 55
         }
       },
       {

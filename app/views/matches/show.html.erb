@@ -3,18 +3,18 @@
     <meta http-equiv="refresh" content="2">
   <% end %>
 
-  <h1>Match <%= @match.id %></h1>
-  <p>Status: <%= @match.status %></p>
-  <p>White: <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
-  <p>Black: <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
-
-  <% if @match.error_message.present? %>
-    <p>Error: <%= @match.error_message %></p>
-  <% end %>
-
   <% if @match.pending? || @match.running? %>
     <div class="match-replay-layout">
       <div class="game-page">
+        <div class="match-show-meta">
+          <h1 class="match-show-title">Match <%= @match.id %></h1>
+          <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
+          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
+          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+        </div>
+        <% if @match.error_message.present? %>
+          <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+        <% end %>
         <div id="arena">
           <div id="notifications"></div>
           <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
@@ -37,8 +37,22 @@
       data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
       data-result="<%= @match.result %>"
+      data-current-user-id="<%= current_user.id %>"
+      data-white-bot-owner-id="<%= @match.white_player_type == 'Bot' ? @match.white_player.user_id : '' %>"
+      data-black-bot-owner-id="<%= @match.black_player_type == 'Bot' ? @match.black_player.user_id : '' %>"
+      data-white-compiled-program-snapshot="<%= json_escape(@match.white_compiled_program_snapshot.to_json) %>"
+      data-black-compiled-program-snapshot="<%= json_escape(@match.black_compiled_program_snapshot.to_json) %>"
     >
       <div class="game-page">
+        <div class="match-show-meta">
+          <h1 class="match-show-title">Match <%= @match.id %></h1>
+          <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
+          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
+          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+        </div>
+        <% if @match.error_message.present? %>
+          <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+        <% end %>
         <div id="arena">
           <div id="notifications"></div>
           <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
@@ -49,26 +63,33 @@
       </div>
 
       <div class="match-replay-sidebar">
-        <p data-match-replay-target="result"></p>
-        <div class="match-replay-controls">
-          <button type="button" data-match-replay-target="start-button">Start</button>
-          <button type="button" data-match-replay-target="back-button">Back</button>
-          <button type="button" data-match-replay-target="play-button">Play</button>
-          <button type="button" data-match-replay-target="reverse-button">Reverse</button>
-        </div>
-        <div class="match-replay-speed">
-          <span>Speed</span>
-          <div class="match-replay-speed-buttons">
-            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
-            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
-            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
-            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
-            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
+        <div class="match-replay-sidebar-top">
+          <p data-match-replay-target="result"></p>
+          <div class="match-replay-controls">
+            <button type="button" data-match-replay-target="start-button">Start</button>
+            <button type="button" data-match-replay-target="back-button">Back</button>
+            <button type="button" data-match-replay-target="forward-button">Forward</button>
+            <button type="button" data-match-replay-target="play-button">Play</button>
+            <button type="button" data-match-replay-target="reverse-button">Reverse</button>
           </div>
+          <div class="match-replay-speed">
+            <span>Speed</span>
+            <div class="match-replay-speed-buttons">
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
+            </div>
+          </div>
+          <p data-match-replay-target="status"></p>
+          <p data-match-replay-target="warning" hidden></p>
+          <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
         </div>
-        <p data-match-replay-target="status"></p>
-        <p data-match-replay-target="warning" hidden></p>
-        <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
+        <div class="match-replay-trace" data-match-replay-target="trace-panel" hidden>
+          <div class="match-replay-trace-summary" data-match-replay-target="trace-summary"></div>
+          <div class="match-replay-trace-branches" data-match-replay-target="trace-branches"></div>
+        </div>
       </div>
     </div>
   <% end %>

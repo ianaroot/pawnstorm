@@ -10,19 +10,25 @@ class BotRunner {
     this.random = options.random || Math.random
   }
 
-  scoreMove({ board, moveObject }) {
+  scoreMove({ board, moveObject, withTrace = false }) {
     const analysis = this.analysisFactory({ board, moveObject })
     const state = {
       score: 0,
-      halted: false
+      halted: false,
+      trace: withTrace ? [] : null
     }
 
-    // Future trace collection should hook in here so one move evaluation can
-    // optionally produce a structural execution trace without changing the
-    // scoring contract.
     this.runNode(this.compiledProgram.root, analysis, state)
 
-    return state.score
+    if (!withTrace) {
+      return state.score
+    }
+
+    return {
+      score: state.score,
+      halted: state.halted,
+      trace: state.trace
+    }
   }
 
   legalMoves({ board }) {
@@ -34,11 +40,22 @@ class BotRunner {
     })
   }
 
-  scoreLegalMoves({ board }) {
-    return this.legalMoves({ board }).map(moveObject => ({
-      moveObject,
-      score: this.scoreMove({ board, moveObject })
-    }))
+  scoreLegalMoves({ board, withTrace = false }) {
+    return this.legalMoves({ board }).map(moveObject => {
+      const scoreResult = this.scoreMove({ board, moveObject, withTrace })
+
+      if (!withTrace) {
+        return {
+          moveObject,
+          score: scoreResult
+        }
+      }
+
+      return {
+        moveObject,
+        ...scoreResult
+      }
+    })
   }
 
   selectMove({ board }) {
@@ -70,12 +87,22 @@ class BotRunner {
         this.runChildren(node.children || [], analysis, state)
         break
       case 'condition':
-        if (this.conditionEvaluator.evaluate(node.data, analysis)) {
-          this.runChildren(node.children || [], analysis, state)
+        {
+          const passed = this.conditionEvaluator.evaluate(node.data, analysis)
+          this.recordTrace(state, {
+            nodeId,
+            nodeType: 'condition',
+            passed,
+            data: node.data
+          })
+
+          if (passed) {
+            this.runChildren(node.children || [], analysis, state)
+          }
         }
         break
       case 'action':
-        this.applyAction(node.data, state)
+        this.applyAction(nodeId, node.data, state)
         break
       default:
         throw new Error(`Unknown compiled node type: ${node.type}`)
@@ -92,7 +119,9 @@ class BotRunner {
     }
   }
 
-  applyAction(actionNode, state) {
+  applyAction(nodeId, actionNode, state) {
+    const scoreBefore = state.score
+
     switch (actionNode.actionType) {
       case 'add':
         state.score += actionNode.value
@@ -110,6 +139,24 @@ class BotRunner {
       default:
         throw new Error(`Unknown action type: ${actionNode.actionType}`)
     }
+
+    this.recordTrace(state, {
+      nodeId,
+      nodeType: 'action',
+      actionType: actionNode.actionType,
+      value: actionNode.value,
+      scoreBefore,
+      scoreAfter: state.score,
+      halted: state.halted
+    })
+  }
+
+  recordTrace(state, entry) {
+    if (!state.trace) {
+      return
+    }
+
+    state.trace.push(entry)
   }
 }
 

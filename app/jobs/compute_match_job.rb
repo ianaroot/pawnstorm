@@ -48,10 +48,18 @@ class ComputeMatchJob < ApplicationJob
 
   def match_payload(match)
     {
-      white_compiled_program: compiled_program_for(match.white_player),
-      black_compiled_program: compiled_program_for(match.black_player),
+      white_compiled_program: compiled_program_snapshot_for(match, :white),
+      black_compiled_program: compiled_program_snapshot_for(match, :black),
       max_plies: 200
     }
+  end
+
+  def compiled_program_snapshot_for(match, team)
+    snapshot = match.compiled_program_snapshot_for(team)
+    return snapshot if snapshot.present?
+
+    player = team.to_sym == :white ? match.white_player : match.black_player
+    compiled_program_for(player)
   end
 
   def compiled_program_for(player)

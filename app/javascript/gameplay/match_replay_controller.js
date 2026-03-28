@@ -1,6 +1,7 @@
 import Board from "gameplay/board"
 import Layout from "gameplay/layout"
 import NotationResolver from "gameplay/notation_resolver"
+import ReplayMoveInspector from "gameplay/replay_move_inspector"
 import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
 import Sound from "gameplay/sound"
 
@@ -14,14 +15,18 @@ class MatchReplayController {
     this.playButton = rootElement.querySelector('[data-match-replay-target="play-button"]')
     this.reverseButton = rootElement.querySelector('[data-match-replay-target="reverse-button"]')
     this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
+    this.forwardButton = rootElement.querySelector('[data-match-replay-target="forward-button"]')
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
+    this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.playButton?.addEventListener('click', () => this.togglePlayback(1))
     this.reverseButton?.addEventListener('click', () => this.togglePlayback(-1))
     this.backButton?.addEventListener('click', this.stepBackwardOnce.bind(this))
+    this.forwardButton?.addEventListener('click', this.stepForwardOnce.bind(this))
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
+    this.boardElement?.addEventListener('click', this.handleBoardClick.bind(this))
     this.speedButtons.forEach(button => {
       button.addEventListener('click', () => this.setSpeed(Number(button.dataset.speedMultiplier)))
     })
@@ -36,11 +41,23 @@ class MatchReplayController {
     this.finalLayout = JSON.parse(rootElement.dataset.finalLayout)
     this.movementNotation = JSON.parse(rootElement.dataset.movementNotation)
     this.result = rootElement.dataset.result
+    this.currentUserId = Number(rootElement.dataset.currentUserId)
+    this.whiteBotOwnerId = rootElement.dataset.whiteBotOwnerId ? Number(rootElement.dataset.whiteBotOwnerId) : null
+    this.blackBotOwnerId = rootElement.dataset.blackBotOwnerId ? Number(rootElement.dataset.blackBotOwnerId) : null
+    this.whiteCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.whiteCompiledProgramSnapshot)
+    this.blackCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.blackCompiledProgramSnapshot)
 
     this.frames = this.buildFrames()
     this.totalPlayableMoves = this.frames.length - 1
     this.movePairs = this.buildMovePairs()
+    this.selectedStartPosition = null
+    this.selectedMoveKey = null
     this.renderCurrentFrame()
+  }
+
+  parseCompiledProgramSnapshot(snapshotJson) {
+    if (!snapshotJson) { return null }
+    return JSON.parse(snapshotJson)
   }
 
   buildFrames() {
@@ -171,6 +188,7 @@ class MatchReplayController {
     }
 
     this.currentMoveIndex += 1
+    this.resetInspectionSelection()
     this.playReplaySound(this.movementNotation[this.currentMoveIndex])
     this.renderCurrentFrame()
 
@@ -187,6 +205,7 @@ class MatchReplayController {
 
     this.playReplaySound(this.movementNotation[this.currentMoveIndex])
     this.currentMoveIndex -= 1
+    this.resetInspectionSelection()
     this.renderCurrentFrame()
 
     if (this.atStart()) {
@@ -202,12 +221,21 @@ class MatchReplayController {
     this.stepBackward()
   }
 
+  stepForwardOnce() {
+    if (this.isPlaying) {
+      this.pause()
+    }
+
+    this.stepForward()
+  }
+
   jumpToStart() {
     if (this.isPlaying) {
       this.pause()
     }
 
     this.currentMoveIndex = -1
+    this.resetInspectionSelection()
     this.renderCurrentFrame()
   }
 
@@ -220,18 +248,96 @@ class MatchReplayController {
     }
 
     this.currentMoveIndex = Number(moveButton.dataset.moveIndex)
+    this.resetInspectionSelection()
     this.renderCurrentFrame()
   }
 
-  renderCurrentFrame() {
+  handleBoardClick(event) {
+    if (this.isPlaying) { return }
+
+    const tile = event.target.closest('.chess-tile')
+    if (!tile) { return }
+
+    const board = this.currentBoard()
+    const inspection = this.inspectionContextForBoard(board)
+    if (!inspection.enabled || !inspection.result) { return }
+
+    const square = tile.id
+    const position = Board.gridCalculatorReverse(square)
+    const clickedVisibleMove = inspection.result.visibleMoves.find(result => (
+      Board.gridCalculator(result.moveObject.endPosition) === square
+    ))
+
+    if (clickedVisibleMove) {
+      this.selectedMoveKey = clickedVisibleMove.key
+      this.renderCurrentFrame()
+      return
+    }
+
+    if (board.teamAt(position) === inspection.team) {
+      this.selectedStartPosition = this.selectedStartPosition === position ? null : position
+      this.selectedMoveKey = null
+      this.renderCurrentFrame()
+      return
+    }
+
+    this.selectedStartPosition = null
+    this.selectedMoveKey = null
+    this.renderCurrentFrame()
+  }
+
+  resetInspectionSelection() {
+    this.selectedStartPosition = null
+    this.selectedMoveKey = null
+  }
+
+  currentBoard() {
     const frameIndex = this.currentMoveIndex + 1
     const frame = this.frames[frameIndex]
 
-    const board = buildReplayBoard({
+    return buildReplayBoard({
       layout: frame.layout,
       capturedPieces: frame.capturedPieces,
       allowedToMove: frame.allowedToMove
     })
+  }
+
+  inspectionContextForBoard(board) {
+    const team = board.allowedToMove
+    const ownerId = team === Board.WHITE ? this.whiteBotOwnerId : this.blackBotOwnerId
+    const compiledProgram = team === Board.WHITE
+      ? this.whiteCompiledProgramSnapshot
+      : this.blackCompiledProgramSnapshot
+
+    if (ownerId !== this.currentUserId || !compiledProgram) {
+      return { enabled: false, team, compiledProgram: null, result: null, selectedStartSquare: null }
+    }
+
+    const inspector = new ReplayMoveInspector({ compiledProgram })
+    const result = inspector.inspectPosition({
+      board,
+      selectedMoveKey: this.selectedMoveKey,
+      restrictToStartPosition: this.selectedStartPosition
+    })
+
+    if (this.selectedMoveKey !== result.selectedMoveKey) {
+      this.selectedMoveKey = result.selectedMoveKey
+    }
+
+    return {
+      enabled: true,
+      team,
+      compiledProgram,
+      result,
+      selectedStartSquare: this.selectedStartPosition === null
+        ? null
+        : Board.gridCalculator(this.selectedStartPosition)
+    }
+  }
+
+  renderCurrentFrame() {
+    const board = this.currentBoard()
+    const inspection = this.inspectionContextForBoard(board)
 
     this.view.renderFrame({
       board,
@@ -242,7 +348,8 @@ class MatchReplayController {
       movePairs: this.movePairs,
       result: this.result,
       totalMoves: this.totalPlayableMoves,
-      warning: this.warning
+      warning: this.warning,
+      inspection
     })
   }
 

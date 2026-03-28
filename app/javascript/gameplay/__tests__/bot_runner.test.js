@@ -188,6 +188,65 @@ describe('BotRunner', () => {
     expect(callCount).toBe(1)
   })
 
+  it('can return a trace with condition results and action score changes', () => {
+    const program = buildProgram({
+      first: {
+        id: 'first',
+        type: 'condition',
+        data: { relation: 'pass', comparison: 'greater_than', comparisonValue: 0 },
+        children: ['grandchild']
+      },
+      grandchild: {
+        id: 'grandchild',
+        type: 'action',
+        data: { actionType: 'add', value: 4 },
+        children: []
+      },
+      second: {
+        id: 'second',
+        type: 'action',
+        data: { actionType: 'return', value: 9 },
+        children: []
+      }
+    })
+
+    const runner = new BotRunner(program, {
+      conditionEvaluator: new FakeConditionEvaluator({ pass: true }),
+      analysisFactory: () => ({})
+    })
+
+    expect(runner.scoreMove({ board: {}, moveObject: {}, withTrace: true })).toEqual({
+      score: 9,
+      halted: true,
+      trace: [
+        {
+          nodeId: 'first',
+          nodeType: 'condition',
+          passed: true,
+          data: { relation: 'pass', comparison: 'greater_than', comparisonValue: 0 }
+        },
+        {
+          nodeId: 'grandchild',
+          nodeType: 'action',
+          actionType: 'add',
+          value: 4,
+          scoreBefore: 0,
+          scoreAfter: 4,
+          halted: false
+        },
+        {
+          nodeId: 'second',
+          nodeType: 'action',
+          actionType: 'return',
+          value: 9,
+          scoreBefore: 4,
+          scoreAfter: 9,
+          halted: true
+        }
+      ]
+    })
+  })
+
   it('scores all legal moves and returns move-score pairs', () => {
     const program = buildProgram({
       first: {

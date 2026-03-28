@@ -1,4 +1,5 @@
 import Board from "gameplay/board"
+import ReplayTraceView from "gameplay/replay_trace_view"
 import {
   clearAlerts,
   displayAlerts,
@@ -14,26 +15,75 @@ class ReplayView {
     this.playButton = rootElement.querySelector('[data-match-replay-target="play-button"]')
     this.reverseButton = rootElement.querySelector('[data-match-replay-target="reverse-button"]')
     this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
+    this.forwardButton = rootElement.querySelector('[data-match-replay-target="forward-button"]')
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.statusElement = rootElement.querySelector('[data-match-replay-target="status"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.warningElement = rootElement.querySelector('[data-match-replay-target="warning"]')
+    this.tracePanelElement = rootElement.querySelector('[data-match-replay-target="trace-panel"]')
+    this.traceSummaryElement = rootElement.querySelector('[data-match-replay-target="trace-summary"]')
+    this.traceBranchesElement = rootElement.querySelector('[data-match-replay-target="trace-branches"]')
+    this.traceView = new ReplayTraceView({
+      tracePanelElement: this.tracePanelElement,
+      traceSummaryElement: this.traceSummaryElement,
+      traceBranchesElement: this.traceBranchesElement
+    })
   }
 
-  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning }) {
+  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning, inspection }) {
     renderBoardPieces(board)
     updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
     displayAlerts("")
+    this.renderBoardHighlights(inspection)
     this.renderStatus({ currentMoveIndex, totalMoves })
     this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves })
     this.renderResult(result)
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
+    this.traceView.render(inspection)
+  }
+
+  renderBoardHighlights(inspection) {
+    document.querySelectorAll('.chess-tile').forEach(tile => {
+      tile.classList.remove(
+        'match-replay-square--selected-piece',
+        'match-replay-square--selected-move',
+        'match-replay-square--tied-move',
+        'match-replay-square--candidate-move'
+      )
+    })
+
+    if (!inspection?.enabled || !inspection.result) { return }
+
+    const selectedPieceTile = inspection.selectedStartSquare
+      ? document.getElementById(inspection.selectedStartSquare)
+      : null
+    selectedPieceTile?.classList.add('match-replay-square--selected-piece')
+
+    const selectedMove = inspection.result.selectedMove?.moveObject || null
+    const selectedMoveTile = selectedMove
+      ? document.getElementById(Board.gridCalculator(selectedMove.endPosition))
+      : null
+    selectedMoveTile?.classList.add('match-replay-square--selected-move')
+
+    const visibleMoves = inspection.result.visibleMoves || []
+    visibleMoves.forEach(result => {
+      const destinationId = Board.gridCalculator(result.moveObject.endPosition)
+      const tile = document.getElementById(destinationId)
+      if (!tile) { return }
+      if (result.key === inspection.result.selectedMoveKey) { return }
+
+      if (inspection.result.tiedTopMoveKeys.includes(result.key)) {
+        tile.classList.add('match-replay-square--tied-move')
+      } else if (inspection.selectedStartSquare) {
+        tile.classList.add('match-replay-square--candidate-move')
+      }
+    })
   }
 
   renderStatus({ currentMoveIndex, totalMoves }) {
@@ -67,6 +117,10 @@ class ReplayView {
 
     if (this.backButton) {
       this.backButton.disabled = currentMoveIndex === -1
+    }
+
+    if (this.forwardButton) {
+      this.forwardButton.disabled = currentMoveIndex >= totalMoves - 1
     }
 
     if (this.playButton) {
@@ -159,6 +213,7 @@ class ReplayView {
       this.notationElement.scrollTop -= upperBand - rowRect.top
     }
   }
+
 }
 
 export function buildReplayBoard({ layout, capturedPieces, allowedToMove }) {

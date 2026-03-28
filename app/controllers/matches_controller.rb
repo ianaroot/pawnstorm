@@ -28,11 +28,21 @@ class MatchesController < ApplicationController
     end
 
     white_bot, black_bot = [own_bot, opponent_bot].shuffle
+    white_snapshot = compiled_program_snapshot_for(white_bot)
+    black_snapshot = compiled_program_snapshot_for(black_bot)
+
+    if white_snapshot.nil? || black_snapshot.nil?
+      flash.now[:alert] = 'Both bots must have a compiled program before match generation.'
+      render :new, status: :unprocessable_entity
+      return
+    end
 
     match = Match.create!(
       creator: current_user,
       white_player: white_bot,
       black_player: black_bot,
+      white_compiled_program_snapshot: white_snapshot,
+      black_compiled_program_snapshot: black_snapshot,
       status: :pending,
       result: nil,
       allowed_to_move: 'W',
@@ -74,6 +84,13 @@ class MatchesController < ApplicationController
 
   def stale_selected_bots(*bots)
     bots.compact.select { |bot| bot.user_id == current_user.id && bot.compiled_program_stale? }
+  end
+
+  def compiled_program_snapshot_for(bot)
+    compiled_program = bot&.compiled_program
+    return nil if compiled_program.blank?
+
+    JSON.parse(compiled_program.to_json)
   end
 
   def match_params

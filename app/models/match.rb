@@ -42,6 +42,17 @@ class Match < ApplicationRecord
 
   validate :completed_matches_require_replay_state
 
+  def compiled_program_snapshot_for(team)
+    case team.to_sym
+    when :white
+      white_compiled_program_snapshot
+    when :black
+      black_compiled_program_snapshot
+    else
+      raise ArgumentError, "Unknown match team for compiled program snapshot: #{team.inspect}"
+    end
+  end
+
   private
 
   def completed_matches_require_replay_state

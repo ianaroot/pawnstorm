@@ -6,11 +6,36 @@ RSpec.describe ComputeMatchJob, type: :job do
   let(:black_bot) { create(:bot, :compiled) }
 
   describe '#perform' do
+    it 'builds the match payload from stored compiled program snapshots' do
+      match = Match.create!(
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_compiled_program_snapshot: { 'version' => 'white-snapshot' },
+        black_compiled_program_snapshot: { 'version' => 'black-snapshot' },
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      payload = described_class.new.send(:match_payload, match)
+
+      expect(payload).to include(
+        white_compiled_program: { 'version' => 'white-snapshot' },
+        black_compiled_program: { 'version' => 'black-snapshot' },
+        max_plies: 200
+      )
+    end
+
     it 'marks the match completed and persists computed state on success' do
       match = Match.create!(
         creator: user,
         white_player: white_bot,
         black_player: black_bot,
+        white_compiled_program_snapshot: { 'version' => 'white-snapshot' },
+        black_compiled_program_snapshot: { 'version' => 'black-snapshot' },
         status: :pending,
         allowed_to_move: 'W',
         captured_pieces: [],
@@ -49,6 +74,8 @@ RSpec.describe ComputeMatchJob, type: :job do
         creator: user,
         white_player: white_bot,
         black_player: black_bot,
+        white_compiled_program_snapshot: { 'version' => 'white-snapshot' },
+        black_compiled_program_snapshot: { 'version' => 'black-snapshot' },
         status: :pending,
         allowed_to_move: 'W',
         captured_pieces: [],
