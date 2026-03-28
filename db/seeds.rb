@@ -344,6 +344,1506 @@ seed_bots = [
         }
       }
     ]
+  },
+  {
+    name: 'Calculated Predator',
+    description: 'Recognizes mate, values clean tactical wins, and pressures the king without hanging pieces for free.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 12
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 6
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      }
+    ]
+  },
+  {
+    name: 'Cold-Eyed Accountant',
+    description: 'Refuses obviously losing tactics, cashes in clean wins, and only values pressure that survives contact.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -200
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 8
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 12
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      }
+    ]
+  },
+  {
+    name: 'Pragmatic Executioner',
+    description: 'Uses chained tactical filters to avoid nonsense, cash in clean captures, and only value king pressure that survives contact.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -200
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 14
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 7
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 8
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'shielded_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 6
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 6
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'coverer_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      }
+    ]
+  },
+  {
+    name: 'Forcing Pragmatist',
+    description: 'Prioritizes clean forcing tactics, values urgent material wins, and only spends attention on positional gains after tactical sanity checks.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -200
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -120
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 90
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 18
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'shielded_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 7
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'coverer_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 1
+        }
+      }
+    ]
+  },
+  {
+    name: 'Initiative Addict',
+    description: 'Values pressure, tempo, and forcing king attacks more than tidy piece safety, while still refusing obviously suicidal blunders.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -120
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 80
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 14
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 14
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'shielded_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 8
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'shielder_count',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 6
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 2
+        }
+      }
+    ]
+  },
+  {
+    name: 'Development Materialist',
+    description: 'Pushes for opening activity and mobility, while eagerly cashing loose pieces even when the resulting position is a little messy.',
+    branches: [
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 1000
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          },
+          {
+            subject: 'allies',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: -100
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'queen',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'return',
+          value: 85
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 16
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'captured_piece',
+            subjectSpecifier: 'any',
+            relation: 'piece_count',
+            relationSpecifier: 'any',
+            comparison: 'count',
+            comparisonValue: 'captured_piece_value'
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'none',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 10
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'knight',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 6
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'bishop',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'knight',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 5
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'bishop',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 4
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'allies',
+            subjectSpecifier: 'rook',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 3
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'greater_than',
+            comparisonValue: 'prior_board_state'
+          },
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any',
+            comparison: 'less_than',
+            comparisonValue: 'prior_board_state'
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 8
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          },
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'defender_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'add',
+          value: 2
+        }
+      },
+      {
+        conditions: [
+          {
+            subject: 'moved_piece',
+            subjectSpecifier: 'any',
+            relation: 'attacker_count',
+            relationSpecifier: 'any',
+            comparison: 'any',
+            comparisonValue: nil
+          }
+        ],
+        action: {
+          action_type: 'subtract',
+          value: 1
+        }
+      }
+    ]
   }
 ]
 
