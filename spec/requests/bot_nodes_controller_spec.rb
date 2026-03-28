@@ -68,10 +68,10 @@ RSpec.describe BotNodesController, type: :request do
           data: {
             subject: 'moved_piece',
             subjectSpecifier: 'any',
-            relation: 'attacker_count',
+            relation: 'attacker',
             relationSpecifier: 'any',
-            comparison: 'any',
-            comparisonValue: nil
+            comparison: 'greater_than',
+            comparisonValue: 0
           }
         }
       }
@@ -89,7 +89,7 @@ RSpec.describe BotNodesController, type: :request do
 
     it 'creates a node with valid params' do
       expect {
-        post bot_nodes_path(bot), params: valid_params
+        post bot_nodes_path(bot), params: valid_params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
       }.to change(Node, :count).by(1)
       expect(response).to have_http_status(:created)
       json = JSON.parse(response.body)
@@ -97,7 +97,7 @@ RSpec.describe BotNodesController, type: :request do
     end
 
     it 'assigns the node to the bot' do
-      post bot_nodes_path(bot), params: valid_params
+      post bot_nodes_path(bot), params: valid_params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
       created_node = bot.nodes.find(JSON.parse(response.body)['id'])
       expect(created_node.bot).to eq(bot)
     end
@@ -119,21 +119,21 @@ RSpec.describe BotNodesController, type: :request do
           data: {
             subject: 'allies',
             subjectSpecifier: 'any',
-            relation: 'attacker_count',
+            relation: 'attacker',
             relationSpecifier: 'any',
-            comparison: 'any',
-            comparisonValue: nil
+            comparison: 'greater_than',
+            comparisonValue: 0
           }
         }
       }
     end
 
     it 'updates the node with valid params' do
-      patch bot_node_path(bot, node), params: valid_params
+      patch bot_node_path(bot, node), params: valid_params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
       node.reload
       expect(node.data['subject']).to eq('allies')
       expect(node.data['subjectSpecifier']).to eq('any')
-      expect(node.data['relation']).to eq('attacker_count')
+      expect(node.data['relation']).to eq('attacker')
       expect(node.data['relationSpecifier']).to eq('any')
       expect(response).to have_http_status(:success)
     end
