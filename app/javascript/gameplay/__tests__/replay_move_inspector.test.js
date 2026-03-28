@@ -78,4 +78,31 @@ describe('ReplayMoveInspector', () => {
       ReplayMoveInspector.moveKey(moveC)
     ])
   })
+
+  it('tracks current choice separately from an explicitly selected move', () => {
+    const moveA = { startPosition: 1, endPosition: 9 }
+    const moveB = { startPosition: 2, endPosition: 10 }
+    const inspector = new ReplayMoveInspector({
+      compiledProgram: {},
+      botRunner: {
+        scoreLegalMoves: () => ([
+          { moveObject: moveA, score: 8 },
+          { moveObject: moveB, score: 4 }
+        ]),
+        scoreMove: ({ moveObject }) => ({ score: moveObject === moveB ? 4 : 8, halted: false, trace: [] })
+      },
+      notationResolver: { resolve: () => { throw new Error('unused') } }
+    })
+
+    const result = inspector.inspectPosition({
+      board: {},
+      selectedMoveKey: ReplayMoveInspector.moveKey(moveB)
+    })
+
+    expect(result.currentChoiceKey).toBe(ReplayMoveInspector.moveKey(moveA))
+    expect(result.currentChoiceMove.moveObject).toBe(moveA)
+    expect(result.explicitSelectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
+    expect(result.selectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
+    expect(result.selectedMove.moveObject).toBe(moveB)
+  })
 })

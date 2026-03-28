@@ -442,6 +442,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'enables delete button when node selected' do
       click_button '+ Condition'
+      expect_node_count(2)
 
       # Select the condition node
       condition_node = Node.where(bot: bot, node_type: 'condition').first

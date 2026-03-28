@@ -27,7 +27,7 @@ class ReplayTraceView {
     const selectedMove = result.selectedMove?.moveObject
     const selectedNotation = selectedMove ? Board.gridCalculator(selectedMove.endPosition) : "none"
     const tiedTopCount = result.tiedTopMoveKeys.length
-    const selectedTied = result.selectedMoveKey && result.tiedTopMoveKeys.includes(result.selectedMoveKey)
+    const selectedTied = result.currentChoiceKey && result.tiedTopMoveKeys.includes(result.currentChoiceKey)
 
     this.traceSummaryElement.innerHTML = ""
 
@@ -46,7 +46,7 @@ class ReplayTraceView {
 
     const moveSummary = document.createElement("span")
     moveSummary.className = "match-replay-trace-meta"
-    moveSummary.innerText = inspection.selectedStartSquare
+    moveSummary.innerText = result.explicitSelectedMoveKey
       ? `selected move: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
       : `current choice: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
     summaryRow.appendChild(moveSummary)

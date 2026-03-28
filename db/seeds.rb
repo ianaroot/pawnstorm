@@ -76,6 +76,113 @@ def create_branch!(bot:, root:, branch_index:, conditions:, action:)
   connect!(previous_node, action_node)
 end
 
+def cond(subject:, relation:, comparison:, comparison_value:, subject_specifier: 'any', relation_specifier: 'any')
+  {
+    subject: subject,
+    subjectSpecifier: subject_specifier,
+    relation: relation,
+    relationSpecifier: relation_specifier,
+    comparison: comparison,
+    comparisonValue: comparison_value
+  }
+end
+
+def branch(conditions:, action_type:, value:)
+  {
+    conditions: conditions,
+    action: {
+      action_type: action_type,
+      value: value
+    }
+  }
+end
+
+def mate_branch(score: 1000)
+  branch(
+    conditions: [
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 0),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 0)
+    ],
+    action_type: 'return',
+    value: score
+  )
+end
+
+def queen_capture_branch(score:)
+  branch(
+    conditions: [
+      cond(subject: 'captured_piece', subject_specifier: 'queen', relation: 'count', comparison: 'equal_to', comparison_value: 1)
+    ],
+    action_type: 'return',
+    value: score
+  )
+end
+
+def winning_capture_branch(score:, defended: false, king_safety: nil)
+  conditions = [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value')
+  ]
+
+  if defended
+    conditions << cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  end
+
+  case king_safety
+  when :stable
+    conditions << cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  when :improved
+    conditions << cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
+  end
+
+  branch(conditions: conditions, action_type: 'return', value: score)
+end
+
+def king_net_branch(score:, stable_king: false)
+  conditions = [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ]
+
+  if stable_king
+    conditions << cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  end
+
+  branch(conditions: conditions, action_type: 'return', value: score)
+end
+
+def forcing_reply_branch(value:, defended: false)
+  conditions = [
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 1)
+  ]
+
+  if defended
+    conditions << cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  end
+
+  branch(conditions: conditions, action_type: 'add', value: value)
+end
+
+def king_shelter_damage_branch(value:)
+  branch(
+    conditions: [
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'shielder', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'coverer', comparison: 'less_than', comparison_value: 'prior_board_state')
+    ],
+    action_type: 'add',
+    value: value
+  )
+end
+
+def development_branch(piece_type:, value:)
+  branch(
+    conditions: [
+      cond(subject: 'allies', subject_specifier: piece_type, relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state')
+    ],
+    action_type: 'add',
+    value: value
+  )
+end
+
 seed_bots = [
   {
     name: 'Tactician',
@@ -1537,6 +1644,89 @@ seed_bots = [
           value: 4
         }
       }
+    ]
+  },
+  {
+    name: 'Taxman',
+    description: 'Converts material first, then chokes the king, then prefers forcing moves. Development matters late, and king safety only after the loot and pressure questions are settled.',
+    branches: [
+      mate_branch,
+      queen_capture_branch(score: 95),
+      winning_capture_branch(score: 78, defended: true),
+      winning_capture_branch(score: 62),
+      king_net_branch(score: 52),
+      king_shelter_damage_branch(value: 16),
+      forcing_reply_branch(value: 14),
+      {
+        conditions: [
+          cond(subject: 'opponents', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state')
+        ],
+        action: {
+          action_type: 'add',
+          value: 10
+        }
+      },
+      development_branch(piece_type: 'knight', value: 4),
+      development_branch(piece_type: 'bishop', value: 4),
+      {
+        conditions: [
+          cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+        ],
+        action: {
+          action_type: 'return',
+          value: -18
+        }
+      }
+    ]
+  },
+  {
+    name: 'Castellan',
+    description: 'Still converts material and hunts king nets, but treats king safety as a real constraint before drifting into quiet development.',
+    branches: [
+      mate_branch,
+      {
+        conditions: [
+          cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+          cond(subject: 'moved_piece', relation: 'defender', comparison: 'equal_to', comparison_value: 0)
+        ],
+        action: {
+          action_type: 'return',
+          value: -140
+        }
+      },
+      winning_capture_branch(score: 72, defended: true),
+      winning_capture_branch(score: 58, king_safety: :stable),
+      king_net_branch(score: 48, stable_king: true),
+      forcing_reply_branch(value: 14, defended: true),
+      {
+        conditions: [
+          cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
+        ],
+        action: {
+          action_type: 'add',
+          value: 12
+        }
+      },
+      {
+        conditions: [
+          cond(subject: 'allies', subject_specifier: 'king', relation: 'coverer', comparison: 'greater_than', comparison_value: 'prior_board_state')
+        ],
+        action: {
+          action_type: 'add',
+          value: 8
+        }
+      },
+      {
+        conditions: [
+          cond(subject: 'allies', subject_specifier: 'king', relation: 'covered', comparison: 'greater_than', comparison_value: 'prior_board_state')
+        ],
+        action: {
+          action_type: 'add',
+          value: 8
+        }
+      },
+      development_branch(piece_type: 'knight', value: 4),
+      development_branch(piece_type: 'bishop', value: 4)
     ]
   }
 ]

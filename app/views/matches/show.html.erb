@@ -30,6 +30,9 @@
     </div>
   <% elsif @match.failed? %>
     <p>Match generation failed.</p>
+    <% if @match.error_message.present? %>
+      <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+    <% end %>
   <% else %>
     <div
       class="match-replay-layout"
@@ -71,6 +74,7 @@
             <button type="button" data-match-replay-target="forward-button">Forward</button>
             <button type="button" data-match-replay-target="play-button">Play</button>
             <button type="button" data-match-replay-target="reverse-button">Reverse</button>
+            <button type="button" data-match-replay-target="selected-move-toggle">Mute selected</button>
           </div>
           <div class="match-replay-speed">
             <span>Speed</span>

@@ -16,7 +16,7 @@ class ReplayMoveInspector {
     ].join(':')
   }
 
-  inspectPosition({ board, actualMoveNotation = null, selectedMoveKey = null, restrictToStartPosition = null }) {
+  inspectPosition({ board, actualMoveNotation = null, selectedMoveKey = null, restrictToStartPosition = null, autoSelectVisibleMove = true }) {
     const scoredMoves = this.botRunner.scoreLegalMoves({ board }).map(result => ({
       ...result,
       key: ReplayMoveInspector.moveKey(result.moveObject)
@@ -29,15 +29,24 @@ class ReplayMoveInspector {
     const visibleMoves = restrictToStartPosition === null
       ? scoredMoves
       : scoredMoves.filter(result => result.moveObject.startPosition === restrictToStartPosition)
-    const effectiveSelectedMoveKey = this.selectedMoveKey({
+    const currentChoiceKey = this.currentChoiceKey({
       scoredMoves,
-      visibleMoves,
-      selectedMoveKey,
       actualMoveKey
     })
-    const selectedMove = scoredMoves.find(result => result.key === effectiveSelectedMoveKey) || null
-    const selectedTrace = selectedMove
-      ? this.botRunner.scoreMove({ board, moveObject: selectedMove.moveObject, withTrace: true })
+    const explicitSelectedMoveKey = this.explicitSelectedMoveKey({
+      scoredMoves,
+      selectedMoveKey
+    })
+    const inspectedMoveKey = this.inspectedMoveKey({
+      visibleMoves,
+      explicitSelectedMoveKey,
+      currentChoiceKey,
+      autoSelectVisibleMove
+    })
+    const currentChoiceMove = scoredMoves.find(result => result.key === currentChoiceKey) || null
+    const inspectedMove = scoredMoves.find(result => result.key === inspectedMoveKey) || null
+    const selectedTrace = inspectedMove
+      ? this.botRunner.scoreMove({ board, moveObject: inspectedMove.moveObject, withTrace: true })
       : null
 
     return {
@@ -46,8 +55,11 @@ class ReplayMoveInspector {
       topScore,
       tiedTopMoveKeys,
       actualMoveKey,
-      selectedMoveKey: selectedMove?.key || null,
-      selectedMove,
+      currentChoiceKey: currentChoiceMove?.key || null,
+      currentChoiceMove,
+      explicitSelectedMoveKey,
+      selectedMoveKey: inspectedMove?.key || null,
+      selectedMove: inspectedMove,
       selectedTrace,
       actualMoveWasTopScored: actualMoveKey ? tiedTopMoveKeys.includes(actualMoveKey) : false
     }
@@ -67,13 +79,38 @@ class ReplayMoveInspector {
     }
   }
 
-  selectedMoveKey({ scoredMoves, visibleMoves, selectedMoveKey, actualMoveKey }) {
+  currentChoiceKey({ scoredMoves, actualMoveKey }) {
+    if (actualMoveKey) {
+      return actualMoveKey
+    }
+
+    if (scoredMoves.length === 0) {
+      return null
+    }
+
+    const topScore = Math.max(...scoredMoves.map(result => result.score))
+    return scoredMoves.find(result => result.score === topScore)?.key || null
+  }
+
+  explicitSelectedMoveKey({ scoredMoves, selectedMoveKey }) {
     if (selectedMoveKey && scoredMoves.some(result => result.key === selectedMoveKey)) {
       return selectedMoveKey
     }
 
-    if (actualMoveKey) {
-      return actualMoveKey
+    return null
+  }
+
+  inspectedMoveKey({ visibleMoves, explicitSelectedMoveKey, currentChoiceKey, autoSelectVisibleMove }) {
+    if (explicitSelectedMoveKey) {
+      return explicitSelectedMoveKey
+    }
+
+    if (currentChoiceKey) {
+      return currentChoiceKey
+    }
+
+    if (!autoSelectVisibleMove) {
+      return null
     }
 
     if (visibleMoves.length === 0) {

@@ -17,6 +17,7 @@ class MatchReplayController {
     this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
     this.forwardButton = rootElement.querySelector('[data-match-replay-target="forward-button"]')
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
+    this.selectedMoveToggle = rootElement.querySelector('[data-match-replay-target="selected-move-toggle"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
@@ -25,6 +26,7 @@ class MatchReplayController {
     this.backButton?.addEventListener('click', this.stepBackwardOnce.bind(this))
     this.forwardButton?.addEventListener('click', this.stepForwardOnce.bind(this))
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
+    this.selectedMoveToggle?.addEventListener('click', this.toggleSelectedMoveHighlight.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
     this.boardElement?.addEventListener('click', this.handleBoardClick.bind(this))
     this.speedButtons.forEach(button => {
@@ -52,6 +54,7 @@ class MatchReplayController {
     this.movePairs = this.buildMovePairs()
     this.selectedStartPosition = null
     this.selectedMoveKey = null
+    this.muteSelectedMoveHighlight = false
     this.renderCurrentFrame()
   }
 
@@ -229,6 +232,11 @@ class MatchReplayController {
     this.stepForward()
   }
 
+  toggleSelectedMoveHighlight() {
+    this.muteSelectedMoveHighlight = !this.muteSelectedMoveHighlight
+    this.renderCurrentFrame()
+  }
+
   jumpToStart() {
     if (this.isPlaying) {
       this.pause()
@@ -317,11 +325,12 @@ class MatchReplayController {
     const result = inspector.inspectPosition({
       board,
       selectedMoveKey: this.selectedMoveKey,
-      restrictToStartPosition: this.selectedStartPosition
+      restrictToStartPosition: this.selectedStartPosition,
+      autoSelectVisibleMove: !(this.selectedStartPosition && this.selectedMoveKey === null)
     })
 
-    if (this.selectedMoveKey !== result.selectedMoveKey) {
-      this.selectedMoveKey = result.selectedMoveKey
+    if (this.selectedMoveKey !== result.explicitSelectedMoveKey) {
+      this.selectedMoveKey = result.explicitSelectedMoveKey
     }
 
     return {
@@ -349,7 +358,8 @@ class MatchReplayController {
       result: this.result,
       totalMoves: this.totalPlayableMoves,
       warning: this.warning,
-      inspection
+      inspection,
+      muteSelectedMoveHighlight: this.muteSelectedMoveHighlight
     })
   }
 
