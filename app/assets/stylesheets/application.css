@@ -234,11 +234,40 @@ button[type="submit"] {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
+}
+
+.match-replay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.match-replay-speed {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.match-replay-speed-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.match-replay-speed-button--active {
+  background-color: #1d4ed8;
+  color: white;
+  border-color: #1d4ed8;
+  font-weight: 700;
 }
 
 .match-replay-notation {
   margin: 0;
   padding-left: 1.25rem;
+  max-height: 26rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .match-replay-notation-row {
@@ -248,7 +277,17 @@ button[type="submit"] {
 }
 
 .match-replay-move {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
   color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.match-replay-move:hover {
+  text-decoration: underline;
 }
 
 .match-replay-move--current {

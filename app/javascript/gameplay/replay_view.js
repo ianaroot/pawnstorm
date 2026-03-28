@@ -12,13 +12,17 @@ class ReplayView {
   constructor({ rootElement }) {
     this.rootElement = rootElement
     this.playButton = rootElement.querySelector('[data-match-replay-target="play-button"]')
+    this.reverseButton = rootElement.querySelector('[data-match-replay-target="reverse-button"]')
+    this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
+    this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
+    this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.statusElement = rootElement.querySelector('[data-match-replay-target="status"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.warningElement = rootElement.querySelector('[data-match-replay-target="warning"]')
   }
 
-  renderFrame({ board, currentMoveIndex, isPlaying, movePairs, result, totalMoves, warning }) {
+  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning }) {
     renderBoardPieces(board)
     updateCaptureAreaSizing(board)
     updateCaptures(board)
@@ -26,7 +30,7 @@ class ReplayView {
     updateTeamAllowedToMove(board)
     displayAlerts("")
     this.renderStatus({ currentMoveIndex, totalMoves })
-    this.renderControls({ isPlaying })
+    this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves })
     this.renderResult(result)
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
@@ -48,9 +52,34 @@ class ReplayView {
     this.statusElement.innerText = `Move ${currentMoveIndex + 1} of ${totalMoves}`
   }
 
-  renderControls({ isPlaying }) {
-    if (!this.playButton) { return }
-    this.playButton.innerText = isPlaying ? "Pause" : "Play"
+  renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves }) {
+    if (this.playButton) {
+      this.playButton.innerText = isPlaying && playDirection === 1 ? "Pause" : "Play"
+    }
+
+    if (this.reverseButton) {
+      this.reverseButton.innerText = isPlaying && playDirection === -1 ? "Pause" : "Reverse"
+    }
+
+    if (this.startButton) {
+      this.startButton.disabled = currentMoveIndex === -1
+    }
+
+    if (this.backButton) {
+      this.backButton.disabled = currentMoveIndex === -1
+    }
+
+    if (this.playButton) {
+      this.playButton.disabled = currentMoveIndex >= totalMoves - 1
+    }
+
+    if (this.reverseButton) {
+      this.reverseButton.disabled = currentMoveIndex === -1
+    }
+
+    this.speedButtons.forEach(button => {
+      button.classList.toggle('match-replay-speed-button--active', Number(button.dataset.speedMultiplier) === speedMultiplier)
+    })
   }
 
   renderResult(result) {
@@ -69,31 +98,65 @@ class ReplayView {
     if (!this.notationElement) { return }
 
     this.notationElement.innerHTML = ""
+    let currentMoveRow = null
 
     for (let i = 0; i < movePairs.length; i++) {
       const [whiteMove, blackMove] = movePairs[i]
       const row = document.createElement("li")
       row.className = "match-replay-notation-row"
 
-      const whiteSpan = document.createElement("span")
+      const whiteSpan = document.createElement("button")
+      whiteSpan.type = "button"
       whiteSpan.className = "match-replay-move"
+      whiteSpan.dataset.moveIndex = i * 2
       whiteSpan.innerText = whiteMove
       if (currentMoveIndex === i * 2) {
         whiteSpan.classList.add("match-replay-move--current")
+        currentMoveRow = row
       }
       row.appendChild(whiteSpan)
 
       if (blackMove) {
-        const blackSpan = document.createElement("span")
+        const blackSpan = document.createElement("button")
+        blackSpan.type = "button"
         blackSpan.className = "match-replay-move"
+        blackSpan.dataset.moveIndex = i * 2 + 1
         blackSpan.innerText = blackMove
         if (currentMoveIndex === i * 2 + 1) {
           blackSpan.classList.add("match-replay-move--current")
+          currentMoveRow = row
         }
         row.appendChild(blackSpan)
       }
 
       this.notationElement.appendChild(row)
+    }
+
+    this.scrollNotationToCurrentMove({ currentMoveIndex, currentMoveRow })
+  }
+
+  scrollNotationToCurrentMove({ currentMoveIndex, currentMoveRow }) {
+    if (!this.notationElement) { return }
+
+    if (currentMoveIndex === -1) {
+      this.notationElement.scrollTop = 0
+      return
+    }
+
+    if (!currentMoveRow) { return }
+
+    const containerRect = this.notationElement.getBoundingClientRect()
+    const rowRect = currentMoveRow.getBoundingClientRect()
+    const upperBand = containerRect.top + (containerRect.height * 0.2)
+    const lowerBand = containerRect.top + (containerRect.height * 0.7)
+
+    if (rowRect.bottom > lowerBand) {
+      this.notationElement.scrollTop += rowRect.bottom - lowerBand
+      return
+    }
+
+    if (rowRect.top < upperBand) {
+      this.notationElement.scrollTop -= upperBand - rowRect.top
     }
   }
 }

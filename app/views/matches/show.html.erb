@@ -50,7 +50,22 @@
 
       <div class="match-replay-sidebar">
         <p data-match-replay-target="result"></p>
-        <button type="button" data-match-replay-target="play-button">Play</button>
+        <div class="match-replay-controls">
+          <button type="button" data-match-replay-target="start-button">Start</button>
+          <button type="button" data-match-replay-target="back-button">Back</button>
+          <button type="button" data-match-replay-target="play-button">Play</button>
+          <button type="button" data-match-replay-target="reverse-button">Reverse</button>
+        </div>
+        <div class="match-replay-speed">
+          <span>Speed</span>
+          <div class="match-replay-speed-buttons">
+            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
+            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
+            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
+            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
+            <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
+          </div>
+        </div>
         <p data-match-replay-target="status"></p>
         <p data-match-replay-target="warning" hidden></p>
         <ol data-match-replay-target="notation" class="match-replay-notation"></ol>

@@ -5,15 +5,30 @@ import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
 import Sound from "gameplay/sound"
 
 class MatchReplayController {
-  constructor({ rootElement, intervalMs = 2000 }) {
+  constructor({ rootElement, intervalMs = 1250 }) {
     this.rootElement = rootElement
+    this.baseIntervalMs = intervalMs
+    this.speedMultiplier = 1
     this.intervalMs = intervalMs
     this.view = new ReplayView({ rootElement })
     this.playButton = rootElement.querySelector('[data-match-replay-target="play-button"]')
-    this.playButton?.addEventListener('click', this.togglePlayback.bind(this))
+    this.reverseButton = rootElement.querySelector('[data-match-replay-target="reverse-button"]')
+    this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
+    this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
+    this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
+    this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
+    this.playButton?.addEventListener('click', () => this.togglePlayback(1))
+    this.reverseButton?.addEventListener('click', () => this.togglePlayback(-1))
+    this.backButton?.addEventListener('click', this.stepBackwardOnce.bind(this))
+    this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
+    this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
+    this.speedButtons.forEach(button => {
+      button.addEventListener('click', () => this.setSpeed(Number(button.dataset.speedMultiplier)))
+    })
 
     this.intervalId = null
     this.isPlaying = false
+    this.playDirection = 1
     this.currentMoveIndex = -1
     this.warning = null
     this.notationResolver = new NotationResolver()
@@ -76,33 +91,81 @@ class MatchReplayController {
     return movePairs
   }
 
-  togglePlayback() {
+  atStart() {
+    return this.currentMoveIndex <= -1
+  }
+
+  atEnd() {
+    return this.currentMoveIndex >= this.totalPlayableMoves - 1
+  }
+
+  setIntervalMs() {
+    this.intervalMs = Math.round(this.baseIntervalMs / this.speedMultiplier)
+  }
+
+  setSpeed(multiplier) {
+    this.speedMultiplier = multiplier
+    this.setIntervalMs()
+
     if (this.isPlaying) {
+      this.restartPlayback()
+      return
+    }
+
+    this.renderCurrentFrame()
+  }
+
+  togglePlayback(direction) {
+    if (this.isPlaying && this.playDirection === direction) {
       this.pause()
     } else {
-      this.play()
+      this.play(direction)
     }
   }
 
-  play() {
-    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) { return }
+  play(direction = 1) {
+    if ((direction === 1 && this.atEnd()) || (direction === -1 && this.atStart())) { return }
 
     this.isPlaying = true
+    this.playDirection = direction
     this.renderCurrentFrame()
-    this.intervalId = window.setInterval(() => this.stepForward(), this.intervalMs)
+    this.startPlayback()
   }
 
-  pause() {
-    this.isPlaying = false
+  startPlayback() {
+    this.stopPlaybackTimer()
+    this.intervalId = window.setInterval(() => this.stepByDirection(), this.intervalMs)
+  }
+
+  restartPlayback() {
+    if (!this.isPlaying) { return }
+    this.startPlayback()
+  }
+
+  stopPlaybackTimer() {
     if (this.intervalId) {
       window.clearInterval(this.intervalId)
       this.intervalId = null
     }
+  }
+
+  pause() {
+    this.isPlaying = false
+    this.stopPlaybackTimer()
     this.renderCurrentFrame()
   }
 
+  stepByDirection() {
+    if (this.playDirection === -1) {
+      this.stepBackward()
+      return
+    }
+
+    this.stepForward()
+  }
+
   stepForward() {
-    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) {
+    if (this.atEnd()) {
       this.pause()
       return
     }
@@ -111,9 +174,53 @@ class MatchReplayController {
     this.playReplaySound(this.movementNotation[this.currentMoveIndex])
     this.renderCurrentFrame()
 
-    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) {
+    if (this.atEnd()) {
       this.pause()
     }
+  }
+
+  stepBackward() {
+    if (this.atStart()) {
+      this.pause()
+      return
+    }
+
+    this.playReplaySound(this.movementNotation[this.currentMoveIndex])
+    this.currentMoveIndex -= 1
+    this.renderCurrentFrame()
+
+    if (this.atStart()) {
+      this.pause()
+    }
+  }
+
+  stepBackwardOnce() {
+    if (this.isPlaying) {
+      this.pause()
+    }
+
+    this.stepBackward()
+  }
+
+  jumpToStart() {
+    if (this.isPlaying) {
+      this.pause()
+    }
+
+    this.currentMoveIndex = -1
+    this.renderCurrentFrame()
+  }
+
+  jumpToNotationMove(event) {
+    const moveButton = event.target.closest('[data-move-index]')
+    if (!moveButton) { return }
+
+    if (this.isPlaying) {
+      this.pause()
+    }
+
+    this.currentMoveIndex = Number(moveButton.dataset.moveIndex)
+    this.renderCurrentFrame()
   }
 
   renderCurrentFrame() {
@@ -130,6 +237,8 @@ class MatchReplayController {
       board,
       currentMoveIndex: this.currentMoveIndex,
       isPlaying: this.isPlaying,
+      playDirection: this.playDirection,
+      speedMultiplier: this.speedMultiplier,
       movePairs: this.movePairs,
       result: this.result,
       totalMoves: this.totalPlayableMoves,
