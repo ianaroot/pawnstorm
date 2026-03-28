@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { adjacentPositions, attackingPositions, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
+import { adjacentPositions, attackingPositions, controlledSquares, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -88,73 +88,73 @@ class CandidateMoveAnalysis {
         return this.mobilityValue(positions, boardScope)
       case 'adjacent':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'adjacent',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'attacker':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'attacker',
-          team: Board.opposingTeam(this.movedPieceTeam()),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'attacked':
         return this.countPositionsWithRelation({
+          query,
           positions,
-          relation: 'attacker',
-          team: Board.opposingTeam(this.movedPieceTeam()),
+          relation: 'attacked',
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'defender':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'defender',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'defended':
         return this.countPositionsWithRelation({
+          query,
           positions,
-          relation: 'defender',
-          team: this.movedPieceTeam(),
+          relation: 'defended',
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'shielder':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'shielder',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'shielded':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'shielded',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'coverer':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'coverer',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
       case 'covered':
         return this.aggregatePositionRelationValue({
+          query,
           positions,
           relation: 'covered',
-          team: this.movedPieceTeam(),
           relationSpecifier: query.relationSpecifier,
           boardScope
         })
@@ -235,42 +235,75 @@ class CandidateMoveAnalysis {
     return moveObjects.length
   }
 
-  aggregatePositionRelationValue({ positions, relation, team, relationSpecifier, boardScope = 'after' }) {
+  subjectTeam(query) {
+    switch (query.subject) {
+      case 'moved_piece':
+      case 'allies':
+        return this.movedPieceTeam()
+      case 'opponents':
+        return Board.opposingTeam(this.movedPieceTeam())
+      default:
+        throw new Error(`Unknown positional subject for team resolution: ${query.subject}`)
+    }
+  }
+
+  relatedTeamFor({ query, relation }) {
+    const subjectTeam = this.subjectTeam(query)
+
+    switch (relation) {
+      case 'adjacent':
+      case 'defender':
+      case 'defended':
+      case 'shielder':
+      case 'shielded':
+      case 'coverer':
+      case 'covered':
+        return subjectTeam
+      case 'attacker':
+      case 'attacked':
+        return Board.opposingTeam(subjectTeam)
+      default:
+        throw new Error(`Unknown relation for team resolution: ${relation}`)
+    }
+  }
+
+  aggregatePositionRelationValue({ query, positions, relation, relationSpecifier, boardScope = 'after' }) {
     return positions.reduce((sum, targetPosition) => {
       return sum + this.positionRelationValue({
+        query,
         relation,
         targetPosition,
-        team,
         relationSpecifier,
         boardScope
       })
     }, 0)
   }
 
-  countPositionsWithRelation({ positions, relation, team, relationSpecifier, boardScope = 'after' }) {
+  countPositionsWithRelation({ query, positions, relation, relationSpecifier, boardScope = 'after' }) {
     return positions.filter(targetPosition => {
       return this.positionRelationValue({
+        query,
         relation,
         targetPosition,
-        team,
         relationSpecifier,
         boardScope
       }) > 0
     }).length
   }
 
-  positionRelationValue({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
+  positionRelationValue({ query, relation, targetPosition, relationSpecifier, boardScope = 'after' }) {
     return this.relatedPositions({
+      query,
       relation,
       targetPosition,
-      team,
       relationSpecifier,
       boardScope
     }).length
   }
 
-  relatedPositions({ relation, targetPosition, team, relationSpecifier, boardScope = 'after' }) {
+  relatedPositions({ query, relation, targetPosition, relationSpecifier, boardScope = 'after' }) {
     const board = this.boardForScope(boardScope)
+    const team = this.relatedTeamFor({ query, relation })
 
     const positions = this.rawRelatedPositions({
       relation,
@@ -300,12 +333,24 @@ class CandidateMoveAnalysis {
           targetPosition,
           team
         })
+      case 'attacked':
+        return this.controlledPositions({
+          board,
+          sourcePosition: targetPosition,
+          team
+        })
       case 'defender':
         return defendingPositions({
           board,
           targetPosition,
           team
         })
+      case 'defended':
+        return this.controlledPositions({
+          board,
+          sourcePosition: targetPosition,
+          team
+        }).filter(position => board.teamAt(position) === team)
       case 'shielder':
         return shieldingPositions({
           board,
@@ -333,6 +378,12 @@ class CandidateMoveAnalysis {
       default:
         throw new Error(`Unknown positional relation: ${relation}`)
     }
+  }
+
+  controlledPositions({ board, sourcePosition, team }) {
+    return controlledSquares({ board, attackerPosition: sourcePosition }).filter(position => {
+      return board.teamAt(position) === team
+    })
   }
 
   filterRelationPositions({ positions, relationSpecifier = 'any', boardScope = 'after' }) {

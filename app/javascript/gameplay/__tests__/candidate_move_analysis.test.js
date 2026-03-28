@@ -516,6 +516,75 @@ describe('CandidateMoveAnalysis', () => {
         })
       ).toBe(0)
     })
+
+    it('counts opponent pieces attacked by allied rooks', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          a8: 'bN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a1', 'a2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'attacker',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(1)
+    })
+
+    it('counts allied pieces attacked by opponent subjects', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wR',
+          d6: 'bN',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'knight',
+          relation: 'attacked',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(1)
+    })
+
+    it('counts opponent pieces defended by opponent subjects', () => {
+      const board = buildBoard({
+        pieces: {
+          c8: 'bB',
+          d7: 'bP',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'bishop',
+          relation: 'defended',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(1)
+    })
   })
 
   describe('shields', () => {
