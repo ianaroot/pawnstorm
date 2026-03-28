@@ -1,8 +1,11 @@
 import Board from "gameplay/board"
+import Layout from "gameplay/layout"
+import NotationResolver from "gameplay/notation_resolver"
 import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
+import Sound from "gameplay/sound"
 
 class MatchReplayController {
-  constructor({ rootElement, intervalMs = 1000 }) {
+  constructor({ rootElement, intervalMs = 2000 }) {
     this.rootElement = rootElement
     this.intervalMs = intervalMs
     this.view = new ReplayView({ rootElement })
@@ -13,44 +16,54 @@ class MatchReplayController {
     this.isPlaying = false
     this.currentMoveIndex = -1
     this.warning = null
+    this.notationResolver = new NotationResolver()
 
-    this.previousLayouts = JSON.parse(rootElement.dataset.previousLayouts)
     this.finalLayout = JSON.parse(rootElement.dataset.finalLayout)
     this.movementNotation = JSON.parse(rootElement.dataset.movementNotation)
     this.result = rootElement.dataset.result
 
     this.frames = this.buildFrames()
+    this.totalPlayableMoves = this.frames.length - 1
     this.movePairs = this.buildMovePairs()
     this.renderCurrentFrame()
   }
 
   buildFrames() {
-    const layouts = [...this.previousLayouts, this.finalLayout]
-    const frames = []
-    const capturedPieces = []
+    const board = new Board({
+      layOut: Layout.default(),
+      capturedPieces: [],
+      allowedToMove: Board.WHITE,
+      movementNotation: [],
+      previousLayouts: JSON.stringify([])
+    })
+    const frames = [this.snapshotBoard(board)]
 
-    for (let i = 0; i < layouts.length; i++) {
-      if (i > 0) {
-        const moveNotation = this.movementNotation[i - 1]
-        const capturedPiece = this.detectCapturedPiece({
-          previousLayout: layouts[i - 1],
-          nextLayout: layouts[i],
-          moveNotation
-        })
-
-        if (capturedPiece) {
-          capturedPieces.push(capturedPiece)
-        }
+    for (const notation of this.movementNotation) {
+      try {
+        const moveObject = this.notationResolver.resolve({ board, notation })
+        board._officiallyMovePiece(moveObject)
+        frames.push(this.snapshotBoard(board))
+      } catch (error) {
+        this.warning = `Replay stopped at ${notation}: ${error.message}`
+        console.warn(this.warning)
+        break
       }
+    }
 
-      frames.push({
-        layout: layouts[i],
-        capturedPieces: [...capturedPieces],
-        allowedToMove: i % 2 === 0 ? Board.WHITE : Board.BLACK
-      })
+    if (frames.length > 0 && JSON.stringify(frames.at(-1).layout) !== JSON.stringify(this.finalLayout)) {
+      this.warning = this.warning || 'Replay reconstruction did not match the persisted final layout.'
+      console.warn(this.warning)
     }
 
     return frames
+  }
+
+  snapshotBoard(board) {
+    return {
+      layout: Board._deepCopy(board.layOut),
+      capturedPieces: Board._deepCopy(board.capturedPieces),
+      allowedToMove: board.allowedToMove
+    }
   }
 
   buildMovePairs() {
@@ -72,7 +85,7 @@ class MatchReplayController {
   }
 
   play() {
-    if (this.currentMoveIndex >= this.movementNotation.length - 1) { return }
+    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) { return }
 
     this.isPlaying = true
     this.renderCurrentFrame()
@@ -89,15 +102,16 @@ class MatchReplayController {
   }
 
   stepForward() {
-    if (this.currentMoveIndex >= this.movementNotation.length - 1) {
+    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) {
       this.pause()
       return
     }
 
     this.currentMoveIndex += 1
+    this.playReplaySound(this.movementNotation[this.currentMoveIndex])
     this.renderCurrentFrame()
 
-    if (this.currentMoveIndex >= this.movementNotation.length - 1) {
+    if (this.currentMoveIndex >= this.totalPlayableMoves - 1) {
       this.pause()
     }
   }
@@ -118,44 +132,25 @@ class MatchReplayController {
       isPlaying: this.isPlaying,
       movePairs: this.movePairs,
       result: this.result,
-      totalMoves: this.movementNotation.length,
+      totalMoves: this.totalPlayableMoves,
       warning: this.warning
     })
   }
 
-  detectCapturedPiece({ previousLayout, nextLayout, moveNotation }) {
-    const disappearedPieces = []
+  playReplaySound(notation) {
+    if (!notation) { return }
 
-    for (let i = 0; i < previousLayout.length; i++) {
-      const previousPiece = previousLayout[i]
-      const nextPiece = nextLayout[i]
-
-      if (previousPiece !== Board.EMPTY_SQUARE && nextPiece === Board.EMPTY_SQUARE) {
-        disappearedPieces.push(previousPiece)
-      }
+    if (notation.includes('+') || notation.includes('#')) {
+      Sound.playSound('check')
+      return
     }
 
-    if (disappearedPieces.length === 0) { return null }
-    if (disappearedPieces.length === 1) { return disappearedPieces[0] }
+    if (notation.includes('x')) {
+      Sound.playSound('capture')
+      return
+    }
 
-    const promotionCapturePiece = this.detectPromotionCapture(disappearedPieces, moveNotation)
-    if (promotionCapturePiece) { return promotionCapturePiece }
-
-    const warning = `Unexpected replay transition after ${moveNotation}: ${disappearedPieces.join(', ')} disappeared`
-    console.warn(warning)
-    this.warning = warning
-    return null
-  }
-
-  detectPromotionCapture(disappearedPieces, moveNotation) {
-    if (!moveNotation.includes('=')) { return null }
-
-    const pawn = disappearedPieces.find(piece => Board.parseSpecies(piece) === Board.PAWN)
-    const capturedPiece = disappearedPieces.find(piece => Board.parseSpecies(piece) !== Board.PAWN)
-
-    if (pawn && capturedPiece) { return capturedPiece }
-
-    return null
+    Sound.playSound('move')
   }
 }
 

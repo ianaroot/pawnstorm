@@ -5,6 +5,8 @@
 
   <h1>Match <%= @match.id %></h1>
   <p>Status: <%= @match.status %></p>
+  <p>White: <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
+  <p>Black: <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
 
   <% if @match.error_message.present? %>
     <p>Error: <%= @match.error_message %></p>
@@ -32,7 +34,6 @@
     <div
       class="match-replay-layout"
       data-match-replay-page="true"
-      data-previous-layouts="<%= json_escape(@match.previous_layouts.to_json) %>"
       data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
       data-result="<%= @match.result %>"

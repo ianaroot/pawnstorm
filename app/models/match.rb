@@ -46,8 +46,8 @@ class Match < ApplicationRecord
 
   def completed_matches_require_replay_state
     return unless completed?
-    return if previous_layouts.present?
 
-    errors.add(:previous_layouts, 'must be present for completed matches')
+    errors.add(:lay_out, 'must be present for completed matches') unless lay_out.present?
+    errors.add(:movement_notation, 'must be present for completed matches') unless movement_notation.present?
   end
 end
