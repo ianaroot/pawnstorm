@@ -43,9 +43,10 @@ RSpec.describe Node, type: :model do
       node = build(:node, :condition, data: {
         subject: 'moved_piece',
         subjectSpecifier: 'any',
-        relation: 'attacker_count',
+        relation: 'attacker',
         relationSpecifier: 'any',
-        comparison: 'any',
+        comparison: 'greater_than',
+        comparisonValue: 0,
         banana: 'crime'
       })
 
@@ -59,33 +60,141 @@ RSpec.describe Node, type: :model do
         subjectSpecifier: 'any',
         relation: 'attacked_after_move',
         relationSpecifier: 'any',
-        comparison: 'any',
-        comparisonValue: nil
+        comparison: 'greater_than',
+        comparisonValue: 0
       })
 
       expect(node).not_to be_valid
       expect(node.errors[:data]).to include('has invalid relation')
     end
 
-    it 'rejects comparisonValue for any comparisons' do
+    it 'rejects positional relations for captured_piece conditions' do
       node = build(:node, :condition, data: {
-        subject: 'moved_piece',
+        subject: 'captured_piece',
         subjectSpecifier: 'any',
-        relation: 'attacker_count',
+        relation: 'mobility',
         relationSpecifier: 'any',
-        comparison: 'any',
-        comparisonValue: 1
+        comparison: 'greater_than',
+        comparisonValue: 0
       })
 
       expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('comparisonValue is not allowed for any/none comparisons')
+      expect(node.errors[:data]).to include('has invalid relation')
+    end
+
+    it 'accepts value for captured_piece conditions' do
+      node = build(:node, :condition, data: {
+        subject: 'captured_piece',
+        subjectSpecifier: 'any',
+        relation: 'value',
+        relationSpecifier: 'any',
+        comparison: 'greater_than',
+        comparisonValue: 3
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'accepts canonical captured_piece relations' do
+      node = build(:node, :condition, data: {
+        subject: 'captured_piece',
+        subjectSpecifier: 'any',
+        relation: 'value',
+        relationSpecifier: 'any',
+        comparison: 'greater_than',
+        comparisonValue: 3
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'rejects relation specifiers that are invalid for the subject' do
+      node = build(:node, :condition, data: {
+        subject: 'captured_piece',
+        subjectSpecifier: 'any',
+        relation: 'value',
+        relationSpecifier: 'pawn',
+        comparison: 'greater_than',
+        comparisonValue: 3
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid relationSpecifier')
+    end
+
+    it 'rejects relation specifiers that are invalid for the relation' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        subjectSpecifier: 'any',
+        relation: 'mobility',
+        relationSpecifier: 'pawn',
+        comparison: 'greater_than',
+        comparisonValue: 'prior_board_state'
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid relationSpecifier')
+    end
+
+    it 'accepts moved_piece as a relation specifier for positional spatial relations' do
+      node = build(:node, :condition, data: {
+        subject: 'allies',
+        subjectSpecifier: 'any',
+        relation: 'attacker',
+        relationSpecifier: 'moved_piece',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'rejects prior_board_state for captured_piece conditions' do
+      node = build(:node, :condition, data: {
+        subject: 'captured_piece',
+        subjectSpecifier: 'any',
+        relation: 'value',
+        relationSpecifier: 'any',
+        comparison: 'greater_than',
+        comparisonValue: 'prior_board_state'
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid comparisonValue')
+    end
+
+    it 'accepts prior_board_state for positional conditions' do
+      node = build(:node, :condition, data: {
+        subject: 'allies',
+        subjectSpecifier: 'any',
+        relation: 'value',
+        relationSpecifier: 'any',
+        comparison: 'greater_than',
+        comparisonValue: 'prior_board_state'
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'requires comparisonValue for all comparisons' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        subjectSpecifier: 'any',
+        relation: 'attacker',
+        relationSpecifier: 'any',
+        comparison: 'equal_to',
+        comparisonValue: nil
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid comparisonValue')
     end
 
     it 'allows comparisonValue for less_than comparisons' do
       node = build(:node, :condition, data: {
         subject: 'allies',
         subjectSpecifier: 'king',
-        relation: 'shielder_count',
+        relation: 'shielder',
         relationSpecifier: 'any',
         comparison: 'less_than',
         comparisonValue: 'prior_board_state'

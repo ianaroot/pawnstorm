@@ -12,75 +12,61 @@
       <div id="condition-subject-group" class="editor-part">
         <label>1. Subject</label>
         <select id="cond-subject">
-          <option value="moved_piece">Moved piece</option>
-          <option value="allies">Allied pieces</option>
-          <option value="opponents">Opponent pieces</option>
-          <option value="captured_piece">Captured piece</option>
+          <% Node.condition_subject_options.each do |label, value| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
         </select>
       </div>
 
       <div id="condition-specifier-group" class="editor-part hidden">
         <label>2. Subject specifier</label>
         <select id="cond-subject-specifier">
-          <option value="any">Any piece</option>
-          <option value="king">King</option>
-          <option value="queen">Queen</option>
-          <option value="rook">Rook</option>
-          <option value="bishop">Bishop</option>
-          <option value="knight">Knight</option>
-          <option value="pawn">Pawn</option>
+          <% Node.condition_subject_specifier_options.each do |label, value| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
         </select>
       </div>
 
       <div id="condition-relation-group" class="editor-part hidden">
         <label>3. Relation</label>
         <select id="cond-relation">
-          <option value="piece_count">Piece count</option>
-          <option value="adjacent_count">Adjacent count</option>
-          <option value="attacker_count">Attacker count</option>
-          <option value="defender_count">Defender count</option>
-          <option value="shielder_count">Shielder count</option>
-          <option value="shielded_count">Shielded count</option>
-          <option value="coverer_count">Coverer count</option>
-          <option value="covered_count">Covered count</option>
-          <option value="mobility">Mobility</option>
+          <% Node.condition_relation_options.each do |label, value, valid_subjects| %>
+            <option value="<%= value %>" data-valid-subjects="<%= valid_subjects.join(',') %>"><%= label %></option>
+          <% end %>
         </select>
       </div>
 
       <div id="condition-relation-specifier-group" class="editor-part hidden">
         <label>4. Relation specifier</label>
         <select id="cond-relation-specifier">
-          <option value="any">Any piece</option>
-          <option value="king">King</option>
-          <option value="queen">Queen</option>
-          <option value="rook">Rook</option>
-          <option value="bishop">Bishop</option>
-          <option value="knight">Knight</option>
-          <option value="pawn">Pawn</option>
-          <option value="moved_piece">Moved piece</option>
+          <% Node.condition_relation_specifier_options.each do |label, value, valid_subjects, valid_relations| %>
+            <option
+              value="<%= value %>"
+              data-valid-subjects="<%= valid_subjects.join(',') %>"
+              data-valid-relations="<%= valid_relations.join(',') %>"
+            ><%= label %></option>
+          <% end %>
         </select>
       </div>
 
       <div id="condition-comparison-group" class="editor-part hidden">
         <label>5. Comparison</label>
         <select id="cond-comparison">
-          <option value="any">Any</option>
-          <option value="none">None</option>
-          <option value="count">Count</option>
-          <option value="greater_than">Greater than</option>
-          <option value="less_than">Less than</option>
+          <% Node.condition_comparison_options.each do |label, value| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
         </select>
       </div>
 
       <div id="condition-comparison-value-group" class="editor-part hidden">
         <label>6. Comparison value</label>
-        <input id="cond-comparison-value-number" type="number" min="0" step="1" value="1">
         <select id="cond-comparison-value-source">
-          <option value="exact_number">Exact number</option>
-          <option value="moved_piece_value">Value of moved piece</option>
-          <option value="captured_piece_value">Value of captured piece</option>
-          <option value="prior_board_state">Prior board state</option>
+          <option value="exact_number">Number</option>
+          <% Node.condition_comparison_value_options.each do |label, value, valid_subjects| %>
+            <option value="<%= value %>" data-valid-subjects="<%= valid_subjects.join(',') %>"><%= label %></option>
+          <% end %>
         </select>
+        <input id="cond-comparison-value-number" type="number" min="0" step="1" value="1">
       </div>
     </div>
     

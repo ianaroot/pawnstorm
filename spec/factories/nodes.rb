@@ -9,10 +9,10 @@ FactoryBot.define do
         {
           subject: "moved_piece",
           subjectSpecifier: "any",
-          relation: "attacker_count",
+          relation: "attacker",
           relationSpecifier: "any",
-          comparison: "any",
-          comparisonValue: nil
+          comparison: "greater_than",
+          comparisonValue: 0
         }
       when "action"
         {
@@ -31,10 +31,10 @@ FactoryBot.define do
         {
           subject: "moved_piece",
           subjectSpecifier: "any",
-          relation: "attacker_count",
+          relation: "attacker",
           relationSpecifier: "any",
-          comparison: "any",
-          comparisonValue: nil
+          comparison: "greater_than",
+          comparisonValue: 0
         }
       end
     end

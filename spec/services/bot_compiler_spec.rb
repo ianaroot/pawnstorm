@@ -13,10 +13,10 @@ RSpec.describe BotCompiler do
         create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
           subject: 'moved_piece',
           subjectSpecifier: 'any',
-          relation: 'attacker_count',
+          relation: 'attacker',
           relationSpecifier: 'any',
-          comparison: 'any',
-          comparisonValue: nil
+          comparison: 'greater_than',
+          comparisonValue: 0
         })
       end
       let!(:action) do
@@ -49,10 +49,10 @@ RSpec.describe BotCompiler do
             data: {
               subject: 'moved_piece',
               subjectSpecifier: 'any',
-              relation: 'attacker_count',
+              relation: 'attacker',
               relationSpecifier: 'any',
-              comparison: 'any',
-              comparisonValue: nil
+              comparison: 'greater_than',
+              comparisonValue: 0
             },
             children: [action.id.to_s]
           }

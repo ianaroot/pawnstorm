@@ -1,13 +1,6 @@
 // handlers/ClickHandler.js
 // Handles node selection and editor panel
 
-import { CONDITION_DATA_KEYS, ACTION_DATA_KEYS } from '../utils/nodeDefaults.js'
-import {
-  confirmLegacyDataDiscard,
-  getLegacyKeys,
-  normalizeLegacyRelation
-} from '../utils/legacyConditionData.js'
-
 /**
  * ClickHandler
  * 
@@ -301,26 +294,8 @@ class ClickHandler {
       return
     }
 
-    const subject = this.editorPanel.querySelector('#cond-subject')
-    const subjectSpecifier = this.editorPanel.querySelector('#cond-subject-specifier')
-    const relation = this.editorPanel.querySelector('#cond-relation')
-    const relationSpecifier = this.editorPanel.querySelector('#cond-relation-specifier')
-    const comparison = this.editorPanel.querySelector('#cond-comparison')
-    const comparisonValueNumber = this.editorPanel.querySelector('#cond-comparison-value-number')
-    const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')
-
-    if (subject) subject.value = node.data.subject || 'moved_piece'
-    if (subjectSpecifier) subjectSpecifier.value = node.data.subjectSpecifier || 'any'
-    if (relation) relation.value = normalizeLegacyRelation(node.data.relation) || 'attacker_count'
-    if (relationSpecifier) relationSpecifier.value = node.data.relationSpecifier || 'any'
-    if (comparison) comparison.value = node.data.comparison || 'any'
-    if (typeof node.data.comparisonValue === 'number') {
-      if (comparisonValueNumber) comparisonValueNumber.value = node.data.comparisonValue
-      if (comparisonValueSource) comparisonValueSource.value = 'exact_number'
-    } else {
-      if (comparisonValueNumber) comparisonValueNumber.value = 1
-      if (comparisonValueSource) comparisonValueSource.value = node.data.comparisonValue || 'exact_number'
-    }
+    const fields = this.conditionEditorFields()
+    this.writeConditionEditorFields(fields, node.data)
 
     this.updateConditionFieldVisibility()
   }
@@ -330,21 +305,141 @@ class ClickHandler {
       return
     }
 
-    const subject = this.editorPanel.querySelector('#cond-subject')?.value
-    const subjectSpecifier = this.editorPanel.querySelector('#cond-subject-specifier')?.value
-    const relation = this.editorPanel.querySelector('#cond-relation')?.value
-    const relationSpecifier = this.editorPanel.querySelector('#cond-relation-specifier')?.value
-    const comparison = this.editorPanel.querySelector('#cond-comparison')?.value
-    const needsComparisonValue = comparison === 'count' || comparison === 'greater_than' || comparison === 'less_than'
-    const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')?.value
-    const showExactNumberInput = needsComparisonValue && comparisonValueSource === 'exact_number'
+    const fields = this.conditionEditorFields()
+    this.filterConditionOptions(fields)
+    this.updateConditionGroupVisibility(fields)
+  }
 
-    this.editorPanel.querySelector('#condition-specifier-group')?.classList.toggle('hidden', !subject)
-    this.editorPanel.querySelector('#condition-relation-group')?.classList.toggle('hidden', !subject || !subjectSpecifier)
-    this.editorPanel.querySelector('#condition-relation-specifier-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation)
-    this.editorPanel.querySelector('#condition-comparison-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation || !relationSpecifier)
-    this.editorPanel.querySelector('#condition-comparison-value-group')?.classList.toggle('hidden', !subject || !subjectSpecifier || !relation || !relationSpecifier || !comparison || !needsComparisonValue)
-    this.editorPanel.querySelector('#cond-comparison-value-number')?.classList.toggle('hidden', !showExactNumberInput)
+  conditionEditorFields() {
+    return {
+      subject: this.editorPanel.querySelector('#cond-subject'),
+      subjectSpecifier: this.editorPanel.querySelector('#cond-subject-specifier'),
+      relation: this.editorPanel.querySelector('#cond-relation'),
+      relationSpecifier: this.editorPanel.querySelector('#cond-relation-specifier'),
+      comparison: this.editorPanel.querySelector('#cond-comparison'),
+      comparisonValueNumber: this.editorPanel.querySelector('#cond-comparison-value-number'),
+      comparisonValueSource: this.editorPanel.querySelector('#cond-comparison-value-source')
+    }
+  }
+
+  writeConditionEditorFields(fields, nodeData = {}) {
+    if (fields.subject) fields.subject.value = nodeData.subject || 'moved_piece'
+    if (fields.subjectSpecifier) fields.subjectSpecifier.value = nodeData.subjectSpecifier || 'any'
+    if (fields.relation) fields.relation.value = nodeData.relation || 'attacker'
+    if (fields.relationSpecifier) fields.relationSpecifier.value = nodeData.relationSpecifier || 'any'
+    if (fields.comparison) fields.comparison.value = nodeData.comparison || 'equal_to'
+
+    if (typeof nodeData.comparisonValue === 'number') {
+      if (fields.comparisonValueNumber) fields.comparisonValueNumber.value = nodeData.comparisonValue
+      if (fields.comparisonValueSource) fields.comparisonValueSource.value = 'exact_number'
+      return
+    }
+
+    if (fields.comparisonValueNumber) fields.comparisonValueNumber.value = 1
+    if (fields.comparisonValueSource) fields.comparisonValueSource.value = nodeData.comparisonValue || 'exact_number'
+  }
+
+  currentConditionEditorState(fields) {
+    const availableRelationSpecifiers = fields.relationSpecifier
+      ? this.enabledOptions(fields.relationSpecifier)
+      : []
+
+    return {
+      subject: fields.subject?.value,
+      subjectSpecifier: fields.subjectSpecifier?.value,
+      relation: fields.relation?.value,
+      relationSpecifier: fields.relationSpecifier?.value,
+      comparison: fields.comparison?.value,
+      comparisonValueSource: fields.comparisonValueSource?.value,
+      showRelationSpecifier: availableRelationSpecifiers.some(option => option.value !== 'any')
+    }
+  }
+
+  filterConditionOptions(fields) {
+    const subject = fields.subject?.value
+
+    if (!subject || !fields.relation || !fields.relationSpecifier || !fields.comparisonValueSource) {
+      return
+    }
+
+    this.filterRelationOptions(fields.relation, subject)
+
+    const relation = fields.relation.value
+    this.filterRelationSpecifierOptions(fields.relationSpecifier, subject, relation)
+    this.filterComparisonValueSourceOptions(fields.comparisonValueSource, subject)
+  }
+
+  filterRelationOptions(relationSelect, subject) {
+    this.filterSelectOptions(relationSelect, option => {
+      const validSubjects = option.dataset.validSubjects?.split(',').filter(Boolean) || []
+      return validSubjects.length === 0 || validSubjects.includes(subject)
+    })
+  }
+
+  filterRelationSpecifierOptions(relationSpecifierSelect, subject, relation) {
+    this.filterSelectOptions(relationSpecifierSelect, option => {
+      const validSubjects = option.dataset.validSubjects?.split(',').filter(Boolean) || []
+      const validRelations = option.dataset.validRelations?.split(',').filter(Boolean) || []
+      const subjectMatches = validSubjects.length === 0 || validSubjects.includes(subject)
+      const relationMatches = validRelations.length === 0 || validRelations.includes(relation)
+      return subjectMatches && relationMatches
+    })
+  }
+
+  filterComparisonValueSourceOptions(comparisonValueSourceSelect, subject) {
+    this.filterSelectOptions(comparisonValueSourceSelect, option => {
+      if (option.value === 'exact_number') {
+        return true
+      }
+
+      const validSubjects = option.dataset.validSubjects?.split(',').filter(Boolean) || []
+      return validSubjects.length === 0 || validSubjects.includes(subject)
+    })
+  }
+
+  updateConditionGroupVisibility(fields) {
+    const state = this.currentConditionEditorState(fields)
+    const needsComparisonValue = Boolean(state.comparison)
+    const showExactNumberInput = needsComparisonValue && state.comparisonValueSource === 'exact_number'
+
+    this.toggleEditorGroup('#condition-specifier-group', !state.subject)
+    this.toggleEditorGroup('#condition-relation-group', !state.subject || !state.subjectSpecifier)
+    this.toggleEditorGroup('#condition-relation-specifier-group', !state.subject || !state.subjectSpecifier || !state.relation || !state.showRelationSpecifier)
+    this.toggleEditorGroup('#condition-comparison-group', !state.subject || !state.subjectSpecifier || !state.relation || !state.relationSpecifier)
+    this.toggleEditorGroup('#condition-comparison-value-group', !state.subject || !state.subjectSpecifier || !state.relation || !state.relationSpecifier || !state.comparison || !needsComparisonValue)
+    fields.comparisonValueNumber?.classList.toggle('hidden', !showExactNumberInput)
+  }
+
+  toggleEditorGroup(selector, hidden) {
+    this.editorPanel.querySelector(selector)?.classList.toggle('hidden', hidden)
+  }
+
+  enabledOptions(select) {
+    return Array.from(select.options).filter(option => !option.disabled)
+  }
+
+  filterSelectOptions(select, predicate) {
+    const options = Array.from(select.options)
+    let selectedOptionIsValid = false
+
+    options.forEach(option => {
+      const isValid = predicate(option)
+      option.hidden = !isValid
+      option.disabled = !isValid
+
+      if (isValid && option.value === select.value) {
+        selectedOptionIsValid = true
+      }
+    })
+
+    if (selectedOptionIsValid) {
+      return
+    }
+
+    const firstValidOption = options.find(option => !option.disabled)
+    if (firstValidOption) {
+      select.value = firstValidOption.value
+    }
   }
 
   handleConditionFieldChange() {
@@ -352,21 +447,20 @@ class ClickHandler {
   }
 
   buildConditionDataPayload() {
-    const comparison = this.editorPanel.querySelector('#cond-comparison')?.value || 'any'
-    const comparisonValueSource = this.editorPanel.querySelector('#cond-comparison-value-source')?.value || 'exact_number'
-    const comparisonValue = ['any', 'none'].includes(comparison)
-      ? null
-      : (
-          comparisonValueSource === 'exact_number'
-            ? Number(this.editorPanel.querySelector('#cond-comparison-value-number')?.value || 1)
-            : comparisonValueSource
-        )
+    const fields = this.conditionEditorFields()
+    const comparison = fields.comparison?.value || 'equal_to'
+    const comparisonValueSource = fields.comparisonValueSource?.value || 'exact_number'
+    const comparisonValue = (
+      comparisonValueSource === 'exact_number'
+        ? Number(fields.comparisonValueNumber?.value || 1)
+        : comparisonValueSource
+    )
 
     return {
-      subject: this.editorPanel.querySelector('#cond-subject')?.value || 'moved_piece',
-      subjectSpecifier: this.editorPanel.querySelector('#cond-subject-specifier')?.value || 'any',
-      relation: this.editorPanel.querySelector('#cond-relation')?.value || 'attacker_count',
-      relationSpecifier: this.editorPanel.querySelector('#cond-relation-specifier')?.value || 'any',
+      subject: fields.subject?.value || 'moved_piece',
+      subjectSpecifier: fields.subjectSpecifier?.value || 'any',
+      relation: fields.relation?.value || 'attacker',
+      relationSpecifier: fields.relationSpecifier?.value || 'any',
       comparison: comparison,
       comparisonValue: comparisonValue
     }
@@ -408,18 +502,8 @@ class ClickHandler {
 
     try {
       if (node.type === 'condition') {
-        const legacyKeys = getLegacyKeys(node.data, CONDITION_DATA_KEYS)
-        if (!confirmLegacyDataDiscard(legacyKeys)) {
-          return
-        }
-
         await this.syncManager.updateNodeData(this.editingNodeId, this.buildConditionDataPayload())
       } else if (node.type === 'action') {
-        const legacyKeys = getLegacyKeys(node.data, ACTION_DATA_KEYS)
-        if (!confirmLegacyDataDiscard(legacyKeys)) {
-          return
-        }
-
         await this.syncManager.updateNodeData(this.editingNodeId, this.buildActionDataPayload())
       }
 

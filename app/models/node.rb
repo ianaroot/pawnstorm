@@ -12,22 +12,6 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  CONDITION_SUBJECTS = %w[moved_piece allies opponents captured_piece].freeze
-  CONDITION_SUBJECT_SPECIFIERS = %w[any king queen rook bishop knight pawn].freeze
-  CONDITION_RELATION_SPECIFIERS = %w[any king queen rook bishop knight pawn moved_piece].freeze
-  CONDITION_RELATIONS = %w[
-    piece_count
-    adjacent_count
-    attacker_count
-    defender_count
-    shielder_count
-    shielded_count
-    coverer_count
-    covered_count
-    mobility
-  ].freeze
-  CONDITION_COMPARISONS = %w[any none count greater_than less_than].freeze
-  CONDITION_COMPARISON_VALUES = %w[moved_piece_value captured_piece_value prior_board_state].freeze
   CONDITION_KEYS = %w[subject subjectSpecifier relation relationSpecifier comparison comparisonValue].freeze
 
   ACTION_TYPES = %w[add subtract set return].freeze
@@ -60,6 +44,137 @@ class Node < ApplicationRecord
   
   def organizer?
     node_type == 'organizer'
+  end
+
+  def self.condition_relations_for(subject)
+    NodeGrammar.relations_for(subject)
+  end
+
+  def self.valid_condition_relation_for_subject?(subject, relation)
+    NodeGrammar.valid_relation_for_subject?(subject, relation)
+  end
+
+  def self.condition_relation_specifiers_for(subject:, relation:)
+    NodeGrammar.relation_specifiers_for(subject:, relation:)
+  end
+
+  def self.valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:)
+    NodeGrammar.valid_relation_specifier_for?(subject:, relation:, relation_specifier:)
+  end
+
+  def self.condition_subject_options
+    NodeGrammar.subject_options
+  end
+
+  def self.condition_subject_specifier_options
+    NodeGrammar.subject_specifier_options
+  end
+
+  def self.condition_relation_specifier_options
+    NodeGrammar.relation_specifier_options
+  end
+
+  def self.condition_relation_options
+    NodeGrammar.relation_options
+  end
+
+  def self.condition_subjects_for_relation(relation)
+    NodeGrammar.subjects_for_relation(relation)
+  end
+
+  def self.condition_subjects_for_relation_specifier(relation_specifier)
+    NodeGrammar.subjects_for_relation_specifier(relation_specifier)
+  end
+
+  def self.condition_relations_for_relation_specifier(relation_specifier)
+    NodeGrammar.relations_for_relation_specifier(relation_specifier)
+  end
+
+  def self.condition_comparison_options
+    NodeGrammar.comparison_options
+  end
+
+  def self.condition_comparison_value_options
+    NodeGrammar.comparison_value_options
+  end
+
+  def self.condition_comparison_values_for(subject)
+    NodeGrammar.comparison_values_for(subject)
+  end
+
+  def self.valid_condition_comparison_value_for_subject?(subject, comparison_value)
+    NodeGrammar.valid_comparison_value_for_subject?(subject, comparison_value)
+  end
+
+  def self.condition_subjects_for_comparison_value(comparison_value)
+    NodeGrammar.subjects_for_comparison_value(comparison_value)
+  end
+
+  def self.condition_subject_label(subject)
+    NodeGrammar.subject_label(subject)
+  end
+
+  def self.condition_subject_short_label(subject)
+    NodeGrammar.subject_short_label(subject)
+  end
+
+  def self.condition_specifier_label(specifier)
+    NodeGrammar.specifier_label(specifier)
+  end
+
+  def self.condition_relation_label(relation)
+    NodeGrammar.relation_label(relation)
+  end
+
+  def self.condition_comparison_label(comparison)
+    NodeGrammar.comparison_label(comparison)
+  end
+
+  def self.condition_comparison_symbol(comparison)
+    NodeGrammar.comparison_symbol(comparison)
+  end
+
+  def self.condition_comparison_value_label(value)
+    NodeGrammar.comparison_value_label(value)
+  end
+
+  def self.condition_comparison_value_short_label(value)
+    NodeGrammar.comparison_value_short_label(value)
+  end
+
+  def self.condition_summary(data)
+    return nil unless data.is_a?(Hash)
+
+    subject = data['subject']
+    subject_specifier = data['subjectSpecifier']
+    relation = data['relation']
+    relation_specifier = data['relationSpecifier']
+    comparison = data['comparison']
+    comparison_value = data['comparisonValue']
+
+    valid = NodeGrammar::SUBJECTS.include?(subject) &&
+      NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier) &&
+      valid_condition_relation_for_subject?(subject, relation) &&
+      valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:) &&
+      NodeGrammar::COMPARISONS.include?(comparison) &&
+      valid_condition_comparison_value_for_subject?(subject, comparison_value)
+
+    return nil unless valid
+
+    summary_parts = []
+    summary_parts << "#{condition_subject_short_label(subject)}:"
+    summary_parts << condition_specifier_label(subject_specifier)&.downcase
+    summary_parts << condition_relation_label(relation)&.downcase
+
+    if relation_specifier != 'any'
+      summary_parts << condition_specifier_label(relation_specifier)&.downcase
+    end
+
+    comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value
+    summary_parts << condition_comparison_symbol(comparison)
+    summary_parts << comparison_value_label.to_s
+
+    summary_parts.compact.join(' ')
   end
   
   private
@@ -100,19 +215,13 @@ class Node < ApplicationRecord
     comparison = data['comparison'] || data[:comparison]
     comparison_value = data['comparisonValue'] || data[:comparisonValue]
 
-    errors.add(:data, 'has invalid subject') unless CONDITION_SUBJECTS.include?(subject)
-    errors.add(:data, 'has invalid subjectSpecifier') unless CONDITION_SUBJECT_SPECIFIERS.include?(subject_specifier)
-    errors.add(:data, 'has invalid relation') unless CONDITION_RELATIONS.include?(relation)
-    errors.add(:data, 'has invalid relationSpecifier') unless CONDITION_RELATION_SPECIFIERS.include?(relation_specifier)
-    errors.add(:data, 'has invalid comparison') unless CONDITION_COMPARISONS.include?(comparison)
+    errors.add(:data, 'has invalid subject') unless NodeGrammar::SUBJECTS.include?(subject)
+    errors.add(:data, 'has invalid subjectSpecifier') unless NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier)
+    errors.add(:data, 'has invalid relation') unless self.class.valid_condition_relation_for_subject?(subject, relation)
+    errors.add(:data, 'has invalid relationSpecifier') unless self.class.valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:)
+    errors.add(:data, 'has invalid comparison') unless NodeGrammar::COMPARISONS.include?(comparison)
 
-    if %w[any none].include?(comparison)
-      errors.add(:data, 'comparisonValue is not allowed for any/none comparisons') unless comparison_value.nil?
-      return
-    end
-
-    return if comparison_value.is_a?(Numeric)
-    return if CONDITION_COMPARISON_VALUES.include?(comparison_value)
+    return if self.class.valid_condition_comparison_value_for_subject?(subject, comparison_value)
 
     errors.add(:data, 'has invalid comparisonValue')
   end
