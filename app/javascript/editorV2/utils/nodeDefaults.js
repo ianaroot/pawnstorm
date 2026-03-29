@@ -12,6 +12,11 @@ export const DEFAULT_ACTION_DATA = Object.freeze({
   value: 1
 })
 
+export const DEFAULT_ORGANIZER_DATA = Object.freeze({
+  title: 'Organizer',
+  notes: ''
+})
+
 export const CONDITION_DATA_KEYS = Object.freeze([
   'subject',
   'subjectSpecifier',
@@ -26,12 +31,19 @@ export const ACTION_DATA_KEYS = Object.freeze([
   'value'
 ])
 
+export const ORGANIZER_DATA_KEYS = Object.freeze([
+  'title',
+  'notes'
+])
+
 export function defaultNodeData(type) {
   switch (type) {
     case 'condition':
       return { ...DEFAULT_CONDITION_DATA }
     case 'action':
       return { ...DEFAULT_ACTION_DATA }
+    case 'organizer':
+      return { ...DEFAULT_ORGANIZER_DATA }
     default:
       return {}
   }
@@ -47,6 +59,8 @@ export function normalizeNodeData(type, data = {}) {
       return { ...DEFAULT_CONDITION_DATA, ...data }
     case 'action':
       return { ...DEFAULT_ACTION_DATA, ...data }
+    case 'organizer':
+      return { ...DEFAULT_ORGANIZER_DATA, ...data }
     default:
       return { ...data }
   }

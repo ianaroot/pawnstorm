@@ -254,12 +254,9 @@ class ClickHandler {
       this.editorPanel.classList.add('hidden')
     }
   }
-  
-  /**
-   * Populate editor panel with node data
-   * Override this or use NodeFormHandler
-   * @param {Node} node - Node instance
-   */
+
+  // ===== Editor Panel Population =====
+
   populateEditorPanel(node) {
     if (!this.editorPanel) {
       return
@@ -274,6 +271,7 @@ class ClickHandler {
     // Hide/show appropriate editor sections
     const conditionEditor = this.editorPanel.querySelector('#condition-editor')
     const actionEditor = this.editorPanel.querySelector('#action-editor')
+    const organizerEditor = this.editorPanel.querySelector('#organizer-editor')
     
     if (conditionEditor) {
       conditionEditor.classList.toggle('hidden', node.type !== 'condition')
@@ -281,13 +279,30 @@ class ClickHandler {
     if (actionEditor) {
       actionEditor.classList.toggle('hidden', node.type !== 'action')
     }
+    if (organizerEditor) {
+      organizerEditor.classList.toggle('hidden', node.type !== 'organizer')
+    }
 
-    if (node.type === 'condition') {
-      this.populateConditionEditor(node)
-    } else if (node.type === 'action') {
-      this.populateActionEditor(node)
+    this.populateEditorByType(node)
+  }
+
+  populateEditorByType(node) {
+    switch (node.type) {
+      case 'condition':
+        this.populateConditionEditor(node)
+        break
+      case 'action':
+        this.populateActionEditor(node)
+        break
+      case 'organizer':
+        this.populateOrganizerEditor(node)
+        break
+      default:
+        break
     }
   }
+
+  // ===== Condition Editor =====
 
   populateConditionEditor(node) {
     if (!this.editorPanel) {
@@ -466,10 +481,21 @@ class ClickHandler {
     }
   }
 
+  // ===== Action Editor =====
+
   buildActionDataPayload() {
     return {
       actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
       value: Number(this.editorPanel.querySelector('#action-value')?.value || 1)
+    }
+  }
+
+  // ===== Organizer Editor =====
+
+  buildOrganizerDataPayload() {
+    return {
+      title: this.editorPanel.querySelector('#organizer-title')?.value?.trim() || 'Organizer',
+      notes: this.editorPanel.querySelector('#organizer-notes')?.value?.trim() || ''
     }
   }
 
@@ -490,6 +516,38 @@ class ClickHandler {
     }
   }
 
+  populateOrganizerEditor(node) {
+    if (!this.editorPanel) {
+      return
+    }
+
+    const organizerTitle = this.editorPanel.querySelector('#organizer-title')
+    const organizerNotes = this.editorPanel.querySelector('#organizer-notes')
+
+    if (organizerTitle) {
+      organizerTitle.value = node.data.title || 'Organizer'
+    }
+
+    if (organizerNotes) {
+      organizerNotes.value = node.data.notes || ''
+    }
+  }
+
+  // ===== Save Helpers =====
+
+  buildDataPayloadByType(node) {
+    switch (node.type) {
+      case 'condition':
+        return this.buildConditionDataPayload()
+      case 'action':
+        return this.buildActionDataPayload()
+      case 'organizer':
+        return this.buildOrganizerDataPayload()
+      default:
+        return null
+    }
+  }
+
   async handleSave() {
     if (!this.editingNodeId) {
       return
@@ -501,10 +559,9 @@ class ClickHandler {
     }
 
     try {
-      if (node.type === 'condition') {
-        await this.syncManager.updateNodeData(this.editingNodeId, this.buildConditionDataPayload())
-      } else if (node.type === 'action') {
-        await this.syncManager.updateNodeData(this.editingNodeId, this.buildActionDataPayload())
+      const payload = this.buildDataPayloadByType(node)
+      if (payload) {
+        await this.syncManager.updateNodeData(this.editingNodeId, payload)
       }
 
       this.closeEditor()

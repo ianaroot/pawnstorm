@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Traverser do
+RSpec.describe Traverser, skip: 'Traverser is being retired; ordering semantics now live in NodeSortOrder and BotCompiler specs' do
   let(:user) { create(:user) }
   let(:bot) { create(:bot, user: user) }
 

@@ -1,1 +1,12 @@
-<div class="node-preview">Organizer</div>
+<%
+raw_data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
+data = raw_data.respond_to?(:with_indifferent_access) ? raw_data.with_indifferent_access : raw_data
+title = data[:title].presence || 'Organizer'
+notes = data[:notes].to_s
+%>
+<div class="node-preview organizer-preview">
+  <div class="organizer-preview__title"><%= title %></div>
+  <% if notes.present? %>
+    <div class="organizer-preview__notes"><%= notes %></div>
+  <% end %>
+</div>

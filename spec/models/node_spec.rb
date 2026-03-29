@@ -34,6 +34,17 @@ RSpec.describe Node, type: :model do
       expect(node).to be_valid
     end
 
+    it 'rejects organizer data with invalid keys' do
+      node = build(:node, :organizer, data: {
+        title: '',
+        notes: '',
+        banana: 'crime'
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('contains invalid keys: banana')
+    end
+
     it 'is valid with prototype condition data' do
       node = build(:node, :condition)
       expect(node).to be_valid

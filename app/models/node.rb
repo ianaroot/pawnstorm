@@ -16,13 +16,15 @@ class Node < ApplicationRecord
 
   ACTION_TYPES = %w[add subtract set return].freeze
   ACTION_KEYS = %w[actionType value].freeze
+  ORGANIZER_KEYS = %w[title notes].freeze
 
   belongs_to :bot
   has_many :outgoing_connections, class_name: 'Connection', foreign_key: 'source_node_id', dependent: :destroy
   has_many :incoming_connections, class_name: 'Connection', foreign_key: 'target_node_id', dependent: :destroy
 
   validates :node_type, presence: true
-  
+  before_validation :normalize_organizer_data
+
   # Ensure only one root per bot (DB has unique index, this validates before save)
   validate :single_root_per_bot, if: -> { node_type == 'root' }
   validate :data_matches_schema, if: :validate_node_data?
@@ -179,6 +181,20 @@ class Node < ApplicationRecord
   
   private
 
+  def normalize_organizer_data
+    return unless organizer?
+
+    raw = data.is_a?(Hash) ? data : {}
+    normalized = raw.each_with_object({}) do |(key, value), memo|
+      memo[key.to_s] = value
+    end
+
+    normalized['title'] = (normalized['title'] || '').to_s
+    normalized['notes'] = (normalized['notes'] || '').to_s
+
+    self.data = normalized
+  end
+
   def validate_node_data?
     new_record? || will_save_change_to_data?
   end
@@ -189,6 +205,8 @@ class Node < ApplicationRecord
       validate_condition_data
     when 'action'
       validate_action_data
+    when 'organizer'
+      validate_organizer_data
     end
   end
 
@@ -247,6 +265,23 @@ class Node < ApplicationRecord
 
     errors.add(:data, 'has invalid actionType') unless ACTION_TYPES.include?(action_type)
     errors.add(:data, 'value must be numeric') unless value.is_a?(Numeric)
+  end
+
+  def validate_organizer_data
+    return errors.add(:data, 'must be a hash') unless data.is_a?(Hash)
+
+    keys = data.keys.map(&:to_s)
+    extra_keys = keys - ORGANIZER_KEYS
+
+    if extra_keys.any?
+      errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
+    end
+
+    title = data['title'] || data[:title]
+    notes = data['notes'] || data[:notes]
+
+    errors.add(:data, 'title must be a string') unless title.is_a?(String)
+    errors.add(:data, 'notes must be a string') unless notes.is_a?(String)
   end
 
   def mark_bot_compiled_program_stale_if_needed

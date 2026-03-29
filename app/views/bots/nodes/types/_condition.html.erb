@@ -1,10 +1,40 @@
 <%
 data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
-summary = Node.condition_summary(data)
+subject = data['subject'] || data[:subject]
+subject_specifier = data['subjectSpecifier'] || data[:subjectSpecifier]
+relation = data['relation'] || data[:relation]
+relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
+comparison = data['comparison'] || data[:comparison]
+comparison_value = data['comparisonValue'] || data[:comparisonValue]
+
+subject_label = Node.condition_subject_short_label(subject)
+subject_specifier_label = Node.condition_specifier_label(subject_specifier)&.downcase
+relation_label = Node.condition_relation_label(relation)&.downcase
+relation_specifier_label = (
+  relation_specifier != 'any' ?
+    Node.condition_specifier_label(relation_specifier)&.downcase :
+    nil
+)
+comparison_symbol = Node.condition_comparison_symbol(comparison)
+comparison_value_label = (
+  Node.condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value.to_s
+)
 %>
-<% if summary.present? %>
-  <div class="node-preview"><%= summary %></div>
-<% else %>
-  <%# Legacy fallback: display raw condition data when it does not match the new grammar. %>
-  <div class="node-preview legacy-preview"><%= JSON.pretty_generate(data) %></div>
-<% end %>
+<div class="node-preview condition-preview">
+  <span class="condition-preview__chunk condition-preview__chunk--subject">
+    <span class="condition-preview__lead"><%= subject_label %></span>
+    <span class="condition-preview__detail"><%= subject_specifier_label %></span>
+  </span>
+
+  <span class="condition-preview__chunk condition-preview__chunk--relation">
+    <span class="condition-preview__lead"><%= relation_label %></span>
+    <% if relation_specifier_label.present? %>
+      <span class="condition-preview__detail"><%= relation_specifier_label %></span>
+    <% end %>
+  </span>
+
+  <span class="condition-preview__chunk condition-preview__chunk--comparison">
+    <span class="condition-preview__lead"><%= comparison_symbol %></span>
+    <span class="condition-preview__detail"><%= comparison_value_label %></span>
+  </span>
+</div>

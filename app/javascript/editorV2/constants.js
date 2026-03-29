@@ -7,9 +7,9 @@ export const NODE_HEIGHT = 60
 export const CONNECTOR_SIZE = 14
 export const NODE_DIMENSIONS = {
   root: { width: 100, height: 100 },
-  condition: { width: 100, height: 60 },
-  action: { width: 100, height: 60 },
-  organizer: { width: 40, height: 40 },
+  condition: { width: 100, height: 128 },
+  action: { width: 108, height: 108 },
+  organizer: { width: 140, height: 112 },
   default: { width: NODE_WIDTH, height: NODE_HEIGHT }
 }
 
@@ -41,7 +41,7 @@ export const NODE_COLORS = {
   root: '#FFD700',
   condition: '#e94560',
   action: '#4CAF50',
-  organizer: '#9C27B0'
+  organizer: '#3b82f6'
 }
 
 // Event names for Store subscriber pattern

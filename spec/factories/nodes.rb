@@ -19,6 +19,11 @@ FactoryBot.define do
           actionType: "add",
           value: 1
         }
+      when "organizer"
+        {
+          title: "",
+          notes: ""
+        }
       else
         {}
       end
@@ -51,7 +56,7 @@ FactoryBot.define do
     
     trait :organizer do
       node_type { "organizer" }
-      data { {} }
+      data { { title: "", notes: "" } }
     end
   end
 end

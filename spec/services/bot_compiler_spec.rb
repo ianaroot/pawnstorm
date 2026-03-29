@@ -95,6 +95,26 @@ RSpec.describe BotCompiler do
       end
     end
 
+    context 'collinear siblings' do
+      let!(:root) { bot.root_node }
+      let!(:near) { create(:node, :condition, bot: bot, position_x: 100, position_y: 200) }
+      let!(:mid) { create(:node, :condition, bot: bot, position_x: 100, position_y: 350) }
+      let!(:far) { create(:node, :condition, bot: bot, position_x: 100, position_y: 600) }
+
+      before do
+        root.update!(position_x: 100, position_y: 50)
+        connect_nodes(root, far)
+        connect_nodes(root, mid)
+        connect_nodes(root, near)
+      end
+
+      it 'orders collinear children by distance in the compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][root.id.to_s][:children]).to eq([near.id.to_s, mid.id.to_s, far.id.to_s])
+      end
+    end
+
     context 'shared descendants in a DAG' do
       let!(:root) { bot.root_node }
       let!(:node_a) { create(:node, :condition, bot: bot, position_x: 200, position_y: 200) }
@@ -119,7 +139,12 @@ RSpec.describe BotCompiler do
 
     context 'organizer nodes' do
       let!(:root) { bot.root_node }
-      let!(:organizer) { create(:node, :organizer, bot: bot, position_x: 100, position_y: 100) }
+      let!(:organizer) do
+        create(:node, :organizer, bot: bot, position_x: 100, position_y: 100, data: {
+          title: 'Fork ideas',
+          notes: 'if this ever compiles into runtime logic, something has gone wrong'
+        })
+      end
       let!(:condition) { create(:node, :condition, bot: bot, position_x: 100, position_y: 220) }
 
       before do
@@ -131,6 +156,7 @@ RSpec.describe BotCompiler do
         compiled = described_class.new(bot).compile
 
         expect(compiled[:nodes][organizer.id.to_s][:type]).to eq('organizer')
+        expect(compiled[:nodes][organizer.id.to_s][:data]).to eq({})
         expect(compiled[:nodes][organizer.id.to_s][:children]).to eq([condition.id.to_s])
       end
     end

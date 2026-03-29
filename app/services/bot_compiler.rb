@@ -108,6 +108,9 @@ class BotCompiler
         value: raw['value'] || raw[:value]
       }
     else
+      # Organizers carry freeform user-authored text. We intentionally strip that
+      # data out during compilation so annotation content never becomes part of the
+      # executable bot program.
       {}
     end
   end

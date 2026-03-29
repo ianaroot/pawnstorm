@@ -4,4 +4,7 @@ data = raw_data.respond_to?(:with_indifferent_access) ? raw_data.with_indifferen
 action_type = data[:actionType] || data[:action_type] || 'add'
 value = data[:value] || 1
 %>
-<div class="node-preview"><%= action_type.to_s.humanize %>: <%= value %></div>
+<div class="node-preview action-preview">
+  <span class="action-preview__type"><%= action_type.to_s.humanize %></span>
+  <span class="action-preview__value"><%= value %></span>
+</div>
