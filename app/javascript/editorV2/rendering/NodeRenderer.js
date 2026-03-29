@@ -126,8 +126,10 @@ class NodeRenderer {
       element.style.top = `${updates.position.y}px`
     }
     
-    // Update data (refetch preview)
-    if (updates.data !== undefined) {
+    // Refetch preview when data changes or when the server ID arrives.
+    // Newly created nodes render optimistically before they have a server ID,
+    // so the first preview fetch can only succeed after sync completes.
+    if (updates.data !== undefined || updates.serverId !== undefined) {
       this.fetchPreview(clientId)
     }
   }
