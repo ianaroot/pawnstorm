@@ -1,0 +1,17 @@
+export const TEMPLATE_CATEGORIES = Object.freeze({
+  CAPTURES: 'captures',
+  SAFETY: 'safety',
+  ACTIVITY: 'activity'
+})
+
+export const TEMPLATE_CATEGORY_ORDER = Object.freeze([
+  TEMPLATE_CATEGORIES.CAPTURES,
+  TEMPLATE_CATEGORIES.SAFETY,
+  TEMPLATE_CATEGORIES.ACTIVITY
+])
+
+export const TEMPLATE_CATEGORY_LABELS = Object.freeze({
+  [TEMPLATE_CATEGORIES.CAPTURES]: 'Captures',
+  [TEMPLATE_CATEGORIES.SAFETY]: 'Safety',
+  [TEMPLATE_CATEGORIES.ACTIVITY]: 'Activity'
+})

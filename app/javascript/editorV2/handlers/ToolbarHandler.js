@@ -2,6 +2,8 @@
 // Handles toolbar buttons: Add Node, Undo, Redo
 
 import { NODE_DIMENSIONS } from '../constants.js'
+import TemplatePicker from '../templates/TemplatePicker.js'
+import { findTemplateAnchor } from '../templates/TemplatePlacement.js'
 
 const NODE_PLACEMENT_PADDING = 40
 const NODE_PLACEMENT_STEP = 36
@@ -34,6 +36,7 @@ class ToolbarHandler {
     this.viewport = viewport
     this.compileAndExitLink = document.getElementById('compile-and-exit-link')
     this.editorRoot = document.querySelector('.bot-editor')
+    this.templatePicker = null
   }
   
 /**
@@ -44,6 +47,11 @@ class ToolbarHandler {
     document.querySelectorAll('.btn-add-node').forEach(btn => {
       btn.addEventListener('click', (e) => this.handleAddNode(e))
     })
+
+    const templatesBtn = document.querySelector('.btn-open-templates')
+    if (templatesBtn) {
+      templatesBtn.addEventListener('click', () => this.openTemplatePicker())
+    }
     
     // Undo button
     const undoBtn = document.querySelector('.btn-undo')
@@ -71,6 +79,7 @@ class ToolbarHandler {
 
     this.syncManager.setPersistedMutationCallback(() => this.markBotStale())
     this.updateCompileAction()
+    this.attachTemplatePicker()
   }
   
   /**
@@ -88,6 +97,31 @@ class ToolbarHandler {
     } catch (err) {
       console.error('Failed to create node:', err)
     }
+  }
+
+  attachTemplatePicker() {
+    const modal = document.getElementById('template-picker-modal')
+    if (!modal) {
+      return
+    }
+
+    this.templatePicker = new TemplatePicker(modal, {
+      onInsert: async (template) => {
+        const organizerAnchor = findTemplateAnchor(template, this.viewport, this.store)
+        const result = await this.syncManager.insertTemplate(template, organizerAnchor)
+
+        if (result?.organizerClientId) {
+          this.clickHandler?.selectNodeById(result.organizerClientId)
+          this.updateButtons()
+        }
+      }
+    })
+
+    this.templatePicker.attach()
+  }
+
+  openTemplatePicker() {
+    this.templatePicker?.open()
   }
 
   findPlacementPosition(type) {

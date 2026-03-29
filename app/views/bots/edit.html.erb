@@ -10,6 +10,7 @@
       <button type="button" class="btn-add-node" data-type="condition">+ Condition</button>
       <button type="button" class="btn-add-node" data-type="action">+ Action</button>
       <button type="button" class="btn-add-node" data-type="organizer">+ Organizer</button>
+      <button type="button" class="btn-open-templates">Templates</button>
     </div>
     
     <div class="toolbar-section">
@@ -107,6 +108,39 @@
       <%= link_to 'Read Full Guide', bot_help_path, class: 'btn-guide-link' %>
     </div>
   </aside>
+
+  <div id="template-picker-modal" class="template-picker-modal hidden" aria-hidden="true">
+    <div class="template-picker-modal__backdrop" data-template-picker-close></div>
+
+    <div class="template-picker-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="template-picker-title">
+      <div class="template-picker-modal__header">
+        <div>
+          <p class="template-picker-modal__eyebrow">Template Chunks</p>
+          <h2 id="template-picker-title">Insert a Template</h2>
+        </div>
+
+        <button type="button" class="template-picker-modal__close" data-template-picker-close>Close</button>
+      </div>
+
+      <div class="template-picker-modal__body">
+        <aside class="template-picker-modal__sidebar">
+          <nav class="template-picker__categories" aria-label="Template categories" data-template-picker-categories></nav>
+          <div class="template-picker__list" data-template-picker-list></div>
+        </aside>
+
+        <section class="template-picker-modal__detail">
+          <p class="template-picker-modal__category" data-template-picker-category></p>
+          <h3 class="template-picker-modal__name" data-template-picker-title></h3>
+          <p class="template-picker-modal__description" data-template-picker-description></p>
+          <div class="template-picker-modal__preview" data-template-picker-preview></div>
+
+          <div class="template-picker-modal__actions">
+            <button type="button" class="template-picker-modal__insert" data-template-picker-insert>Insert Template</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
 
   <%= render "bots/nodes/editor" %>
 </div>

@@ -7,6 +7,7 @@ import Connection from '../models/Connection.js'
 import { showError } from '../utils/errors.js'
 import { showErrorDialog } from '../utils/ErrorDialog.js'
 import { normalizeNodeData } from '../utils/nodeDefaults.js'
+import { buildTemplateInsertOperation } from '../templates/TemplateInserter.js'
 
 /**
  * SyncManager
@@ -232,6 +233,16 @@ class SyncManager {
           operation.clientId
         )
         break
+
+      case 'insertTemplate':
+        for (const connection of [...operation.connections].reverse()) {
+          await this.api.deleteConnection(connection.clientId, connection.sourceId)
+        }
+
+        for (const node of [...operation.nodes].reverse()) {
+          await this.api.deleteNode(node.clientId)
+        }
+        break
         
       default:
         throw new Error(`Unknown operation type: ${operation.type}`)
@@ -296,6 +307,16 @@ class SyncManager {
         // Redo: delete the connection again
         await this.api.deleteConnection(operation.clientId, operation.sourceId)
         break
+
+      case 'insertTemplate':
+        for (const node of operation.nodes) {
+          await this.api.createNode(node.entity, node.clientId)
+        }
+
+        for (const connection of operation.connections) {
+          await this.api.createConnection(connection.sourceId, connection.targetId, connection.clientId)
+        }
+        break
         
       default:
         throw new Error(`Unknown operation type: ${operation.type}`)
@@ -352,6 +373,51 @@ class SyncManager {
       showError(`Failed to create node: ${error.message}`)
       console.error('Failed to create node:', error)
       
+      throw error
+    }
+  }
+
+  async insertTemplate(template, organizerAnchor) {
+    const operation = buildTemplateInsertOperation(template, organizerAnchor)
+    const nodeModels = operation.nodes.map(nodeData => new Node({
+      clientId: nodeData.clientId,
+      type: nodeData.entity.type,
+      position: nodeData.entity.position,
+      data: nodeData.entity.data
+    }))
+    const connectionModels = operation.connections.map(connectionData => new Connection(connectionData))
+    const persistedNodes = []
+    const persistedConnections = []
+
+    nodeModels.forEach(node => this.store.addNode(node))
+    connectionModels.forEach(connection => this.store.addConnection(connection))
+
+    try {
+      for (const nodeData of operation.nodes) {
+        const response = await this.api.createNode(nodeData.entity, nodeData.clientId)
+        persistedNodes.push(nodeData)
+        this.store.updateNode(nodeData.clientId, { serverId: response.id })
+      }
+
+      for (const connectionData of operation.connections) {
+        const response = await this.api.createConnection(connectionData.sourceId, connectionData.targetId, connectionData.clientId)
+        persistedConnections.push(connectionData)
+        this.store.updateConnection(connectionData.clientId, { serverId: response.id })
+      }
+
+      this.history.push(`Insert template: ${template.name}`, operation)
+      this.notifyPersistedMutation()
+
+      return {
+        organizerClientId: operation.organizerClientId
+      }
+    } catch (error) {
+      this.rollbackInsertedTemplateLocally(operation)
+      await this.rollbackInsertedTemplateRemotely(persistedConnections, persistedNodes)
+
+      showError(`Failed to insert template: ${error.message}`)
+      console.error('Failed to insert template:', error)
+
       throw error
     }
   }
@@ -683,6 +749,34 @@ class SyncManager {
       console.error('Failed to batch update positions:', error)
       
       throw error
+    }
+  }
+
+  rollbackInsertedTemplateLocally(operation) {
+    [...operation.connections].reverse().forEach(connection => {
+      this.store.removeConnection(connection.clientId)
+    });
+
+    [...operation.nodes].reverse().forEach(node => {
+      this.store.removeNode(node.clientId)
+    });
+  }
+
+  async rollbackInsertedTemplateRemotely(persistedConnections, persistedNodes) {
+    for (const connection of [...persistedConnections].reverse()) {
+      try {
+        await this.api.deleteConnection(connection.clientId, connection.sourceId)
+      } catch (rollbackError) {
+        console.error('Failed to roll back template connection:', rollbackError)
+      }
+    }
+
+    for (const node of [...persistedNodes].reverse()) {
+      try {
+        await this.api.deleteNode(node.clientId)
+      } catch (rollbackError) {
+        console.error('Failed to roll back template node:', rollbackError)
+      }
     }
   }
   

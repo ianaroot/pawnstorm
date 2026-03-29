@@ -191,6 +191,15 @@ class ClickHandler {
       this.onNodeSelected(clientId)
     }
   }
+
+  selectNodeById(clientId) {
+    const element = document.querySelector(`.node[data-client-id="${clientId}"]`)
+    if (!element) {
+      return
+    }
+
+    this.selectNode(clientId, element)
+  }
   
   /**
    * Deselect all nodes
