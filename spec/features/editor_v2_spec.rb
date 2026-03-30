@@ -78,8 +78,9 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'assigns stable client IDs to created nodes' do
       click_button '+ Condition'
+      expect_node_count(2)
 
-      node = Node.where(bot: bot, node_type: 'condition').first
+      node = Node.find_by!(bot: bot, node_type: 'condition')
       client_id = find_node_client_id(node.id)
 
       expect(client_id).not_to be_nil
@@ -88,8 +89,9 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'maps client ID to server ID correctly' do
       click_button '+ Condition'
+      expect_node_count(2)
 
-      node = Node.where(bot: bot, node_type: 'condition').first
+      node = Node.find_by!(bot: bot, node_type: 'condition')
       client_id = find_node_client_id(node.id)
       server_id = get_server_id(client_id)
 
