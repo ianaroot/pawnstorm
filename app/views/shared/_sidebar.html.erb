@@ -1,6 +1,4 @@
-<div data-controller="sidebar"
-     data-sidebar-target="sidebar">
-  
+<div data-controller="sidebar">
   <button data-action="click->sidebar#toggle"
           class="hamburger"
           aria-label="Toggle navigation">
@@ -8,8 +6,9 @@
     <span class="hamburger__line"></span>
     <span class="hamburger__line"></span>
   </button>
-  
-  <div class="sidebar__content">
+
+  <div data-sidebar-target="sidebar">
+    <div class="sidebar__content">
     <div class="sidebar__logo">
 <svg class="sidebar__logo-icon" viewBox="0 -8 48 78" width="48" height="78" aria-hidden="true">
         <!-- Pawn base (wide, flat bottom) -->
@@ -93,6 +92,7 @@
             class: "sidebar__link sidebar__link--primary",
             data: { action: "click->sidebar#navigate" } %>
       <% end %>
+    </div>
     </div>
   </div>
 </div>

@@ -3,7 +3,7 @@
    ============================================ */
 
 /* Default: sidebar VISIBLE on desktop */
-[data-controller="sidebar"] {
+[data-sidebar-target="sidebar"] {
   position: fixed;
   top: 0;
   left: 0;
@@ -166,11 +166,11 @@
     justify-content: center;
   }
   
-  [data-controller="sidebar"] {
+  [data-sidebar-target="sidebar"] {
     transform: translateX(-240px);
   }
   
-  [data-controller="sidebar"].sidebar--open {
+  [data-sidebar-target="sidebar"].sidebar--open {
     transform: translateX(0);
   }
 }
