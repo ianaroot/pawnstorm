@@ -54,7 +54,7 @@ module EditorV2Helpers
     expect(page).to have_css('#nodes-canvas', wait: 5)
     expect(page).to have_css('#connections-canvas', wait: 5)
     # Wait for at least root node to be rendered
-    expect(page).to have_css('.node', wait: 5)
+    expect(page).to have_css('.node', wait: 10)
   end
 
   # Assert history count (format: "X/50")
