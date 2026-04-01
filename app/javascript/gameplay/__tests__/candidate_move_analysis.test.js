@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import Board from 'gameplay/board'
 import CandidateMoveAnalysis from 'gameplay/candidate_move_analysis'
+import Rules from 'gameplay/rules'
 
-import { buildBoard, getMove, position } from 'gameplay/__tests__/helpers'
+import { buildBoard, getMove, moveTargets, playMoveSequence, position } from 'gameplay/__tests__/helpers'
 
 describe('CandidateMoveAnalysis', () => {
   describe('afterBoard', () => {
@@ -42,6 +43,80 @@ describe('CandidateMoveAnalysis', () => {
       const analysis = new CandidateMoveAnalysis({ board, moveObject })
 
       expect(analysis.afterBoard()).toBe(analysis.afterBoard())
+    })
+
+    it('preserves en passant availability that depends on movement notation', () => {
+      const board = buildBoard({
+        allowedToMove: Board.WHITE,
+        movementNotation: ['h3', 'd5'],
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a2: 'wP',
+          e5: 'wP',
+          d5: 'bP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+      const afterBoard = analysis.afterBoard()
+
+      const whitePawnTargets = moveTargets(
+        Rules.availableMovesFrom({ board: afterBoard, startPosition: position('e5') })
+      )
+
+      expect(whitePawnTargets).toContain('d6')
+    })
+
+    it('preserves castling availability when king and rook are untouched', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h1: 'wR',
+          a2: 'wP',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+      const afterBoard = analysis.afterBoard()
+
+      const kingTargets = moveTargets(
+        Rules.availableMovesFrom({ board: afterBoard, startPosition: position('e1') })
+      )
+
+      expect(kingTargets).toContain('g1')
+    })
+
+    it('preserves castling unavailability when the rook moved away and returned', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h1: 'wR',
+          a2: 'wP',
+          e8: 'bK',
+          a7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'h1', to: 'h2' },
+        { from: 'a7', to: 'a6' },
+        { from: 'h2', to: 'h1' },
+        { from: 'a6', to: 'a5' }
+      ])
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+      const afterBoard = analysis.afterBoard()
+
+      const kingTargets = moveTargets(
+        Rules.availableMovesFrom({ board: afterBoard, startPosition: position('e1') })
+      )
+
+      expect(kingTargets).not.toContain('g1')
     })
   })
 
@@ -530,6 +605,32 @@ describe('CandidateMoveAnalysis', () => {
       ).toBe(1)
     })
 
+    it('counts a pawn capture when it is the only legal reply', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h5: 'wN',
+          d8: 'bR',
+          e8: 'bK',
+          f8: 'bR',
+          d7: 'bP',
+          e7: 'bP',
+          f7: 'bP'
+        }
+      })
+
+      const moveObject = getMove('h5', 'f6', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+    })
+
     it('resolves moved_piece mobility on the prior board from the start square', () => {
       const board = buildBoard({
         pieces: {
@@ -553,6 +654,325 @@ describe('CandidateMoveAnalysis', () => {
           'prior'
         )
       ).toBe(3)
+    })
+
+    it('counts opponent king mobility on the after board when the checking piece can be captured', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e2: 'wQ',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e7', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+    })
+
+    it('counts aggregate opponent mobility on the after board when only the king capture defends check', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e2: 'wQ',
+          a8: 'bR',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e7', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+    })
+
+    it('resolves opponent king mobility on the prior board from the prior position in the king-capture defense scenario', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e2: 'wQ',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e7', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(4)
+    })
+
+    it('distinguishes opponent king mobility from aggregate opponent mobility in a normal position', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          d1: 'wQ',
+          a8: 'bR',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d1', 'd2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(4)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(14)
+    })
+
+    it('tracks prior board opponent mobility in the normal aggregate scenario', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          d1: 'wQ',
+          a8: 'bR',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d1', 'd2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(4)
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'any',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(14)
+    })
+
+    it('returns zero opponent mobility in a checkmate position', () => {
+      const board = buildBoard({
+        pieces: {
+          c6: 'wK',
+          c7: 'wQ',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('c7', 'b7', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+
+    it('returns zero opponent mobility in a stalemate position', () => {
+      const board = buildBoard({
+        pieces: {
+          c6: 'wK',
+          d7: 'wQ',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d7', 'c7', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+
+    it('counts opponent mobility when check is defendable only by blocking', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wK',
+          c1: 'wR',
+          e1: 'wR',
+          c2: 'wQ',
+          d8: 'bK',
+          f7: 'bR'
+        }
+      })
+
+      const moveObject = getMove('c2', 'd2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+    })
+
+    it('counts opponent mobility when check is defendable only by king escape', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wK',
+          c4: 'wN',
+          d7: 'bK',
+          c7: 'bR',
+          d8: 'bR',
+          e7: 'bR',
+          c6: 'bB',
+          d6: 'bB',
+          e6: 'bB'
+        }
+      })
+
+      const moveObject = getMove('c4', 'b6', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
+          'prior'
+        )
+      ).toBe(2)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'king',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'any',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+    })
+
+    it('treats promotion-ready opponent pawn mobility as binary forward access', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wK',
+          g8: 'bK',
+          a2: 'bP'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'pawn',
+          relation: 'mobility',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
     })
   })
 
@@ -742,6 +1162,30 @@ describe('CandidateMoveAnalysis', () => {
       ).toBe(0)
     })
 
+    it('supports exclude mode for moved_piece relation specifiers', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'shielder',
+          relationSpecifier: 'moved_piece',
+          relationSpecifierMode: 'exclude'
+        })
+      ).toBe(0)
+    })
+
     it('does not count a blocker as a shielder when no enemy slider line exists', () => {
       const board = buildBoard({
         pieces: {
@@ -800,36 +1244,6 @@ describe('CandidateMoveAnalysis', () => {
   })
 
   describe('covers', () => {
-    it('counts the first allied blocker on an enemy-facing ray as a coverer', () => {
-      const board = buildBoard({
-        pieces: {
-          e2: 'wP',
-          e1: 'wK',
-          a8: 'bK'
-        }
-      })
-
-      const moveObject = getMove('e2', 'e3', board)
-      const analysis = new CandidateMoveAnalysis({ board, moveObject })
-
-      expect(
-        analysis.queryValue({
-          subject: 'allies',
-          subjectSpecifier: 'king',
-          relation: 'coverer',
-          relationSpecifier: 'any'
-        })
-      ).toBe(1)
-
-      expect(
-        analysis.queryValue({
-          subject: 'moved_piece',
-          subjectSpecifier: 'pawn',
-          relation: 'covered',
-          relationSpecifier: 'king'
-        })
-      ).toBe(1)
-    })
 
     it('does not count the reverse direction as cover', () => {
       const board = buildBoard({
@@ -859,6 +1273,201 @@ describe('CandidateMoveAnalysis', () => {
           relation: 'covered',
           relationSpecifier: 'pawn'
         })
+      ).toBe(0)
+    })
+
+    it('does not count cover when the blocked side of the board contains only allies and empty squares', () => {
+      const board = buildBoard({
+        pieces: {
+          a3: 'wP',
+          a2: 'wR',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'coverer',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'rook',
+          relation: 'covered',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(0)
+    })
+
+    it('does not count a diagonal pawn as cover for a rook when no opposing slider can access that side', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          b2: 'wP',
+          e1: 'wK',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'rook',
+          relation: 'coverer',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'covered',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(0)
+    })
+
+    it('counts a forward pawn as cover for a rook when an opposing rook can access that file', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          a2: 'wP',
+          e1: 'wK',
+          a8: 'bR',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'rook',
+          relation: 'coverer',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'covered',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(1)
+    })
+
+    it('counts a diagonal pawn as cover for a rook when an opposing bishop can access that side', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          b2: 'wP',
+          e1: 'wK',
+          f8: 'bB',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'rook',
+          relation: 'coverer',
+          relationSpecifier: 'pawn'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'covered',
+          relationSpecifier: 'rook'
+        })
+      ).toBe(1)
+    })
+
+    it('does not increase king cover when a move only opens a remote latent slider route', () => {
+      const board = buildBoard({
+        pieces: {
+          e8: 'bK',
+          f7: 'bP',
+          g4: 'bN',
+          d1: 'wQ',
+          a1: 'wK'
+        },
+        allowedToMove: Board.BLACK
+      })
+
+      const moveObject = getMove('g4', 'f6', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      const priorCover = analysis.queryValue({
+        subject: 'allies',
+        subjectSpecifier: 'king',
+        relation: 'coverer',
+        relationSpecifier: 'any'
+      }, 'prior')
+
+      const afterCover = analysis.queryValue({
+        subject: 'allies',
+        subjectSpecifier: 'king',
+        relation: 'coverer',
+        relationSpecifier: 'any'
+      })
+
+      expect(afterCover).toBe(priorCover)
+    })
+
+    it('does not count cover when the only attacker route reaches the ray by capturing the cover piece', () => {
+      const board = buildBoard({
+        pieces: {
+          g1: 'wK',
+          h2: 'wP',
+          a2: 'wP',
+          f4: 'bQ',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'king',
+          relation: 'coverer',
+          relationSpecifier: 'pawn'
+        }, 'prior')
+      ).toBe(0)
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          relation: 'covered',
+          relationSpecifier: 'king'
+        }, 'prior')
       ).toBe(0)
     })
 
@@ -1037,6 +1646,40 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'captured_piece',
           subjectSpecifier: 'rook',
+          relation: 'count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+
+    it('supports exclude mode for captured piece subject specifiers', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wP',
+          d5: 'bQ',
+          e1: 'wK',
+          e8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e4', 'd5', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'captured_piece',
+          subjectSpecifier: 'pawn',
+          subjectSpecifierMode: 'exclude',
+          relation: 'count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(1)
+
+      expect(
+        analysis.queryValue({
+          subject: 'captured_piece',
+          subjectSpecifier: 'queen',
+          subjectSpecifierMode: 'exclude',
           relation: 'count',
           relationSpecifier: 'any'
         })

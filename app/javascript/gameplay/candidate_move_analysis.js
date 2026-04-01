@@ -11,7 +11,7 @@ class CandidateMoveAnalysis {
 
   afterBoard() {
     if (!this._afterBoard) {
-      const nextBoard = this.board.deepCopy()
+      const nextBoard = this.board.lightClone()
       nextBoard._hypotheticallyMovePiece(this.moveObject)
       this._afterBoard = nextBoard
     }
@@ -240,9 +240,8 @@ class CandidateMoveAnalysis {
     const moveObjects = Rules.availableMovesFrom({ board, startPosition: position })
 
     if (pieceType === Board.PAWN) {
-      return moveObjects.some(moveObject => {
-        return Board.file(moveObject.startPosition) === Board.file(moveObject.endPosition)
-      }) ? 1 : 0
+      const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
+      return destinations.size
     }
 
     return moveObjects.length

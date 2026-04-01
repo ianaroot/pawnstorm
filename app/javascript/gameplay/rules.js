@@ -45,17 +45,17 @@ class Rules {
     // ){
     //   throw new Error("missing params in checkQuery")
     // }
-    let startPosition = moveObject.startPosition,
-      teamString         = board.teamAt(startPosition),
-      newBoard = board.deepCopy();
+    const startPosition = moveObject.startPosition
+    const teamString = board.teamAt(startPosition)
+    let newBoard = board.lightClone();
     newBoard._hypotheticallyMovePiece( moveObject )
     return this.checkQuery({board: newBoard, teamString: teamString})
   }
 
   static pieceWillBeAttackedAfterMove({board: board, moveObject: moveObject}){
-    let startPosition = moveObject.startPosition,
-      teamString         = board.teamAt(startPosition),
-      newBoard = board.deepCopy();
+    const startPosition = moveObject.startPosition
+    const teamString  = board.teamAt(startPosition)
+    let newBoard = board.lightClone();
     newBoard._hypotheticallyMovePiece( moveObject )
     return this.checkQuery({board: newBoard, teamString: teamString})
   }

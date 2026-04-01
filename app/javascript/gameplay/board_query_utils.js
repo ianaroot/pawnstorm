@@ -190,7 +190,6 @@ function firstOccupiedOnRay({ board, startPosition, step }) {
 }
 
 function covererOnRay({ board, targetPosition, team, step }) {
-    const opposingTeam = Board.opposingTeam(team)
     const blockerPosition = firstOccupiedOnRay({ board, startPosition: targetPosition, step })
 
     if (blockerPosition === null || board.teamAt(blockerPosition) !== team) {
@@ -202,18 +201,66 @@ function covererOnRay({ board, targetPosition, team, step }) {
         return null
     }
 
-    const beyondBlocker = firstOccupiedOnRay({ board, startPosition: blockerPosition, step })
-
-    if (beyondBlocker === null) {
-        return blockerPosition
-    }
-
-    if (compatibleSliderOnRay({ board, position: beyondBlocker, step, opposingTeam })) {
+    const potentialAttacker = hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, step })
+    if (potentialAttacker) {
         return blockerPosition
     }
 
     return null
 }
+
+function hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, step }) {
+    const opposingTeam = Board.opposingTeam(team)
+    const farSideSquares = []
+    for (
+        let current = nextPositionOnRay(blockerPosition, step);
+        current !== null;
+        current = nextPositionOnRay(current, step)
+    ) {
+        farSideSquares.push(current)
+    }
+
+    if (farSideSquares.length === 0) { return false}
+
+    const enemySliders = board._positionsOccupiedByTeam(opposingTeam).filter(position => {
+        return compatibleSliderOnRay({ board, position, step, opposingTeam })
+    })
+    for (const sliderPosition of enemySliders) {
+        for (const square of farSideSquares) {
+            const reachable =sliderCouldReachSquareForCover({ board, sliderPosition, targetSquare: square, originalTeam: team })
+             if (reachable) return true
+        }
+    }
+    return false
+}
+
+function sliderCouldReachSquareForCover({ board, sliderPosition, targetSquare, originalTeam }) {
+    const pieceType = board.pieceTypeAt(sliderPosition)
+    const sliderFile = sliderPosition % 8
+    const targetFile = targetSquare % 8
+    const sliderRank = Math.floor(sliderPosition / 8)
+    const targetRank = Math.floor(targetSquare / 8)
+
+    const sameFile = sliderFile === targetFile
+    const sameRank = sliderRank === targetRank
+    const fileDiff = Math.abs(sliderFile - targetFile)
+    const rankDiff = Math.abs(sliderRank - targetRank)
+    const sameDiagonal = fileDiff === rankDiff
+
+    const geometricallyReachable =
+        (pieceType === Board.ROOK && (sameFile || sameRank)) ||
+        (pieceType === Board.BISHOP && sameDiagonal) ||
+        (pieceType === Board.QUEEN && (sameFile || sameRank || sameDiagonal))
+
+    if (!geometricallyReachable) {
+        return false
+    } else {
+        return true
+    }
+
+    
+}
+
 
 function pieceValue(species) {
     switch (species) {

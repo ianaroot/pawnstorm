@@ -59,6 +59,40 @@ class Board {
     return newObject
   }
 
+  clone() {
+    let newLayout = Board._deepCopy(this.layOut),
+      newCaptures = Board._deepCopy(this.capturedPieces),
+      newMovementNotation = Board._deepCopy(this.movementNotation),
+    newBoard = new Board({
+      layOut: newLayout,
+      capturedPieces: newCaptures,
+      allowedToMove: this.allowedToMove,
+      gameOver: this.gameOver,
+      movementNotation: newMovementNotation,
+      previousLayouts: this.previousLayouts,
+      winner: this._winner,
+      resultType: this._resultType
+    });
+  return newBoard;
+  }
+
+  lightClone() {
+    let newLayout = Board._deepCopy(this.layOut),
+        newCaptures = Board._deepCopy(this.capturedPieces),
+        newMovementNotation = Board._deepCopy(this.movementNotation),
+        newBoard = new Board({
+          layOut: newLayout,
+          capturedPieces: newCaptures,
+          allowedToMove: this.allowedToMove,
+          gameOver: this.gameOver,
+          movementNotation: newMovementNotation,
+          previousLayouts: JSON.stringify([]),
+          winner: this._winner,
+          resultType: this._resultType
+        });
+    return newBoard;
+  }
+
   static isSeventhRank(position){
     position = Board.convertPositionFromAlphaNumeric(position)
     return Math.floor(position / 8) === 6
@@ -314,11 +348,7 @@ class Board {
   }
 
   deepCopy(){
-    let newLayout = Board._deepCopy(this.layOut),
-        newCaptures = Board._deepCopy(this.capturedPieces),
-        newMovementNotation = Board._deepCopy(this.movementNotation),
-        newBoard = new Board({layOut: newLayout, capturedPieces: newCaptures, allowedToMove: this.allowedToMove, gameOver: this.gameOver, movementNotation: newMovementNotation, previousLayouts: this.previousLayouts, winner: this._winner, resultType: this._resultType});
-    return newBoard;
+    return this.clone()
   }
 
   _reset(){
