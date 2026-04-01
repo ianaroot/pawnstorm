@@ -11,6 +11,13 @@
           <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
           <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
           <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+          <% if @rematch_params.present? %>
+            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+              <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
+              <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
+              <%= form.submit 'Rematch' %>
+            <% end %>
+          <% end %>
         </div>
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
@@ -29,10 +36,25 @@
       </div>
     </div>
   <% elsif @match.failed? %>
-    <p>Match generation failed.</p>
-    <% if @match.error_message.present? %>
-      <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
-    <% end %>
+    <div class="game-page">
+      <div class="match-show-meta">
+        <h1 class="match-show-title">Match <%= @match.id %></h1>
+        <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
+        <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
+        <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+        <% if @rematch_params.present? %>
+          <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+            <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
+            <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
+            <%= form.submit 'Rematch' %>
+          <% end %>
+        <% end %>
+      </div>
+      <p>Match generation failed.</p>
+      <% if @match.error_message.present? %>
+        <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+      <% end %>
+    </div>
   <% else %>
     <div
       class="match-replay-layout"
@@ -52,6 +74,13 @@
           <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
           <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
           <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+          <% if @rematch_params.present? %>
+            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+              <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
+              <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
+              <%= form.submit 'Rematch' %>
+            <% end %>
+          <% end %>
         </div>
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>

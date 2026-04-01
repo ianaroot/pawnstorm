@@ -166,6 +166,7 @@ RSpec.describe MatchesController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Match is generating.')
       expect(response.body).to match(/<meta[^>]+http-equiv="refresh"[^>]+content="2"[^>]*>/)
+      expect(response.body).to include('Rematch')
     end
 
     it 'shows failure details for failed matches' do
@@ -187,6 +188,51 @@ RSpec.describe MatchesController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Match generation failed.')
       expect(response.body).to include('boom')
+      expect(response.body).to include('Rematch')
+    end
+
+    it 'hides rematch when neither bot is owned by the current user' do
+      match = Match.create!(
+        creator: user,
+        white_player: create(:bot, :compiled),
+        black_player: create(:bot, :compiled),
+        status: :failed,
+        result: :error,
+        error_message: 'boom',
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Rematch')
+    end
+
+    it 'prefills rematch with the current user bot and the other bot' do
+      own_bot = create(:bot, :compiled, user: user)
+      opponent_bot = create(:bot, :compiled)
+      match = Match.create!(
+        creator: user,
+        white_player: opponent_bot,
+        black_player: own_bot,
+        status: :failed,
+        result: :error,
+        error_message: 'boom',
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get match_path(match)
+
+      expect(response.body).to include(%(name="match[own_bot_id]"))
+      expect(response.body).to include(%(value="#{own_bot.id}"))
+      expect(response.body).to include(%(name="match[opponent_bot_id]"))
+      expect(response.body).to include(%(value="#{opponent_bot.id}"))
     end
   end
 end
