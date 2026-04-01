@@ -62,17 +62,19 @@ class CandidateMoveAnalysis {
     return this.queryValue({
       subject: conditionNode.subject,
       subjectSpecifier: conditionNode.subjectSpecifier || 'any',
+      subjectSpecifierMode: conditionNode.subjectSpecifierMode || 'include',
       relation: conditionNode.relation,
-      relationSpecifier: conditionNode.relationSpecifier || 'any'
+      relationSpecifier: conditionNode.relationSpecifier || 'any',
+      relationSpecifierMode: conditionNode.relationSpecifierMode || 'include'
     })
   }
 
   capturedPieceQueryValue(query) {
     switch (query.relation) {
       case 'count':
-        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? 1 : 0
+        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier, query.subjectSpecifierMode) ? 1 : 0
       case 'value':
-        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier) ? this.capturedPieceValue() : 0
+        return this.capturedPieceMatchesSpecifier(query.subjectSpecifier, query.subjectSpecifierMode) ? this.capturedPieceValue() : 0
       default:
         throw new Error(`captured_piece does not support relation: ${query.relation}`)
     }
@@ -92,6 +94,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'adjacent',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'attacker':
@@ -100,6 +103,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'attacker',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'attacked':
@@ -108,6 +112,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'attacked',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'defender':
@@ -116,6 +121,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'defender',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'defended':
@@ -124,6 +130,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'defended',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'shielder':
@@ -132,6 +139,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'shielder',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'shielded':
@@ -140,6 +148,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'shielded',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'coverer':
@@ -148,6 +157,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'coverer',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       case 'covered':
@@ -156,6 +166,7 @@ class CandidateMoveAnalysis {
           positions,
           relation: 'covered',
           relationSpecifier: query.relationSpecifier,
+          relationSpecifierMode: query.relationSpecifierMode,
           boardScope
         })
       default:
@@ -166,17 +177,19 @@ class CandidateMoveAnalysis {
   subjectPositions(query, boardScope = 'after') {
     switch (query.subject) {
       case 'moved_piece':
-        return this.movedPiecePositions(query.subjectSpecifier, boardScope)
+        return this.movedPiecePositions(query.subjectSpecifier, boardScope, query.subjectSpecifierMode)
       case 'allies':
         return this.teamPositions({
           team: this.movedPieceTeam(),
           subjectSpecifier: query.subjectSpecifier,
+          subjectSpecifierMode: query.subjectSpecifierMode,
           boardScope
         })
       case 'opponents':
         return this.teamPositions({
           team: Board.opposingTeam(this.movedPieceTeam()),
           subjectSpecifier: query.subjectSpecifier,
+          subjectSpecifierMode: query.subjectSpecifierMode,
           boardScope
         })
       default:
@@ -184,25 +197,25 @@ class CandidateMoveAnalysis {
     }
   }
 
-  movedPiecePositions(subjectSpecifier = 'any', boardScope = 'after') {
-    return this.matchesSpecifier(this.board.pieceTypeAt(this.moveObject.startPosition), subjectSpecifier)
+  movedPiecePositions(subjectSpecifier = 'any', boardScope = 'after', subjectSpecifierMode = 'include') {
+    return this.matchesSpecifier(this.board.pieceTypeAt(this.moveObject.startPosition), subjectSpecifier, subjectSpecifierMode)
       ? [this.movedPiecePosition(boardScope)]
       : []
   }
 
-  teamPositions({ team, subjectSpecifier = 'any', boardScope = 'after' }) {
+  teamPositions({ team, subjectSpecifier = 'any', boardScope = 'after', subjectSpecifierMode = 'include' }) {
     const board = this.boardForScope(boardScope)
     const positions = board._positionsOccupiedByTeam(team)
-    return this.positionsMatchingSpecifier(positions, subjectSpecifier, board)
+    return this.positionsMatchingSpecifier(positions, subjectSpecifier, subjectSpecifierMode, board)
   }
 
-  positionsMatchingSpecifier(positions, subjectSpecifier = 'any', board = this.afterBoard()) {
+  positionsMatchingSpecifier(positions, subjectSpecifier = 'any', subjectSpecifierMode = 'include', board = this.afterBoard()) {
     if (subjectSpecifier === 'any') {
       return positions
     }
 
     return positions.filter(position => {
-      return this.matchesSpecifier(board.pieceTypeAt(position), subjectSpecifier)
+      return this.matchesSpecifier(board.pieceTypeAt(position), subjectSpecifier, subjectSpecifierMode)
     })
   }
 
@@ -267,41 +280,44 @@ class CandidateMoveAnalysis {
     }
   }
 
-  aggregatePositionRelationValue({ query, positions, relation, relationSpecifier, boardScope = 'after' }) {
+  aggregatePositionRelationValue({ query, positions, relation, relationSpecifier, relationSpecifierMode,  boardScope = 'after' }) {
     return positions.reduce((sum, targetPosition) => {
       return sum + this.positionRelationValue({
         query,
         relation,
         targetPosition,
         relationSpecifier,
+        relationSpecifierMode,
         boardScope
       })
     }, 0)
   }
 
-  countPositionsWithRelation({ query, positions, relation, relationSpecifier, boardScope = 'after' }) {
+  countPositionsWithRelation({ query, positions, relation, relationSpecifier, relationSpecifierMode, boardScope = 'after' }) {
     return positions.filter(targetPosition => {
       return this.positionRelationValue({
         query,
         relation,
         targetPosition,
         relationSpecifier,
+        relationSpecifierMode,
         boardScope
       }) > 0
     }).length
   }
 
-  positionRelationValue({ query, relation, targetPosition, relationSpecifier, boardScope = 'after' }) {
+  positionRelationValue({ query, relation, targetPosition, relationSpecifier, relationSpecifierMode, boardScope = 'after' }) {
     return this.relatedPositions({
       query,
       relation,
       targetPosition,
       relationSpecifier,
+      relationSpecifierMode,
       boardScope
     }).length
   }
 
-  relatedPositions({ query, relation, targetPosition, relationSpecifier, boardScope = 'after' }) {
+  relatedPositions({ query, relation, targetPosition, relationSpecifier, relationSpecifierMode, boardScope = 'after' }) {
     const board = this.boardForScope(boardScope)
     const team = this.relatedTeamFor({ query, relation })
 
@@ -315,6 +331,7 @@ class CandidateMoveAnalysis {
     return this.filterRelationPositions({
       positions,
       relationSpecifier,
+      relationSpecifierMode,
       boardScope
     })
   }
@@ -386,30 +403,38 @@ class CandidateMoveAnalysis {
     })
   }
 
-  filterRelationPositions({ positions, relationSpecifier = 'any', boardScope = 'after' }) {
+  filterRelationPositions({ positions, relationSpecifier = 'any', relationSpecifierMode = 'include', boardScope = 'after' }) {
     if (relationSpecifier === 'any') {
       return positions
     }
 
     if (relationSpecifier === 'moved_piece') {
-      const movedPiecePosition = this.movedPiecePosition(boardScope)
-      return positions.filter(position => position === movedPiecePosition)
-    }
+    const movedPiecePosition = this.movedPiecePosition(boardScope)
+    return positions.filter(position => {
+      const baseMatch = position === movedPiecePosition
+      return relationSpecifierMode === 'exclude' ? !baseMatch : baseMatch
+    })
+  }
 
     const board = this.boardForScope(boardScope)
-    return this.positionsMatchingSpecifier(positions, relationSpecifier, board)
+    return this.positionsMatchingSpecifier(positions, relationSpecifier, relationSpecifierMode, board)
   }
 
-  capturedPieceMatchesSpecifier(subjectSpecifier = 'any') {
-    return this.matchesSpecifier(this.capturedPieceSpecies(), subjectSpecifier)
+  capturedPieceMatchesSpecifier(subjectSpecifier = 'any', subjectSpecifierMode = 'include') {
+    return this.matchesSpecifier(this.capturedPieceSpecies(), subjectSpecifier, subjectSpecifierMode)
   }
 
-  matchesSpecifier(species, specifier = 'any') {
+  matchesSpecifier(species, specifier = 'any', specifierMode = 'include') {
     if (species === null) {
       return false
     }
 
-    return specifier === 'any' || species === this.specifierToSpecies(specifier)
+    if (specifier === 'any') { return true}
+    else{
+      const baseMatch = species === this.specifierToSpecies(specifier)
+      return specifierMode === 'exclude' ? !baseMatch : baseMatch
+    }
+    
   }
 
   specifierToSpecies(specifier = 'any') {

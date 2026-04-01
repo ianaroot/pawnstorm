@@ -20,6 +20,12 @@
 
       <div id="condition-specifier-group" class="editor-part hidden">
         <label>2. Subject specifier</label>
+        <label>Specifier mode</label>
+        <select id="cond-subject-specifier-mode">
+          <% Node.condition_specifier_mode_options.each do |label, value| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
+        </select>
         <select id="cond-subject-specifier">
           <% Node.condition_subject_specifier_options.each do |label, value| %>
             <option value="<%= value %>"><%= label %></option>
@@ -38,6 +44,12 @@
 
       <div id="condition-relation-specifier-group" class="editor-part hidden">
         <label>4. Relation specifier</label>
+        <label>Specifier mode</label>
+        <select id="cond-relation-specifier-mode">
+          <% Node.condition_specifier_mode_options.each do |label, value| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
+        </select>
         <select id="cond-relation-specifier">
           <% Node.condition_relation_specifier_options.each do |label, value, valid_subjects, valid_relations| %>
             <option

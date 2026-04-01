@@ -160,6 +160,53 @@ RSpec.describe Node, type: :model do
       expect(node).to be_valid
     end
 
+    it 'accepts exclude mode for subject and relation specifiers' do
+      node = build(:node, :condition, data: {
+        subject: 'allies',
+        subjectSpecifier: 'pawn',
+        subjectSpecifierMode: 'exclude',
+        relation: 'attacker',
+        relationSpecifier: 'pawn',
+        relationSpecifierMode: 'exclude',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      })
+
+      expect(node).to be_valid
+    end
+
+    it 'rejects exclude mode for subjectSpecifier any' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        subjectSpecifier: 'any',
+        subjectSpecifierMode: 'exclude',
+        relation: 'attacker',
+        relationSpecifier: 'any',
+        relationSpecifierMode: 'include',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid subjectSpecifierMode for subjectSpecifier')
+    end
+
+    it 'rejects exclude mode for relationSpecifier any' do
+      node = build(:node, :condition, data: {
+        subject: 'moved_piece',
+        subjectSpecifier: 'pawn',
+        subjectSpecifierMode: 'include',
+        relation: 'attacker',
+        relationSpecifier: 'any',
+        relationSpecifierMode: 'exclude',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('has invalid relationSpecifierMode for relationSpecifier')
+    end
+
     it 'rejects prior_board_state for captured_piece conditions' do
       node = build(:node, :condition, data: {
         subject: 'captured_piece',

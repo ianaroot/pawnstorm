@@ -4,7 +4,9 @@ class ConditionEvaluator {
       subject: conditionNode.subject,
       subjectSpecifier: conditionNode.subjectSpecifier || 'any',
       relation: conditionNode.relation,
-      relationSpecifier: conditionNode.relationSpecifier || 'any'
+      relationSpecifier: conditionNode.relationSpecifier || 'any',
+      subjectSpecifierMode: conditionNode.subjectSpecifierMode || 'include',
+      relationSpecifierMode: conditionNode.relationSpecifierMode || 'include'
     }
     const value = analysis.queryValue(query, 'after')
     const comparison = conditionNode.comparison

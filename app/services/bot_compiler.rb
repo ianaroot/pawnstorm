@@ -97,8 +97,10 @@ class BotCompiler
       {
         subject: raw['subject'] || raw[:subject],
         subjectSpecifier: raw['subjectSpecifier'] || raw[:subjectSpecifier],
+        subjectSpecifierMode: raw['subjectSpecifierMode'] || raw[:subjectSpecifierMode],
         relation: raw['relation'] || raw[:relation],
         relationSpecifier: raw['relationSpecifier'] || raw[:relationSpecifier],
+        relationSpecifierMode: raw['relationSpecifierMode'] || raw[:relationSpecifierMode],
         comparison: raw['comparison'] || raw[:comparison],
         comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
       }

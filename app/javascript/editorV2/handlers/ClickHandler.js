@@ -115,8 +115,10 @@ class ClickHandler {
     this.editorPanel.querySelector('#cancel-edit')?.addEventListener('click', this.boundHandleCancel)
 
     this.editorPanel.querySelector('#cond-subject')?.addEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel.querySelector('#cond-subject-specifier-mode')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-subject-specifier')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-relation')?.addEventListener('change', this.boundHandleConditionFieldChange)
+    this.editorPanel.querySelector('#cond-relation-specifier-mode')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-relation-specifier')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-comparison')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-comparison-value-source')?.addEventListener('change', this.boundHandleConditionFieldChange)
@@ -337,8 +339,10 @@ class ClickHandler {
   conditionEditorFields() {
     return {
       subject: this.editorPanel.querySelector('#cond-subject'),
+      subjectSpecifierMode: this.editorPanel.querySelector('#cond-subject-specifier-mode'),
       subjectSpecifier: this.editorPanel.querySelector('#cond-subject-specifier'),
       relation: this.editorPanel.querySelector('#cond-relation'),
+      relationSpecifierMode: this.editorPanel.querySelector('#cond-relation-specifier-mode'),
       relationSpecifier: this.editorPanel.querySelector('#cond-relation-specifier'),
       comparison: this.editorPanel.querySelector('#cond-comparison'),
       comparisonValueNumber: this.editorPanel.querySelector('#cond-comparison-value-number'),
@@ -348,8 +352,10 @@ class ClickHandler {
 
   writeConditionEditorFields(fields, nodeData = {}) {
     if (fields.subject) fields.subject.value = nodeData.subject || 'moved_piece'
+    if (fields.subjectSpecifierMode) fields.subjectSpecifierMode.value = nodeData.subjectSpecifierMode || 'include'
     if (fields.subjectSpecifier) fields.subjectSpecifier.value = nodeData.subjectSpecifier || 'any'
     if (fields.relation) fields.relation.value = nodeData.relation || 'attacker'
+    if (fields.relationSpecifierMode) fields.relationSpecifierMode.value = nodeData.relationSpecifierMode || 'include'
     if (fields.relationSpecifier) fields.relationSpecifier.value = nodeData.relationSpecifier || 'any'
     if (fields.comparison) fields.comparison.value = nodeData.comparison || 'equal_to'
 
@@ -370,8 +376,10 @@ class ClickHandler {
 
     return {
       subject: fields.subject?.value,
+      subjectSpecifierMode: fields.subjectSpecifierMode?.value || 'include',
       subjectSpecifier: fields.subjectSpecifier?.value,
       relation: fields.relation?.value,
+      relationSpecifierMode: fields.relationSpecifierMode?.value || 'include',
       relationSpecifier: fields.relationSpecifier?.value,
       comparison: fields.comparison?.value,
       comparisonValueSource: fields.comparisonValueSource?.value,
@@ -390,7 +398,13 @@ class ClickHandler {
 
     const relation = fields.relation.value
     this.filterRelationSpecifierOptions(fields.relationSpecifier, subject, relation)
+    this.filterSubjectSpecifierOptions(fields.subjectSpecifier, fields.subjectSpecifierMode)
+    this.filterRelationSpecifierByMode(fields.relationSpecifier, fields.relationSpecifierMode)
     this.filterComparisonValueSourceOptions(fields.comparisonValueSource, subject)
+  }
+
+  filterSubjectSpecifierOptions(subjectSpecifierSelect, subjectSpecifierModeSelect) {
+    this.filterSpecifierOptionsByMode(subjectSpecifierSelect, subjectSpecifierModeSelect)
   }
 
   filterRelationOptions(relationSelect, subject) {
@@ -408,6 +422,48 @@ class ClickHandler {
       const relationMatches = validRelations.length === 0 || validRelations.includes(relation)
       return subjectMatches && relationMatches
     })
+  }
+
+  filterRelationSpecifierByMode(relationSpecifierSelect, relationSpecifierModeSelect) {
+    this.filterSpecifierOptionsByMode(relationSpecifierSelect, relationSpecifierModeSelect)
+  }
+
+  filterSpecifierOptionsByMode(specifierSelect, specifierModeSelect) {
+    if (!specifierSelect || !specifierModeSelect) {
+      return
+    }
+
+    const anyOption = Array.from(specifierSelect.options).find(option => option.value === 'any')
+    if (!anyOption) {
+      return
+    }
+
+    const excludeMode = specifierModeSelect.value === 'exclude'
+
+    if (excludeMode) {
+      anyOption.hidden = true
+      anyOption.disabled = true
+
+      if (specifierSelect.value === 'any') {
+        const firstValidOption = Array.from(specifierSelect.options).find(option => !option.disabled)
+        if (firstValidOption) {
+          specifierSelect.value = firstValidOption.value
+        }
+      }
+
+      return
+    }
+
+    const validSubjects = anyOption.dataset.validSubjects?.split(',').filter(Boolean) || []
+    const validRelations = anyOption.dataset.validRelations?.split(',').filter(Boolean) || []
+    const currentSubject = this.editorPanel?.querySelector('#cond-subject')?.value
+    const currentRelation = this.editorPanel?.querySelector('#cond-relation')?.value
+    const subjectMatches = validSubjects.length === 0 || validSubjects.includes(currentSubject)
+    const relationMatches = validRelations.length === 0 || validRelations.includes(currentRelation)
+    const shouldShowAny = subjectMatches && relationMatches
+
+    anyOption.hidden = !shouldShowAny
+    anyOption.disabled = !shouldShowAny
   }
 
   filterComparisonValueSourceOptions(comparisonValueSourceSelect, subject) {
@@ -482,8 +538,10 @@ class ClickHandler {
 
     return {
       subject: fields.subject?.value || 'moved_piece',
+      subjectSpecifierMode: fields.subjectSpecifierMode?.value || 'include',
       subjectSpecifier: fields.subjectSpecifier?.value || 'any',
       relation: fields.relation?.value || 'attacker',
+      relationSpecifierMode: fields.relationSpecifierMode?.value || 'include',
       relationSpecifier: fields.relationSpecifier?.value || 'any',
       comparison: comparison,
       comparisonValue: comparisonValue

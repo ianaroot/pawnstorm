@@ -180,6 +180,31 @@ describe('CandidateMoveAnalysis', () => {
       ).toBe(0)
     })
 
+    it('supports exclude mode when filtering relation specifiers by piece type', () => {
+      const board = buildBoard({
+        pieces: {
+          d2: 'wP',
+          e1: 'wK',
+          e8: 'bK',
+          d8: 'bR',
+          b2: 'bB'
+        }
+      })
+
+      const moveObject = getMove('d2', 'd4', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'any',
+          relation: 'attacker',
+          relationSpecifier: 'rook',
+          relationSpecifierMode: 'exclude'
+        })
+      ).toBe(1)
+    })
+
     it('counts defenders for the moved piece and filters them by relationSpecifier', () => {
       const board = buildBoard({
         pieces: {
@@ -247,6 +272,30 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue({
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
+          relation: 'attacker',
+          relationSpecifier: 'any'
+        })
+      ).toBe(0)
+    })
+
+    it('supports exclude mode when filtering the moved piece subject by subjectSpecifier', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          e8: 'bK',
+          g5: 'bN'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'moved_piece',
+          subjectSpecifier: 'pawn',
+          subjectSpecifierMode: 'exclude',
           relation: 'attacker',
           relationSpecifier: 'any'
         })
@@ -322,6 +371,44 @@ describe('CandidateMoveAnalysis', () => {
           relationSpecifier: 'any'
         })
       ).toBe(0)
+    })
+
+    it('supports exclude mode for allied and opponent subject specifiers', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          a1: 'wR',
+          h1: 'wR',
+          e1: 'wK',
+          e8: 'bK',
+          a8: 'bR',
+          h8: 'bR',
+          d7: 'bP'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+
+      expect(
+        analysis.queryValue({
+          subject: 'allies',
+          subjectSpecifier: 'pawn',
+          subjectSpecifierMode: 'exclude',
+          relation: 'count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(3)
+
+      expect(
+        analysis.queryValue({
+          subject: 'opponents',
+          subjectSpecifier: 'pawn',
+          subjectSpecifierMode: 'exclude',
+          relation: 'count',
+          relationSpecifier: 'any'
+        })
+      ).toBe(3)
     })
 
     it('resolves allies on the prior board scope for comparison-style queries', () => {

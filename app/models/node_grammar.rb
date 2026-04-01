@@ -143,6 +143,17 @@ class NodeGrammar
       comparison_value.is_a?(Numeric) || comparison_values_for(subject).include?(comparison_value)
     end
 
+    def valid_specifier_mode?(mode)
+      SPECIFIER_MODES.include?(mode)
+    end
+
+    def valid_mode_for_specifier?(specifier:, mode:)
+      return false unless valid_specifier_mode?(mode)
+      return mode == 'include' if specifier == 'any'
+
+      true
+    end
+
     def subject_options
       SUBJECTS.map { |subject| [SUBJECT_LABELS.fetch(subject), subject] }
     end

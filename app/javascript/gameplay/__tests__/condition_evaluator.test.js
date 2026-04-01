@@ -27,8 +27,10 @@ describe('ConditionEvaluator', () => {
       {
         subject: 'moved_piece',
         subjectSpecifier: 'rook',
+        subjectSpecifierMode: 'include',
         relation: 'attacker',
-        relationSpecifier: 'pawn'
+        relationSpecifier: 'pawn',
+        relationSpecifierMode: 'include'
       }
     ])
   })
@@ -60,8 +62,10 @@ describe('ConditionEvaluator', () => {
       {
         subject: 'moved_piece',
         subjectSpecifier: 'any',
+        subjectSpecifierMode: 'include',
         relation: 'attacker',
-        relationSpecifier: 'any'
+        relationSpecifier: 'any',
+        relationSpecifierMode: 'include'
       }
     ])
   })
@@ -141,8 +145,10 @@ describe('ConditionEvaluator', () => {
         {
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
+          subjectSpecifierMode: 'include',
           relation: 'attacker',
-          relationSpecifier: 'pawn'
+          relationSpecifier: 'pawn',
+          relationSpecifierMode: 'include'
         },
         'after'
       ],
@@ -150,11 +156,52 @@ describe('ConditionEvaluator', () => {
         {
           subject: 'moved_piece',
           subjectSpecifier: 'rook',
+          subjectSpecifierMode: 'include',
           relation: 'attacker',
-          relationSpecifier: 'pawn'
+          relationSpecifier: 'pawn',
+          relationSpecifierMode: 'include'
         },
         'prior'
       ]
+    ])
+  })
+
+  it('passes explicit include/exclude specifier modes through to analysis', () => {
+    const queries = []
+    const analysis = {
+      queryValue(query) {
+        queries.push(query)
+        return 1
+      }
+    }
+
+    const evaluator = new ConditionEvaluator()
+
+    expect(
+      evaluator.evaluate(
+        {
+          subject: 'captured_piece',
+          subjectSpecifier: 'pawn',
+          subjectSpecifierMode: 'exclude',
+          relation: 'count',
+          relationSpecifier: 'moved_piece',
+          relationSpecifierMode: 'exclude',
+          comparison: 'greater_than',
+          comparisonValue: 0
+        },
+        analysis
+      )
+    ).toBe(true)
+
+    expect(queries).toEqual([
+      {
+        subject: 'captured_piece',
+        subjectSpecifier: 'pawn',
+        subjectSpecifierMode: 'exclude',
+        relation: 'count',
+        relationSpecifier: 'moved_piece',
+        relationSpecifierMode: 'exclude'
+      }
     ])
   })
 })

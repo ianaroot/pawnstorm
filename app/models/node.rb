@@ -12,7 +12,7 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  CONDITION_KEYS = %w[subject subjectSpecifier relation relationSpecifier comparison comparisonValue].freeze
+  CONDITION_KEYS = %w[subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison comparisonValue].freeze
 
   ACTION_TYPES = %w[add subtract set return].freeze
   ACTION_KEYS = %w[actionType value].freeze
@@ -23,7 +23,7 @@ class Node < ApplicationRecord
   has_many :incoming_connections, class_name: 'Connection', foreign_key: 'target_node_id', dependent: :destroy
 
   validates :node_type, presence: true
-  before_validation :normalize_organizer_data
+  before_validation :normalize_node_data
 
   # Ensure only one root per bot (DB has unique index, this validates before save)
   validate :single_root_per_bot, if: -> { node_type == 'root' }
@@ -31,6 +31,10 @@ class Node < ApplicationRecord
 
   after_commit :mark_bot_compiled_program_stale_if_needed, on: [:create, :update, :destroy]
   
+  def self.condition_specifier_mode_options
+    NodeGrammar.specifier_mode_options
+  end
+
   # Node type helpers
   def root?
     node_type == 'root'
@@ -149,8 +153,10 @@ class Node < ApplicationRecord
 
     subject = data['subject']
     subject_specifier = data['subjectSpecifier']
+    subject_specifier_mode = data['subjectSpecifierMode']
     relation = data['relation']
     relation_specifier = data['relationSpecifier']
+    relation_specifier_mode = data['relationSpecifierMode']
     comparison = data['comparison']
     comparison_value = data['comparisonValue']
 
@@ -159,7 +165,11 @@ class Node < ApplicationRecord
       valid_condition_relation_for_subject?(subject, relation) &&
       valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:) &&
       NodeGrammar::COMPARISONS.include?(comparison) &&
-      valid_condition_comparison_value_for_subject?(subject, comparison_value)
+      valid_condition_comparison_value_for_subject?(subject, comparison_value) &&
+      NodeGrammar.valid_specifier_mode?(subject_specifier_mode) &&
+      NodeGrammar.valid_specifier_mode?(relation_specifier_mode) &&
+      NodeGrammar.valid_mode_for_specifier?(specifier: subject_specifier, mode: subject_specifier_mode) &&
+      NodeGrammar.valid_mode_for_specifier?(specifier: relation_specifier, mode: relation_specifier_mode)
 
     return nil unless valid
 

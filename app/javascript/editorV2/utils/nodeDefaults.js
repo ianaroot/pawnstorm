@@ -1,8 +1,10 @@
 export const DEFAULT_CONDITION_DATA = Object.freeze({
   subject: 'moved_piece',
   subjectSpecifier: 'any',
+  subjectSpecifierMode: 'include',
   relation: 'attacker',
   relationSpecifier: 'any',
+  relationSpecifierMode: 'include',
   comparison: 'equal_to',
   comparisonValue: 1
 })
@@ -20,8 +22,10 @@ export const DEFAULT_ORGANIZER_DATA = Object.freeze({
 export const CONDITION_DATA_KEYS = Object.freeze([
   'subject',
   'subjectSpecifier',
+  'subjectSpecifierMode',
   'relation',
   'relationSpecifier',
+  'relationSpecifierMode',
   'comparison',
   'comparisonValue'
 ])
