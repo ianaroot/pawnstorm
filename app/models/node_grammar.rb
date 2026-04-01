@@ -6,6 +6,7 @@ class NodeGrammar
   POSITIONAL_RELATIONS = %w[
     count
     value
+    mobility
     adjacent
     attacker
     attacked
@@ -15,7 +16,6 @@ class NodeGrammar
     shielded
     coverer
     covered
-    mobility
   ].freeze
   CAPTURED_PIECE_RELATIONS = %w[count value].freeze
   FILTERABLE_POSITIONAL_RELATIONS = %w[
@@ -71,18 +71,19 @@ class NodeGrammar
     'pawn' => 'Pawn',
     'moved_piece' => 'Moved piece'
   }.freeze
+  SPECIFIER_MODES = %w[include exclude].freeze
   RELATION_LABELS = {
     'count' => 'Count',
     'value' => 'Value',
     'adjacent' => 'Adjacent',
-    'attacker' => 'Attacker',
-    'attacked' => 'Attacked',
-    'defender' => 'Defender',
-    'defended' => 'Defended',
-    'shielder' => 'Shielder',
-    'shielded' => 'Shielded',
-    'coverer' => 'Coverer',
-    'covered' => 'Covered',
+    'attacker' => 'Is ATTACKED by',
+    'attacked' => 'Makes ATTACKS against',
+    'defender' => 'Is DEFENDED by',
+    'defended' => 'Provides DEFENSE for',
+    'shielder' => 'Is SHIELDED by',
+    'shielded' => 'Provides SHIELDING for',
+    'coverer' => 'Is COVERED by',
+    'covered' => 'Provides COVER for',
     'mobility' => 'Mobility'
   }.freeze
   COMPARISON_LABELS = {
@@ -105,8 +106,16 @@ class NodeGrammar
     'captured_piece_value' => 'captured value',
     'prior_board_state' => 'prior'
   }.freeze
+  
 
   class << self
+    def specifier_mode_options
+      [
+        ['Is', 'include'],
+        ['Is not', 'exclude']
+      ]
+    end
+    
     def relations_for(subject)
       RELATIONS_BY_SUBJECT[subject] || []
     end

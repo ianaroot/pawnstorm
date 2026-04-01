@@ -2,17 +2,27 @@
 data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
 subject = data['subject'] || data[:subject]
 subject_specifier = data['subjectSpecifier'] || data[:subjectSpecifier]
+subject_specifier_mode = data['subjectSpecifierMode'] || data[:subjectSpecifierMode] || 'include'
 relation = data['relation'] || data[:relation]
 relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
+relation_specifier_mode = data['relationSpecifierMode'] || data[:relationSpecifierMode] || 'include'
 comparison = data['comparison'] || data[:comparison]
 comparison_value = data['comparisonValue'] || data[:comparisonValue]
 
 subject_label = Node.condition_subject_short_label(subject)
-subject_specifier_label = Node.condition_specifier_label(subject_specifier)&.downcase
+subject_specifier_label = Node.send(
+  :specifier_summary,
+  subject_specifier,
+  subject_specifier_mode
+)
 relation_label = Node.condition_relation_label(relation)&.downcase
 relation_specifier_label = (
   relation_specifier != 'any' ?
-    Node.condition_specifier_label(relation_specifier)&.downcase :
+    Node.send(
+      :specifier_summary,
+      relation_specifier,
+      relation_specifier_mode
+    ) :
     nil
 )
 comparison_symbol = Node.condition_comparison_symbol(comparison)

@@ -165,11 +165,11 @@ class Node < ApplicationRecord
 
     summary_parts = []
     summary_parts << "#{condition_subject_short_label(subject)}:"
-    summary_parts << condition_specifier_label(subject_specifier)&.downcase
+    summary_parts << specifier_summary(subject_specifier, subject_specifier_mode)
     summary_parts << condition_relation_label(relation)&.downcase
 
     if relation_specifier != 'any'
-      summary_parts << condition_specifier_label(relation_specifier)&.downcase
+      summary_parts << specifier_summary(relation_specifier, relation_specifier_mode)
     end
 
     comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value
@@ -181,9 +181,31 @@ class Node < ApplicationRecord
   
   private
 
-  def normalize_organizer_data
-    return unless organizer?
+  def self.specifier_summary(specifier, mode)
+    label = condition_specifier_label(specifier)&.downcase
+    return label unless label && mode == 'exclude'
 
+    "non-#{label}"
+  end
+
+  def normalize_node_data
+    normalize_condition_data if condition?
+    normalize_organizer_data if organizer?
+  end
+
+  def normalize_condition_data
+    raw = data.is_a?(Hash) ? data : {}
+    normalized = raw.each_with_object({}) do |(key, value), memo|
+      memo[key.to_s] = value
+    end
+
+    normalized['subjectSpecifierMode'] ||= 'include'
+    normalized['relationSpecifierMode'] ||= 'include'
+
+    self.data = normalized
+  end
+
+  def normalize_organizer_data
     raw = data.is_a?(Hash) ? data : {}
     normalized = raw.each_with_object({}) do |(key, value), memo|
       memo[key.to_s] = value
@@ -232,12 +254,18 @@ class Node < ApplicationRecord
     relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
     comparison = data['comparison'] || data[:comparison]
     comparison_value = data['comparisonValue'] || data[:comparisonValue]
+    subject_specifier_mode = data['subjectSpecifierMode'] || data[:subjectSpecifierMode]
+    relation_specifier_mode = data['relationSpecifierMode'] || data[:relationSpecifierMode]
 
     errors.add(:data, 'has invalid subject') unless NodeGrammar::SUBJECTS.include?(subject)
     errors.add(:data, 'has invalid subjectSpecifier') unless NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier)
     errors.add(:data, 'has invalid relation') unless self.class.valid_condition_relation_for_subject?(subject, relation)
     errors.add(:data, 'has invalid relationSpecifier') unless self.class.valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:)
     errors.add(:data, 'has invalid comparison') unless NodeGrammar::COMPARISONS.include?(comparison)
+    errors.add(:data, 'has invalid subjectSpecifierMode') unless NodeGrammar.valid_specifier_mode?(subject_specifier_mode)
+    errors.add(:data, 'has invalid relationSpecifierMode') unless NodeGrammar.valid_specifier_mode?(relation_specifier_mode)
+    errors.add(:data, 'has invalid subjectSpecifierMode for subjectSpecifier') unless NodeGrammar.valid_mode_for_specifier?(specifier: subject_specifier, mode: subject_specifier_mode)
+    errors.add(:data, 'has invalid relationSpecifierMode for relationSpecifier') unless NodeGrammar.valid_mode_for_specifier?(specifier: relation_specifier, mode: relation_specifier_mode)
 
     return if self.class.valid_condition_comparison_value_for_subject?(subject, comparison_value)
 
