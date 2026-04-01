@@ -40,7 +40,7 @@
 
 /* Capture panels */
 .captures {
-  background-color: #2d2a25;
+  background-color: #8f8576;
   border: 2px solid #3d3a35;
   border-radius: 10px;
   min-height: 100px;
@@ -51,6 +51,27 @@
   align-content: flex-start;
   padding: 5px;
   overflow-x: auto;
+}
+
+.capture-piece-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  line-height: 1;
+  width: 48px;
+  height: 48px;
+  margin: 2px 4px 2px 0;
+  color: black;
+}
+
+.capture-piece-glyph.W {
+  color: #f5f5f5;
+}
+
+.board-piece-glyph {
+  display: inline-block;
+  line-height: 1;
 }
 
 #W-captures {

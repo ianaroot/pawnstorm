@@ -122,7 +122,7 @@ class ReplayTraceView {
     typePill.className = "match-replay-trace-pill match-replay-trace-pill--type"
     typePill.innerText = entry.nodeType
     meta.appendChild(typePill)
-
+    
     if (entry.nodeType === 'condition') {
       row.classList.add('match-replay-trace-entry--condition')
       row.classList.add(entry.passed ? 'match-replay-trace-entry--pass' : 'match-replay-trace-entry--fail')
@@ -140,6 +140,7 @@ class ReplayTraceView {
     }
 
     row.classList.add('match-replay-trace-entry--action')
+    row.classList.add(entry.halted ? 'match-replay-trace-entry--action-halted' : 'match-replay-trace-entry--action-applied')
     const statusPill = document.createElement("span")
     statusPill.className = "match-replay-trace-pill match-replay-trace-pill--action"
     statusPill.innerText = entry.halted ? 'halt' : 'applied'
@@ -159,26 +160,45 @@ class ReplayTraceView {
   }
 
   conditionSummary(data) {
+    const relationLabel = this.relationLabel(data.relation)
     const relationSpecifier = data.relationSpecifier && data.relationSpecifier !== 'any'
-      ? ` by ${data.relationSpecifier}`
+      ? ` ${this.specifierSummary(data.relationSpecifier, data.relationSpecifierMode)}`
       : ''
     const subjectSpecifier = data.subjectSpecifier && data.subjectSpecifier !== 'any'
-      ? ` ${data.subjectSpecifier}`
+      ? ` ${this.specifierSummary(data.subjectSpecifier, data.subjectSpecifierMode)}`
       : ''
     const comparisonValue = typeof data.comparisonValue === 'number'
       ? data.comparisonValue
-      : String(data.comparisonValue).replaceAll('_', ' ')
+      : this.prettyToken(data.comparisonValue)
     const operator = {
       equal_to: '=',
       greater_than: '>',
       less_than: '<'
     }[data.comparison] || data.comparison
 
-    return `${this.prettyToken(data.subject)}${subjectSpecifier} ${this.prettyToken(data.relation)}${relationSpecifier} ${operator} ${this.prettyToken(comparisonValue)}`
+    return `${this.prettyToken(data.subject)}${subjectSpecifier} ${relationLabel}${relationSpecifier} ${operator} ${comparisonValue}`
+  }
+
+  relationLabel(relation) {
+    return {
+      attacker: 'is ATTACKED by',
+      attacked: 'makes ATTACKS against',
+      defender: 'is DEFENDED by',
+      defended: 'provides DEFENSE for',
+      shielder: 'is SHIELDED by',
+      shielded: 'provides SHIELDING for',
+      coverer: 'is COVERED by',
+      covered: 'provides COVER for'
+    }[relation] || this.prettyToken(relation)
   }
 
   prettyToken(value) {
     return String(value).replaceAll('_', ' ')
+  }
+
+  specifierSummary(specifier, mode) {
+    const label = this.prettyToken(specifier)
+    return mode === 'exclude' ? `non-${label}` : label
   }
 }
 

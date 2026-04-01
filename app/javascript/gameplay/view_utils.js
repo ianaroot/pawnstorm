@@ -40,9 +40,17 @@ export function displayPiece({ pieceInitials, gridPosition }) {
   const element = document.getElementById(gridPosition)
   if (!element) { return }
 
-  element.innerHTML = unicodePieces[pieceInitials]
+  element.innerHTML = ""
+  element.appendChild(buildPieceGlyph(pieceInitials))
   element.classList.add(pieceInitials[0])
   element.style.color = "black"
+}
+
+function buildPieceGlyph(pieceInitials, className = 'board-piece-glyph') {
+  const glyph = document.createElement('span')
+  glyph.className = `${className} ${pieceInitials[0]}`
+  glyph.innerHTML = unicodePieces[pieceInitials]
+  return glyph
 }
 
 export function pieceInitials(pieceObject) {
@@ -80,7 +88,10 @@ export function updateCaptures(board) {
   for (let i = 0; i < board.capturedPieces.length; i++) {
     const pieceObject = board.capturedPieces[i]
     const team = Board.parseTeam(pieceObject)
-    displayPiece({ pieceInitials: pieceInitials(pieceObject), gridPosition: team + "-captures" })
+    const captureDiv = document.getElementById(team + "-captures")
+    if (!captureDiv) { continue }
+
+    captureDiv.appendChild(buildPieceGlyph(pieceInitials(pieceObject), 'capture-piece-glyph'))
   }
 }
 

@@ -317,6 +317,10 @@ class MatchReplayController {
       ? this.whiteCompiledProgramSnapshot
       : this.blackCompiledProgramSnapshot
 
+    if (this.atEnd()) {
+      return { enabled: false, team, compiledProgram: null, result: null, selectedStartSquare: null }
+    }
+
     if (ownerId !== this.currentUserId || !compiledProgram) {
       return { enabled: false, team, compiledProgram: null, result: null, selectedStartSquare: null }
     }
