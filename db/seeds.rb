@@ -126,6 +126,29 @@ def create_path!(bot:, start_node:, x:, y:, conditions:, action_type:, value:, s
   connect!(previous_node, action_node)
 end
 
+def clone_bot_graph!(source_bot:, target_bot:)
+  reset_bot_graph!(target_bot)
+
+  source_root = source_bot.root_node
+  target_root = target_bot.root_node
+  node_map = { source_root.id => target_root }
+
+  source_bot.nodes.where.not(node_type: 'root').find_each do |node|
+    node_map[node.id] = target_bot.nodes.create!(
+      node_type: node.node_type,
+      position_x: node.position_x,
+      position_y: node.position_y,
+      data: node.data.deep_dup
+    )
+  end
+
+  source_bot.nodes.find_each do |node|
+    node.outgoing_connections.find_each do |connection|
+      connect!(node_map[connection.source_node_id], node_map[connection.target_node_id])
+    end
+  end
+end
+
 def cond(
   subject:,
   relation:,
@@ -2562,10 +2585,43 @@ create_path!(
   y: 1420,
   zigzag_offset: 70,
   conditions: [
-    cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state')
+    cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0)
   ],
   action_type: 'add',
   value: 5
+)
+
+create_path!(
+  bot: vise,
+  start_node: fallback_organizer,
+  x: 5160,
+  y: 1420,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 8
+)
+
+create_path!(
+  bot: vise,
+  start_node: fallback_organizer,
+  x: 5420,
+  y: 1420,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'rook', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 8
 )
 
 vise.compile_program!
@@ -3239,10 +3295,43 @@ create_path!(
   y: 1520,
   zigzag_offset: 70,
   conditions: [
-    cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state')
+    cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0)
   ],
   action_type: 'add',
   value: 5
+)
+
+create_path!(
+  bot: gambit,
+  start_node: gambit_fallback,
+  x: 7640,
+  y: 1520,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+create_path!(
+  bot: gambit,
+  start_node: gambit_fallback,
+  x: 7900,
+  y: 1520,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'rook', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
 )
 
 gambit.compile_program!
@@ -5254,4 +5343,1444 @@ create_path!(
 
 rogue.compile_program!
 
-puts "Seeded #{seed_bots.length + 4} heuristic bots for #{seed_email}"
+phoenix = user.bots.find_or_initialize_by(name: 'Phoenix')
+phoenix.description = 'A Rogue derivative that keeps the same tactical spine, but is more disciplined about avoiding cheap queen harassment and more eager to bring supporting pieces into mating nets.'
+phoenix.save!
+
+clone_bot_graph!(source_bot: rogue, target_bot: phoenix)
+
+phoenix_root = phoenix.root_node
+phoenix_conversion = create_organizer!(bot: phoenix, position_x: 10880, position_y: 1080, title: 'Phoenix Conversion')
+phoenix_discipline = create_organizer!(bot: phoenix, position_x: 11380, position_y: 1080, title: 'Phoenix Discipline')
+
+connect!(phoenix_root, phoenix_conversion)
+connect!(phoenix_root, phoenix_discipline)
+
+phoenix_conversion_safety = [
+  [cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)],
+  [cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)]
+]
+
+phoenix_helper_constriction_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+]
+
+phoenix_helper_box_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'less_than', comparison_value: 'prior_board_state')
+]
+
+phoenix_conversion_safety.each_with_index do |safety_conditions, index|
+  base_x = 10740 + (index * 300)
+
+  create_path!(
+    bot: phoenix,
+    start_node: phoenix_conversion,
+    x: base_x,
+    y: 1240,
+    zigzag_offset: 70,
+    conditions: phoenix_helper_constriction_core + safety_conditions,
+    action_type: 'return',
+    value: 24
+  )
+
+  create_path!(
+    bot: phoenix,
+    start_node: phoenix_conversion,
+    x: base_x + 620,
+    y: 1240,
+    zigzag_offset: 70,
+    conditions: phoenix_helper_box_core + safety_conditions,
+    action_type: 'return',
+    value: 22
+  )
+
+  create_path!(
+    bot: phoenix,
+    start_node: phoenix_conversion,
+    x: base_x + 1240,
+    y: 1240,
+    zigzag_offset: 70,
+    conditions: endgame_gate_conditions + phoenix_helper_constriction_core + safety_conditions,
+    action_type: 'return',
+    value: 36
+  )
+end
+
+create_path!(
+  bot: phoenix,
+  start_node: phoenix_discipline,
+  x: 11240,
+  y: 1240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 18
+)
+
+create_path!(
+  bot: phoenix,
+  start_node: phoenix_discipline,
+  x: 11500,
+  y: 1240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'shielder', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 18
+)
+
+create_path!(
+  bot: phoenix,
+  start_node: phoenix_discipline,
+  x: 11760,
+  y: 1240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+phoenix.compile_program!
+
+cyclops = user.bots.find_or_initialize_by(name: 'Cyclops')
+cyclops.description = 'A single-minded king hunter that borrows Rogue’s best forcing ideas, but uses a narrower, more support-driven attack plan and a simpler fallback spine.'
+cyclops.save!
+
+reset_bot_graph!(cyclops)
+
+cyclops_root = cyclops.root_node
+
+cyclops_terminal = create_organizer!(bot: cyclops, position_x: 120, position_y: 4080, title: 'Terminal')
+cyclops_opening = create_organizer!(bot: cyclops, position_x: 780, position_y: 4080, title: 'Opening')
+cyclops_tactics = create_organizer!(bot: cyclops, position_x: 1600, position_y: 4080, title: 'Tactics')
+cyclops_pressure = create_organizer!(bot: cyclops, position_x: 2580, position_y: 4080, title: 'Pressure')
+cyclops_endgame = create_organizer!(bot: cyclops, position_x: 3840, position_y: 4080, title: 'Endgame')
+cyclops_fallback = create_organizer!(bot: cyclops, position_x: 4980, position_y: 4080, title: 'Fallback')
+
+[cyclops_terminal, cyclops_opening, cyclops_tactics, cyclops_pressure, cyclops_endgame, cyclops_fallback].each do |organizer|
+  connect!(cyclops_root, organizer)
+end
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_terminal,
+  x: 80,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 100
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_terminal,
+  x: 340,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -100
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_opening,
+  x: 700,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 14
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_opening,
+  x: 960,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 13
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_opening,
+  x: 1220,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 9
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_opening,
+  x: 1480,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 8
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 1520,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 110
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 1780,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value')
+  ],
+  action_type: 'return',
+  value: 100
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 2040,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: 90
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 2300,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'pawn', subject_specifier_mode: 'exclude', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 1),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 58
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 2560,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'queen', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'queen', relation: 'shielder', comparison: 'equal_to', comparison_value: 1),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 48
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_tactics,
+  x: 2820,
+  y: 4240,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'shielded', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'pawn', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: 44
+)
+
+cyclops_pressure_safety = [
+  [cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)],
+  [cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)]
+]
+
+cyclops_tighten_core = [
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+]
+
+cyclops_helper_pressure_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+]
+
+cyclops_helper_box_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'less_than', comparison_value: 'prior_board_state')
+]
+
+cyclops_pressure_safety.each_with_index do |safety_conditions, index|
+  base_x = 2480 + (index * 300)
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_pressure,
+    x: base_x,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: cyclops_tighten_core + safety_conditions,
+    action_type: 'return',
+    value: 34
+  )
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_pressure,
+    x: base_x + 620,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: cyclops_helper_pressure_core + safety_conditions,
+    action_type: 'return',
+    value: 24
+  )
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_pressure,
+    x: base_x + 1240,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: cyclops_helper_box_core + safety_conditions,
+    action_type: 'return',
+    value: 22
+  )
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_pressure,
+    x: base_x + 1860,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 1)
+    ] + safety_conditions,
+    action_type: 'add',
+    value: 16
+  )
+end
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_pressure,
+  x: 3720,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 14
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_pressure,
+  x: 3980,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 14
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_endgame,
+  x: 3780,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: endgame_gate_conditions + [
+    cond(subject: 'captured_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 1),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 88
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_endgame,
+  x: 4040,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: endgame_gate_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 24
+)
+
+cyclops_pressure_safety.each_with_index do |safety_conditions, index|
+  base_x = 4300 + (index * 300)
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_endgame,
+    x: base_x,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: endgame_gate_conditions + cyclops_tighten_core + safety_conditions,
+    action_type: 'return',
+    value: 34
+  )
+
+  create_path!(
+    bot: cyclops,
+    start_node: cyclops_endgame,
+    x: base_x + 620,
+    y: 4240,
+    zigzag_offset: 70,
+    conditions: endgame_gate_conditions + cyclops_helper_pressure_core + safety_conditions,
+    action_type: 'return',
+    value: 36
+  )
+end
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 4900,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 7
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 5160,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'add',
+  value: 7
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 5420,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'add',
+  value: 7
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 5680,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'king', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'adjacent', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 26
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 5940,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'coverer', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 18
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 6200,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 6460,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 6720,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacked', relation_specifier: 'pawn', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'subtract',
+  value: 8
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 6980,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacked', relation_specifier: 'pawn', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'subtract',
+  value: 8
+)
+
+create_path!(
+  bot: cyclops,
+  start_node: cyclops_fallback,
+  x: 7240,
+  y: 4240,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+cyclops.compile_program!
+
+nightcrawler = user.bots.find_or_initialize_by(name: 'Nightcrawler')
+nightcrawler.description = 'An opportunistic hunter that jumps on newly loose pieces, tempo-gaining attacks, and tactical punishments more readily than the more positional bots.'
+nightcrawler.save!
+
+reset_bot_graph!(nightcrawler)
+
+nightcrawler_root = nightcrawler.root_node
+
+nightcrawler_terminal = create_organizer!(bot: nightcrawler, position_x: 120, position_y: 6540, title: 'Terminal')
+nightcrawler_opening = create_organizer!(bot: nightcrawler, position_x: 860, position_y: 6540, title: 'Opening')
+nightcrawler_tactics = create_organizer!(bot: nightcrawler, position_x: 1780, position_y: 6540, title: 'Punish')
+nightcrawler_pressure = create_organizer!(bot: nightcrawler, position_x: 3240, position_y: 6540, title: 'Pressure')
+nightcrawler_fallback = create_organizer!(bot: nightcrawler, position_x: 4720, position_y: 6540, title: 'Fallback')
+
+[nightcrawler_terminal, nightcrawler_opening, nightcrawler_tactics, nightcrawler_pressure, nightcrawler_fallback].each do |organizer|
+  connect!(nightcrawler_root, organizer)
+end
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_terminal,
+  x: 80,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 100
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_terminal,
+  x: 340,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -100
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_opening,
+  x: 760,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 14
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_opening,
+  x: 1020,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 13
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_opening,
+  x: 1280,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 8
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 1680,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 112
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 1940,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value')
+  ],
+  action_type: 'return',
+  value: 102
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 2200,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'captured_piece', subject_specifier: 'queen', relation: 'count', comparison: 'equal_to', comparison_value: 1)
+  ],
+  action_type: 'return',
+  value: 96
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 2460,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'pawn', subject_specifier_mode: 'exclude', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 1),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 60
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 2720,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 12
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 2980,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', relation: 'defended', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 10
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_tactics,
+  x: 3240,
+  y: 6700,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'queen', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'queen', relation: 'shielded', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 50
+)
+
+nightcrawler_pressure_safety = [
+  [cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)],
+  [cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)]
+]
+
+nightcrawler_pressure_safety.each_with_index do |safety_conditions, index|
+  base_x = 3140 + (index * 320)
+
+  create_path!(
+    bot: nightcrawler,
+    start_node: nightcrawler_pressure,
+    x: base_x,
+    y: 6700,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+    ] + safety_conditions,
+    action_type: 'return',
+    value: 30
+  )
+
+  create_path!(
+    bot: nightcrawler,
+    start_node: nightcrawler_pressure,
+    x: base_x + 660,
+    y: 6700,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 1)
+    ] + safety_conditions,
+    action_type: 'add',
+    value: 14
+  )
+end
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_fallback,
+  x: 4620,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 7
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_fallback,
+  x: 4880,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_fallback,
+  x: 5140,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: nightcrawler,
+  start_node: nightcrawler_fallback,
+  x: 5400,
+  y: 6700,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'king', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'adjacent', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 24
+)
+
+nightcrawler.compile_program!
+
+beast = user.bots.find_or_initialize_by(name: 'Beast')
+beast.description = 'A squeeze bot that values restriction, support, and simplification, trying to win by making the opponent smaller before going for the kill.'
+beast.save!
+
+reset_bot_graph!(beast)
+
+beast_root = beast.root_node
+
+beast_terminal = create_organizer!(bot: beast, position_x: 120, position_y: 9000, title: 'Terminal')
+beast_opening = create_organizer!(bot: beast, position_x: 860, position_y: 9000, title: 'Opening')
+beast_squeeze = create_organizer!(bot: beast, position_x: 1700, position_y: 9000, title: 'Squeeze')
+beast_endgame = create_organizer!(bot: beast, position_x: 3280, position_y: 9000, title: 'Endgame')
+beast_fallback = create_organizer!(bot: beast, position_x: 4480, position_y: 9000, title: 'Fallback')
+
+[beast_terminal, beast_opening, beast_squeeze, beast_endgame, beast_fallback].each do |organizer|
+  connect!(beast_root, organizer)
+end
+
+create_path!(
+  bot: beast,
+  start_node: beast_terminal,
+  x: 80,
+  y: 9160,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 100
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_terminal,
+  x: 340,
+  y: 9160,
+  zigzag_offset: 60,
+  conditions: [
+    cond(subject: 'opponents', relation: 'mobility', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -100
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_opening,
+  x: 760,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 12
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_opening,
+  x: 1020,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 10
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_opening,
+  x: 1280,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: opening_game_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 10
+)
+
+beast_safety = [
+  [cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)],
+  [cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)]
+]
+
+beast_safety.each_with_index do |safety_conditions, index|
+  base_x = 1600 + (index * 320)
+
+  create_path!(
+    bot: beast,
+    start_node: beast_squeeze,
+    x: base_x,
+    y: 9160,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state')
+    ] + safety_conditions,
+    action_type: 'return',
+    value: 24
+  )
+
+  create_path!(
+    bot: beast,
+    start_node: beast_squeeze,
+    x: base_x + 660,
+    y: 9160,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'allies', subject_specifier: 'bishop', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
+    ] + safety_conditions,
+    action_type: 'add',
+    value: 12
+  )
+
+  create_path!(
+    bot: beast,
+    start_node: beast_squeeze,
+    x: base_x + 1320,
+    y: 9160,
+    zigzag_offset: 70,
+    conditions: [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
+    ] + safety_conditions,
+    action_type: 'add',
+    value: 12
+  )
+end
+
+create_path!(
+  bot: beast,
+  start_node: beast_squeeze,
+  x: 3580,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'captured_piece', relation: 'value', comparison: 'greater_than', comparison_value: 'moved_piece_value'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 106
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_squeeze,
+  x: 3840,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'add',
+  value: 14
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_endgame,
+  x: 3180,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: endgame_gate_conditions + [
+    cond(subject: 'captured_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 1),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 88
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_endgame,
+  x: 3440,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: endgame_gate_conditions + [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 24
+)
+
+beast_safety.each_with_index do |safety_conditions, index|
+  base_x = 3700 + (index * 320)
+
+  create_path!(
+    bot: beast,
+    start_node: beast_endgame,
+    x: base_x,
+    y: 9160,
+    zigzag_offset: 70,
+    conditions: endgame_gate_conditions + [
+      cond(subject: 'opponents', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state')
+    ] + safety_conditions,
+    action_type: 'return',
+    value: 30
+  )
+end
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 4380,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'add',
+  value: 7
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 4640,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'king', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'adjacent', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 24
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 4900,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'coverer', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'allies', subject_specifier: 'king', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: 18
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 5160,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 5420,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacked', relation_specifier: 'pawn', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'subtract',
+  value: 8
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 5680,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'defender', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacked', relation_specifier: 'pawn', comparison: 'equal_to', comparison_value: 0)
+  ],
+  action_type: 'subtract',
+  value: 8
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 5940,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+create_path!(
+  bot: beast,
+  start_node: beast_fallback,
+  x: 6200,
+  y: 9160,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'rook', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+beast.compile_program!
+
+colossus = user.bots.find_or_initialize_by(name: 'Colossus')
+colossus.description = 'A Cyclops derivative built to convert more advantages by rewarding supported constriction and punishing repetitive non-capturing checks that do not shrink the king box.'
+colossus.save!
+
+clone_bot_graph!(source_bot: cyclops, target_bot: colossus)
+
+colossus_root = colossus.root_node
+colossus_conversion = create_organizer!(bot: colossus, position_x: 11040, position_y: 4040, title: 'Colossus Conversion')
+colossus_discipline = create_organizer!(bot: colossus, position_x: 11620, position_y: 4040, title: 'Colossus Discipline')
+
+connect!(colossus_root, colossus_conversion)
+connect!(colossus_root, colossus_discipline)
+
+colossus_conversion_safety = [
+  [cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)],
+  [cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)]
+]
+
+colossus_support_box_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'less_than', comparison_value: 'prior_board_state')
+]
+
+colossus_support_pressure_core = [
+  cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+  cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
+  cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+]
+
+colossus_conversion_safety.each_with_index do |safety_conditions, index|
+  base_x = 10920 + (index * 320)
+
+  create_path!(
+    bot: colossus,
+    start_node: colossus_conversion,
+    x: base_x,
+    y: 4200,
+    zigzag_offset: 70,
+    conditions: colossus_support_box_core + safety_conditions,
+    action_type: 'return',
+    value: 26
+  )
+
+  create_path!(
+    bot: colossus,
+    start_node: colossus_conversion,
+    x: base_x + 660,
+    y: 4200,
+    zigzag_offset: 70,
+    conditions: colossus_support_pressure_core + safety_conditions,
+    action_type: 'return',
+    value: 26
+  )
+
+  create_path!(
+    bot: colossus,
+    start_node: colossus_conversion,
+    x: base_x + 1320,
+    y: 4200,
+    zigzag_offset: 70,
+    conditions: endgame_gate_conditions + colossus_support_box_core + safety_conditions,
+    action_type: 'return',
+    value: 40
+  )
+end
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 11500,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 16
+)
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 11760,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 14
+)
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 12020,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'rook', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 14
+)
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 12280,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 12540,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'rook', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 10
+)
+
+create_path!(
+  bot: colossus,
+  start_node: colossus_discipline,
+  x: 12800,
+  y: 4200,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 12
+)
+
+colossus.compile_program!
+
+puts "Seeded #{seed_bots.length + 9} heuristic bots for #{seed_email}"
