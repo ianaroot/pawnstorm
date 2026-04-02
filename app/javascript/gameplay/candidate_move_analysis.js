@@ -7,6 +7,20 @@ class CandidateMoveAnalysis {
     this.board = board
     this.moveObject = moveObject
     this._afterBoard = null
+    this._availableMovesCache = new Map()
+    this._rawRelatedPositionsCache = new Map()
+  }
+
+  cachedRawRelatedPositions({ relation, targetPosition, team, boardScope = 'after' }) {
+    const key = `${boardScope}:${relation}:${targetPosition}:${team}`
+    if (this._rawRelatedPositionsCache.has(key)) {
+      return this._rawRelatedPositionsCache.get(key)
+    }
+
+    const board = this.boardForScope(boardScope)
+    const positions = this.rawRelatedPositions({ relation, targetPosition, team, board })
+    this._rawRelatedPositionsCache.set(key, positions)
+    return positions
   }
 
   afterBoard() {
@@ -17,6 +31,16 @@ class CandidateMoveAnalysis {
     }
 
     return this._afterBoard
+  }
+
+  availableMovesFrom(position, boardScope = 'after') {
+    const key = `${boardScope}:${position}`
+    if (this._availableMovesCache.has(key)) return this._availableMovesCache.get(key)
+
+    const board = this.boardForScope(boardScope)
+    const moves = Rules.availableMovesFrom({ board, startPosition: position })
+    this._availableMovesCache.set(key, moves)
+    return moves
   }
 
   boardForScope(boardScope = 'after') {
@@ -237,7 +261,7 @@ class CandidateMoveAnalysis {
   positionMobility(position, boardScope = 'after') {
     const board = this.boardForScope(boardScope)
     const pieceType = board.pieceTypeAt(position)
-    const moveObjects = Rules.availableMovesFrom({ board, startPosition: position })
+    const moveObjects = this.availableMovesFrom(position, boardScope)
 
     if (pieceType === Board.PAWN) {
       const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
@@ -317,15 +341,8 @@ class CandidateMoveAnalysis {
   }
 
   relatedPositions({ query, relation, targetPosition, relationSpecifier, relationSpecifierMode, boardScope = 'after' }) {
-    const board = this.boardForScope(boardScope)
     const team = this.relatedTeamFor({ query, relation })
-
-    const positions = this.rawRelatedPositions({
-      relation,
-      targetPosition,
-      team,
-      board
-    })
+    const positions = this.cachedRawRelatedPositions({ relation, targetPosition, team, boardScope })
 
     return this.filterRelationPositions({
       positions,
