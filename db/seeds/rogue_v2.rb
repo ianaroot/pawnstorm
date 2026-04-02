@@ -54,93 +54,111 @@ create_path!(
 
 rogue_opening_base = opening_game_conditions
 
-create_shared_split_paths!(
+rogue_opening_base_trunk = create_condition_chain!(
   bot: rogue_v2,
   start_node: rogue_opening,
   x: 700,
   y: 280,
-  zigzag_offset: 80,
-  branch_spacing: 480,
-  shared_conditions: rogue_opening_base,
-  variants: [
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'add',
-      value: 12
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', subject_specifier: 'knight', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'add',
-      value: 12
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'add',
-      value: 11
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'add',
-      value: 11
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'allies', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 8
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'allies', subject_specifier: 'bishop', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 8
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 8
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 8
-    }
-  ]
+  conditions: rogue_opening_base,
+  zigzag_offset: 80
 )
+
+[
+  { piece_type: 'knight', x: 700, value: 12 },
+  { piece_type: 'bishop', x: 1180, value: 11 }
+].each do |entry|
+  opening_development_trunk = create_condition_chain!(
+    bot: rogue_v2,
+    start_node: rogue_opening_base_trunk,
+    x: entry[:x],
+    y: 2380,
+    conditions: [
+      cond(subject: 'moved_piece', subject_specifier: entry[:piece_type], relation: 'count', comparison: 'greater_than', comparison_value: 0),
+      cond(subject: 'moved_piece', subject_specifier: entry[:piece_type], relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
+      cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+    ],
+    zigzag_offset: 80
+  )
+
+  create_shared_split_paths!(
+    bot: rogue_v2,
+    start_node: opening_development_trunk,
+    x: entry[:x],
+    y: 2830,
+    zigzag_offset: 80,
+    branch_spacing: 260,
+    shared_conditions: [],
+    variants: [
+      {
+        conditions: [
+          cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
+        ],
+        action_type: 'add',
+        value: entry[:value]
+      },
+      {
+        conditions: [
+          cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state')
+        ],
+        action_type: 'add',
+        value: entry[:value]
+      }
+    ]
+  )
+end
+
+pawn_opening_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_opening_base_trunk,
+  x: 1660,
+  y: 2380,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0)
+  ],
+  zigzag_offset: 80
+)
+
+[
+  { piece_type: 'bishop', relation: 'mobility', x: 1660 },
+  { piece_type: 'knight', relation: 'defended', x: 2140 }
+].each do |entry|
+  opening_support_trunk = create_condition_chain!(
+    bot: rogue_v2,
+    start_node: pawn_opening_trunk,
+    x: entry[:x],
+    y: 2530,
+    conditions: [
+      cond(subject: 'allies', subject_specifier: entry[:piece_type], relation: entry[:relation], comparison: 'greater_than', comparison_value: 'prior_board_state')
+    ],
+    zigzag_offset: 80
+  )
+
+  create_shared_split_paths!(
+    bot: rogue_v2,
+    start_node: opening_support_trunk,
+    x: entry[:x],
+    y: 2680,
+    zigzag_offset: 80,
+    branch_spacing: 260,
+    shared_conditions: [],
+    variants: [
+      {
+        conditions: [
+          cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+        ],
+        action_type: 'add',
+        value: 8
+      },
+      {
+        conditions: [
+          cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+        ],
+        action_type: 'add',
+        value: 8
+      }
+    ]
+  )
+end
 
 create_shared_split_paths!(
   bot: rogue_v2,
@@ -335,18 +353,37 @@ rogue_queen_base = [
   cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0)
 ]
 
-create_shared_split_paths!(
+rogue_queen_base_trunk = create_condition_chain!(
   bot: rogue_v2,
   start_node: rogue_queen,
   x: 1820,
   y: 380,
+  conditions: rogue_queen_base,
+  zigzag_offset: 70
+)
+
+rogue_queen_safer_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_queen_base_trunk,
+  x: 1820,
+  y: 530,
+  conditions: [
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: rogue_queen_safer_trunk,
+  x: 1820,
+  y: 680,
   zigzag_offset: 70,
   branch_spacing: 260,
-  shared_conditions: rogue_queen_base,
+  shared_conditions: [],
   variants: [
     {
       conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state'),
         cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
       ],
       action_type: 'return',
@@ -354,33 +391,63 @@ create_shared_split_paths!(
     },
     {
       conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state'),
         cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
       ],
       action_type: 'return',
       value: 80
-    },
+    }
+  ]
+)
+
+rogue_queen_safe_attack_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_queen_base_trunk,
+  x: 2340,
+  y: 530,
+  conditions: [
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  zigzag_offset: 70
+)
+
+create_path!(
+  bot: rogue_v2,
+  start_node: rogue_queen_safe_attack_trunk,
+  x: 2340,
+  y: 830,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'add',
+  value: 14
+)
+
+create_path!(
+  bot: rogue_v2,
+  start_node: rogue_queen_safe_attack_trunk,
+  x: 2600,
+  y: 830,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'add',
+  value: 14
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: rogue_queen_safe_attack_trunk,
+  x: 2860,
+  y: 830,
+  zigzag_offset: 70,
+  branch_spacing: 260,
+  shared_conditions: [],
+  variants: [
     {
       conditions: [
-        cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 14
-    },
-    {
-      conditions: [
-        cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-      ],
-      action_type: 'add',
-      value: 14
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
-        cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
         cond(subject: 'allies', subject_specifier: 'pawn', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
       ],
       action_type: 'add',
@@ -388,8 +455,6 @@ create_shared_split_paths!(
     },
     {
       conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
-        cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
         cond(subject: 'allies', subject_specifier: 'bishop', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
       ],
       action_type: 'add',
@@ -397,38 +462,54 @@ create_shared_split_paths!(
     },
     {
       conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
-        cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state'),
         cond(subject: 'allies', subject_specifier: 'knight', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
       ],
       action_type: 'add',
       value: 8
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'return',
-      value: -120
-    },
-    {
-      conditions: [
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
-        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 0)
-      ],
-      action_type: 'return',
-      value: -120
-    },
-    {
-      conditions: [
-        cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
-        cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
-        cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
-      ],
-      action_type: 'subtract',
-      value: 12
     }
   ]
+)
+
+create_path!(
+  bot: rogue_v2,
+  start_node: rogue_queen_base_trunk,
+  x: 3640,
+  y: 530,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: rogue_v2,
+  start_node: rogue_queen_base_trunk,
+  x: 3900,
+  y: 530,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'attacker', comparison: 'greater_than', comparison_value: 0)
+  ],
+  action_type: 'return',
+  value: -120
+)
+
+create_path!(
+  bot: rogue_v2,
+  start_node: rogue_queen_base_trunk,
+  x: 4160,
+  y: 530,
+  zigzag_offset: 70,
+  conditions: [
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
+    cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
+    cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
+  ],
+  action_type: 'subtract',
+  value: 12
 )
 
 rogue_pressure_safety = [
@@ -568,94 +649,193 @@ end
 
 rogue_endgame_base = endgame_gate_conditions
 
-rogue_endgame_variants = [
-  {
-    conditions: [
-      cond(subject: 'captured_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-      cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
-    ],
-    action_type: 'return',
-    value: 88
-  },
-  {
-    conditions: [
-      cond(subject: 'captured_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-      cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-    ],
-    action_type: 'return',
-    value: 88
-  },
-  {
-    conditions: [
-      cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-      cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
-    ],
-    action_type: 'return',
-    value: 22
-  },
-  {
-    conditions: [
-      cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0),
-      cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-    ],
-    action_type: 'return',
-    value: 22
-  },
-  {
-    conditions: [
-      cond(subject: 'allies', subject_specifier: 'pawn', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-    ],
-    action_type: 'add',
-    value: 14
-  },
-  {
-    conditions: [
-      cond(subject: 'allies', subject_specifier: 'pawn', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
-    ],
-    action_type: 'add',
-    value: 14
-  },
-  {
-    conditions: rogue_tighten_core + rogue_pressure_safety[0],
-    action_type: 'return',
-    value: 32
-  },
-  {
-    conditions: rogue_tighten_core + rogue_pressure_safety[1],
-    action_type: 'return',
-    value: 32
-  },
-  {
-    conditions: [
-      cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
-    ],
-    action_type: 'add',
-    value: 8
-  },
-  {
-    conditions: [
-      cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state'),
-      cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
-    ],
-    action_type: 'add',
-    value: 8
-  }
-]
-
-create_shared_split_paths!(
+rogue_endgame_trunk = create_condition_chain!(
   bot: rogue_v2,
   start_node: rogue_endgame,
   x: 3240,
   y: 1060,
+  conditions: rogue_endgame_base,
+  zigzag_offset: 70
+)
+
+captured_pawn_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_endgame_trunk,
+  x: 3240,
+  y: 1360,
+  conditions: [
+    cond(subject: 'captured_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 1)
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: captured_pawn_trunk,
+  x: 3240,
+  y: 1510,
   zigzag_offset: 70,
   branch_spacing: 260,
-  shared_conditions: rogue_endgame_base,
-  variants: rogue_endgame_variants
+  shared_conditions: [],
+  variants: [
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+      ],
+      action_type: 'return',
+      value: 88
+    },
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+      ],
+      action_type: 'return',
+      value: 88
+    }
+  ]
+)
+
+pawn_push_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_endgame_trunk,
+  x: 3760,
+  y: 1360,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'pawn', relation: 'count', comparison: 'greater_than', comparison_value: 0)
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: pawn_push_trunk,
+  x: 3760,
+  y: 1510,
+  zigzag_offset: 70,
+  branch_spacing: 260,
+  shared_conditions: [],
+  variants: [
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'less_than', comparison_value: 'prior_board_state')
+      ],
+      action_type: 'return',
+      value: 22
+    },
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+      ],
+      action_type: 'return',
+      value: 22
+    }
+  ]
+)
+
+pawn_defense_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_endgame_trunk,
+  x: 4280,
+  y: 1360,
+  conditions: [
+    cond(subject: 'allies', subject_specifier: 'pawn', relation: 'defended', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: pawn_defense_trunk,
+  x: 4280,
+  y: 1510,
+  zigzag_offset: 70,
+  branch_spacing: 260,
+  shared_conditions: [],
+  variants: [
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+      ],
+      action_type: 'add',
+      value: 14
+    },
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+      ],
+      action_type: 'add',
+      value: 14
+    }
+  ]
+)
+
+tighten_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_endgame_trunk,
+  x: 4800,
+  y: 1360,
+  conditions: rogue_tighten_core,
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: tighten_trunk,
+  x: 4800,
+  y: 1660,
+  zigzag_offset: 70,
+  branch_spacing: 260,
+  shared_conditions: [],
+  variants: [
+    {
+      conditions: rogue_pressure_safety[0],
+      action_type: 'return',
+      value: 32
+    },
+    {
+      conditions: rogue_pressure_safety[1],
+      action_type: 'return',
+      value: 32
+    }
+  ]
+)
+
+relief_trunk = create_condition_chain!(
+  bot: rogue_v2,
+  start_node: rogue_endgame_trunk,
+  x: 5320,
+  y: 1360,
+  conditions: [
+    cond(subject: 'allies', relation: 'attacked', comparison: 'less_than', comparison_value: 'prior_board_state'),
+    cond(subject: 'moved_piece', relation: 'mobility', comparison: 'greater_than', comparison_value: 'prior_board_state')
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: rogue_v2,
+  start_node: relief_trunk,
+  x: 5320,
+  y: 1660,
+  zigzag_offset: 70,
+  branch_spacing: 260,
+  shared_conditions: [],
+  variants: [
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0)
+      ],
+      action_type: 'add',
+      value: 8
+    },
+    {
+      conditions: [
+        cond(subject: 'moved_piece', relation: 'defender', comparison: 'greater_than', comparison_value: 0)
+      ],
+      action_type: 'add',
+      value: 8
+    }
+  ]
 )
 
 rogue_fallback_supported_activity_start = create_condition_chain!(
@@ -1010,450 +1190,423 @@ create_shared_split_paths!(
 )
 
 rogue_v2_position_overrides = [
-  [-1352.0, 148.0],
-  [7192.0, -872.0],
-  [-3212.0, 1124.0],
-  [3704.0, -228.0],
-  [432.0, 1308.0],
-  [4216.0, 984.0],
-  [3740.0, 2632.0],
-  [-1392.0, 308.0],
-  [-1332.0, 458.0],
-  [-1392.0, 608.0],
-  [-1172.0, 308.0],
-  [-1112.0, 458.0],
-  [-1172.0, 608.0],
-  [7072.0, -712.0],
-  [7152.0, -562.0],
-  [7072.0, -412.0],
-  [7152.0, -262.0],
-  [7072.0, -112.0],
-  [7152.0, 38.0],
-  [7072.0, 188.0],
-  [7152.0, 338.0],
-  [7072.0, 488.0],
-  [7152.0, 638.0],
-  [7072.0, 788.0],
-  [7152.0, 938.0],
-  [7072.0, 1088.0],
-  [7152.0, 1238.0],
-  [5896.0, 1464.0],
-  [5976.0, 1614.0],
-  [5896.0, 1764.0],
-  [5976.0, 1914.0],
-  [5976.0, 2128.0],
-  [6212.0, 1560.0],
-  [6292.0, 1710.0],
-  [6212.0, 1860.0],
-  [6292.0, 2010.0],
-  [6292.0, 2224.0],
-  [6604.0, 1556.0],
-  [6684.0, 1706.0],
-  [6604.0, 1856.0],
-  [6684.0, 2006.0],
-  [6684.0, 2220.0],
-  [6996.0, 1560.0],
-  [7076.0, 1710.0],
-  [6996.0, 1860.0],
-  [7076.0, 2010.0],
-  [7076.0, 2224.0],
-  [7316.0, 1672.0],
-  [7396.0, 1822.0],
-  [7316.0, 1972.0],
-  [7300.0, 2170.0],
-  [7668.0, 1632.0],
-  [7748.0, 1782.0],
-  [7668.0, 1932.0],
-  [7652.0, 2130.0],
-  [7988.0, 1568.0],
-  [8068.0, 1718.0],
-  [7988.0, 1868.0],
-  [7972.0, 2066.0],
-  [8328.0, 1532.0],
-  [8408.0, 1682.0],
-  [8328.0, 1832.0],
-  [8312.0, 2030.0],
-  [-3836.0, 612.0],
-  [-3980.0, 758.0],
-  [-4040.0, 908.0],
-  [-3840.0, 842.0],
-  [-3780.0, 2196.0],
-  [-3720.0, 2346.0],
-  [-3724.0, 2556.0],
-  [-3440.0, 2116.0],
-  [-3380.0, 2266.0],
-  [-3504.0, 2416.0],
-  [-3512.0, 2606.0],
-  [-3260.0, 2416.0],
-  [-3268.0, 2606.0],
-  [-2984.0, 2004.0],
-  [-2924.0, 2154.0],
-  [-2984.0, 2304.0],
-  [-2924.0, 2454.0],
-  [-2932.0, 2636.0],
-  [-2368.0, 2632.0],
-  [-3056.0, 3010.0],
-  [-3056.0, 3216.0],
-  [-2796.0, 3010.0],
-  [-2856.0, 3160.0],
-  [-2796.0, 3310.0],
-  [-2804.0, 3500.0],
-  [-2536.0, 3010.0],
-  [-2536.0, 3204.0],
-  [-2276.0, 3010.0],
-  [-2336.0, 3160.0],
-  [-2348.0, 3354.0],
-  [-2016.0, 3010.0],
-  [-2076.0, 3160.0],
-  [-2088.0, 3354.0],
-  [-1756.0, 3010.0],
-  [-1816.0, 3160.0],
-  [-1828.0, 3354.0],
-  [-1496.0, 3010.0],
-  [-1556.0, 3160.0],
-  [-1568.0, 3354.0],
-  [-756.0, 3108.0],
-  [-1420.0, 3442.0],
-  [-1416.0, 3628.0],
-  [-1160.0, 3442.0],
-  [-1220.0, 3592.0],
-  [-1160.0, 3742.0],
-  [-1168.0, 3924.0],
-  [-900.0, 3442.0],
-  [-900.0, 3648.0],
-  [-640.0, 3442.0],
-  [-700.0, 3592.0],
-  [-708.0, 3782.0],
-  [-380.0, 3442.0],
-  [-440.0, 3592.0],
-  [-448.0, 3790.0],
-  [-120.0, 3442.0],
-  [-180.0, 3592.0],
-  [-188.0, 3782.0],
-  [140.0, 3442.0],
-  [80.0, 3592.0],
-  [72.0, 3782.0],
-  [-1488.0, 1904.0],
-  [-1960.0, 2234.0],
-  [-1968.0, 2420.0],
-  [-1700.0, 2234.0],
-  [-1760.0, 2384.0],
-  [-1700.0, 2534.0],
-  [-1700.0, 2720.0],
-  [-1440.0, 2234.0],
-  [-1440.0, 2416.0],
-  [-1180.0, 2234.0],
-  [-1240.0, 2384.0],
-  [-1248.0, 2566.0],
-  [-920.0, 2234.0],
-  [-980.0, 2384.0],
-  [-988.0, 2566.0],
-  [-660.0, 2234.0],
-  [-720.0, 2384.0],
-  [-728.0, 2566.0],
-  [-400.0, 2234.0],
-  [-460.0, 2384.0],
-  [-468.0, 2566.0],
-  [-1792.0, 1072.0],
-  [-2572.0, 1338.0],
-  [-2584.0, 1540.0],
-  [-2312.0, 1338.0],
-  [-2372.0, 1488.0],
-  [-2312.0, 1638.0],
-  [-2324.0, 1832.0],
-  [-2052.0, 1338.0],
-  [-2060.0, 1520.0],
-  [-1792.0, 1338.0],
-  [-1852.0, 1488.0],
-  [-1856.0, 1686.0],
-  [-1532.0, 1338.0],
-  [-1592.0, 1488.0],
-  [-1596.0, 1686.0],
-  [-1272.0, 1338.0],
-  [-1332.0, 1488.0],
-  [-1336.0, 1686.0],
-  [-1012.0, 1338.0],
-  [-1072.0, 1488.0],
-  [-1076.0, 1686.0],
-  [-4984.0, 958.0],
-  [-5696.0, 1284.0],
-  [-5712.0, 1474.0],
-  [-5436.0, 1284.0],
-  [-5496.0, 1434.0],
-  [-5436.0, 1584.0],
-  [-5448.0, 1774.0],
-  [-5176.0, 1284.0],
-  [-5184.0, 1490.0],
-  [-4916.0, 1284.0],
-  [-4976.0, 1434.0],
-  [-4996.0, 1612.0],
-  [-4656.0, 1284.0],
-  [-4716.0, 1434.0],
-  [-4736.0, 1612.0],
-  [-4396.0, 1284.0],
-  [-4456.0, 1434.0],
-  [-4476.0, 1612.0],
-  [-4136.0, 1284.0],
-  [-4196.0, 1434.0],
-  [-4216.0, 1612.0],
-  [-5052.0, 1974.0],
-  [-5764.0, 2260.0],
-  [-5776.0, 2454.0],
-  [-5504.0, 2260.0],
-  [-5564.0, 2410.0],
-  [-5504.0, 2560.0],
-  [-5508.0, 2746.0],
-  [-5244.0, 2260.0],
-  [-5248.0, 2458.0],
-  [-4984.0, 2260.0],
-  [-5044.0, 2410.0],
-  [-5052.0, 2596.0],
-  [-4724.0, 2260.0],
-  [-4784.0, 2410.0],
-  [-4792.0, 2596.0],
-  [-4464.0, 2260.0],
-  [-4524.0, 2410.0],
-  [-4532.0, 2596.0],
-  [-4204.0, 2260.0],
-  [-4264.0, 2410.0],
-  [-4272.0, 2596.0],
-  [-5008.0, 2846.0],
-  [-5640.0, 3128.0],
-  [-5648.0, 3326.0],
-  [-5380.0, 3128.0],
-  [-5440.0, 3278.0],
-  [-5380.0, 3428.0],
-  [-5388.0, 3622.0],
-  [-5120.0, 3128.0],
-  [-5132.0, 3318.0],
-  [-4860.0, 3128.0],
-  [-4920.0, 3278.0],
-  [-4920.0, 3464.0],
-  [-4600.0, 3128.0],
-  [-4660.0, 3278.0],
-  [-4660.0, 3464.0],
-  [-4340.0, 3128.0],
-  [-4400.0, 3278.0],
-  [-4400.0, 3464.0],
-  [-4080.0, 3128.0],
-  [-4140.0, 3278.0],
-  [-4140.0, 3464.0],
-  [3724.0, -28.0],
-  [2734.0, 214.0],
-  [2664.0, 364.0],
-  [2662.0, 550.0],
-  [2994.0, 214.0],
-  [2924.0, 364.0],
-  [2910.0, 574.0],
-  [3254.0, 214.0],
-  [3184.0, 364.0],
-  [3254.0, 514.0],
-  [3260.0, 716.0],
-  [3514.0, 214.0],
-  [3444.0, 364.0],
-  [3446.0, 550.0],
-  [3774.0, 214.0],
-  [3704.0, 364.0],
-  [3774.0, 514.0],
-  [3772.0, 704.0],
-  [4034.0, 214.0],
-  [3964.0, 364.0],
-  [4034.0, 514.0],
-  [4032.0, 704.0],
-  [4294.0, 214.0],
-  [4224.0, 364.0],
-  [4294.0, 514.0],
-  [4292.0, 704.0],
-  [4554.0, 214.0],
-  [4544.0, 420.0],
-  [4814.0, 214.0],
-  [4744.0, 364.0],
-  [4722.0, 554.0],
-  [5074.0, 214.0],
-  [5004.0, 364.0],
-  [5074.0, 514.0],
-  [5064.0, 720.0],
-  [28.0, 1416.0],
-  [-116.0, 1566.0],
-  [-196.0, 1708.0],
-  [-202.0, 1894.0],
-  [-8.0, 1712.0],
-  [160.0, 1550.0],
-  [166.0, 1768.0],
-  [1416.0, 1272.0],
-  [1264.0, 1422.0],
-  [1164.0, 1560.0],
-  [1154.0, 1766.0],
-  [1384.0, 1568.0],
-  [1580.0, 1430.0],
-  [1586.0, 1696.0],
-  [892.0, 1768.0],
-  [356.0, 1990.0],
-  [354.0, 2200.0],
-  [1456.0, 2636.0],
-  [1526.0, 2786.0],
-  [-280.0, 2470.0],
-  [-210.0, 2620.0],
-  [848.0, 3120.0],
-  [834.0, 3318.0],
-  [-40.0, 2470.0],
-  [30.0, 2620.0],
-  [-40.0, 2770.0],
-  [30.0, 2920.0],
-  [1088.0, 3120.0],
-  [1158.0, 3270.0],
-  [1088.0, 3420.0],
-  [1090.0, 3622.0],
-  [200.0, 2470.0],
-  [270.0, 2620.0],
-  [1328.0, 3120.0],
-  [1330.0, 3326.0],
-  [440.0, 2470.0],
-  [510.0, 2620.0],
-  [440.0, 2770.0],
-  [1568.0, 3120.0],
-  [1638.0, 3270.0],
-  [1624.0, 3456.0],
-  [680.0, 2470.0],
-  [750.0, 2620.0],
-  [680.0, 2770.0],
-  [1808.0, 3120.0],
-  [1878.0, 3270.0],
-  [1864.0, 3456.0],
-  [920.0, 2470.0],
-  [990.0, 2620.0],
-  [920.0, 2770.0],
-  [2048.0, 3120.0],
-  [2118.0, 3270.0],
-  [2104.0, 3456.0],
-  [1160.0, 2470.0],
-  [1230.0, 2620.0],
-  [1160.0, 2770.0],
-  [2288.0, 3120.0],
-  [2358.0, 3270.0],
-  [2344.0, 3456.0],
-  [4096.0, 1144.0],
-  [4166.0, 1294.0],
-  [3168.0, 1448.0],
-  [3238.0, 1598.0],
-  [3228.0, 1792.0],
-  [3396.0, 1628.0],
-  [3466.0, 1778.0],
-  [3468.0, 1976.0],
-  [3656.0, 1628.0],
-  [3726.0, 1778.0],
-  [3728.0, 1976.0],
-  [3916.0, 1628.0],
-  [3986.0, 1778.0],
-  [3988.0, 1976.0],
-  [4176.0, 1628.0],
-  [4246.0, 1778.0],
-  [4248.0, 1976.0],
-  [4436.0, 1628.0],
-  [4506.0, 1778.0],
-  [4508.0, 1976.0],
-  [4696.0, 1628.0],
-  [4766.0, 1778.0],
-  [4696.0, 1928.0],
-  [4686.0, 2122.0],
-  [4956.0, 1628.0],
-  [5026.0, 1778.0],
-  [4956.0, 1928.0],
-  [4946.0, 2122.0],
-  [5216.0, 1628.0],
-  [5286.0, 1778.0],
-  [5216.0, 1928.0],
-  [5206.0, 2122.0],
-  [5476.0, 1628.0],
-  [5546.0, 1778.0],
-  [5476.0, 1928.0],
-  [5466.0, 2122.0],
-  [2844.0, 2464.0],
-  [2914.0, 2614.0],
-  [2732.0, 2744.0],
-  [2598.0, 2890.0],
-  [2464.0, 3040.0],
-  [2458.0, 3246.0],
-  [2600.0, 3136.0],
-  [2598.0, 3354.0],
-  [2752.0, 3040.0],
-  [2822.0, 3190.0],
-  [2828.0, 3396.0],
-  [3068.0, 2764.0],
-  [3138.0, 2914.0],
-  [3128.0, 3112.0],
-  [3036.0, 3444.0],
-  [3106.0, 3594.0],
-  [3036.0, 3744.0],
-  [3106.0, 3894.0],
-  [3100.0, 4092.0],
-  [3316.0, 3416.0],
-  [3316.0, 3566.0],
-  [3386.0, 3716.0],
-  [3316.0, 3866.0],
-  [3302.0, 4048.0],
-  [3576.0, 3566.0],
-  [3646.0, 3716.0],
-  [3576.0, 3866.0],
-  [3562.0, 4048.0],
-  [3952.0, 3040.0],
-  [3852.0, 3190.0],
-  [3758.0, 3332.0],
-  [3748.0, 3538.0],
-  [3962.0, 3340.0],
-  [3964.0, 3534.0],
-  [4272.0, 3180.0],
-  [4138.0, 3314.0],
-  [4132.0, 3508.0],
-  [4398.0, 3314.0],
-  [4392.0, 3508.0],
-  [5024.0, 3700.0],
-  [4828.0, 3850.0],
-  [4690.0, 4004.0],
-  [4676.0, 4198.0],
-  [4950.0, 4004.0],
-  [4936.0, 4198.0],
-  [5248.0, 3860.0],
-  [5122.0, 4026.0],
-  [5112.0, 4232.0],
-  [5382.0, 4026.0],
-  [5372.0, 4232.0],
-  [6084.0, 3740.0],
-  [6154.0, 3890.0],
-  [6084.0, 4040.0],
-  [6154.0, 4190.0],
-  [6152.0, 4372.0],
-  [5636.0, 3728.0],
-  [5706.0, 3878.0],
-  [5636.0, 4028.0],
-  [5526.0, 4170.0],
-  [5638.0, 4234.0],
-  [5632.0, 4440.0],
-  [5850.0, 4178.0],
-  [5848.0, 4372.0],
-  [6564.0, 3696.0],
-  [6634.0, 3846.0],
-  [6564.0, 3996.0],
-  [6422.0, 4146.0],
-  [6562.0, 4206.0],
-  [6556.0, 4392.0],
-  [6702.0, 4134.0],
-  [6696.0, 4344.0],
-  [5308.0, 3004.0],
-  [5378.0, 3154.0],
-  [5612.0, 2984.0],
-  [5682.0, 3134.0],
-  [5872.0, 2984.0],
-  [5942.0, 3134.0],
-  [6132.0, 2984.0],
-  [6202.0, 3134.0],
-  [6392.0, 2984.0],
-  [6462.0, 3134.0],
-  [6652.0, 2984.0],
-  [6722.0, 3134.0],
-  [6912.0, 2984.0],
-  [6982.0, 3134.0],
-  [6114.0, 2729.0]
+  [-980.0, -327.3330078125],
+  [7255.238115583148, 155.4285714285714],
+  [-3914.665367126465, 1600.0],
+  [3308.5714285714275, 260.0],
+  [532.0, 3328.0],
+  [5206.857142857143, 1547.4285714285716],
+  [3030.285714285712, 3342.8571428571427],
+  [-1020.0, -167.3330078125],
+  [-960.0, -17.3330078125],
+  [-1020.0, 132.6669921875],
+  [-800.0, -167.3330078125],
+  [-740.0, -17.3330078125],
+  [-800.0, 132.6669921875],
+  [7135.238115583148, 315.4285714285714],
+  [7215.238115583148, 465.4285714285714],
+  [7135.238115583148, 615.4285714285713],
+  [7215.238115583148, 765.4285714285713],
+  [7135.238115583148, 915.4285714285713],
+  [7215.238115583148, 1065.4285714285713],
+  [7135.238115583148, 1215.4285714285713],
+  [7215.238115583148, 1365.4285714285713],
+  [7135.238115583148, 1515.4285714285713],
+  [7215.238115583148, 1665.4285714285713],
+  [7135.238115583148, 1815.4285714285713],
+  [7215.238115583148, 1965.4285714285713],
+  [7135.238115583148, 2115.4285714285716],
+  [7215.238115583148, 2265.4285714285716],
+  [6706.666687011721, 2409.714285714286],
+  [6786.666687011721, 2559.714285714286],
+  [6706.666687011721, 2709.714285714286],
+  [6595.238115583148, 2859.714285714286],
+  [6592.380972726005, 3061.1428571428573],
+  [6815.238115583148, 2856.8571428571427],
+  [6812.380972726005, 3058.285714285714],
+  [7206.666687011721, 2489.7142857142853],
+  [7286.666687011721, 2639.7142857142853],
+  [7206.666687011721, 2789.7142857142853],
+  [7080.952401297434, 2933.9999999999995],
+  [7078.095258440291, 3135.428571428571],
+  [7352.380972726007, 2939.7142857142853],
+  [7349.523829868864, 3141.142857142857],
+  [7832.380972726006, 2398.2857142857147],
+  [7672.380972726006, 2542.571428571429],
+  [7538.095258440292, 2684.0000000000005],
+  [7535.238115583148, 2874.0000000000005],
+  [7780.952401297432, 2689.7142857142862],
+  [7778.0952584402885, 2879.7142857142862],
+  [8120.9524012974325, 2545.428571428572],
+  [7998.0952584402885, 2692.571428571429],
+  [7995.238115583145, 2882.571428571429],
+  [8263.809544154574, 2681.142857142858],
+  [8260.952401297433, 2871.142857142858],
+  [-5301.327842712402, 1356.0],
+  [-5497.327842712402, 1506.0],
+  [-5497.327842712402, 1708.0],
+  [-5157.327842712402, 1510.0],
+  [-3742.665367126465, 3176.0],
+  [-3682.665367126465, 3326.0],
+  [-3688.379652840751, 3516.0],
+  [-3462.665367126465, 3040.0],
+  [-3402.665367126465, 3190.0],
+  [-3462.665367126465, 3340.0],
+  [-3462.6653671264653, 3530.0],
+  [-3222.665367126465, 3340.0],
+  [-3222.6653671264653, 3530.0],
+  [-2954.665367126465, 3188.0],
+  [-2894.665367126465, 3338.0],
+  [-2954.665367126465, 3488.0],
+  [-2894.665367126465, 3638.0],
+  [-2900.3796528407506, 3845.142857142857],
+  [-2201.2108216719193, 3874.909090909091],
+  [-2725.2108216719193, 4096.909090909091],
+  [-2785.2108216719193, 4246.909090909091],
+  [-2465.2108216719193, 4096.909090909091],
+  [-2525.2108216719193, 4246.909090909091],
+  [-2473.2108216719193, 4392.909090909091],
+  [-2473.2108216719193, 4590.909090909091],
+  [-2205.2108216719193, 4096.909090909091],
+  [-2213.2108216719193, 4310.909090909091],
+  [-1945.2108216719193, 4096.909090909091],
+  [-2005.2108216719193, 4246.909090909091],
+  [-2021.2108216719193, 4440.909090909091],
+  [-1685.2108216719193, 4096.909090909091],
+  [-1745.2108216719193, 4246.909090909091],
+  [-1761.2108216719193, 4440.909090909091],
+  [-1425.2108216719193, 4096.909090909091],
+  [-1485.2108216719193, 4246.909090909091],
+  [-1501.2108216719193, 4440.909090909091],
+  [-1165.2108216719193, 4096.909090909091],
+  [-1225.2108216719193, 4246.909090909091],
+  [-1241.2108216719193, 4440.909090909091],
+  [-1593.9380943991923, 2876.3636363636365],
+  [-2385.9380943991923, 3134.3636363636365],
+  [-2389.9380943991923, 3344.3636363636365],
+  [-2125.9380943991923, 3134.3636363636365],
+  [-2185.9380943991923, 3284.3636363636365],
+  [-2125.9380943991923, 3434.3636363636365],
+  [-2133.9380943991923, 3628.3636363636365],
+  [-1865.9380943991923, 3134.3636363636365],
+  [-1865.9380943991923, 3324.3636363636365],
+  [-1605.9380943991923, 3134.3636363636365],
+  [-1665.9380943991923, 3284.3636363636365],
+  [-1669.9380943991923, 3482.3636363636365],
+  [-1345.9380943991923, 3134.3636363636365],
+  [-1405.9380943991923, 3284.3636363636365],
+  [-1409.9380943991923, 3482.3636363636365],
+  [-1085.9380943991923, 3134.3636363636365],
+  [-1145.9380943991923, 3284.3636363636365],
+  [-1149.9380943991923, 3482.3636363636365],
+  [-825.9380943991923, 3134.3636363636365],
+  [-885.9380943991923, 3284.3636363636365],
+  [-889.9380943991923, 3482.3636363636365],
+  [-929.5744580355558, 1968.727272727273],
+  [-1713.5744580355558, 2137.636363636364],
+  [-1413.5744580355558, 2198.727272727273],
+  [-1473.5744580355558, 2348.727272727273],
+  [-1413.5744580355558, 2498.727272727273],
+  [-1425.5744580355558, 2696.727272727273],
+  [-1153.5744580355558, 2198.727272727273],
+  [-1161.5744580355558, 2412.727272727273],
+  [-893.5744580355558, 2198.727272727273],
+  [-953.5744580355558, 2348.727272727273],
+  [-949.5744580355558, 2546.727272727273],
+  [-633.5744580355558, 2198.727272727273],
+  [-693.5744580355558, 2348.727272727273],
+  [-689.5744580355558, 2546.727272727273],
+  [-373.57445803555584, 2198.727272727273],
+  [-433.57445803555584, 2348.727272727273],
+  [-429.57445803555584, 2546.727272727273],
+  [-113.57445803555584, 2198.727272727273],
+  [-173.57445803555584, 2348.727272727273],
+  [-169.57445803555584, 2546.727272727273],
+  [-1458.6653671264648, 1040.0],
+  [-2242.665367126465, 1298.0],
+  [-1982.6653671264648, 1298.0],
+  [-2042.6653671264648, 1448.0],
+  [-1982.6653671264648, 1598.0],
+  [-1990.6653671264648, 1800.0],
+  [-1722.6653671264648, 1298.0],
+  [-1730.6653671264648, 1496.0],
+  [-1462.6653671264648, 1298.0],
+  [-1522.6653671264648, 1448.0],
+  [-1526.6653671264648, 1638.0],
+  [-1202.6653671264648, 1298.0],
+  [-1262.6653671264648, 1448.0],
+  [-1266.6653671264648, 1638.0],
+  [-942.6653671264648, 1298.0],
+  [-1002.6653671264648, 1448.0],
+  [-1006.6653671264648, 1638.0],
+  [-682.6653671264648, 1298.0],
+  [-742.6653671264648, 1448.0],
+  [-746.6653671264648, 1638.0],
+  [-5412.190705435611, 1940.8571428571431],
+  [-6183.737205505356, 2245.1428571428573],
+  [-6191.737205505356, 2463.1428571428573],
+  [-5923.737205505356, 2245.1428571428573],
+  [-5983.737205505356, 2395.1428571428573],
+  [-5923.737205505356, 2545.1428571428573],
+  [-5926.594348362499, 2743.7142857142862],
+  [-5663.737205505356, 2245.1428571428573],
+  [-5667.737205505356, 2455.1428571428573],
+  [-5403.737205505356, 2245.1428571428573],
+  [-5463.737205505356, 2395.1428571428573],
+  [-5469.451491219641, 2585.1428571428573],
+  [-5143.737205505356, 2245.1428571428573],
+  [-5203.737205505356, 2395.1428571428573],
+  [-5209.451491219641, 2585.1428571428573],
+  [-4883.737205505356, 2245.1428571428573],
+  [-4943.737205505356, 2395.1428571428573],
+  [-4949.451491219641, 2585.1428571428573],
+  [-4623.737205505356, 2245.1428571428573],
+  [-4683.737205505356, 2395.1428571428573],
+  [-4689.451491219641, 2585.1428571428573],
+  [-5261.333824157715, 2910.0],
+  [-5989.905252729144, 3177.1428571428573],
+  [-5995.61953844343, 3384.285714285714],
+  [-5729.905252729144, 3177.1428571428573],
+  [-5789.905252729144, 3327.1428571428573],
+  [-5729.905252729144, 3477.1428571428573],
+  [-5735.61953844343, 3670.0],
+  [-5469.905252729143, 3177.1428571428573],
+  [-5475.6195384434295, 3370.0],
+  [-5209.905252729143, 3177.1428571428573],
+  [-5269.905252729143, 3327.1428571428573],
+  [-5272.762395586286, 3511.428571428572],
+  [-4949.905252729143, 3177.1428571428573],
+  [-5009.905252729143, 3327.1428571428573],
+  [-5012.762395586286, 3511.428571428572],
+  [-4689.905252729143, 3177.1428571428573],
+  [-4749.905252729143, 3327.1428571428573],
+  [-4752.762395586286, 3511.428571428572],
+  [-4429.905252729143, 3177.1428571428573],
+  [-4489.905252729143, 3327.1428571428573],
+  [-4498.093938555036, 3535.428571428572],
+  [-3946.0939385550355, 3559.7142857142853],
+  [-4723.236795697892, 3841.142857142857],
+  [-4723.236795697892, 4045.4285714285706],
+  [-4463.236795697892, 3841.142857142857],
+  [-4523.236795697892, 3991.142857142857],
+  [-4463.236795697892, 4141.142857142857],
+  [-4471.808224269322, 4322.571428571428],
+  [-4203.236795697892, 3841.142857142857],
+  [-4206.0939385550355, 4048.2857142857138],
+  [-3943.2367956978924, 3841.142857142857],
+  [-4003.2367956978924, 3991.142857142857],
+  [-4008.9510814121786, 4175.428571428571],
+  [-3683.2367956978924, 3841.142857142857],
+  [-3743.2367956978924, 3991.142857142857],
+  [-3748.9510814121786, 4175.428571428571],
+  [-3423.236795697893, 3841.142857142857],
+  [-3483.2367956978924, 3991.142857142857],
+  [-3488.9510814121786, 4175.428571428571],
+  [-3163.236795697893, 3841.142857142857],
+  [-3223.236795697893, 3991.142857142857],
+  [-3228.951081412178, 4175.428571428571],
+  [3328.5714285714275, 468.57142857142856],
+  [3148.5714285714275, 607.1428571428572],
+  [3014.285714285713, 751.4285714285716],
+  [3009.999999999999, 955.7142857142858],
+  [3262.857142857142, 748.5714285714286],
+  [3258.5714285714284, 952.8571428571428],
+  [3339.999999999999, 1070.0],
+  [3409.999999999999, 1220.0],
+  [2891.4285714285706, 1450.0],
+  [2895.7142857142844, 1645.7142857142858],
+  [3151.4285714285706, 1450.0],
+  [3155.7142857142844, 1645.7142857142858],
+  [3411.4285714285706, 1450.0],
+  [3415.7142857142844, 1645.7142857142858],
+  [3671.4285714285706, 1450.0],
+  [3675.7142857142844, 1645.7142857142858],
+  [3931.4285714285706, 1450.0],
+  [3935.7142857142844, 1645.7142857142858],
+  [3480.000000000001, 815.7142857142858],
+  [3475.714285714287, 1022.8571428571429],
+  [3740.000000000001, 815.7142857142858],
+  [3810.000000000001, 965.7142857142858],
+  [3805.714285714287, 1172.8571428571431],
+  [4000.000000000001, 815.7142857142858],
+  [4070.000000000001, 965.7142857142858],
+  [4000.000000000001, 1115.7142857142858],
+  [4001.4285714285716, 1300.0000000000005],
+  [-128.0, 3536.0],
+  [-296.0, 3670.0],
+  [-440.0, 3804.0],
+  [-446.0, 4006.0],
+  [-168.0, 3816.0],
+  [48.0, 3686.0],
+  [30.0, 4004.0],
+  [1332.0, 3488.0],
+  [1112.0, 3622.0],
+  [1112.0, 3836.0],
+  [1106.0, 4050.0],
+  [1256.0, 3772.0],
+  [1492.0, 3634.0],
+  [1478.0, 3848.0],
+  [528.0, 3876.0],
+  [0.9523809523798263, 4259.333333333332],
+  [-457.80952380952476, 4423.2380952380945],
+  [808.0000000000009, 4164.571428571428],
+  [878.0000000000009, 4314.571428571428],
+  [-907.8095238095252, 4566.190476190475],
+  [-910.0000000000018, 4748.190476190475],
+  [510.85714285714494, 4461.714285714286],
+  [495.1428571428578, 4648.857142857143],
+  [-924.5714285714303, 4909.619047619048],
+  [-854.5714285714303, 5059.619047619048],
+  [-924.5714285714303, 5209.619047619048],
+  [-934.5714285714303, 5408.190476190476],
+  [656.5714285714303, 4656.0],
+  [726.5714285714303, 4806.0],
+  [656.5714285714303, 4956.0],
+  [655.1428571428587, 5140.285714285714],
+  [-720.1904761904775, 4871.142857142857],
+  [-724.4761904761917, 5072.5714285714275],
+  [896.5714285714303, 4656.0],
+  [895.1428571428587, 4846.0],
+  [-516.3809523809532, 4833.2380952380945],
+  [-446.3809523809532, 4983.2380952380945],
+  [-442.09523809523944, 5178.95238095238],
+  [1136.5714285714303, 4656.0],
+  [1206.5714285714303, 4806.0],
+  [1196.5714285714303, 4998.857142857143],
+  [-284.95238095238165, 4773.238095238094],
+  [-214.95238095238165, 4923.238095238094],
+  [-210.66666666666788, 5118.952380952379],
+  [1376.5714285714303, 4656.0],
+  [1446.5714285714303, 4806.0],
+  [1436.5714285714303, 4998.857142857143],
+  [-30.66666666666788, 4727.523809523808],
+  [39.33333333333212, 4877.523809523808],
+  [43.61904761904589, 5073.238095238094],
+  [1616.5714285714303, 4656.0],
+  [1686.5714285714303, 4806.0],
+  [1676.5714285714303, 4998.857142857143],
+  [215.04761904761745, 4584.666666666665],
+  [285.04761904761745, 4734.666666666665],
+  [289.3333333333321, 4930.3809523809505],
+  [1856.5714285714303, 4656.0],
+  [1926.5714285714303, 4806.0],
+  [1916.5714285714303, 4998.857142857143],
+  [5086.857142857143, 1707.4285714285716],
+  [5156.857142857143, 1857.4285714285716],
+  [4104.0, 2087.4285714285716],
+  [3989.7142857142862, 2243.1428571428573],
+  [3985.4285714285706, 2433.1428571428573],
+  [4249.714285714286, 2243.1428571428573],
+  [4245.428571428571, 2433.1428571428573],
+  [4624.0, 2087.4285714285716],
+  [4489.714285714286, 2231.714285714286],
+  [4482.5714285714275, 2436.0],
+  [4749.714285714286, 2231.714285714286],
+  [4742.5714285714275, 2436.0],
+  [5144.0, 2087.4285714285716],
+  [5009.714285714286, 2231.714285714286],
+  [5002.5714285714275, 2436.0],
+  [5269.714285714286, 2231.714285714286],
+  [5262.5714285714275, 2436.0],
+  [5569.714285714284, 2087.4285714285716],
+  [5639.714285714284, 2237.4285714285716],
+  [5501.142857142853, 2393.142857142857],
+  [5502.571428571426, 2580.285714285714],
+  [5763.999999999998, 2384.571428571429],
+  [5759.714285714283, 2606.0],
+  [6015.428571428571, 2090.2857142857147],
+  [6085.428571428571, 2240.2857142857147],
+  [6015.428571428571, 2390.2857142857147],
+  [6011.142857142857, 2571.7142857142853],
+  [6275.428571428571, 2390.2857142857147],
+  [6271.142857142857, 2571.7142857142853],
+  [1901.7142857142835, 3448.5714285714284],
+  [1971.7142857142835, 3598.5714285714284],
+  [1901.7142857142835, 3748.5714285714284],
+  [1971.7142857142835, 3898.5714285714284],
+  [1790.285714285712, 4048.5714285714284],
+  [1791.7142857142826, 4235.714285714286],
+  [1973.1428571428542, 4182.857142857143],
+  [1974.5714285714248, 4370.000000000002],
+  [2118.8571428571404, 4057.142857142857],
+  [2188.8571428571404, 4207.142857142857],
+  [2187.428571428568, 4411.428571428571],
+  [2293.142857142854, 3751.428571428571],
+  [2363.142857142854, 3901.428571428571],
+  [2358.8571428571404, 4100.0],
+  [2150.285714285712, 4608.571428571429],
+  [2220.285714285712, 4758.571428571429],
+  [2150.285714285712, 4908.571428571429],
+  [2220.285714285712, 5058.571428571429],
+  [2224.5714285714257, 5265.714285714286],
+  [2407.428571428569, 4525.714285714286],
+  [2407.428571428569, 4675.714285714286],
+  [2477.428571428569, 4825.714285714286],
+  [2407.428571428569, 4975.714285714286],
+  [2397.428571428569, 5180.0],
+  [2667.428571428569, 4675.714285714286],
+  [2737.428571428569, 4825.714285714286],
+  [2667.428571428569, 4975.714285714286],
+  [2657.428571428569, 5180.0],
+  [3027.428571428569, 3920.0],
+  [2764.5714285714257, 4070.0],
+  [2643.142857142855, 4220.0],
+  [2647.428571428569, 4418.571428571428],
+  [2903.142857142855, 4220.0],
+  [2907.428571428569, 4418.571428571428],
+  [3021.714285714281, 4614.285714285714],
+  [2891.714285714281, 4778.571428571429],
+  [2884.571428571424, 4968.571428571429],
+  [3151.714285714281, 4778.571428571429],
+  [3144.571428571424, 4968.571428571429],
+  [3650.285714285712, 4331.428571428572],
+  [3470.285714285712, 4478.571428571429],
+  [3348.8571428571413, 4628.571428571429],
+  [3353.142857142855, 4827.142857142858],
+  [3608.8571428571413, 4628.571428571429],
+  [3613.142857142855, 4827.142857142858],
+  [3747.428571428569, 5105.714285714286],
+  [3617.428571428569, 5270.000000000002],
+  [3610.285714285712, 5460.000000000002],
+  [3877.428571428569, 5270.000000000002],
+  [3870.285714285712, 5460.000000000002],
+  [4673.142857142855, 4200.0],
+  [4743.142857142855, 4350.0],
+  [4673.142857142855, 4500.0],
+  [4743.142857142855, 4650.0],
+  [4733.142857142855, 4840.0],
+  [4024.5714285714257, 4022.857142857142],
+  [4094.5714285714257, 4172.857142857142],
+  [4024.5714285714257, 4322.857142857142],
+  [3848.8571428571395, 4467.142857142857],
+  [4028.8571428571377, 4595.714285714284],
+  [4018.8571428571377, 4785.714285714284],
+  [4248.857142857138, 4452.857142857141],
+  [4238.857142857138, 4642.857142857141],
+  [5173.142857142855, 4097.142857142857],
+  [5243.142857142855, 4247.142857142857],
+  [5173.142857142855, 4397.142857142857],
+  [4948.857142857141, 4547.142857142858],
+  [5165.999999999998, 4615.714285714286],
+  [5155.999999999998, 4805.714285714286],
+  [5414.571428571426, 4550.000000000001],
+  [5404.571428571426, 4740.000000000001],
+  [5447.428571428568, 4040.0],
+  [5440.285714285711, 4230.0],
+  [5707.428571428568, 4040.0],
+  [5700.285714285711, 4230.0],
+  [5967.428571428568, 4040.0],
+  [5960.285714285711, 4230.0],
+  [6227.428571428568, 4040.0],
+  [6220.285714285711, 4230.0],
+  [6487.428571428568, 4040.0],
+  [6480.285714285711, 4230.0],
+  [6747.428571428568, 4040.0],
+  [6740.285714285711, 4230.0],
+  [7007.428571428568, 4040.0],
+  [7000.285714285711, 4230.0],
+  [-2250.665367126465, 1516.0],
+  [-1726.301730762828, 2373.0909090909095]
 ]
 
 rogue_v2_created_nodes = rogue_v2.nodes.where.not(node_type: 'root').order(:id).to_a

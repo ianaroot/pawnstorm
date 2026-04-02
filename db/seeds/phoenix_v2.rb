@@ -39,27 +39,54 @@ phoenix_helper_box_core = [
 phoenix_conversion_safety.each_with_index do |safety_conditions, index|
   base_x = 10740 + (index * 940)
 
-  create_shared_split_paths!(
+  phoenix_conversion_safety_trunk = create_condition_chain!(
     bot: phoenix_v2,
     start_node: phoenix_conversion,
     x: base_x,
     y: 1240,
+    conditions: safety_conditions,
+    zigzag_offset: 70
+  )
+
+  phoenix_conversion_piece_trunk = create_condition_chain!(
+    bot: phoenix_v2,
+    start_node: phoenix_conversion_safety_trunk,
+    x: base_x,
+    y: 1390,
+    conditions: [
+      cond(subject: 'moved_piece', subject_specifier: 'queen', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'greater_than', comparison_value: 0),
+      cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state')
+    ],
+    zigzag_offset: 70
+  )
+
+  create_shared_split_paths!(
+    bot: phoenix_v2,
+    start_node: phoenix_conversion_piece_trunk,
+    x: base_x,
+    y: 1690,
     zigzag_offset: 70,
     branch_spacing: 620,
-    shared_conditions: safety_conditions,
+    shared_conditions: [],
     variants: [
       {
-        conditions: phoenix_helper_constriction_core,
+        conditions: [
+          cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+        ],
         action_type: 'return',
         value: 24
       },
       {
-        conditions: phoenix_helper_box_core,
+        conditions: [
+          cond(subject: 'opponents', subject_specifier: 'king', relation: 'adjacent', comparison: 'less_than', comparison_value: 'prior_board_state')
+        ],
         action_type: 'return',
         value: 22
       },
       {
-        conditions: endgame_gate_conditions + phoenix_helper_constriction_core,
+        conditions: endgame_gate_conditions + [
+          cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 'prior_board_state')
+        ],
         action_type: 'return',
         value: 36
       }
@@ -67,15 +94,25 @@ phoenix_conversion_safety.each_with_index do |safety_conditions, index|
   )
 end
 
-create_shared_split_paths!(
+phoenix_discipline_queen_trunk = create_condition_chain!(
   bot: phoenix_v2,
   start_node: phoenix_discipline,
   x: 11240,
   y: 1240,
+  conditions: [
+    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0)
+  ],
+  zigzag_offset: 70
+)
+
+create_shared_split_paths!(
+  bot: phoenix_v2,
+  start_node: phoenix_discipline_queen_trunk,
+  x: 11240,
+  y: 1390,
   zigzag_offset: 70,
   branch_spacing: 260,
   shared_conditions: [
-    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
     cond(subject: 'opponents', subject_specifier: 'king', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'greater_than', comparison_value: 0),
     cond(subject: 'captured_piece', relation: 'count', comparison: 'equal_to', comparison_value: 0),
     cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'equal_to', comparison_value: 'prior_board_state')
@@ -100,12 +137,11 @@ create_shared_split_paths!(
 
 create_path!(
   bot: phoenix_v2,
-  start_node: phoenix_discipline,
+  start_node: phoenix_discipline_queen_trunk,
   x: 11760,
-  y: 1240,
+  y: 1390,
   zigzag_offset: 70,
   conditions: [
-    cond(subject: 'moved_piece', subject_specifier: 'queen', relation: 'count', comparison: 'greater_than', comparison_value: 0),
     cond(subject: 'moved_piece', relation: 'attacker', comparison: 'equal_to', comparison_value: 0),
     cond(subject: 'opponents', subject_specifier: 'king', relation: 'mobility', comparison: 'less_than', comparison_value: 'prior_board_state'),
     cond(subject: 'opponents', relation: 'attacked', relation_specifier: 'moved_piece', comparison: 'equal_to', comparison_value: 'prior_board_state')

@@ -4,6 +4,8 @@ load Rails.root.join('db/seeds/rogue_v2.rb')
 puts "rogue seeded"
 load Rails.root.join('db/seeds/phoenix_v2.rb') # after rogue_v2: clones Rogue v2
 puts "phoenix seeded"
+load Rails.root.join('db/seeds/professor_x_v2.rb') # after phoenix_v2: clones Phoenix v2
+puts "professor x seeded"
 load Rails.root.join('db/seeds/storm_v2.rb')
 puts "storm seeded"
 load Rails.root.join('db/seeds/nightcrawler_v2.rb')
@@ -16,3 +18,7 @@ load Rails.root.join('db/seeds/bishop_v2.rb')
 puts "bishop seeded"
 load Rails.root.join('db/seeds/gambit_v2.rb')
 puts "gambit seeded"
+load Rails.root.join('db/seeds/wolverine_v2.rb')
+puts "wolverine seeded"
+
+# bin/rails runner db/seeds/wolverine_v2.rb
