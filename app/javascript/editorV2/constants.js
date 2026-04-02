@@ -17,6 +17,10 @@ export const NODE_DIMENSIONS = {
 export const CONNECTION_COLOR = '#4CAF50'
 export const CONNECTION_STROKE_WIDTH = 2
 export const CONNECTION_HITAREA_WIDTH = 20
+export const CONNECTION_HOVER_HITAREA_WIDTH = 44
+export const CONNECTION_DELETE_BUTTON_SIZE = 26
+export const CONNECTION_DELETE_BUTTON_MIN_SIZE = 26
+export const CONNECTION_DELETE_BUTTON_MAX_SIZE = 44
 
 // Temp line styling (during connection drag)
 export const TEMP_LINE_COLOR = '#4CAF50'

@@ -212,23 +212,34 @@
   transform-origin: top left;
 }
 
-.connections-layer line {
+.connections-layer .connection-line {
   pointer-events: stroke;
   stroke: #CC7722;
   stroke-width: 2;
   stroke-linecap: round;
 }
 
+.connections-layer .connection-hit-area {
+  stroke: transparent;
+  stroke-linecap: round;
+}
+
+.connections-layer .connection-temp-line {
+  stroke-linecap: round;
+}
+
 .connection-delete-btn {
+  --connection-delete-button-size: 26px;
+  --connection-delete-button-font-size: 15px;
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: var(--connection-delete-button-size);
+  height: var(--connection-delete-button-size);
   background: #EF4444;
   color: white;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--connection-delete-button-font-size);
   line-height: 1;
   display: none;
   pointer-events: auto;
@@ -472,6 +483,17 @@
   cursor: crosshair;
   border: 2px solid #fff;
   transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.node-connector::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(28px / var(--editor-zoom, 1));
+  height: calc(28px / var(--editor-zoom, 1));
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
 }
 
 .node-connector:hover {

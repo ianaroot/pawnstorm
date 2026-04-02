@@ -96,6 +96,7 @@ class ConnectionHandler {
     
     // Create temp line
     this.tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+    this.tempLine.classList.add('connection-temp-line')
     this.tempLine.setAttribute('stroke', '#4CAF50')
     this.tempLine.setAttribute('stroke-width', '3')
     this.tempLine.setAttribute('stroke-dasharray', '5,5')

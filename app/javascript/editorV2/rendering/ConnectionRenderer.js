@@ -1,7 +1,16 @@
 // rendering/ConnectionRenderer.js
 // Creates and updates connection SVG lines from state
 
-import { EVENTS, CONNECTION_COLOR, CONNECTION_STROKE_WIDTH, CONNECTION_HITAREA_WIDTH } from '../constants.js'
+import {
+  EVENTS,
+  CONNECTION_COLOR,
+  CONNECTION_STROKE_WIDTH,
+  CONNECTION_HITAREA_WIDTH,
+  CONNECTION_HOVER_HITAREA_WIDTH,
+  CONNECTION_DELETE_BUTTON_SIZE,
+  CONNECTION_DELETE_BUTTON_MIN_SIZE,
+  CONNECTION_DELETE_BUTTON_MAX_SIZE
+} from '../constants.js'
 import { getConnectionPoints } from './connectionGeometry.js'
 
 /**
@@ -32,6 +41,35 @@ class ConnectionRenderer {
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(this.handleChange.bind(this))
     this.unsubscribeViewport = this.viewport?.subscribe(() => this.updateDeleteButtonPositions())
+  }
+
+  currentZoom() {
+    return this.viewport?.getZoom?.() || 1
+  }
+
+  scaledHitAreaWidth() {
+    return Math.max(CONNECTION_HITAREA_WIDTH, CONNECTION_HITAREA_WIDTH / this.currentZoom())
+  }
+
+  scaledHoverHitAreaWidth() {
+    return Math.max(CONNECTION_HOVER_HITAREA_WIDTH, CONNECTION_HOVER_HITAREA_WIDTH / this.currentZoom())
+  }
+
+  scaledDeleteButtonSize() {
+    const scaled = CONNECTION_DELETE_BUTTON_SIZE / this.currentZoom()
+    return Math.max(CONNECTION_DELETE_BUTTON_MIN_SIZE, Math.min(CONNECTION_DELETE_BUTTON_MAX_SIZE, scaled))
+  }
+
+  applyInteractiveSizing({ hitArea, deleteBtn }) {
+    if (hitArea) {
+      hitArea.setAttribute('stroke-width', this.scaledHoverHitAreaWidth())
+    }
+
+    if (deleteBtn) {
+      const size = this.scaledDeleteButtonSize()
+      deleteBtn.style.setProperty('--connection-delete-button-size', `${size}px`)
+      deleteBtn.style.setProperty('--connection-delete-button-font-size', `${Math.max(12, size * 0.6)}px`)
+    }
   }
   
   /**
@@ -168,6 +206,7 @@ class ConnectionRenderer {
   createConnectionElements(clientId, sourceId, targetId, startX, startY, endX, endY) {
     // Visible line
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+    line.classList.add('connection-line')
     line.setAttribute('x1', startX)
     line.setAttribute('y1', startY)
     line.setAttribute('x2', endX)
@@ -181,12 +220,12 @@ class ConnectionRenderer {
     
     // Invisible hit area (wider stroke for easier clicking)
     const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+    hitArea.classList.add('connection-hit-area')
     hitArea.setAttribute('x1', startX)
     hitArea.setAttribute('y1', startY)
     hitArea.setAttribute('x2', endX)
     hitArea.setAttribute('y2', endY)
     hitArea.setAttribute('stroke', 'transparent')
-    hitArea.setAttribute('stroke-width', CONNECTION_HITAREA_WIDTH)
     hitArea.style.pointerEvents = 'stroke'
     hitArea.style.cursor = 'pointer'
     hitArea.dataset.clientId = clientId
@@ -206,14 +245,11 @@ class ConnectionRenderer {
       position: absolute;
       left: ${sceneMidpoint.x}px;
       top: ${sceneMidpoint.y}px;
-      width: 20px;
-      height: 20px;
       background: #e94560;
       color: white;
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 12px;
       line-height: 1;
       display: none;
       pointer-events: auto;
@@ -223,6 +259,7 @@ class ConnectionRenderer {
     deleteBtn.dataset.clientId = clientId
     deleteBtn.dataset.sourceId = sourceId
     deleteBtn.dataset.targetId = targetId
+    this.applyInteractiveSizing({ hitArea, deleteBtn })
     
     // Show/hide delete button on hover
     hitArea.addEventListener('mouseenter', () => {
@@ -297,6 +334,7 @@ class ConnectionRenderer {
     const sceneMidpoint = this.viewport?.graphToScenePoint(midX, midY) || { x: midX, y: midY }
     elements.deleteBtn.style.left = `${sceneMidpoint.x}px`
     elements.deleteBtn.style.top = `${sceneMidpoint.y}px`
+    this.applyInteractiveSizing(elements)
   }
 
   updateDeleteButtonPositions() {
@@ -319,6 +357,7 @@ class ConnectionRenderer {
 
       elements.deleteBtn.style.left = `${sceneMidpoint.x}px`
       elements.deleteBtn.style.top = `${sceneMidpoint.y}px`
+      this.applyInteractiveSizing(elements)
     })
   }
   
