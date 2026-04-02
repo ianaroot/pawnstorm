@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_28_040500) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_31_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -57,8 +57,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_28_040500) do
     t.text "error_message"
     t.json "white_compiled_program_snapshot"
     t.json "black_compiled_program_snapshot"
+    t.bigint "tournament_id"
     t.index ["black_player_type", "black_player_id"], name: "index_matches_on_black_player"
     t.index ["creator_id"], name: "index_matches_on_creator_id"
+    t.index ["tournament_id"], name: "index_matches_on_tournament_id"
     t.index ["white_player_type", "white_player_id"], name: "index_matches_on_white_player"
   end
 
@@ -75,6 +77,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_28_040500) do
     t.check_constraint "node_type::text = ANY (ARRAY['condition'::character varying, 'action'::character varying, 'root'::character varying, 'organizer'::character varying]::text[])", name: "node_type_check"
   end
 
+  create_table "tournament_entries", force: :cascade do |t|
+    t.bigint "tournament_id", null: false
+    t.bigint "bot_id", null: false
+    t.integer "seed_order", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_id"], name: "index_tournament_entries_on_bot_id"
+    t.index ["tournament_id", "bot_id"], name: "index_tournament_entries_on_tournament_id_and_bot_id", unique: true
+    t.index ["tournament_id"], name: "index_tournament_entries_on_tournament_id"
+  end
+
+  create_table "tournaments", force: :cascade do |t|
+    t.bigint "creator_id", null: false
+    t.integer "games_per_pair", default: 10, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_tournaments_on_creator_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -89,6 +110,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_28_040500) do
 
   add_foreign_key "connections", "nodes", column: "source_node_id"
   add_foreign_key "connections", "nodes", column: "target_node_id"
+  add_foreign_key "matches", "tournaments"
   add_foreign_key "matches", "users", column: "creator_id"
   add_foreign_key "nodes", "bots"
+  add_foreign_key "tournament_entries", "bots"
+  add_foreign_key "tournament_entries", "tournaments"
+  add_foreign_key "tournaments", "users", column: "creator_id"
 end

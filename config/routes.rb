@@ -25,8 +25,13 @@ Rails.application.routes.draw do
     delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :connection
   end
 
-  if Rails.env.development?
+  if Rails.env.development? || Rails.env.test?
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
+    resources :tournaments, only: [:new, :create, :show] do
+      post :abort, on: :member
+      post :pause, on: :member
+      post :resume, on: :member
+    end
   end
 
   resources :matches, only: [:new, :create, :show]

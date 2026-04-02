@@ -37,6 +37,7 @@ class Match < ApplicationRecord
   }, allow_nil: true
 
   belongs_to :creator, class_name: 'User'
+  belongs_to :tournament, optional: true
   belongs_to :white_player, polymorphic: true
   belongs_to :black_player, polymorphic: true
 
