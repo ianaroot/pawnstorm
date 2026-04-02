@@ -857,6 +857,19 @@
   box-shadow: 0 0 14px rgba(59, 130, 246, 0.75), 0 0 28px rgba(59, 130, 246, 0.28);
 }
 
+.node.dragging {
+  cursor: grabbing;
+}
+
+.selection-marquee {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  border: 1px solid rgba(192, 132, 252, 0.95);
+  background: rgba(168, 85, 247, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(232, 204, 255, 0.2);
+}
+
 .node-editor-section {
   margin-top: 15px;
   padding-top: 15px;

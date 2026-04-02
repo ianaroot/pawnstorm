@@ -3,6 +3,7 @@ import DragHandler from '../handlers/DragHandler.js'
 import Store from '../state/Store.js'
 import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
+import { DRAG_START_THRESHOLD } from '../constants.js'
 
 // Mock SyncManager
 class MockSyncManager {
@@ -19,6 +20,7 @@ function buildMouseEvent(overrides = {}) {
     button: 0,
     ...DEFAULT_POINTER,
     shiftKey: false,
+    altKey: false,
     target: {
       classList: {
         contains: vi.fn(() => false)
@@ -74,6 +76,19 @@ function buildElement(clientId = 'node-1') {
   }
 }
 
+function beginDrag(dragHandler, clientId, element, startEvent, moveEvent = null) {
+  const dragDelta = DRAG_START_THRESHOLD + 2
+  const thresholdMove = moveEvent || buildMouseEvent({
+    clientX: startEvent.clientX + dragDelta,
+    clientY: startEvent.clientY + dragDelta,
+    shiftKey: startEvent.shiftKey,
+    altKey: startEvent.altKey
+  })
+
+  dragHandler.handleMouseDown(startEvent, clientId, element)
+  dragHandler.handleMouseMove(thresholdMove)
+}
+
 describe('DragHandler', () => {
   let store
   let syncManager
@@ -106,8 +121,8 @@ describe('DragHandler', () => {
     it('initializes with empty drag state', () => {
       expect(dragHandler.isDragging).toBe(false)
       expect(dragHandler.draggedClientId).toBe(null)
-      expect(dragHandler.childOffsets.size).toBe(0)
-      expect(dragHandler.shouldDragChildren).toBe(true)
+      expect(dragHandler.dragOffsets.size).toBe(0)
+      expect(dragHandler.draggedClientIds).toEqual([])
     })
   })
 
@@ -115,7 +130,7 @@ describe('DragHandler', () => {
     it('starts drag on root nodes', () => {
       addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
       const event = buildMouseEvent()
-      dragHandler.handleMouseDown(event, 'root', mockElement)
+      beginDrag(dragHandler, 'root', mockElement, event)
 
       expect(dragHandler.isDragging).toBe(true)
     })
@@ -139,7 +154,7 @@ describe('DragHandler', () => {
     it('initializes drag state for valid drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
       const event = buildMouseEvent()
-      dragHandler.handleMouseDown(event, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, event)
 
       expect(dragHandler.isDragging).toBe(true)
       expect(dragHandler.draggedClientId).toBe('node-1')
@@ -149,23 +164,23 @@ describe('DragHandler', () => {
     it('calls beginInteraction on valid drag start', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
       const event = buildMouseEvent()
-      dragHandler.handleMouseDown(event, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, event)
 
       expect(viewport.beginInteraction).toHaveBeenCalledTimes(1)
     })
 
 
-    it('calculates child offsets when Shift NOT held', () => {
+    it('selects an unselected node and prepares a drag including descendants by default', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
       const event = buildMouseEvent()
-      dragHandler.handleMouseDown(event, 'parent', mockElement)
+      beginDrag(dragHandler, 'parent', mockElement, event)
 
-      expect(dragHandler.shouldDragChildren).toBe(true)
-      expect(dragHandler.childOffsets.has('child')).toBe(true)
-      expect(dragHandler.childOffsets.get('child')).toEqual({
+      expect(store.getSelectedNodeIds()).toEqual(['parent'])
+      expect(dragHandler.draggedClientIds).toEqual(['parent', 'child'])
+      expect(dragHandler.dragOffsets.get('child')).toEqual({
         dx: 100,
         dy: 50,
         startX: 200,
@@ -173,33 +188,34 @@ describe('DragHandler', () => {
       })
     })
 
-    it('does NOT calculate child offsets when Shift held', () => {
+    it('shift-drag adds an unselected node to the current drag selection', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
-      addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
+      store.selectOnlyNode('child')
 
       const event = buildMouseEvent({ shiftKey: true })
-      dragHandler.handleMouseDown(event, 'parent', mockElement)
+      beginDrag(dragHandler, 'parent', mockElement, event)
 
-      expect(dragHandler.shouldDragChildren).toBe(false)
-      expect(dragHandler.childOffsets.size).toBe(0)
+      expect(store.getSelectedNodeIds()).toEqual(['child', 'parent'])
+      expect(dragHandler.draggedClientIds).toEqual(['child', 'parent'])
+      expect(dragHandler.dragOffsets.get('child')).toEqual({
+        dx: 100,
+        dy: 50,
+        startX: 200,
+        startY: 150
+      })
     })
 
-    it('stores all descendants, not just direct children', () => {
-      addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
+    it('option-drag moves only the grabbed node', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child1', type: 'action', x: 200, y: 100 })
-      addNode(store, { clientId: 'grandchild', type: 'action', x: 300, y: 100 })
-      addConnection(store, { clientId: 'c1', sourceId: 'root', targetId: 'parent' })
-      addConnection(store, { clientId: 'c2', sourceId: 'parent', targetId: 'child1' })
-      addConnection(store, { clientId: 'c3', sourceId: 'child1', targetId: 'grandchild' })
-      
-      const event = buildMouseEvent()
-      dragHandler.handleMouseDown(event, 'parent', mockElement)
+      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      store.setSelectedNodeIds(['parent', 'child'])
 
-      expect(dragHandler.childOffsets.size).toBe(2)
-      expect(dragHandler.childOffsets.has('child1')).toBe(true)
-      expect(dragHandler.childOffsets.has('grandchild')).toBe(true)
+      const event = buildMouseEvent({ altKey: true })
+      beginDrag(dragHandler, 'parent', mockElement, event)
+
+      expect(dragHandler.draggedClientIds).toEqual(['parent'])
+      expect(dragHandler.dragOffsets.size).toBe(0)
     })
   })
 
@@ -208,7 +224,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
       const startEvent = buildMouseEvent()
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       const endEvent = buildMouseEvent()
       dragHandler.handleMouseUp(endEvent)
@@ -223,7 +239,7 @@ describe('DragHandler', () => {
       const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
       const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
 
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
       dragHandler.handleMouseMove(moveEvent)
       dragHandler.handleMouseUp(endEvent)
 
@@ -231,13 +247,13 @@ describe('DragHandler', () => {
       expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
     })
 
-    it('calls batchUpdatePositions when dragging a node with descendants', () => {
+    it('calls batchUpdatePositions when dragging multiple selected nodes', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
-      addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
+      store.setSelectedNodeIds(['parent', 'child'])
 
       const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      dragHandler.handleMouseDown(startEvent, 'parent', mockElement)
+      beginDrag(dragHandler, 'parent', mockElement, startEvent)
 
       const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
       dragHandler.handleMouseMove(moveEvent)
@@ -255,17 +271,41 @@ describe('DragHandler', () => {
       expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
     })
 
-    it('calls updateNodePosition when dragging a node with descendants while holding Shift', () => {
+    it('calls batchUpdatePositions when dragging a singly selected node with descendants', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
+      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      beginDrag(dragHandler, 'parent', mockElement, startEvent)
+
+      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseMove(moveEvent)
+
+      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handleMouseUp(endEvent)
+
+      expect(syncManager.batchUpdatePositions).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ clientId: 'parent', x: 150, y: 160 }),
+          expect.objectContaining({ clientId: 'child', x: 250, y: 210 })
+        ]),
+        expect.stringContaining('Move')
+      )
+      expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
+    })
+
+    it('calls updateNodePosition when option-dragging a node out of a selected group', () => {
+      addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
+      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      store.setSelectedNodeIds(['parent', 'child'])
+
       const startEvent = buildMouseEvent({
         clientX: 100,
         clientY: 100,
-        shiftKey: true
+        altKey: true
       })
-      dragHandler.handleMouseDown(startEvent, 'parent', mockElement)
+      beginDrag(dragHandler, 'parent', mockElement, startEvent)
 
       const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
       dragHandler.handleMouseMove(moveEvent)
@@ -285,7 +325,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
       const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       dragHandler.cancelDrag()
 
@@ -298,7 +338,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
       const startEvent = buildMouseEvent()
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       dragHandler.cancelDrag()
 
@@ -313,7 +353,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
       const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       expect(dragHandler.isCurrentlyDragging()).toBe(true)
     })
@@ -324,7 +364,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
    
       const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      dragHandler.handleMouseDown(startEvent, 'node-1', mockElement)
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       expect(dragHandler.getDraggedNodeId()).toBe('node-1')
     })

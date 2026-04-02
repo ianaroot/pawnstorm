@@ -26,8 +26,12 @@ class Store {
       zoom: 1,
       panX: 0,
       panY: 0,
-      selectedNodeId: null,
-      editingNodeId: null
+      selectedNodeIds: [],
+      primarySelectedNodeId: null,
+      editingNodeId: null,
+      isMarqueeSelecting: false,
+      marqueeStart: null,
+      marqueeCurrent: null
     }
     
     // Subscribers: Array of { event, callback }
@@ -38,6 +42,10 @@ class Store {
     
     // Flag to prevent updates after destruction
     this.destroyed = false
+
+    // Transient click suppression used to prevent post-drag/post-marquee clicks
+    // from immediately overwriting selection state.
+    this.clickSuppressedUntil = 0
   }
   
   // ===== Subscriber Pattern =====
@@ -216,10 +224,6 @@ class Store {
     this.emit(EVENTS.CONNECTION_UPDATE, { connection: updatedConn, clientId, updates })
   }
   
-  /**
-   * Remove a connection
-   * @param {string} clientId - Connection clientId
-   */
   removeConnection(clientId) {
     if (!this.graph.hasConnection(clientId)) {
       console.warn(`Connection ${clientId} not found, cannot remove`)
@@ -230,105 +234,167 @@ class Store {
     this.emit(EVENTS.CONNECTION_REMOVE, { clientId })
   }
   
-  /**
-   * Get a connection by clientId
-   * @param {string} clientId - Connection clientId
-   * @returns {Connection|undefined}
-   */
   getConnection(clientId) {
     return this.graph.getConnection(clientId)
   }
   
-  /**
-   * Get all connections
-   * @returns {Connection[]}
-   */
   getConnections() {
     return this.graph.getConnections()
   }
   
-  /**
-   * Find connection between two nodes
-   * @param {string} sourceClientId - Source node clientId
-   * @param {string} targetClientId - Target node clientId
-   * @returns {Connection|undefined}
-   */
   findConnection(sourceClientId, targetClientId) {
     return this.graph.findConnection(sourceClientId, targetClientId)
   }
   
-  /**
-   * Get connections for a node
-   * @param {string} clientId - Node clientId
-   * @returns {Object} { outgoing: Connection[], incoming: Connection[] }
-   */
   getConnectionsFor(clientId) {
     return this.graph.getConnectionsFor(clientId)
   }
   
-  /**
-   * Get descendant node IDs
-   * @param {string} clientId - Starting node clientId
-   * @returns {Set<string>}
-   */
   getDescendantIds(clientId) {
     return this.graph.getDescendantIds(clientId)
   }
   
-  // ===== View State Operations =====
-  
+// ===== View State Operations =====
+
   /**
    * Set zoom level
    * @param {number} zoom - Zoom level (1 = 100%)
    */
   setZoom(zoom) {
     this.viewState.zoom = Math.max(0.1, Math.min(5, zoom))
-    // No emit for view state changes
   }
-  
-  /**
-   * Set pan offset
-   * @param {number} panX - X offset
-   * @param {number} panY - Y offset
-   */
+
   setPan(panX, panY) {
     this.viewState.panX = panX
     this.viewState.panY = panY
-    // No emit for view state changes
   }
-  
-  /**
-   * Set selected node
-   * @param {string|null} clientId - Node clientId or null to deselect
-   */
-  setSelectedNode(clientId) {
-    this.viewState.selectedNodeId = clientId
-    // No emit for view state changes
+
+  setSelectedNodeIds(clientIds) {
+    const uniqueIds = [...new Set((clientIds || []).filter(Boolean))]
+    this.viewState.selectedNodeIds = uniqueIds
+
+    if (uniqueIds.length === 0) {
+      this.viewState.primarySelectedNodeId = null
+      return
+    }
+
+    if (!uniqueIds.includes(this.viewState.primarySelectedNodeId)) {
+      this.viewState.primarySelectedNodeId = uniqueIds[0]
+    }
   }
-  
+
+  selectOnlyNode(clientId) {
+    if (!clientId) {
+      this.clearSelection()
+      return
+    }
+
+    this.viewState.selectedNodeIds = [clientId]
+    this.viewState.primarySelectedNodeId = clientId
+  }
+
+  addNodeToSelection(clientId) {
+    if (!clientId || this.isNodeSelected(clientId)) return
+
+    this.viewState.selectedNodeIds = [...this.viewState.selectedNodeIds, clientId]
+    if (!this.viewState.primarySelectedNodeId) {
+      this.viewState.primarySelectedNodeId = clientId
+    }
+  }
+
+  removeNodeFromSelection(clientId) {
+    if (!clientId) return
+
+    this.viewState.selectedNodeIds = this.viewState.selectedNodeIds.filter(id => id !== clientId)
+
+    if (this.viewState.primarySelectedNodeId === clientId) {
+      this.viewState.primarySelectedNodeId = this.viewState.selectedNodeIds[0] || null
+    }
+  }
+
+  toggleNodeSelection(clientId) {
+    if (!clientId) return
+
+    if (this.isNodeSelected(clientId)) {
+      this.removeNodeFromSelection(clientId)
+    } else {
+      this.addNodeToSelection(clientId)
+      this.viewState.primarySelectedNodeId = clientId
+    }
+  }
+
+  clearSelection() {
+    this.viewState.selectedNodeIds = []
+    this.viewState.primarySelectedNodeId = null
+  }
+
+  isNodeSelected(clientId) {
+    return this.viewState.selectedNodeIds.includes(clientId)
+  }
+
+  getSelectedNodeIds() {
+    return [...this.viewState.selectedNodeIds]
+  }
+
+  getPrimarySelectedNode() {
+    return this.viewState.primarySelectedNodeId
+  }
+
   /**
-   * Get selected node
+   * Backward-compatible single-selection getter.
+   * Leave this in place until handlers/renderers are updated.
    * @returns {string|null}
    */
   getSelectedNode() {
-    return this.viewState.selectedNodeId
+    return this.viewState.primarySelectedNodeId
   }
-  
-  /**
-   * Set editing node (for side panel)
-   * @param {string|null} clientId - Node clientId or null to close
-   */
+
   setEditingNode(clientId) {
     this.viewState.editingNodeId = clientId
-    // No emit for view state changes
   }
-  
-  /**
-   * Get editing node
-   * @returns {string|null}
-   */
+
   getEditingNode() {
     return this.viewState.editingNodeId
+  }
+
+  startMarquee(point) {
+    this.viewState.isMarqueeSelecting = true
+    this.viewState.marqueeStart = point
+    this.viewState.marqueeCurrent = point
+  }
+
+  updateMarquee(point) {
+    if (!this.viewState.isMarqueeSelecting) return
+    this.viewState.marqueeCurrent = point
+  }
+
+  finishMarquee() {
+    this.viewState.isMarqueeSelecting = false
+    this.viewState.marqueeStart = null
+    this.viewState.marqueeCurrent = null
+  }
+
+  /**
+   * Alias for finishMarquee for call-site readability.
+   */
+  cancelMarquee() {
+    this.finishMarquee()
+  }
+
+  getMarqueeState() {
+    return {
+      isMarqueeSelecting: this.viewState.isMarqueeSelecting,
+      marqueeStart: this.viewState.marqueeStart,
+      marqueeCurrent: this.viewState.marqueeCurrent
+    }
+  }
+
+  suppressClicksFor(durationMs = 150) {
+    this.clickSuppressedUntil = Date.now() + durationMs
+  }
+
+  shouldSuppressClicks() {
+    return Date.now() < this.clickSuppressedUntil
   }
   
   // ===== Serialization =====
@@ -372,9 +438,14 @@ class Store {
       zoom: 1,
       panX: 0,
       panY: 0,
-      selectedNodeId: null,
-      editingNodeId: null
+      selectedNodeIds: [],
+      primarySelectedNodeId: null,
+      editingNodeId: null,
+      isMarqueeSelecting: false,
+      marqueeStart: null,
+      marqueeCurrent: null
     }
+    this.clickSuppressedUntil = 0
     this.emit(EVENTS.GRAPH_REPLACE, { graph: this.graph })
   }
   
@@ -386,6 +457,7 @@ class Store {
     this.destroyed = true
     this.subscribers = []
     this.graph = new Graph()
+    this.clickSuppressedUntil = 0
   }
 }
 

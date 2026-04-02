@@ -82,6 +82,9 @@ class NodeRenderer {
   createNodeElement(node) {
     const element = document.createElement('div')
     element.className = `node ${node.type}`
+    if (this.store.isNodeSelected(node.clientId)) {
+      element.classList.add('selected')
+    }
     element.dataset.clientId = node.clientId
     element.dataset.type = node.type
     element.style.left = `${node.position.x}px`

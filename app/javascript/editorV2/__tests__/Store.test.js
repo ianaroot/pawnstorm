@@ -27,8 +27,8 @@ describe('Store', () => {
       expect(store.viewState.zoom).toBe(1)
       expect(store.viewState.panX).toBe(0)
       expect(store.viewState.panY).toBe(0)
-      expect(store.viewState.selectedNodeId).toBe(null)
-      expect(store.viewState.editingNodeId).toBe(null)
+      expect(store.viewState.selectedNodeIds).toEqual([])
+      expect(store.viewState.primarySelectedNodeId).toBe(null)
     })
   })
 
@@ -468,11 +468,53 @@ describe('Store', () => {
     })
 
     it('sets and gets selected node', () => {
-      store.setSelectedNode('node-1')
+      store.selectOnlyNode('node-1')
       expect(store.getSelectedNode()).toBe('node-1')
+      expect(store.getPrimarySelectedNode()).toBe('node-1')
+      expect(store.getSelectedNodeIds()).toEqual(['node-1'])
 
-      store.setSelectedNode(null)
+      store.clearSelection()
       expect(store.getSelectedNode()).toBe(null)
+      expect(store.getSelectedNodeIds()).toEqual([])
+    })
+
+    it('supports additive selection and primary selection tracking', () => {
+      store.addNodeToSelection('node-1')
+      store.addNodeToSelection('node-2')
+
+      expect(store.getSelectedNodeIds()).toEqual(['node-1', 'node-2'])
+      expect(store.getPrimarySelectedNode()).toBe('node-1')
+
+      store.toggleNodeSelection('node-3')
+      expect(store.getSelectedNodeIds()).toEqual(['node-1', 'node-2', 'node-3'])
+      expect(store.getPrimarySelectedNode()).toBe('node-3')
+
+      store.removeNodeFromSelection('node-3')
+      expect(store.getSelectedNodeIds()).toEqual(['node-1', 'node-2'])
+      expect(store.getPrimarySelectedNode()).toBe('node-1')
+    })
+
+    it('tracks marquee state', () => {
+      store.startMarquee({ x: 10, y: 20 })
+      expect(store.getMarqueeState()).toEqual({
+        isMarqueeSelecting: true,
+        marqueeStart: { x: 10, y: 20 },
+        marqueeCurrent: { x: 10, y: 20 }
+      })
+
+      store.updateMarquee({ x: 30, y: 40 })
+      expect(store.getMarqueeState()).toEqual({
+        isMarqueeSelecting: true,
+        marqueeStart: { x: 10, y: 20 },
+        marqueeCurrent: { x: 30, y: 40 }
+      })
+
+      store.finishMarquee()
+      expect(store.getMarqueeState()).toEqual({
+        isMarqueeSelecting: false,
+        marqueeStart: null,
+        marqueeCurrent: null
+      })
     })
 
     it('sets and gets editing node', () => {

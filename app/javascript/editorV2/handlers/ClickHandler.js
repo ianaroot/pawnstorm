@@ -31,12 +31,12 @@ class ClickHandler {
     this.boundHandleSave = this.handleSave.bind(this)
     this.boundHandleCancel = this.closeEditor.bind(this)
     this.boundHandleConditionFieldChange = this.handleConditionFieldChange.bind(this)
+    this.boundHandleStoreUpdate = this.handleStoreUpdate.bind(this)
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
     
-    // Currently selected node
-    this.selectedNodeId = null
+    // Primary selected node is now tracked by the store
     
     // Currently editing node
     this.editingNodeId = null
@@ -49,6 +49,7 @@ class ClickHandler {
     if (this.editorPanel) {
       this.attachEditorPanelHandlers()
     }
+    this.unsubscribeStore = this.store.subscribe(this.boundHandleStoreUpdate)
   }
   
   /**
@@ -66,12 +67,15 @@ class ClickHandler {
     
     // Single click: select node
     element.addEventListener('click', (e) => {
-      // Don't select if clicking on connector
       if (e.target.classList.contains('node-connector')) {
         return
       }
-      
-      this.selectNode(clientId, element)
+
+      if (this.store.shouldSuppressClicks()) {
+        return
+      }
+
+      this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
     })
     
     // Double click: open editor panel
@@ -123,12 +127,33 @@ class ClickHandler {
     this.editorPanel.querySelector('#cond-comparison')?.addEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel.querySelector('#cond-comparison-value-source')?.addEventListener('change', this.boundHandleConditionFieldChange)
   }
+
+  handleStoreUpdate() {
+    this.syncSelectionClasses()
+  }
+
+  syncSelectionClasses() {
+    const selectedIds = new Set(this.store.getSelectedNodeIds())
+
+    document.querySelectorAll('.node').forEach(el => {
+      const clientId = el.dataset?.clientId
+      el.classList.toggle('selected', selectedIds.has(clientId))
+    })
+  }
+
+  isShiftSelection(event) {
+    return event.shiftKey
+  }
   
   /**
    * Handle document click (for deselection)
    * @param {MouseEvent} event
    */
   handleClick(event) {
+    if (this.store.shouldSuppressClicks()) {
+      return
+    }
+
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
     
@@ -163,7 +188,7 @@ class ClickHandler {
         return
       }
       
-      if (this.selectedNodeId) {
+      if (this.store.getPrimarySelectedNode()) {
         this.deleteSelectedNode()
       }
     }
@@ -178,17 +203,26 @@ class ClickHandler {
    * Select a node
    * @param {string} clientId - Node client ID
    * @param {HTMLElement} element - Node element
+   * @param {Object} options
+   * @param {boolean} options.additive - Toggle into current selection
    */
-  selectNode(clientId, element) {
-    // Deselect previous
-    this.deselectAll()
-    
-    // Select this node
-    this.selectedNodeId = clientId
-    this.store.setSelectedNode(clientId)
-    element.classList.add('selected')
-    
-    // Callback
+  selectNode(clientId, element, { additive = false } = {}) {
+    if (additive) {
+      this.store.toggleNodeSelection(clientId)
+
+      if (this.store.isNodeSelected(clientId)) {
+        if (this.onNodeSelected) {
+          this.onNodeSelected(clientId)
+        }
+      } else if (this.onNodeDeselected) {
+        this.onNodeDeselected()
+      }
+
+      return
+    }
+
+    this.store.selectOnlyNode(clientId)
+
     if (this.onNodeSelected) {
       this.onNodeSelected(clientId)
     }
@@ -202,22 +236,13 @@ class ClickHandler {
 
     this.selectNode(clientId, element)
   }
-  
+
   /**
    * Deselect all nodes
    */
   deselectAll() {
-    // Remove selection from store
-    this.store.setSelectedNode(null)
-    
-    // Remove visual selection from all nodes
-    document.querySelectorAll('.node.selected').forEach(el => {
-      el.classList.remove('selected')
-    })
-    
-    this.selectedNodeId = null
-    
-    // Callback
+    this.store.clearSelection()
+
     if (this.onNodeDeselected) {
       this.onNodeDeselected()
     }
@@ -641,11 +666,12 @@ class ClickHandler {
    * Delete the currently selected node
    */
   async deleteSelectedNode() {
-    if (!this.selectedNodeId) {
+    const selectedNodeId = this.store.getPrimarySelectedNode()
+    if (!selectedNodeId) {
       return
     }
-    
-    const node = this.store.getNode(this.selectedNodeId)
+
+    const node = this.store.getNode(selectedNodeId)
     if (!node) {
       return
     }
@@ -661,7 +687,7 @@ class ClickHandler {
       return
     }
     
-    const clientId = this.selectedNodeId
+    const clientId = selectedNodeId
     
     // Deselect first
     this.deselectAll()
@@ -692,7 +718,7 @@ class ClickHandler {
    * @returns {string|null}
    */
   getSelectedNodeId() {
-    return this.selectedNodeId
+    return this.store.getPrimarySelectedNode()
   }
   
   /**
@@ -718,9 +744,9 @@ class ClickHandler {
     this.editorPanel?.querySelector('#cond-relation-specifier')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel?.querySelector('#cond-comparison')?.removeEventListener('change', this.boundHandleConditionFieldChange)
     this.editorPanel?.querySelector('#cond-comparison-value-source')?.removeEventListener('change', this.boundHandleConditionFieldChange)
-    
+
+    this.unsubscribeStore?.()
     this.attachedElements = new WeakMap()
-    this.selectedNodeId = null
     this.editingNodeId = null
   }
 }
