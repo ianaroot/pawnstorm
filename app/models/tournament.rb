@@ -124,28 +124,58 @@ class Tournament < ApplicationRecord
     end
   end
 
-  def pairing_rows
-    all_matches = matches.includes(:white_player, :black_player).order(:created_at).to_a
-    grouped_matches = all_matches.group_by do |match|
-      [match.white_player_id, match.black_player_id].sort
-    end
+  def pairing_matches(bot_a, bot_b)
+    normalized_a, normalized_b = normalize_pairing_bots(bot_a, bot_b)
 
-    entrants.combination(2).map do |bot_a, bot_b|
-      pairing_matches = grouped_matches.fetch([bot_a.id, bot_b.id].sort, [])
+    matches
+      .includes(:white_player, :black_player)
+      .where(
+        "(white_player_id = :a_id AND black_player_id = :b_id) OR (white_player_id = :b_id AND black_player_id = :a_id)",
+        a_id: normalized_a.id,
+        b_id: normalized_b.id
+      )
+      .order(:created_at)
+      .to_a
+  end
 
-      {
-        bot_a: bot_a,
-        bot_b: bot_b,
-        record: pairing_record(pairing_matches, bot_a, bot_b),
-        matches: pairing_matches
-      }
-    end
+  def pairing_row(bot_a, bot_b)
+    normalized_a, normalized_b = normalize_pairing_bots(bot_a, bot_b)
+    all_pairing_matches = pairing_matches(normalized_a, normalized_b)
+
+    {
+      bot_a: normalized_a,
+      bot_b: normalized_b,
+      total_record: pairing_record(all_pairing_matches, normalized_a, normalized_b),
+      bot_a_white_record: directional_pairing_record(normalized_a, normalized_b),
+      bot_b_white_record: directional_pairing_record(normalized_b, normalized_a),
+      matches: all_pairing_matches
+    }
+  end
+
+  def directional_pairing_summary(white_bot, black_bot)
+    directional_record = directional_pairing_record(white_bot, black_bot)
+
+    {
+      white_bot: white_bot,
+      black_bot: black_bot,
+      white_points: directional_record[:record][:bot_a_points],
+      black_points: directional_record[:record][:bot_b_points],
+      white_wins: directional_record[:record][:bot_a_wins],
+      black_wins: directional_record[:record][:bot_b_wins],
+      draws: directional_record[:record][:draws],
+      failed: directional_record[:record][:failed],
+      matches: directional_record[:matches]
+    }
   end
 
   private
 
   def paused_cache_key
     "tournaments/#{id}/paused"
+  end
+
+  def normalize_pairing_bots(bot_a, bot_b)
+    [bot_a, bot_b].sort_by(&:id)
   end
 
   def pairing_record(pairing_matches, bot_a, bot_b)
@@ -184,5 +214,20 @@ class Tournament < ApplicationRecord
     end
 
     record
+  end
+
+  def directional_pairing_record(white_bot, black_bot)
+    directional_matches = matches
+      .includes(:white_player, :black_player)
+      .where(white_player: white_bot, black_player: black_bot)
+      .order(:created_at)
+      .to_a
+
+    {
+      white_bot: white_bot,
+      black_bot: black_bot,
+      record: pairing_record(directional_matches, white_bot, black_bot),
+      matches: directional_matches
+    }
   end
 end

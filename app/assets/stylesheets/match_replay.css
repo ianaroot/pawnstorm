@@ -62,6 +62,17 @@
   align-items: start;
 }
 
+.tournament-show-layout {
+  display: block;
+}
+
+.tournament-page {
+  min-height: auto;
+  margin-left: 0;
+  margin-right: 0;
+  min-width: 0;
+}
+
 .match-replay-sidebar {
   display: flex;
   flex-direction: column;
@@ -358,4 +369,83 @@
   .match-replay-layout {
     grid-template-columns: 1fr;
   }
+}
+
+.tournament-pairing-matrix {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible;
+}
+
+.tournament-pairing-matrix-wrap {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.tournament-pairing-matrix th,
+.tournament-pairing-matrix td {
+  width: 8.75rem;
+  min-width: 8.75rem;
+  max-width: 8.75rem;
+}
+
+.tournament-pairing-matrix th:first-child {
+  width: 9.5rem;
+  min-width: 9.5rem;
+  max-width: 9.5rem;
+}
+
+.tournament-pairing-matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #2D2D2D;
+}
+
+.tournament-pairing-matrix thead th:first-child,
+.tournament-pairing-matrix tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.tournament-pairing-matrix tbody th {
+  background-color: #252526;
+  z-index: 1;
+}
+
+.tournament-pairing-matrix thead th:first-child {
+  z-index: 3;
+}
+
+.tournament-pairing-matrix__cell {
+  text-align: center;
+}
+
+.tournament-pairing-matrix__link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+  line-height: 1.15;
+}
+
+.tournament-pairing-matrix__link:hover {
+  text-decoration: underline;
+}
+
+.tournament-pairing-matrix__primary {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.tournament-pairing-matrix__secondary {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #9CA3AF;
 }

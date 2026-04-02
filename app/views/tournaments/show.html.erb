@@ -3,8 +3,8 @@
     <meta http-equiv="refresh" content="2">
   <% end %>
 
-  <div class="match-replay-layout">
-    <div class="game-page">
+  <div class="match-replay-layout tournament-show-layout">
+    <div class="game-page tournament-page">
       <div class="match-show-meta">
         <h1 class="match-show-title">Tournament <%= @tournament.id %></h1>
         <p class="match-show-meta-item"><strong>Status:</strong> <%= @tournament.overall_status.humanize %></p>
@@ -62,40 +62,48 @@
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div class="match-replay-sidebar">
-      <div class="match-replay-sidebar-top">
-        <h2>Pairings</h2>
-        <% @pairings.each do |pairing| %>
-          <div class="match-setup-section">
-            <h3><%= pairing[:bot_a].name %> vs <%= pairing[:bot_b].name %></h3>
-            <p>
-              <strong>Record:</strong>
-              <%= pairing[:bot_a].name %> <%= pairing[:record][:bot_a_points] %> -
-              <%= pairing[:record][:bot_b_points] %> <%= pairing[:bot_b].name %>
-              (<%= pairing[:record][:bot_a_wins] %>-<%= pairing[:record][:bot_b_wins] %>, draws: <%= pairing[:record][:draws] %>, failed: <%= pairing[:record][:failed] %>)
-            </p>
+      <div class="match-setup-section">
+        <h2>Matchup Matrix</h2>
+        <p><strong>Rows:</strong> White player. <strong>Columns:</strong> Black player.</p>
+        <p>Cell format: white points - black points, then draws and failed counts.</p>
 
-            <ul>
-              <% pairing[:matches].each do |match| %>
-                <li>
-                  <%= link_to "Match #{match.id}", match_path(match) %>
-                  -
-                  White: <%= match.white_player.respond_to?(:name) ? match.white_player.name : "#{match.white_player_type} #{match.white_player_id}" %>
-                  /
-                  Black: <%= match.black_player.respond_to?(:name) ? match.black_player.name : "#{match.black_player_type} #{match.black_player_id}" %>
-                  /
-                  Status: <%= match.status %>
-                  <% if match.result.present? %>
-                    /
-                    Result: <%= match.result %>
+        <div class="tournament-pairing-matrix-wrap">
+          <table class="tournament-pairing-matrix">
+            <thead>
+              <tr>
+                <th>White \ Black</th>
+                <% @entrants.each do |black_bot| %>
+                  <th><%= black_bot.name %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% @entrants.each do |white_bot| %>
+                <tr>
+                  <th><%= white_bot.name %></th>
+                  <% @entrants.each do |black_bot| %>
+                    <td class="tournament-pairing-matrix__cell">
+                      <% if white_bot == black_bot %>
+                        -
+                      <% else %>
+                        <% summary = @tournament.directional_pairing_summary(white_bot, black_bot) %>
+                        <%= link_to tournament_pairing_path(@tournament, white_bot, black_bot), class: 'tournament-pairing-matrix__link' do %>
+                          <span class="tournament-pairing-matrix__primary">
+                            <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
+                          </span>
+                          <span class="tournament-pairing-matrix__secondary">
+                            fails <%= summary[:failed] %>
+                          </span>
+                        <% end %>
+                      <% end %>
+                    </td>
                   <% end %>
-                </li>
+                </tr>
               <% end %>
-            </ul>
-          </div>
-        <% end %>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
