@@ -964,12 +964,12 @@
 }
 
 .condition-lab-panel {
-  width: min(52rem, calc(100vw - 3rem));
+  width: min(42rem, calc(100vw - 3rem));
 }
 
 .condition-lab-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 8.5rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.88fr) 7.75rem minmax(0, 0.88fr);
   gap: 14px;
   align-items: start;
 }
@@ -1037,7 +1037,8 @@
 }
 
 .condition-lab-inline-pair {
-  grid-template-columns: 7rem minmax(0, 1fr);
+  grid-template-columns: 4.1rem minmax(0, 1fr);
+  gap: 0.08rem;
 }
 
 .condition-lab-inline-triple {
@@ -1057,6 +1058,20 @@
 .condition-lab-comparison-value-stack {
   display: grid;
   gap: 8px;
+}
+
+.condition-lab-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.15rem;
+  color: #E5E5E5;
+  font-size: 12px;
+}
+
+.condition-lab-checkbox input {
+  width: auto;
+  margin: 0;
 }
 
 .condition-lab-comparison__toggle {
