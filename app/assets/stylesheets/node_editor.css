@@ -423,13 +423,13 @@
 .condition-preview {
   display: flex;
   flex-direction: column;
-  gap: 0.58rem;
 }
 
 .condition-preview__chunk {
   display: flex;
   flex-wrap: wrap;
   gap: 0.22rem 0.38rem;
+  margin-bottom: 0.3rem;
 }
 
 .condition-preview__chunk--subject {
@@ -955,6 +955,179 @@
   margin-bottom: 4px;
   font-size: 11px;
   color: #6B7280;
+}
+
+.condition-lab-panel .panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.condition-lab-panel {
+  width: min(52rem, calc(100vw - 3rem));
+}
+
+.condition-lab-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8.5rem minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.condition-lab-side,
+.condition-lab-verb {
+  background: #14120f;
+  border: 1px solid #3d3a35;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.condition-lab-side__header {
+  margin-bottom: 12px;
+}
+
+.condition-lab-side__label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+}
+
+.condition-lab-verb {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.condition-lab-verb label,
+.condition-lab-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.condition-lab-field + .condition-lab-field,
+.condition-lab-field + .condition-lab-comparison,
+.condition-lab-comparison + .condition-lab-field {
+  margin-top: 12px;
+}
+
+.condition-lab-side select,
+.condition-lab-side input,
+.condition-lab-verb select {
+  width: 100%;
+  padding: 7px 8px;
+  background: #2d2a25;
+  border: 1px solid #1a1815;
+  border-radius: 6px;
+  color: #E5E5E5;
+  font-size: 12px;
+}
+
+.condition-lab-inline-pair,
+.condition-lab-inline-triple,
+.condition-lab-comparison-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.condition-lab-inline-pair {
+  grid-template-columns: 7rem minmax(0, 1fr);
+}
+
+.condition-lab-inline-triple {
+  grid-template-columns: 6.5rem 4rem minmax(0, 1fr);
+}
+
+.condition-lab-comparison-grid--relation {
+  grid-template-columns: 6.5rem 4rem minmax(0, 1fr);
+  align-items: start;
+}
+
+.condition-lab-comparison-grid--unary {
+  grid-template-columns: 4rem minmax(0, 1fr);
+  align-items: start;
+}
+
+.condition-lab-comparison-value-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.condition-lab-comparison__toggle {
+  width: 100%;
+  padding: 8px 10px;
+  background: #1d1916;
+  border: 1px dashed #5a5650;
+  border-radius: 8px;
+  color: #D1D5DB;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.condition-lab-comparison__toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.condition-lab-comparison__body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #3d3a35;
+}
+
+.condition-lab-note {
+  padding: 10px 12px;
+  background: rgba(96, 165, 250, 0.09);
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  border-radius: 8px;
+  color: #BFDBFE;
+  font-size: 12px;
+}
+
+.condition-lab-formulation label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.condition-lab-formulation__text {
+  padding: 10px 12px;
+  background: #14120f;
+  border: 1px solid #3d3a35;
+  border-radius: 8px;
+  color: #E5E5E5;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.condition-preview__chunk--spacer {
+  font-size: 0;
+  line-height: 0;
+  min-height: 0.0001rem;
+  margin-bottom: 0.08rem;
+}
+
+.condition-preview__chunk:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1100px) {
+  .condition-lab-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .condition-lab-verb {
+    order: -1;
+  }
 }
 
 /* Undo/Redo buttons */

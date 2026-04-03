@@ -26,6 +26,7 @@ Rails.application.routes.draw do
   end
 
   if Rails.env.development? || Rails.env.test?
+    get 'labs/condition_v2', to: 'labs#condition_v2', as: :condition_v2_lab
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
     resources :tournaments, only: [:new, :create, :show] do
       get 'pairings/:bot_a_id/:bot_b_id', to: 'tournaments#pairing', as: :pairing
