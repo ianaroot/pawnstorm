@@ -56,9 +56,11 @@
           </div>
 
           <div class="condition-lab-field">
-            <label>Specifier</label>
             <div class="condition-lab-inline-pair">
-              <select data-condition-lab-target="leftSpecifierMode" data-path="left.specifierMode" data-action="change->condition-lab#updateField"></select>
+              <label class="condition-lab-checkbox">
+                <input data-condition-lab-target="leftSpecifierMode" data-path="left.specifierMode" data-action="change->condition-lab#updateField" type="checkbox">
+                <span>Non-</span>
+              </label>
               <select data-condition-lab-target="leftSpecifier" data-path="left.specifier" data-action="change->condition-lab#updateField"></select>
             </div>
           </div>
@@ -95,7 +97,7 @@
 
         <section class="condition-lab-side" data-condition-lab-target="rightCard">
           <div class="condition-lab-side__header">
-            <span class="condition-lab-side__label" data-condition-lab-target="rightCardLabel">Relation</span>
+            <span class="condition-lab-side__label" data-condition-lab-target="rightCardLabel">Target</span>
           </div>
 
           <div data-condition-lab-target="rightRelationFields">
@@ -105,9 +107,11 @@
             </div>
 
             <div class="condition-lab-field">
-              <label>Specifier</label>
               <div class="condition-lab-inline-pair">
-                <select data-condition-lab-target="rightSpecifierMode" data-path="right.specifierMode" data-action="change->condition-lab#updateField"></select>
+                <label class="condition-lab-checkbox">
+                  <input data-condition-lab-target="rightSpecifierMode" data-path="right.specifierMode" data-action="change->condition-lab#updateField" type="checkbox">
+                  <span>Non-</span>
+                </label>
                 <select data-condition-lab-target="rightSpecifier" data-path="right.specifier" data-action="change->condition-lab#updateField"></select>
               </div>
             </div>

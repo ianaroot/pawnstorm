@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 const SUBJECT_OPTIONS = [
-  ["Allies", "allies"],
-  ["Opponents", "opponents"],
+  ["Allied", "allies"],
+  ["Opponent", "opponents"],
   ["Moved Piece", "moved_piece"],
   ["Captured Piece", "captured_piece"]
 ]
@@ -15,11 +15,6 @@ const SPECIFIER_OPTIONS = [
   ["Rook", "rook"],
   ["Queen", "queen"],
   ["King", "king"]
-]
-
-const SPECIFIER_MODE_OPTIONS = [
-  ["Is", "include"],
-  ["Is Not", "exclude"]
 ]
 
 const RELATION_OPTIONS = [
@@ -48,7 +43,7 @@ const COMPARISON_OPTIONS = [
 ]
 
 const COMPARISON_VALUE_OPTIONS = [
-  ["Number", "exact_number"],
+  ["Integer", "exact_number"],
   ["Moved Piece Value", "moved_piece_value"],
   ["Captured Piece Value", "captured_piece_value"],
   ["Prior Board State", "prior_board_state"]
@@ -179,7 +174,11 @@ export default class extends Controller {
       path = path.replace(/^left\./, "unary.")
     }
 
-    const value = event.target.type === "number" ? Number(event.target.value || 0) : event.target.value
+    const value = event.target.type === "number"
+      ? Number(event.target.value || 0)
+      : event.target.type === "checkbox"
+        ? (event.target.checked ? "exclude" : "include")
+        : event.target.value
     this.assignPath(path, value)
     this.renderAll()
   }
@@ -202,9 +201,6 @@ export default class extends Controller {
 
     this.renderOptions(this.leftSpecifierTarget, SPECIFIER_OPTIONS)
     this.renderOptions(this.rightSpecifierTarget, SPECIFIER_OPTIONS)
-
-    this.renderOptions(this.leftSpecifierModeTarget, SPECIFIER_MODE_OPTIONS)
-    this.renderOptions(this.rightSpecifierModeTarget, SPECIFIER_MODE_OPTIONS)
 
     this.renderOptions(this.verbSelectorTarget, [...RELATION_OPTIONS, ...UNARY_VERB_OPTIONS])
 
@@ -251,7 +247,7 @@ export default class extends Controller {
 
     this.leftSubjectTarget.value = this.state.kind === "relation" ? this.state.left.subject : this.state.unary.subject
     this.leftSpecifierTarget.value = this.state.kind === "relation" ? this.state.left.specifier : this.state.unary.specifier
-    this.leftSpecifierModeTarget.value = this.state.kind === "relation" ? this.state.left.specifierMode : this.state.unary.specifierMode
+    this.leftSpecifierModeTarget.checked = (this.state.kind === "relation" ? this.state.left.specifierMode : this.state.unary.specifierMode) === "exclude"
     this.leftMetricTarget.value = this.state.left.comparisonMetric || "count"
     this.leftComparisonTarget.value = this.state.kind === "relation" ? this.state.left.comparison : this.state.unary.comparison
     this.leftComparisonValueSourceTarget.value = this.state.kind === "relation"
@@ -263,7 +259,7 @@ export default class extends Controller {
 
     this.rightSubjectTarget.value = this.state.right.subject
     this.rightSpecifierTarget.value = this.state.right.specifier
-    this.rightSpecifierModeTarget.value = this.state.right.specifierMode
+    this.rightSpecifierModeTarget.checked = this.state.right.specifierMode === "exclude"
     this.rightMetricTarget.value = this.state.right.comparisonMetric || "count"
     this.rightComparisonTarget.value = this.state.right.comparison || "equal_to"
     this.rightComparisonValueSourceTarget.value = this.state.right.comparisonValueSource
@@ -279,7 +275,7 @@ export default class extends Controller {
     const rightNumber = this.rightComparisonValueSourceTarget.value === "exact_number"
     const unaryNumber = this.unaryComparisonValueSourceTarget.value === "exact_number"
 
-    this.rightCardLabelTarget.textContent = relationMode ? "Relation" : "Comparison"
+    this.rightCardLabelTarget.textContent = relationMode ? "Target" : "Comparison"
     this.rightRelationFieldsTarget.classList.toggle("hidden", !relationMode)
     this.leftComparisonSectionTarget.classList.toggle("hidden", !relationMode)
     this.unaryComparisonSectionTarget.classList.toggle("hidden", relationMode)
