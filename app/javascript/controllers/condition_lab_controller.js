@@ -1,10 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 const SUBJECT_OPTIONS = [
-  ["Allied", "allies"],
-  ["Opponent", "opponents"],
+  ["Allied", "allied"],
+  ["Enemy", "enemy"],
   ["Moved Piece", "moved_piece"],
-  ["Captured Piece", "captured_piece"]
+  ["Captured Piece", "captured_piece"],
+  ["Enemy Moved Piece", "enemy_moved_piece"],
+  ["Enemy Captured Piece", "enemy_captured_piece"]
 ]
 
 const SPECIFIER_OPTIONS = [
@@ -28,7 +30,8 @@ const RELATION_OPTIONS = [
 const UNARY_VERB_OPTIONS = [
   ["Count", "count"],
   ["Mobility", "mobility"],
-  ["Value", "value"]
+  ["Value", "value"],
+  ["Same-Piece", "same_piece"]
 ]
 
 const COMPARISON_METRIC_OPTIONS = [
@@ -52,10 +55,9 @@ const COMPARISON_VALUE_OPTIONS = [
 const DEFAULT_STATE = Object.freeze({
   kind: "relation",
   left: {
-    subject: "allies",
+    subject: "allied",
     specifier: "pawn",
     specifierMode: "include",
-    resultMode: "comparison",
     comparisonMetric: "",
     comparison: "equal_to",
     comparisonValueSource: "exact_number",
@@ -63,10 +65,9 @@ const DEFAULT_STATE = Object.freeze({
   },
   relation: "attack",
   right: {
-    subject: "opponents",
+    subject: "enemy",
     specifier: "bishop",
     specifierMode: "include",
-    resultMode: "comparison",
     comparisonMetric: "",
     comparison: "equal_to",
     comparisonValueSource: "exact_number",
@@ -110,9 +111,6 @@ export default class extends Controller {
     "leftComparisonField",
     "leftComparisonToggle",
     "leftComparisonBody",
-    "leftResultModeComparison",
-    "leftResultModeNone",
-    "leftNoneChoice",
     "rightSubject",
     "rightSpecifier",
     "rightSpecifierMode",
@@ -123,9 +121,6 @@ export default class extends Controller {
     "rightComparisonField",
     "rightComparisonToggle",
     "rightComparisonBody",
-    "rightResultModeComparison",
-    "rightResultModeNone",
-    "rightNoneChoice",
     "unaryComparison",
     "unaryComparisonValueSource",
     "unaryComparisonValueNumber",
@@ -145,7 +140,7 @@ export default class extends Controller {
 
   changeVerbFamily() {
     const value = this.verbSelectorTarget.value
-    this.state.kind = RELATION_OPTIONS.some(([, option]) => option === value) ? "relation" : "unary"
+    this.state.kind = value === "same_piece" || RELATION_OPTIONS.some(([, option]) => option === value) ? "relation" : "unary"
     if (this.state.kind === "relation") {
       this.state.relation = value
     } else {
@@ -173,23 +168,6 @@ export default class extends Controller {
     }
 
     this.state.ui[key] = !currentlyOpen
-    this.renderAll()
-  }
-
-  changeResultMode(event) {
-    const side = event.currentTarget.dataset.side
-    const mode = event.currentTarget.dataset.mode
-    const sideState = this.state[side]
-
-    sideState.resultMode = mode
-
-    if (mode === "comparison" && !sideState.comparisonMetric) {
-      sideState.comparisonMetric = "count"
-      sideState.comparison = "equal_to"
-      sideState.comparisonValueSource = "exact_number"
-      sideState.comparisonValueNumber ||= 1
-    }
-
     this.renderAll()
   }
 
@@ -230,12 +208,15 @@ export default class extends Controller {
 
   renderSelectOptions() {
     this.renderOptions(this.leftSubjectTarget, SUBJECT_OPTIONS)
-    this.renderOptions(this.rightSubjectTarget, SUBJECT_OPTIONS.filter(([, value]) => value !== "captured_piece"))
+    this.renderOptions(
+      this.rightSubjectTarget,
+      SUBJECT_OPTIONS.filter(([, value]) => value !== "enemy_captured_piece")
+    )
 
     this.renderOptions(this.leftSpecifierTarget, SPECIFIER_OPTIONS)
     this.renderOptions(this.rightSpecifierTarget, SPECIFIER_OPTIONS)
 
-    this.renderOptions(this.verbSelectorTarget, [...RELATION_OPTIONS, ...UNARY_VERB_OPTIONS])
+    this.renderVerbOptions(this.verbSelectorTarget)
 
     this.renderOptions(this.leftMetricTarget, COMPARISON_METRIC_OPTIONS)
     this.renderOptions(this.rightMetricTarget, COMPARISON_METRIC_OPTIONS)
@@ -254,11 +235,46 @@ export default class extends Controller {
     select.dataset.optionsInitialized = "true"
   }
 
+  renderVerbOptions(select) {
+    if (select.dataset.optionsInitialized === "true") return
+
+    const relationOptions = RELATION_OPTIONS
+      .map(([label, value]) => `<option value="${value}">${label}</option>`)
+      .join("")
+
+    const unaryOptions = UNARY_VERB_OPTIONS
+      .map(([label, value]) => `<option value="${value}">${label}</option>`)
+      .join("")
+
+    select.innerHTML = `${relationOptions}<option disabled>────────</option>${unaryOptions}`
+    select.dataset.optionsInitialized = "true"
+  }
+
   applyCompatibilityRules() {
     if (this.state.kind !== "relation") return
 
-    if (this.state.right.subject === "captured_piece") {
-      this.state.right.subject = "opponents"
+    if (["captured_piece", "enemy_captured_piece"].includes(this.state.right.subject)) {
+      this.state.right.subject = "enemy"
+    }
+
+    if (this.usesSamePiece()) {
+      const allowedLeft = ["enemy_moved_piece", "captured_piece"]
+      if (!allowedLeft.includes(this.state.left.subject)) {
+        this.state.left.subject = "enemy_moved_piece"
+      }
+
+      this.state.right.subject = this.state.left.subject === "enemy_moved_piece"
+        ? "captured_piece"
+        : "enemy_moved_piece"
+
+      this.state.left.specifier = "any"
+      this.state.left.specifierMode = "include"
+      this.state.right.specifier = "any"
+      this.state.right.specifierMode = "include"
+      this.clearComparator("left")
+      this.clearComparator("right")
+      this.state.ui.leftComparisonOpen = false
+      this.state.ui.rightComparisonOpen = false
     }
 
     const leftPrior = this.leftUsesPrior()
@@ -267,21 +283,9 @@ export default class extends Controller {
     if (leftPrior) {
       this.clearComparator("right")
       this.state.ui.rightComparisonOpen = false
-      this.state.right.resultMode = "comparison"
     }
 
     if (rightPrior) {
-      this.clearComparator("left")
-      this.state.ui.leftComparisonOpen = false
-      this.state.left.resultMode = "comparison"
-    }
-
-    if (this.leftUsesNone()) {
-      this.clearComparator("right")
-      this.state.ui.rightComparisonOpen = false
-    }
-
-    if (this.rightUsesNone()) {
       this.clearComparator("left")
       this.state.ui.leftComparisonOpen = false
     }
@@ -316,14 +320,18 @@ export default class extends Controller {
 
   renderVisibility() {
     const relationMode = this.state.kind === "relation"
+    const samePieceMode = relationMode && this.usesSamePiece()
     const leftNumber = this.leftComparisonValueSourceTarget.value === "exact_number"
     const rightNumber = this.rightComparisonValueSourceTarget.value === "exact_number"
     const unaryNumber = this.unaryComparisonValueSourceTarget.value === "exact_number"
 
     this.rightCardLabelTarget.textContent = relationMode ? "Target" : "Comparison"
     this.rightRelationFieldsTarget.classList.toggle("hidden", !relationMode)
-    this.leftComparisonSectionTarget.classList.toggle("hidden", !relationMode)
+    this.leftComparisonSectionTarget.classList.toggle("hidden", !relationMode || samePieceMode)
+    this.rightComparisonToggleTarget.closest(".condition-lab-comparison").classList.toggle("hidden", samePieceMode)
     this.unaryComparisonSectionTarget.classList.toggle("hidden", relationMode)
+    this.leftSpecifierTarget.closest(".condition-lab-field").classList.toggle("hidden", samePieceMode)
+    this.rightSpecifierTarget.closest(".condition-lab-field").classList.toggle("hidden", samePieceMode)
 
     this.leftComparisonValueNumberTarget.classList.toggle(
       "hidden",
@@ -352,6 +360,8 @@ export default class extends Controller {
   }
 
   renderComparisonState(side) {
+    if (this.usesSamePiece()) return
+
     const sideState = side === "left"
       ? (this.state.kind === "relation" ? this.state.left : this.state.unary)
       : this.state.right
@@ -362,7 +372,7 @@ export default class extends Controller {
     const compareUnavailable = this.comparisonLocked(side)
     const hasComparison = side === "left" && this.state.kind !== "relation"
       ? true
-      : sideState.resultMode === "none" || Boolean(sideState.comparisonMetric)
+      : Boolean(sideState.comparisonMetric)
     const open = side === "right" && this.state.kind !== "relation" ? false : this.state.ui[openKey]
 
     if (side === "left" && this.state.kind !== "relation") {
@@ -385,19 +395,9 @@ export default class extends Controller {
     toggleTarget.disabled = compareUnavailable
     toggleTarget.textContent = this.comparisonToggleText(side, sideState, hasComparison, open, compareUnavailable)
 
-    const comparisonButton = side === "left" ? this.leftResultModeComparisonTarget : this.rightResultModeComparisonTarget
-    const noneButton = side === "left" ? this.leftResultModeNoneTarget : this.rightResultModeNoneTarget
     const comparisonField = side === "left" ? this.leftComparisonFieldTarget : this.rightComparisonFieldTarget
-    const noneChoice = side === "left" ? this.leftNoneChoiceTarget : this.rightNoneChoiceTarget
-    const comparisonModeActive = sideState.resultMode === "comparison" && !compareUnavailable
-    const noneModeActive = sideState.resultMode === "none" || compareUnavailable
-
-    comparisonButton.classList.toggle("active", comparisonModeActive)
-    comparisonButton.disabled = compareUnavailable
-    noneButton.classList.toggle("active", sideState.resultMode === "none")
-    noneButton.disabled = compareUnavailable && sideState.resultMode !== "none"
-    comparisonField.classList.toggle("hidden", !comparisonModeActive)
-    noneChoice.classList.toggle("hidden", !noneModeActive)
+    const comparisonModeActive = !compareUnavailable
+    comparisonField.classList.toggle("hidden", false)
 
     if (side === "left") {
       this.setControlsDisabled(
@@ -450,6 +450,16 @@ export default class extends Controller {
 
   previewChunks() {
     if (this.state.kind === "relation") {
+      if (this.usesSamePiece()) {
+        return [
+          this.sideSummary(this.state.left),
+          "",
+          this.relationLabel(this.state.relation),
+          "",
+          this.sideSummary(this.state.right)
+        ]
+      }
+
       const chunks = [
         this.sideSummary(this.state.left, { comparisonActive: this.leftComparisonActive() }),
         "",
@@ -490,7 +500,6 @@ export default class extends Controller {
       : `${this.subjectLabel(side.subject)}`
 
     if (!comparisonActive) return pieces
-    if (side.resultMode === "none") return `${pieces} none`
     if (!side.comparisonMetric) return pieces
 
     const comparisonParts = [
@@ -530,17 +539,15 @@ export default class extends Controller {
 
   comparisonLocked(side) {
     if (this.state.kind !== "relation") return false
-    if (side === "left") return this.rightUsesPrior() || this.rightUsesNone()
-    return this.leftUsesPrior() || this.leftUsesNone()
+    if (side === "left") return this.rightUsesPrior()
+    return this.leftUsesPrior()
   }
 
   comparisonUnavailableText(side) {
     if (side === "left") {
       if (this.rightUsesPrior()) return "+ comparison unavailable while target uses prior"
-      if (this.rightUsesNone()) return "+ comparison unavailable while target uses none"
     } else {
       if (this.leftUsesPrior()) return "+ comparison unavailable while subject uses prior"
-      if (this.leftUsesNone()) return "+ comparison unavailable while subject uses none"
     }
 
     return "+ comparison unavailable"
@@ -549,31 +556,15 @@ export default class extends Controller {
   leftComparisonActive() {
     return this.state.kind === "relation" &&
       this.state.ui.leftComparisonOpen &&
-      (
-        this.state.left.resultMode === "none" ||
-        (!this.comparisonLocked("left") && Boolean(this.state.left.comparisonMetric))
-      )
+      !this.comparisonLocked("left") &&
+      Boolean(this.state.left.comparisonMetric)
   }
 
   rightComparisonActive() {
     return this.state.kind === "relation" &&
       this.state.ui.rightComparisonOpen &&
-      (
-        this.state.right.resultMode === "none" ||
-        (!this.comparisonLocked("right") && Boolean(this.state.right.comparisonMetric))
-      )
-  }
-
-  leftUsesNone() {
-    return this.state.kind === "relation" &&
-      this.state.ui.leftComparisonOpen &&
-      this.state.left.resultMode === "none"
-  }
-
-  rightUsesNone() {
-    return this.state.kind === "relation" &&
-      this.state.ui.rightComparisonOpen &&
-      this.state.right.resultMode === "none"
+      !this.comparisonLocked("right") &&
+      Boolean(this.state.right.comparisonMetric)
   }
 
   comparisonSummary(side, sideState) {
@@ -581,15 +572,12 @@ export default class extends Controller {
       return `${this.operatorLabel(sideState.comparison)} ${this.valueLabel(sideState.comparisonValueSource, sideState.comparisonValueNumber)}`
     }
 
-    if (sideState.resultMode === "none") return "none"
-
     return `${sideState.comparisonMetric} ${this.operatorLabel(sideState.comparison)} ${this.valueLabel(sideState.comparisonValueSource, sideState.comparisonValueNumber)}`
   }
 
   leftUsesPrior() {
     return this.state.kind === "relation" &&
       this.state.ui.leftComparisonOpen &&
-      this.state.left.resultMode === "comparison" &&
       this.state.left.comparisonMetric &&
       this.state.left.comparisonValueSource === "prior_board_state"
   }
@@ -597,7 +585,6 @@ export default class extends Controller {
   rightUsesPrior() {
     return this.state.kind === "relation" &&
       this.state.ui.rightComparisonOpen &&
-      this.state.right.resultMode === "comparison" &&
       this.state.right.comparisonMetric &&
       this.state.right.comparisonValueSource === "prior_board_state"
   }
@@ -612,8 +599,8 @@ export default class extends Controller {
   }
 
   subjectLabel(value) {
-    if (value === "allies") return "Allied"
-    if (value === "opponents") return "Opponent"
+    if (value === "allied") return "Allied"
+    if (value === "enemy") return "Enemy"
     return SUBJECT_OPTIONS.find(([, v]) => v === value)?.[0] || value
   }
 
@@ -651,9 +638,15 @@ export default class extends Controller {
         return "shielding"
       case "adjacent":
         return "adjacent to"
+      case "same_piece":
+        return "same-piece as"
       default:
         return value
     }
+  }
+
+  usesSamePiece() {
+    return this.state.kind === "relation" && this.state.relation === "same_piece"
   }
 
   valueLabel(source, number) {
