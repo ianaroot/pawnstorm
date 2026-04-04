@@ -1,17 +1,19 @@
 import Layout from "gameplay/layout";
 import Rules from "gameplay/rules";
+import { cloneRecentMoveContext, buildRecentMoveContext } from "gameplay/recent_move_context"
 
 class Board {
-  // TODO might be easier to store the moveObjects and recreate notation on demand!!!
-  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, previousLayouts: previousLayouts, winner: winner, resultType: resultType}){
+  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, previousLayouts: previousLayouts, winner: winner, resultType: resultType, recentMoveContext: recentMoveContext}){
     this.layOut = layOut|| Layout.default()
     this.capturedPieces = capturedPieces || [];
-    this.gameOver = gameOver || false;
     this.allowedToMove = allowedToMove || Board.WHITE;
+    // EVERYTHING BELOW HERE IS SLATED FOR EXTRACTION
+    this.gameOver = gameOver || false;
     this.movementNotation = movementNotation || [];
     this.previousLayouts = Array.isArray(previousLayouts) ? JSON.stringify(previousLayouts) : (previousLayouts || JSON.stringify([]))
     this._winner = winner
     this._resultType = resultType || null
+    this.recentMoveContext = recentMoveContext || null
   }
 
   static get WHITE()  { return "W" }
@@ -71,7 +73,8 @@ class Board {
       movementNotation: newMovementNotation,
       previousLayouts: this.previousLayouts,
       winner: this._winner,
-      resultType: this._resultType
+      resultType: this._resultType,
+      recentMoveContext: cloneRecentMoveContext(this.recentMoveContext)
     });
   return newBoard;
   }
@@ -88,7 +91,8 @@ class Board {
           movementNotation: newMovementNotation,
           previousLayouts: JSON.stringify([]),
           winner: this._winner,
-          resultType: this._resultType
+          resultType: this._resultType,
+          recentMoveContext: cloneRecentMoveContext(this.recentMoveContext)
         });
     return newBoard;
   }
@@ -196,18 +200,6 @@ class Board {
     this.allowedToMove = Board.WHITE
   }
 
-  _undo(){
-    let parsedPrevious = JSON.parse(this.previousLayouts);
-    this.layOut = parsedPrevious.pop();
-    this.previousLayouts = JSON.stringify(parsedPrevious)
-    let undoneNotation = this.movementNotation.pop(),
-      captureNotationMatch = undoneNotation.match(/x/);
-    if( captureNotationMatch ){
-      this.capturedPieces.pop()
-    }
-    this._nextTurn()
-  }
-
   remainingPieceValueFor(team){
     let subtractedValue = 0,
         captures = this.capturedPieces;
@@ -230,40 +222,6 @@ class Board {
     values[Board.QUEEN] = 9;
     values[Board.KING] = 0;
     return values;
-  }
-
-  consoleLogBlackPov(){
-    for( let i = 0; i < 64; i = i + 8 ){
-      let row = ""
-      for( let j = 0; j < 8; j++){
-        let pieceObject = this.pieceObject(i + j)
-        if( Board.parseTeam(pieceObject) === Board.EMPTY ){
-          var text = "  __  "
-        } else {
-          var text = "  " + Board.parseTeam(pieceObject)[0] + Board.parseSpecies( pieceObject )[0] + "  "
-        }
-        row = row + text
-      }
-      console.log(row)
-      console.log(" ")
-    }
-  }
-
-  consoleLogWhitePov(){
-    for( let i = 56; i > -1; i = i - 8 ){
-      let row = ""
-      for( let j = 0; j < 8; j++){
-        let pieceObject = this.pieceObject(i + j)
-        if( Board.parseTeam(pieceObject) === Board.EMPTY ){
-          var text = "  __  "
-        } else {
-          var text = "  " + Board.parseTeam(pieceObject)[0] + Board.parseSpecies( pieceObject )[0] + "  "
-        }
-        row = row + text
-      }
-      console.log(row)
-      console.log(" ")
-    }
   }
 
   static convertPositionFromAlphaNumeric(position){
@@ -295,42 +253,144 @@ class Board {
     return Board.parseSpecies( this.pieceObject(position) ) === Board.PAWN
   }
 
-  blackPawnDoubleSteppedTo(position){// only to be called if already know the black pawn is at rank 4 and in "position"
-    var result = true;
-    let blackMoves = this.movesNotationFor(Board.BLACK),
-      square = Board.gridCalculator(position),
-      singleStepSquare = square[0] + '6',
-      doubleStepSquare = square[0] + '5'; //e.g. if the double step would've been to a5, then the single step it may have taken would've been to a6
-    if( blackMoves[blackMoves.length -1] != doubleStepSquare ){
-      return false //this means that even if it did at some point double step, it wasn't the last move to occur
+  deepCopy(){
+    return this.clone()
+  }
+
+  teamNotMoving(){
+    let teamNotMoving;
+    if( this.allowedToMove === Board.WHITE){
+      teamNotMoving = Board.BLACK
+    } else {
+      teamNotMoving = Board.WHITE
     }
-    for(let i = 0; i < blackMoves.length; i++){
-      if( blackMoves[i] === singleStepSquare || blackMoves[i] === singleStepSquare + "+" ){
-        result = false;
+    return teamNotMoving
+  }
+
+  _capture(position){
+    let pieceObject = this.layOut[position];
+    this.capturedPieces.push(pieceObject);
+  }
+
+  _oneSpaceDownIsEmpty(position){
+    return this.positionEmpty(position - 8)
+  }
+
+  _twoSpacesDownIsEmpty(position){
+    return this.positionEmpty(position - 16)
+  }
+
+  _squareColorsMatch(square1, square2){
+    return Board.squareColor(square1) === Board.squareColor(square2)
+  }
+
+  _twoSpacesUpIsEmpty(position){
+    return this.positionEmpty( position + 16)
+  }
+
+  _oneSpaceUpIsEmpty(position){
+    return this.positionEmpty( position + 8)
+  }
+
+  pieceObject(position){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    return this.layOut[position]
+  }
+
+  _emptify(position){
+    this.layOut[position] = Board.EMPTY + Board.EMPTY
+  }
+
+  _placePiece({position: position, pieceObject: pieceObject}){
+    this.layOut[position] = pieceObject
+  }
+
+  _promotePawn(position){
+    let teamString = this.teamAt(position);
+    this.layOut[position] = teamString  + Board.QUEEN
+  }
+
+  teamAt(position){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    if( !Board._inBounds(position) ){
+      return Board.EMPTY
+    };
+    let pieceObject = this.pieceObject(position),
+      teamString = Board.parseTeam( pieceObject );
+    return teamString
+  }
+
+  positionsOccupiedByTeam(teamString){
+    let positions = this._positionsOccupiedByTeam(teamString),
+    alphaNumericPositions = [];
+    for (let i = 0; i < positions.length; i++){
+      alphaNumericPositions.push( Board.gridCalculator( positions[i] ))
+    }
+    return alphaNumericPositions;
+  }
+
+  _positionsOccupiedByOpponentOf(teamString){
+    let opposingTeam = Board.opposingTeam(teamString);
+    return this._positionsOccupiedByTeam(opposingTeam)
+  }
+
+  _positionsOccupiedByTeam(teamString){
+    let positions = [];
+    for( let i = 0; i < this.layOut.length && positions.length < 16; i++){
+      let teamAt = this.teamAt(i);
+      if(teamAt === teamString){
+        positions.push(i)
+      };
+    };
+    return positions
+  }
+
+  occupiedByTeamMate({position: position, teamString: teamString}){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    let occupantTeam = this.teamAt(position);
+    return teamString === occupantTeam
+  }
+
+  occupiedByOpponent({position: position, teamString: teamString}){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    let occupantTeam = this.teamAt(position);
+    return !this.positionEmpty(position) && teamString !== occupantTeam
+  }
+
+  positionEmpty(position){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    let pieceObject = this.pieceObject(position)
+    return Board.parseTeam( pieceObject ) === Board.EMPTY
+  }
+
+  pieceTypeAt(position){
+    position = Board.convertPositionFromAlphaNumeric(position)
+    let pieceObject = this.pieceObject(position),
+      pieceType = Board.parseSpecies( pieceObject );
+    return pieceType
+  }
+
+  kingPosition(teamString){
+    let position = this._kingPosition(teamString);
+    return Board.gridCalculator(position);
+  }
+
+  _kingPosition(teamString){
+    let layOut = this.layOut,
+      position = null;
+    for(let i = 0; i < layOut.length; i ++){
+      let teamAtPosition = this.teamAt(i),
+        pieceType = this.pieceTypeAt(i);
+      if(teamAtPosition === teamString && pieceType === Board.KING){
+        position = i
         break
       }
     }
-    return result
+    return position
   }
 
-
-  whitePawnDoubleSteppedTo(position){// only to be called if already know the white pawn is at rank 4 and in "position"
-    var result = true;
-    let whiteMoves = this.movesNotationFor(Board.WHITE),
-      square = Board.gridCalculator(position),
-      singleStepSquare = square[0] + '3',
-      doubleStepSquare = square[0] + '4'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
-    if( whiteMoves[whiteMoves.length -1] != doubleStepSquare ){
-        return false //this means that even if it did at some point double step, it wasn't the last move to occur
-      }
-    for(let i = 0; i < whiteMoves.length; i++){
-      if( whiteMoves[i] === singleStepSquare || whiteMoves[i] === singleStepSquare + "+" ){
-        result = false;
-        break
-      }
-    }
-    return result
-  }
+  // FUTURE EXTRACTION MOVE HISTORY AND MATCH STATE TRACKING 
+  // will also pull state: _winner, previousLayouts, movementNotation, _resultType, gameOver
 
   movesNotationFor(team){
     let teamMoves = [];
@@ -347,8 +407,38 @@ class Board {
     return teamMoves;
   }
 
-  deepCopy(){
-    return this.clone()
+  _recordLayout(stringyLayOut){
+    if(/,/.exec(this.previousLayouts)){
+      this.previousLayouts = this.previousLayouts.replace(/]$/, "," + stringyLayOut + "]" )
+    } else {
+      this.previousLayouts = "[" + stringyLayOut + "]"
+    }
+  }
+
+  _endGame({ winner: winner = null, resultType: resultType = null } = {}){
+    this.gameOver = true
+    this._winner = winner
+    this._resultType = resultType
+  }
+
+  _recordNotation({ baseNotation: baseNotation, epNotation: epNotation, notationSuffix: notationSuffix }){
+    const notation = baseNotation + (epNotation || "") + notationSuffix
+    const moveNumber = Math.floor(this.movementNotation.length / 2) + 1
+    const prefixedNotation = this.allowedToMove === Board.WHITE ? `${moveNumber}. ${notation}` : notation
+
+    this.movementNotation.push(prefixedNotation)
+  }
+
+  _undo(){
+    let parsedPrevious = JSON.parse(this.previousLayouts);
+    this.layOut = parsedPrevious.pop();
+    this.previousLayouts = JSON.stringify(parsedPrevious)
+    let undoneNotation = this.movementNotation.pop(),
+      captureNotationMatch = undoneNotation.match(/x/);
+    if( captureNotationMatch ){
+      this.capturedPieces.pop()
+    }
+    this._nextTurn()
   }
 
   _reset(){
@@ -358,22 +448,47 @@ class Board {
     this.allowedToMove = Board.WHITE;
     // this.previousLayouts = [];
     this.movementNotation = [];
+    this.recentMoveContext = null;
   }
 
-  _endGame({ winner: winner = null, resultType: resultType = null } = {}){
-    this.gameOver = true
-    this._winner = winner
-    this._resultType = resultType
-  }
+  // FUTURE EXTRACTION STATE TRANSITIONS
 
-  teamNotMoving(){
-    let teamNotMoving;
-    if( this.allowedToMove === Board.WHITE){
-      teamNotMoving = Board.BLACK
-    } else {
-      teamNotMoving = Board.WHITE
+  _hypotheticallyMovePiece( moveObject ){ // ONLY USE THIS TO SEE IF A MOVE WOULD RESULT IN MATE. there's a lot of space between _officiallyMovePiece and hypothetical. eg  not recording any data on hypothetical moves
+    let startPosition = moveObject.startPosition,
+      endPosition = moveObject.endPosition,
+      additionalActions = moveObject.additionalActions,
+      promotionPiece = moveObject.promotionPiece;
+      let pieceObject = this.pieceObject(startPosition);
+    this._emptify(startPosition)
+    this._placePiece({ position: endPosition, pieceObject: pieceObject })
+    if( additionalActions ){ additionalActions.call(this, startPosition) }
+    if( promotionPiece ){
+      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
     }
-    return teamNotMoving
+  }
+
+  _officiallyMovePiece( moveObject ){
+    // if( !MoveObject.prototype.isPrototypeOf( moveObject ) ){ throw new Error("missing params in movePiece") }
+    let startPosition = moveObject.startPosition,
+      endPosition = moveObject.endPosition,
+      additionalActions = moveObject.additionalActions,
+      promotionPiece = moveObject.promotionPiece,
+      pieceObject = this.pieceObject(startPosition),
+      stringyLayOut = JSON.stringify(this.layOut),
+      baseNotation = this.baseNotationFor(moveObject);
+      
+    this.recentMoveContext = buildRecentMoveContext({boardBeforeMove: this, moveObject: moveObject})
+    this._recordLayout(stringyLayOut)
+    this._emptify(startPosition)
+    if( !this.positionEmpty(endPosition) ){ this._capture(endPosition); }
+    this._placePiece({ position: endPosition, pieceObject: pieceObject })
+    if( additionalActions ){ var epNotation = additionalActions.call(this, startPosition) }
+    if( promotionPiece ){
+      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
+    }
+    let notationSuffix = Rules.postMoveQueries(this, baseNotation);
+    this._recordNotation({ baseNotation: baseNotation, epNotation: (epNotation || ""), notationSuffix: notationSuffix })
+    if( !this.gameOver ){ this._nextTurn() }
   }
 
   baseNotationFor(moveObject){
@@ -422,118 +537,43 @@ class Board {
     })
   }
 
-  _recordNotation({ baseNotation: baseNotation, epNotation: epNotation, notationSuffix: notationSuffix }){
-    const notation = baseNotation + (epNotation || "") + notationSuffix
-    const moveNumber = Math.floor(this.movementNotation.length / 2) + 1
-    const prefixedNotation = this.allowedToMove === Board.WHITE ? `${moveNumber}. ${notation}` : notation
+  // DUBIOUS OWNERNSHIP, probably part of the match history?
 
-    this.movementNotation.push(prefixedNotation)
-  }
-
-  _hypotheticallyMovePiece( moveObject ){ // ONLY USE THIS TO SEE IF A MOVE WOULD RESULT IN MATE. there's a lot of space between _officiallyMovePiece and hypothetical. eg  not recording any data on hypothetical moves
-    let startPosition = moveObject.startPosition,
-      endPosition = moveObject.endPosition,
-      additionalActions = moveObject.additionalActions,
-      promotionPiece = moveObject.promotionPiece;
-      let pieceObject = this.pieceObject(startPosition);
-    this._emptify(startPosition)
-    this._placePiece({ position: endPosition, pieceObject: pieceObject })
-    if( additionalActions ){ additionalActions.call(this, startPosition) }
-    if( promotionPiece ){
-      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
+  blackPawnDoubleSteppedTo(position){// only to be called if already know the black pawn is at rank 4 and in "position"
+    var result = true;
+    let blackMoves = this.movesNotationFor(Board.BLACK),
+      square = Board.gridCalculator(position),
+      singleStepSquare = square[0] + '6',
+      doubleStepSquare = square[0] + '5'; //e.g. if the double step would've been to a5, then the single step it may have taken would've been to a6
+    if( blackMoves[blackMoves.length -1] != doubleStepSquare ){
+      return false //this means that even if it did at some point double step, it wasn't the last move to occur
     }
-  }
-
-  _officiallyMovePiece( moveObject ){
-    // if( !MoveObject.prototype.isPrototypeOf( moveObject ) ){ throw new Error("missing params in movePiece") }
-    let startPosition = moveObject.startPosition,
-      endPosition = moveObject.endPosition,
-      additionalActions = moveObject.additionalActions,
-      promotionPiece = moveObject.promotionPiece,
-      pieceObject = this.pieceObject(startPosition),
-      stringyLayOut = JSON.stringify(this.layOut),
-      baseNotation = this.baseNotationFor(moveObject);
-
-    this._recordLayout(stringyLayOut)
-    this._emptify(startPosition)
-    if( !this.positionEmpty(endPosition) ){ this._capture(endPosition); }
-    this._placePiece({ position: endPosition, pieceObject: pieceObject })
-    if( additionalActions ){ var epNotation = additionalActions.call(this, startPosition) }
-    if( promotionPiece ){
-      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
+    for(let i = 0; i < blackMoves.length; i++){
+      if( blackMoves[i] === singleStepSquare || blackMoves[i] === singleStepSquare + "+" ){
+        result = false;
+        break
+      }
     }
-    let notationSuffix = Rules.postMoveQueries(this, baseNotation);
-    this._recordNotation({ baseNotation: baseNotation, epNotation: (epNotation || ""), notationSuffix: notationSuffix })
-    if( !this.gameOver ){ this._nextTurn() }
+    return result
   }
 
-  _recordLayout(stringyLayOut){
-    if(/,/.exec(this.previousLayouts)){
-      this.previousLayouts = this.previousLayouts.replace(/]$/, "," + stringyLayOut + "]" )
-    } else {
-      this.previousLayouts = "[" + stringyLayOut + "]"
+  whitePawnDoubleSteppedTo(position){// only to be called if already know the white pawn is at rank 4 and in "position"
+    var result = true;
+    let whiteMoves = this.movesNotationFor(Board.WHITE),
+      square = Board.gridCalculator(position),
+      singleStepSquare = square[0] + '3',
+      doubleStepSquare = square[0] + '4'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
+    if( whiteMoves[whiteMoves.length -1] != doubleStepSquare ){
+        return false //this means that even if it did at some point double step, it wasn't the last move to occur
+      }
+    for(let i = 0; i < whiteMoves.length; i++){
+      if( whiteMoves[i] === singleStepSquare || whiteMoves[i] === singleStepSquare + "+" ){
+        result = false;
+        break
+      }
     }
+    return result
   }
-
-  // this being here is better than when it was a conditional mess in the game controller, but it ain't right. probably not the board's job even though
-  // ths board is the one that knows the movementNotation, which is how it got here
-
-  getAlertsAndSounds(){
-    let lastNotation = this.movementNotation[this.movementNotation.length -1],
-      alert = "",
-      sound = "move";
-    if( /#/.exec(lastNotation) ){
-      alert = "checkmate"
-      sound = "check"
-    } else if( /\+/.exec(lastNotation) ) {
-      alert = "check"
-      sound = "check"
-    } else if( this._resultType === "threefold_repetition" ) {
-      alert = "threefold repetition"
-      sound = "move"
-    } else if( this.gameOver === true ){
-      alert = "stalemate"
-      sound = "move"
-    } else {
-      sound = "move"
-    }
-    return {alert: alert, sound: sound}
-  }
-
-  _capture(position){
-    let pieceObject = this.layOut[position];
-    this.capturedPieces.push(pieceObject);
-  }
-
-  _oneSpaceDownIsEmpty(position){
-    return this.positionEmpty(position - 8)
-  }
-
-  _twoSpacesDownIsEmpty(position){
-    return this.positionEmpty(position - 16)
-  }
-
-  _squareColorsMatch(square1, square2){
-    return Board.squareColor(square1) === Board.squareColor(square2)
-  }
-
-  _twoSpacesUpIsEmpty(position){
-    return this.positionEmpty( position + 16)
-  }
-
-  _oneSpaceUpIsEmpty(position){
-    return this.positionEmpty( position + 8)
-  }
-
-  // static backRankFor(team){
-  //   let rankArray = {
-  //     black: 8,
-  //     white: 1
-  //   }
-  //   return rankArray[team]
-  // }
-
-
 
   castleSquaresAreEmpty(squares){
     for (let i = 0; i < squares.length; i++) {
@@ -641,102 +681,65 @@ class Board {
     return (this.pieceTypeAt( queenSideRookStartPosition ) ===Board.ROOK) && this.pieceHasNotMovedFrom( queenSideRookStartPosition )
   }
 
-  pieceObject(position){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    return this.layOut[position]
-  }
+  // FUTURE EXTRACTION SOUND AND VIEW HELPERS
 
-  _emptify(position){
-    this.layOut[position] = Board.EMPTY + Board.EMPTY
-  }
-
-  _placePiece({position: position, pieceObject: pieceObject}){
-    this.layOut[position] = pieceObject
-  }
-
-  _promotePawn(position){
-    let teamString = this.teamAt(position);
-    this.layOut[position] = teamString  + Board.QUEEN
-  }
-
-  teamAt(position){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    if( !Board._inBounds(position) ){
-      return Board.EMPTY
-    };
-    let pieceObject = this.pieceObject(position),
-      teamString = Board.parseTeam( pieceObject );
-    return teamString
-  }
-
-  positionsOccupiedByTeam(teamString){
-    let positions = this._positionsOccupiedByTeam(teamString),
-    alphaNumericPositions = [];
-    for (let i = 0; i < positions.length; i++){
-      alphaNumericPositions.push( Board.gridCalculator( positions[i] ))
+  getAlertsAndSounds(){
+    let lastNotation = this.movementNotation[this.movementNotation.length -1],
+      alert = "",
+      sound = "move";
+    if( /#/.exec(lastNotation) ){
+      alert = "checkmate"
+      sound = "check"
+    } else if( /\+/.exec(lastNotation) ) {
+      alert = "check"
+      sound = "check"
+    } else if( this._resultType === "threefold_repetition" ) {
+      alert = "threefold repetition"
+      sound = "move"
+    } else if( this.gameOver === true ){
+      alert = "stalemate"
+      sound = "move"
+    } else {
+      sound = "move"
     }
-    return alphaNumericPositions;
+    return {alert: alert, sound: sound}
   }
 
-  _positionsOccupiedByOpponentOf(teamString){
-    let opposingTeam = Board.opposingTeam(teamString);
-    return this._positionsOccupiedByTeam(opposingTeam)
-  }
-
-  _positionsOccupiedByTeam(teamString){
-    let positions = [];
-    for( let i = 0; i < this.layOut.length && positions.length < 16; i++){
-      let teamAt = this.teamAt(i);
-      if(teamAt === teamString){
-        positions.push(i)
-      };
-    };
-    return positions
-  }
-
-  occupiedByTeamMate({position: position, teamString: teamString}){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    let occupantTeam = this.teamAt(position);
-    return teamString === occupantTeam
-  }
-
-  occupiedByOpponent({position: position, teamString: teamString}){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    let occupantTeam = this.teamAt(position);
-    return !this.positionEmpty(position) && teamString !== occupantTeam
-  }
-
-  positionEmpty(position){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    let pieceObject = this.pieceObject(position)
-    return Board.parseTeam( pieceObject ) === Board.EMPTY
-  }
-
-  pieceTypeAt(position){
-    position = Board.convertPositionFromAlphaNumeric(position)
-    let pieceObject = this.pieceObject(position),
-      pieceType = Board.parseSpecies( pieceObject );
-    return pieceType
-  }
-
-  kingPosition(teamString){
-    let position = this._kingPosition(teamString);
-    return Board.gridCalculator(position);
-  }
-
-  _kingPosition(teamString){
-    let layOut = this.layOut,
-      position = null;
-    for(let i = 0; i < layOut.length; i ++){
-      let teamAtPosition = this.teamAt(i),
-        pieceType = this.pieceTypeAt(i);
-      if(teamAtPosition === teamString && pieceType === Board.KING){
-        position = i
-        break
+  consoleLogBlackPov(){
+    for( let i = 0; i < 64; i = i + 8 ){
+      let row = ""
+      for( let j = 0; j < 8; j++){
+        let pieceObject = this.pieceObject(i + j)
+        if( Board.parseTeam(pieceObject) === Board.EMPTY ){
+          var text = "  __  "
+        } else {
+          var text = "  " + Board.parseTeam(pieceObject)[0] + Board.parseSpecies( pieceObject )[0] + "  "
+        }
+        row = row + text
       }
+      console.log(row)
+      console.log(" ")
     }
-    return position
   }
+
+  consoleLogWhitePov(){
+    for( let i = 56; i > -1; i = i - 8 ){
+      let row = ""
+      for( let j = 0; j < 8; j++){
+        let pieceObject = this.pieceObject(i + j)
+        if( Board.parseTeam(pieceObject) === Board.EMPTY ){
+          var text = "  __  "
+        } else {
+          var text = "  " + Board.parseTeam(pieceObject)[0] + Board.parseSpecies( pieceObject )[0] + "  "
+        }
+        row = row + text
+      }
+      console.log(row)
+      console.log(" ")
+    }
+  }
+
+
 }
 
 export default Board

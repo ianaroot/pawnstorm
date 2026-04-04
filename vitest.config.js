@@ -21,7 +21,8 @@ export default defineConfig({
   resolve: {
     alias: {
       'editorV2': '/app/javascript/editorV2',
-      'gameplay': '/app/javascript/gameplay'
+      'gameplay': '/app/javascript/gameplay',
+      'bot_execution': '/app/javascript/bot_execution'
     }
   }
 });
