@@ -204,4 +204,40 @@ describe('ConditionEvaluator', () => {
       }
     ])
   })
+
+  it('dispatches version 2 condition nodes to the V2 evaluator', () => {
+    const analysis = {}
+    const v2 = {
+      evaluate(node, passedAnalysis) {
+        expect(node).toEqual({
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'queen',
+          verb: 'count',
+          comparator: 'greater_than',
+          comparisonValue: 0
+        })
+        expect(passedAnalysis).toBe(analysis)
+        return true
+      }
+    }
+
+    const evaluator = new ConditionEvaluator({ v2 })
+
+    expect(
+      evaluator.evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'queen',
+          verb: 'count',
+          comparator: 'greater_than',
+          comparisonValue: 0
+        },
+        analysis
+      )
+    ).toBe(true)
+  })
 })

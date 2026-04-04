@@ -55,6 +55,7 @@ const DEFAULT_STATE = Object.freeze({
     subject: "allies",
     specifier: "pawn",
     specifierMode: "include",
+    resultMode: "comparison",
     comparisonMetric: "",
     comparison: "equal_to",
     comparisonValueSource: "exact_number",
@@ -65,6 +66,7 @@ const DEFAULT_STATE = Object.freeze({
     subject: "opponents",
     specifier: "bishop",
     specifierMode: "include",
+    resultMode: "comparison",
     comparisonMetric: "",
     comparison: "equal_to",
     comparisonValueSource: "exact_number",
@@ -105,8 +107,12 @@ export default class extends Controller {
     "leftComparisonValueSource",
     "leftComparisonValueNumber",
     "leftComparisonRow",
+    "leftComparisonField",
     "leftComparisonToggle",
     "leftComparisonBody",
+    "leftResultModeComparison",
+    "leftResultModeNone",
+    "leftNoneChoice",
     "rightSubject",
     "rightSpecifier",
     "rightSpecifierMode",
@@ -114,8 +120,12 @@ export default class extends Controller {
     "rightComparison",
     "rightComparisonValueSource",
     "rightComparisonValueNumber",
+    "rightComparisonField",
     "rightComparisonToggle",
     "rightComparisonBody",
+    "rightResultModeComparison",
+    "rightResultModeNone",
+    "rightNoneChoice",
     "unaryComparison",
     "unaryComparisonValueSource",
     "unaryComparisonValueNumber",
@@ -166,6 +176,23 @@ export default class extends Controller {
     this.renderAll()
   }
 
+  changeResultMode(event) {
+    const side = event.currentTarget.dataset.side
+    const mode = event.currentTarget.dataset.mode
+    const sideState = this.state[side]
+
+    sideState.resultMode = mode
+
+    if (mode === "comparison" && !sideState.comparisonMetric) {
+      sideState.comparisonMetric = "count"
+      sideState.comparison = "equal_to"
+      sideState.comparisonValueSource = "exact_number"
+      sideState.comparisonValueNumber ||= 1
+    }
+
+    this.renderAll()
+  }
+
   updateField(event) {
     let path = event.target.dataset.path
     if (!path) return
@@ -188,10 +215,16 @@ export default class extends Controller {
     this.applyCompatibilityRules()
     this.renderFieldValues()
     this.renderVisibility()
-    this.renderComparisonState("left")
-    this.renderComparisonState("right")
-    this.renderPreview()
+    try {
+      this.renderComparisonState("left")
+      this.renderComparisonState("right")
+    } catch (error) {
+      this.formulationPreviewTarget.textContent = `[renderComparisonState failed: ${error.message}]`
+      this.nodePreviewTarget.innerHTML = `<div class="condition-preview__chunk">[renderComparisonState failed]</div>`
+      return
+    }
     this.renderFormulationPreview()
+    this.renderPreview()
     this.renderPriorNote()
   }
 
@@ -234,9 +267,21 @@ export default class extends Controller {
     if (leftPrior) {
       this.clearComparator("right")
       this.state.ui.rightComparisonOpen = false
+      this.state.right.resultMode = "comparison"
     }
 
     if (rightPrior) {
+      this.clearComparator("left")
+      this.state.ui.leftComparisonOpen = false
+      this.state.left.resultMode = "comparison"
+    }
+
+    if (this.leftUsesNone()) {
+      this.clearComparator("right")
+      this.state.ui.rightComparisonOpen = false
+    }
+
+    if (this.rightUsesNone()) {
       this.clearComparator("left")
       this.state.ui.leftComparisonOpen = false
     }
@@ -314,10 +359,10 @@ export default class extends Controller {
     const openKey = side === "left" ? "leftComparisonOpen" : "rightComparisonOpen"
     const bodyTarget = side === "left" ? this.leftComparisonBodyTarget : this.rightComparisonBodyTarget
     const toggleTarget = side === "left" ? this.leftComparisonToggleTarget : this.rightComparisonToggleTarget
-    const locked = this.comparisonLocked(side)
+    const compareUnavailable = this.comparisonLocked(side)
     const hasComparison = side === "left" && this.state.kind !== "relation"
       ? true
-      : Boolean(sideState.comparisonMetric)
+      : sideState.resultMode === "none" || Boolean(sideState.comparisonMetric)
     const open = side === "right" && this.state.kind !== "relation" ? false : this.state.ui[openKey]
 
     if (side === "left" && this.state.kind !== "relation") {
@@ -335,10 +380,24 @@ export default class extends Controller {
       return
     }
 
-    bodyTarget.classList.toggle("hidden", !open || locked)
+    bodyTarget.classList.toggle("hidden", !open)
     toggleTarget.classList.remove("hidden")
-    toggleTarget.disabled = locked
-    toggleTarget.textContent = this.comparisonToggleText(side, sideState, hasComparison, open, locked)
+    toggleTarget.disabled = compareUnavailable
+    toggleTarget.textContent = this.comparisonToggleText(side, sideState, hasComparison, open, compareUnavailable)
+
+    const comparisonButton = side === "left" ? this.leftResultModeComparisonTarget : this.rightResultModeComparisonTarget
+    const noneButton = side === "left" ? this.leftResultModeNoneTarget : this.rightResultModeNoneTarget
+    const comparisonField = side === "left" ? this.leftComparisonFieldTarget : this.rightComparisonFieldTarget
+    const noneChoice = side === "left" ? this.leftNoneChoiceTarget : this.rightNoneChoiceTarget
+    const comparisonModeActive = sideState.resultMode === "comparison" && !compareUnavailable
+    const noneModeActive = sideState.resultMode === "none" || compareUnavailable
+
+    comparisonButton.classList.toggle("active", comparisonModeActive)
+    comparisonButton.disabled = compareUnavailable
+    noneButton.classList.toggle("active", sideState.resultMode === "none")
+    noneButton.disabled = compareUnavailable && sideState.resultMode !== "none"
+    comparisonField.classList.toggle("hidden", !comparisonModeActive)
+    noneChoice.classList.toggle("hidden", !noneModeActive)
 
     if (side === "left") {
       this.setControlsDisabled(
@@ -348,9 +407,9 @@ export default class extends Controller {
           this.leftComparisonValueSourceTarget,
           this.leftComparisonValueNumberTarget
         ],
-        !open || locked
+        !open || !comparisonModeActive
       )
-      this.leftComparisonValueNumberTarget.disabled = !open || locked || this.leftComparisonValueSourceTarget.value !== "exact_number"
+      this.leftComparisonValueNumberTarget.disabled = !open || !comparisonModeActive || this.leftComparisonValueSourceTarget.value !== "exact_number"
       return
     }
 
@@ -361,9 +420,9 @@ export default class extends Controller {
         this.rightComparisonValueSourceTarget,
         this.rightComparisonValueNumberTarget
       ],
-      !open || locked
+      !open || !comparisonModeActive
     )
-    this.rightComparisonValueNumberTarget.disabled = !open || locked || this.rightComparisonValueSourceTarget.value !== "exact_number"
+    this.rightComparisonValueNumberTarget.disabled = !open || !comparisonModeActive || this.rightComparisonValueSourceTarget.value !== "exact_number"
   }
 
   renderPreview() {
@@ -377,14 +436,16 @@ export default class extends Controller {
   }
 
   renderFormulationPreview() {
-    this.formulationPreviewTarget.textContent = this.state.kind === "relation"
+    const summary = this.state.kind === "relation"
       ? this.relationSummary()
       : this.unarySummary()
+
+    this.formulationPreviewTarget.textContent = summary || "[no condition text]"
   }
 
   renderPriorNote() {
-    this.priorNoteTarget.textContent = this.priorNote()
-    this.priorNoteTarget.classList.toggle("hidden", this.priorNoteTarget.textContent === "")
+    this.priorNoteTarget.textContent = ""
+    this.priorNoteTarget.classList.add("hidden")
   }
 
   previewChunks() {
@@ -396,10 +457,6 @@ export default class extends Controller {
         "",
         this.sideSummary(this.state.right, { comparisonActive: this.rightComparisonActive() })
       ]
-
-      if (this.priorNote()) {
-        chunks.push("", this.priorNote())
-      }
 
       return chunks
     }
@@ -416,10 +473,7 @@ export default class extends Controller {
 
   relationSummary() {
     const spacer = "   :   "
-    return [
-      `${this.sideSummary(this.state.left, { comparisonActive: this.leftComparisonActive() })}${spacer}${this.relationLabel(this.state.relation)}${spacer}${this.sideSummary(this.state.right, { comparisonActive: this.rightComparisonActive() })}`,
-      this.priorNote()
-    ].filter(Boolean).join("\n")
+    return `${this.sideSummary(this.state.left, { comparisonActive: this.leftComparisonActive() })}${spacer}${this.relationLabel(this.state.relation)}${spacer}${this.sideSummary(this.state.right, { comparisonActive: this.rightComparisonActive() })}`
   }
 
   unarySummary() {
@@ -435,7 +489,9 @@ export default class extends Controller {
       ? `${this.subjectLabel(side.subject)} ${qualifier}`
       : `${this.subjectLabel(side.subject)}`
 
-    if (!comparisonActive || !side.comparisonMetric) return pieces
+    if (!comparisonActive) return pieces
+    if (side.resultMode === "none") return `${pieces} none`
+    if (!side.comparisonMetric) return pieces
 
     const comparisonParts = [
       side.comparisonMetric,
@@ -447,13 +503,11 @@ export default class extends Controller {
   }
 
   priorNote() {
-    if (this.leftUsesPrior()) return "Right-side comparison is unavailable while the subject side uses prior board state."
-    if (this.rightUsesPrior()) return "Subject-side comparison is unavailable while the relation side uses prior board state."
     return ""
   }
 
   comparisonToggleText(side, sideState, hasComparison, open, locked) {
-    if (locked) return "+ comparison unavailable"
+    if (locked) return this.comparisonUnavailableText(side)
     if (!hasComparison) return "+ comparison"
     if (open) {
       return `Hide comparison (${this.comparisonSummary(side, sideState)})`
@@ -476,22 +530,50 @@ export default class extends Controller {
 
   comparisonLocked(side) {
     if (this.state.kind !== "relation") return false
-    if (side === "left") return this.rightUsesPrior()
-    return this.leftUsesPrior()
+    if (side === "left") return this.rightUsesPrior() || this.rightUsesNone()
+    return this.leftUsesPrior() || this.leftUsesNone()
+  }
+
+  comparisonUnavailableText(side) {
+    if (side === "left") {
+      if (this.rightUsesPrior()) return "+ comparison unavailable while target uses prior"
+      if (this.rightUsesNone()) return "+ comparison unavailable while target uses none"
+    } else {
+      if (this.leftUsesPrior()) return "+ comparison unavailable while subject uses prior"
+      if (this.leftUsesNone()) return "+ comparison unavailable while subject uses none"
+    }
+
+    return "+ comparison unavailable"
   }
 
   leftComparisonActive() {
     return this.state.kind === "relation" &&
       this.state.ui.leftComparisonOpen &&
-      !this.comparisonLocked("left") &&
-      Boolean(this.state.left.comparisonMetric)
+      (
+        this.state.left.resultMode === "none" ||
+        (!this.comparisonLocked("left") && Boolean(this.state.left.comparisonMetric))
+      )
   }
 
   rightComparisonActive() {
     return this.state.kind === "relation" &&
       this.state.ui.rightComparisonOpen &&
-      !this.comparisonLocked("right") &&
-      Boolean(this.state.right.comparisonMetric)
+      (
+        this.state.right.resultMode === "none" ||
+        (!this.comparisonLocked("right") && Boolean(this.state.right.comparisonMetric))
+      )
+  }
+
+  leftUsesNone() {
+    return this.state.kind === "relation" &&
+      this.state.ui.leftComparisonOpen &&
+      this.state.left.resultMode === "none"
+  }
+
+  rightUsesNone() {
+    return this.state.kind === "relation" &&
+      this.state.ui.rightComparisonOpen &&
+      this.state.right.resultMode === "none"
   }
 
   comparisonSummary(side, sideState) {
@@ -499,17 +581,23 @@ export default class extends Controller {
       return `${this.operatorLabel(sideState.comparison)} ${this.valueLabel(sideState.comparisonValueSource, sideState.comparisonValueNumber)}`
     }
 
+    if (sideState.resultMode === "none") return "none"
+
     return `${sideState.comparisonMetric} ${this.operatorLabel(sideState.comparison)} ${this.valueLabel(sideState.comparisonValueSource, sideState.comparisonValueNumber)}`
   }
 
   leftUsesPrior() {
     return this.state.kind === "relation" &&
+      this.state.ui.leftComparisonOpen &&
+      this.state.left.resultMode === "comparison" &&
       this.state.left.comparisonMetric &&
       this.state.left.comparisonValueSource === "prior_board_state"
   }
 
   rightUsesPrior() {
     return this.state.kind === "relation" &&
+      this.state.ui.rightComparisonOpen &&
+      this.state.right.resultMode === "comparison" &&
       this.state.right.comparisonMetric &&
       this.state.right.comparisonValueSource === "prior_board_state"
   }

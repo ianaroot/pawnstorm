@@ -12,7 +12,11 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  CONDITION_KEYS = %w[subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison comparisonValue].freeze
+    CONDITION_V1_KEYS = %w[ subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison  ].freeze
+
+  CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode verb comparator  ].freeze
+
+  CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonValue verb target targetFilter targetFilterMode targetComparisonMetric targetComparator  ].freeze
 
   ACTION_TYPES = %w[add subtract set return].freeze
   ACTION_KEYS = %w[actionType value].freeze
@@ -198,22 +202,25 @@ class Node < ApplicationRecord
     "non-#{label}"
   end
 
-  def normalize_node_data
-    normalize_condition_data if condition?
-    normalize_organizer_data if organizer?
-  end
-
   def normalize_condition_data
     raw = data.is_a?(Hash) ? data : {}
     normalized = raw.each_with_object({}) do |(key, value), memo|
       memo[key.to_s] = value
     end
 
-    normalized['subjectSpecifierMode'] ||= 'include'
-    normalized['relationSpecifierMode'] ||= 'include'
+    version = (normalized['version'] || 1).to_i
+    normalized['version'] = version
+
+    if version == 1
+      normalized['subjectSpecifierMode'] ||= 'include'
+      normalized['relationSpecifierMode'] ||= 'include'
+    else
+      normalize_condition_data_v2!(normalized)
+    end
 
     self.data = normalized
   end
+
 
   def normalize_organizer_data
     raw = data.is_a?(Hash) ? data : {}
@@ -242,12 +249,10 @@ class Node < ApplicationRecord
     end
   end
 
-  def validate_condition_data
-    return errors.add(:data, 'must be a hash') unless data.is_a?(Hash)
-
+  def validate_condition_data_v1
     keys = data.keys.map(&:to_s)
-    extra_keys = keys - CONDITION_KEYS
-    missing_keys = CONDITION_KEYS - keys
+    extra_keys = keys - CONDITION_V1_KEYS
+    missing_keys = CONDITION_V1_KEYS - keys
 
     if extra_keys.any?
       errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")

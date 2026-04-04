@@ -75,7 +75,28 @@
             </button>
 
             <div class="condition-lab-comparison__body hidden" data-condition-lab-target="leftComparisonBody">
-              <div class="condition-lab-field">
+              <div class="condition-lab-result-mode">
+                <button
+                  type="button"
+                  class="condition-lab-result-mode__option"
+                  data-condition-lab-target="leftResultModeComparison"
+                  data-side="left"
+                  data-mode="comparison"
+                  data-action="click->condition-lab#changeResultMode">
+                  Compare
+                </button>
+                <button
+                  type="button"
+                  class="condition-lab-result-mode__option"
+                  data-condition-lab-target="leftResultModeNone"
+                  data-side="left"
+                  data-mode="none"
+                  data-action="click->condition-lab#changeResultMode">
+                  None
+                </button>
+              </div>
+
+              <div class="condition-lab-field" data-condition-lab-target="leftComparisonField">
                 <label>Comparison</label>
                 <div class="condition-lab-comparison-grid condition-lab-comparison-grid--relation" data-condition-lab-target="leftComparisonRow">
                   <select data-condition-lab-target="leftMetric" data-path="left.comparisonMetric" data-action="change->condition-lab#updateField"></select>
@@ -85,6 +106,10 @@
                     <input data-condition-lab-target="leftComparisonValueNumber" data-path="left.comparisonValueNumber" data-action="input->condition-lab#updateField" type="number" min="0" step="1">
                   </div>
                 </div>
+              </div>
+
+              <div class="condition-lab-none-choice hidden" data-condition-lab-target="leftNoneChoice">
+                <span>No subject matches.</span>
               </div>
             </div>
           </div>
@@ -126,7 +151,28 @@
               </button>
 
               <div class="condition-lab-comparison__body hidden" data-condition-lab-target="rightComparisonBody">
-                <div class="condition-lab-field">
+                <div class="condition-lab-result-mode">
+                  <button
+                    type="button"
+                    class="condition-lab-result-mode__option"
+                    data-condition-lab-target="rightResultModeComparison"
+                    data-side="right"
+                    data-mode="comparison"
+                    data-action="click->condition-lab#changeResultMode">
+                    Compare
+                  </button>
+                  <button
+                    type="button"
+                    class="condition-lab-result-mode__option"
+                    data-condition-lab-target="rightResultModeNone"
+                    data-side="right"
+                    data-mode="none"
+                    data-action="click->condition-lab#changeResultMode">
+                    None
+                  </button>
+                </div>
+
+                <div class="condition-lab-field" data-condition-lab-target="rightComparisonField">
                   <label>Comparison</label>
                   <div class="condition-lab-comparison-grid condition-lab-comparison-grid--relation" data-condition-lab-target="rightComparisonRow">
                     <select data-condition-lab-target="rightMetric" data-path="right.comparisonMetric" data-action="change->condition-lab#updateField"></select>
@@ -136,6 +182,10 @@
                       <input data-condition-lab-target="rightComparisonValueNumber" data-path="right.comparisonValueNumber" data-action="input->condition-lab#updateField" type="number" min="0" step="1">
                     </div>
                   </div>
+                </div>
+
+                <div class="condition-lab-none-choice hidden" data-condition-lab-target="rightNoneChoice">
+                  <span>No target matches.</span>
                 </div>
               </div>
             </div>

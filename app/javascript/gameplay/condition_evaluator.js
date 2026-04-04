@@ -1,5 +1,17 @@
+import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
+
 class ConditionEvaluator {
+  constructor(options = {}) {
+    this.v2 = options.v2 || new ConditionEvaluatorV2()
+  }
+
   evaluate(conditionNode, analysis) {
+    const version = Number(conditionNode.version || 1)
+
+    if (version === 2) {
+      return this.v2.evaluate(conditionNode, analysis)
+    }
+
     const query = {
       subject: conditionNode.subject,
       subjectSpecifier: conditionNode.subjectSpecifier || 'any',
