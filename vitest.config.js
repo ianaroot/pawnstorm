@@ -5,6 +5,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: [
+      'app/javascript/bot_execution/**/*.test.js',
       'app/javascript/editorV2/**/*.test.js',
       'app/javascript/gameplay/**/*.test.js'
     ],
@@ -12,6 +13,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: [
+        'app/javascript/bot_execution/**/*.js',
         'app/javascript/editorV2/**/*.js',
         'app/javascript/gameplay/**/*.js'
       ],
@@ -20,8 +22,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'editorV2': '/app/javascript/editorV2',
-      'gameplay': '/app/javascript/gameplay'
+      editorV2: "/app/javascript/editorV2",
+      gameplay: "/app/javascript/gameplay",
+      bot_execution: "/app/javascript/bot_execution"
     }
   }
+
 });

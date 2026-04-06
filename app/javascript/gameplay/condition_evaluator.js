@@ -1,3 +1,4 @@
+import ConditionEvaluatorV2 from "bot_execution/condition_evaluator_v2"
 class ConditionEvaluator {
   constructor(options = {}) {
     this.v2 = options.v2 || new ConditionEvaluatorV2()
