@@ -6,6 +6,10 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helpers'
 
 describe('ConditionEvaluatorV2', () => {
+  function evaluate(conditionNode, board, moveObject) {
+    return new ConditionEvaluatorV2().evaluate(conditionNode, { board, moveObject })
+  }
+
   it('evaluates a promoted moved_piece value against prior_board_state', () => {
     const board = buildBoard({
       pieces: {
@@ -125,5 +129,646 @@ describe('ConditionEvaluatorV2', () => {
         { board, moveObject }
       )
     ).toBe(true)
+  })
+
+  describe('relational evaluation', () => {
+    it('returns true when a relational node with no comparison blocks has at least one pair', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns false when a relational node with no comparison blocks has no pairs', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          a2: 'wP',
+          h7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('uses a subject-only comparison block as the full truth condition when it passes', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('uses a subject-only comparison block as the full truth condition when it fails', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'greater_than',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('lets a subject-only zero comparison pass on an empty relation', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          a2: 'wP',
+          h7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonValue: 0,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('lets a subject-only zero comparison fail on an empty relation when the comparator demands more', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          a2: 'wP',
+          h7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'greater_than',
+            subjectComparisonValue: 0,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('uses a target-only comparison block as the full truth condition when it passes', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('uses a target-only comparison block as the full truth condition when it fails', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('lets a target-only zero comparison pass on an empty relation', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          a2: 'wP',
+          h7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'queen',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('lets a target-only zero comparison fail on an empty relation when the comparator demands more', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          a2: 'wP',
+          h7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'queen',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('requires both comparison blocks to pass when both are present', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails when the subject comparison block fails and the target comparison block passes', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'greater_than',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('fails when the target comparison block fails and the subject comparison block passes', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('fails when both comparison blocks fail', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'greater_than',
+            subjectComparisonValue: 1,
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('passes a subject-side prior_board_state comparison when the moved piece creates a new attack', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bB'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'greater_than',
+            subjectComparisonValue: 'prior_board_state',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails a subject-side prior_board_state comparison when the moved piece creates a new attack', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bB'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonValue: 'prior_board_state',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('passes a target-side prior_board_state comparison when the moved piece creates a new attack', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bB'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails a target-side prior_board_state comparison when the moved piece creates a new attack', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bB'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            verb: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('runs a full real move sequence for a target-side prior_board_state comparison against enemy_moved_piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            verb: 'attack',
+            target: 'enemy_moved_piece',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'less_than',
+            targetComparisonValue: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
   })
 })
