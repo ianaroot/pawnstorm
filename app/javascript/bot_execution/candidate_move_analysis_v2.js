@@ -1,12 +1,11 @@
   import Board from "gameplay/board"
   import Rules from "gameplay/rules"
-   import {
+  import {
     adjacentPositions,
-    attackingPositions,
-    coveringPositions,
-    defendingPositions,
+    controlledSquares,
+    coveredPositions,
     materialValue,
-    shieldingPositions
+    shieldedPositions
   } from "gameplay/board_query_utils"
   
   const AFTER_BOARD = "after"
@@ -374,6 +373,185 @@
           throw new Error(`Unsupported V2 unary verb for enemy_captured_piece: ${verb}`)
       }
     }
+
+    // -------------------------------------------------   RELATIONAL BLOCK -------------------------------------------
+
+    relationalResult({
+        subject,
+        subjectFilter = "any",
+        subjectFilterMode = null,
+        verb,
+        target,
+        targetFilter = "any",
+        targetFilterMode = null,
+        boardScope = AFTER_BOARD
+    }) {
+        const candidateSubjectPositions = this.relationalActorPositions({
+            actor: subject,
+            filter: subjectFilter,
+            filterMode: subjectFilterMode,
+            boardScope
+        })
+        const candidateTargetPositions = this.relationalActorPositions({
+            actor: target,
+            filter: targetFilter,
+            filterMode: targetFilterMode,
+            boardScope
+        })
+        const candidateTargetPositionSet = new Set(candidateTargetPositions)
+        const pairs = []
+        candidateSubjectPositions.forEach((subjectPosition) => {
+            const relatedTargetPositions = this.relatedTargetPositionsForSubject({
+                verb,
+                subjectPosition,
+                target,
+                boardScope
+            })
+            relatedTargetPositions.forEach((targetPosition) => {
+                if (!candidateTargetPositionSet.has(targetPosition)) { return }
+                pairs.push({ subjectPosition, targetPosition })
+            })
+        })
+        return {
+            pairs,
+            subjectPositions: this.uniquePositions(pairs.map(pair => pair.subjectPosition)),
+            targetPositions: this.uniquePositions(pairs.map(pair => pair.targetPosition))
+        }
+    }
+    
+    relationalActorPositions({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      switch (actor) {
+        case "allied":
+        case "enemy":
+          return this.generalRelationalPositions({
+            actor,
+            filter,
+            filterMode,
+            boardScope
+          })
+        case "moved_piece":
+          return this.movedPieceRelationalPositions({
+            filter,
+            filterMode,
+            boardScope
+          })
+        case "enemy_moved_piece":
+          return this.enemyMovedPieceRelationalPositions({
+            filter,
+            filterMode,
+            boardScope
+          })
+        default:
+          throw new Error(`Unsupported V2 relational actor: ${actor}`)
+      }
+    }
+
+    generalRelationalPositions({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      const team = actor === "allied" ? this.movedPieceTeam() : this.enemyTeam()
+      const board = this.boardForScope(boardScope)
+
+      return board._positionsOccupiedByTeam(team).filter((position) => {
+        return this.matchesFilter({
+          species: board.pieceTypeAt(position),
+          filter,
+          filterMode
+        })
+      })
+    }
+
+    movedPieceRelationalPositions({ filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      const resolved = this.resolvedMovedPiece(boardScope)
+
+      if (!this.matchesFilter({
+        species: resolved.species,
+        filter,
+        filterMode
+      })) {
+        return []
+      }
+
+      return [resolved.position]
+    }
+
+    enemyMovedPieceRelationalPositions({ filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      const resolved = this.resolvedEnemyMovedPiece(boardScope)
+
+      if (!resolved || !resolved.presentOnBoard) {
+        return []
+      }
+
+      if (!this.matchesFilter({
+        species: resolved.species,
+        filter,
+        filterMode
+      })) {
+        return []
+      }
+
+      return [resolved.position]
+    }
+
+    relatedTargetPositionsForSubject({ verb, subjectPosition, target, boardScope = AFTER_BOARD }) {
+        const board = this.boardForScope(boardScope)
+        const targetTeam = this.relationalTeamForActor(target)
+        switch (verb) {
+              case "attack": {
+                    const subjectTeam = board.teamAt(subjectPosition)
+                    return controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                    return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam })
+                }
+                case "defend": {
+                    const subjectTeam = board.teamAt(subjectPosition)
+                    return controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                    return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam })
+                }
+            case "adjacent":
+                return adjacentPositions({ board, targetPosition: subjectPosition, team: targetTeam })
+            case "shield":
+                return shieldedPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
+            case "cover":
+                return coveredPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
+            default:
+                throw new Error(`Unsupported V2 relational verb: ${verb}`)
+        }
+    }
+
+    relationalTeamForActor(actor) {
+        switch (actor) {
+            case "allied":
+            case "moved_piece":
+                return this.movedPieceTeam()
+            case "enemy":
+            case "enemy_moved_piece":
+                return this.enemyTeam()
+            default:
+                throw new Error(`Unsupported V2 relational team actor: ${actor}`)
+        }
+    }
+
+        uniquePositions(positions) {
+      return Array.from(new Set(positions))
+    }
+
+    metricForPositions({ metric, positions, boardScope = AFTER_BOARD }) {
+        switch (metric) {
+            case "count":
+                return positions.length
+            case "value":
+                return this.valueOfPositions(positions, boardScope)
+            default:
+                throw new Error(`Unsupported V2 relational metric: ${metric}`)
+        }
+    }
+
+    valueOfPositions(positions, boardScope = AFTER_BOARD) {
+        const board = this.boardForScope(boardScope)
+
+        return positions.reduce((sum, position) => {
+            return sum + materialValue(board.pieceTypeAt(position))
+        }, 0)
+    }
+
 
   }
 

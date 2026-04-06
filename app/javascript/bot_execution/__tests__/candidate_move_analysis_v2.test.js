@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 
-import { buildBoard, getMove, playMoveSequence, position } from 'gameplay/__tests__/helpers'
+import { buildBoard, getMove, playMoveSequence, position, square } from 'gameplay/__tests__/helpers'
 
 function buildEnemyKnightRecentMoveContext() {
   return {
@@ -31,6 +31,16 @@ function buildEnemyCapturedPieceContext() {
     capturedPieceTeam: Board.WHITE,
     capturedPieceSpecies: Board.BISHOP
   }
+}
+
+function pairSquares(result) {
+  return result.pairs
+    .map(pair => [square(pair.subjectPosition), square(pair.targetPosition)])
+    .sort((a, b) => a.join(':').localeCompare(b.join(':')))
+}
+
+function squaresFor(positions) {
+  return positions.map(square).sort()
 }
 
 describe('CandidateMoveAnalysisV2', () => {
@@ -376,6 +386,251 @@ describe('CandidateMoveAnalysisV2', () => {
           verb: 'value'
         })
       ).toBe(3)
+    })
+  })
+
+  describe('relational attack', () => {
+    it('builds pairs and deduped side sets for allied rook attacks against enemy targets', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'rook',
+        verb: 'attack',
+        target: 'enemy',
+        targetFilter: 'any'
+      })
+
+      expect(pairSquares(result)).toEqual([
+        ['d4', 'd7'],
+        ['d4', 'g4']
+      ])
+      expect(squaresFor(result.subjectPositions)).toEqual(['d4'])
+      expect(squaresFor(result.targetPositions)).toEqual(['d7', 'g4'])
+    })
+
+    it('supports moved_piece and enemy_moved_piece as relational targets across after and prior board scopes', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          h7: 'bB',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const movedPieceTargetResult = analysis.relationalResult({
+        subject: 'enemy',
+        subjectFilter: 'bishop',
+        verb: 'attack',
+        target: 'moved_piece',
+        targetFilter: 'any'
+      })
+
+      expect(pairSquares(movedPieceTargetResult)).toEqual([['h7', 'f5']])
+      expect(squaresFor(movedPieceTargetResult.subjectPositions)).toEqual(['h7'])
+      expect(squaresFor(movedPieceTargetResult.targetPositions)).toEqual(['f5'])
+
+      const enemyMovedPiecePriorResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        verb: 'attack',
+        target: 'enemy_moved_piece',
+        targetFilter: 'any',
+        boardScope: 'prior'
+      })
+
+      expect(pairSquares(enemyMovedPiecePriorResult)).toEqual([['e4', 'f5']])
+      expect(squaresFor(enemyMovedPiecePriorResult.subjectPositions)).toEqual(['e4'])
+      expect(squaresFor(enemyMovedPiecePriorResult.targetPositions)).toEqual(['f5'])
+
+      const enemyMovedPieceAfterResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        verb: 'attack',
+        target: 'enemy_moved_piece',
+        targetFilter: 'any'
+      })
+
+      expect(pairSquares(enemyMovedPieceAfterResult)).toEqual([])
+      expect(enemyMovedPieceAfterResult.subjectPositions).toEqual([])
+      expect(enemyMovedPieceAfterResult.targetPositions).toEqual([])
+    })
+  })
+
+  describe('relational defend', () => {
+    it('supports allied defenders targeting the moved piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f2: 'wN'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'knight',
+        verb: 'defend',
+        target: 'moved_piece',
+        targetFilter: 'any'
+      })
+
+      expect(pairSquares(result)).toEqual([['f2', 'e4']])
+      expect(squaresFor(result.subjectPositions)).toEqual(['f2'])
+      expect(squaresFor(result.targetPositions)).toEqual(['e4'])
+    })
+  })
+
+  describe('relational adjacent', () => {
+    it('supports enemy_moved_piece as a present-on-board subject', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          b5: 'wB',
+          c6: 'bN',
+          a2: 'wP'
+        }
+      })
+      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'enemy_moved_piece',
+        subjectFilter: 'any',
+        verb: 'adjacent',
+        target: 'allied',
+        targetFilter: 'bishop'
+      })
+
+      expect(pairSquares(result)).toEqual([['c6', 'b5']])
+      expect(squaresFor(result.subjectPositions)).toEqual(['c6'])
+      expect(squaresFor(result.targetPositions)).toEqual(['b5'])
+    })
+
+    it('returns no after-board pairs and a prior-board pair when the enemy moved piece was captured', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const afterResult = analysis.relationalResult({
+        subject: 'enemy_moved_piece',
+        subjectFilter: 'any',
+        verb: 'adjacent',
+        target: 'allied',
+        targetFilter: 'pawn'
+      })
+
+      expect(pairSquares(afterResult)).toEqual([])
+      expect(afterResult.subjectPositions).toEqual([])
+      expect(afterResult.targetPositions).toEqual([])
+
+      const priorResult = analysis.relationalResult({
+        subject: 'enemy_moved_piece',
+        subjectFilter: 'any',
+        verb: 'adjacent',
+        target: 'allied',
+        targetFilter: 'pawn',
+        boardScope: 'prior'
+      })
+
+      expect(pairSquares(priorResult)).toEqual([['f5', 'e4']])
+      expect(squaresFor(priorResult.subjectPositions)).toEqual(['f5'])
+      expect(squaresFor(priorResult.targetPositions)).toEqual(['e4'])
+    })
+  })
+
+  describe('relational shield', () => {
+    it('treats the moved piece as shielding the allied king when it interposes on a slider line', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          e8: 'bR',
+          d3: 'wB'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e2', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        verb: 'shield',
+        target: 'allied',
+        targetFilter: 'king'
+      })
+
+      expect(pairSquares(result)).toEqual([['e2', 'e1']])
+      expect(squaresFor(result.subjectPositions)).toEqual(['e2'])
+      expect(squaresFor(result.targetPositions)).toEqual(['e1'])
+    })
+  })
+
+  describe('relational cover', () => {
+    it('treats a pawn as covering an allied rook when it blocks a live opposing slider route', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          d4: 'wR',
+          d5: 'wP',
+          d8: 'bR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        verb: 'cover',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(result)).toEqual([['d5', 'd4']])
+      expect(squaresFor(result.subjectPositions)).toEqual(['d5'])
+      expect(squaresFor(result.targetPositions)).toEqual(['d4'])
     })
   })
 })
