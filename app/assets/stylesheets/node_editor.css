@@ -963,9 +963,14 @@
   gap: 16px;
 }
 
-.condition-form-panel {
+.node-form-panel {
+  width: 20rem;
+}
+
+.node-form-panel.node-form-panel--condition {
   width: min(62rem, calc(100vw - 3rem));
 }
+
 
 .condition-form-layout {
   display: grid;

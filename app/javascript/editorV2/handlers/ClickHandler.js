@@ -226,7 +226,8 @@ class ClickHandler {
     const conditionForm = this.editorPanel.querySelector('#condition-form')
     const actionEditor = this.editorPanel.querySelector('#action-form')
     const organizerEditor = this.editorPanel.querySelector('#organizer-form')
-    
+    this.editorPanel.classList.toggle('node-form-panel--condition', node.type === 'condition')
+
     if (conditionForm) {
       conditionForm.classList.toggle('hidden', node.type !== 'condition')
     }
