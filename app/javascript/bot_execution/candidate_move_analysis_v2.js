@@ -79,6 +79,31 @@
       return resolved ? materialValue(resolved.species) : 0
     }
 
+    samePiece({ subject, target }) {
+        if (
+          (subject === "enemy_moved_piece" && target === "captured_piece") ||
+          (subject === "captured_piece" && target === "enemy_moved_piece")
+        ) {
+          return this.enemyMovedPieceMatchesCapturedPiece()
+        } else {
+          throw new Error(`Unsupported V2 samePiece comparison: ${subject} vs ${target}`)
+        }
+    }
+
+    enemyMovedPieceMatchesCapturedPiece() {
+        const recentMove = this.board.recentMoveContext
+        const capturedPiecePosition = this.capturedPiecePosition()
+        const capturedPieceSpecies = this.capturedPieceSpecies()
+        if (!recentMove || capturedPiecePosition === null || capturedPieceSpecies === null) {
+          return false
+        } else {
+            return (
+              recentMove.movedPieceEndPosition === capturedPiecePosition &&
+              recentMove.movedPieceSpeciesAfterMove === capturedPieceSpecies
+            )
+        }
+    }
+
     resolvedMovedPiece(boardScope = AFTER_BOARD) {
         if (boardScope === PRIOR_BOARD ) {
             return {
@@ -187,12 +212,7 @@
         case "enemy_captured_piece_value":
             return this.enemyCapturedPieceValue()
         case "prior_board_state":
-            return this.priorComparisonValueFor({
-            subject,
-            subjectFilter,
-            subjectFilterMode,
-            verb
-            })
+            return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, verb })
         default:
             throw new Error(`Unsupported V2 comparison value: ${comparisonValue}`)
         }
@@ -321,7 +341,7 @@
             })
         })
         return {
-            pairs,
+            pairs, // pairs in the return is not strictly speaking necessary but may simplify debugging in the future
             subjectPositions: this.uniquePositions(pairs.map(pair => pair.subjectPosition)),
             targetPositions: this.uniquePositions(pairs.map(pair => pair.targetPosition))
         }

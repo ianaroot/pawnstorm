@@ -771,4 +771,221 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
   })
+
+  describe('same_piece evaluation', () => {
+    it('returns true when the current move captures the enemy moved piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'captured_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns true in the reversed same_piece direction when the current move captures the enemy moved piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'captured_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'enemy_moved_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns true for en passant when the captured pawn is the enemy moved piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a7: 'bP',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'a7', to: 'a6' },
+        { from: 'e4', to: 'e5' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e5', 'f6', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'captured_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns false when the current move is not a capture', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'e5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'captured_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('returns false when the current move captures a different piece', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bN',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'captured_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('returns false when the current move captures a different piece of the same species', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e4: 'wP',
+          d5: 'bP',
+          f5: 'bP'
+        }
+      })
+      board.recentMoveContext = {
+        moveObject: { startPosition: 53, endPosition: 37 },
+        movingTeam: Board.BLACK,
+        movedPieceStartPosition: 53,
+        movedPieceEndPosition: 37,
+        movedPieceSpeciesBeforeMove: Board.PAWN,
+        movedPieceSpeciesAfterMove: Board.PAWN,
+        capturedPiecePosition: null,
+        capturedPieceTeam: null,
+        capturedPieceSpecies: null
+      }
+
+      const moveObject = getMove('e4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            verb: 'same_piece',
+            target: 'captured_piece',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+  })
 })

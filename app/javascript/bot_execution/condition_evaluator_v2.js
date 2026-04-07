@@ -29,7 +29,7 @@
     }
 
     evaluateRelational(conditionNode, analysis) {
-      if (conditionNode.verb === "same_piece") { throw new Error("V2 same_piece evaluation not implemented yet") }
+      if (conditionNode.verb === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
       const result = analysis.relationalResult({
         subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
         subjectFilterMode: conditionNode.subjectFilterMode || null, verb: conditionNode.verb,
