@@ -269,12 +269,17 @@ class ConditionForm {
     fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
     fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
 
-    fields.leftComparisonToggle.textContent = this.state.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison'
-    fields.rightComparisonToggle.textContent = this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison'
+    const leftLocked = this.comparisonLocked('left')
+    const rightLocked = this.comparisonLocked('right')
+    fields.leftComparisonToggle.disabled = leftLocked
+    fields.rightComparisonToggle.disabled = rightLocked
+    fields.leftComparisonToggle.textContent = leftLocked ? this.comparisonUnavailableText('left') : (this.state.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison')
+    fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText('right') : (this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison')
   }
 
   toggleLeftComparison() {
     if (this.state.kind !== 'relational') { return }
+    if (this.comparisonLocked('left')) { return }
 
     if (!this.state.ui.leftComparisonOpen && !this.state.left.comparisonMetric) {
       this.state.left.comparisonMetric = 'count'
@@ -289,6 +294,7 @@ class ConditionForm {
 
   toggleRightComparison() {
     if (this.state.kind !== 'relational') { return }
+    if (this.comparisonLocked('right')) { return }
 
     if (!this.state.ui.rightComparisonOpen && !this.state.right.comparisonMetric) {
       this.state.right.comparisonMetric = 'count'
@@ -445,9 +451,52 @@ class ConditionForm {
       return
     }
 
+    if (this.leftUsesPriorBoardState()) {
+      this.clearComparator('right')
+      this.state.ui.rightComparisonOpen = false
+    }
+
+    if (this.rightUsesPriorBoardState()) {
+      this.clearComparator('left')
+      this.state.ui.leftComparisonOpen = false
+    }
+
     if (this.state.right.subject === 'captured_piece') {
       this.state.right.subject = 'enemy'
     }
+  }
+
+  leftUsesPriorBoardState() {
+    return this.state.kind === 'relational' &&
+      this.state.ui.leftComparisonOpen &&
+      this.state.left.comparisonValueSource === 'prior_board_state'
+  }
+
+  rightUsesPriorBoardState() {
+    return this.state.kind === 'relational' &&
+      this.state.ui.rightComparisonOpen &&
+      this.state.right.comparisonValueSource === 'prior_board_state'
+  }
+
+  comparisonLocked(side) {
+    if (this.state.kind !== 'relational') {
+      return false
+    }
+    if (side === 'left') {
+      return this.rightUsesPriorBoardState()
+    } else {
+      return this.leftUsesPriorBoardState()
+    }
+  }
+
+  comparisonUnavailableText(side) {
+    if (side === 'left' && this.rightUsesPriorBoardState()) {
+      return '+ comparison unavailable while target uses prior'
+    }
+    if (side === 'right' && this.leftUsesPriorBoardState()) {
+      return '+ comparison unavailable while subject uses prior'
+    }
+    return '+ comparison unavailable'
   }
   
 }

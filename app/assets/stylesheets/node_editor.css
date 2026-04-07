@@ -964,12 +964,12 @@
 }
 
 .condition-form-panel {
-  width: min(42rem, calc(100vw - 3rem));
+  width: min(62rem, calc(100vw - 3rem));
 }
 
 .condition-form-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) 7.75rem minmax(0, 0.88fr);
+  grid-template-columns: minmax(25rem, 1fr) 6rem minmax(25rem, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -1046,12 +1046,12 @@
 }
 
 .condition-form-comparison-grid--relational {
-  grid-template-columns: 6.5rem 4rem minmax(0, 1fr);
+  grid-template-columns: 4.75rem 3.0rem minmax(10.5rem, 1fr);
   align-items: start;
 }
 
 .condition-form-comparison-grid--unary {
-  grid-template-columns: 4rem minmax(0, 1fr);
+  grid-template-columns: 4.75rem minmax(10.5rem, 1fr);
   align-items: start;
 }
 
