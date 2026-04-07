@@ -329,9 +329,10 @@ class ConditionForm {
     this.state.ui.rightComparisonOpen = !this.state.ui.rightComparisonOpen
     this.render()
   }
-
-  handleFieldChange() {
+  
+  handleFieldChange(event) {
     const fields = this.fields()
+    const changedId = event?.target?.id
     const relationalVerb = ['attack', 'defend', 'cover', 'shield', 'adjacent', 'same_piece'].includes(fields.verb?.value)
 
     if (relationalVerb) {
@@ -364,6 +365,9 @@ class ConditionForm {
       this.state.unary.comparisonValueNumber = Number(fields.unaryComparisonValueNumber?.value || 0)
       this.state.ui.rightComparisonOpen = false
       this.state.ui.leftComparisonOpen = false
+      this.applyUnaryCompatibilityRules(changedId)
+      this.render()
+      return
     }
 
     this.applyCompatibilityRules()
@@ -449,14 +453,6 @@ class ConditionForm {
   }
 
   applyCompatibilityRules() {
-    if (this.state.kind === 'unary') {
-      const allowedUnaryVerbs = this.allowedUnaryVerbsForSubject(this.state.left.subject)
-      if (!allowedUnaryVerbs.includes(this.state.verb)) {
-        this.state.verb = allowedUnaryVerbs[0]
-      }
-      return
-    }
-
     if (this.state.kind !== 'relational') {
       return
     }
@@ -550,6 +546,19 @@ class ConditionForm {
       return ['count', 'value']
     } else {
       return ['count', 'mobility', 'value']
+    }
+  }
+
+  applyUnaryCompatibilityRules(changedId) {
+    const allowedUnaryVerbs = this.allowedUnaryVerbsForSubject(this.state.left.subject)
+    if (allowedUnaryVerbs.includes(this.state.verb)) {
+      return
+    }
+
+    if (changedId === 'cond-verb') {
+      this.state.left.subject = 'allied'
+    } else {
+      this.state.verb = allowedUnaryVerbs[0]
     }
   }
   

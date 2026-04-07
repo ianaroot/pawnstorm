@@ -14,6 +14,7 @@
       moved_piece
       captured_piece
       enemy_moved_piece
+      enemy_captured_piece
     ].freeze
 
     FILTERS = %w[any king queen rook bishop knight pawn].freeze
