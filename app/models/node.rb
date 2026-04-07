@@ -12,7 +12,7 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  CONDITION_V1_KEYS = %w[ subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison  ].freeze
+  CONDITION_V1_KEYS = %w[ subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison comparisonValue ].freeze
 
   CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode verb comparator comparisonValue ].freeze
 
@@ -291,6 +291,10 @@ class Node < ApplicationRecord
   end
   
   private
+  def normalize_node_data
+    normalize_condition_data if condition?
+    normalize_organizer_data if organizer?
+  end
 
   def self.specifier_summary(specifier, mode)
     label = condition_specifier_label(specifier)&.downcase
@@ -307,11 +311,12 @@ class Node < ApplicationRecord
       memo[key.to_s] = value
     end
     version = (normalized['version'] || 1).to_i
-    normalized['version'] = version
     if version == 1
+      normalized.delete('version')
       normalized['subjectSpecifierMode'] ||= 'include'
       normalized['relationSpecifierMode'] ||= 'include'
     else
+      normalized['version'] = version
       normalize_condition_data_v2!(normalized)
     end
     self.data = normalized

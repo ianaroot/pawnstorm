@@ -49,8 +49,10 @@ RSpec.describe BotCompiler do
             data: {
               subject: 'moved_piece',
               subjectSpecifier: 'any',
+              subjectSpecifierMode: 'include',
               relation: 'attacker',
               relationSpecifier: 'any',
+              relationSpecifierMode: 'include',
               comparison: 'greater_than',
               comparisonValue: 0
             },
