@@ -77,8 +77,12 @@
         <section class="condition-form-verb">
           <label>Verb</label>
           <select id="cond-verb">
-            <% NodeGrammarV2.relational_verb_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
+            <% NodeGrammarV2::RELATIONAL_VERBS.each do |value| %>
+              <option value="<%= value %>"><%= NodeGrammarV2.verb_label(value) %></option>
+            <% end %>
+            <option disabled>────────</option>
+            <% NodeGrammarV2::SPECIAL_TARGETED_VERBS.each do |value| %>
+              <option value="<%= value %>"><%= NodeGrammarV2.verb_label(value) %></option>
             <% end %>
             <option disabled>────────</option>
             <% NodeGrammarV2.unary_verb_options.each do |label, value| %>

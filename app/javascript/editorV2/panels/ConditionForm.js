@@ -127,6 +127,7 @@ class ConditionForm {
       this.state = structuredClone(DEFAULT_STATE)
       this.state.ui.legacyNotice = true
     }
+    this.applyCompatibilityRules()
     this.render()
   }
 
@@ -262,6 +263,12 @@ class ConditionForm {
     fields.leftComparisonBody.classList.toggle('hidden', !this.state.ui.leftComparisonOpen)
     fields.rightComparisonBody.classList.toggle('hidden', !this.state.ui.rightComparisonOpen || this.state.kind !== 'relational')
 
+    const samePieceMode = this.usesSamePiece()
+    fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
+    fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
+    fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
+    fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
+
     fields.leftComparisonToggle.textContent = this.state.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison'
     fields.rightComparisonToggle.textContent = this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison'
   }
@@ -330,6 +337,7 @@ class ConditionForm {
       this.state.ui.leftComparisonOpen = false
     }
 
+    this.applyCompatibilityRules()
     this.render()
   }
 
@@ -394,6 +402,51 @@ class ConditionForm {
       return number
     } else {
       return source
+    }
+  }
+
+
+  // -------------------------------- GRAMMAR RULES ----------------------------------
+
+  usesSamePiece() {
+    return this.state.kind === 'relational' && this.state.verb === 'same_piece'
+  }
+
+  clearComparator(side) {
+    this.state[side].comparisonMetric = ''
+    this.state[side].comparator = 'equal_to'
+    this.state[side].comparisonValueSource = 'exact_number'
+    this.state[side].comparisonValueNumber = 1
+  }
+
+  applyCompatibilityRules() {
+    if (this.state.kind !== 'relational') {
+      return
+    }
+
+    if (this.usesSamePiece()) {
+      const allowedLeft = ['enemy_moved_piece', 'captured_piece']
+      if (!allowedLeft.includes(this.state.left.subject)) {
+        this.state.left.subject = 'enemy_moved_piece'
+      }
+
+      this.state.right.subject = this.state.left.subject === 'enemy_moved_piece'
+        ? 'captured_piece'
+        : 'enemy_moved_piece'
+
+      this.state.left.filter = 'any'
+      this.state.left.filterMode = 'include'
+      this.state.right.filter = 'any'
+      this.state.right.filterMode = 'include'
+      this.clearComparator('left')
+      this.clearComparator('right')
+      this.state.ui.leftComparisonOpen = false
+      this.state.ui.rightComparisonOpen = false
+      return
+    }
+
+    if (this.state.right.subject === 'captured_piece') {
+      this.state.right.subject = 'enemy'
     }
   }
   
