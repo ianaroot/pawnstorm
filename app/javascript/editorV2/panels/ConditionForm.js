@@ -449,6 +449,14 @@ class ConditionForm {
   }
 
   applyCompatibilityRules() {
+    if (this.state.kind === 'unary') {
+      const allowedUnaryVerbs = this.allowedUnaryVerbsForSubject(this.state.left.subject)
+      if (!allowedUnaryVerbs.includes(this.state.verb)) {
+        this.state.verb = allowedUnaryVerbs[0]
+      }
+      return
+    }
+
     if (this.state.kind !== 'relational') {
       return
     }
@@ -535,6 +543,14 @@ class ConditionForm {
 
   regularRelationalTargets() {
     return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+  }
+
+  allowedUnaryVerbsForSubject(subject) {
+    if (['captured_piece', 'enemy_captured_piece'].includes(subject)) {
+      return ['count', 'value']
+    } else {
+      return ['count', 'mobility', 'value']
+    }
   }
   
 }
