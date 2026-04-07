@@ -275,6 +275,29 @@ class ConditionForm {
     fields.rightComparisonToggle.disabled = rightLocked
     fields.leftComparisonToggle.textContent = leftLocked ? this.comparisonUnavailableText('left') : (this.state.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison')
     fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText('right') : (this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison')
+    if (this.state.kind === 'relational' && !samePieceMode) {
+      this.filterSelectOptions(fields.leftSubject, this.regularRelationalSubjects())
+      this.filterSelectOptions(fields.rightSubject, this.regularRelationalTargets())
+    } else {
+      this.showAllOptions(fields.leftSubject)
+      this.showAllOptions(fields.rightSubject)
+    }
+  }
+
+  showAllOptions(select) {
+    Array.from(select.options).forEach(option => {
+      option.hidden = false
+    })
+  }
+
+  filterSelectOptions(select, allowedValues) {
+    Array.from(select.options).forEach(option => {
+      option.hidden = !allowedValues.includes(option.value)
+    })
+
+    if (!allowedValues.includes(select.value)) {
+      select.value = allowedValues[0]
+    }
   }
 
   toggleLeftComparison() {
@@ -436,9 +459,7 @@ class ConditionForm {
         this.state.left.subject = 'enemy_moved_piece'
       }
 
-      this.state.right.subject = this.state.left.subject === 'enemy_moved_piece'
-        ? 'captured_piece'
-        : 'enemy_moved_piece'
+      this.state.right.subject = this.state.left.subject === 'enemy_moved_piece' ? 'captured_piece' : 'enemy_moved_piece'
 
       this.state.left.filter = 'any'
       this.state.left.filterMode = 'include'
@@ -451,6 +472,19 @@ class ConditionForm {
       return
     }
 
+    if (this.state.right.subject === 'captured_piece') {
+      this.state.right.subject = 'enemy'
+    }
+    const allowedLeft = this.regularRelationalSubjects()
+    if (!allowedLeft.includes(this.state.left.subject)) {
+      this.state.left.subject = 'allied'
+    }
+
+    const allowedRight = this.regularRelationalTargets()
+    if (!allowedRight.includes(this.state.right.subject)) {
+      this.state.right.subject = 'enemy'
+    }
+
     if (this.leftUsesPriorBoardState()) {
       this.clearComparator('right')
       this.state.ui.rightComparisonOpen = false
@@ -459,10 +493,6 @@ class ConditionForm {
     if (this.rightUsesPriorBoardState()) {
       this.clearComparator('left')
       this.state.ui.leftComparisonOpen = false
-    }
-
-    if (this.state.right.subject === 'captured_piece') {
-      this.state.right.subject = 'enemy'
     }
   }
 
@@ -497,6 +527,14 @@ class ConditionForm {
       return '+ comparison unavailable while subject uses prior'
     }
     return '+ comparison unavailable'
+  }
+
+  regularRelationalSubjects() {
+    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+  }
+
+  regularRelationalTargets() {
+    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
   }
   
 }
