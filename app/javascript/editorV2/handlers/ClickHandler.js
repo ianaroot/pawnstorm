@@ -223,9 +223,9 @@ class ClickHandler {
     }
     
     // Hide/show appropriate editor sections
-    const conditionForm = this.editorPanel.querySelector('#condition-editor')
-    const actionEditor = this.editorPanel.querySelector('#action-editor')
-    const organizerEditor = this.editorPanel.querySelector('#organizer-editor')
+    const conditionForm = this.editorPanel.querySelector('#condition-form')
+    const actionEditor = this.editorPanel.querySelector('#action-form')
+    const organizerEditor = this.editorPanel.querySelector('#organizer-form')
     
     if (conditionForm) {
       conditionForm.classList.toggle('hidden', node.type !== 'condition')

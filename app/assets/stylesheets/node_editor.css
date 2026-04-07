@@ -614,7 +614,7 @@
   transform: translate(-50%, 50%) scale(1.3);
 }
 
-.node-editor-panel {
+.node-form-panel {
   position: absolute;
   right: 20px;
   top: 20px;
@@ -626,11 +626,11 @@
   z-index: 100;
 }
 
-.node-editor-panel.hidden {
+.node-form-panel.hidden {
   display: none;
 }
 
-.node-editor-panel h3 {
+.node-form-panel h3 {
   margin: 0 0 15px 0;
   color: #A855F7;
   font-size: 14px;
@@ -756,7 +756,7 @@
   border-top: 1px solid #3d3a35;
 }
 
-.bot-guide-drawer--open ~ .node-editor-panel {
+.bot-guide-drawer--open ~ .node-form-panel {
   right: 39rem;
 }
 
@@ -776,7 +776,7 @@
 }
 
 @media (max-width: 1200px) {
-  .bot-guide-drawer--open ~ .node-editor-panel {
+  .bot-guide-drawer--open ~ .node-form-panel {
     right: 20px;
     top: calc(5.25rem + 1.5rem);
   }
@@ -892,32 +892,32 @@
   box-shadow: inset 0 0 0 1px rgba(232, 204, 255, 0.2);
 }
 
-.node-editor-section {
+.node-form-section {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #3d3a35;
 }
 
-.node-editor-section h4 {
+.node-form-section h4 {
   margin: 0 0 10px 0;
   color: #A855F7;
   font-size: 13px;
 }
 
-.editor-part {
+.form-part {
   margin-bottom: 12px;
 }
 
-.editor-part label {
+.form-part label {
   display: block;
   margin-bottom: 4px;
   font-size: 12px;
   color: #9CA3AF;
 }
 
-.editor-part select,
-.editor-part input,
-.editor-part textarea {
+.form-part select,
+.form-part input,
+.form-part textarea {
   width: 100%;
   padding: 6px;
   margin-bottom: 6px;
@@ -928,7 +928,7 @@
   font-size: 12px;
 }
 
-.editor-part textarea {
+.form-part textarea {
   min-height: 6rem;
   resize: vertical;
 }
@@ -957,36 +957,36 @@
   color: #6B7280;
 }
 
-.condition-lab-panel .panel-content {
+.condition-form-panel .panel-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.condition-lab-panel {
+.condition-form-panel {
   width: min(42rem, calc(100vw - 3rem));
 }
 
-.condition-lab-layout {
+.condition-form-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.88fr) 7.75rem minmax(0, 0.88fr);
   gap: 14px;
   align-items: start;
 }
 
-.condition-lab-side,
-.condition-lab-verb {
+.condition-form-side,
+.condition-form-verb {
   background: #14120f;
   border: 1px solid #3d3a35;
   border-radius: 10px;
   padding: 14px;
 }
 
-.condition-lab-side__header {
+.condition-form-side__header {
   margin-bottom: 12px;
 }
 
-.condition-lab-side__label {
+.condition-form-side__label {
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
@@ -995,7 +995,7 @@
   color: #9CA3AF;
 }
 
-.condition-lab-verb {
+.condition-form-verb {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1003,23 +1003,23 @@
   align-self: stretch;
 }
 
-.condition-lab-verb label,
-.condition-lab-field label {
+.condition-form-verb label,
+.condition-form-field label {
   display: block;
   margin-bottom: 4px;
   font-size: 12px;
   color: #9CA3AF;
 }
 
-.condition-lab-field + .condition-lab-field,
-.condition-lab-field + .condition-lab-comparison,
-.condition-lab-comparison + .condition-lab-field {
+.condition-form-field + .condition-form-field,
+.condition-form-field + .condition-form-comparison,
+.condition-form-comparison + .condition-form-field {
   margin-top: 12px;
 }
 
-.condition-lab-side select,
-.condition-lab-side input,
-.condition-lab-verb select {
+.condition-form-side select,
+.condition-form-side input,
+.condition-form-verb select {
   width: 100%;
   padding: 7px 8px;
   background: #2d2a25;
@@ -1029,38 +1029,38 @@
   font-size: 12px;
 }
 
-.condition-lab-inline-pair,
-.condition-lab-inline-triple,
-.condition-lab-comparison-grid {
+.condition-form-inline-pair,
+.condition-form-inline-triple,
+.condition-form-comparison-grid {
   display: grid;
   gap: 8px;
 }
 
-.condition-lab-inline-pair {
+.condition-form-inline-pair {
   grid-template-columns: 4.1rem minmax(0, 1fr);
   gap: 0.08rem;
 }
 
-.condition-lab-inline-triple {
+.condition-form-inline-triple {
   grid-template-columns: 6.5rem 4rem minmax(0, 1fr);
 }
 
-.condition-lab-comparison-grid--relation {
+.condition-form-comparison-grid--relational {
   grid-template-columns: 6.5rem 4rem minmax(0, 1fr);
   align-items: start;
 }
 
-.condition-lab-comparison-grid--unary {
+.condition-form-comparison-grid--unary {
   grid-template-columns: 4rem minmax(0, 1fr);
   align-items: start;
 }
 
-.condition-lab-comparison-value-stack {
+.condition-form-comparison-value-stack {
   display: grid;
   gap: 8px;
 }
 
-.condition-lab-checkbox {
+.condition-form-checkbox {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -1069,12 +1069,12 @@
   font-size: 12px;
 }
 
-.condition-lab-checkbox input {
+.condition-form-checkbox input {
   width: auto;
   margin: 0;
 }
 
-.condition-lab-comparison__toggle {
+.condition-form-comparison__toggle {
   width: 100%;
   padding: 8px 10px;
   background: #1d1916;
@@ -1086,24 +1086,24 @@
   cursor: pointer;
 }
 
-.condition-lab-comparison__toggle:disabled {
+.condition-form-comparison__toggle:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.condition-lab-comparison__body {
+.condition-form-comparison__body {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #3d3a35;
 }
 
-.condition-lab-result-mode {
+.condition-form-result-mode {
   display: inline-flex;
   gap: 6px;
   margin-bottom: 10px;
 }
 
-.condition-lab-result-mode__option {
+.condition-form-result-mode__option {
   padding: 5px 9px;
   background: #1d1916;
   border: 1px solid #4a443d;
@@ -1113,18 +1113,18 @@
   cursor: pointer;
 }
 
-.condition-lab-result-mode__option.active {
+.condition-form-result-mode__option.active {
   background: #2e2924;
   border-color: #8b5cf6;
   color: #f4efe6;
 }
 
-.condition-lab-result-mode__option:disabled {
+.condition-form-result-mode__option:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.condition-lab-none-choice {
+.condition-form-none-choice {
   padding: 10px 12px;
   background: #191613;
   border: 1px solid #3d3a35;
@@ -1133,7 +1133,7 @@
   font-size: 12px;
 }
 
-.condition-lab-note {
+.condition-form-note {
   padding: 10px 12px;
   background: rgba(96, 165, 250, 0.09);
   border: 1px solid rgba(96, 165, 250, 0.32);
@@ -1142,14 +1142,14 @@
   font-size: 12px;
 }
 
-.condition-lab-formulation label {
+.condition-form-formulation label {
   display: block;
   margin-bottom: 6px;
   font-size: 12px;
   color: #9CA3AF;
 }
 
-.condition-lab-formulation__text {
+.condition-form-formulation__text {
   padding: 10px 12px;
   background: #14120f;
   border: 1px solid #3d3a35;
@@ -1172,11 +1172,11 @@
 }
 
 @media (max-width: 1100px) {
-  .condition-lab-layout {
+  .condition-form-layout {
     grid-template-columns: 1fr;
   }
 
-  .condition-lab-verb {
+  .condition-form-verb {
     order: -1;
   }
 }

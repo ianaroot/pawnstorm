@@ -1,90 +1,189 @@
-<div id="node-editor-panel" class="node-editor-panel hidden">
+<div id="node-form-panel" class="node-form-panel condition-form-panel hidden">
   <h3>Edit Node</h3>
-  <div class="panel-content">
+  <div class="panel-content condition-form-panel__content">
     <div class="form-group">
       <label>Type</label>
       <span id="edit-node-type"></span>
     </div>
     
-    <div id="condition-editor" class="node-editor-section hidden">
+    <div id="condition-form" class="node-form-section hidden">
       <h4>Condition</h4>
 
-      <div id="condition-subject-group" class="editor-part">
-        <label>1. Subject</label>
-        <select id="cond-subject">
-          <% Node.condition_subject_options.each do |label, value| %>
-            <option value="<%= value %>"><%= label %></option>
-          <% end %>
-        </select>
+      <div id="condition-legacy-note" class="condition-form-note hidden"></div>
+
+      <div class="condition-form-layout">
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Subject</span>
+          </div>
+
+          <div class="condition-form-field">
+            <label>Subject</label>
+            <select id="cond-left-subject">
+              <% NodeGrammarV2.editor_subject_options.each do |label, value| %>
+                <option value="<%= value %>"><%= label %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="condition-form-field" id="cond-left-filter-row">
+            <div class="condition-form-inline-pair">
+              <label class="condition-form-checkbox">
+                <input id="cond-left-filter-mode" type="checkbox">
+                <span>Non-</span>
+              </label>
+              <select id="cond-left-filter">
+                <% NodeGrammarV2.filter_options.each do |label, value| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+
+          <div class="condition-form-comparison" id="cond-left-comparison-section">
+            <button type="button" class="condition-form-comparison__toggle" id="cond-left-comparison-toggle"></button>
+
+            <div class="condition-form-comparison__body hidden" id="cond-left-comparison-body">
+              <div class="condition-form-field">
+                <label>Comparison</label>
+                <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
+                  <select id="cond-left-comparison-metric">
+                    <% NodeGrammarV2.comparison_metric_options.each do |label, value| %>
+                      <option value="<%= value %>"><%= label %></option>
+                    <% end %>
+                  </select>
+
+                  <select id="cond-left-comparator">
+                    <option value="equal_to">=</option>
+                    <option value="greater_than">></option>
+                    <option value="less_than"><</option>
+                  </select>
+
+                  <div class="condition-form-comparison-value-stack">
+                    <select id="cond-left-comparison-value-source">
+                      <option value="exact_number">Integer</option>
+                      <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
+                        <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                      <% end %>
+                    </select>
+                    <input id="cond-left-comparison-value-number" type="number" min="0" step="1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="condition-form-verb">
+          <label>Verb</label>
+          <select id="cond-verb">
+            <% NodeGrammarV2.relational_verb_options.each do |label, value| %>
+              <option value="<%= value %>"><%= label %></option>
+            <% end %>
+            <option disabled>────────</option>
+            <% NodeGrammarV2.unary_verb_options.each do |label, value| %>
+              <option value="<%= value %>"><%= label %></option>
+            <% end %>
+          </select>
+        </section>
+
+        <section class="condition-form-side" id="cond-right-card">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label" id="cond-right-card-label">Target</span>
+          </div>
+
+          <div id="cond-right-relational-fields">
+            <div class="condition-form-field">
+              <label>Subject</label>
+              <select id="cond-right-subject">
+                <% NodeGrammarV2.editor_subject_options.each do |label, value| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+
+            <div class="condition-form-field" id="cond-right-filter-row">
+              <div class="condition-form-inline-pair">
+                <label class="condition-form-checkbox">
+                  <input id="cond-right-filter-mode" type="checkbox">
+                  <span>Non-</span>
+                </label>
+                <select id="cond-right-filter">
+                  <% NodeGrammarV2.filter_options.each do |label, value| %>
+                    <option value="<%= value %>"><%= label %></option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+
+            <div class="condition-form-comparison">
+              <button type="button" class="condition-form-comparison__toggle" id="cond-right-comparison-toggle"></button>
+
+              <div class="condition-form-comparison__body hidden" id="cond-right-comparison-body">
+                <div class="condition-form-field">
+                  <label>Comparison</label>
+                  <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
+                    <select id="cond-right-comparison-metric">
+                      <% NodeGrammarV2.comparison_metric_options.each do |label, value| %>
+                        <option value="<%= value %>"><%= label %></option>
+                      <% end %>
+                    </select>
+
+                    <select id="cond-right-comparator">
+                      <option value="equal_to">=</option>
+                      <option value="greater_than">></option>
+                      <option value="less_than"><</option>
+                    </select>
+
+                    <div class="condition-form-comparison-value-stack">
+                      <select id="cond-right-comparison-value-source">
+                        <option value="exact_number">Integer</option>
+                        <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
+                          <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                        <% end %>
+                      </select>
+                      <input id="cond-right-comparison-value-number" type="number" min="0" step="1">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="condition-form-comparison hidden" id="cond-unary-comparison-section">
+            <div class="condition-form-field">
+              <label>Comparison</label>
+              <div class="condition-form-comparison-grid condition-form-comparison-grid--unary">
+                <select id="cond-unary-comparator">
+                  <option value="equal_to">=</option>
+                  <option value="greater_than">></option>
+                  <option value="less_than"><</option>
+                </select>
+
+                <div class="condition-form-comparison-value-stack">
+                  <select id="cond-unary-comparison-value-source">
+                    <option value="exact_number">Integer</option>
+                    <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
+                      <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                    <% end %>
+                  </select>
+                  <input id="cond-unary-comparison-value-number" type="number" min="0" step="1">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div id="condition-specifier-group" class="editor-part hidden">
-        <label>2. Subject specifier</label>
-        <label>Specifier mode</label>
-        <select id="cond-subject-specifier-mode">
-          <% Node.condition_specifier_mode_options.each do |label, value| %>
-            <option value="<%= value %>"><%= label %></option>
-          <% end %>
-        </select>
-        <select id="cond-subject-specifier">
-          <% Node.condition_subject_specifier_options.each do |label, value| %>
-            <option value="<%= value %>"><%= label %></option>
-          <% end %>
-        </select>
-      </div>
-
-      <div id="condition-relation-group" class="editor-part hidden">
-        <label>3. Relation</label>
-        <select id="cond-relation">
-          <% Node.condition_relation_options.each do |label, value, valid_subjects| %>
-            <option value="<%= value %>" data-valid-subjects="<%= valid_subjects.join(',') %>"><%= label %></option>
-          <% end %>
-        </select>
-      </div>
-
-      <div id="condition-relation-specifier-group" class="editor-part hidden">
-        <label>4. Relation specifier</label>
-        <label>Specifier mode</label>
-        <select id="cond-relation-specifier-mode">
-          <% Node.condition_specifier_mode_options.each do |label, value| %>
-            <option value="<%= value %>"><%= label %></option>
-          <% end %>
-        </select>
-        <select id="cond-relation-specifier">
-          <% Node.condition_relation_specifier_options.each do |label, value, valid_subjects, valid_relations| %>
-            <option
-              value="<%= value %>"
-              data-valid-subjects="<%= valid_subjects.join(',') %>"
-              data-valid-relations="<%= valid_relations.join(',') %>"
-            ><%= label %></option>
-          <% end %>
-        </select>
-      </div>
-
-      <div id="condition-comparison-group" class="editor-part hidden">
-        <label>5. Comparison</label>
-        <select id="cond-comparison">
-          <% Node.condition_comparison_options.each do |label, value| %>
-            <option value="<%= value %>"><%= label %></option>
-          <% end %>
-        </select>
-      </div>
-
-      <div id="condition-comparison-value-group" class="editor-part hidden">
-        <label>6. Comparison value</label>
-        <select id="cond-comparison-value-source">
-          <option value="exact_number">Number</option>
-          <% Node.condition_comparison_value_options.each do |label, value, valid_subjects| %>
-            <option value="<%= value %>" data-valid-subjects="<%= valid_subjects.join(',') %>"><%= label %></option>
-          <% end %>
-        </select>
-        <input id="cond-comparison-value-number" type="number" min="0" step="1" value="1">
+      <div class="condition-form-formulation">
+        <label>Current Condition</label>
+        <div class="condition-form-formulation__text" id="cond-formulation-preview"></div>
       </div>
     </div>
     
-    <div id="action-editor" class="node-editor-section hidden">
+    <div id="action-form" class="node-form-section hidden">
       <h4>Action</h4>
-      <div class="editor-part">
+      <div class="form-part">
         <label>1. Action</label>
         <select id="action-type">
           <option value="add">Add</option>
@@ -94,20 +193,20 @@
         </select>
       </div>
 
-      <div class="editor-part">
+      <div class="form-part">
         <label>2. Value</label>
         <input id="action-value" type="number" step="1" value="1">
       </div>
     </div>
 
-    <div id="organizer-editor" class="node-editor-section hidden">
+    <div id="organizer-form" class="node-form-section hidden">
       <h4>Organizer</h4>
-      <div class="editor-part">
+      <div class="form-part">
         <label>1. Title</label>
         <input id="organizer-title" type="text" maxlength="80" placeholder="Plan name">
       </div>
 
-      <div class="editor-part">
+      <div class="form-part">
         <label>2. Notes</label>
         <textarea id="organizer-notes" rows="5" maxlength="400" placeholder="Short notes for this branch"></textarea>
       </div>

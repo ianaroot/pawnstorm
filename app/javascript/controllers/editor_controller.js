@@ -7,7 +7,7 @@ export default class extends Controller {
   connect() {
     const container = document.getElementById('nodes-canvas')
     const svgContainer = document.getElementById('connections-canvas')
-    const editorPanel = document.getElementById('node-editor-panel')
+    const editorPanel = document.getElementById('node-form-panel')
     
     if (!container || !svgContainer) {
       console.error('Editor container elements not found')
