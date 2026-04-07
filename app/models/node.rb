@@ -152,9 +152,112 @@ class Node < ApplicationRecord
     NodeGrammar.comparison_value_short_label(value)
   end
 
+  def self.condition_preview_chunks(data)
+    return ['[invalid condition]'] unless data.is_a?(Hash)
+    version = (data['version'] || data[:version] || 1).to_i
+    case version
+    when 1
+      condition_preview_chunks_v1(data)
+    when 2
+      condition_preview_chunks_v2(data)
+    else
+      ['[invalid condition]']
+    end
+  end
+
+  def self.condition_preview_chunks_v1(data)
+    subject = data['subject'] || data[:subject]
+    subject_specifier = data['subjectSpecifier'] || data[:subjectSpecifier]
+    subject_specifier_mode = data['subjectSpecifierMode'] || data[:subjectSpecifierMode] || 'include'
+    relation = data['relation'] || data[:relation]
+    relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
+    relation_specifier_mode = data['relationSpecifierMode'] || data[:relationSpecifierMode] || 'include'
+    comparison = data['comparison'] || data[:comparison]
+    comparison_value = data['comparisonValue'] || data[:comparisonValue]
+    subject_label = condition_subject_short_label(subject)
+    subject_specifier_label = specifier_summary(subject_specifier, subject_specifier_mode)
+    relation_label = condition_relation_label(relation)&.downcase
+    relation_specifier_label = ( relation_specifier != 'any' ? specifier_summary(relation_specifier, relation_specifier_mode) : nil )
+    comparison_symbol = condition_comparison_symbol(comparison)
+    comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value.to_s
+    [
+      [subject_label, subject_specifier_label].compact.join(' '),
+      relation_specifier_label.present? ? "#{relation_label} #{relation_specifier_label}" : relation_label,
+      [comparison_symbol, comparison_value_label].compact.join(' ')
+    ]
+  end
+
+  def self.condition_preview_chunks_v2(data)
+    kind = data['kind'] || data[:kind]
+    case kind
+    when 'relational'
+      condition_preview_chunks_v2_relational(data)
+    when 'unary'
+      condition_preview_chunks_v2_unary(data)
+    else
+      ['[invalid condition]']
+    end
+  end
+
+  def self.condition_preview_chunks_v2_relational(data)
+    subject_line = v2_side_summary(
+      subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'],
+      comparison_metric: data['subjectComparisonMetric'], comparator: data['subjectComparator'], comparison_value: data['subjectComparisonValue']
+    )
+    target_line = v2_side_summary(
+      subject: data['target'], filter: data['targetFilter'], filter_mode: data['targetFilterMode'],
+      comparison_metric: data['targetComparisonMetric'], comparator: data['targetComparator'], comparison_value: data['targetComparisonValue']
+    )
+    [ subject_line, '', v2_relation_preview_label(data['verb']), '', target_line ]
+  end
+
+  def self.condition_preview_chunks_v2_unary(data)
+    [
+      v2_side_summary( subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'] ), '',
+      data['verb'], '',
+      "#{NodeGrammarV2.comparator_symbol(data['comparator'])} #{v2_comparison_value_label(data['comparisonValue'])}"
+    ]
+  end
+
+  def self.v2_side_summary(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
+    qualifier = v2_filter_phrase(filter_mode, filter)
+    pieces = qualifier.present? ? "#{NodeGrammarV2.subject_label(subject)} #{qualifier}" : NodeGrammarV2.subject_label(subject)
+
+    return pieces if comparison_metric.blank?
+
+    comparison_parts = [
+      comparison_metric,
+      NodeGrammarV2.comparator_symbol(comparator),
+      v2_comparison_value_label(comparison_value)
+    ].join('  ')
+
+    "#{pieces} #{comparison_parts}"
+  end
+
+  def self.v2_filter_phrase(filter_mode, filter)
+    return '' if filter == 'any'
+    label = NodeGrammarV2.filter_label(filter)
+    filter_mode == 'exclude' ? "non-#{label}" : label
+  end
+
+  def self.v2_relation_preview_label(verb)
+    case verb
+    when 'attack' then 'attacking'
+    when 'defend' then 'defending'
+    when 'cover' then 'covering'
+    when 'shield' then 'shielding'
+    when 'adjacent' then 'adjacent to'
+    when 'same_piece' then 'same-piece as'
+    else verb.to_s
+    end
+  end
+
+  def self.v2_comparison_value_label(value)
+    NodeGrammarV2.comparison_value_label(value) || value.to_s
+  end
+
   def self.condition_summary(data)
     return nil unless data.is_a?(Hash)
-
     subject = data['subject']
     subject_specifier = data['subjectSpecifier']
     subject_specifier_mode = data['subjectSpecifierMode']
@@ -163,7 +266,6 @@ class Node < ApplicationRecord
     relation_specifier_mode = data['relationSpecifierMode']
     comparison = data['comparison']
     comparison_value = data['comparisonValue']
-
     valid = NodeGrammar::SUBJECTS.include?(subject) &&
       NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier) &&
       valid_condition_relation_for_subject?(subject, relation) &&
@@ -174,22 +276,17 @@ class Node < ApplicationRecord
       NodeGrammar.valid_specifier_mode?(relation_specifier_mode) &&
       NodeGrammar.valid_mode_for_specifier?(specifier: subject_specifier, mode: subject_specifier_mode) &&
       NodeGrammar.valid_mode_for_specifier?(specifier: relation_specifier, mode: relation_specifier_mode)
-
     return nil unless valid
-
     summary_parts = []
     summary_parts << "#{condition_subject_short_label(subject)}:"
     summary_parts << specifier_summary(subject_specifier, subject_specifier_mode)
     summary_parts << condition_relation_label(relation)&.downcase
-
     if relation_specifier != 'any'
       summary_parts << specifier_summary(relation_specifier, relation_specifier_mode)
     end
-
     comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value
     summary_parts << condition_comparison_symbol(comparison)
     summary_parts << comparison_value_label.to_s
-
     summary_parts.compact.join(' ')
   end
   
