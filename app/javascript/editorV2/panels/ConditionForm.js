@@ -97,7 +97,6 @@ class ConditionForm {
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
       rightComparisonToggle: this.editorPanel.querySelector('#cond-right-comparison-toggle'),
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
-      rightCard: this.editorPanel.querySelector('#cond-right-card'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
       unaryComparisonSection: this.editorPanel.querySelector('#cond-unary-comparison-section'),
@@ -222,6 +221,10 @@ class ConditionForm {
 
   render() {
     const fields = this.fields()
+    const samePieceMode = this.usesSamePiece()
+    const leftComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.leftComparisonOpen
+    const rightComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.rightComparisonOpen
+    const unaryComparisonActive = this.state.kind === 'unary'
 
     if (fields.leftSubject) fields.leftSubject.value = this.state.left.subject
     if (fields.leftFilterMode) fields.leftFilterMode.checked = this.state.left.filterMode === 'exclude'
@@ -254,8 +257,8 @@ class ConditionForm {
 
     if (fields.formulationPreview) {
       fields.formulationPreview.textContent = this.state.kind === 'relational'
-        ? `${this.state.left.subject} : ${this.state.operator} : ${this.state.right.subject}`
-        : `${this.state.left.subject} : ${this.state.operator} : ${this.state.unary.comparator}`
+        ? this.relationalPreviewText()
+        : this.unaryPreviewText()
     }
     fields.rightCardLabel.textContent = this.state.kind === 'relational' ? 'Target' : 'Comparison'
     fields.rightRelationalFields.classList.toggle('hidden', this.state.kind !== 'relational')
@@ -263,11 +266,13 @@ class ConditionForm {
     fields.leftComparisonBody.classList.toggle('hidden', !this.state.ui.leftComparisonOpen)
     fields.rightComparisonBody.classList.toggle('hidden', !this.state.ui.rightComparisonOpen || this.state.kind !== 'relational')
 
-    const samePieceMode = this.usesSamePiece()
     fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
     fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
     fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
     fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
+    this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
+    this.setComparisonInputsDisabled('right', fields, !rightComparisonActive)
+    this.setUnaryComparisonInputsDisabled(fields, !unaryComparisonActive)
 
     const leftLocked = this.comparisonLocked('left')
     const rightLocked = this.comparisonLocked('right')
@@ -285,16 +290,6 @@ class ConditionForm {
       option.hidden = false
       option.disabled = false
     })
-  }
-
-  filterSelectOptions(select, allowedValues) {
-    Array.from(select.options).forEach(option => {
-      option.hidden = !allowedValues.includes(option.value)
-    })
-
-    if (!allowedValues.includes(select.value)) {
-      select.value = allowedValues[0]
-    }
   }
 
   toggleLeftComparison() {
@@ -576,6 +571,186 @@ class ConditionForm {
       return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
     } else {
       return this.editorSubjects()
+    }
+  }
+
+  relationalPreviewText() {
+    return `${this.relationalSidePreview(this.state.left, this.state.ui.leftComparisonOpen)} : ${this.operatorPreviewText()} : ${this.relationalSidePreview(this.state.right, this.state.ui.rightComparisonOpen)}`
+  }
+
+  unaryPreviewText() {
+    return `${this.subjectPreview(this.state.left.subject, this.state.left.filter, this.state.left.filterMode)} : ${this.operatorLabel(this.state.operator)} : ${this.unaryComparisonPreview()}`
+  }
+
+  relationalSidePreview(side, comparisonOpen) {
+    const base = this.subjectPreview(side.subject, side.filter, side.filterMode)
+    const comparison = this.sideComparisonPreview(side, comparisonOpen)
+    return comparison ? `${base} (${comparison})` : base
+  }
+
+  subjectPreview(subject, filter, filterMode) {
+    const subjectLabel = this.subjectLabel(subject)
+    if (this.isCollectionSubject(subject)) {
+      if (filter === 'any') {
+        return `${subject === 'allied' ? 'Allies' : 'Enemies'} any`
+      }
+      return `${subjectLabel} ${this.filterPreview(filter, filterMode)}`
+    }
+    if (filter && filter !== 'any') {
+      return `${subjectLabel} ${this.filterPreview(filter, filterMode)}`
+    }
+    return subjectLabel
+  }
+
+  sideComparisonPreview(side, comparisonOpen) {
+    if (!comparisonOpen || !side.comparisonMetric) { return '' }
+    return `${this.metricLabel(side.comparisonMetric)} ${this.comparatorLabel(side.comparator)} ${this.comparisonValuePreview(side.comparisonValueSource, side.comparisonValueNumber)}`
+  }
+
+  setComparisonInputsDisabled(side, fields, disabled) {
+    const metricKey = side === 'left' ? 'leftComparisonMetric' : 'rightComparisonMetric'
+    const comparatorKey = side === 'left' ? 'leftComparator' : 'rightComparator'
+    const valueSourceKey = side === 'left' ? 'leftComparisonValueSource' : 'rightComparisonValueSource'
+    const valueNumberKey = side === 'left' ? 'leftComparisonValueNumber' : 'rightComparisonValueNumber'
+
+    fields[metricKey].disabled = disabled
+    fields[comparatorKey].disabled = disabled
+    fields[valueSourceKey].disabled = disabled
+    fields[valueNumberKey].disabled = disabled
+  }
+
+  setUnaryComparisonInputsDisabled(fields, disabled) {
+    fields.unaryComparator.disabled = disabled
+    fields.unaryComparisonValueSource.disabled = disabled
+    fields.unaryComparisonValueNumber.disabled = disabled
+  }
+
+  unaryComparisonPreview() {
+    return `${this.comparatorLabel(this.state.unary.comparator)} ${this.comparisonValuePreview(this.state.unary.comparisonValueSource, this.state.unary.comparisonValueNumber)}`
+  }
+
+  operatorPreviewText() {
+    if (this.state.operator === 'same_piece') {
+      return 'is same-piece-as'
+    }
+    return this.operatorLabel(this.state.operator)
+  }
+
+  isCollectionSubject(subject) {
+    return subject === 'allied' || subject === 'enemy'
+  }
+
+  subjectLabel(subject) {
+    switch (subject) {
+      case 'allied':
+        return 'Allied'
+      case 'enemy':
+        return 'Enemy'
+      case 'moved_piece':
+        return 'Moved Piece'
+      case 'captured_piece':
+        return 'Captured Piece'
+      case 'enemy_moved_piece':
+        return 'Enemy Moved Piece'
+      case 'enemy_captured_piece':
+        return 'Enemy Captured Piece'
+      default:
+        return subject
+    }
+  }
+
+  filterPreview(filter, filterMode) {
+    if (filter === 'any') { return 'any' }
+    const noun = this.filterNoun(filter)
+    return filterMode === 'exclude' ? `non-${noun}` : noun
+  }
+
+  filterNoun(filter) {
+    switch (filter) {
+      case 'king':
+        return 'king'
+      case 'queen':
+        return 'queen/s'
+      case 'rook':
+        return 'rook/s'
+      case 'bishop':
+        return 'bishop/s'
+      case 'knight':
+        return 'knight/s'
+      case 'pawn':
+        return 'pawn/s'
+      default:
+        return filter
+    }
+  }
+
+  operatorLabel(operator) {
+    switch (operator) {
+      case 'attack':
+        return 'attack'
+      case 'defend':
+        return 'defend'
+      case 'cover':
+        return 'cover'
+      case 'shield':
+        return 'shield'
+      case 'adjacent':
+        return 'adjacent'
+      case 'same_piece':
+        return 'same-piece'
+      case 'count':
+        return 'count'
+      case 'mobility':
+        return 'mobility'
+      case 'value':
+        return 'value'
+      default:
+        return operator
+    }
+  }
+
+  metricLabel(metric) {
+    switch (metric) {
+      case 'count':
+        return 'count'
+      case 'value':
+        return 'value'
+      default:
+        return metric
+    }
+  }
+
+  comparatorLabel(comparator) {
+    switch (comparator) {
+      case 'equal_to':
+        return '='
+      case 'greater_than':
+        return '>'
+      case 'less_than':
+        return '<'
+      default:
+        return comparator
+    }
+  }
+
+  comparisonValuePreview(source, number) {
+    if (source === 'exact_number') {
+      return String(number)
+    }
+
+    switch (source) {
+      case 'moved_piece_value':
+        return 'Moved Piece Value'
+      case 'captured_piece_value':
+        return 'Captured Piece Value'
+      case 'enemy_moved_piece_value':
+        return 'Enemy Moved Piece Value'
+      case 'enemy_captured_piece_value':
+        return 'Enemy Captured Piece Value'
+      case 'prior_board_state':
+        return 'Prior Board State'
+      default:
+        return source
     }
   }
 
