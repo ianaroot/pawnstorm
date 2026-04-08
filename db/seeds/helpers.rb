@@ -264,3 +264,85 @@ def endgame_gate_conditions
     cond(subject: 'opponents', subject_specifier: 'pawn', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'less_than', comparison_value: 3)
   ]
 end
+
+def unary_v2(subject:, operator:, comparator:, comparison_value:, filter: 'any', filter_mode: 'include')
+  data = {
+    version: 2,
+    kind: 'unary',
+    subject: subject,
+    subjectFilter: filter,
+    operator: operator,
+    comparator: comparator,
+    comparisonValue: comparison_value
+  }
+
+  data[:subjectFilterMode] = filter_mode unless filter == 'any'
+  data
+end
+
+def rel_v2(
+  subject:,
+  operator:,
+  target:,
+  subject_filter: 'any',
+  subject_filter_mode: 'include',
+  target_filter: 'any',
+  target_filter_mode: 'include',
+  subject_comparison_metric: nil,
+  subject_comparator: nil,
+  subject_comparison_value: nil,
+  target_comparison_metric: nil,
+  target_comparator: nil,
+  target_comparison_value: nil
+)
+  data = {
+    version: 2,
+    kind: 'relational',
+    subject: subject,
+    subjectFilter: subject_filter,
+    operator: operator,
+    target: target,
+    targetFilter: target_filter
+  }
+
+  data[:subjectFilterMode] = subject_filter_mode unless subject_filter == 'any'
+  data[:targetFilterMode] = target_filter_mode unless target_filter == 'any'
+
+  if subject_comparison_metric.present?
+    data[:subjectComparisonMetric] = subject_comparison_metric
+    data[:subjectComparator] = subject_comparator
+    data[:subjectComparisonValue] = subject_comparison_value
+  end
+
+  if target_comparison_metric.present?
+    data[:targetComparisonMetric] = target_comparison_metric
+    data[:targetComparator] = target_comparator
+    data[:targetComparisonValue] = target_comparison_value
+  end
+
+  data
+end
+
+def opening_game_conditions_v2
+  [
+    unary_v2(subject: 'allied', filter: 'king', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    unary_v2(subject: 'allied', filter: 'queen', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    unary_v2(subject: 'allied', filter: 'rook', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'allied', filter: 'bishop', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'allied', filter: 'knight', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'allied', filter: 'pawn', operator: 'count', comparator: 'equal_to', comparison_value: 8),
+    unary_v2(subject: 'enemy', filter: 'king', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    unary_v2(subject: 'enemy', filter: 'queen', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    unary_v2(subject: 'enemy', filter: 'rook', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'enemy', filter: 'bishop', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'enemy', filter: 'knight', operator: 'count', comparator: 'equal_to', comparison_value: 2),
+    unary_v2(subject: 'enemy', filter: 'pawn', operator: 'count', comparator: 'equal_to', comparison_value: 8)
+  ]
+end
+
+def endgame_gate_conditions_v2
+  [
+    unary_v2(subject: 'allied', filter: 'pawn', filter_mode: 'exclude', operator: 'count', comparator: 'less_than', comparison_value: 3),
+    unary_v2(subject: 'enemy', filter: 'pawn', filter_mode: 'exclude', operator: 'count', comparator: 'less_than', comparison_value: 3)
+  ]
+end

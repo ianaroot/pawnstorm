@@ -20,5 +20,7 @@ load Rails.root.join('db/seeds/gambit_v2.rb')
 puts "gambit seeded"
 load Rails.root.join('db/seeds/wolverine_v2.rb')
 puts "wolverine seeded"
+load Rails.root.join('db/seeds/magneto.rb')
+puts "magneto seeded"
 
 # bin/rails runner db/seeds/wolverine_v2.rb
