@@ -29,7 +29,11 @@ class TournamentsController < ApplicationController
       )
 
       selected_bots.each_with_index do |bot, index|
-        tournament.tournament_entries.create!(bot:, seed_order: index)
+        tournament.tournament_entries.create!(
+          bot:,
+          seed_order: index,
+          compiled_program_snapshot: compiled_program_snapshot_for(bot)
+        )
       end
 
       build_match_definitions(selected_bots, games_per_pair: @games_per_pair).shuffle.each do |definition|
@@ -41,8 +45,6 @@ class TournamentsController < ApplicationController
           creator: current_user,
           white_player: white_bot,
           black_player: black_bot,
-          white_compiled_program_snapshot: compiled_program_snapshot_for(white_bot),
-          black_compiled_program_snapshot: compiled_program_snapshot_for(black_bot),
           status: :pending,
           result: nil,
           allowed_to_move: 'W',

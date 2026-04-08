@@ -44,6 +44,9 @@ class Match < ApplicationRecord
   validate :completed_matches_require_replay_state
 
   def compiled_program_snapshot_for(team)
+    tournament_snapshot = tournament_compiled_program_snapshot_for(team)
+    return tournament_snapshot if tournament_snapshot.present?
+
     case team.to_sym
     when :white
       white_compiled_program_snapshot
@@ -55,6 +58,24 @@ class Match < ApplicationRecord
   end
 
   private
+
+  def tournament_compiled_program_snapshot_for(team)
+    return nil unless tournament.present?
+
+    player = case team.to_sym
+    when :white
+      white_player
+    when :black
+      black_player
+    else
+      raise ArgumentError, "Unknown match team for compiled program snapshot: #{team.inspect}"
+    end
+
+    return nil unless player.is_a?(Bot)
+
+    tournament_entry = tournament.tournament_entries.find_by(bot_id: player.id)
+    tournament_entry&.frozen_compiled_program_snapshot
+  end
 
   def completed_matches_require_replay_state
     return unless completed?

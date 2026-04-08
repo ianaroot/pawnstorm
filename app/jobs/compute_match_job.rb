@@ -76,14 +76,7 @@ class ComputeMatchJob < ApplicationJob
     snapshot = match.compiled_program_snapshot_for(team)
     return snapshot if snapshot.present?
 
-    player = team.to_sym == :white ? match.white_player : match.black_player
-    compiled_program_for(player)
-  end
-
-  def compiled_program_for(player)
-    return player.compiled_program if player.respond_to?(:compiled_program)
-
-    raise "Unsupported match player type: #{player.class.name}"
+    raise "Missing compiled program snapshot for match #{match.id} #{team}"
   end
 
   def run_match_process(match:, result_path:)
