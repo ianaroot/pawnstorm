@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import Board from 'gameplay/board'
+import CandidateMoveAnalysis from 'gameplay/candidate_move_analysis'
+import ConditionEvaluator from 'gameplay/condition_evaluator'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 
 import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helpers'
@@ -8,6 +10,11 @@ import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helper
 describe('ConditionEvaluatorV2', () => {
   function evaluate(conditionNode, board, moveObject) {
     return new ConditionEvaluatorV2().evaluate(conditionNode, { board, moveObject })
+  }
+
+  function evaluateV1(conditionNode, board, moveObject) {
+    const analysis = new CandidateMoveAnalysis({ board, moveObject })
+    return new ConditionEvaluator().evaluate(conditionNode, analysis)
   }
 
   it('evaluates a promoted moved_piece value against prior_board_state', () => {
@@ -986,6 +993,158 @@ describe('ConditionEvaluatorV2', () => {
           moveObject
         )
       ).toBe(false)
+    })
+  })
+
+  describe('v1 shield/cover equivalence', () => {
+    it('matches v1 shielder > 0 with plain v2 shield existence', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+
+      const v1Condition = {
+        subject: 'allies',
+        subjectSpecifier: 'king',
+        relation: 'shielder',
+        relationSpecifier: 'moved_piece',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      }
+
+      const v2Condition = {
+        version: 2,
+        kind: 'relational',
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        operator: 'shield',
+        target: 'allied',
+        targetFilter: 'king'
+      }
+
+      expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
+    })
+
+    it('matches v1 shielder = 0 with a target-side zero comparison in v2 shield', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          g8: 'bN',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+
+      const v1Condition = {
+        subject: 'allies',
+        subjectSpecifier: 'king',
+        relation: 'shielder',
+        relationSpecifier: 'any',
+        comparison: 'equal_to',
+        comparisonValue: 0
+      }
+
+      const v2Condition = {
+        version: 2,
+        kind: 'relational',
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        operator: 'shield',
+        target: 'allied',
+        targetFilter: 'king',
+        targetComparisonMetric: 'count',
+        targetComparator: 'equal_to',
+        targetComparisonValue: 0
+      }
+
+      expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
+    })
+
+    it('matches v1 coverer > 0 with plain v2 cover existence', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          a2: 'wP',
+          e1: 'wK',
+          a8: 'bR',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+
+      const v1Condition = {
+        subject: 'allies',
+        subjectSpecifier: 'rook',
+        relation: 'coverer',
+        relationSpecifier: 'pawn',
+        comparison: 'greater_than',
+        comparisonValue: 0
+      }
+
+      const v2Condition = {
+        version: 2,
+        kind: 'relational',
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'cover',
+        target: 'allied',
+        targetFilter: 'rook'
+      }
+
+      expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
+    })
+
+    it('matches v1 covered = 0 with a target-side zero comparison in v2 cover', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+
+      const v1Condition = {
+        subject: 'allies',
+        subjectSpecifier: 'king',
+        relation: 'covered',
+        relationSpecifier: 'pawn',
+        comparison: 'equal_to',
+        comparisonValue: 0
+      }
+
+      const v2Condition = {
+        version: 2,
+        kind: 'relational',
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'cover',
+        target: 'allied',
+        targetFilter: 'king',
+        targetComparisonMetric: 'count',
+        targetComparator: 'equal_to',
+        targetComparisonValue: 0
+      }
+
+      expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(true)
+      expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
     })
   })
 })
