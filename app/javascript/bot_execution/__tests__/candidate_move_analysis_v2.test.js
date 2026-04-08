@@ -65,7 +65,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'allied',
           subjectFilter: 'any',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(4)
 
@@ -74,7 +74,7 @@ describe('CandidateMoveAnalysisV2', () => {
           subject: 'enemy',
           subjectFilter: 'king',
           subjectFilterMode: 'exclude',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(4)
 
@@ -83,7 +83,7 @@ describe('CandidateMoveAnalysisV2', () => {
           subject: 'allied',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(3)
 
@@ -91,7 +91,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy',
           subjectFilter: 'knight',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(7)
     })
@@ -114,7 +114,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'moved_piece',
           subjectFilter: 'queen',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -122,7 +122,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(9)
 
@@ -130,7 +130,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'moved_piece',
           subjectFilter: 'any',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(17)
 
@@ -139,7 +139,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'prior_board_state',
           subject: 'moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(1)
 
@@ -148,7 +148,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'moved_piece_value',
           subject: 'moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(9)
     })
@@ -172,7 +172,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'captured_piece',
           subjectFilter: 'knight',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -180,7 +180,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'captured_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
 
@@ -189,7 +189,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'captured_piece_value',
           subject: 'captured_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
     })
@@ -213,7 +213,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'captured_piece',
           subjectFilter: 'pawn',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -222,7 +222,7 @@ describe('CandidateMoveAnalysisV2', () => {
           subject: 'captured_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(0)
     })
@@ -247,7 +247,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'knight',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -255,7 +255,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
 
@@ -263,7 +263,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(8)
 
@@ -272,7 +272,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'prior_board_state',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(8)
 
@@ -281,7 +281,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'enemy_moved_piece_value',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
     })
@@ -308,7 +308,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -316,7 +316,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(1)
 
@@ -324,7 +324,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(0)
 
@@ -333,7 +333,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'prior_board_state',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
-          verb: 'mobility'
+          operator: 'mobility'
         })
       ).toBe(2)
     })
@@ -357,7 +357,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_captured_piece',
           subjectFilter: 'bishop',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(1)
 
@@ -365,7 +365,7 @@ describe('CandidateMoveAnalysisV2', () => {
         analysis.unaryValue({
           subject: 'enemy_captured_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
 
@@ -374,7 +374,7 @@ describe('CandidateMoveAnalysisV2', () => {
           subject: 'enemy_captured_piece',
           subjectFilter: 'bishop',
           subjectFilterMode: 'exclude',
-          verb: 'count'
+          operator: 'count'
         })
       ).toBe(0)
 
@@ -383,7 +383,7 @@ describe('CandidateMoveAnalysisV2', () => {
           comparisonValue: 'enemy_captured_piece_value',
           subject: 'enemy_captured_piece',
           subjectFilter: 'any',
-          verb: 'value'
+          operator: 'value'
         })
       ).toBe(3)
     })
@@ -407,7 +407,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const result = analysis.relationalResult({
         subject: 'allied',
         subjectFilter: 'rook',
-        verb: 'attack',
+        operator: 'attack',
         target: 'enemy',
         targetFilter: 'any'
       })
@@ -442,7 +442,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const movedPieceTargetResult = analysis.relationalResult({
         subject: 'enemy',
         subjectFilter: 'bishop',
-        verb: 'attack',
+        operator: 'attack',
         target: 'moved_piece',
         targetFilter: 'any'
       })
@@ -454,7 +454,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const enemyMovedPiecePriorResult = analysis.relationalResult({
         subject: 'allied',
         subjectFilter: 'pawn',
-        verb: 'attack',
+        operator: 'attack',
         target: 'enemy_moved_piece',
         targetFilter: 'any',
         boardScope: 'prior'
@@ -467,7 +467,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const enemyMovedPieceAfterResult = analysis.relationalResult({
         subject: 'allied',
         subjectFilter: 'pawn',
-        verb: 'attack',
+        operator: 'attack',
         target: 'enemy_moved_piece',
         targetFilter: 'any'
       })
@@ -494,7 +494,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const result = analysis.relationalResult({
         subject: 'allied',
         subjectFilter: 'knight',
-        verb: 'defend',
+        operator: 'defend',
         target: 'moved_piece',
         targetFilter: 'any'
       })
@@ -523,7 +523,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const result = analysis.relationalResult({
         subject: 'enemy_moved_piece',
         subjectFilter: 'any',
-        verb: 'adjacent',
+        operator: 'adjacent',
         target: 'allied',
         targetFilter: 'bishop'
       })
@@ -554,7 +554,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const afterResult = analysis.relationalResult({
         subject: 'enemy_moved_piece',
         subjectFilter: 'any',
-        verb: 'adjacent',
+        operator: 'adjacent',
         target: 'allied',
         targetFilter: 'pawn'
       })
@@ -566,7 +566,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const priorResult = analysis.relationalResult({
         subject: 'enemy_moved_piece',
         subjectFilter: 'any',
-        verb: 'adjacent',
+        operator: 'adjacent',
         target: 'allied',
         targetFilter: 'pawn',
         boardScope: 'prior'
@@ -594,7 +594,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const result = analysis.relationalResult({
         subject: 'moved_piece',
         subjectFilter: 'any',
-        verb: 'shield',
+        operator: 'shield',
         target: 'allied',
         targetFilter: 'king'
       })
@@ -623,7 +623,7 @@ describe('CandidateMoveAnalysisV2', () => {
       const result = analysis.relationalResult({
         subject: 'allied',
         subjectFilter: 'pawn',
-        verb: 'cover',
+        operator: 'cover',
         target: 'allied',
         targetFilter: 'rook'
       })
