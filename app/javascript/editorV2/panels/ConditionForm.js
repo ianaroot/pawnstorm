@@ -1,4 +1,4 @@
-import { formatConditionPreviewState } from '../utils/conditionPreviewFormatter'
+import { formatConditionPreview } from '../utils/conditionPreviewFormatter'
 
 const DEFAULT_STATE = Object.freeze({
   kind: 'relational',
@@ -258,7 +258,7 @@ class ConditionForm {
     }
 
     if (fields.formulationPreview) {
-      fields.formulationPreview.textContent = formatConditionPreviewState(this.state)
+      fields.formulationPreview.textContent = formatConditionPreview(this.buildPayload()).text
     }
     fields.rightCardLabel.textContent = this.state.kind === 'relational' ? 'Target' : 'Comparison'
     fields.rightRelationalFields.classList.toggle('hidden', this.state.kind !== 'relational')

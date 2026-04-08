@@ -117,6 +117,9 @@ function comparisonValuePreview(comparisonValue, comparisonValueNumber) {
   if (comparisonValue === undefined || comparisonValue === null || comparisonValue === '') {
     return ''
   }
+  if (typeof comparisonValue === 'number') {
+    return String(comparisonValue)
+  }
   if (comparisonValue === 'exact_number') {
     return String(comparisonValueNumber)
   }
@@ -136,14 +139,14 @@ function comparisonValuePreview(comparisonValue, comparisonValueNumber) {
   }
 }
 
-function sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber, comparisonOpen = true }) {
-  if (!comparisonOpen || !comparisonMetric) { return '' }
+function sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber }) {
+  if (!comparisonMetric) { return '' }
   return `${metricLabel(comparisonMetric)} ${comparatorLabel(comparator)} ${comparisonValuePreview(comparisonValue, comparisonValueNumber)}`
 }
 
-function sidePreview({ subject, filter, filterMode, comparisonMetric, comparator, comparisonValue, comparisonValueNumber, comparisonOpen = true }) {
+function sidePreview({ subject, filter, filterMode, comparisonMetric, comparator, comparisonValue, comparisonValueNumber }) {
   const base = subjectPreview(subject, filter, filterMode)
-  const comparison = sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber, comparisonOpen })
+  const comparison = sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber })
   return comparison ? `${base} (${comparison})` : base
 }
 
@@ -151,34 +154,45 @@ function unaryComparisonPreview({ comparator, comparisonValue, comparisonValueNu
   return `${comparatorLabel(comparator)} ${comparisonValuePreview(comparisonValue, comparisonValueNumber)}`
 }
 
-export function formatConditionPreviewState(state) {
-  if (state.kind === 'relational') {
-    return `${sidePreview({
-      subject: state.left.subject,
-      filter: state.left.filter,
-      filterMode: state.left.filterMode,
-      comparisonMetric: state.left.comparisonMetric,
-      comparator: state.left.comparator,
-      comparisonValue: state.left.comparisonValueSource,
-      comparisonValueNumber: state.left.comparisonValueNumber,
-      comparisonOpen: state.ui.leftComparisonOpen
-    })} : ${operatorPreviewText(state.operator)} : ${sidePreview({
-      subject: state.right.subject,
-      filter: state.right.filter,
-      filterMode: state.right.filterMode,
-      comparisonMetric: state.right.comparisonMetric,
-      comparator: state.right.comparator,
-      comparisonValue: state.right.comparisonValueSource,
-      comparisonValueNumber: state.right.comparisonValueNumber,
-      comparisonOpen: state.ui.rightComparisonOpen
-    })}`
+function previewText({ left, operator, right }) {
+  return `${left} : ${operator} : ${right}`
+}
+
+export function formatConditionPreview(nodeData = {}) {
+  if (nodeData.kind === 'relational') {
+    const preview = {
+      left: sidePreview({
+        subject: nodeData.subject,
+        filter: nodeData.subjectFilter || 'any',
+        filterMode: nodeData.subjectFilterMode || 'include',
+        comparisonMetric: nodeData.subjectComparisonMetric,
+        comparator: nodeData.subjectComparator,
+        comparisonValue: nodeData.subjectComparisonValue
+      }),
+      operator: operatorPreviewText(nodeData.operator),
+      right: sidePreview({
+        subject: nodeData.target,
+        filter: nodeData.targetFilter || 'any',
+        filterMode: nodeData.targetFilterMode || 'include',
+        comparisonMetric: nodeData.targetComparisonMetric,
+        comparator: nodeData.targetComparator,
+        comparisonValue: nodeData.targetComparisonValue
+      })
+    }
+    preview.text = previewText(preview)
+    return preview
   }
 
-  return `${subjectPreview(state.left.subject, state.left.filter, state.left.filterMode)} : ${operatorLabel(state.operator)} : ${unaryComparisonPreview({
-    comparator: state.unary.comparator,
-    comparisonValue: state.unary.comparisonValueSource,
-    comparisonValueNumber: state.unary.comparisonValueNumber
-  })}`
+  const preview = {
+    left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
+    operator: operatorLabel(nodeData.operator),
+    right: unaryComparisonPreview({
+      comparator: nodeData.comparator,
+      comparisonValue: nodeData.comparisonValue
+    })
+  }
+  preview.text = previewText(preview)
+  return preview
 }
 
 export function formatConditionPreviewChunk(chunk) {
@@ -194,10 +208,6 @@ export function formatConditionPreviewChunk(chunk) {
   }
 }
 
-function parseBoolean(value) {
-  return value === 'true'
-}
-
 function parseChunkDataset(element) {
   const { dataset } = element
   return {
@@ -209,7 +219,6 @@ function parseChunkDataset(element) {
     comparator: dataset.conditionPreviewComparator,
     comparisonValue: dataset.conditionPreviewComparisonValue,
     comparisonValueNumber: dataset.conditionPreviewComparisonValueNumber,
-    comparisonOpen: parseBoolean(dataset.conditionPreviewComparisonOpen),
     operator: dataset.conditionPreviewOperator,
     text: element.textContent
   }

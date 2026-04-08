@@ -1,189 +1,85 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatConditionPreview,
   formatConditionPreviewChunk,
-  formatConditionPreviewState
 } from 'editorV2/utils/conditionPreviewFormatter'
 
 describe('conditionPreviewFormatter', () => {
-  describe('formatConditionPreviewState', () => {
+  describe('formatConditionPreview', () => {
     it('formats a plain relational preview', () => {
       expect(
-        formatConditionPreviewState({
+        formatConditionPreview({
+          version: 2,
           kind: 'relational',
-          left: {
-            subject: 'allied',
-            filter: 'queen',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
+          subject: 'allied',
+          subjectFilter: 'queen',
           operator: 'attack',
-          right: {
-            subject: 'enemy',
-            filter: 'any',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
-          unary: {
-            comparator: 'greater_than',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 0
-          },
-          ui: {
-            leftComparisonOpen: false,
-            rightComparisonOpen: false
-          }
-        })
+          target: 'enemy',
+          targetFilter: 'any'
+        }).text
       ).toBe('Allied queen/s : attack : Enemies any')
     })
 
     it('keeps side comparisons attached to their own chunks', () => {
       expect(
-        formatConditionPreviewState({
+        formatConditionPreview({
+          version: 2,
           kind: 'relational',
-          left: {
-            subject: 'allied',
-            filter: 'pawn',
-            filterMode: 'include',
-            comparisonMetric: 'count',
-            comparator: 'greater_than',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 2
-          },
+          subject: 'allied',
+          subjectFilter: 'pawn',
+          subjectComparisonMetric: 'count',
+          subjectComparator: 'greater_than',
+          subjectComparisonValue: 2,
           operator: 'attack',
-          right: {
-            subject: 'enemy',
-            filter: 'bishop',
-            filterMode: 'include',
-            comparisonMetric: 'value',
-            comparator: 'less_than',
-            comparisonValueSource: 'prior_board_state',
-            comparisonValueNumber: 1
-          },
-          unary: {
-            comparator: 'greater_than',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 0
-          },
-          ui: {
-            leftComparisonOpen: true,
-            rightComparisonOpen: true
-          }
-        })
+          target: 'enemy',
+          targetFilter: 'bishop',
+          targetComparisonMetric: 'value',
+          targetComparator: 'less_than',
+          targetComparisonValue: 'prior_board_state'
+        }).text
       ).toBe('Allied pawn/s (count > 2) : attack : Enemy bishop/s (value < Prior Board State)')
     })
 
     it('formats unary previews in a three-block layout', () => {
       expect(
-        formatConditionPreviewState({
+        formatConditionPreview({
+          version: 2,
           kind: 'unary',
-          left: {
-            subject: 'enemy_moved_piece',
-            filter: 'pawn',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
           operator: 'mobility',
-          right: {
-            subject: 'enemy',
-            filter: 'any',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
-          unary: {
-            comparator: 'less_than',
-            comparisonValueSource: 'prior_board_state',
-            comparisonValueNumber: 0
-          },
-          ui: {
-            leftComparisonOpen: false,
-            rightComparisonOpen: false
-          }
-        })
+          comparator: 'less_than',
+          comparisonValue: 'prior_board_state'
+        }).text
       ).toBe('Enemy Moved Piece pawn/s : mobility : < Prior Board State')
     })
 
     it('formats same_piece with the explicit operator phrase', () => {
       expect(
-        formatConditionPreviewState({
+        formatConditionPreview({
+          version: 2,
           kind: 'relational',
-          left: {
-            subject: 'enemy_moved_piece',
-            filter: 'any',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'any',
           operator: 'same_piece',
-          right: {
-            subject: 'captured_piece',
-            filter: 'any',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
-          unary: {
-            comparator: 'greater_than',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 0
-          },
-          ui: {
-            leftComparisonOpen: false,
-            rightComparisonOpen: false
-          }
-        })
+          target: 'captured_piece',
+          targetFilter: 'any'
+        }).text
       ).toBe('Enemy Moved Piece : is same-piece-as : Captured Piece')
     })
 
     it('keeps king singular and any pluralized as allies or enemies', () => {
       expect(
-        formatConditionPreviewState({
+        formatConditionPreview({
+          version: 2,
           kind: 'relational',
-          left: {
-            subject: 'allied',
-            filter: 'king',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
+          subject: 'allied',
+          subjectFilter: 'king',
           operator: 'defend',
-          right: {
-            subject: 'enemy',
-            filter: 'any',
-            filterMode: 'include',
-            comparisonMetric: '',
-            comparator: 'equal_to',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 1
-          },
-          unary: {
-            comparator: 'greater_than',
-            comparisonValueSource: 'exact_number',
-            comparisonValueNumber: 0
-          },
-          ui: {
-            leftComparisonOpen: false,
-            rightComparisonOpen: false
-          }
-        })
+          target: 'enemy',
+          targetFilter: 'any'
+        }).text
       ).toBe('Allied king : defend : Enemies any')
     })
   })

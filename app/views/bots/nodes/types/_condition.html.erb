@@ -19,9 +19,8 @@
           <% if (value = chunk[:comparison_metric] || chunk['comparison_metric']).present? %>data-condition-preview-comparison-metric="<%= value %>"<% end %>
           <% if (value = chunk[:comparator] || chunk['comparator']).present? %>data-condition-preview-comparator="<%= value %>"<% end %>
           <% if (value = chunk[:comparison_value] || chunk['comparison_value']).present? %>data-condition-preview-comparison-value="<%= value %>"<% end %>
-          <% if chunk.key?(:comparison_open) || chunk.key?('comparison_open') %>data-condition-preview-comparison-open="<%= (chunk[:comparison_open] || chunk['comparison_open']) ? 'true' : 'false' %>"<% end %>
           <% if (value = chunk[:operator] || chunk['operator']).present? %>data-condition-preview-operator="<%= value %>"<% end %>
-        ><%= chunk[:text] || chunk['text'] %></div>
+        ></div>
       <% end %>
     <% elsif chunk == "" %>
       <div class="condition-preview__chunk condition-preview__chunk--spacer"></div>

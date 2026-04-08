@@ -200,19 +200,8 @@ class Node < ApplicationRecord
   end
 
   def self.condition_preview_chunks_v2_relational(data)
-    # These text values are only a no-JS fallback.
-    # The editor's shared preview formatter rewrites structured V2 chunks client-side.
-    subject_line = v2_side_summary(
-      subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'],
-      comparison_metric: data['subjectComparisonMetric'], comparator: data['subjectComparator'], comparison_value: data['subjectComparisonValue']
-    )
-    target_line = v2_side_summary(
-      subject: data['target'], filter: data['targetFilter'], filter_mode: data['targetFilterMode'],
-      comparison_metric: data['targetComparisonMetric'], comparator: data['targetComparator'], comparison_value: data['targetComparisonValue']
-    )
     [
       v2_side_chunk(
-        text: subject_line,
         subject: data['subject'],
         filter: data['subjectFilter'],
         filter_mode: data['subjectFilterMode'],
@@ -221,10 +210,9 @@ class Node < ApplicationRecord
         comparison_value: data['subjectComparisonValue']
       ),
       { role: 'spacer' },
-      { role: 'operator', operator: data['operator'], text: v2_relation_preview_label(data['operator']) },
+      { role: 'operator', operator: data['operator'] },
       { role: 'spacer' },
       v2_side_chunk(
-        text: target_line,
         subject: data['target'],
         filter: data['targetFilter'],
         filter_mode: data['targetFilterMode'],
@@ -236,76 +224,33 @@ class Node < ApplicationRecord
   end
 
   def self.condition_preview_chunks_v2_unary(data)
-    # These text values are only a no-JS fallback.
-    # The editor's shared preview formatter rewrites structured V2 chunks client-side.
     [
       v2_side_chunk(
-        text: v2_side_summary(subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode']),
         subject: data['subject'],
         filter: data['subjectFilter'],
         filter_mode: data['subjectFilterMode']
       ),
       { role: 'spacer' },
-      { role: 'operator', operator: data['operator'], text: data['operator'] },
+      { role: 'operator', operator: data['operator'] },
       { role: 'spacer' },
       {
         role: 'comparison',
         comparator: data['comparator'],
-        comparison_value: data['comparisonValue'],
-        text: "#{NodeGrammarV2.comparator_symbol(data['comparator'])} #{v2_comparison_value_label(data['comparisonValue'])}"
+        comparison_value: data['comparisonValue']
       }
     ]
   end
 
-  def self.v2_side_chunk(text:, subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
+  def self.v2_side_chunk(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
     {
       role: 'side',
-      text: text,
       subject: subject,
       filter: filter,
       filter_mode: filter_mode,
       comparison_metric: comparison_metric,
       comparator: comparator,
-      comparison_value: comparison_value,
-      comparison_open: comparison_metric.present?
+      comparison_value: comparison_value
     }
-  end
-
-  def self.v2_side_summary(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
-    qualifier = v2_filter_phrase(filter_mode, filter)
-    pieces = qualifier.present? ? "#{NodeGrammarV2.subject_label(subject)} #{qualifier}" : NodeGrammarV2.subject_label(subject)
-
-    return pieces if comparison_metric.blank?
-
-    comparison_parts = [
-      comparison_metric,
-      NodeGrammarV2.comparator_symbol(comparator),
-      v2_comparison_value_label(comparison_value)
-    ].join('  ')
-
-    "#{pieces} #{comparison_parts}"
-  end
-
-  def self.v2_filter_phrase(filter_mode, filter)
-    return '' if filter == 'any'
-    label = NodeGrammarV2.filter_label(filter)
-    filter_mode == 'exclude' ? "non-#{label}" : label
-  end
-
-  def self.v2_relation_preview_label(operator)
-    case operator
-    when 'attack' then 'attacking'
-    when 'defend' then 'defending'
-    when 'cover' then 'covering'
-    when 'shield' then 'shielding'
-    when 'adjacent' then 'adjacent to'
-    when 'same_piece' then 'same-piece as'
-    else operator.to_s
-    end
-  end
-
-  def self.v2_comparison_value_label(value)
-    NodeGrammarV2.comparison_value_label(value) || value.to_s
   end
 
   def self.condition_summary(data)
