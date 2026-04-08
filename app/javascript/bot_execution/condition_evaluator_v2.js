@@ -18,21 +18,23 @@
     }
 
     evaluateUnary(conditionNode, analysis) {
+      const operator = conditionNode.operator
       const leftValue = analysis.unaryValue({
         subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
-        subjectFilterMode: conditionNode.subjectFilterMode || null, verb: conditionNode.verb
+        subjectFilterMode: conditionNode.subjectFilterMode || null, operator
       })
       const rightValue = analysis.comparisonValueFor({ comparisonValue: conditionNode.comparisonValue, subject: conditionNode.subject,
-        subjectFilter: conditionNode.subjectFilter || "any", subjectFilterMode: conditionNode.subjectFilterMode || null, verb: conditionNode.verb
+        subjectFilter: conditionNode.subjectFilter || "any", subjectFilterMode: conditionNode.subjectFilterMode || null, operator
       })
       return this.compare({ comparator: conditionNode.comparator, leftValue, rightValue })
     }
 
     evaluateRelational(conditionNode, analysis) {
-      if (conditionNode.verb === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
+      const operator = conditionNode.operator
+      if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
       const result = analysis.relationalResult({
         subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
-        subjectFilterMode: conditionNode.subjectFilterMode || null, verb: conditionNode.verb,
+        subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
         target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
         targetFilterMode: conditionNode.targetFilterMode || null
       })
@@ -79,10 +81,11 @@
       const comparisonValueKey = side === "subject" ? "subjectComparisonValue" : "targetComparisonValue"
       const comparisonMetricKey = side === "subject" ? "subjectComparisonMetric" : "targetComparisonMetric"
       const comparisonValue = conditionNode[comparisonValueKey]
+      const operator = conditionNode.operator
       if (comparisonValue === "prior_board_state") {
         const priorResult = analysis.relationalResult({
           subject: conditionNode.subject,  subjectFilter: conditionNode.subjectFilter || "any",
-          subjectFilterMode: conditionNode.subjectFilterMode || null,  verb: conditionNode.verb,
+          subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
           target: conditionNode.target,  targetFilter: conditionNode.targetFilter || "any",
           targetFilterMode: conditionNode.targetFilterMode || null, boardScope: "prior"
         })
@@ -91,7 +94,7 @@
       } else {
           return analysis.comparisonValueFor({
             comparisonValue,  subject: conditionNode.subject,  subjectFilter: conditionNode.subjectFilter || "any",
-            subjectFilterMode: conditionNode.subjectFilterMode || null,  verb: conditionNode.verb
+            subjectFilterMode: conditionNode.subjectFilterMode || null, operator
           })
       }
     }

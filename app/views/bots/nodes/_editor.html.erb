@@ -74,21 +74,22 @@
           </div>
         </section>
 
-        <section class="condition-form-verb">
-          <label>Verb</label>
-          <select id="cond-verb">
-            <% NodeGrammarV2::RELATIONAL_VERBS.each do |value| %>
-              <option value="<%= value %>"><%= NodeGrammarV2.verb_label(value) %></option>
+        <section class="condition-form-operator">
+          <label>Operator</label>
+          <select id="cond-operator">
+            <% NodeGrammarV2::RELATIONAL_OPERATORS.each do |value| %>
+              <option value="<%= value %>"><%= NodeGrammarV2.operator_label(value) %></option>
             <% end %>
             <option disabled>────────</option>
-            <% NodeGrammarV2::SPECIAL_TARGETED_VERBS.each do |value| %>
-              <option value="<%= value %>"><%= NodeGrammarV2.verb_label(value) %></option>
+            <% NodeGrammarV2::SPECIAL_TARGETED_OPERATORS.each do |value| %>
+              <option value="<%= value %>"><%= NodeGrammarV2.operator_label(value) %></option>
             <% end %>
             <option disabled>────────</option>
-            <% NodeGrammarV2.unary_verb_options.each do |label, value| %>
+            <% NodeGrammarV2.unary_operator_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
+          <p class="condition-form-operator__note">Operator choice drives which subjects and targets are available.</p>
         </section>
 
         <section class="condition-form-side" id="cond-right-card">

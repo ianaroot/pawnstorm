@@ -198,7 +198,7 @@
       }
     }
 
-    comparisonValueFor({ comparisonValue, subject, subjectFilter = "any", subjectFilterMode = null, verb }) {
+    comparisonValueFor({ comparisonValue, subject, subjectFilter = "any", subjectFilterMode = null, operator }) {
         if (typeof comparisonValue === "number") {
             return comparisonValue
         }
@@ -212,42 +212,42 @@
         case "enemy_captured_piece_value":
             return this.enemyCapturedPieceValue()
         case "prior_board_state":
-            return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, verb })
+            return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator })
         default:
             throw new Error(`Unsupported V2 comparison value: ${comparisonValue}`)
         }
     }
 
     // ---------------------------------------------     UNARY BLOCK     ------------------------------------------
-    unaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, verb, boardScope = AFTER_BOARD }) {
+    unaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
       switch (subject) {
         case "allied":
         case "enemy":
-          return this.generalSubjectUnaryValue({ subject, subjectFilter, subjectFilterMode, verb, boardScope })
+          return this.generalSubjectUnaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope })
         case "moved_piece":
-          return this.movedPieceUnaryValue({ subjectFilter, subjectFilterMode, verb, boardScope })
+          return this.movedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
         case "captured_piece":
-          return this.capturedPieceUnaryValue({ subjectFilter, subjectFilterMode, verb })
+          return this.capturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
         case "enemy_moved_piece":
-          return this.enemyMovedPieceUnaryValue({ subjectFilter, subjectFilterMode, verb, boardScope })
+          return this.enemyMovedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
         case "enemy_captured_piece":
-          return this.enemyCapturedPieceUnaryValue({ subjectFilter, subjectFilterMode, verb })
+          return this.enemyCapturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
         default:
           throw new Error(`Unsupported V2 unary subject: ${subject}`)
       }
     }
 
-    priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, verb }) {
-        return this.unaryValue({ subject, subjectFilter, subjectFilterMode, verb, boardScope: PRIOR_BOARD })
+    priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator }) {
+        return this.unaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope: PRIOR_BOARD })
     }
 
-    generalSubjectUnaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, verb, boardScope = AFTER_BOARD }) {
+    generalSubjectUnaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
       const team = subject === "allied" ? this.movedPieceTeam() : this.enemyTeam()
       const board = this.boardForScope(boardScope)
       const positions = board._positionsOccupiedByTeam(team).filter(position => {
         return this.matchesFilter({ species: board.pieceTypeAt(position), filter: subjectFilter, filterMode: subjectFilterMode })
       })
-      switch (verb) {
+      switch (operator) {
         case "count":
           return positions.length
         case "value":
@@ -259,14 +259,14 @@
             return sum + this.positionMobility(position, boardScope)
           }, 0)
         default:
-          throw new Error(`Unsupported V2 unary verb for ${subject}: ${verb}`)
+          throw new Error(`Unsupported V2 unary operator for ${subject}: ${operator}`)
       }
     }
 
-    movedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, verb, boardScope = AFTER_BOARD }) {
+    movedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
       const resolved = this.resolvedMovedPiece(boardScope)
       if (!this.matchesFilter({species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode})) { return 0 }
-      switch (verb) {
+      switch (operator) {
         case "count":
           return 1
         case "value":
@@ -274,29 +274,29 @@
         case "mobility":
           return this.positionMobility(resolved.position, boardScope)
         default:
-          throw new Error(`Unsupported V2 unary verb for moved_piece: ${verb}`)
+          throw new Error(`Unsupported V2 unary operator for moved_piece: ${operator}`)
       }
     }
 
-    capturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, verb }) {
+    capturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
       const resolved = this.resolvedCapturedPiece()
       if (!resolved) { return 0 }
       if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
-      switch (verb) {
+      switch (operator) {
         case "count":
           return 1
         case "value":
           return materialValue(resolved.species)
         default:
-          throw new Error(`Unsupported V2 unary verb for captured_piece: ${verb}`)
+          throw new Error(`Unsupported V2 unary operator for captured_piece: ${operator}`)
       }
     }
 
-    enemyMovedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, verb, boardScope = AFTER_BOARD }) {
+    enemyMovedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
       const resolved = this.resolvedEnemyMovedPiece(boardScope)
       if (!resolved) { return 0 }
       if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
-      switch (verb) {
+      switch (operator) {
         case "count":
           return 1
         case "value":
@@ -305,28 +305,28 @@
           if (!resolved.presentOnBoard) return 0
           return this.positionMobility(resolved.position, boardScope)
         default:
-          throw new Error(`Unsupported V2 unary verb for enemy_moved_piece: ${verb}`)
+          throw new Error(`Unsupported V2 unary operator for enemy_moved_piece: ${operator}`)
       }
     }
 
-    enemyCapturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, verb }) {
+    enemyCapturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
       const resolved = this.resolvedEnemyCapturedPiece()
       if (!resolved) { return 0 }
       if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
-      switch (verb) {
+      switch (operator) {
         case "count":
           return 1
         case "value":
           return materialValue(resolved.species)
         default:
-          throw new Error(`Unsupported V2 unary verb for enemy_captured_piece: ${verb}`)
+          throw new Error(`Unsupported V2 unary operator for enemy_captured_piece: ${operator}`)
       }
     }
 
     // -------------------------------------------------   RELATIONAL BLOCK -------------------------------------------
 
     relationalResult({ subject, subjectFilter = "any", subjectFilterMode = null,
-        verb,
+        operator,
         target, targetFilter = "any", targetFilterMode = null, boardScope = AFTER_BOARD
     }) {
         const candidateSubjectPositions = this.relationalActorPositions({ actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, boardScope })
@@ -334,7 +334,7 @@
         const candidateTargetPositionSet = new Set(candidateTargetPositions)
         const pairs = []
         candidateSubjectPositions.forEach((subjectPosition) => {
-            const relatedTargetPositions = this.relatedTargetPositionsForSubject({ verb, subjectPosition, target, boardScope })
+            const relatedTargetPositions = this.relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope })
             relatedTargetPositions.forEach((targetPosition) => {
                 if (!candidateTargetPositionSet.has(targetPosition)) { return }
                 pairs.push({ subjectPosition, targetPosition })
@@ -391,10 +391,10 @@
       }
     }
 
-    relatedTargetPositionsForSubject({ verb, subjectPosition, target, boardScope = AFTER_BOARD }) {
+    relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope = AFTER_BOARD }) {
         const board = this.boardForScope(boardScope)
         const targetTeam = this.relationalTeamForActor(target)
-        switch (verb) {
+        switch (operator) {
               case "attack": {
                     const subjectTeam = board.teamAt(subjectPosition)
                     return controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
@@ -412,7 +412,7 @@
             case "cover":
                 return coveredPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
             default:
-                throw new Error(`Unsupported V2 relational verb: ${verb}`)
+                throw new Error(`Unsupported V2 relational operator: ${operator}`)
         }
     }
 

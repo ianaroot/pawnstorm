@@ -21,21 +21,21 @@
     CONCRETE_FILTERS = %w[king queen rook bishop knight pawn].freeze
     FILTER_MODES = %w[include exclude].freeze
 
-    RELATIONAL_VERBS = %w[attack defend cover shield adjacent].freeze
-    SPECIAL_TARGETED_VERBS = %w[same_piece].freeze
-    ALL_RELATIONAL_VERBS = (RELATIONAL_VERBS + SPECIAL_TARGETED_VERBS).freeze
+    RELATIONAL_OPERATORS = %w[attack defend cover shield adjacent].freeze
+    SPECIAL_TARGETED_OPERATORS = %w[same_piece].freeze
+    ALL_RELATIONAL_OPERATORS = (RELATIONAL_OPERATORS + SPECIAL_TARGETED_OPERATORS).freeze
 
-    UNARY_VERBS = %w[count mobility value].freeze
+    UNARY_OPERATORS = %w[count mobility value].freeze
 
     COMPARISON_METRICS = %w[count value].freeze
     COMPARATORS = %w[equal_to greater_than less_than].freeze
     COMPARISON_VALUES = %w[ moved_piece_value enemy_moved_piece_value captured_piece_value enemy_captured_piece_value prior_board_state ].freeze
 
-    UNARY_VERBS_BY_SUBJECT = {
-      'allied' => UNARY_VERBS,
-      'enemy' => UNARY_VERBS,
-      'moved_piece' => UNARY_VERBS,
-      'enemy_moved_piece' => UNARY_VERBS,
+    UNARY_OPERATORS_BY_SUBJECT = {
+      'allied' => UNARY_OPERATORS,
+      'enemy' => UNARY_OPERATORS,
+      'moved_piece' => UNARY_OPERATORS,
+      'enemy_moved_piece' => UNARY_OPERATORS,
       'captured_piece' => %w[count value],
       'enemy_captured_piece' => %w[count value]
     }.freeze
@@ -89,7 +89,7 @@
       'pawn' => 'Pawn'
     }.freeze
 
-    VERB_LABELS = {
+    OPERATOR_LABELS = {
       'attack' => 'Attack',
       'defend' => 'Defend',
       'cover' => 'Cover',
@@ -133,12 +133,12 @@
         FILTERS.map { |value| [FILTER_LABELS.fetch(value), value] }
       end
 
-      def relational_verb_options
-        ALL_RELATIONAL_VERBS.map { |value| [VERB_LABELS.fetch(value), value] }
+      def relational_operator_options
+        ALL_RELATIONAL_OPERATORS.map { |value| [OPERATOR_LABELS.fetch(value), value] }
       end
 
-      def unary_verb_options
-        UNARY_VERBS.map { |value| [VERB_LABELS.fetch(value), value] }
+      def unary_operator_options
+        UNARY_OPERATORS.map { |value| [OPERATOR_LABELS.fetch(value), value] }
       end
 
       def comparison_metric_options
@@ -171,38 +171,38 @@
         end
       end
 
-      def valid_unary_verb_for_subject?(subject, verb)
-        UNARY_VERBS_BY_SUBJECT.fetch(subject, []).include?(verb)
+      def valid_unary_operator_for_subject?(subject, operator)
+        UNARY_OPERATORS_BY_SUBJECT.fetch(subject, []).include?(operator)
       end
 
-      def valid_relational_verb?(verb)
-        ALL_RELATIONAL_VERBS.include?(verb)
+      def valid_relational_operator?(operator)
+        ALL_RELATIONAL_OPERATORS.include?(operator)
       end
 
-      def valid_relational_verb_for_subject?(subject:, verb:)
+      def valid_relational_operator_for_subject?(subject:, operator:)
         return false unless valid_subject?(subject)
-        return false unless valid_relational_verb?(verb)
+        return false unless valid_relational_operator?(operator)
 
-        if verb == 'same_piece'
+        if operator == 'same_piece'
           SAME_PIECE_TARGETS.key?(subject)
         else
           REGULAR_RELATIONAL_SUBJECTS.include?(subject)
         end
       end
 
-      def valid_relational_target_for?(subject:, verb:, target:)
+      def valid_relational_target_for?(subject:, operator:, target:)
         return false unless valid_subject?(target)
-        return false unless valid_relational_verb_for_subject?(subject:, verb:)
+        return false unless valid_relational_operator_for_subject?(subject:, operator:)
 
-        if verb == 'same_piece'
+        if operator == 'same_piece'
           SAME_PIECE_TARGETS.fetch(subject, []).include?(target)
         else
           REGULAR_RELATIONAL_TARGETS.include?(target)
         end
       end
 
-      def comparison_allowed_for_relational_verb?(verb)
-        RELATIONAL_VERBS.include?(verb)
+      def comparison_allowed_for_relational_operator?(operator)
+        RELATIONAL_OPERATORS.include?(operator)
       end
 
       def valid_comparison_metric?(value)
@@ -233,8 +233,36 @@
         FILTER_LABELS[value]
       end
 
+      def operator_label(value)
+        OPERATOR_LABELS[value]
+      end
+
+      def relational_verb_options
+        relational_operator_options
+      end
+
+      def unary_verb_options
+        unary_operator_options
+      end
+
+      def valid_unary_verb_for_subject?(subject, verb)
+        valid_unary_operator_for_subject?(subject, verb)
+      end
+
+      def valid_relational_verb?(verb)
+        valid_relational_operator?(verb)
+      end
+
+      def valid_relational_verb_for_subject?(subject:, verb:)
+        valid_relational_operator_for_subject?(subject:, operator: verb)
+      end
+
+      def comparison_allowed_for_relational_verb?(verb)
+        comparison_allowed_for_relational_operator?(verb)
+      end
+
       def verb_label(value)
-        VERB_LABELS[value]
+        operator_label(value)
       end
 
       def comparison_metric_label(value)
@@ -245,4 +273,11 @@
         COMPARISON_VALUE_LABELS[value]
       end
     end
+
+    RELATIONAL_VERBS = RELATIONAL_OPERATORS
+    SPECIAL_TARGETED_VERBS = SPECIAL_TARGETED_OPERATORS
+    ALL_RELATIONAL_VERBS = ALL_RELATIONAL_OPERATORS
+    UNARY_VERBS = UNARY_OPERATORS
+    UNARY_VERBS_BY_SUBJECT = UNARY_OPERATORS_BY_SUBJECT
+    VERB_LABELS = OPERATOR_LABELS
   end

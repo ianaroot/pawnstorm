@@ -9,7 +9,7 @@ const DEFAULT_STATE = Object.freeze({
     comparisonValueSource: 'exact_number',
     comparisonValueNumber: 1
   },
-  verb: 'attack',
+  operator: 'attack',
   right: {
     subject: 'enemy',
     filter: 'any',
@@ -62,7 +62,7 @@ class ConditionForm {
     const leftComparator = this.editorPanel.querySelector('#cond-left-comparator')
     const leftComparisonValueSource = this.editorPanel.querySelector('#cond-left-comparison-value-source')
     const leftComparisonValueNumber = this.editorPanel.querySelector('#cond-left-comparison-value-number')
-    const verb = this.editorPanel.querySelector('#cond-verb')
+    const operator = this.editorPanel.querySelector('#cond-operator')
     const rightSubject = this.editorPanel.querySelector('#cond-right-subject')
     const rightFilterMode = this.editorPanel.querySelector('#cond-right-filter-mode')
     const rightFilter = this.editorPanel.querySelector('#cond-right-filter')
@@ -82,7 +82,7 @@ class ConditionForm {
       leftComparator,
       leftComparisonValueSource,
       leftComparisonValueNumber,
-      verb,
+      operator,
       rightSubject,
       rightFilterMode,
       rightFilter,
@@ -108,7 +108,7 @@ class ConditionForm {
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       all: [
         leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonValueSource,
-        verb,
+        operator,
         rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, rightComparator, rightComparisonValueSource,
         unaryComparator, unaryComparisonValueSource
       ],
@@ -148,7 +148,7 @@ class ConditionForm {
           comparisonValueSource: 'exact_number',
           comparisonValueNumber: 1
         },
-        verb: nodeData.verb || 'count',
+        operator: nodeData.operator || 'count',
         right: {
           subject: 'enemy',
           filter: 'any',
@@ -176,7 +176,7 @@ class ConditionForm {
           comparator: nodeData.subjectComparator,
           comparisonValue: nodeData.subjectComparisonValue
         }),
-        verb: nodeData.verb || 'attack',
+        operator: nodeData.operator || 'attack',
         right: this.relationalSideState({
           subject: nodeData.target,
           filter: nodeData.targetFilter,
@@ -231,7 +231,7 @@ class ConditionForm {
     if (fields.leftComparisonValueSource) fields.leftComparisonValueSource.value = this.state.left.comparisonValueSource
     if (fields.leftComparisonValueNumber) fields.leftComparisonValueNumber.value = this.state.left.comparisonValueNumber
 
-    if (fields.verb) fields.verb.value = this.state.verb
+    if (fields.operator) fields.operator.value = this.state.operator
 
     if (fields.rightSubject) fields.rightSubject.value = this.state.right.subject
     if (fields.rightFilterMode) fields.rightFilterMode.checked = this.state.right.filterMode === 'exclude'
@@ -254,8 +254,8 @@ class ConditionForm {
 
     if (fields.formulationPreview) {
       fields.formulationPreview.textContent = this.state.kind === 'relational'
-        ? `${this.state.left.subject} : ${this.state.verb} : ${this.state.right.subject}`
-        : `${this.state.left.subject} : ${this.state.verb} : ${this.state.unary.comparator}`
+        ? `${this.state.left.subject} : ${this.state.operator} : ${this.state.right.subject}`
+        : `${this.state.left.subject} : ${this.state.operator} : ${this.state.unary.comparator}`
     }
     fields.rightCardLabel.textContent = this.state.kind === 'relational' ? 'Target' : 'Comparison'
     fields.rightRelationalFields.classList.toggle('hidden', this.state.kind !== 'relational')
@@ -275,18 +275,15 @@ class ConditionForm {
     fields.rightComparisonToggle.disabled = rightLocked
     fields.leftComparisonToggle.textContent = leftLocked ? this.comparisonUnavailableText('left') : (this.state.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison')
     fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText('right') : (this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison')
-    if (this.state.kind === 'relational' && !samePieceMode) {
-      this.filterSelectOptions(fields.leftSubject, this.regularRelationalSubjects())
-      this.filterSelectOptions(fields.rightSubject, this.regularRelationalTargets())
-    } else {
-      this.showAllOptions(fields.leftSubject)
-      this.showAllOptions(fields.rightSubject)
-    }
+    this.showAllOptions(fields.leftSubject)
+    this.showAllOptions(fields.rightSubject)
+    this.disableSubjectOptions(fields, samePieceMode)
   }
 
   showAllOptions(select) {
     Array.from(select.options).forEach(option => {
       option.hidden = false
+      option.disabled = false
     })
   }
 
@@ -333,9 +330,9 @@ class ConditionForm {
   handleFieldChange(event) {
     const fields = this.fields()
     const changedId = event?.target?.id
-    const relationalVerb = ['attack', 'defend', 'cover', 'shield', 'adjacent', 'same_piece'].includes(fields.verb?.value)
+    const relationalOperator = ['attack', 'defend', 'cover', 'shield', 'adjacent', 'same_piece'].includes(fields.operator?.value)
 
-    if (relationalVerb) {
+    if (relationalOperator) {
       this.state.kind = 'relational'
       this.state.left.subject = fields.leftSubject?.value || 'allied'
       this.state.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
@@ -345,7 +342,7 @@ class ConditionForm {
       this.state.left.comparisonValueSource = fields.leftComparisonValueSource?.value || 'exact_number'
       this.state.left.comparisonValueNumber = Number(fields.leftComparisonValueNumber?.value || 1)
 
-      this.state.verb = fields.verb?.value || 'attack'
+      this.state.operator = fields.operator?.value || 'attack'
 
       this.state.right.subject = fields.rightSubject?.value || 'enemy'
       this.state.right.filterMode = fields.rightFilterMode?.checked ? 'exclude' : 'include'
@@ -359,7 +356,7 @@ class ConditionForm {
       this.state.left.subject = fields.leftSubject?.value || 'allied'
       this.state.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
       this.state.left.filter = fields.leftFilter?.value || 'any'
-      this.state.verb = fields.verb?.value || 'count'
+      this.state.operator = fields.operator?.value || 'count'
       this.state.unary.comparator = fields.unaryComparator?.value || 'greater_than'
       this.state.unary.comparisonValueSource = fields.unaryComparisonValueSource?.value || 'exact_number'
       this.state.unary.comparisonValueNumber = Number(fields.unaryComparisonValueNumber?.value || 0)
@@ -381,7 +378,7 @@ class ConditionForm {
         kind: 'unary',
         subject: this.state.left.subject,
         subjectFilter: this.state.left.filter,
-        verb: this.state.verb,
+        operator: this.state.operator,
         comparator: this.state.unary.comparator,
         comparisonValue: this.comparisonValuePayload(
           this.state.unary.comparisonValueSource,
@@ -395,7 +392,7 @@ class ConditionForm {
         kind: 'relational',
         subject: this.state.left.subject,
         subjectFilter: this.state.left.filter,
-        verb: this.state.verb,
+        operator: this.state.operator,
         target: this.state.right.subject,
         targetFilter: this.state.right.filter
       }
@@ -442,7 +439,7 @@ class ConditionForm {
   // -------------------------------- GRAMMAR RULES ----------------------------------
 
   usesSamePiece() {
-    return this.state.kind === 'relational' && this.state.verb === 'same_piece'
+    return this.state.kind === 'relational' && this.state.operator === 'same_piece'
   }
 
   clearComparator(side) {
@@ -541,7 +538,7 @@ class ConditionForm {
     return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
   }
 
-  allowedUnaryVerbsForSubject(subject) {
+  allowedUnaryOperatorsForSubject(subject) {
     if (['captured_piece', 'enemy_captured_piece'].includes(subject)) {
       return ['count', 'value']
     } else {
@@ -550,18 +547,69 @@ class ConditionForm {
   }
 
   applyUnaryCompatibilityRules(changedId) {
-    const allowedUnaryVerbs = this.allowedUnaryVerbsForSubject(this.state.left.subject)
-    if (allowedUnaryVerbs.includes(this.state.verb)) {
+    const allowedUnaryOperators = this.allowedUnaryOperatorsForSubject(this.state.left.subject)
+    if (allowedUnaryOperators.includes(this.state.operator)) {
       return
     }
 
-    if (changedId === 'cond-verb') {
+    if (changedId === 'cond-operator') {
       this.state.left.subject = 'allied'
     } else {
-      this.state.verb = allowedUnaryVerbs[0]
+      this.state.operator = allowedUnaryOperators[0]
     }
   }
   
+  disableOptions(select, disallowedValues) {
+    Array.from(select.options).forEach(option => {
+      option.disabled = disallowedValues.includes(option.value)
+    })
+  }
+
+  enableAllOptions(select) {
+    Array.from(select.options).forEach(option => {
+      option.disabled = false
+    })
+  }
+
+  allowedUnarySubjectsForOperator(operator) {
+    if (operator === 'mobility') {
+      return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+    } else {
+      return this.editorSubjects()
+    }
+  }
+
+  disableSubjectOptions(fields, samePieceMode) {
+    this.enableAllOptions(fields.leftSubject)
+    this.enableAllOptions(fields.rightSubject)
+
+    if (this.state.kind === 'unary') {
+      const allowedSubjects = this.allowedUnarySubjectsForOperator(this.state.operator)
+      this.disableOptions(fields.leftSubject, this.editorSubjects().filter(value => !allowedSubjects.includes(value)))
+      return
+    }
+
+    if (this.state.kind !== 'relational') {
+      return
+    }
+
+    if (samePieceMode) {
+      const leftAllowed = ['enemy_moved_piece', 'captured_piece']
+      const rightAllowed = this.state.left.subject === 'enemy_moved_piece' ? ['captured_piece'] : ['enemy_moved_piece']
+
+      this.disableOptions(fields.leftSubject, this.editorSubjects().filter(value => !leftAllowed.includes(value)))
+      this.disableOptions(fields.rightSubject, this.editorSubjects().filter(value => !rightAllowed.includes(value)))
+      return
+    }
+
+    this.disableOptions(fields.leftSubject, this.editorSubjects().filter(value => !this.regularRelationalSubjects().includes(value)))
+    this.disableOptions(fields.rightSubject, this.editorSubjects().filter(value => !this.regularRelationalTargets().includes(value)))
+  }
+
+  editorSubjects() {
+    return ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+  }
+
 }
 
 export default ConditionForm

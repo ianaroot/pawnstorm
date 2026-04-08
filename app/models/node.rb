@@ -14,9 +14,9 @@
 class Node < ApplicationRecord
   CONDITION_V1_KEYS = %w[ subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison comparisonValue ].freeze
 
-  CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode verb comparator comparisonValue ].freeze
+  CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator comparisonValue ].freeze
 
-  CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonValue verb target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonValue ].freeze
+  CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonValue operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonValue ].freeze
 
   ACTION_TYPES = %w[add subtract set return].freeze
   ACTION_KEYS = %w[actionType value].freeze
@@ -208,13 +208,13 @@ class Node < ApplicationRecord
       subject: data['target'], filter: data['targetFilter'], filter_mode: data['targetFilterMode'],
       comparison_metric: data['targetComparisonMetric'], comparator: data['targetComparator'], comparison_value: data['targetComparisonValue']
     )
-    [ subject_line, '', v2_relation_preview_label(data['verb']), '', target_line ]
+    [ subject_line, '', v2_relation_preview_label(data['operator']), '', target_line ]
   end
 
   def self.condition_preview_chunks_v2_unary(data)
     [
       v2_side_summary( subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'] ), '',
-      data['verb'], '',
+      data['operator'], '',
       "#{NodeGrammarV2.comparator_symbol(data['comparator'])} #{v2_comparison_value_label(data['comparisonValue'])}"
     ]
   end
@@ -240,15 +240,15 @@ class Node < ApplicationRecord
     filter_mode == 'exclude' ? "non-#{label}" : label
   end
 
-  def self.v2_relation_preview_label(verb)
-    case verb
+  def self.v2_relation_preview_label(operator)
+    case operator
     when 'attack' then 'attacking'
     when 'defend' then 'defending'
     when 'cover' then 'covering'
     when 'shield' then 'shielding'
     when 'adjacent' then 'adjacent to'
     when 'same_piece' then 'same-piece as'
-    else verb.to_s
+    else operator.to_s
     end
   end
 
@@ -341,7 +341,7 @@ class Node < ApplicationRecord
       normalized.delete('targetComparator')
       normalized.delete('targetComparisonValue')
     elsif kind == 'relational'
-      unless NodeGrammarV2.comparison_allowed_for_relational_verb?(normalized['verb'])
+      unless NodeGrammarV2.comparison_allowed_for_relational_operator?(normalized['operator'])
         normalized.delete('subjectComparisonMetric')
         normalized.delete('subjectComparator')
         normalized.delete('subjectComparisonValue')
@@ -456,7 +456,7 @@ class Node < ApplicationRecord
   def validate_condition_data_v2_unary
     keys = data.keys.map(&:to_s)
     extra_keys = keys - CONDITION_V2_UNARY_KEYS
-    missing_keys = %w[version kind subject subjectFilter verb comparator comparisonValue] - keys
+    missing_keys = %w[version kind subject subjectFilter operator comparator comparisonValue] - keys
     if extra_keys.any?
       errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
     end
@@ -467,14 +467,14 @@ class Node < ApplicationRecord
     subject = data['subject']
     subject_filter = data['subjectFilter']
     subject_filter_mode = data['subjectFilterMode']
-    verb = data['verb']
+    operator = data['operator']
     comparator = data['comparator']
     comparison_value = data['comparisonValue']
 
     errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
     errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
     errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
-    errors.add(:data, 'has invalid verb') unless NodeGrammarV2.valid_unary_verb_for_subject?(subject, verb)
+    errors.add(:data, 'has invalid operator') unless NodeGrammarV2.valid_unary_operator_for_subject?(subject, operator)
     errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
     errors.add(:data, 'has invalid comparisonValue') unless NodeGrammarV2.valid_comparison_value_for_subject?(subject, comparison_value)
   end
@@ -482,7 +482,7 @@ class Node < ApplicationRecord
   def validate_condition_data_v2_relational
     keys = data.keys.map(&:to_s)
     extra_keys = keys - CONDITION_V2_RELATION_KEYS
-    missing_keys = %w[version kind subject subjectFilter verb target targetFilter] - keys
+    missing_keys = %w[version kind subject subjectFilter operator target targetFilter] - keys
     if extra_keys.any?
       errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
     end
@@ -493,18 +493,18 @@ class Node < ApplicationRecord
     subject = data['subject']
     subject_filter = data['subjectFilter']
     subject_filter_mode = data['subjectFilterMode']
-    verb = data['verb']
+    operator = data['operator']
     target = data['target']
     target_filter = data['targetFilter']
     target_filter_mode = data['targetFilterMode']
     errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
-    errors.add(:data, 'has invalid verb') unless NodeGrammarV2.valid_relational_verb_for_subject?(subject:, verb:)
-    errors.add(:data, 'has invalid target') unless NodeGrammarV2.valid_relational_target_for?(subject:, verb:, target:)
+    errors.add(:data, 'has invalid operator') unless NodeGrammarV2.valid_relational_operator_for_subject?(subject:, operator:)
+    errors.add(:data, 'has invalid target') unless NodeGrammarV2.valid_relational_target_for?(subject:, operator:, target:)
     errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
     errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
     errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
     errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
-    unless NodeGrammarV2.comparison_allowed_for_relational_verb?(verb)
+    unless NodeGrammarV2.comparison_allowed_for_relational_operator?(operator)
       validate_v2_same_piece_relational!
       return
     end
