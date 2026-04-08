@@ -200,6 +200,8 @@ class Node < ApplicationRecord
   end
 
   def self.condition_preview_chunks_v2_relational(data)
+    # These text values are only a no-JS fallback.
+    # The editor's shared preview formatter rewrites structured V2 chunks client-side.
     subject_line = v2_side_summary(
       subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'],
       comparison_metric: data['subjectComparisonMetric'], comparator: data['subjectComparator'], comparison_value: data['subjectComparisonValue']
@@ -234,6 +236,8 @@ class Node < ApplicationRecord
   end
 
   def self.condition_preview_chunks_v2_unary(data)
+    # These text values are only a no-JS fallback.
+    # The editor's shared preview formatter rewrites structured V2 chunks client-side.
     [
       v2_side_chunk(
         text: v2_side_summary(subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode']),

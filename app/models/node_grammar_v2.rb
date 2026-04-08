@@ -237,34 +237,6 @@
         OPERATOR_LABELS[value]
       end
 
-      def relational_verb_options
-        relational_operator_options
-      end
-
-      def unary_verb_options
-        unary_operator_options
-      end
-
-      def valid_unary_verb_for_subject?(subject, verb)
-        valid_unary_operator_for_subject?(subject, verb)
-      end
-
-      def valid_relational_verb?(verb)
-        valid_relational_operator?(verb)
-      end
-
-      def valid_relational_verb_for_subject?(subject:, verb:)
-        valid_relational_operator_for_subject?(subject:, operator: verb)
-      end
-
-      def comparison_allowed_for_relational_verb?(verb)
-        comparison_allowed_for_relational_operator?(verb)
-      end
-
-      def verb_label(value)
-        operator_label(value)
-      end
-
       def comparison_metric_label(value)
         COMPARISON_METRIC_LABELS[value]
       end
@@ -274,10 +246,4 @@
       end
     end
 
-    RELATIONAL_VERBS = RELATIONAL_OPERATORS
-    SPECIAL_TARGETED_VERBS = SPECIAL_TARGETED_OPERATORS
-    ALL_RELATIONAL_VERBS = ALL_RELATIONAL_OPERATORS
-    UNARY_VERBS = UNARY_OPERATORS
-    UNARY_VERBS_BY_SUBJECT = UNARY_OPERATORS_BY_SUBJECT
-    VERB_LABELS = OPERATOR_LABELS
   end
