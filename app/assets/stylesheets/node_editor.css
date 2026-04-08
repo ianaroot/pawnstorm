@@ -1057,15 +1057,6 @@
   font-weight: 600;
 }
 
-.condition-form-operator__note {
-  margin: 0;
-  padding-top: 2px;
-  border-top: 1px solid rgba(168, 85, 247, 0.18);
-  color: #ddd6ea;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
 .condition-form-inline-pair,
 .condition-form-inline-triple,
 .condition-form-comparison-grid {
