@@ -208,15 +208,63 @@ class Node < ApplicationRecord
       subject: data['target'], filter: data['targetFilter'], filter_mode: data['targetFilterMode'],
       comparison_metric: data['targetComparisonMetric'], comparator: data['targetComparator'], comparison_value: data['targetComparisonValue']
     )
-    [ subject_line, '', v2_relation_preview_label(data['operator']), '', target_line ]
+    [
+      v2_side_chunk(
+        text: subject_line,
+        subject: data['subject'],
+        filter: data['subjectFilter'],
+        filter_mode: data['subjectFilterMode'],
+        comparison_metric: data['subjectComparisonMetric'],
+        comparator: data['subjectComparator'],
+        comparison_value: data['subjectComparisonValue']
+      ),
+      { role: 'spacer' },
+      { role: 'operator', operator: data['operator'], text: v2_relation_preview_label(data['operator']) },
+      { role: 'spacer' },
+      v2_side_chunk(
+        text: target_line,
+        subject: data['target'],
+        filter: data['targetFilter'],
+        filter_mode: data['targetFilterMode'],
+        comparison_metric: data['targetComparisonMetric'],
+        comparator: data['targetComparator'],
+        comparison_value: data['targetComparisonValue']
+      )
+    ]
   end
 
   def self.condition_preview_chunks_v2_unary(data)
     [
-      v2_side_summary( subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode'] ), '',
-      data['operator'], '',
-      "#{NodeGrammarV2.comparator_symbol(data['comparator'])} #{v2_comparison_value_label(data['comparisonValue'])}"
+      v2_side_chunk(
+        text: v2_side_summary(subject: data['subject'], filter: data['subjectFilter'], filter_mode: data['subjectFilterMode']),
+        subject: data['subject'],
+        filter: data['subjectFilter'],
+        filter_mode: data['subjectFilterMode']
+      ),
+      { role: 'spacer' },
+      { role: 'operator', operator: data['operator'], text: data['operator'] },
+      { role: 'spacer' },
+      {
+        role: 'comparison',
+        comparator: data['comparator'],
+        comparison_value: data['comparisonValue'],
+        text: "#{NodeGrammarV2.comparator_symbol(data['comparator'])} #{v2_comparison_value_label(data['comparisonValue'])}"
+      }
     ]
+  end
+
+  def self.v2_side_chunk(text:, subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
+    {
+      role: 'side',
+      text: text,
+      subject: subject,
+      filter: filter,
+      filter_mode: filter_mode,
+      comparison_metric: comparison_metric,
+      comparator: comparator,
+      comparison_value: comparison_value,
+      comparison_open: comparison_metric.present?
+    }
   end
 
   def self.v2_side_summary(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)

@@ -2,6 +2,7 @@
 // Creates and updates node DOM elements from state
 
 import { EVENTS, NODE_COLORS } from '../constants.js'
+import { formatConditionPreviewElement } from '../utils/conditionPreviewFormatter.js'
 
 /**
  * NodeRenderer
@@ -183,6 +184,7 @@ class NodeRenderer {
         // Use textContent for simple previews
         // For HTML previews, use innerHTML (ensure server sanitizes)
         previewEl.innerHTML = html || 'Configure...'
+        formatConditionPreviewElement(previewEl)
         this.onContentRender?.(clientId)
       }
     } catch (error) {
