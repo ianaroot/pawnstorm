@@ -94,16 +94,56 @@ class BotCompiler
 
     case node.node_type
     when 'condition'
-      {
-        subject: raw['subject'] || raw[:subject],
-        subjectSpecifier: raw['subjectSpecifier'] || raw[:subjectSpecifier],
-        subjectSpecifierMode: raw['subjectSpecifierMode'] || raw[:subjectSpecifierMode],
-        relation: raw['relation'] || raw[:relation],
-        relationSpecifier: raw['relationSpecifier'] || raw[:relationSpecifier],
-        relationSpecifierMode: raw['relationSpecifierMode'] || raw[:relationSpecifierMode],
-        comparison: raw['comparison'] || raw[:comparison],
-        comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
-      }
+      version = (raw['version'] || raw[:version] || 1).to_i
+
+      if version == 2
+        kind = raw['kind'] || raw[:kind]
+
+        case kind
+        when 'unary'
+          {
+            version: 2,
+            kind: 'unary',
+            subject: raw['subject'] || raw[:subject],
+            subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
+            subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
+            operator: raw['operator'] || raw[:operator],
+            comparator: raw['comparator'] || raw[:comparator],
+            comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
+          }.compact
+        when 'relational'
+          {
+            version: 2,
+            kind: 'relational',
+            subject: raw['subject'] || raw[:subject],
+            subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
+            subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
+            subjectComparisonMetric: raw['subjectComparisonMetric'] || raw[:subjectComparisonMetric],
+            subjectComparator: raw['subjectComparator'] || raw[:subjectComparator],
+            subjectComparisonValue: raw['subjectComparisonValue'] || raw[:subjectComparisonValue],
+            operator: raw['operator'] || raw[:operator],
+            target: raw['target'] || raw[:target],
+            targetFilter: raw['targetFilter'] || raw[:targetFilter],
+            targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
+            targetComparisonMetric: raw['targetComparisonMetric'] || raw[:targetComparisonMetric],
+            targetComparator: raw['targetComparator'] || raw[:targetComparator],
+            targetComparisonValue: raw['targetComparisonValue'] || raw[:targetComparisonValue]
+          }.compact
+        else
+          raw
+        end
+      else
+        {
+          subject: raw['subject'] || raw[:subject],
+          subjectSpecifier: raw['subjectSpecifier'] || raw[:subjectSpecifier],
+          subjectSpecifierMode: raw['subjectSpecifierMode'] || raw[:subjectSpecifierMode],
+          relation: raw['relation'] || raw[:relation],
+          relationSpecifier: raw['relationSpecifier'] || raw[:relationSpecifier],
+          relationSpecifierMode: raw['relationSpecifierMode'] || raw[:relationSpecifierMode],
+          comparison: raw['comparison'] || raw[:comparison],
+          comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
+        }
+      end
     when 'action'
       {
         actionType: raw['actionType'] || raw[:actionType],

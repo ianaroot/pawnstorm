@@ -1,6 +1,114 @@
 require 'rails_helper'
 
 RSpec.describe Node, type: :model do
+  describe '.condition_preview_chunks' do
+    it 'returns structured relational V2 chunks' do
+      chunks = described_class.condition_preview_chunks(
+        {
+          'version' => 2,
+          'kind' => 'relational',
+          'subject' => 'allied',
+          'subjectFilter' => 'queen',
+          'subjectFilterMode' => 'include',
+          'subjectComparisonMetric' => 'count',
+          'subjectComparator' => 'greater_than',
+          'subjectComparisonValue' => 2,
+          'operator' => 'attack',
+          'target' => 'enemy',
+          'targetFilter' => 'any',
+          'targetComparisonMetric' => 'value',
+          'targetComparator' => 'less_than',
+          'targetComparisonValue' => 'prior_board_state'
+        }
+      )
+
+      expect(chunks).to eq(
+        [
+          {
+            role: 'side',
+            text: 'Allied Queen count  >  2',
+            subject: 'allied',
+            filter: 'queen',
+            filter_mode: 'include',
+            comparison_metric: 'count',
+            comparator: 'greater_than',
+            comparison_value: 2,
+            comparison_open: true
+          },
+          { role: 'spacer' },
+          { role: 'operator', operator: 'attack', text: 'attacking' },
+          { role: 'spacer' },
+          {
+            role: 'side',
+            text: 'Enemy value  <  Prior Board State',
+            subject: 'enemy',
+            filter: 'any',
+            filter_mode: nil,
+            comparison_metric: 'value',
+            comparator: 'less_than',
+            comparison_value: 'prior_board_state',
+            comparison_open: true
+          }
+        ]
+      )
+    end
+
+    it 'returns structured unary V2 chunks' do
+      chunks = described_class.condition_preview_chunks(
+        {
+          'version' => 2,
+          'kind' => 'unary',
+          'subject' => 'enemy_moved_piece',
+          'subjectFilter' => 'pawn',
+          'subjectFilterMode' => 'include',
+          'operator' => 'value',
+          'comparator' => 'equal_to',
+          'comparisonValue' => 'captured_piece_value'
+        }
+      )
+
+      expect(chunks).to eq(
+        [
+          {
+            role: 'side',
+            text: 'Enemy Moved Piece Pawn',
+            subject: 'enemy_moved_piece',
+            filter: 'pawn',
+            filter_mode: 'include',
+            comparison_metric: nil,
+            comparator: nil,
+            comparison_value: nil,
+            comparison_open: false
+          },
+          { role: 'spacer' },
+          { role: 'operator', operator: 'value', text: 'value' },
+          { role: 'spacer' },
+          {
+            role: 'comparison',
+            comparator: 'equal_to',
+            comparison_value: 'captured_piece_value',
+            text: '= Captured Piece Value'
+          }
+        ]
+      )
+    end
+
+    it 'keeps V1 chunks as plain strings' do
+      chunks = described_class.condition_preview_chunks(
+        {
+          'subject' => 'moved_piece',
+          'subjectSpecifier' => 'any',
+          'relation' => 'attacker',
+          'relationSpecifier' => 'any',
+          'comparison' => 'greater_than',
+          'comparisonValue' => 0
+        }
+      )
+
+      expect(chunks).to all(be_a(String))
+    end
+  end
+
   describe 'validations' do
     it 'is valid with a node_type' do
       node = build(:node)

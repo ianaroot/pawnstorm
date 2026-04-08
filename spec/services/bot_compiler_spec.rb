@@ -62,6 +62,47 @@ RSpec.describe BotCompiler do
       end
     end
 
+    context 'v2 condition nodes' do
+      let!(:root) { bot.root_node }
+      let!(:condition) do
+        create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'moved_piece',
+          subjectFilter: 'any',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'queen',
+          targetComparisonMetric: 'count',
+          targetComparator: 'greater_than',
+          targetComparisonValue: 0
+        })
+      end
+
+      before do
+        connect_nodes(root, condition)
+      end
+
+      it 'preserves v2 condition payloads in compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][condition.id.to_s][:data]).to eq(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'queen',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonValue: 0
+          }
+        )
+      end
+    end
+
     context 'disconnected nodes' do
       let!(:root) { bot.root_node }
       let!(:connected) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }
