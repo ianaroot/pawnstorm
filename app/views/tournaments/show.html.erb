@@ -1,109 +1,25 @@
 <div class="match-show-page">
-  <% if (@tournament.pending_matches_count.positive? || @tournament.running_matches_count.positive?) && !@tournament.paused? %>
-    <meta http-equiv="refresh" content="2">
-  <% end %>
-
-  <div class="match-replay-layout tournament-show-layout">
+  <div
+    class="match-replay-layout tournament-show-layout"
+    data-controller="tournament-poll"
+    data-tournament-poll-url-value="<%= tournament_path(@tournament, format: :json) %>"
+    data-tournament-poll-active-value="<%= @tournament.pending_matches_count.positive? || @tournament.running_matches_count.positive? %>"
+  >
     <div class="game-page tournament-page">
-      <div class="match-show-meta">
-        <h1 class="match-show-title">Tournament <%= @tournament.id %></h1>
-        <p class="match-show-meta-item"><strong>Status:</strong> <%= @tournament.overall_status.humanize %></p>
-        <p class="match-show-meta-item"><strong>Entrants:</strong> <%= @tournament.entrants.map(&:name).join(', ') %></p>
-        <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= @tournament.games_per_pair %></p>
-        <% if @tournament.pending_matches_count.positive? || @tournament.running_matches_count.positive? %>
-          <p class="match-show-meta-item">
-            <% if @tournament.paused? %>
-              <%= button_to 'Resume Tournament', resume_tournament_path(@tournament), method: :post %>
-            <% else %>
-              <%= button_to 'Pause Tournament', pause_tournament_path(@tournament), method: :post, data: { turbo_confirm: 'Pause this tournament? The current running match may finish, but no new matches will be queued.' } %>
-            <% end %>
-          </p>
-          <p class="match-show-meta-item">
-            <%= button_to 'Abort Tournament', abort_tournament_path(@tournament), method: :post, data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
-          </p>
-        <% end %>
+      <div data-tournament-poll-target="meta">
+        <%= render 'meta', tournament: @tournament %>
       </div>
 
-      <div class="match-setup-section">
-        <h2>Progress</h2>
-        <p><strong>Total Matches:</strong> <%= @tournament.total_matches_count %></p>
-        <p><strong>Pending:</strong> <%= @tournament.pending_matches_count %></p>
-        <p><strong>Running:</strong> <%= @tournament.running_matches_count %></p>
-        <p><strong>Completed:</strong> <%= @tournament.completed_matches_count %></p>
-        <p><strong>Failed:</strong> <%= @tournament.failed_matches_count %></p>
+      <div data-tournament-poll-target="progress">
+        <%= render 'progress', tournament: @tournament %>
       </div>
 
-      <div class="match-setup-section">
-        <h2>Standings</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Bot</th>
-              <th>Points</th>
-              <th>Wins</th>
-              <th>Draws</th>
-              <th>Losses</th>
-              <th>Completed</th>
-              <th>Failed</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @standings.each do |row| %>
-              <tr>
-                <td><%= row[:bot].name %></td>
-                <td><%= row[:points] %></td>
-                <td><%= row[:wins] %></td>
-                <td><%= row[:draws] %></td>
-                <td><%= row[:losses] %></td>
-                <td><%= row[:completed] %></td>
-                <td><%= row[:failed] %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+      <div data-tournament-poll-target="standings">
+        <%= render 'standings', standings: @standings %>
       </div>
 
-      <div class="match-setup-section">
-        <h2>Matchup Matrix</h2>
-        <p><strong>Rows:</strong> White player. <strong>Columns:</strong> Black player.</p>
-        <p>Cell format: white points - black points, then draws and failed counts.</p>
-
-        <div class="tournament-pairing-matrix-wrap">
-          <table class="tournament-pairing-matrix">
-            <thead>
-              <tr>
-                <th>White \ Black</th>
-                <% @entrants.each do |black_bot| %>
-                  <th><%= black_bot.name %></th>
-                <% end %>
-              </tr>
-            </thead>
-            <tbody>
-              <% @entrants.each do |white_bot| %>
-                <tr>
-                  <th><%= white_bot.name %></th>
-                  <% @entrants.each do |black_bot| %>
-                    <td class="tournament-pairing-matrix__cell">
-                      <% if white_bot == black_bot %>
-                        -
-                      <% else %>
-                        <% summary = @tournament.directional_pairing_summary(white_bot, black_bot) %>
-                        <%= link_to tournament_pairing_path(@tournament, white_bot, black_bot), class: 'tournament-pairing-matrix__link' do %>
-                          <span class="tournament-pairing-matrix__primary">
-                            <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
-                          </span>
-                          <span class="tournament-pairing-matrix__secondary">
-                            fails <%= summary[:failed] %>
-                          </span>
-                        <% end %>
-                      <% end %>
-                    </td>
-                  <% end %>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
+      <div data-tournament-poll-target="matrix">
+        <%= render 'matrix', tournament: @tournament, entrants: @entrants %>
       </div>
     </div>
   </div>

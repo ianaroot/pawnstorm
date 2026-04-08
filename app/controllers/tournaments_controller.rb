@@ -62,6 +62,19 @@ class TournamentsController < ApplicationController
     @tournament = Tournament.includes(tournament_entries: :bot, matches: [:white_player, :black_player]).find(params[:id])
     @entrants = @tournament.entrants
     @standings = @tournament.standings_rows
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, rematch_params: @rematch_params }),
+          progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament: @tournament }),
+          standings_html: render_to_string(partial: 'standings', formats: [:html], locals: { standings: @standings }),
+          matrix_html: render_to_string(partial: 'matrix', formats: [:html], locals: { tournament: @tournament, entrants: @entrants }),
+          polling_complete: @tournament.pending_matches_count.zero? && @tournament.running_matches_count.zero?
+        }
+      end
+    end
   end
 
   def pairing

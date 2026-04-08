@@ -1,0 +1,18 @@
+<div class="match-show-meta">
+  <h1 class="match-show-title">Tournament <%= tournament.id %></h1>
+  <p class="match-show-meta-item"><strong>Status:</strong> <%= tournament.overall_status.humanize %></p>
+  <p class="match-show-meta-item"><strong>Entrants:</strong> <%= tournament.entrants.map(&:name).join(', ') %></p>
+  <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= tournament.games_per_pair %></p>
+  <% if tournament.pending_matches_count.positive? || tournament.running_matches_count.positive? %>
+    <p class="match-show-meta-item">
+      <% if tournament.paused? %>
+        <%= button_to 'Resume Tournament', resume_tournament_path(tournament), method: :post %>
+      <% else %>
+        <%= button_to 'Pause Tournament', pause_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Pause this tournament? The current running match may finish, but no new matches will be queued.' } %>
+      <% end %>
+    </p>
+    <p class="match-show-meta-item">
+      <%= button_to 'Abort Tournament', abort_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
+    </p>
+  <% end %>
+</div>
