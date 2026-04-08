@@ -12,7 +12,11 @@ class ComputeMatchJob < ApplicationJob
       stdout, stderr, status = run_match_process(match:, result_path: result_file.path)
 
       unless status.success?
-        match.update!(status: :failed, result: :error, error_message: stderr.presence || stdout.presence || 'Match computation failed')
+        match.update!(
+          status: :failed,
+          result: :error,
+          error_message: failure_message_for(match:, status:, stdout:, stderr:)
+        )
         return
       end
 
@@ -21,7 +25,18 @@ class ComputeMatchJob < ApplicationJob
         match.update!(
           status: :failed,
           result: :error,
-          error_message: 'Match computation completed without writing a result payload'
+          error_message: JSON.generate({
+            error: {
+              name: 'MissingResultPayload',
+              message: 'Match computation completed without writing a result payload'
+            },
+            match: match_context(match),
+            process: {
+              exit_status: status.exitstatus,
+              stdout: stdout.presence,
+              stderr: stderr.presence
+            }
+          })
         )
         return
       end
@@ -91,5 +106,41 @@ class ComputeMatchJob < ApplicationJob
     JSON.parse(stdout)
   rescue JSON::ParserError => error
     raise JSON::ParserError, "Match computation emitted invalid JSON: #{error.message}. stdout=#{stdout.inspect}"
+  end
+
+  def failure_message_for(match:, status:, stdout:, stderr:)
+    stderr_json = parsed_json(stderr)
+    stdout_json = parsed_json(stdout)
+
+    JSON.generate(
+      stderr_json || stdout_json || {
+        error: {
+          name: 'MatchComputationFailed',
+          message: 'Match computation failed'
+        },
+        match: match_context(match),
+        process: {
+          exit_status: status.exitstatus,
+          stdout: stdout.presence,
+          stderr: stderr.presence
+        }
+      }
+    )
+  end
+
+  def parsed_json(value)
+    return nil if value.blank?
+
+    JSON.parse(value)
+  rescue JSON::ParserError
+    nil
+  end
+
+  def match_context(match)
+    {
+      id: match.id,
+      white: match.white_player&.respond_to?(:name) ? match.white_player.name : nil,
+      black: match.black_player&.respond_to?(:name) ? match.black_player.name : nil
+    }
   end
 end

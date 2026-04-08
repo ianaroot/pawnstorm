@@ -14,6 +14,30 @@ async function readStdin() {
   return Buffer.concat(chunks).toString()
 }
 
+function serializableError(error) {
+  if (!error) { return null }
+
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack
+  }
+}
+
+function boardSnapshot(board) {
+  if (!board) { return null }
+
+  return {
+    lay_out: board.layOut,
+    captured_pieces: board.capturedPieces,
+    allowed_to_move: board.allowedToMove,
+    movement_notation: board.movementNotation,
+    result_type: board._resultType,
+    winner: board._winner,
+    game_over: board.gameOver
+  }
+}
+
 function resultFor(board, maxPlies, turnCount) {
   if (!board.gameOver && turnCount >= maxPlies) { return 'capped' }
   if (board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
@@ -23,6 +47,9 @@ function resultFor(board, maxPlies, turnCount) {
   throw new Error(`Unable to resolve match result from board state: winner=${board._winner}, resultType=${board._resultType}`)
 }
 
+let currentBoard = null
+let currentPayload = null
+
 async function main() {
   const resultPath = process.env.MATCH_RESULT_PATH
   if (!resultPath) {
@@ -30,6 +57,8 @@ async function main() {
   }
 
   const payload = JSON.parse(await readStdin())
+  currentPayload = payload
+
   const board = new Board({
     layOut: Layout.default(),
     capturedPieces: [],
@@ -37,6 +66,7 @@ async function main() {
     movementNotation: [],
     previousLayouts: JSON.stringify([])
   })
+  currentBoard = board
 
   const matchRunner = new MatchRunner({
     board,
@@ -59,7 +89,13 @@ async function main() {
   writeFileSync(resultPath, JSON.stringify(resultPayload), 'utf8')
 }
 
-await main().catch(error => {
-  console.error(error)
+await main().catch((error) => {
+  const failurePayload = {
+    error: serializableError(error),
+    payload: currentPayload,
+    board: boardSnapshot(currentBoard)
+  }
+
+  console.error(JSON.stringify(failurePayload))
   process.exitCode = 1
 })
