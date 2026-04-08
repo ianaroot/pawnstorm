@@ -1,4 +1,5 @@
 import Board from "gameplay/board"
+import { formatConditionPreviewState } from "editorV2/utils/conditionPreviewFormatter"
 
 class ReplayTraceView {
   constructor({ tracePanelElement, traceSummaryElement, traceBranchesElement }) {
@@ -160,6 +161,10 @@ class ReplayTraceView {
   }
 
   conditionSummary(data) {
+    if (Number(data.version || 1) === 2) {
+      return this.v2ConditionSummary(data)
+    }
+
     const relationLabel = this.relationLabel(data.relation)
     const relationSpecifier = data.relationSpecifier && data.relationSpecifier !== 'any'
       ? ` ${this.specifierSummary(data.relationSpecifier, data.relationSpecifierMode)}`
@@ -177,6 +182,76 @@ class ReplayTraceView {
     }[data.comparison] || data.comparison
 
     return `${this.prettyToken(data.subject)}${subjectSpecifier} ${relationLabel}${relationSpecifier} ${operator} ${comparisonValue}`
+  }
+
+  v2ConditionSummary(data) {
+    if (data.kind === 'relational') {
+      return formatConditionPreviewState({
+        kind: 'relational',
+        left: {
+          subject: data.subject,
+          filter: data.subjectFilter || 'any',
+          filterMode: data.subjectFilterMode || 'include',
+          comparisonMetric: data.subjectComparisonMetric || '',
+          comparator: data.subjectComparator || 'equal_to',
+          comparisonValueSource: typeof data.subjectComparisonValue === 'number' ? 'exact_number' : data.subjectComparisonValue,
+          comparisonValueNumber: typeof data.subjectComparisonValue === 'number' ? data.subjectComparisonValue : 1
+        },
+        operator: data.operator,
+        right: {
+          subject: data.target,
+          filter: data.targetFilter || 'any',
+          filterMode: data.targetFilterMode || 'include',
+          comparisonMetric: data.targetComparisonMetric || '',
+          comparator: data.targetComparator || 'equal_to',
+          comparisonValueSource: typeof data.targetComparisonValue === 'number' ? 'exact_number' : data.targetComparisonValue,
+          comparisonValueNumber: typeof data.targetComparisonValue === 'number' ? data.targetComparisonValue : 1
+        },
+        unary: {
+          comparator: 'greater_than',
+          comparisonValueSource: 'exact_number',
+          comparisonValueNumber: 0
+        },
+        ui: {
+          leftComparisonOpen: Boolean(data.subjectComparisonMetric),
+          rightComparisonOpen: Boolean(data.targetComparisonMetric),
+          legacyNotice: false
+        }
+      })
+    }
+
+    return formatConditionPreviewState({
+      kind: 'unary',
+      left: {
+        subject: data.subject,
+        filter: data.subjectFilter || 'any',
+        filterMode: data.subjectFilterMode || 'include',
+        comparisonMetric: '',
+        comparator: 'equal_to',
+        comparisonValueSource: 'exact_number',
+        comparisonValueNumber: 1
+      },
+      operator: data.operator,
+      right: {
+        subject: 'enemy',
+        filter: 'any',
+        filterMode: 'include',
+        comparisonMetric: '',
+        comparator: 'equal_to',
+        comparisonValueSource: 'exact_number',
+        comparisonValueNumber: 1
+      },
+      unary: {
+        comparator: data.comparator || 'greater_than',
+        comparisonValueSource: typeof data.comparisonValue === 'number' ? 'exact_number' : data.comparisonValue,
+        comparisonValueNumber: typeof data.comparisonValue === 'number' ? data.comparisonValue : 0
+      },
+      ui: {
+        leftComparisonOpen: false,
+        rightComparisonOpen: false,
+        legacyNotice: false
+      }
+    })
   }
 
   relationLabel(relation) {
