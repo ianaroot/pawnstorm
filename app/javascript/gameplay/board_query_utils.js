@@ -231,6 +231,40 @@ function cachedCovererOnRay({ board, targetPosition, team, step, cache = null, c
     })
 }
 
+function buildCoverMap({ board, team, cache = null, cacheScope = 'after' }) {
+    return cachedValue({
+        cache,
+        cacheType: 'coverMap',
+        cacheKey: `${cacheScope}:${team}`,
+        compute: () => {
+            const targetToCoverers = new Map()
+            const sourceToCoveredTargets = new Map()
+            const alliedPositions = board._positionsOccupiedByTeam(team)
+            alliedPositions.forEach((targetPosition) => {
+                const coverers = new Set()
+                raySteps().forEach((step) => {
+                    const blockerPosition = cachedCovererOnRay({ board, targetPosition, team, step, cache, cacheScope })
+                    if (blockerPosition === null) { return }
+                    coverers.add(blockerPosition)
+                })
+                const covererList = Array.from(coverers)
+                targetToCoverers.set(targetPosition, covererList)
+                covererList.forEach((sourcePosition) => {
+                    if (!sourceToCoveredTargets.has(sourcePosition)) {
+                        sourceToCoveredTargets.set(sourcePosition, [])
+                    }
+                    sourceToCoveredTargets.get(sourcePosition).push(targetPosition)
+                })
+            })
+
+            return {
+                targetToCoverers,
+                sourceToCoveredTargets
+            }
+        }
+    })
+}
+
 function hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, step }) {
     return profileCollector.measure('board_query.potential_slider_pressure_beyond_cover', () => {
         const opposingTeam = Board.opposingTeam(team)
@@ -509,27 +543,14 @@ export function shieldingPositions({ board, targetPosition, team, species = null
 
 export function coveringPositions({ board, targetPosition, team, species = null, cache = null, cacheScope = 'after' }) {
     return profileCollector.measure('board_query.covering_positions', () => {
-        return cachedValue({
-            cache,
-            cacheType: 'coveringPositions',
-            cacheKey: `${cacheScope}:${targetPosition}:${team}:${species || 'any'}`,
-            compute: () => {
-                const covering = new Set()
+        const { targetToCoverers } = buildCoverMap({ board, team, cache, cacheScope })
+        const covering = targetToCoverers.get(targetPosition) || []
 
-                raySteps().forEach(step => {
-                    const blockerPosition = cachedCovererOnRay({ board, targetPosition, team, step, cache, cacheScope })
-                    if (blockerPosition === null) {
-                        return
-                    }
-                    if (species !== null && board.pieceTypeAt(blockerPosition) !== species) {
-                        return
-                    }
-                    covering.add(blockerPosition)
-                })
+        if (species === null) {
+            return covering
+        }
 
-                return Array.from(covering)
-            }
-        })
+        return covering.filter((position) => board.pieceTypeAt(position) === species)
     })
 }
 
@@ -551,17 +572,14 @@ export function shieldedPositions({ board, sourcePosition, team, species = null 
 
 export function coveredPositions({ board, sourcePosition, team, species = null, cache = null, cacheScope = 'after' }) {
     return profileCollector.measure('board_query.covered_positions', () => {
-        return board._positionsOccupiedByTeam(team).filter(targetPosition => {
-            if (targetPosition === sourcePosition) {
-                return false
-            }
+        const { sourceToCoveredTargets } = buildCoverMap({ board, team, cache, cacheScope })
+        const covered = sourceToCoveredTargets.get(sourcePosition) || []
 
-            if (species !== null && board.pieceTypeAt(targetPosition) !== species) {
-                return false
-            }
+        if (species === null) {
+            return covered
+        }
 
-            return coveringPositions({ board, targetPosition, team, cache, cacheScope }).includes(sourcePosition)
-        })
+        return covered.filter((position) => board.pieceTypeAt(position) === species)
     })
 }
 

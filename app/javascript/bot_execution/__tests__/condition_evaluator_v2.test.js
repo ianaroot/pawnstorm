@@ -1147,4 +1147,294 @@ describe('ConditionEvaluatorV2', () => {
       expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
     })
   })
+
+  describe('v2 cover semantics', () => {
+    it('does not count the reverse direction as cover', () => {
+      const board = buildBoard({
+        pieces: {
+          e2: 'wP',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'king'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('does not count cover when the blocked side of the board contains only allies and empty squares', () => {
+      const board = buildBoard({
+        pieces: {
+          a3: 'wP',
+          a2: 'wR',
+          e1: 'wK',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'rook'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'pawn'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('does not count a diagonal pawn as cover for a rook when no opposing slider can access that side', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          b2: 'wP',
+          e1: 'wK',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'rook'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'pawn'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('counts a forward pawn as cover for a rook when an opposing rook can access that file', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          a2: 'wP',
+          e1: 'wK',
+          a8: 'bR',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'rook'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('counts a diagonal pawn as cover for a rook when an opposing bishop can access that side', () => {
+      const board = buildBoard({
+        pieces: {
+          a1: 'wR',
+          b2: 'wP',
+          e1: 'wK',
+          f8: 'bB',
+          h8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('e1', 'e2', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'rook'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('does not increase king cover when a move only opens a remote latent slider route', () => {
+      const board = buildBoard({
+        pieces: {
+          e8: 'bK',
+          f7: 'bP',
+          g4: 'bN',
+          d1: 'wQ',
+          a1: 'wK'
+        },
+        allowedToMove: Board.BLACK
+      })
+
+      const moveObject = getMove('g4', 'f6', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'any',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'king',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonValue: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('does not count cover when the only attacker route reaches the ray by capturing the cover piece', () => {
+      const board = buildBoard({
+        pieces: {
+          g1: 'wK',
+          h2: 'wP',
+          a2: 'wP',
+          f4: 'bQ',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'king',
+            boardScope: 'prior'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('counts shields as a subset of covers', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            operator: 'cover',
+            target: 'allied',
+            targetFilter: 'king'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+  })
 })

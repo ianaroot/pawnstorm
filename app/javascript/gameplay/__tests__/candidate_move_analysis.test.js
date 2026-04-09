@@ -1244,7 +1244,6 @@ describe('CandidateMoveAnalysis', () => {
   })
 
   describe('covers', () => {
-
     it('does not count the reverse direction as cover', () => {
       const board = buildBoard({
         pieces: {
