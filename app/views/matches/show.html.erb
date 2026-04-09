@@ -65,8 +65,8 @@
       data-current-user-id="<%= current_user.id %>"
       data-white-bot-owner-id="<%= @match.white_player_type == 'Bot' ? @match.white_player.user_id : '' %>"
       data-black-bot-owner-id="<%= @match.black_player_type == 'Bot' ? @match.black_player.user_id : '' %>"
-      data-white-compiled-program-snapshot="<%= json_escape(@match.white_compiled_program_snapshot.to_json) %>"
-      data-black-compiled-program-snapshot="<%= json_escape(@match.black_compiled_program_snapshot.to_json) %>"
+      data-white-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:white).to_json) %>"
+      data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
     >
       <div class="game-page">
         <div class="match-show-meta">
