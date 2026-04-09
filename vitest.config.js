@@ -1,4 +1,7 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config';
+
+const appJavascriptPath = fileURLToPath(new URL('./app/javascript', import.meta.url))
 
 export default defineConfig({
   test: {
@@ -22,9 +25,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      editorV2: "/app/javascript/editorV2",
-      gameplay: "/app/javascript/gameplay",
-      bot_execution: "/app/javascript/bot_execution"
+      editorV2: `${appJavascriptPath}/editorV2`,
+      gameplay: `${appJavascriptPath}/gameplay`,
+      bot_execution: `${appJavascriptPath}/bot_execution`
     }
   }
 
