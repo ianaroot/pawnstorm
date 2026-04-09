@@ -1,4 +1,5 @@
   import Board from "gameplay/board"
+  import profileCollector from "gameplay/profile_collector"
   import Rules from "gameplay/rules"
   import {
     adjacentPositions,
@@ -18,15 +19,21 @@
           this.moveObject = moveObject
           this._afterBoard = null
           this._availableMovesCache = new Map()
+          this._positionMobilityCache = new Map()
+          this._relationalResultCache = new Map()
+          this._relatedTargetPositionsCache = new Map()
+          this._boardQueryCache = {}
         }
 
     afterBoard() {
-      if (!this._afterBoard) {
-        const nextBoard = this.board.lightClone()
-        nextBoard._hypotheticallyMovePiece(this.moveObject)
-        this._afterBoard = nextBoard
-      }
-      return this._afterBoard
+      return profileCollector.measure('cma.v2.after_board', () => {
+        if (!this._afterBoard) {
+          const nextBoard = this.board.lightClone()
+          nextBoard._hypotheticallyMovePiece(this.moveObject)
+          this._afterBoard = nextBoard
+        }
+        return this._afterBoard
+      })
     }
 
     boardForScope(boardScope = AFTER_BOARD) {
@@ -42,23 +49,36 @@
     }
 
     availableMovesFrom(position, boardScope = AFTER_BOARD) {
-      const key = `${boardScope}:${position}`
-      if (this._availableMovesCache.has(key)) { return this._availableMovesCache.get(key) }
-      const board = this.boardForScope(boardScope)
-      const moves = Rules.availableMovesFrom({ board, startPosition: position })
-      this._availableMovesCache.set(key, moves)
-      return moves
+      return profileCollector.measure('cma.v2.available_moves_from', () => {
+        const key = `${boardScope}:${position}`
+        if (this._availableMovesCache.has(key)) { return this._availableMovesCache.get(key) }
+        const board = this.boardForScope(boardScope)
+        const moves = Rules.availableMovesFrom({ board, startPosition: position })
+        this._availableMovesCache.set(key, moves)
+        return moves
+      })
     }
 
     positionMobility(position, boardScope = AFTER_BOARD) {
-        const board = this.boardForScope(boardScope)
-        const pieceType = board.pieceTypeAt(position)
-        const moveObjects = this.availableMovesFrom(position, boardScope)
-        if (pieceType === Board.PAWN) {
-        const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
-        return destinations.size
-        }
-        return moveObjects.length
+        return profileCollector.measure('cma.v2.position_mobility', () => {
+          const key = `${boardScope}:${position}`
+          if (this._positionMobilityCache.has(key)) { return this._positionMobilityCache.get(key) }
+
+          const board = this.boardForScope(boardScope)
+          const pieceType = board.pieceTypeAt(position)
+          const moveObjects = this.availableMovesFrom(position, boardScope)
+          let mobility
+
+          if (pieceType === Board.PAWN) {
+            const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
+            mobility = destinations.size
+          } else {
+            mobility = moveObjects.length
+          }
+
+          this._positionMobilityCache.set(key, mobility)
+          return mobility
+        })
     }
     movedPieceValue(boardScope = AFTER_BOARD) {
         return materialValue(this.resolvedMovedPiece(boardScope).species)
@@ -199,42 +219,46 @@
     }
 
     comparisonValueFor({ comparisonValue, subject, subjectFilter = "any", subjectFilterMode = null, operator }) {
-        if (typeof comparisonValue === "number") {
-            return comparisonValue
-        }
-        switch (comparisonValue) {
-        case "moved_piece_value":
-            return this.movedPieceValue(AFTER_BOARD)
-        case "enemy_moved_piece_value":
-            return this.enemyMovedPieceValue()
-        case "captured_piece_value":
-            return this.capturedPieceValue()
-        case "enemy_captured_piece_value":
-            return this.enemyCapturedPieceValue()
-        case "prior_board_state":
-            return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator })
-        default:
-            throw new Error(`Unsupported V2 comparison value: ${comparisonValue}`)
-        }
+        return profileCollector.measure('cma.v2.comparison_value_for', () => {
+          if (typeof comparisonValue === "number") {
+              return comparisonValue
+          }
+          switch (comparisonValue) {
+          case "moved_piece_value":
+              return this.movedPieceValue(AFTER_BOARD)
+          case "enemy_moved_piece_value":
+              return this.enemyMovedPieceValue()
+          case "captured_piece_value":
+              return this.capturedPieceValue()
+          case "enemy_captured_piece_value":
+              return this.enemyCapturedPieceValue()
+          case "prior_board_state":
+              return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator })
+          default:
+              throw new Error(`Unsupported V2 comparison value: ${comparisonValue}`)
+          }
+        })
     }
 
     // ---------------------------------------------     UNARY BLOCK     ------------------------------------------
     unaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      switch (subject) {
-        case "allied":
-        case "enemy":
-          return this.generalSubjectUnaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope })
-        case "moved_piece":
-          return this.movedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
-        case "captured_piece":
-          return this.capturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
-        case "enemy_moved_piece":
-          return this.enemyMovedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
-        case "enemy_captured_piece":
-          return this.enemyCapturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
-        default:
-          throw new Error(`Unsupported V2 unary subject: ${subject}`)
-      }
+      return profileCollector.measure('cma.v2.unary_value', () => {
+        switch (subject) {
+          case "allied":
+          case "enemy":
+            return this.generalSubjectUnaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope })
+          case "moved_piece":
+            return this.movedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
+          case "captured_piece":
+            return this.capturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
+          case "enemy_moved_piece":
+            return this.enemyMovedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
+          case "enemy_captured_piece":
+            return this.enemyCapturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
+          default:
+            throw new Error(`Unsupported V2 unary subject: ${subject}`)
+        }
+      })
     }
 
     priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator }) {
@@ -242,40 +266,48 @@
     }
 
     generalSubjectUnaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      const team = subject === "allied" ? this.movedPieceTeam() : this.enemyTeam()
-      const board = this.boardForScope(boardScope)
-      const positions = board._positionsOccupiedByTeam(team).filter(position => {
-        return this.matchesFilter({ species: board.pieceTypeAt(position), filter: subjectFilter, filterMode: subjectFilterMode })
+      return profileCollector.measure('cma.v2.general_subject_unary_value', () => {
+        const team = subject === "allied" ? this.movedPieceTeam() : this.enemyTeam()
+        const board = this.boardForScope(boardScope)
+        const positions = board._positionsOccupiedByTeam(team).filter(position => {
+          return this.matchesFilter({ species: board.pieceTypeAt(position), filter: subjectFilter, filterMode: subjectFilterMode })
+        })
+        switch (operator) {
+          case "count":
+            return positions.length
+          case "value":
+            return profileCollector.measure('cma.v2.general_subject_unary_value.value', () => {
+              return positions.reduce((sum, position) => {
+                return sum + materialValue(board.pieceTypeAt(position))
+              }, 0)
+            })
+          case "mobility":
+            return profileCollector.measure('cma.v2.general_subject_unary_value.mobility', () => {
+              return positions.reduce((sum, position) => {
+                return sum + this.positionMobility(position, boardScope)
+              }, 0)
+            })
+          default:
+            throw new Error(`Unsupported V2 unary operator for ${subject}: ${operator}`)
+        }
       })
-      switch (operator) {
-        case "count":
-          return positions.length
-        case "value":
-          return positions.reduce((sum, position) => {
-            return sum + materialValue(board.pieceTypeAt(position))
-          }, 0)
-        case "mobility":
-          return positions.reduce((sum, position) => {
-            return sum + this.positionMobility(position, boardScope)
-          }, 0)
-        default:
-          throw new Error(`Unsupported V2 unary operator for ${subject}: ${operator}`)
-      }
     }
 
     movedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      const resolved = this.resolvedMovedPiece(boardScope)
-      if (!this.matchesFilter({species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode})) { return 0 }
-      switch (operator) {
-        case "count":
-          return 1
-        case "value":
-          return materialValue(resolved.species)
-        case "mobility":
-          return this.positionMobility(resolved.position, boardScope)
-        default:
-          throw new Error(`Unsupported V2 unary operator for moved_piece: ${operator}`)
-      }
+      return profileCollector.measure('cma.v2.moved_piece_unary_value', () => {
+        const resolved = this.resolvedMovedPiece(boardScope)
+        if (!this.matchesFilter({species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode})) { return 0 }
+        switch (operator) {
+          case "count":
+            return 1
+          case "value":
+            return materialValue(resolved.species)
+          case "mobility":
+            return this.positionMobility(resolved.position, boardScope)
+          default:
+            throw new Error(`Unsupported V2 unary operator for moved_piece: ${operator}`)
+        }
+      })
     }
 
     capturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
@@ -293,20 +325,22 @@
     }
 
     enemyMovedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      const resolved = this.resolvedEnemyMovedPiece(boardScope)
-      if (!resolved) { return 0 }
-      if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
-      switch (operator) {
-        case "count":
-          return 1
-        case "value":
-          return materialValue(resolved.species)
-        case "mobility":
-          if (!resolved.presentOnBoard) return 0
-          return this.positionMobility(resolved.position, boardScope)
-        default:
-          throw new Error(`Unsupported V2 unary operator for enemy_moved_piece: ${operator}`)
-      }
+      return profileCollector.measure('cma.v2.enemy_moved_piece_unary_value', () => {
+        const resolved = this.resolvedEnemyMovedPiece(boardScope)
+        if (!resolved) { return 0 }
+        if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
+        switch (operator) {
+          case "count":
+            return 1
+          case "value":
+            return materialValue(resolved.species)
+          case "mobility":
+            if (!resolved.presentOnBoard) return 0
+            return this.positionMobility(resolved.position, boardScope)
+          default:
+            throw new Error(`Unsupported V2 unary operator for enemy_moved_piece: ${operator}`)
+        }
+      })
     }
 
     enemyCapturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
@@ -329,36 +363,56 @@
         operator,
         target, targetFilter = "any", targetFilterMode = null, boardScope = AFTER_BOARD
     }) {
-        const candidateSubjectPositions = this.relationalActorPositions({ actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, boardScope })
-        const candidateTargetPositions = this.relationalActorPositions({ actor: target, filter: targetFilter, filterMode: targetFilterMode, boardScope })
-        const candidateTargetPositionSet = new Set(candidateTargetPositions)
-        const pairs = []
-        candidateSubjectPositions.forEach((subjectPosition) => {
-            const relatedTargetPositions = this.relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope })
-            relatedTargetPositions.forEach((targetPosition) => {
-                if (!candidateTargetPositionSet.has(targetPosition)) { return }
-                pairs.push({ subjectPosition, targetPosition })
-            })
-        })
-        return {
-            pairs, // pairs in the return is not strictly speaking necessary but may simplify debugging in the future
-            subjectPositions: this.uniquePositions(pairs.map(pair => pair.subjectPosition)),
-            targetPositions: this.uniquePositions(pairs.map(pair => pair.targetPosition))
+        const cacheKey = [
+          boardScope,
+          subject,
+          subjectFilter,
+          subjectFilterMode || "include",
+          operator,
+          target,
+          targetFilter,
+          targetFilterMode || "include"
+        ].join(":")
+        if (this._relationalResultCache.has(cacheKey)) {
+          return this._relationalResultCache.get(cacheKey)
         }
+
+        return profileCollector.measure('cma.v2.relational_result', () => {
+            const candidateSubjectPositions = this.relationalActorPositions({ actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, boardScope })
+            const candidateTargetPositions = this.relationalActorPositions({ actor: target, filter: targetFilter, filterMode: targetFilterMode, boardScope })
+            const candidateTargetPositionSet = profileCollector.measure('cma.v2.relational_result.target_set', () => new Set(candidateTargetPositions))
+            const pairs = []
+            candidateSubjectPositions.forEach((subjectPosition) => {
+                const relatedTargetPositions = this.relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope })
+                relatedTargetPositions.forEach((targetPosition) => {
+                    if (!candidateTargetPositionSet.has(targetPosition)) { return }
+                    pairs.push({ subjectPosition, targetPosition })
+                })
+            })
+            const result = {
+                pairs, // pairs in the return is not strictly speaking necessary but may simplify debugging in the future
+                subjectPositions: this.uniquePositions(pairs.map(pair => pair.subjectPosition)),
+                targetPositions: this.uniquePositions(pairs.map(pair => pair.targetPosition))
+            }
+            this._relationalResultCache.set(cacheKey, result)
+            return result
+        })
     }
     
     relationalActorPositions({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
-      switch (actor) {
-        case "allied":
-        case "enemy":
-          return this.generalRelationalPositions({ actor, filter, filterMode, boardScope })
-        case "moved_piece":
-          return this.movedPieceRelationalPositions({ filter, filterMode, boardScope })
-        case "enemy_moved_piece":
-          return this.enemyMovedPieceRelationalPositions({ filter, filterMode, boardScope })
-        default:
-          throw new Error(`Unsupported V2 relational actor: ${actor}`)
-      }
+      return profileCollector.measure('cma.v2.relational_actor_positions', () => {
+        switch (actor) {
+          case "allied":
+          case "enemy":
+            return this.generalRelationalPositions({ actor, filter, filterMode, boardScope })
+          case "moved_piece":
+            return this.movedPieceRelationalPositions({ filter, filterMode, boardScope })
+          case "enemy_moved_piece":
+            return this.enemyMovedPieceRelationalPositions({ filter, filterMode, boardScope })
+          default:
+            throw new Error(`Unsupported V2 relational actor: ${actor}`)
+        }
+      })
     }
 
     generalRelationalPositions({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
@@ -392,28 +446,49 @@
     }
 
     relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope = AFTER_BOARD }) {
-        const board = this.boardForScope(boardScope)
-        const targetTeam = this.relationalTeamForActor(target)
-        switch (operator) {
-              case "attack": {
-                    const subjectTeam = board.teamAt(subjectPosition)
-                    return controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
-                    return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam })
-                }
-                case "defend": {
-                    const subjectTeam = board.teamAt(subjectPosition)
-                    return controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
-                    return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam })
-                }
-            case "adjacent":
-                return adjacentPositions({ board, targetPosition: subjectPosition, team: targetTeam })
-            case "shield":
-                return shieldedPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
-            case "cover":
-                return coveredPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
-            default:
-                throw new Error(`Unsupported V2 relational operator: ${operator}`)
+        const cacheKey = `${boardScope}:${operator}:${subjectPosition}:${target}`
+        if (this._relatedTargetPositionsCache.has(cacheKey)) {
+            return this._relatedTargetPositionsCache.get(cacheKey)
         }
+
+        return profileCollector.measure('cma.v2.related_target_positions_for_subject', () => {
+            const board = this.boardForScope(boardScope)
+            const targetTeam = this.relationalTeamForActor(target)
+            let positions
+            switch (operator) {
+                  case "attack": {
+                        const subjectTeam = board.teamAt(subjectPosition)
+                        positions = controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                        return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam })
+                        break
+                    }
+                    case "defend": {
+                        const subjectTeam = board.teamAt(subjectPosition)
+                        positions = controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                        return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam })
+                        break
+                    }
+                case "adjacent":
+                    positions = adjacentPositions({ board, targetPosition: subjectPosition, team: targetTeam })
+                    break
+                case "shield":
+                    positions = shieldedPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
+                    break
+                case "cover":
+                    positions = coveredPositions({
+                      board,
+                      sourcePosition: subjectPosition,
+                      team: targetTeam,
+                      cache: this._boardQueryCache,
+                      cacheScope: boardScope
+                    })
+                    break
+                default:
+                    throw new Error(`Unsupported V2 relational operator: ${operator}`)
+            }
+            this._relatedTargetPositionsCache.set(cacheKey, positions)
+            return positions
+        })
     }
 
     relationalTeamForActor(actor) {
@@ -434,14 +509,16 @@
     }
 
     metricForPositions({ metric, positions, boardScope = AFTER_BOARD }) {
-        switch (metric) {
-            case "count":
-                return positions.length
-            case "value":
-                return this.valueOfPositions(positions, boardScope)
-            default:
-                throw new Error(`Unsupported V2 relational metric: ${metric}`)
-        }
+        return profileCollector.measure('cma.v2.metric_for_positions', () => {
+            switch (metric) {
+                case "count":
+                    return positions.length
+                case "value":
+                    return this.valueOfPositions(positions, boardScope)
+                default:
+                    throw new Error(`Unsupported V2 relational metric: ${metric}`)
+            }
+        })
     }
 
     valueOfPositions(positions, boardScope = AFTER_BOARD) {

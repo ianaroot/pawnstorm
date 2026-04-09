@@ -1,52 +1,68 @@
   import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
+  import profileCollector from "gameplay/profile_collector"
 
   class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
-      const v2Analysis = new CandidateMoveAnalysisV2({
-        board: analysis.board,
-        moveObject: analysis.moveObject
-      })
+      return profileCollector.measure('condition.v2.dispatch', () => {
+        const v2Analysis = this.v2AnalysisFor(analysis)
 
-      switch (conditionNode.kind) {
-        case "unary":
-          return this.evaluateUnary(conditionNode, v2Analysis)
-        case "relational":
-          return this.evaluateRelational(conditionNode, v2Analysis)
-        default:
-          throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
+        switch (conditionNode.kind) {
+          case "unary":
+            return this.evaluateUnary(conditionNode, v2Analysis)
+          case "relational":
+            return this.evaluateRelational(conditionNode, v2Analysis)
+          default:
+            throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
+        }
+      })
+    }
+
+    v2AnalysisFor(analysis) {
+      if (!analysis._v2Analysis) {
+        profileCollector.increment('condition.v2.analysis_instances')
+        analysis._v2Analysis = new CandidateMoveAnalysisV2({
+          board: analysis.board,
+          moveObject: analysis.moveObject
+        })
       }
+
+      return analysis._v2Analysis
     }
 
     evaluateUnary(conditionNode, analysis) {
-      const operator = conditionNode.operator
-      const leftValue = analysis.unaryValue({
-        subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
-        subjectFilterMode: conditionNode.subjectFilterMode || null, operator
+      return profileCollector.measure('condition.v2.unary', () => {
+        const operator = conditionNode.operator
+        const leftValue = analysis.unaryValue({
+          subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
+          subjectFilterMode: conditionNode.subjectFilterMode || null, operator
+        })
+        const rightValue = analysis.comparisonValueFor({ comparisonValue: conditionNode.comparisonValue, subject: conditionNode.subject,
+          subjectFilter: conditionNode.subjectFilter || "any", subjectFilterMode: conditionNode.subjectFilterMode || null, operator
+        })
+        return this.compare({ comparator: conditionNode.comparator, leftValue, rightValue })
       })
-      const rightValue = analysis.comparisonValueFor({ comparisonValue: conditionNode.comparisonValue, subject: conditionNode.subject,
-        subjectFilter: conditionNode.subjectFilter || "any", subjectFilterMode: conditionNode.subjectFilterMode || null, operator
-      })
-      return this.compare({ comparator: conditionNode.comparator, leftValue, rightValue })
     }
 
     evaluateRelational(conditionNode, analysis) {
-      const operator = conditionNode.operator
-      if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
-      const result = analysis.relationalResult({
-        subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
-        subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
-        target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
-        targetFilterMode: conditionNode.targetFilterMode || null
+      return profileCollector.measure('condition.v2.relational', () => {
+        const operator = conditionNode.operator
+        if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
+        const result = analysis.relationalResult({
+          subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
+          subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+          target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
+          targetFilterMode: conditionNode.targetFilterMode || null
+        })
+        const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
+        const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
+        if (!subjectComparisonPresent && !targetComparisonPresent) { 
+          return result.pairs.length > 0 
+        } else { 
+          const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
+          const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
+          return subjectPasses && targetPasses
+        }
       })
-      const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
-      const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
-      if (!subjectComparisonPresent && !targetComparisonPresent) { 
-        return result.pairs.length > 0 
-      } else { 
-        const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
-        const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
-        return subjectPasses && targetPasses
-      }
     }
 
     compare({ comparator, leftValue, rightValue }) {
