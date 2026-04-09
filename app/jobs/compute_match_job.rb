@@ -6,7 +6,7 @@ class ComputeMatchJob < ApplicationJob
 
   def perform(match_id)
     match = Match.find(match_id)
-    match.update!(status: :running, error_message: nil)
+    match.update!(status: :running, error_message: nil, profile_data: nil)
 
     Tempfile.create(['match-result', '.json']) do |result_file|
       stdout, stderr, status = run_match_process(match:, result_path: result_file.path)
@@ -15,7 +15,8 @@ class ComputeMatchJob < ApplicationJob
         match.update!(
           status: :failed,
           result: :error,
-          error_message: failure_message_for(match:, status:, stdout:, stderr:)
+          error_message: failure_message_for(match:, status:, stdout:, stderr:),
+          profile_data: profile_data_for(stdout:, stderr:)
         )
         return
       end
@@ -36,7 +37,8 @@ class ComputeMatchJob < ApplicationJob
               stdout: stdout.presence,
               stderr: stderr.presence
             }
-          })
+          }),
+          profile_data: profile_data_for(stdout:, stderr:)
         )
         return
       end
@@ -51,7 +53,8 @@ class ComputeMatchJob < ApplicationJob
         allowed_to_move: result_payload.fetch('allowed_to_move'),
         movement_notation: result_payload.fetch('movement_notation'),
         previous_layouts: [],
-        error_message: nil
+        error_message: nil,
+        profile_data: result_payload['profile']
       )
 
       match.tournament&.enqueue_next_match!
@@ -81,7 +84,7 @@ class ComputeMatchJob < ApplicationJob
 
   def run_match_process(match:, result_path:)
     Open3.capture3(
-      { 'MATCH_RESULT_PATH' => result_path },
+      { 'MATCH_RESULT_PATH' => result_path, 'MATCH_PROFILE' => match_profile_env_value },
       Rails.root.join('node_modules/.bin/vite-node').to_s,
       '--config',
       Rails.root.join('vitest.config.js').to_s,
@@ -119,6 +122,17 @@ class ComputeMatchJob < ApplicationJob
         }
       }
     )
+  end
+
+  def profile_data_for(stdout:, stderr:)
+    parsed_json(stderr)&.dig('board', 'profile') ||
+      parsed_json(stdout)&.dig('profile')
+  end
+
+  def match_profile_env_value
+    return ENV['MATCH_PROFILE'] if ENV.key?('MATCH_PROFILE')
+
+    Rails.env.development? ? '1' : '0'
   end
 
   def parsed_json(value)

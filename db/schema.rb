@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_08_130000) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_08_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -58,6 +58,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_08_130000) do
     t.json "white_compiled_program_snapshot"
     t.json "black_compiled_program_snapshot"
     t.bigint "tournament_id"
+    t.json "profile_data"
     t.index ["black_player_type", "black_player_id"], name: "index_matches_on_black_player"
     t.index ["creator_id"], name: "index_matches_on_creator_id"
     t.index ["tournament_id"], name: "index_matches_on_tournament_id"

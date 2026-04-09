@@ -4,6 +4,7 @@ import Board from 'gameplay/board'
 import BotRunner from 'gameplay/bot_runner'
 import Layout from 'gameplay/layout'
 import MatchRunner from 'gameplay/match_runner'
+import profileCollector from 'gameplay/profile_collector'
 
 async function readStdin() {
   const chunks = []
@@ -34,7 +35,8 @@ function boardSnapshot(board) {
     movement_notation: board.movementNotation,
     result_type: board._resultType,
     winner: board._winner,
-    game_over: board.gameOver
+    game_over: board.gameOver,
+    profile: profileCollector.snapshot()
   }
 }
 
@@ -76,14 +78,17 @@ async function main() {
     }
   })
 
-  const turns = matchRunner.play({ maxPlies: payload.max_plies || 200 })
+  const turns = profileCollector.measure('match.total', () => {
+    return matchRunner.play({ maxPlies: payload.max_plies || 200 })
+  })
   const resultPayload = {
     result: resultFor(board, payload.max_plies || 200, turns.length),
     lay_out: board.layOut,
     captured_pieces: board.capturedPieces,
     allowed_to_move: board.allowedToMove,
     movement_notation: board.movementNotation,
-    previous_layouts: []
+    previous_layouts: [],
+    profile: profileCollector.snapshot()
   }
 
   writeFileSync(resultPath, JSON.stringify(resultPayload), 'utf8')

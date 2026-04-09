@@ -1,5 +1,6 @@
 import CandidateMoveAnalysis from 'gameplay/candidate_move_analysis'
 import ConditionEvaluator from 'gameplay/condition_evaluator'
+import profileCollector from 'gameplay/profile_collector'
 import Rules from 'gameplay/rules'
 
 class BotRunner {
@@ -11,64 +12,76 @@ class BotRunner {
   }
 
   scoreMove({ board, moveObject, withTrace = false }) {
-    const analysis = this.analysisFactory({ board, moveObject })
-    const state = {
-      score: 0,
-      halted: false,
-      trace: withTrace ? [] : null
-    }
+    return profileCollector.measure('bot.score_move', () => {
+      const analysis = this.analysisFactory({ board, moveObject })
+      const state = {
+        score: 0,
+        halted: false,
+        trace: withTrace ? [] : null
+      }
 
-    this.runNode(this.compiledProgram.root, analysis, state)
+      this.runNode(this.compiledProgram.root, analysis, state)
 
-    if (!withTrace) {
-      return state.score
-    }
+      if (!withTrace) {
+        return state.score
+      }
 
-    return {
-      score: state.score,
-      halted: state.halted,
-      trace: state.trace
-    }
+      return {
+        score: state.score,
+        halted: state.halted,
+        trace: state.trace
+      }
+    })
   }
 
   legalMoves({ board }) {
-    const movingTeam = board.allowedToMove
-    const positions = board._positionsOccupiedByTeam(movingTeam)
+    return profileCollector.measure('bot.legal_moves', () => {
+      const movingTeam = board.allowedToMove
+      const positions = board._positionsOccupiedByTeam(movingTeam)
 
-    return positions.flatMap(startPosition => {
-      return Rules.availableMovesFrom({ board, startPosition })
+      return positions.flatMap(startPosition => {
+        return Rules.availableMovesFrom({ board, startPosition })
+      })
     })
   }
 
   scoreLegalMoves({ board, withTrace = false }) {
-    return this.legalMoves({ board }).map(moveObject => {
-      const scoreResult = this.scoreMove({ board, moveObject, withTrace })
+    return profileCollector.measure('bot.score_legal_moves', () => {
+      const legalMoves = this.legalMoves({ board })
+      profileCollector.increment('bot.legal_move_count', legalMoves.length)
 
-      if (!withTrace) {
+      return legalMoves.map(moveObject => {
+        const scoreResult = this.scoreMove({ board, moveObject, withTrace })
+
+        if (!withTrace) {
+          return {
+            moveObject,
+            score: scoreResult
+          }
+        }
+
         return {
           moveObject,
-          score: scoreResult
+          ...scoreResult
         }
-      }
-
-      return {
-        moveObject,
-        ...scoreResult
-      }
+      })
     })
   }
 
   selectMove({ board }) {
-    const scoredMoves = this.scoreLegalMoves({ board })
-    if (scoredMoves.length === 0) {
-      return null
-    }
+    return profileCollector.measure('bot.select_move', () => {
+      const scoredMoves = this.scoreLegalMoves({ board })
+      if (scoredMoves.length === 0) {
+        return null
+      }
 
-    const topScore = Math.max(...scoredMoves.map(result => result.score))
-    const topMoves = scoredMoves.filter(result => result.score === topScore)
-    const selected = topMoves[Math.floor(this.random() * topMoves.length)]
+      const topScore = Math.max(...scoredMoves.map(result => result.score))
+      const topMoves = scoredMoves.filter(result => result.score === topScore)
+      profileCollector.increment('bot.top_move_tie_count', topMoves.length)
+      const selected = topMoves[Math.floor(this.random() * topMoves.length)]
 
-    return selected.moveObject
+      return selected.moveObject
+    })
   }
 
   runNode(nodeId, analysis, state) {
@@ -88,7 +101,9 @@ class BotRunner {
         break
       case 'condition':
         {
-          const passed = this.conditionEvaluator.evaluate(node.data, analysis)
+          const passed = profileCollector.measure('bot.run_node.condition', () => {
+            return this.conditionEvaluator.evaluate(node.data, analysis)
+          })
           this.recordTrace(state, {
             nodeId,
             nodeType: 'condition',
@@ -102,6 +117,7 @@ class BotRunner {
         }
         break
       case 'action':
+        profileCollector.increment('bot.action_node_count')
         this.applyAction(nodeId, node.data, state)
         break
       default:
@@ -120,34 +136,36 @@ class BotRunner {
   }
 
   applyAction(nodeId, actionNode, state) {
-    const scoreBefore = state.score
+    profileCollector.measure('bot.apply_action', () => {
+      const scoreBefore = state.score
 
-    switch (actionNode.actionType) {
-      case 'add':
-        state.score += actionNode.value
-        break
-      case 'subtract':
-        state.score -= actionNode.value
-        break
-      case 'set':
-        state.score = actionNode.value
-        break
-      case 'return':
-        state.score = actionNode.value
-        state.halted = true
-        break
-      default:
-        throw new Error(`Unknown action type: ${actionNode.actionType}`)
-    }
+      switch (actionNode.actionType) {
+        case 'add':
+          state.score += actionNode.value
+          break
+        case 'subtract':
+          state.score -= actionNode.value
+          break
+        case 'set':
+          state.score = actionNode.value
+          break
+        case 'return':
+          state.score = actionNode.value
+          state.halted = true
+          break
+        default:
+          throw new Error(`Unknown action type: ${actionNode.actionType}`)
+      }
 
-    this.recordTrace(state, {
-      nodeId,
-      nodeType: 'action',
-      actionType: actionNode.actionType,
-      value: actionNode.value,
-      scoreBefore,
-      scoreAfter: state.score,
-      halted: state.halted
+      this.recordTrace(state, {
+        nodeId,
+        nodeType: 'action',
+        actionType: actionNode.actionType,
+        value: actionNode.value,
+        scoreBefore,
+        scoreAfter: state.score,
+        halted: state.halted
+      })
     })
   }
 

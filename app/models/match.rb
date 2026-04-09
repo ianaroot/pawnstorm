@@ -9,6 +9,7 @@
  #  movement_notation :json
  #  previous_layouts  :json
  #  error_message     :text
+ #  profile_data      :json
  #  result            :integer
  #  status            :integer          default("pending"), not null
  #  created_at        :datetime         not null

@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import profileCollector from 'gameplay/profile_collector'
 import Rules from 'gameplay/rules'
 import { adjacentPositions, attackingPositions, controlledSquares, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
 
@@ -24,23 +25,27 @@ class CandidateMoveAnalysis {
   }
 
   afterBoard() {
-    if (!this._afterBoard) {
-      const nextBoard = this.board.lightClone()
-      nextBoard._hypotheticallyMovePiece(this.moveObject)
-      this._afterBoard = nextBoard
-    }
+    return profileCollector.measure('cma.v1.after_board', () => {
+      if (!this._afterBoard) {
+        const nextBoard = this.board.lightClone()
+        nextBoard._hypotheticallyMovePiece(this.moveObject)
+        this._afterBoard = nextBoard
+      }
 
-    return this._afterBoard
+      return this._afterBoard
+    })
   }
 
   availableMovesFrom(position, boardScope = 'after') {
-    const key = `${boardScope}:${position}`
-    if (this._availableMovesCache.has(key)) return this._availableMovesCache.get(key)
+    return profileCollector.measure('cma.v1.available_moves_from', () => {
+      const key = `${boardScope}:${position}`
+      if (this._availableMovesCache.has(key)) return this._availableMovesCache.get(key)
 
-    const board = this.boardForScope(boardScope)
-    const moves = Rules.availableMovesFrom({ board, startPosition: position })
-    this._availableMovesCache.set(key, moves)
-    return moves
+      const board = this.boardForScope(boardScope)
+      const moves = Rules.availableMovesFrom({ board, startPosition: position })
+      this._availableMovesCache.set(key, moves)
+      return moves
+    })
   }
 
   boardForScope(boardScope = 'after') {
@@ -71,15 +76,17 @@ class CandidateMoveAnalysis {
   }
 
   queryValue(query, boardScope = 'after') {
-    if (query.subject === 'captured_piece') {
-      // Captured pieces are currently the only subject resolved from move-event state
-      // rather than a live position on the after-board. If more such subjects appear,
-      // this branch may want a broader shared path later.
-      return this.capturedPieceQueryValue(query)
-    }
+    return profileCollector.measure('cma.v1.query_value', () => {
+      if (query.subject === 'captured_piece') {
+        // Captured pieces are currently the only subject resolved from move-event state
+        // rather than a live position on the after-board. If more such subjects appear,
+        // this branch may want a broader shared path later.
+        return this.capturedPieceQueryValue(query)
+      }
 
-    const positions = this.subjectPositions(query, boardScope)
-    return this.positionalQueryValue(query, positions, boardScope)
+      const positions = this.subjectPositions(query, boardScope)
+      return this.positionalQueryValue(query, positions, boardScope)
+    })
   }
 
   relationValue(conditionNode) {
