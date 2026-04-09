@@ -1,6 +1,8 @@
 import MovesCalculator from "gameplay/moves_calculator";
 import Board from "gameplay/board";
 import MoveObject from "gameplay/move_object";
+import { controllingPositions } from "gameplay/board_query_utils";
+import profileCollector from "gameplay/profile_collector";
 
 class Rules {
   
@@ -47,7 +49,7 @@ class Rules {
     // }
     const startPosition = moveObject.startPosition
     const teamString = board.teamAt(startPosition)
-    let newBoard = board.lightClone();
+    let newBoard = board.lightCloneForCheckQuery();
     newBoard._hypotheticallyMovePiece( moveObject )
     return this.checkQuery({board: newBoard, teamString: teamString})
   }
@@ -55,7 +57,7 @@ class Rules {
   static pieceWillBeAttackedAfterMove({board: board, moveObject: moveObject}){
     const startPosition = moveObject.startPosition
     const teamString  = board.teamAt(startPosition)
-    let newBoard = board.lightClone();
+    let newBoard = board.lightCloneForCheckQuery();
     newBoard._hypotheticallyMovePiece( moveObject )
     return this.checkQuery({board: newBoard, teamString: teamString})
   }
@@ -63,34 +65,18 @@ class Rules {
   static checkQuery({board: board, teamString: teamString}){
     // let opposingTeamString = Board.opposingTeam(teamString),
       let kingPosition = board._kingPosition(teamString);
-      return this.pieceIsAttacked({board: board, defensePosition: kingPosition})
+      return this.pieceIsAttacked({board: board, defensePosition: kingPosition, defendingTeam: teamString})
   }
 
-  static pieceIsAttacked({board: board, defensePosition: defensePosition}){ //doesn't care if the position is occupied
-    let teamString = board.teamAt(defensePosition),
-      opposingTeamString = Board.opposingTeam(teamString),
-      enemyPositions = board._positionsOccupiedByTeam(opposingTeamString);
-    for(let i = 0; i < enemyPositions.length; i++){
-      let enemyPosition = enemyPositions[i],
-      enemyPieceType = board.pieceTypeAt( enemyPosition ),
-      differential = defensePosition - enemyPosition;
-      if( !( differential % 10 === 0 || differential % 8 === 0 || differential % 6 === 0 || differential % 7 === 0 || differential % 9 === 0 || differential % 15 === 0 || differential % 17 === 0 || Math.abs(differential) < 8 ) ){ continue}
-      let movesCalculator = new MovesCalculator({board: board, startPosition: enemyPosition, ignoreCastles: true}),//, endPosition: defensePosition}),
-      responseMoveObject = new MoveObject({illegal: true}); //defaulting to illegal, will be overridden if it's not
-      for(let i = 0; i < movesCalculator.moveObjects.length; i++){
-        let currentMoveObject = movesCalculator.moveObjects[i],
-        endPosition = currentMoveObject.endPosition;
-        if( endPosition === defensePosition ){
-          responseMoveObject = currentMoveObject
-          // console.log(responseMoveObject)
-          break;
-        }
-      }
-      if( !responseMoveObject.illegal ){
-        return true
-      }
-    };
-    return false
+  static pieceIsAttacked({board: board, defensePosition: defensePosition, defendingTeam: defendingTeam = null}){ //doesn't care if the position is occupied
+    const teamString = defendingTeam || board.teamAt(defensePosition)
+    const opposingTeamString = Board.opposingTeam(teamString)
+
+    return controllingPositions({
+      board,
+      targetPosition: defensePosition,
+      team: opposingTeamString
+    }).length > 0
   }
 
   static positionsControlledByTeam({board: board, team: team}){
@@ -101,15 +87,29 @@ class Rules {
   }
 
   static availableMovesFrom({board: board, startPosition: startPosition}){
-    let moveObjects = new MovesCalculator({board: board, startPosition: startPosition}).moveObjects,
-      safeMoves = [];
-    for(let i = 0; i < moveObjects.length; i++){
-      let moveObject = moveObjects[i]
-      if( !this.checkQueryWithMove({board: board, moveObject: moveObject})){
-        safeMoves.push(moveObject);
-      }
-    }
-    return safeMoves
+    return profileCollector.measure('rules.available_moves_from', () => {
+      const pieceType = board.pieceTypeAt(startPosition)
+      const pieceLabel = {
+        [Board.PAWN]: 'pawn',
+        [Board.NIGHT]: 'knight',
+        [Board.BISHOP]: 'bishop',
+        [Board.ROOK]: 'rook',
+        [Board.QUEEN]: 'queen',
+        [Board.KING]: 'king'
+      }[pieceType] || 'unknown'
+
+      return profileCollector.measure(`rules.available_moves_from.${pieceLabel}`, () => {
+        let moveObjects = new MovesCalculator({board: board, startPosition: startPosition}).moveObjects,
+          safeMoves = [];
+        for(let i = 0; i < moveObjects.length; i++){
+          let moveObject = moveObjects[i]
+          if( !this.checkQueryWithMove({board: board, moveObject: moveObject})){
+            safeMoves.push(moveObject);
+          }
+        }
+        return safeMoves
+      })
+    })
   }
   static viablePositionsFromKeysOnly({board: board, startPosition: startPosition}){
     // if(

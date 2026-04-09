@@ -14,6 +14,7 @@ class Board {
     this._winner = winner
     this._resultType = resultType || null
     this.recentMoveContext = recentMoveContext || null
+    this._castlingRightsCache = null
   }
 
   static get WHITE()  { return "W" }
@@ -94,6 +95,20 @@ class Board {
           resultType: this._resultType,
           recentMoveContext: cloneRecentMoveContext(this.recentMoveContext)
         });
+    return newBoard;
+  }
+
+  lightCloneForCheckQuery() {
+    let newLayout = Board._deepCopy(this.layOut),
+        newBoard = new Board({
+          layOut: newLayout,
+          allowedToMove: this.allowedToMove,
+          gameOver: this.gameOver,
+          previousLayouts: JSON.stringify([]),
+          winner: this._winner,
+          resultType: this._resultType
+        });
+    newBoard._castlingRightsCache = this._castlingRightsCache
     return newBoard;
   }
 
@@ -425,7 +440,7 @@ class Board {
     const notation = baseNotation + (epNotation || "") + notationSuffix
     const moveNumber = Math.floor(this.movementNotation.length / 2) + 1
     const prefixedNotation = this.allowedToMove === Board.WHITE ? `${moveNumber}. ${notation}` : notation
-
+    this._castlingRightsCache = null
     this.movementNotation.push(prefixedNotation)
   }
 
@@ -538,15 +553,26 @@ class Board {
   }
 
   // DUBIOUS OWNERNSHIP, probably part of the match history?
+  blackPawnRecentlyDoubleSteppedTo(position){
+    const recentMove = this.recentMoveContext
+    if (!recentMove) { return null }
 
-  blackPawnDoubleSteppedTo(position){// only to be called if already know the black pawn is at rank 4 and in "position"
+    return (
+      recentMove.movingTeam === Board.BLACK &&
+      recentMove.movedPieceSpeciesBeforeMove === Board.PAWN &&
+      recentMove.movedPieceStartPosition === position + 16 &&
+      recentMove.movedPieceEndPosition === position
+    )
+  }
+
+  blackPawnDoubleSteppedToFromNotation(position){
     var result = true;
     let blackMoves = this.movesNotationFor(Board.BLACK),
       square = Board.gridCalculator(position),
       singleStepSquare = square[0] + '6',
-      doubleStepSquare = square[0] + '5'; //e.g. if the double step would've been to a5, then the single step it may have taken would've been to a6
+      doubleStepSquare = square[0] + '5';
     if( blackMoves[blackMoves.length -1] != doubleStepSquare ){
-      return false //this means that even if it did at some point double step, it wasn't the last move to occur
+      return false
     }
     for(let i = 0; i < blackMoves.length; i++){
       if( blackMoves[i] === singleStepSquare || blackMoves[i] === singleStepSquare + "+" ){
@@ -557,15 +583,34 @@ class Board {
     return result
   }
 
-  whitePawnDoubleSteppedTo(position){// only to be called if already know the white pawn is at rank 4 and in "position"
+  blackPawnDoubleSteppedTo(position){
+    const recentMoveResult = this.blackPawnRecentlyDoubleSteppedTo(position)
+    if (recentMoveResult !== null) { return recentMoveResult }
+
+    return this.blackPawnDoubleSteppedToFromNotation(position)
+  }
+
+  whitePawnRecentlyDoubleSteppedTo(position){
+    const recentMove = this.recentMoveContext
+    if (!recentMove) { return null }
+
+    return (
+      recentMove.movingTeam === Board.WHITE &&
+      recentMove.movedPieceSpeciesBeforeMove === Board.PAWN &&
+      recentMove.movedPieceStartPosition === position - 16 &&
+      recentMove.movedPieceEndPosition === position
+    )
+  }
+
+  whitePawnDoubleSteppedToFromNotation(position){
     var result = true;
     let whiteMoves = this.movesNotationFor(Board.WHITE),
       square = Board.gridCalculator(position),
       singleStepSquare = square[0] + '3',
-      doubleStepSquare = square[0] + '4'; //e.g. if the double step would've been to a4, then the single step it may have taken would've been to a3
+      doubleStepSquare = square[0] + '4';
     if( whiteMoves[whiteMoves.length -1] != doubleStepSquare ){
-        return false //this means that even if it did at some point double step, it wasn't the last move to occur
-      }
+      return false
+    }
     for(let i = 0; i < whiteMoves.length; i++){
       if( whiteMoves[i] === singleStepSquare || whiteMoves[i] === singleStepSquare + "+" ){
         result = false;
@@ -573,6 +618,38 @@ class Board {
       }
     }
     return result
+  }
+
+  whitePawnDoubleSteppedTo(position){
+    const recentMoveResult = this.whitePawnRecentlyDoubleSteppedTo(position)
+    if (recentMoveResult !== null) { return recentMoveResult }
+
+    return this.whitePawnDoubleSteppedToFromNotation(position)
+  }
+
+  castlingRightsCache() {
+    if (this._castlingRightsCache) {
+      return this._castlingRightsCache
+    }
+    const rights = {
+      [Board.WHITE]: { kingMoved: false, kingSideRookMoved: false, queenSideRookMoved: false },
+      [Board.BLACK]: { kingMoved: false, kingSideRookMoved: false, queenSideRookMoved: false }
+    }
+    for (let i = 0; i < this.movementNotation.length; i++) {
+      const notation = this.movementNotation[i]
+      const team = i % 2 === 0 ? Board.WHITE : Board.BLACK
+      if (/^(\d+\.\s+)?K/.test(notation) || /^(\d+\.\s+)?O-O/.test(notation) || /^(\d+\.\s+)?O-O-O/.test(notation)) {
+        rights[team].kingMoved = true
+      }
+      if (/^(\d+\.\s+)?R(h|g|f)/.test(notation)) {
+        rights[team].kingSideRookMoved = true
+      }
+      if (/^(\d+\.\s+)?R(a|b|c|d)/.test(notation)) {
+        rights[team].queenSideRookMoved = true
+      }
+    }
+    this._castlingRightsCache = rights
+    return rights
   }
 
   castleSquaresAreEmpty(squares){
@@ -592,7 +669,7 @@ class Board {
       testBoard._emptify(startPosition)
       testBoard._placePiece({ position: square, pieceObject: king })
 
-      if (Rules.pieceIsAttacked({ board: testBoard, defensePosition: square })) {
+      if (Rules.pieceIsAttacked({ board: testBoard, defensePosition: square, defendingTeam: Board.parseTeam(king) })) {
         return false
       }
     }
@@ -604,29 +681,21 @@ class Board {
     if( this.pieceObject(startPosition + 3) !== team + Board.ROOK ){ return false }
     if (Rules.checkQuery({board: this, teamString: this.allowedToMove}) ){ return false }
     // thinks you can castle if rook was captured but never moved!
-    let moveNotations = this.movesNotationFor(team),
-      regexes = [/Rh/, /Rg/, /Rf/];
-    if(team === Board.WHITE){
-      if( startPosition !== 4 ){ return false }
-      var necessaryEmptyPositions = [5,6];
-      regexes.push(/Ke2/, /Kd1/, /Kd2/, /Kf1/, /Kf2/, /Kg1/, /Kc1/)
-    } else if( team === Board.BLACK){
-      if( startPosition !== 60 ){ return false }
-      var necessaryEmptyPositions = [61,62];
-        regexes.push(/Ke7/, /Kd8/, /Kd7/, /Kf8/, /Kf7/, /Kg8/, /Kc8/)
+    const rights = this.castlingRightsCache()[team]
+    if (rights.kingMoved || rights.kingSideRookMoved) { return false }
+    if (team === Board.WHITE) {
+      if (startPosition !== 4) { return false }
+      var necessaryEmptyPositions = [5, 6]
+    } else if (team === Board.BLACK) {
+      if (startPosition !== 60) { return false }
+      var necessaryEmptyPositions = [61, 62]
     } else {
       alert('bad input for board.kingSideCastleViableFor :' + team)
     }
+
     if (!this.castleSquaresAreEmpty(necessaryEmptyPositions)) { return false }
     if (!this.castlePathIsSafe(startPosition, [startPosition + 1, startPosition + 2])) {
       return false
-    }
-    for(let j = 0; j < moveNotations.length; j++){
-      let notation = moveNotations[j];
-      for(let i = 0; i < regexes.length; i++){
-        let regex = regexes[i];
-        if( regex.exec(notation) ){ return false }
-      }
     }
     return true;
   }
@@ -635,29 +704,20 @@ class Board {
     if( this.pieceObject(startPosition - 4) !== team + Board.ROOK ){ return false }
     if (Rules.checkQuery({board: this, teamString: this.allowedToMove}) ){ return false }
     // thinks you can castle if rook was captured but never moved!
-    let moveNotations = this.movesNotationFor(team),
-      regexes = [/Ra/, /Rb/, /Rc/, /Rd/];
-    if(team === Board.WHITE){
-      if( startPosition !== 4 ){ return false }
-      var necessaryEmptyPositions = [1,2,3];
-        regexes.push(/Ke2/, /Kd1/, /Kd2/, /Kf1/, /Kf2/, /Kg1/, /Kc1/);
-    } else if( team === Board.BLACK){
-      if( startPosition !== 60 ){ return false }
-      var necessaryEmptyPositions = [59,58,57];
-        regexes.push(/Ke7/, /Kd8/, /Kd7/, /Kf8/, /Kf7/, /Kg8/, /Kc8/)
+    const rights = this.castlingRightsCache()[team]
+    if (rights.kingMoved || rights.queenSideRookMoved) { return false }
+    if (team === Board.WHITE) {
+      if (startPosition !== 4) { return false }
+      var necessaryEmptyPositions = [1, 2, 3]
+    } else if (team === Board.BLACK) {
+      if (startPosition !== 60) { return false }
+      var necessaryEmptyPositions = [59, 58, 57]
     } else {
       alert('bad input for board.kingSideCastleViableFor :' + team)
     }
     if (!this.castleSquaresAreEmpty(necessaryEmptyPositions)) { return false }
     if (!this.castlePathIsSafe(startPosition, [startPosition + 1, startPosition + 2])) {
       return false
-    }
-    for(let j = 0; j < moveNotations.length; j++){
-      let notation = moveNotations[j];
-      for(let i = 0; i < regexes.length; i++){
-        let regex = regexes[i];
-        if( regex.exec(notation) ){ return false }
-      }
     }
     return true;
   }

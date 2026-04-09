@@ -336,6 +336,19 @@ describe('Rules castling', () => {
 
     expect(move.illegal).toBe(true)
   })
+
+  it('does not allow castling if the rook has been captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    const move = getMove('e1', 'g1', board)
+
+    expect(move.illegal).toBe(true)
+  })
 })
 
 describe('Rules notation recording', () => {
