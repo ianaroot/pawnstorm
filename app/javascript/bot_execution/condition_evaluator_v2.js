@@ -3,18 +3,15 @@
 
   class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
-      return profileCollector.measure('condition.v2.dispatch', () => {
-        const v2Analysis = this.v2AnalysisFor(analysis)
-
-        switch (conditionNode.kind) {
-          case "unary":
-            return this.evaluateUnary(conditionNode, v2Analysis)
-          case "relational":
-            return this.evaluateRelational(conditionNode, v2Analysis)
-          default:
-            throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
-        }
-      })
+      const v2Analysis = this.v2AnalysisFor(analysis)
+      switch (conditionNode.kind) {
+        case "unary":
+          return this.evaluateUnary(conditionNode, v2Analysis)
+        case "relational":
+          return this.evaluateRelational(conditionNode, v2Analysis)
+        default:
+          throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
+      }
     }
 
     v2AnalysisFor(analysis) {

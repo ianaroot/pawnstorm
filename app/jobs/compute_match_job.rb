@@ -130,9 +130,9 @@ class ComputeMatchJob < ApplicationJob
   end
 
   def match_profile_env_value
-    return ENV['MATCH_PROFILE'] if ENV.key?('MATCH_PROFILE')
-
-    Rails.env.development? ? '1' : '0'
+    # return ENV['MATCH_PROFILE'] if ENV.key?('MATCH_PROFILE')
+    # Rails.env.development? ? '1' : '0'
+    return '0'
   end
 
   def parsed_json(value)

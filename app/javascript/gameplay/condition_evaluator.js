@@ -6,36 +6,31 @@ class ConditionEvaluator {
   }
 
   evaluate(conditionNode, analysis) {
-    return profileCollector.measure('condition.evaluate', () => {
-      const version = Number(conditionNode.version || 1)
+    const version = Number(conditionNode.version || 1)
+    if (version === 2) { return this.v2.evaluate(conditionNode, analysis) }
 
-      if (version === 2) {
-        return profileCollector.measure('condition.v2.evaluate', () => this.v2.evaluate(conditionNode, analysis))
-      }
+    const query = {
+      subject: conditionNode.subject,
+      subjectSpecifier: conditionNode.subjectSpecifier || 'any',
+      relation: conditionNode.relation,
+      relationSpecifier: conditionNode.relationSpecifier || 'any',
+      subjectSpecifierMode: conditionNode.subjectSpecifierMode || 'include',
+      relationSpecifierMode: conditionNode.relationSpecifierMode || 'include'
+    }
+    const value = analysis.queryValue(query, 'after')
+    const comparison = conditionNode.comparison
+    const comparisonValue = this.comparisonValueFor(conditionNode, analysis, query)
 
-      const query = {
-        subject: conditionNode.subject,
-        subjectSpecifier: conditionNode.subjectSpecifier || 'any',
-        relation: conditionNode.relation,
-        relationSpecifier: conditionNode.relationSpecifier || 'any',
-        subjectSpecifierMode: conditionNode.subjectSpecifierMode || 'include',
-        relationSpecifierMode: conditionNode.relationSpecifierMode || 'include'
-      }
-      const value = analysis.queryValue(query, 'after')
-      const comparison = conditionNode.comparison
-      const comparisonValue = this.comparisonValueFor(conditionNode, analysis, query)
-
-      switch (comparison) {
-        case 'equal_to':
-          return value === comparisonValue
-        case 'greater_than':
-          return value > comparisonValue
-        case 'less_than':
-          return value < comparisonValue
-        default:
-          throw new Error(`Unknown comparison: ${comparison}`)
-      }
-    })
+    switch (comparison) {
+      case 'equal_to':
+        return value === comparisonValue
+      case 'greater_than':
+        return value > comparisonValue
+      case 'less_than':
+        return value < comparisonValue
+      default:
+        throw new Error(`Unknown comparison: ${comparison}`)
+    }
   }
 
   comparisonValueFor(conditionNode, analysis, query) {

@@ -46,42 +46,33 @@ class BotRunner {
   }
 
   scoreLegalMoves({ board, withTrace = false }) {
-    return profileCollector.measure('bot.score_legal_moves', () => {
-      const legalMoves = this.legalMoves({ board })
-      profileCollector.increment('bot.legal_move_count', legalMoves.length)
+    const legalMoves = this.legalMoves({ board })
+    profileCollector.increment('bot.legal_move_count', legalMoves.length)
+    return legalMoves.map(moveObject => {
+      const scoreResult = this.scoreMove({ board, moveObject, withTrace })
 
-      return legalMoves.map(moveObject => {
-        const scoreResult = this.scoreMove({ board, moveObject, withTrace })
-
-        if (!withTrace) {
-          return {
-            moveObject,
-            score: scoreResult
-          }
-        }
-
+      if (!withTrace) {
         return {
           moveObject,
-          ...scoreResult
+          score: scoreResult
         }
-      })
+      }
+
+      return {
+        moveObject,
+        ...scoreResult
+      }
     })
   }
 
   selectMove({ board }) {
-    return profileCollector.measure('bot.select_move', () => {
-      const scoredMoves = this.scoreLegalMoves({ board })
-      if (scoredMoves.length === 0) {
-        return null
-      }
-
-      const topScore = Math.max(...scoredMoves.map(result => result.score))
-      const topMoves = scoredMoves.filter(result => result.score === topScore)
-      profileCollector.increment('bot.top_move_tie_count', topMoves.length)
-      const selected = topMoves[Math.floor(this.random() * topMoves.length)]
-
-      return selected.moveObject
-    })
+    const scoredMoves = this.scoreLegalMoves({ board })
+    if (scoredMoves.length === 0) { return null }
+    const topScore = Math.max(...scoredMoves.map(result => result.score))
+    const topMoves = scoredMoves.filter(result => result.score === topScore)
+    profileCollector.increment('bot.top_move_tie_count', topMoves.length)
+    const selected = topMoves[Math.floor(this.random() * topMoves.length)]
+    return selected.moveObject
   }
 
   runNode(nodeId, analysis, state) {
