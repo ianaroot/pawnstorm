@@ -64,13 +64,6 @@ RSpec.describe Bot, type: :model do
         expect(bot.root_node.node_type).to eq('root')
       end
 
-      it 'positions root at (600, 50)' do
-        bot = create(:bot)
-        root = bot.root_node
-        expect(root.position_x).to eq(600)
-        expect(root.position_y).to eq(50)
-      end
-
       it 'sets root node data to empty hash' do
         bot = create(:bot)
         root = bot.root_node

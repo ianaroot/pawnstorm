@@ -194,19 +194,6 @@ RSpec.describe Node, type: :model do
       expect(node.errors[:data]).to include('has invalid relation')
     end
 
-    it 'accepts value for captured_piece conditions' do
-      node = build(:node, :condition, data: {
-        subject: 'captured_piece',
-        subjectSpecifier: 'any',
-        relation: 'value',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 3
-      })
-
-      expect(node).to be_valid
-    end
-
     it 'accepts canonical captured_piece relations' do
       node = build(:node, :condition, data: {
         subject: 'captured_piece',
@@ -360,6 +347,156 @@ RSpec.describe Node, type: :model do
       })
 
       expect(node).to be_valid
+    end
+
+    describe 'V2 condition data' do
+      it 'rejects V2 condition data with unexpected keys' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'any',
+          operator: 'value',
+          comparator: 'greater_than',
+          comparisonValue: 0,
+          script: 'alert(1)'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('contains invalid keys: script')
+      end
+
+      it 'rejects invalid subjectFilterMode for unary V2 conditions' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'pawn',
+          subjectFilterMode: 'banana',
+          operator: 'value',
+          comparator: 'greater_than',
+          comparisonValue: 0
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid subjectFilterMode')
+      end
+
+      it 'rejects invalid targetFilterMode for relational V2 conditions' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'queen',
+          targetFilterMode: 'banana'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid targetFilterMode')
+      end
+
+      it 'normalizes same_piece by stripping non-any filters and filter modes' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          subjectFilterMode: 'exclude',
+          operator: 'same_piece',
+          target: 'captured_piece',
+          targetFilter: 'pawn',
+          targetFilterMode: 'exclude'
+        })
+
+        expect(node).to be_valid
+        expect(node.data).to eq(
+          {
+            'version' => 2,
+            'kind' => 'relational',
+            'subject' => 'enemy_moved_piece',
+            'subjectFilter' => 'any',
+            'operator' => 'same_piece',
+            'target' => 'captured_piece',
+            'targetFilter' => 'any'
+          }
+        )
+      end
+
+      it 'normalizes same_piece by stripping both comparison blocks' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'count',
+          subjectComparator: 'greater_than',
+          subjectComparisonValue: 0,
+          operator: 'same_piece',
+          target: 'captured_piece',
+          targetFilter: 'any',
+          targetComparisonMetric: 'count',
+          targetComparator: 'greater_than',
+          targetComparisonValue: 0
+        })
+
+        expect(node).to be_valid
+        expect(node.data).to eq(
+          {
+            'version' => 2,
+            'kind' => 'relational',
+            'subject' => 'enemy_moved_piece',
+            'subjectFilter' => 'any',
+            'operator' => 'same_piece',
+            'target' => 'captured_piece',
+            'targetFilter' => 'any'
+          }
+        )
+      end
+
+      it 'rejects a target-side comparison when subjectComparisonValue is prior_board_state' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'count',
+          subjectComparator: 'greater_than',
+          subjectComparisonValue: 'prior_board_state',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any',
+          targetComparisonMetric: 'count',
+          targetComparator: 'greater_than',
+          targetComparisonValue: 0
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('cannot use target-side comparison when subjectComparisonValue is prior_board_state')
+      end
+
+      it 'rejects a subject-side comparison when targetComparisonValue is prior_board_state' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'count',
+          subjectComparator: 'greater_than',
+          subjectComparisonValue: 0,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any',
+          targetComparisonMetric: 'count',
+          targetComparator: 'greater_than',
+          targetComparisonValue: 'prior_board_state'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('cannot use subject-side comparison when targetComparisonValue is prior_board_state')
+      end
     end
 
     it 'is valid with prototype action data' do

@@ -98,5 +98,35 @@ RSpec.describe ComputeMatchJob, type: :job do
       expect(payload.dig('process', 'exit_status')).to eq(1)
       expect(payload.dig('process', 'stderr')).to eq('kaboom')
     end
+
+    it 'marks the match failed when the subprocess succeeds without writing a result payload' do
+      match = Match.create!(
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_compiled_program_snapshot: { 'version' => 'white-snapshot' },
+        black_compiled_program_snapshot: { 'version' => 'black-snapshot' },
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:read_result_file).and_return('')
+
+      described_class.perform_now(match.id)
+
+      match.reload
+      expect(match.status).to eq('failed')
+      expect(match.result).to eq('error')
+
+      payload = JSON.parse(match.error_message)
+      expect(payload.dig('error', 'name')).to eq('MissingResultPayload')
+      expect(payload.dig('error', 'message')).to eq('Match computation completed without writing a result payload')
+      expect(payload.dig('process', 'exit_status')).to eq(0)
+    end
   end
 end

@@ -64,7 +64,7 @@ RSpec.describe BotCompiler do
 
     context 'v2 condition nodes' do
       let!(:root) { bot.root_node }
-      let!(:condition) do
+      let!(:relational_condition) do
         create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
           version: 2,
           kind: 'relational',
@@ -79,15 +79,28 @@ RSpec.describe BotCompiler do
           targetComparisonValue: 0
         })
       end
-
-      before do
-        connect_nodes(root, condition)
+      let!(:unary_condition) do
+        create(:node, :condition, bot: bot, position_x: 220, position_y: 100, data: {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          subjectFilterMode: 'include',
+          operator: 'value',
+          comparator: 'equal_to',
+          comparisonValue: 'captured_piece_value'
+        })
       end
 
-      it 'preserves v2 condition payloads in compiled output' do
+      before do
+        connect_nodes(root, relational_condition)
+        connect_nodes(root, unary_condition)
+      end
+
+      it 'preserves v2 relational condition payloads in compiled output' do
         compiled = described_class.new(bot).compile
 
-        expect(compiled[:nodes][condition.id.to_s][:data]).to eq(
+        expect(compiled[:nodes][relational_condition.id.to_s][:data]).to eq(
           {
             version: 2,
             kind: 'relational',
@@ -100,6 +113,23 @@ RSpec.describe BotCompiler do
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
             targetComparisonValue: 0
+          }
+        )
+      end
+
+      it 'preserves v2 unary condition payloads in compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][unary_condition.id.to_s][:data]).to eq(
+          {
+            version: 2,
+            kind: 'unary',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'pawn',
+            subjectFilterMode: 'include',
+            operator: 'value',
+            comparator: 'equal_to',
+            comparisonValue: 'captured_piece_value'
           }
         )
       end
