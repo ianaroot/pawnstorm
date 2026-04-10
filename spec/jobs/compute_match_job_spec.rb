@@ -83,7 +83,7 @@ RSpec.describe ComputeMatchJob, type: :job do
         previous_layouts: []
       )
 
-      status = instance_double(Process::Status, success?: false)
+      status = instance_double(Process::Status, success?: false, exitstatus: 1)
       allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', 'kaboom', status])
 
       described_class.perform_now(match.id)
@@ -91,7 +91,12 @@ RSpec.describe ComputeMatchJob, type: :job do
       match.reload
       expect(match.status).to eq('failed')
       expect(match.result).to eq('error')
-      expect(match.error_message).to eq('kaboom')
+
+      payload = JSON.parse(match.error_message)
+      expect(payload.dig('error', 'name')).to eq('MatchComputationFailed')
+      expect(payload.dig('error', 'message')).to eq('Match computation failed')
+      expect(payload.dig('process', 'exit_status')).to eq(1)
+      expect(payload.dig('process', 'stderr')).to eq('kaboom')
     end
   end
 end

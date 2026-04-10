@@ -73,6 +73,7 @@ RSpec.describe BotCompiler do
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'queen',
+          targetFilterMode: 'include',
           targetComparisonMetric: 'count',
           targetComparator: 'greater_than',
           targetComparisonValue: 0
@@ -95,6 +96,7 @@ RSpec.describe BotCompiler do
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'queen',
+            targetFilterMode: 'include',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
             targetComparisonValue: 0

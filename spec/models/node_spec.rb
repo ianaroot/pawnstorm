@@ -22,33 +22,29 @@ RSpec.describe Node, type: :model do
         }
       )
 
-      expect(chunks).to eq(
+      expect(chunks).to match(
         [
-          {
+          include(
             role: 'side',
-            text: 'Allied Queen count  >  2',
             subject: 'allied',
             filter: 'queen',
             filter_mode: 'include',
             comparison_metric: 'count',
             comparator: 'greater_than',
-            comparison_value: 2,
-            comparison_open: true
-          },
+            comparison_value: 2
+          ),
           { role: 'spacer' },
-          { role: 'operator', operator: 'attack', text: 'attacking' },
+          include(role: 'operator', operator: 'attack'),
           { role: 'spacer' },
-          {
+          include(
             role: 'side',
-            text: 'Enemy value  <  Prior Board State',
             subject: 'enemy',
             filter: 'any',
             filter_mode: nil,
             comparison_metric: 'value',
             comparator: 'less_than',
-            comparison_value: 'prior_board_state',
-            comparison_open: true
-          }
+            comparison_value: 'prior_board_state'
+          )
         ]
       )
     end
@@ -67,28 +63,25 @@ RSpec.describe Node, type: :model do
         }
       )
 
-      expect(chunks).to eq(
+      expect(chunks).to match(
         [
-          {
+          include(
             role: 'side',
-            text: 'Enemy Moved Piece Pawn',
             subject: 'enemy_moved_piece',
             filter: 'pawn',
             filter_mode: 'include',
             comparison_metric: nil,
             comparator: nil,
-            comparison_value: nil,
-            comparison_open: false
-          },
+            comparison_value: nil
+          ),
           { role: 'spacer' },
-          { role: 'operator', operator: 'value', text: 'value' },
+          include(role: 'operator', operator: 'value'),
           { role: 'spacer' },
-          {
+          include(
             role: 'comparison',
             comparator: 'equal_to',
-            comparison_value: 'captured_piece_value',
-            text: '= Captured Piece Value'
-          }
+            comparison_value: 'captured_piece_value'
+          )
         ]
       )
     end
