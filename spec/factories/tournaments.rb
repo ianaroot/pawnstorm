@@ -7,6 +7,8 @@ FactoryBot.define do
   factory :tournament_entry do
     association :tournament
     association :bot
+    bot_owner { bot.user }
+    display_name { bot.name }
     sequence(:seed_order)
   end
 end

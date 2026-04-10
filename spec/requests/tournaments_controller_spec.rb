@@ -66,6 +66,14 @@ RSpec.describe TournamentsController, type: :request do
       expect(tournament.creator).to eq(user)
       expect(tournament.games_per_pair).to eq(10)
 
+      entries_by_bot_id = tournament.tournament_entries.index_by(&:bot_id)
+      [bot_a, bot_b, bot_c].each do |bot|
+        entry = entries_by_bot_id.fetch(bot.id)
+        expect(entry.display_name).to eq(bot.name)
+        expect(entry.bot_owner).to eq(bot.user)
+        expect(entry.compiled_program_snapshot).to eq(bot.compiled_program)
+      end
+
       pair_counts = tournament.matches.group_by do |match|
         [match.white_player_id, match.black_player_id].sort
       end.transform_values(&:count)
@@ -79,6 +87,11 @@ RSpec.describe TournamentsController, type: :request do
 
       expect(pairing_matches.count { |match| match.white_player == bot_a }).to eq(5)
       expect(pairing_matches.count { |match| match.white_player == bot_b }).to eq(5)
+      expect(tournament.matches).to all(have_attributes(white_tournament_entry: be_present, black_tournament_entry: be_present))
+      tournament.matches.each do |match|
+        expect(match.white_tournament_entry).to eq(entries_by_bot_id.fetch(match.white_player_id))
+        expect(match.black_tournament_entry).to eq(entries_by_bot_id.fetch(match.black_player_id))
+      end
       expect(ComputeMatchJob).to have_been_enqueued.exactly(1).times
     end
 

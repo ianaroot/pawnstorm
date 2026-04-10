@@ -28,9 +28,12 @@ class TournamentsController < ApplicationController
         games_per_pair: @games_per_pair
       )
 
+      tournament_entries_by_bot_id = {}
       selected_bots.each_with_index do |bot, index|
-        tournament.tournament_entries.create!(
+        tournament_entries_by_bot_id[bot.id] = tournament.tournament_entries.create!(
           bot:,
+          bot_owner: bot.user,
+          display_name: bot.name,
           seed_order: index,
           compiled_program_snapshot: compiled_program_snapshot_for(bot)
         )
@@ -45,6 +48,8 @@ class TournamentsController < ApplicationController
           creator: current_user,
           white_player: white_bot,
           black_player: black_bot,
+          white_tournament_entry: tournament_entries_by_bot_id.fetch(white_bot.id),
+          black_tournament_entry: tournament_entries_by_bot_id.fetch(black_bot.id),
           status: :pending,
           result: nil,
           allowed_to_move: 'W',

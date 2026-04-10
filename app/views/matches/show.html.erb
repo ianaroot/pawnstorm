@@ -9,8 +9,8 @@
         <div class="match-show-meta">
           <h1 class="match-show-title">Match <%= @match.id %></h1>
           <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
-          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
+          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
           <% if @rematch_params.present? %>
             <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
               <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
@@ -40,8 +40,8 @@
       <div class="match-show-meta">
         <h1 class="match-show-title">Match <%= @match.id %></h1>
         <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-        <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
-        <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+        <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
+        <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
         <% if @rematch_params.present? %>
           <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
             <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
@@ -63,8 +63,8 @@
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
       data-result="<%= @match.result %>"
       data-current-user-id="<%= current_user.id %>"
-      data-white-bot-owner-id="<%= @match.white_player_type == 'Bot' ? @match.white_player.user_id : '' %>"
-      data-black-bot-owner-id="<%= @match.black_player_type == 'Bot' ? @match.black_player.user_id : '' %>"
+      data-white-bot-owner-id="<%= @match.white_tournament_entry&.bot_owner_id || (@match.white_player_type == 'Bot' ? @match.white_player&.user_id : '') %>"
+      data-black-bot-owner-id="<%= @match.black_tournament_entry&.bot_owner_id || (@match.black_player_type == 'Bot' ? @match.black_player&.user_id : '') %>"
       data-white-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:white).to_json) %>"
       data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
     >
@@ -72,8 +72,8 @@
         <div class="match-show-meta">
           <h1 class="match-show-title">Match <%= @match.id %></h1>
           <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.white_player.respond_to?(:name) ? @match.white_player.name : "#{@match.white_player_type} #{@match.white_player_id}" %></p>
-          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.black_player.respond_to?(:name) ? @match.black_player.name : "#{@match.black_player_type} #{@match.black_player_id}" %></p>
+          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
+          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
           <% if @rematch_params.present? %>
             <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
               <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
