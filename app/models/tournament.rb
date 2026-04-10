@@ -41,7 +41,11 @@ class Tournament < ApplicationRecord
   end
 
   def entrants
-    tournament_entries.includes(:bot).map(&:bot)
+    tournament_entries
+  end
+
+  def bot_entrants
+    tournament_entries.where.not(bot_id: nil)
   end
 
   def pending_matches_count
@@ -74,9 +78,9 @@ class Tournament < ApplicationRecord
   end
 
   def standings_rows
-    rows = entrants.each_with_object({}) do |bot, result|
-      result[bot.id] = {
-        bot: bot,
+    rows = bot_entrants.each_with_object({}) do |entrant, result|
+      result[entrant.id] = {
+        entrant: entrant,
         points: 0.0,
         wins: 0,
         losses: 0,
@@ -87,50 +91,50 @@ class Tournament < ApplicationRecord
     end
 
     matches.includes(:white_player, :black_player).find_each do |match|
-      white_bot = match.white_player
-      black_bot = match.black_player
-      next unless white_bot.is_a?(Bot) && black_bot.is_a?(Bot)
-      next unless rows.key?(white_bot.id) && rows.key?(black_bot.id)
+      white_entrant = match.white_tournament_entry
+      black_entrant = match.black_tournament_entry
+      next unless white_entrant && black_entrant
+      next unless rows.key?(white_entrant.id) && rows.key?(black_entrant.id)
 
       if match.failed?
-        rows[white_bot.id][:failed] += 1
-        rows[black_bot.id][:failed] += 1
+        rows[white_entrant.id][:failed] += 1
+        rows[black_entrant.id][:failed] += 1
         next
       end
 
       next unless match.completed?
 
       if DRAW_RESULTS.include?(match.result)
-        rows[white_bot.id][:points] += 0.5
-        rows[black_bot.id][:points] += 0.5
-        rows[white_bot.id][:draws] += 1
-        rows[black_bot.id][:draws] += 1
+        rows[white_entrant.id][:points] += 0.5
+        rows[black_entrant.id][:points] += 0.5
+        rows[white_entrant.id][:draws] += 1
+        rows[black_entrant.id][:draws] += 1
       elsif match.white_win?
-        rows[white_bot.id][:points] += 1.0
-        rows[white_bot.id][:wins] += 1
-        rows[black_bot.id][:losses] += 1
+        rows[white_entrant.id][:points] += 1.0
+        rows[white_entrant.id][:wins] += 1
+        rows[black_entrant.id][:losses] += 1
       elsif match.black_win?
-        rows[black_bot.id][:points] += 1.0
-        rows[black_bot.id][:wins] += 1
-        rows[white_bot.id][:losses] += 1
+        rows[black_entrant.id][:points] += 1.0
+        rows[black_entrant.id][:wins] += 1
+        rows[white_entrant.id][:losses] += 1
       end
 
-      rows[white_bot.id][:completed] += 1
-      rows[black_bot.id][:completed] += 1
+      rows[white_entrant.id][:completed] += 1
+      rows[black_entrant.id][:completed] += 1
     end
 
     rows.values.sort_by do |row|
-      [-row[:points], -row[:wins], row[:losses], row[:bot].name]
+      [-row[:points], -row[:wins], row[:losses], row[:entrant].display_name]
     end
   end
 
-  def pairing_matches(bot_a, bot_b)
-    normalized_a, normalized_b = normalize_pairing_bots(bot_a, bot_b)
+  def pairing_matches(entrant_a, entrant_b)
+    normalized_a, normalized_b = normalize_pairing_entrants(entrant_a, entrant_b)
 
     matches
-      .includes(:white_player, :black_player)
+      .includes(:white_tournament_entry, :black_tournament_entry)
       .where(
-        "(white_player_id = :a_id AND black_player_id = :b_id) OR (white_player_id = :b_id AND black_player_id = :a_id)",
+        "(white_tournament_entry_id = :a_id AND black_tournament_entry_id = :b_id) OR (white_tournament_entry_id = :b_id AND black_tournament_entry_id = :a_id)",
         a_id: normalized_a.id,
         b_id: normalized_b.id
       )
@@ -138,30 +142,30 @@ class Tournament < ApplicationRecord
       .to_a
   end
 
-  def pairing_row(bot_a, bot_b)
-    normalized_a, normalized_b = normalize_pairing_bots(bot_a, bot_b)
+  def pairing_row(entrant_a, entrant_b)
+    normalized_a, normalized_b = normalize_pairing_entrants(entrant_a, entrant_b)
     all_pairing_matches = pairing_matches(normalized_a, normalized_b)
 
     {
-      bot_a: normalized_a,
-      bot_b: normalized_b,
+      entrant_a: normalized_a,
+      entrant_b: normalized_b,
       total_record: pairing_record(all_pairing_matches, normalized_a, normalized_b),
-      bot_a_white_record: directional_pairing_record(normalized_a, normalized_b),
-      bot_b_white_record: directional_pairing_record(normalized_b, normalized_a),
+      entrant_a_white_record: directional_pairing_record(normalized_a, normalized_b),
+      entrant_b_white_record: directional_pairing_record(normalized_b, normalized_a),
       matches: all_pairing_matches
     }
   end
 
-  def directional_pairing_summary(white_bot, black_bot)
-    directional_record = directional_pairing_record(white_bot, black_bot)
+  def directional_pairing_summary(white_entrant, black_entrant)
+    directional_record = directional_pairing_record(white_entrant, black_entrant)
 
     {
-      white_bot: white_bot,
-      black_bot: black_bot,
-      white_points: directional_record[:record][:bot_a_points],
-      black_points: directional_record[:record][:bot_b_points],
-      white_wins: directional_record[:record][:bot_a_wins],
-      black_wins: directional_record[:record][:bot_b_wins],
+      white_entrant: white_entrant,
+      black_entrant: black_entrant,
+      white_points: directional_record[:record][:entrant_a_points],
+      black_points: directional_record[:record][:entrant_b_points],
+      white_wins: directional_record[:record][:entrant_a_wins],
+      black_wins: directional_record[:record][:entrant_b_wins],
       draws: directional_record[:record][:draws],
       failed: directional_record[:record][:failed],
       matches: directional_record[:matches]
@@ -174,16 +178,16 @@ class Tournament < ApplicationRecord
     "tournaments/#{id}/paused"
   end
 
-  def normalize_pairing_bots(bot_a, bot_b)
-    [bot_a, bot_b].sort_by(&:id)
+  def normalize_pairing_entrants(entrant_a, entrant_b)
+    [entrant_a, entrant_b].sort_by(&:id)
   end
 
-  def pairing_record(pairing_matches, bot_a, bot_b)
+  def pairing_record(pairing_matches, entrant_a, entrant_b)
     record = {
-      bot_a_points: 0.0,
-      bot_b_points: 0.0,
-      bot_a_wins: 0,
-      bot_b_wins: 0,
+      entrant_a_points: 0.0,
+      entrant_b_points: 0.0,
+      entrant_a_wins: 0,
+      entrant_b_wins: 0,
       draws: 0,
       failed: 0
     }
@@ -197,18 +201,18 @@ class Tournament < ApplicationRecord
       next unless match.completed?
 
       if DRAW_RESULTS.include?(match.result)
-        record[:bot_a_points] += 0.5
-        record[:bot_b_points] += 0.5
+        record[:entrant_a_points] += 0.5
+        record[:entrant_b_points] += 0.5
         record[:draws] += 1
       elsif match.white_win? || match.black_win?
-        winner = match.white_win? ? match.white_player : match.black_player
+        winner = match.white_win? ? match.white_tournament_entry : match.black_tournament_entry
 
-        if winner == bot_a
-          record[:bot_a_points] += 1.0
-          record[:bot_a_wins] += 1
+        if winner == entrant_a
+          record[:entrant_a_points] += 1.0
+          record[:entrant_a_wins] += 1
         else
-          record[:bot_b_points] += 1.0
-          record[:bot_b_wins] += 1
+          record[:entrant_b_points] += 1.0
+          record[:entrant_b_wins] += 1
         end
       end
     end
@@ -216,17 +220,17 @@ class Tournament < ApplicationRecord
     record
   end
 
-  def directional_pairing_record(white_bot, black_bot)
+  def directional_pairing_record(white_entrant, black_entrant)
     directional_matches = matches
-      .includes(:white_player, :black_player)
-      .where(white_player: white_bot, black_player: black_bot)
+      .includes(:white_tournament_entry, :black_tournament_entry)
+      .where(white_tournament_entry: white_entrant, black_tournament_entry: black_entrant)
       .order(:created_at)
       .to_a
 
     {
-      white_bot: white_bot,
-      black_bot: black_bot,
-      record: pairing_record(directional_matches, white_bot, black_bot),
+      white_entrant: white_entrant,
+      black_entrant: black_entrant,
+      record: pairing_record(directional_matches, white_entrant, black_entrant),
       matches: directional_matches
     }
   end

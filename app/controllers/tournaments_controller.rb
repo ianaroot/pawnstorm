@@ -66,8 +66,8 @@ class TournamentsController < ApplicationController
   end
 
   def show
-    @tournament = Tournament.includes(tournament_entries: :bot, matches: [:white_player, :black_player]).find(params[:id])
-    @entrants = @tournament.entrants
+    @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
+    @entrants = @tournament.bot_entrants
     @standings = @tournament.standings_rows
 
     respond_to do |format|
@@ -85,16 +85,16 @@ class TournamentsController < ApplicationController
   end
 
   def pairing
-    @tournament = Tournament.includes(tournament_entries: :bot, matches: [:white_player, :black_player]).find(params[:id])
-    requested_bot_ids = [params[:bot_a_id], params[:bot_b_id]].map(&:to_i).uniq
-    requested_bots = @tournament.entrants.where(id: requested_bot_ids)
+    @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
+    requested_entrant_ids = [params[:entrant_a_id], params[:entrant_b_id]].map(&:to_i).uniq
+    requested_entrants = @tournament.bot_entrants.where(id: requested_entrant_ids)
 
-    if requested_bot_ids.size != 2 || requested_bots.size != 2
+    if requested_entrant_ids.size != 2 || requested_entrants.size != 2
       redirect_to tournament_path(@tournament), alert: 'That pairing is not valid for this tournament.'
       return
     end
 
-    @pairing = @tournament.pairing_row(requested_bots.first, requested_bots.last)
+    @pairing = @tournament.pairing_row(requested_entrants.first, requested_entrants.last)
   end
 
   def abort

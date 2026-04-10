@@ -8,25 +8,25 @@
       <thead>
         <tr>
           <th>White \ Black</th>
-          <% entrants.each do |black_bot| %>
-            <th><%= black_bot.name %></th>
+          <% entrants.each do |black_entrant| %>
+            <th><%= black_entrant.display_name %></th>
           <% end %>
         </tr>
       </thead>
       <tbody>
-        <% entrants.each do |white_bot| %>
-          <tr data-tournament-row="matrix-<%= white_bot.id %>">
-            <th><%= white_bot.name %></th>
-            <% entrants.each do |black_bot| %>
+        <% entrants.each do |white_entrant| %>
+          <tr data-tournament-row="matrix-<%= white_entrant.id %>">
+            <th><%= white_entrant.display_name %></th>
+            <% entrants.each do |black_entrant| %>
               <td
                 class="tournament-pairing-matrix__cell"
-                data-tournament-field="matrix-<%= white_bot.id %>-<%= black_bot.id %>"
+                data-tournament-field="matrix-<%= white_entrant.id %>-<%= black_entrant.id %>"
               >
-                <% if white_bot == black_bot %>
+                <% if white_entrant == black_entrant %>
                   -
                 <% else %>
-                  <% summary = tournament.directional_pairing_summary(white_bot, black_bot) %>
-                  <%= link_to tournament_pairing_path(tournament, white_bot, black_bot), class: 'tournament-pairing-matrix__link' do %>
+                  <% summary = tournament.directional_pairing_summary(white_entrant, black_entrant) %>
+                  <%= link_to tournament_pairing_path(tournament, white_entrant, black_entrant), class: 'tournament-pairing-matrix__link' do %>
                     <span class="tournament-pairing-matrix__primary">
                       <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
                     </span>

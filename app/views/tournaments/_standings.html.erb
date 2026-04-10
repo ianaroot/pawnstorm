@@ -14,14 +14,14 @@
     </thead>
     <tbody>
       <% standings.each do |row| %>
-        <tr data-tournament-row="standings-<%= row[:bot].id %>">
-          <td data-tournament-field="standings-<%= row[:bot].id %>-name"><%= row[:bot].name %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-points"><%= row[:points] %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-wins"><%= row[:wins] %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-draws"><%= row[:draws] %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-losses"><%= row[:losses] %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-completed"><%= row[:completed] %></td>
-          <td data-tournament-field="standings-<%= row[:bot].id %>-failed"><%= row[:failed] %></td>
+        <tr data-tournament-row="standings-<%= row[:entrant].id %>">
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-name"><%= row[:entrant].display_name %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-points"><%= row[:points] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-wins"><%= row[:wins] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-draws"><%= row[:draws] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-losses"><%= row[:losses] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-completed"><%= row[:completed] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-failed"><%= row[:failed] %></td>
         </tr>
       <% end %>
     </tbody>
