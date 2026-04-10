@@ -3,6 +3,7 @@
   import Rules from "gameplay/rules"
   import {
     adjacentPositions,
+    cachedControlledSquares,
     controlledSquares,
     coveredPositions,
     materialValue,
@@ -21,6 +22,7 @@
           this._availableMovesCache = new Map()
           this._positionMobilityCache = new Map()
           this._relationalResultCache = new Map()
+          this._relationalActorPositionsCache = new Map()
           this._relatedTargetPositionsCache = new Map()
           this._boardQueryCache = {}
         }
@@ -272,6 +274,7 @@
         const positions = board._positionsOccupiedByTeam(team).filter(position => {
           return this.matchesFilter({ species: board.pieceTypeAt(position), filter: subjectFilter, filterMode: subjectFilterMode })
         })
+
         switch (operator) {
           case "count":
             return positions.length
@@ -400,18 +403,30 @@
     }
     
     relationalActorPositions({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      const cacheKey = `${boardScope}:${actor}:${filter}:${filterMode || "include"}`
+      if (this._relationalActorPositionsCache.has(cacheKey)) {
+        return this._relationalActorPositionsCache.get(cacheKey)
+      }
+
       return profileCollector.measure('cma.v2.relational_actor_positions', () => {
+        let positions
         switch (actor) {
           case "allied":
           case "enemy":
-            return this.generalRelationalPositions({ actor, filter, filterMode, boardScope })
+            positions = this.generalRelationalPositions({ actor, filter, filterMode, boardScope })
+            break
           case "moved_piece":
-            return this.movedPieceRelationalPositions({ filter, filterMode, boardScope })
+            positions = this.movedPieceRelationalPositions({ filter, filterMode, boardScope })
+            break
           case "enemy_moved_piece":
-            return this.enemyMovedPieceRelationalPositions({ filter, filterMode, boardScope })
+            positions = this.enemyMovedPieceRelationalPositions({ filter, filterMode, boardScope })
+            break
           default:
             throw new Error(`Unsupported V2 relational actor: ${actor}`)
         }
+
+        this._relationalActorPositionsCache.set(cacheKey, positions)
+        return positions
       })
     }
 
@@ -458,13 +473,23 @@
             switch (operator) {
                   case "attack": {
                         const subjectTeam = board.teamAt(subjectPosition)
-                        positions = controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                        positions = cachedControlledSquares({
+                          board,
+                          attackerPosition: subjectPosition,
+                          cache: this._boardQueryCache,
+                          cacheScope: boardScope
+                        }).filter((targetPosition) => {
                         return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam })
                         break
                     }
                     case "defend": {
                         const subjectTeam = board.teamAt(subjectPosition)
-                        positions = controlledSquares({ board, attackerPosition: subjectPosition }).filter((targetPosition) => {
+                        positions = cachedControlledSquares({
+                          board,
+                          attackerPosition: subjectPosition,
+                          cache: this._boardQueryCache,
+                          cacheScope: boardScope
+                        }).filter((targetPosition) => {
                         return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam })
                         break
                     }
