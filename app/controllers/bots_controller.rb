@@ -3,7 +3,7 @@ class BotsController < ApplicationController
   before_action :set_bot, only: [:edit, :update, :destroy, :compile]
 
   def index
-    @bots = Bot.all
+    @bots = current_user.bots.order(:name)
   end
 
   def new
