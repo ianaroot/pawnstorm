@@ -67,7 +67,7 @@ class TournamentsController < ApplicationController
 
   def show
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
-    @entrants = @tournament.bot_entrants
+    @entrants = @tournament.entrants
     @standings = @tournament.standings_rows
 
     respond_to do |format|
@@ -87,7 +87,7 @@ class TournamentsController < ApplicationController
   def pairing
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
     requested_entrant_ids = [params[:entrant_a_id], params[:entrant_b_id]].map(&:to_i).uniq
-    requested_entrants = @tournament.bot_entrants.where(id: requested_entrant_ids)
+    requested_entrants = @tournament.entrants.where(id: requested_entrant_ids)
 
     if requested_entrant_ids.size != 2 || requested_entrants.size != 2
       redirect_to tournament_path(@tournament), alert: 'That pairing is not valid for this tournament.'

@@ -28,10 +28,12 @@ Rails.application.routes.draw do
   if Rails.env.development? || Rails.env.test?
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
     resources :tournaments, only: [:new, :create, :show] do
-      get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
-      post :abort, on: :member
-      post :pause, on: :member
-      post :resume, on: :member
+      member do
+        get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
+        post :abort
+        post :pause
+        post :resume
+      end
     end
   end
 

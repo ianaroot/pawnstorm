@@ -44,10 +44,6 @@ class Tournament < ApplicationRecord
     tournament_entries
   end
 
-  def bot_entrants
-    tournament_entries.where.not(bot_id: nil)
-  end
-
   def pending_matches_count
     matches.pending.count
   end
@@ -78,7 +74,7 @@ class Tournament < ApplicationRecord
   end
 
   def standings_rows
-    rows = bot_entrants.each_with_object({}) do |entrant, result|
+    rows = entrants.each_with_object({}) do |entrant, result|
       result[entrant.id] = {
         entrant: entrant,
         points: 0.0,

@@ -26,7 +26,7 @@
                   -
                 <% else %>
                   <% summary = tournament.directional_pairing_summary(white_entrant, black_entrant) %>
-                  <%= link_to tournament_pairing_path(tournament, white_entrant, black_entrant), class: 'tournament-pairing-matrix__link' do %>
+                  <%= link_to pairing_tournament_path(tournament, white_entrant, black_entrant), class: 'tournament-pairing-matrix__link' do %>
                     <span class="tournament-pairing-matrix__primary">
                       <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
                     </span>

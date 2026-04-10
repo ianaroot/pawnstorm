@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_10_151000) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_10_152000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -84,7 +84,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_151000) do
 
   create_table "tournament_entries", force: :cascade do |t|
     t.bigint "tournament_id", null: false
-    t.bigint "bot_id", null: false
+    t.bigint "bot_id"
     t.integer "seed_order", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -124,7 +124,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_151000) do
   add_foreign_key "matches", "tournaments"
   add_foreign_key "matches", "users", column: "creator_id"
   add_foreign_key "nodes", "bots"
-  add_foreign_key "tournament_entries", "bots"
+  add_foreign_key "tournament_entries", "bots", on_delete: :nullify
   add_foreign_key "tournament_entries", "tournaments"
   add_foreign_key "tournament_entries", "users", column: "bot_owner_id"
   add_foreign_key "tournaments", "users", column: "creator_id"
