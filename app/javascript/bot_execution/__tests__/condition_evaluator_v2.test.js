@@ -199,6 +199,128 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(false)
     })
 
+    it('honors subject exclude filters when the remaining subject can still make the relation true', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          c2: 'wP',
+          d7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('c2', 'c3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectFilterMode: 'exclude',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('honors subject exclude filters when excluding the only matching subject makes the relation false', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wP',
+          d7: 'bB'
+        }
+      })
+
+      const moveObject = getMove('d4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectFilterMode: 'exclude',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('honors target exclude filters when the remaining target can still satisfy the relation', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bB',
+          d8: 'bP'
+        }
+      })
+
+      const moveObject = getMove('d4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'pawn',
+            targetFilterMode: 'exclude'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('honors target exclude filters when excluding the only matching target makes the relation false', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          d7: 'bP'
+        }
+      })
+
+      const moveObject = getMove('d4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'pawn',
+            targetFilterMode: 'exclude'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
     it('uses a subject-only comparison block as the full truth condition when it passes', () => {
       const board = buildBoard({
         pieces: {
@@ -1145,6 +1267,67 @@ describe('ConditionEvaluatorV2', () => {
       expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
       expect(evaluate(v2Condition, board, moveObject)).toBe(true)
       expect(evaluate(v2Condition, board, moveObject)).toBe(evaluateV1(v1Condition, board, moveObject))
+    })
+  })
+
+  describe('v2 shield semantics', () => {
+    it('does not count a blocker as a shielder when no enemy slider line exists', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e1: 'wK',
+          g8: 'bN',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            operator: 'shield',
+            target: 'allied',
+            targetFilter: 'king'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('does not count lines with multiple blockers as a shield', () => {
+      const board = buildBoard({
+        pieces: {
+          d3: 'wR',
+          e2: 'wP',
+          e1: 'wK',
+          e8: 'bR',
+          a8: 'bK'
+        }
+      })
+
+      const moveObject = getMove('d3', 'e3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            operator: 'shield',
+            target: 'allied',
+            targetFilter: 'king'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
     })
   })
 
