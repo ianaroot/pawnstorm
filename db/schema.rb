@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_08_143000) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_10_151000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -59,10 +59,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_08_143000) do
     t.json "black_compiled_program_snapshot"
     t.bigint "tournament_id"
     t.json "profile_data"
+    t.bigint "white_tournament_entry_id"
+    t.bigint "black_tournament_entry_id"
     t.index ["black_player_type", "black_player_id"], name: "index_matches_on_black_player"
+    t.index ["black_tournament_entry_id"], name: "index_matches_on_black_tournament_entry_id"
     t.index ["creator_id"], name: "index_matches_on_creator_id"
     t.index ["tournament_id"], name: "index_matches_on_tournament_id"
     t.index ["white_player_type", "white_player_id"], name: "index_matches_on_white_player"
+    t.index ["white_tournament_entry_id"], name: "index_matches_on_white_tournament_entry_id"
   end
 
   create_table "nodes", force: :cascade do |t|
@@ -85,7 +89,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_08_143000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "compiled_program_snapshot"
+    t.string "display_name"
+    t.bigint "bot_owner_id"
     t.index ["bot_id"], name: "index_tournament_entries_on_bot_id"
+    t.index ["bot_owner_id"], name: "index_tournament_entries_on_bot_owner_id"
     t.index ["tournament_id", "bot_id"], name: "index_tournament_entries_on_tournament_id_and_bot_id", unique: true
     t.index ["tournament_id"], name: "index_tournament_entries_on_tournament_id"
   end
@@ -112,10 +119,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_08_143000) do
 
   add_foreign_key "connections", "nodes", column: "source_node_id"
   add_foreign_key "connections", "nodes", column: "target_node_id"
+  add_foreign_key "matches", "tournament_entries", column: "black_tournament_entry_id"
+  add_foreign_key "matches", "tournament_entries", column: "white_tournament_entry_id"
   add_foreign_key "matches", "tournaments"
   add_foreign_key "matches", "users", column: "creator_id"
   add_foreign_key "nodes", "bots"
   add_foreign_key "tournament_entries", "bots"
   add_foreign_key "tournament_entries", "tournaments"
+  add_foreign_key "tournament_entries", "users", column: "bot_owner_id"
   add_foreign_key "tournaments", "users", column: "creator_id"
 end
