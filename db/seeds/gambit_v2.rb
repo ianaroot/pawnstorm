@@ -18,8 +18,29 @@ gambit_tactics = create_organizer!(bot: gambit_v2, position_x: 520, position_y: 
 gambit_pressure = create_organizer!(bot: gambit_v2, position_x: 2040, position_y: 1180, title: 'King Pressure')
 gambit_endgame = create_organizer!(bot: gambit_v2, position_x: 3020, position_y: 880, title: 'Endgame')
 gambit_fallback = create_organizer!(bot: gambit_v2, position_x: 4040, position_y: 1360, title: 'Fallback')
+gambit_guppy_tempo = create_organizer!(
+  bot: gambit_v2,
+  position_x: 1180,
+  position_y: 1660,
+  title: 'Guppy Tweak 2',
+  notes: 'Rewards moves that directly hit the enemy piece that just moved.'
+)
+gambit_guppy_pressure = create_organizer!(
+  bot: gambit_v2,
+  position_x: 2540,
+  position_y: 1020,
+  title: 'Guppy Tweak 2',
+  notes: 'Rewards moves that newly bind the enemy’s last-moved non-pawn to shielding its king.'
+)
+gambit_guppy_recap = create_organizer!(
+  bot: gambit_v2,
+  position_x: 1700,
+  position_y: 1660,
+  title: 'Guppy Tweak 2',
+  notes: 'Rewards immediate punishment when the opponent just captured and we answer by taking that last-moved piece.'
+)
 
-[gambit_terminal, gambit_opening, gambit_tactics, gambit_pressure, gambit_endgame, gambit_fallback].each do |organizer|
+[gambit_terminal, gambit_opening, gambit_tactics, gambit_pressure, gambit_endgame, gambit_fallback, gambit_guppy_tempo, gambit_guppy_pressure, gambit_guppy_recap].each do |organizer|
   connect!(gambit_root, organizer)
 end
 
@@ -258,6 +279,34 @@ create_shared_split_paths!(
   ]
 )
 
+create_path!(
+  bot: gambit_v2,
+  start_node: gambit_guppy_tempo,
+  x: 1180,
+  y: 1820,
+  zigzag_offset: 60,
+  conditions: [
+    rel_v2(subject: 'moved_piece', operator: 'attack', target: 'enemy_moved_piece')
+  ],
+  action_type: 'add',
+  value: 10
+)
+
+create_path!(
+  bot: gambit_v2,
+  start_node: gambit_guppy_recap,
+  x: 1700,
+  y: 1820,
+  zigzag_offset: 60,
+  conditions: [
+    unary_v2(subject: 'enemy_captured_piece', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    unary_v2(subject: 'captured_piece', operator: 'count', comparator: 'equal_to', comparison_value: 1),
+    rel_v2(subject: 'captured_piece', operator: 'same_piece', target: 'enemy_moved_piece')
+  ],
+  action_type: 'add',
+  value: 16
+)
+
 create_shared_split_paths!(
   bot: gambit_v2,
   start_node: gambit_tactics,
@@ -391,6 +440,30 @@ gambit_pressure_safety.each_with_index do |safety_conditions, index|
     value: 26
   )
 end
+
+create_path!(
+  bot: gambit_v2,
+  start_node: gambit_guppy_pressure,
+  x: 2540,
+  y: 1180,
+  zigzag_offset: 70,
+  conditions: [
+    rel_v2(
+      subject: 'enemy_moved_piece',
+      subject_filter: 'pawn',
+      subject_filter_mode: 'exclude',
+      operator: 'shield',
+      target: 'enemy',
+      target_filter: 'king',
+      target_comparison_metric: 'count',
+      target_comparator: 'greater_than',
+      target_comparison_value: 'prior_board_state'
+    ),
+    rel_v2(subject: 'moved_piece', operator: 'attack', target: 'enemy_moved_piece')
+  ],
+  action_type: 'add',
+  value: 18
+)
 
 endgame_trunk = create_condition_chain!(
   bot: gambit_v2,
