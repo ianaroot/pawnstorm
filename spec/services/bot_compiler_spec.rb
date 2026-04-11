@@ -11,11 +11,13 @@ RSpec.describe BotCompiler do
       let!(:root) { bot.root_node }
       let!(:condition) do
         create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
+          version: 2,
+          kind: 'unary',
           subject: 'moved_piece',
-          subjectSpecifier: 'any',
-          relation: 'attacker',
-          relationSpecifier: 'any',
-          comparison: 'greater_than',
+          subjectFilter: 'any',
+          subjectFilterMode: 'include',
+          operator: 'value',
+          comparator: 'greater_than',
           comparisonValue: 0
         })
       end
@@ -47,13 +49,12 @@ RSpec.describe BotCompiler do
             id: condition.id.to_s,
             type: 'condition',
             data: {
+              version: 2,
+              kind: 'unary',
               subject: 'moved_piece',
-              subjectSpecifier: 'any',
-              subjectSpecifierMode: 'include',
-              relation: 'attacker',
-              relationSpecifier: 'any',
-              relationSpecifierMode: 'include',
-              comparison: 'greater_than',
+              subjectFilter: 'any',
+              operator: 'value',
+              comparator: 'greater_than',
               comparisonValue: 0
             },
             children: [action.id.to_s]

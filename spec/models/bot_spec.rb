@@ -140,12 +140,14 @@ RSpec.describe Bot, type: :model do
       bot.compile_program!
 
       node.update!(data: {
-        subject: 'allies',
-        subjectSpecifier: 'rook',
-        relation: 'mobility',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 'prior_board_state'
+        version: 2,
+        kind: 'unary',
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        subjectFilterMode: 'include',
+        operator: 'mobility',
+        comparator: 'greater_than',
+        comparisonValue: 0
       })
 
       expect(bot.reload.compiled_program_stale).to be(true)

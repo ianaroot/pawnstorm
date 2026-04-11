@@ -12,7 +12,6 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  CONDITION_V1_KEYS = %w[ subject subjectSpecifier subjectSpecifierMode relation relationSpecifier relationSpecifierMode comparison comparisonValue ].freeze
 
   CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator comparisonValue ].freeze
 
@@ -154,37 +153,7 @@ class Node < ApplicationRecord
 
   def self.condition_preview_chunks(data)
     return ['[invalid condition]'] unless data.is_a?(Hash)
-    version = (data['version'] || data[:version] || 1).to_i
-    case version
-    when 1
-      condition_preview_chunks_v1(data)
-    when 2
-      condition_preview_chunks_v2(data)
-    else
-      ['[invalid condition]']
-    end
-  end
-
-  def self.condition_preview_chunks_v1(data)
-    subject = data['subject'] || data[:subject]
-    subject_specifier = data['subjectSpecifier'] || data[:subjectSpecifier]
-    subject_specifier_mode = data['subjectSpecifierMode'] || data[:subjectSpecifierMode] || 'include'
-    relation = data['relation'] || data[:relation]
-    relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
-    relation_specifier_mode = data['relationSpecifierMode'] || data[:relationSpecifierMode] || 'include'
-    comparison = data['comparison'] || data[:comparison]
-    comparison_value = data['comparisonValue'] || data[:comparisonValue]
-    subject_label = condition_subject_short_label(subject)
-    subject_specifier_label = specifier_summary(subject_specifier, subject_specifier_mode)
-    relation_label = condition_relation_label(relation)&.downcase
-    relation_specifier_label = ( relation_specifier != 'any' ? specifier_summary(relation_specifier, relation_specifier_mode) : nil )
-    comparison_symbol = condition_comparison_symbol(comparison)
-    comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value.to_s
-    [
-      [subject_label, subject_specifier_label].compact.join(' '),
-      relation_specifier_label.present? ? "#{relation_label} #{relation_specifier_label}" : relation_label,
-      [comparison_symbol, comparison_value_label].compact.join(' ')
-    ]
+    condition_preview_chunks_v2(data)
   end
 
   def self.condition_preview_chunks_v2(data)
@@ -393,49 +362,7 @@ class Node < ApplicationRecord
 
   def validate_condition_data
     return errors.add(:data, 'must be a hash') unless data.is_a?(Hash)
-    version = (data['version'] || data[:version] || 1).to_i
-    case version
-    when 1
-      validate_condition_data_v1
-    when 2
-      validate_condition_data_v2
-    else
-      errors.add(:data, "has invalid version: #{version}")
-    end
-  end
-
-  def validate_condition_data_v1
-    keys = data.keys.map(&:to_s)
-    extra_keys = keys - CONDITION_V1_KEYS
-    missing_keys = CONDITION_V1_KEYS - keys
-    if extra_keys.any?
-      errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-    end
-    if missing_keys.any?
-      errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-      return
-    end
-    subject = data['subject'] || data[:subject]
-    subject_specifier = data['subjectSpecifier'] || data[:subjectSpecifier]
-    relation = data['relation'] || data[:relation]
-    relation_specifier = data['relationSpecifier'] || data[:relationSpecifier]
-    comparison = data['comparison'] || data[:comparison]
-    comparison_value = data['comparisonValue'] || data[:comparisonValue]
-    subject_specifier_mode = data['subjectSpecifierMode'] || data[:subjectSpecifierMode]
-    relation_specifier_mode = data['relationSpecifierMode'] || data[:relationSpecifierMode]
-
-    errors.add(:data, 'has invalid subject') unless NodeGrammar::SUBJECTS.include?(subject)
-    errors.add(:data, 'has invalid subjectSpecifier') unless NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier)
-    errors.add(:data, 'has invalid relation') unless self.class.valid_condition_relation_for_subject?(subject, relation)
-    errors.add(:data, 'has invalid relationSpecifier') unless self.class.valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:)
-    errors.add(:data, 'has invalid comparison') unless NodeGrammar::COMPARISONS.include?(comparison)
-    errors.add(:data, 'has invalid subjectSpecifierMode') unless NodeGrammar.valid_specifier_mode?(subject_specifier_mode)
-    errors.add(:data, 'has invalid relationSpecifierMode') unless NodeGrammar.valid_specifier_mode?(relation_specifier_mode)
-    errors.add(:data, 'has invalid subjectSpecifierMode for subjectSpecifier') unless NodeGrammar.valid_mode_for_specifier?(specifier: subject_specifier, mode: subject_specifier_mode)
-    errors.add(:data, 'has invalid relationSpecifierMode for relationSpecifier') unless NodeGrammar.valid_mode_for_specifier?(specifier: relation_specifier, mode: relation_specifier_mode)
-
-    return if self.class.valid_condition_comparison_value_for_subject?(subject, comparison_value)
-    errors.add(:data, 'has invalid comparisonValue')
+    validate_condition_data_v2
   end
 
   def validate_condition_data_v2

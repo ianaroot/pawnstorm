@@ -85,21 +85,6 @@ RSpec.describe Node, type: :model do
         ]
       )
     end
-
-    it 'keeps V1 chunks as plain strings' do
-      chunks = described_class.condition_preview_chunks(
-        {
-          'subject' => 'moved_piece',
-          'subjectSpecifier' => 'any',
-          'relation' => 'attacker',
-          'relationSpecifier' => 'any',
-          'comparison' => 'greater_than',
-          'comparisonValue' => 0
-        }
-      )
-
-      expect(chunks).to all(be_a(String))
-    end
   end
 
   describe 'validations' do
@@ -153,11 +138,13 @@ RSpec.describe Node, type: :model do
 
     it 'rejects condition data with invalid keys' do
       node = build(:node, :condition, data: {
+        version: 2,
+        kind: 'unary',
         subject: 'moved_piece',
-        subjectSpecifier: 'any',
-        relation: 'attacker',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
+        subjectFilter: 'any',
+        subjectFilterMode: 'include',
+        operator: 'value',
+        comparator: 'greater_than',
         comparisonValue: 0,
         banana: 'crime'
       })
@@ -166,187 +153,18 @@ RSpec.describe Node, type: :model do
       expect(node.errors[:data]).to include('contains invalid keys: banana')
     end
 
-    it 'rejects condition data with invalid relation' do
-      node = build(:node, :condition, data: {
-        subject: 'moved_piece',
-        subjectSpecifier: 'any',
-        relation: 'attacked_after_move',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid relation')
-    end
-
-    it 'rejects positional relations for captured_piece conditions' do
-      node = build(:node, :condition, data: {
-        subject: 'captured_piece',
-        subjectSpecifier: 'any',
-        relation: 'mobility',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid relation')
-    end
-
-    it 'accepts canonical captured_piece relations' do
-      node = build(:node, :condition, data: {
-        subject: 'captured_piece',
-        subjectSpecifier: 'any',
-        relation: 'value',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 3
-      })
-
-      expect(node).to be_valid
-    end
-
-    it 'rejects relation specifiers that are invalid for the subject' do
-      node = build(:node, :condition, data: {
-        subject: 'captured_piece',
-        subjectSpecifier: 'any',
-        relation: 'value',
-        relationSpecifier: 'pawn',
-        comparison: 'greater_than',
-        comparisonValue: 3
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid relationSpecifier')
-    end
-
-    it 'rejects relation specifiers that are invalid for the relation' do
-      node = build(:node, :condition, data: {
-        subject: 'moved_piece',
-        subjectSpecifier: 'any',
-        relation: 'mobility',
-        relationSpecifier: 'pawn',
-        comparison: 'greater_than',
-        comparisonValue: 'prior_board_state'
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid relationSpecifier')
-    end
-
-    it 'accepts moved_piece as a relation specifier for positional spatial relations' do
-      node = build(:node, :condition, data: {
-        subject: 'allies',
-        subjectSpecifier: 'any',
-        relation: 'attacker',
-        relationSpecifier: 'moved_piece',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).to be_valid
-    end
-
-    it 'accepts exclude mode for subject and relation specifiers' do
-      node = build(:node, :condition, data: {
-        subject: 'allies',
-        subjectSpecifier: 'pawn',
-        subjectSpecifierMode: 'exclude',
-        relation: 'attacker',
-        relationSpecifier: 'pawn',
-        relationSpecifierMode: 'exclude',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).to be_valid
-    end
-
-    it 'rejects exclude mode for subjectSpecifier any' do
-      node = build(:node, :condition, data: {
-        subject: 'moved_piece',
-        subjectSpecifier: 'any',
-        subjectSpecifierMode: 'exclude',
-        relation: 'attacker',
-        relationSpecifier: 'any',
-        relationSpecifierMode: 'include',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid subjectSpecifierMode for subjectSpecifier')
-    end
-
-    it 'rejects exclude mode for relationSpecifier any' do
-      node = build(:node, :condition, data: {
-        subject: 'moved_piece',
-        subjectSpecifier: 'pawn',
-        subjectSpecifierMode: 'include',
-        relation: 'attacker',
-        relationSpecifier: 'any',
-        relationSpecifierMode: 'exclude',
-        comparison: 'greater_than',
-        comparisonValue: 0
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid relationSpecifierMode for relationSpecifier')
-    end
-
-    it 'rejects prior_board_state for captured_piece conditions' do
-      node = build(:node, :condition, data: {
-        subject: 'captured_piece',
-        subjectSpecifier: 'any',
-        relation: 'value',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 'prior_board_state'
-      })
-
-      expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid comparisonValue')
-    end
-
-    it 'accepts prior_board_state for positional conditions' do
-      node = build(:node, :condition, data: {
-        subject: 'allies',
-        subjectSpecifier: 'any',
-        relation: 'value',
-        relationSpecifier: 'any',
-        comparison: 'greater_than',
-        comparisonValue: 'prior_board_state'
-      })
-
-      expect(node).to be_valid
-    end
-
-    it 'requires comparisonValue for all comparisons' do
+    it 'rejects legacy V1 condition data for persisted nodes' do
       node = build(:node, :condition, data: {
         subject: 'moved_piece',
         subjectSpecifier: 'any',
         relation: 'attacker',
         relationSpecifier: 'any',
-        comparison: 'equal_to',
-        comparisonValue: nil
+        comparison: 'greater_than',
+        comparisonValue: 0
       })
 
       expect(node).not_to be_valid
-      expect(node.errors[:data]).to include('has invalid comparisonValue')
-    end
-
-    it 'allows comparisonValue for less_than comparisons' do
-      node = build(:node, :condition, data: {
-        subject: 'allies',
-        subjectSpecifier: 'king',
-        relation: 'shielder',
-        relationSpecifier: 'any',
-        comparison: 'less_than',
-        comparisonValue: 'prior_board_state'
-      })
-
-      expect(node).to be_valid
+      expect(node.errors[:data]).to include('has invalid kind: ')
     end
 
     describe 'V2 condition data' do

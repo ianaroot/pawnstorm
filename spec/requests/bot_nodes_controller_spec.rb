@@ -66,11 +66,13 @@ RSpec.describe BotNodesController, type: :request do
           position_x: 100,
           position_y: 200,
           data: {
+            version: 2,
+            kind: 'unary',
             subject: 'moved_piece',
-            subjectSpecifier: 'any',
-            relation: 'attacker',
-            relationSpecifier: 'any',
-            comparison: 'greater_than',
+            subjectFilter: 'any',
+            subjectFilterMode: 'include',
+            operator: 'value',
+            comparator: 'greater_than',
             comparisonValue: 0
           }
         }
@@ -117,12 +119,15 @@ RSpec.describe BotNodesController, type: :request do
       {
         node: {
           data: {
-            subject: 'allies',
-            subjectSpecifier: 'any',
-            relation: 'attacker',
-            relationSpecifier: 'any',
-            comparison: 'greater_than',
-            comparisonValue: 0
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            subjectFilterMode: 'include',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetFilterMode: 'include'
           }
         }
       }
@@ -131,10 +136,11 @@ RSpec.describe BotNodesController, type: :request do
     it 'updates the node with valid params' do
       patch bot_node_path(bot, node), params: valid_params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
       node.reload
-      expect(node.data['subject']).to eq('allies')
-      expect(node.data['subjectSpecifier']).to eq('any')
-      expect(node.data['relation']).to eq('attacker')
-      expect(node.data['relationSpecifier']).to eq('any')
+      expect(node.data['version']).to eq(2)
+      expect(node.data['kind']).to eq('relational')
+      expect(node.data['subject']).to eq('moved_piece')
+      expect(node.data['operator']).to eq('attack')
+      expect(node.data['target']).to eq('enemy')
       expect(response).to have_http_status(:success)
     end
 
