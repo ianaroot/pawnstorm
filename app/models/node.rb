@@ -33,10 +33,6 @@ class Node < ApplicationRecord
   validate :data_matches_schema, if: :validate_node_data?
 
   after_commit :mark_bot_compiled_program_stale_if_needed, on: [:create, :update, :destroy]
-  
-  def self.condition_specifier_mode_options
-    NodeGrammar.specifier_mode_options
-  end
 
   # Node type helpers
   def root?
@@ -53,102 +49,6 @@ class Node < ApplicationRecord
   
   def organizer?
     node_type == 'organizer'
-  end
-
-  def self.condition_relations_for(subject)
-    NodeGrammar.relations_for(subject)
-  end
-
-  def self.valid_condition_relation_for_subject?(subject, relation)
-    NodeGrammar.valid_relation_for_subject?(subject, relation)
-  end
-
-  def self.condition_relation_specifiers_for(subject:, relation:)
-    NodeGrammar.relation_specifiers_for(subject:, relation:)
-  end
-
-  def self.valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:)
-    NodeGrammar.valid_relation_specifier_for?(subject:, relation:, relation_specifier:)
-  end
-
-  def self.condition_subject_options
-    NodeGrammar.subject_options
-  end
-
-  def self.condition_subject_specifier_options
-    NodeGrammar.subject_specifier_options
-  end
-
-  def self.condition_relation_specifier_options
-    NodeGrammar.relation_specifier_options
-  end
-
-  def self.condition_relation_options
-    NodeGrammar.relation_options
-  end
-
-  def self.condition_subjects_for_relation(relation)
-    NodeGrammar.subjects_for_relation(relation)
-  end
-
-  def self.condition_subjects_for_relation_specifier(relation_specifier)
-    NodeGrammar.subjects_for_relation_specifier(relation_specifier)
-  end
-
-  def self.condition_relations_for_relation_specifier(relation_specifier)
-    NodeGrammar.relations_for_relation_specifier(relation_specifier)
-  end
-
-  def self.condition_comparison_options
-    NodeGrammar.comparison_options
-  end
-
-  def self.condition_comparison_value_options
-    NodeGrammar.comparison_value_options
-  end
-
-  def self.condition_comparison_values_for(subject)
-    NodeGrammar.comparison_values_for(subject)
-  end
-
-  def self.valid_condition_comparison_value_for_subject?(subject, comparison_value)
-    NodeGrammar.valid_comparison_value_for_subject?(subject, comparison_value)
-  end
-
-  def self.condition_subjects_for_comparison_value(comparison_value)
-    NodeGrammar.subjects_for_comparison_value(comparison_value)
-  end
-
-  def self.condition_subject_label(subject)
-    NodeGrammar.subject_label(subject)
-  end
-
-  def self.condition_subject_short_label(subject)
-    NodeGrammar.subject_short_label(subject)
-  end
-
-  def self.condition_specifier_label(specifier)
-    NodeGrammar.specifier_label(specifier)
-  end
-
-  def self.condition_relation_label(relation)
-    NodeGrammar.relation_label(relation)
-  end
-
-  def self.condition_comparison_label(comparison)
-    NodeGrammar.comparison_label(comparison)
-  end
-
-  def self.condition_comparison_symbol(comparison)
-    NodeGrammar.comparison_symbol(comparison)
-  end
-
-  def self.condition_comparison_value_label(value)
-    NodeGrammar.comparison_value_label(value)
-  end
-
-  def self.condition_comparison_value_short_label(value)
-    NodeGrammar.comparison_value_short_label(value)
   end
 
   def self.condition_preview_chunks(data)
@@ -221,40 +121,6 @@ class Node < ApplicationRecord
       comparison_value: comparison_value
     }
   end
-
-  def self.condition_summary(data)
-    return nil unless data.is_a?(Hash)
-    subject = data['subject']
-    subject_specifier = data['subjectSpecifier']
-    subject_specifier_mode = data['subjectSpecifierMode']
-    relation = data['relation']
-    relation_specifier = data['relationSpecifier']
-    relation_specifier_mode = data['relationSpecifierMode']
-    comparison = data['comparison']
-    comparison_value = data['comparisonValue']
-    valid = NodeGrammar::SUBJECTS.include?(subject) &&
-      NodeGrammar::SUBJECT_SPECIFIERS.include?(subject_specifier) &&
-      valid_condition_relation_for_subject?(subject, relation) &&
-      valid_condition_relation_specifier_for?(subject:, relation:, relation_specifier:) &&
-      NodeGrammar::COMPARISONS.include?(comparison) &&
-      valid_condition_comparison_value_for_subject?(subject, comparison_value) &&
-      NodeGrammar.valid_specifier_mode?(subject_specifier_mode) &&
-      NodeGrammar.valid_specifier_mode?(relation_specifier_mode) &&
-      NodeGrammar.valid_mode_for_specifier?(specifier: subject_specifier, mode: subject_specifier_mode) &&
-      NodeGrammar.valid_mode_for_specifier?(specifier: relation_specifier, mode: relation_specifier_mode)
-    return nil unless valid
-    summary_parts = []
-    summary_parts << "#{condition_subject_short_label(subject)}:"
-    summary_parts << specifier_summary(subject_specifier, subject_specifier_mode)
-    summary_parts << condition_relation_label(relation)&.downcase
-    if relation_specifier != 'any'
-      summary_parts << specifier_summary(relation_specifier, relation_specifier_mode)
-    end
-    comparison_value_label = condition_comparison_value_short_label(comparison_value)&.downcase || comparison_value
-    summary_parts << condition_comparison_symbol(comparison)
-    summary_parts << comparison_value_label.to_s
-    summary_parts.compact.join(' ')
-  end
   
   private
   def normalize_node_data
@@ -262,29 +128,12 @@ class Node < ApplicationRecord
     normalize_organizer_data if organizer?
   end
 
-  def self.specifier_summary(specifier, mode)
-    label = condition_specifier_label(specifier)&.downcase
-    if label && mode == 'exclude'
-      return "non-#{label}"
-    else
-      return label
-    end
-  end
-
   def normalize_condition_data
     raw = data.is_a?(Hash) ? data : {}
     normalized = raw.each_with_object({}) do |(key, value), memo|
       memo[key.to_s] = value
     end
-    version = (normalized['version'] || 1).to_i
-    if version == 1
-      normalized.delete('version')
-      normalized['subjectSpecifierMode'] ||= 'include'
-      normalized['relationSpecifierMode'] ||= 'include'
-    else
-      normalized['version'] = version
-      normalize_condition_data_v2!(normalized)
-    end
+    normalize_condition_data_v2!(normalized)
     self.data = normalized
   end
 

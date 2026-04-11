@@ -29,7 +29,6 @@ const DEFAULT_STATE = Object.freeze({
   ui: {
     leftComparisonOpen: false,
     rightComparisonOpen: false,
-    legacyNotice: false
   }
 })
 
@@ -105,7 +104,6 @@ class ConditionForm {
       leftComparisonSection: this.editorPanel.querySelector('#cond-left-comparison-section'),
       leftFilterRow: this.editorPanel.querySelector('#cond-left-filter-row'),
       rightFilterRow: this.editorPanel.querySelector('#cond-right-filter-row'),
-      legacyNote: this.editorPanel.querySelector('#condition-legacy-note'),
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       all: [
         leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonValueSource,
@@ -126,7 +124,6 @@ class ConditionForm {
       this.state = this.stateFromNodeData(nodeData)
     } else {
       this.state = structuredClone(DEFAULT_STATE)
-      this.state.ui.legacyNotice = true
     }
     this.applyCompatibilityRules()
     this.render()
@@ -163,7 +160,6 @@ class ConditionForm {
         ui: {
           leftComparisonOpen: false,
           rightComparisonOpen: false,
-          legacyNotice: false
         }
       }
     } else {
@@ -194,7 +190,6 @@ class ConditionForm {
         ui: {
           leftComparisonOpen: Boolean(nodeData.subjectComparisonMetric),
           rightComparisonOpen: Boolean(nodeData.targetComparisonMetric),
-          legacyNotice: false
         }
       }
     }
@@ -250,12 +245,6 @@ class ConditionForm {
     if (fields.unaryComparisonValueSource) fields.unaryComparisonValueSource.value = this.state.unary.comparisonValueSource
     if (fields.unaryComparisonValueNumber) fields.unaryComparisonValueNumber.value = this.state.unary.comparisonValueNumber
 
-    if (fields.legacyNote) {
-      fields.legacyNote.textContent = this.state.ui.legacyNotice
-        ? 'Legacy V1 condition node. Preview remains unchanged until you save. Saving will replace this node with a V2 condition.'
-        : ''
-      fields.legacyNote.classList.toggle('hidden', !this.state.ui.legacyNotice)
-    }
 
     if (fields.formulationPreview) {
       fields.formulationPreview.textContent = formatConditionPreview(this.buildPayload()).text
