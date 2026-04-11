@@ -217,54 +217,6 @@ def create_condition_chain!(bot:, start_node:, x:, y:, conditions:, step_y: 150,
   previous_node
 end
 
-def cond(
-  subject:,
-  relation:,
-  comparison:,
-  comparison_value:,
-  subject_specifier: 'any',
-  subject_specifier_mode: 'include',
-  relation_specifier: 'any',
-  relation_specifier_mode: 'include'
-)
-  {
-    subject: subject,
-    subjectSpecifier: subject_specifier,
-    subjectSpecifierMode: subject_specifier_mode,
-    relation: relation,
-    relationSpecifier: relation_specifier,
-    relationSpecifierMode: relation_specifier_mode,
-    comparison: comparison,
-    comparisonValue: comparison_value
-  }
-end
-
-def opening_game_conditions
-  [
-    cond(subject: 'allies', subject_specifier: 'king', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-    cond(subject: 'allies', subject_specifier: 'queen', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-    cond(subject: 'allies', subject_specifier: 'rook', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'allies', subject_specifier: 'bishop', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'allies', subject_specifier: 'knight', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'allies', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 8),
-    cond(subject: 'opponents', subject_specifier: 'king', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-    cond(subject: 'opponents', subject_specifier: 'queen', relation: 'count', comparison: 'equal_to', comparison_value: 1),
-    cond(subject: 'opponents', subject_specifier: 'rook', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'opponents', subject_specifier: 'bishop', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'opponents', subject_specifier: 'knight', relation: 'count', comparison: 'equal_to', comparison_value: 2),
-    cond(subject: 'opponents', subject_specifier: 'pawn', relation: 'count', comparison: 'equal_to', comparison_value: 8),
-    cond(subject: 'allies', relation: 'attacked', comparison: 'equal_to', comparison_value: 0),
-    cond(subject: 'opponents', relation: 'attacked', comparison: 'equal_to', comparison_value: 0)
-  ]
-end
-
-def endgame_gate_conditions
-  [
-    cond(subject: 'allies', subject_specifier: 'pawn', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'less_than', comparison_value: 3),
-    cond(subject: 'opponents', subject_specifier: 'pawn', subject_specifier_mode: 'exclude', relation: 'count', comparison: 'less_than', comparison_value: 3)
-  ]
-end
-
 def unary_v2(subject:, operator:, comparator:, comparison_value:, filter: 'any', filter_mode: 'include')
   data = {
     version: 2,
