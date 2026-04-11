@@ -1,5 +1,5 @@
 module ApplicationHelper
-  # Node dimensions lookup - must match Traverser::NODE_DIMENSIONS
+  # Node dimensions lookup - must match the editor canvas dimensions.
   NODE_DIMENSIONS = {
     'condition' => { width: 100, height: 128 },
     'action' => { width: 108, height: 108 },
