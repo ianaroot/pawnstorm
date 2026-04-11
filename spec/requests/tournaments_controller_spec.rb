@@ -167,6 +167,58 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include("Match #{match.id}")
       expect(response.body).to include(match_path(match))
     end
+
+    it 'keeps deleted-bot entrants visible in standings and pairing pages' do
+      tournament = create(:tournament, creator: user)
+      deleted_bot = create(:bot, :compiled, name: 'Deleted Phoenix')
+      surviving_bot = create(:bot, :compiled, name: 'Surviving Storm')
+      deleted_entry = create(
+        :tournament_entry,
+        tournament:,
+        bot: deleted_bot,
+        display_name: deleted_bot.name,
+        compiled_program_snapshot: deleted_bot.compiled_program,
+        seed_order: 0
+      )
+      surviving_entry = create(
+        :tournament_entry,
+        tournament:,
+        bot: surviving_bot,
+        display_name: surviving_bot.name,
+        compiled_program_snapshot: surviving_bot.compiled_program,
+        seed_order: 1
+      )
+      Match.create!(
+        tournament:,
+        creator: user,
+        white_player: deleted_bot,
+        black_player: surviving_bot,
+        white_tournament_entry: deleted_entry,
+        black_tournament_entry: surviving_entry,
+        status: :completed,
+        result: :black_win,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: ['e4'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+      deleted_bot.destroy!
+      deleted_entry.reload
+
+      get tournament_path(tournament)
+
+      expect(deleted_entry.bot).to be_nil
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Deleted Phoenix')
+      expect(response.body).to include('Surviving Storm')
+
+      get pairing_tournament_path(tournament, deleted_entry, surviving_entry)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Deleted Phoenix')
+      expect(response.body).to include('Surviving Storm')
+    end
   end
 
   describe 'POST #abort' do

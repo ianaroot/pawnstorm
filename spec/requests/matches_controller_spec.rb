@@ -256,5 +256,52 @@ RSpec.describe MatchesController, type: :request do
       expect(response.body).to include(%(name="match[opponent_bot_id]"))
       expect(response.body).to include(%(value="#{opponent_bot.id}"))
     end
+
+    it 'shows tournament match history after a bot has been deleted' do
+      tournament = create(:tournament, creator: user)
+      deleted_bot = create(:bot, :compiled, name: 'Deleted Rogue')
+      surviving_bot = create(:bot, :compiled, name: 'Surviving Beast')
+      deleted_entry = create(
+        :tournament_entry,
+        tournament:,
+        bot: deleted_bot,
+        display_name: deleted_bot.name,
+        compiled_program_snapshot: deleted_bot.compiled_program,
+        seed_order: 0
+      )
+      surviving_entry = create(
+        :tournament_entry,
+        tournament:,
+        bot: surviving_bot,
+        display_name: surviving_bot.name,
+        compiled_program_snapshot: surviving_bot.compiled_program,
+        seed_order: 1
+      )
+      match = Match.create!(
+        tournament:,
+        creator: user,
+        white_player: deleted_bot,
+        black_player: surviving_bot,
+        white_tournament_entry: deleted_entry,
+        black_tournament_entry: surviving_entry,
+        status: :completed,
+        result: :black_win,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: ['e4'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+      deleted_bot.destroy!
+
+      get match_path(match)
+
+      expect(match.reload.white_player).to be_nil
+      expect(deleted_entry.reload.bot).to be_nil
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Deleted Rogue')
+      expect(response.body).to include('Surviving Beast')
+      expect(match.reload.compiled_program_snapshot_for(:white)).to eq(deleted_entry.compiled_program_snapshot)
+    end
   end
 end
