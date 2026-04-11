@@ -66,6 +66,7 @@ RSpec.describe BotsController, type: :request do
       expect {
         post bots_path, params: valid_params
       }.to change { User.where(guest: true).count }.by(1)
+        .and change(Bot, :count).by(1)
 
       created_bot = Bot.find_by!(name: 'Test Bot')
       guest_user = created_bot.user
@@ -73,6 +74,17 @@ RSpec.describe BotsController, type: :request do
       expect(guest_user).to be_guest
       expect(guest_user.last_active_at).to be_present
       expect(response).to redirect_to(edit_bot_path(created_bot))
+    end
+
+    it 'signs in the guest who owns the created bot' do
+      post bots_path, params: valid_params
+      created_bot = Bot.find_by!(name: 'Test Bot')
+
+      follow_redirect!
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(created_bot.name)
+      expect(created_bot.user).to be_guest
     end
 
     context 'when authenticated' do

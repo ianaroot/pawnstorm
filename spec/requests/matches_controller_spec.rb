@@ -78,6 +78,28 @@ RSpec.describe MatchesController, type: :request do
       expect(ComputeMatchJob).to have_been_enqueued.with(match.id)
     end
 
+    it 'allows guest users to create matches with their bots' do
+      guest = create(:user, :guest)
+      guest_bot = create(:bot, :compiled, user: guest)
+      opponent_bot = create(:bot, :compiled)
+      sign_in guest
+
+      expect do
+        post matches_path, params: {
+          match: {
+            own_bot_id: guest_bot.id,
+            opponent_bot_id: opponent_bot.id
+          }
+        }
+      end.to change(Match, :count).by(1)
+
+      match = Match.order(:created_at).last
+      expect(response).to redirect_to(match_path(match))
+      expect(match.creator).to eq(guest)
+      expect([match.white_player, match.black_player]).to contain_exactly(guest_bot, opponent_bot)
+      expect(ComputeMatchJob).to have_been_enqueued.with(match.id)
+    end
+
     it 'allows a bot to play against itself' do
       post matches_path, params: {
         match: {
