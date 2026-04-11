@@ -80,7 +80,17 @@
     </nav>
     
     <div class="sidebar__auth">
-      <% if user_signed_in? %>
+      <% if current_user&.guest? %>
+        <div class="sidebar__user">
+          Guest bot builder
+        </div>
+        <%= link_to "Create Account", new_user_registration_path,
+            class: "sidebar__link sidebar__link--primary",
+            data: { action: "click->sidebar#navigate" } %>
+        <%= link_to "Sign In", new_user_session_path,
+            class: "sidebar__link",
+            data: { action: "click->sidebar#navigate" } %>
+      <% elsif user_signed_in? %>
         <div class="sidebar__user">
           <%= current_user.email %>
         </div>
