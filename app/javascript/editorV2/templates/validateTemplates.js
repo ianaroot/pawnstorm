@@ -1,11 +1,43 @@
 import {
   ACTION_DATA_KEYS,
-  CONDITION_DATA_KEYS,
   ORGANIZER_DATA_KEYS
 } from '../utils/nodeDefaults.js'
 import { TEMPLATE_CATEGORY_ORDER } from './TemplateCategories.js'
 
 const ALLOWED_NODE_TYPES = Object.freeze(['organizer', 'condition', 'action'])
+const CONDITION_UNARY_REQUIRED_KEYS = Object.freeze([
+  'version',
+  'kind',
+  'subject',
+  'subjectFilter',
+  'operator',
+  'comparator',
+  'comparisonValue'
+])
+const CONDITION_UNARY_ALLOWED_KEYS = Object.freeze([
+  ...CONDITION_UNARY_REQUIRED_KEYS,
+  'subjectFilterMode'
+])
+const CONDITION_RELATIONAL_REQUIRED_KEYS = Object.freeze([
+  'version',
+  'kind',
+  'subject',
+  'subjectFilter',
+  'operator',
+  'target',
+  'targetFilter'
+])
+const CONDITION_RELATIONAL_ALLOWED_KEYS = Object.freeze([
+  ...CONDITION_RELATIONAL_REQUIRED_KEYS,
+  'subjectFilterMode',
+  'subjectComparisonMetric',
+  'subjectComparator',
+  'subjectComparisonValue',
+  'targetFilterMode',
+  'targetComparisonMetric',
+  'targetComparator',
+  'targetComparisonValue'
+])
 
 function assert(condition, message) {
   if (!condition) {
@@ -24,10 +56,7 @@ function validateDataShape(template, node) {
       )
       break
     case 'condition':
-      assert(
-        JSON.stringify(keys) === JSON.stringify([...CONDITION_DATA_KEYS].sort()),
-        `Template "${template.id}" condition node "${node.key}" must define the full condition grammar`
-      )
+      validateConditionDataShape(template, node, keys)
       break
     case 'action':
       assert(
@@ -38,6 +67,25 @@ function validateDataShape(template, node) {
     default:
       break
   }
+}
+
+function validateConditionDataShape(template, node, keys) {
+  const kind = node.data?.kind
+  const allowedKeys = kind === 'unary' ? CONDITION_UNARY_ALLOWED_KEYS : CONDITION_RELATIONAL_ALLOWED_KEYS
+  const requiredKeys = kind === 'unary' ? CONDITION_UNARY_REQUIRED_KEYS : CONDITION_RELATIONAL_REQUIRED_KEYS
+
+  assert(
+    kind === 'unary' || kind === 'relational',
+    `Template "${template.id}" condition node "${node.key}" must define a valid V2 condition kind`
+  )
+
+  const extraKeys = keys.filter(key => !allowedKeys.includes(key))
+  const missingKeys = requiredKeys.filter(key => !keys.includes(key))
+
+  assert(
+    extraKeys.length === 0 && missingKeys.length === 0,
+    `Template "${template.id}" condition node "${node.key}" must define valid V2 condition data`
+  )
 }
 
 export function validateTemplates(templates) {

@@ -1,4 +1,5 @@
 import { NODE_DIMENSIONS } from '../constants.js'
+import { formatConditionPreview } from '../utils/conditionPreviewFormatter.js'
 import {
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_CATEGORY_ORDER
@@ -19,23 +20,6 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
-}
-
-function prettyToken(value) {
-  return String(value).replaceAll('_', ' ')
-}
-
-function relationLabel(relation) {
-  return {
-    attacker: 'is ATTACKED by',
-    attacked: 'makes ATTACKS against',
-    defender: 'is DEFENDED by',
-    defended: 'provides DEFENSE for',
-    shielder: 'is SHIELDED by',
-    shielded: 'provides SHIELDING for',
-    coverer: 'is COVERED by',
-    covered: 'provides COVER for'
-  }[relation] || prettyToken(relation)
 }
 
 function previewBounds(template) {
@@ -116,16 +100,8 @@ function renderTemplatePreview(template) {
         <div class="template-picker-preview__organizer-title">${escapeHtml(node.data.title)}</div>
       `
     } else if (node.type === 'condition') {
-      const subjectSpecifier = node.data.subjectSpecifier && node.data.subjectSpecifier !== 'any'
-        ? ` ${prettyToken(node.data.subjectSpecifier)}`
-        : ''
-      const relationSpecifier = node.data.relationSpecifier && node.data.relationSpecifier !== 'any'
-        ? ` ${prettyToken(node.data.relationSpecifier)}`
-        : ''
-
       content = `
-        <div class="template-picker-preview__condition-line">${escapeHtml(prettyToken(node.data.subject) + subjectSpecifier)}</div>
-        <div class="template-picker-preview__condition-line">${escapeHtml(relationLabel(node.data.relation) + relationSpecifier)}</div>
+        <div class="template-picker-preview__condition-line">${escapeHtml(formatConditionPreview(node.data).text)}</div>
       `
     } else if (node.type === 'action') {
       content = `

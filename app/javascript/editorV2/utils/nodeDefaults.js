@@ -1,12 +1,12 @@
 export const DEFAULT_CONDITION_DATA = Object.freeze({
+  version: 2,
+  kind: 'unary',
   subject: 'moved_piece',
-  subjectSpecifier: 'any',
-  subjectSpecifierMode: 'include',
-  relation: 'attacker',
-  relationSpecifier: 'any',
-  relationSpecifierMode: 'include',
-  comparison: 'equal_to',
-  comparisonValue: 1
+  subjectFilter: 'any',
+  subjectFilterMode: 'include',
+  operator: 'value',
+  comparator: 'greater_than',
+  comparisonValue: 0
 })
 
 export const DEFAULT_ACTION_DATA = Object.freeze({
@@ -20,13 +20,13 @@ export const DEFAULT_ORGANIZER_DATA = Object.freeze({
 })
 
 export const CONDITION_DATA_KEYS = Object.freeze([
+  'version',
+  'kind',
   'subject',
-  'subjectSpecifier',
-  'subjectSpecifierMode',
-  'relation',
-  'relationSpecifier',
-  'relationSpecifierMode',
-  'comparison',
+  'subjectFilter',
+  'subjectFilterMode',
+  'operator',
+  'comparator',
   'comparisonValue'
 ])
 
@@ -60,6 +60,9 @@ export function normalizeNodeData(type, data = {}) {
 
   switch (type) {
     case 'condition':
+      if (data.kind === 'relational') {
+        return { ...data }
+      }
       return { ...DEFAULT_CONDITION_DATA, ...data }
     case 'action':
       return { ...DEFAULT_ACTION_DATA, ...data }
