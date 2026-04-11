@@ -1,7 +1,7 @@
 class TournamentsController < ApplicationController
   GAMES_PER_PAIR = 10
 
-  before_action :authenticate_user!
+  before_action :authenticate_registered_user!
 
   def new
     load_selectable_bots

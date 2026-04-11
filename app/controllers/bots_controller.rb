@@ -1,17 +1,17 @@
 class BotsController < ApplicationController
-  before_action :authenticate_user!, except: [:index]
+  before_action :authenticate_registered_or_guest_user!, except: [:index, :new, :create]
   before_action :set_bot, only: [:edit, :update, :destroy, :compile]
 
   def index
-    @bots = current_user.bots.order(:name)
+    @bots = current_user ? current_user.bots.order(:name) : Bot.none
   end
 
   def new
-    @bot = current_user.bots.new
+    @bot = Bot.new
   end
 
   def create
-    @bot = current_user.bots.new(bot_params)
+    @bot = current_user_or_create_guest!.bots.new(bot_params)
     
     if @bot.save
       redirect_to edit_bot_path(@bot), notice: 'Bot was successfully created.'

@@ -1,5 +1,5 @@
 class MatchesController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_registered_or_guest_user!
 
   def new
     load_bot_options

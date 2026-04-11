@@ -1,5 +1,5 @@
 class BotNodesController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_registered_or_guest_user!
   before_action :set_bot
   before_action :set_node, only: [:show, :edit, :update, :destroy, :update_position]
 

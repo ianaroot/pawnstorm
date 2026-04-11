@@ -15,6 +15,16 @@ RSpec.describe TournamentsController, type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
+    it 'redirects guest users to sign up' do
+      guest = create(:user, :guest)
+      sign_in guest
+
+      get new_tournament_path
+
+      expect(response).to redirect_to(new_user_registration_path)
+      expect(flash[:alert]).to eq('Please create an account to use that feature.')
+    end
+
     it 'shows compiled bots from any user and hides stale bots' do
       user = create(:user)
       own_bot = create(:bot, :compiled, user: user)
