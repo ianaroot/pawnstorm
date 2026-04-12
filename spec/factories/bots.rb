@@ -10,6 +10,7 @@ FactoryBot.define do
           compiled_program: { root: 'root', nodes: {} },
           compiled_program_stale: false
         )
+        bot.reload
       end
     end
 

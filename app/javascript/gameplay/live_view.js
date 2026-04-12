@@ -48,7 +48,7 @@ class LiveView {
         team = this.teamSet(target.classList)
         const controlPreview = this.buildControlPreview(position, team)
         this.renderControlPreview(controlPreview)
-        if (team === this._gameController.board.allowedToMove){
+        if (team === this._gameController.board.allowedToMove && this._gameController.canHumanMove()){
           this.highlightLegalMovesFrom(position, target)
         }
       }

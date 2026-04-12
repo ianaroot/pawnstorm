@@ -12,7 +12,7 @@
           <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
           <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
           <% if @rematch_params.present? %>
-            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+            <%= form_with url: bot_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
               <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
               <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
               <%= form.submit 'Rematch' %>
@@ -43,7 +43,7 @@
         <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
         <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
         <% if @rematch_params.present? %>
-          <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+          <%= form_with url: bot_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
             <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
             <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
             <%= form.submit 'Rematch' %>
@@ -75,7 +75,7 @@
           <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
           <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
           <% if @rematch_params.present? %>
-            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
+            <%= form_with url: bot_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
               <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
               <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
               <%= form.submit 'Rematch' %>

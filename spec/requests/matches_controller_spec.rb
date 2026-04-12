@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe MatchesController, type: :request do
+RSpec.describe 'Matches', type: :request do
   include ActiveJob::TestHelper
 
   before do
@@ -10,7 +10,7 @@ RSpec.describe MatchesController, type: :request do
 
   describe 'GET #new' do
     it 'redirects to login when not authenticated' do
-      get new_match_path
+      get new_bot_vs_bot_match_path
 
       expect(response).to redirect_to(new_user_session_path)
     end
@@ -23,7 +23,7 @@ RSpec.describe MatchesController, type: :request do
       other_stale_bot = create(:bot, compiled_program_stale: true)
 
       sign_in user
-      get new_match_path
+      get new_bot_vs_bot_match_path
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(own_fresh_bot.name)
@@ -37,7 +37,7 @@ RSpec.describe MatchesController, type: :request do
       own_bot = create(:bot, :compiled, user: user)
 
       sign_in user
-      get new_match_path, params: { own_bot_id: own_bot.id }
+      get new_bot_vs_bot_match_path, params: { own_bot_id: own_bot.id }
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(%(value="#{own_bot.id}" checked="checked"))
@@ -55,7 +55,7 @@ RSpec.describe MatchesController, type: :request do
 
     it 'creates a pending match and enqueues generation' do
       expect do
-        post matches_path, params: {
+        post bot_vs_bot_matches_path, params: {
           match: {
             own_bot_id: own_bot.id,
             opponent_bot_id: opponent_bot.id
@@ -85,7 +85,7 @@ RSpec.describe MatchesController, type: :request do
       sign_in guest
 
       expect do
-        post matches_path, params: {
+        post bot_vs_bot_matches_path, params: {
           match: {
             own_bot_id: guest_bot.id,
             opponent_bot_id: opponent_bot.id
@@ -101,7 +101,7 @@ RSpec.describe MatchesController, type: :request do
     end
 
     it 'allows a bot to play against itself' do
-      post matches_path, params: {
+      post bot_vs_bot_matches_path, params: {
         match: {
           own_bot_id: own_bot.id,
           opponent_bot_id: own_bot.id
@@ -118,7 +118,7 @@ RSpec.describe MatchesController, type: :request do
       stale_bot = create(:bot, user: user, compiled_program_stale: true)
 
       expect do
-        post matches_path, params: {
+        post bot_vs_bot_matches_path, params: {
           match: {
             own_bot_id: stale_bot.id,
             opponent_bot_id: opponent_bot.id
@@ -135,7 +135,7 @@ RSpec.describe MatchesController, type: :request do
       stale_opponent_bot = create(:bot, user: user, compiled_program_stale: true)
 
       expect do
-        post matches_path, params: {
+        post bot_vs_bot_matches_path, params: {
           match: {
             own_bot_id: stale_own_bot.id,
             opponent_bot_id: stale_opponent_bot.id,
@@ -151,7 +151,7 @@ RSpec.describe MatchesController, type: :request do
 
     it 'rejects invalid bot selections' do
       expect do
-        post matches_path, params: {
+        post bot_vs_bot_matches_path, params: {
           match: {
             own_bot_id: own_bot.id,
             opponent_bot_id: 999_999
@@ -161,6 +161,227 @@ RSpec.describe MatchesController, type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include('Please choose valid bots for both sides.')
+    end
+  end
+
+  describe 'human-vs-bot play' do
+    let(:user) { create(:user) }
+    let!(:bot) { create(:bot, :compiled, user: user) }
+
+    before do
+      sign_in user
+    end
+
+    it 'shows only compiled non-stale bots owned by the current user' do
+      stale_bot = create(:bot, user: user, compiled_program_stale: true)
+      other_bot = create(:bot, :compiled)
+
+      get new_human_vs_bot_match_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(bot.name)
+      expect(response.body).not_to include(stale_bot.name)
+      expect(response.body).not_to include(other_bot.name)
+    end
+
+    it 'creates a running match with the human as white and the selected bot as black' do
+      expect do
+        post human_vs_bot_matches_path, params: {
+          match: {
+            bot_id: bot.id,
+            human_color: 'white'
+          }
+        }
+      end.to change(Match, :count).by(1)
+
+      match = Match.order(:created_at).last
+      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(match.creator).to eq(user)
+      expect(match.white_player).to eq(user)
+      expect(match.black_player).to eq(bot)
+      expect(match.black_compiled_program_snapshot).to eq(bot.compiled_program)
+      expect(match.white_compiled_program_snapshot).to be_nil
+      expect(match.status).to eq('running')
+    end
+
+    it 'creates a running match with the human as black and the selected bot as white' do
+      post human_vs_bot_matches_path, params: {
+        match: {
+          bot_id: bot.id,
+          human_color: 'black'
+        }
+      }
+
+      match = Match.order(:created_at).last
+      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(match.white_player).to eq(bot)
+      expect(match.black_player).to eq(user)
+      expect(match.white_compiled_program_snapshot).to eq(bot.compiled_program)
+      expect(match.black_compiled_program_snapshot).to be_nil
+    end
+
+    it 'allows guest users to play against their compiled bots' do
+      guest = create(:user, :guest)
+      guest_bot = create(:bot, :compiled, user: guest)
+      sign_in guest
+
+      expect do
+        post human_vs_bot_matches_path, params: {
+          match: {
+            bot_id: guest_bot.id,
+            human_color: 'white'
+          }
+        }
+      end.to change(Match, :count).by(1)
+
+      match = Match.order(:created_at).last
+      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(match.creator).to eq(guest)
+      expect(match.white_player).to eq(guest)
+      expect(match.black_player).to eq(guest_bot)
+    end
+
+    it 'rejects stale or unowned bots' do
+      stale_bot = create(:bot, user: user, compiled_program_stale: true)
+      unowned_bot = create(:bot, :compiled)
+
+      expect do
+        post human_vs_bot_matches_path, params: {
+          match: {
+            bot_id: stale_bot.id,
+            human_color: 'white'
+          }
+        }
+      end.not_to change(Match, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Please choose one of your compiled bots.')
+
+      expect do
+        post human_vs_bot_matches_path, params: {
+          match: {
+            bot_id: unowned_bot.id,
+            human_color: 'white'
+          }
+        }
+      end.not_to change(Match, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Please choose one of your compiled bots.')
+    end
+
+    it 'renders the persisted play page for the creator' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get play_human_vs_bot_match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(%(data-game-mode="human-vs-bot"))
+      expect(response.body).to include(%(data-human-team="W"))
+      expect(response.body).to include(%(data-bot-team="B"))
+    end
+
+    it 'does not render another user play match' do
+      other_user = create(:user)
+      match = Match.create!(
+        creator: other_user,
+        white_player: other_user,
+        black_player: create(:bot, :compiled, user: other_user),
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      expect do
+        get play_human_vs_bot_match_path(match)
+      end.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it 'does not render bot-vs-bot matches through the play route' do
+      match = Match.create!(
+        creator: user,
+        white_player: create(:bot, :compiled, user: user),
+        black_player: create(:bot, :compiled, user: user),
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get play_human_vs_bot_match_path(match)
+
+      expect(response).to redirect_to(match_path(match))
+    end
+
+    it 'completes a running human-vs-bot match' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      patch complete_human_vs_bot_match_path(match), params: {
+        match: {
+          status: 'completed',
+          result: 'white_win',
+          lay_out: Array.new(64, 'ee'),
+          captured_pieces: [],
+          allowed_to_move: 'W',
+          movement_notation: ['1. e4#'],
+          previous_layouts: []
+        }
+      }, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body).to include('redirect_url' => match_path(match))
+      expect(match.reload).to be_completed
+      expect(match.result).to eq('white_win')
+      expect(match.movement_notation).to eq(['1. e4#'])
+    end
+
+    it 'persists browser-side play failures' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      patch complete_human_vs_bot_match_path(match), params: {
+        match: {
+          status: 'failed',
+          error_message: 'Bot move failed: kaboom'
+        }
+      }, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(match.reload).to be_failed
+      expect(match.result).to eq('error')
+      expect(match.error_message).to eq('Bot move failed: kaboom')
     end
   end
 

@@ -38,8 +38,7 @@ end
 
   def compile
     @bot.compile_program!
-
-    redirect_to new_match_path(own_bot_id: @bot.id), notice: 'Bot compiled. Exiting editor to match setup.'
+    redirect_to new_bot_vs_bot_match_path(own_bot_id: @bot.id), notice: 'Bot compiled. Exiting editor to match setup.'
   rescue StandardError => error
     redirect_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}"
   end
