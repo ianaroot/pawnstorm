@@ -10,7 +10,6 @@ class ComputeMatchJob < ApplicationJob
 
     Tempfile.create(['match-result', '.json']) do |result_file|
       stdout, stderr, status = run_match_process(match:, result_path: result_file.path)
-
       unless status.success?
         match.update!(
           status: :failed,

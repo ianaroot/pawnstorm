@@ -12,10 +12,8 @@ class Tournament < ApplicationRecord
   def enqueue_next_match!
     return if paused?
     return if matches.running.exists?
-
     next_match = matches.pending.order(:created_at).first
     return if next_match.nil?
-
     ComputeMatchJob.perform_later(next_match.id)
   end
 
@@ -85,21 +83,17 @@ class Tournament < ApplicationRecord
         completed: 0
       }
     end
-
     matches.includes(:white_player, :black_player).find_each do |match|
       white_entrant = match.white_tournament_entry
       black_entrant = match.black_tournament_entry
       next unless white_entrant && black_entrant
       next unless rows.key?(white_entrant.id) && rows.key?(black_entrant.id)
-
       if match.failed?
         rows[white_entrant.id][:failed] += 1
         rows[black_entrant.id][:failed] += 1
         next
       end
-
       next unless match.completed?
-
       if DRAW_RESULTS.include?(match.result)
         rows[white_entrant.id][:points] += 0.5
         rows[black_entrant.id][:points] += 0.5
@@ -114,11 +108,9 @@ class Tournament < ApplicationRecord
         rows[black_entrant.id][:wins] += 1
         rows[white_entrant.id][:losses] += 1
       end
-
       rows[white_entrant.id][:completed] += 1
       rows[black_entrant.id][:completed] += 1
     end
-
     rows.values.sort_by do |row|
       [-row[:points], -row[:wins], row[:losses], row[:entrant].display_name]
     end
@@ -126,7 +118,6 @@ class Tournament < ApplicationRecord
 
   def pairing_matches(entrant_a, entrant_b)
     normalized_a, normalized_b = normalize_pairing_entrants(entrant_a, entrant_b)
-
     matches
       .includes(:white_tournament_entry, :black_tournament_entry)
       .where(
@@ -141,7 +132,6 @@ class Tournament < ApplicationRecord
   def pairing_row(entrant_a, entrant_b)
     normalized_a, normalized_b = normalize_pairing_entrants(entrant_a, entrant_b)
     all_pairing_matches = pairing_matches(normalized_a, normalized_b)
-
     {
       entrant_a: normalized_a,
       entrant_b: normalized_b,
@@ -154,7 +144,6 @@ class Tournament < ApplicationRecord
 
   def directional_pairing_summary(white_entrant, black_entrant)
     directional_record = directional_pairing_record(white_entrant, black_entrant)
-
     {
       white_entrant: white_entrant,
       black_entrant: black_entrant,
@@ -222,7 +211,6 @@ class Tournament < ApplicationRecord
       .where(white_tournament_entry: white_entrant, black_tournament_entry: black_entrant)
       .order(:created_at)
       .to_a
-
     {
       white_entrant: white_entrant,
       black_entrant: black_entrant,

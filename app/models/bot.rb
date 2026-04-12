@@ -39,7 +39,6 @@ class Bot < ApplicationRecord
   def mark_compiled_program_stale!
     return unless persisted?
     return if compiled_program_stale?
-
     update_column(:compiled_program_stale, true)
   end
   

@@ -16,7 +16,6 @@ class BotNodesController < ApplicationController
 
   def create
     @node = @bot.nodes.new(node_params)
-    
     if @node.save
       render json: @node, status: :created
     else
@@ -38,7 +37,6 @@ class BotNodesController < ApplicationController
       render json: { error: "Cannot delete root node" }, status: :unprocessable_entity
       return
     end
-    
     @node.destroy
     head :no_content
   end
@@ -53,7 +51,6 @@ class BotNodesController < ApplicationController
 
   def batch_update_positions
     positions = params[:nodes] || []
-    
     begin
       Node.transaction do
         positions.each do |node_data|
@@ -72,18 +69,11 @@ class BotNodesController < ApplicationController
   def connect
     source_node = @bot.nodes.find(params[:id])
     target_node = @bot.nodes.find(params[:target_id])
-    
-    # Prevent connecting TO a root node (root can only have outgoing connections)
     if target_node.root?
       render json: { error: "Cannot connect to root node" }, status: :unprocessable_entity
       return
     end
-    
-    connection = Connection.new(
-      source_node: source_node,
-      target_node: target_node
-    )
-
+    connection = Connection.new(source_node: source_node,target_node: target_node )
     if connection.save
       render json: connection, status: :created
     else
@@ -113,7 +103,6 @@ class BotNodesController < ApplicationController
 
   def node_params
     permitted = params.require(:node).permit(:node_type, :position_x, :position_y)
-
     if params.dig(:node, :data).present?
       permitted[:data] =
         if params[:node][:data].respond_to?(:to_unsafe_h)

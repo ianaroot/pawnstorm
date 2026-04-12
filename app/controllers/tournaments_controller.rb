@@ -14,20 +14,17 @@ class TournamentsController < ApplicationController
     @selected_bot_ids = tournament_params[:entrant_bot_ids].reject(&:blank?)
     @games_per_pair = parsed_games_per_pair
     selected_bots = @selectable_bots.select { |bot| @selected_bot_ids.include?(bot.id.to_s) }
-
     if selected_bots.length < 2
       flash.now[:alert] = 'Please choose at least two compiled bots.'
       render :new, status: :unprocessable_entity
       return
     end
-
     tournament = nil
     ActiveRecord::Base.transaction do
       tournament = Tournament.create!(
         creator: current_user,
         games_per_pair: @games_per_pair
       )
-
       tournament_entries_by_bot_id = {}
       selected_bots.each_with_index do |bot, index|
         tournament_entries_by_bot_id[bot.id] = tournament.tournament_entries.create!(
@@ -38,11 +35,9 @@ class TournamentsController < ApplicationController
           compiled_program_snapshot: compiled_program_snapshot_for(bot)
         )
       end
-
       build_match_definitions(selected_bots, games_per_pair: @games_per_pair).shuffle.each do |definition|
         white_bot = definition.fetch(:white_bot)
         black_bot = definition.fetch(:black_bot)
-
         Match.create!(
           tournament: tournament,
           creator: current_user,
@@ -59,9 +54,7 @@ class TournamentsController < ApplicationController
         )
       end
     end
-
     tournament.enqueue_next_match!
-
     redirect_to tournament_path(tournament), notice: 'Tournament created. Matches are generating now.'
   end
 
@@ -69,7 +62,6 @@ class TournamentsController < ApplicationController
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
     @entrants = @tournament.entrants
     @standings = @tournament.standings_rows
-
     respond_to do |format|
       format.html
       format.json do
@@ -88,33 +80,28 @@ class TournamentsController < ApplicationController
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
     requested_entrant_ids = [params[:entrant_a_id], params[:entrant_b_id]].map(&:to_i).uniq
     requested_entrants = @tournament.entrants.where(id: requested_entrant_ids)
-
     if requested_entrant_ids.size != 2 || requested_entrants.size != 2
       redirect_to tournament_path(@tournament), alert: 'That pairing is not valid for this tournament.'
       return
     end
-
     @pairing = @tournament.pairing_row(requested_entrants.first, requested_entrants.last)
   end
 
   def abort
     tournament = Tournament.find(params[:id])
     tournament.abort!
-
     redirect_to tournament_path(tournament), notice: 'Tournament aborted. Running matches may finish, but no new matches will be queued.'
   end
 
   def pause
     tournament = Tournament.find(params[:id])
     tournament.pause!
-
     redirect_to tournament_path(tournament), notice: 'Tournament paused. Running matches may finish, but no new matches will be queued.'
   end
 
   def resume
     tournament = Tournament.find(params[:id])
     tournament.resume!
-
     redirect_to tournament_path(tournament), notice: 'Tournament resumed.'
   end
 
