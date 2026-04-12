@@ -478,6 +478,82 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include(%(value="#{opponent_bot.id}"))
     end
 
+    it 'shows play again for human-vs-bot matches with a random color rematch' do
+      bot = create(:bot, :compiled, user: user)
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :completed,
+        result: :white_win,
+        allowed_to_move: 'B',
+        captured_pieces: [],
+        movement_notation: ['1. e4#'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Play Again')
+      expect(response.body).to include(%(action="#{human_vs_bot_matches_path}"))
+      expect(response.body).to include(%(name="match[bot_id]"))
+      expect(response.body).to include(%(value="#{bot.id}"))
+      expect(response.body).to include(%(name="match[human_color]"))
+      expect(response.body).to include(%(value="random"))
+      expect(response.body).not_to include(%(name="match[own_bot_id]"))
+    end
+
+    it 'explains why play again is unavailable when the human-vs-bot bot is stale' do
+      bot = create(:bot, :compiled, user: user)
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :completed,
+        result: :white_win,
+        allowed_to_move: 'B',
+        captured_pieces: [],
+        movement_notation: ['1. e4#'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+      bot.update_column(:compiled_program_stale, true)
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Play again is unavailable because this bot needs to be recompiled.')
+      expect(response.body).not_to include('Play Again')
+    end
+
+    it 'explains why play again is unavailable when the human-vs-bot bot has been deleted' do
+      bot = create(:bot, :compiled, user: user)
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :completed,
+        result: :white_win,
+        allowed_to_move: 'B',
+        captured_pieces: [],
+        movement_notation: ['1. e4#'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+      bot.destroy!
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Play again is unavailable because the green chess goblin from this match has been deleted.')
+      expect(response.body).not_to include('Play Again')
+    end
+
     it 'shows tournament match history after a bot has been deleted' do
       tournament = create(:tournament, creator: user)
       deleted_bot = create(:bot, :compiled, name: 'Deleted Rogue')
