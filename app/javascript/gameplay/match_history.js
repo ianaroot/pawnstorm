@@ -27,7 +27,6 @@ class MatchHistory {
 
   lightClone() {
     return new MatchHistory({
-      movementNotation: [...this.movementNotation],
       recentMoveContext: this.recentMoveContext
         ? {
             ...this.recentMoveContext,

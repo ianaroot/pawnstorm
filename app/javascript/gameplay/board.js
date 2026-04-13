@@ -109,6 +109,7 @@ class Board {
           resultType: this._resultType,
         });
     newBoard.history = this.history.lightClone()
+    newBoard._castlingRightsCache = JSON.parse(JSON.stringify(this.castlingRightsCache()))
     return newBoard;
   }
 
