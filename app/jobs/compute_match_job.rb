@@ -69,8 +69,7 @@ class ComputeMatchJob < ApplicationJob
   def match_payload(match)
     {
       white_compiled_program: compiled_program_snapshot_for(match, :white),
-      black_compiled_program: compiled_program_snapshot_for(match, :black),
-      max_plies: 200
+      black_compiled_program: compiled_program_snapshot_for(match, :black)
     }
   end
 

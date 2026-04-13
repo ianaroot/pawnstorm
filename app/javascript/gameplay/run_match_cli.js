@@ -6,6 +6,8 @@ import Layout from 'gameplay/layout'
 import MatchRunner from 'gameplay/match_runner'
 import profileCollector from 'gameplay/profile_collector'
 
+const DEFAULT_MAX_PLIES = 1000
+
 async function readStdin() {
   const chunks = []
   for await (const chunk of process.stdin) {
@@ -69,6 +71,7 @@ async function main() {
     movementNotation: []
   })
   currentBoard = board
+  const maxPlies = payload.max_plies ?? DEFAULT_MAX_PLIES
 
   const matchRunner = new MatchRunner({
     board,
@@ -79,10 +82,10 @@ async function main() {
   })
 
   const turns = profileCollector.measure('match.total', () => {
-    return matchRunner.play({ maxPlies: payload.max_plies || 200 })
+    return matchRunner.play({ maxPlies })
   })
   const resultPayload = {
-    result: resultFor(board, payload.max_plies || 200, turns.length),
+    result: resultFor(board, maxPlies, turns.length),
     lay_out: board.layOut,
     captured_pieces: board.capturedPieces,
     allowed_to_move: board.allowedToMove,
