@@ -42,6 +42,7 @@ function boardSnapshot(board) {
 
 function resultFor(board, maxPlies, turnCount) {
   if (!board.gameOver && turnCount >= maxPlies) { return 'capped' }
+  if (board._resultType === 'fifty_move_rule') { return 'fifty_move_rule' }
   if (board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
   if (board._resultType === 'stalemate') { return 'stalemate' }
   if (board._winner === Board.WHITE) { return 'white_win' }

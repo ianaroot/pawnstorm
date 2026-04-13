@@ -358,6 +358,37 @@ RSpec.describe 'Matches', type: :request do
       expect(match.movement_notation).to eq(['1. e4#'])
     end
 
+    it 'persists a fifty-move-rule completed match' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      patch complete_human_vs_bot_match_path(match), params: {
+        match: {
+          status: 'completed',
+          result: 'fifty_move_rule',
+          lay_out: Array.new(64, 'ee'),
+          captured_pieces: [],
+          allowed_to_move: 'W',
+          movement_notation: ['1. Ke2'],
+          previous_layouts: []
+        }
+      }, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body).to include('redirect_url' => match_path(match))
+      expect(match.reload).to be_completed
+      expect(match.result).to eq('fifty_move_rule')
+    end
+
     it 'persists browser-side play failures' do
       match = Match.create!(
         creator: user,

@@ -171,6 +171,7 @@ class GameController {
 	}
 
 	matchResult(){
+		if (this.board._resultType === 'fifty_move_rule') { return 'fifty_move_rule' }
 		if (this.board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
 		if (this.board._winner === Board.WHITE) { return 'white_win' }
 		if (this.board._winner === Board.BLACK) { return 'black_win' }
@@ -181,6 +182,7 @@ class GameController {
 	resultMessage(){
 		if (this.board._winner === this.playConfig.humanTeam) { return 'You win.' }
 		if (this.board._winner === this.playConfig.botTeam) { return 'Bot wins.' }
+		if (this.board._resultType === 'fifty_move_rule') { return 'Draw by 50-move rule.' }
 		if (this.board._resultType === 'threefold_repetition') { return 'Draw by threefold repetition.' }
 
 		return 'Draw by stalemate.'

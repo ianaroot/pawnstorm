@@ -731,6 +731,9 @@ class Board {
     } else if( /\+/.exec(lastNotation) ) {
       alert = "check"
       sound = "check"
+    } else if( this._resultType === "fifty_move_rule" ) {
+      alert = "50-move rule"
+      sound = "move"
     } else if( this._resultType === "threefold_repetition" ) {
       alert = "threefold repetition"
       sound = "move"

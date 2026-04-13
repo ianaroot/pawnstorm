@@ -147,26 +147,6 @@ class Rules {
     return noLegalMoves
   }
 
-  static getDuplicatesForThreeFold( arr ) {
-    var all = {};
-    return arr.reduce(function( duplicates, value ) {// strip out clarifying rank or file letter
-      //TODO record clarifying rank or file letter
-      value = value.replace(/=[QRNB]/, "")
-      value = value.replace(/\+/, "")
-      if( /[RNBQ][a-h1-8][a-h]/.exec(value) ){
-        value = value.replace(/[a-h1-8]/, "")
-      }
-      if( all[value] ) {
-        duplicates.push(value);
-        all[value] = false;
-      } else if( typeof all[value] == "undefined" ) {
-        all[value] = true;
-      }
-      return duplicates;
-    }, []);
-  }
-
-
   static threeFoldRepetition(board){
     return board.history.positionKeyCount(board) >= 3
   }

@@ -1,0 +1,41 @@
+require 'rails_helper'
+
+RSpec.describe Tournament, type: :model do
+  describe 'draw accounting' do
+    it 'counts fifty_move_rule as a draw in standings and pairings' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      Match.create!(
+        tournament: tournament,
+        creator: creator,
+        white_player: bot_a,
+        black_player: bot_b,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :completed,
+        result: :fifty_move_rule,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: ['1. Nf3'],
+        previous_layouts: [],
+        lay_out: Array.new(64, 'ee')
+      )
+
+      standings_by_entry_id = tournament.standings_rows.index_by { |row| row[:entrant].id }
+      expect(standings_by_entry_id.fetch(entry_a.id)[:points]).to eq(0.5)
+      expect(standings_by_entry_id.fetch(entry_b.id)[:points]).to eq(0.5)
+      expect(standings_by_entry_id.fetch(entry_a.id)[:draws]).to eq(1)
+      expect(standings_by_entry_id.fetch(entry_b.id)[:draws]).to eq(1)
+
+      pairing = tournament.pairing_row(entry_a, entry_b)
+      expect(pairing[:total_record][:draws]).to eq(1)
+      expect(pairing[:total_record][:entrant_a_points]).to eq(0.5)
+      expect(pairing[:total_record][:entrant_b_points]).to eq(0.5)
+    end
+  end
+end
