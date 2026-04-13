@@ -145,12 +145,7 @@ class GameController {
 	}
 
 	undo(){
-		if (this.playConfig) { return }
-
-		if( JSON.parse( this.board.previousLayouts ).length){
-			this.board._undo()
-			this.view.displayLayOut({board: this.board})
-		}
+		return
 	}
 
 	submitCompletionIfGameOver(){

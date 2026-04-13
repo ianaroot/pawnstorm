@@ -167,60 +167,8 @@ class Rules {
   }
 
 
-  static threeFoldRepetition(board, prefixNotation){
-    let notations = Board._deepCopy(board.movementNotation),
-      notationsSinceCaptureOrPromotion = [];
-      notations.push(prefixNotation); //have to start with this one, don't want to skip the latest move
-    for(let i = notations.length -1; i >= 0; i --){
-      let notation = notations[i];
-      notationsSinceCaptureOrPromotion.push( notation )
-      if( /x/.exec(notation) || /^[a-h]/.exec(notation) ){
-        break
-      }
-    }
-    let teamOneNotation = [],
-      teamTwoNotation = [];
-    for(let i = 0; i < notationsSinceCaptureOrPromotion.length; i++){
-      let notation = notationsSinceCaptureOrPromotion[i];
-      if( i % 2 === 0 ){
-        teamOneNotation.push(notation)
-      } else {
-        teamTwoNotation.push(notation)
-      }
-    }
-
-    let teamOneDuplicates = this.getDuplicatesForThreeFold(teamOneNotation),
-      teamTwoDuplicates = this.getDuplicatesForThreeFold(teamTwoNotation);
-    if( teamOneDuplicates.length < 2 || teamTwoDuplicates.length < 2){//TODO setup more indicative three fold test to show why this is 2 not 3
-      return false
-    } else {
-      // console.log("threeFold triggered")
-      let previousLayouts = JSON.parse(board.previousLayouts),
-          repetitions = 0,
-          threeFoldRepetition = false,
-          // currentLayOut = board.layOut;
-          currentLayOut = JSON.stringify(board.layOut);
-
-      for( let i = 0; i < previousLayouts.length; i++ ){
-
-        let comparisonLayout = JSON.stringify(previousLayouts[i]);
-        if(comparisonLayout === currentLayOut){ repetitions++ }
-
-      //   let comparisonLayout = previousLayouts[i],
-      //     different = false;
-      //   for( let j = 0; j < comparisonLayout.length; j++){
-      //     if( comparisonLayout[j] !== currentLayOut[j] ){
-      //       different = true
-      //       break
-      //     }
-      //   };
-      // if( !different ){ repetitions ++ }
-      };
-      if(repetitions >= 2){
-        threeFoldRepetition = true
-      }
-    return threeFoldRepetition
-    }
+  static threeFoldRepetition(board){
+    return board.history.positionKeyCount(board) >= 3
   }
 
 
@@ -229,12 +177,24 @@ class Rules {
         attackingTeam = Board.opposingTeam(otherTeam),
         kingPosition = board._kingPosition(otherTeam),
         inCheck = this.checkQuery({board: board, teamString: otherTeam}),
-        noMoves = this.noLegalMoves({ board: board, teamString: otherTeam }),
-        threeFold = this.threeFoldRepetition(board, prefixNotation);
+        noMoves = this.noLegalMoves({ board: board, teamString: otherTeam });
     if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return "#" }
     if( inCheck ){ return "+" }
     if( noMoves ){ board._endGame({ resultType: "stalemate" }); return "" }
-    if( threeFold ){ board._endGame({ resultType: "threefold_repetition" }); return "" }
+    return ""
+  }
+
+  static postTurnDrawQueries(board){
+    if( board.history.halfmoveClock >= 100 ){
+      board._endGame({ resultType: "fifty_move_rule" })
+      return ""
+    }
+
+    if( this.threeFoldRepetition(board) ){
+      board._endGame({ resultType: "threefold_repetition" })
+      return ""
+    }
+
     return ""
   }
 }

@@ -197,8 +197,6 @@ class Bot {
       // console.log(newBoard.movementNotation)
       // console.log('good checkmate')
       // return 1
-      // console.log(newBoard.previousLayouts)
-      // console.log(JSON.parse(newBoard.previousLayouts).length)
       return 1
     } else if ( newBoard._winner === Board.opposingTeam(this.homeTeam) ){
       // console.log('bad checkmate')

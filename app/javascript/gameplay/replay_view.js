@@ -241,8 +241,7 @@ export function buildReplayBoard({ layout, capturedPieces, allowedToMove }) {
     layOut: layout,
     capturedPieces,
     allowedToMove,
-    movementNotation: [],
-    previousLayouts: []
+    movementNotation: []
   })
 }
 

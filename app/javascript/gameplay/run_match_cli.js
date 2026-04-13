@@ -65,8 +65,7 @@ async function main() {
     layOut: Layout.default(),
     capturedPieces: [],
     allowedToMove: Board.WHITE,
-    movementNotation: [],
-    previousLayouts: JSON.stringify([])
+    movementNotation: []
   })
   currentBoard = board
 

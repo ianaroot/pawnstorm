@@ -68,8 +68,7 @@ class MatchReplayController {
       layOut: Layout.default(),
       capturedPieces: [],
       allowedToMove: Board.WHITE,
-      movementNotation: [],
-      previousLayouts: JSON.stringify([])
+      movementNotation: []
     })
     const frames = [this.snapshotBoard(board)]
 
