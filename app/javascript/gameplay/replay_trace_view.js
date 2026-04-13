@@ -11,7 +11,7 @@ class ReplayTraceView {
   render(inspection) {
     if (!this.tracePanelElement || !this.traceSummaryElement || !this.traceBranchesElement) { return }
 
-    if (!inspection?.enabled || !inspection.result?.selectedTrace) {
+    if (!inspection?.enabled || !inspection.result?.inspectedTrace) {
       this.tracePanelElement.hidden = true
       this.traceSummaryElement.innerHTML = ""
       this.traceBranchesElement.innerHTML = ""
@@ -25,10 +25,10 @@ class ReplayTraceView {
 
   renderSummary(inspection) {
     const { result } = inspection
-    const selectedMove = result.selectedMove?.moveObject
-    const selectedNotation = selectedMove ? Board.gridCalculator(selectedMove.endPosition) : "none"
+    const inspectedMove = result.inspectedMove?.moveObject
+    const inspectedNotation = inspectedMove ? Board.gridCalculator(inspectedMove.endPosition) : "none"
     const tiedTopCount = result.tiedTopMoveKeys.length
-    const selectedTied = result.currentChoiceKey && result.tiedTopMoveKeys.includes(result.currentChoiceKey)
+    const inspectedTied = result.inspectedMoveKey && result.tiedTopMoveKeys.includes(result.inspectedMoveKey)
 
     this.traceSummaryElement.innerHTML = ""
 
@@ -42,17 +42,17 @@ class ReplayTraceView {
 
     const score = document.createElement("span")
     score.className = "match-replay-trace-score"
-    score.innerText = `score ${result.selectedTrace.score}`
+    score.innerText = `score ${result.inspectedTrace.score}`
     summaryRow.appendChild(score)
 
     const moveSummary = document.createElement("span")
     moveSummary.className = "match-replay-trace-meta"
-    moveSummary.innerText = result.explicitSelectedMoveKey
-      ? `selected move: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
-      : `current choice: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
+    moveSummary.innerText = result.explicitInspectedMoveKey
+      ? `inspected move: ${Board.gridCalculator(inspectedMove.startPosition)} to ${inspectedNotation}`
+      : `current choice: ${Board.gridCalculator(inspectedMove.startPosition)} to ${inspectedNotation}`
     summaryRow.appendChild(moveSummary)
 
-    if (tiedTopCount > 1 && selectedTied) {
+    if (tiedTopCount > 1 && inspectedTied) {
       const tieSummary = document.createElement("span")
       tieSummary.className = "match-replay-trace-meta"
       tieSummary.innerText = `tied top moves: ${tiedTopCount}`
@@ -67,7 +67,7 @@ class ReplayTraceView {
 
     const groupedBranches = this.groupByBranch({
       compiledProgram: inspection.compiledProgram,
-      trace: inspection.result.selectedTrace.trace
+      trace: inspection.result.inspectedTrace.trace
     })
 
     groupedBranches.forEach(branch => {

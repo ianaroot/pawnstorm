@@ -17,7 +17,7 @@ class MatchReplayController {
     this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
     this.forwardButton = rootElement.querySelector('[data-match-replay-target="forward-button"]')
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
-    this.selectedMoveToggle = rootElement.querySelector('[data-match-replay-target="selected-move-toggle"]')
+    this.topMovesToggle = rootElement.querySelector('[data-match-replay-target="top-moves-toggle"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
@@ -26,7 +26,7 @@ class MatchReplayController {
     this.backButton?.addEventListener('click', this.stepBackwardOnce.bind(this))
     this.forwardButton?.addEventListener('click', this.stepForwardOnce.bind(this))
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
-    this.selectedMoveToggle?.addEventListener('click', this.toggleSelectedMoveHighlight.bind(this))
+    this.topMovesToggle?.addEventListener('click', this.toggleTopMoveHighlights.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
     this.boardElement?.addEventListener('click', this.handleBoardClick.bind(this))
     this.speedButtons.forEach(button => {
@@ -53,8 +53,8 @@ class MatchReplayController {
     this.totalPlayableMoves = this.frames.length - 1
     this.movePairs = this.buildMovePairs()
     this.selectedStartPosition = null
-    this.selectedMoveKey = null
-    this.muteSelectedMoveHighlight = false
+    this.inspectedMoveKey = null
+    this.muteTopMoveHighlights = false
     this.renderCurrentFrame()
   }
 
@@ -232,8 +232,8 @@ class MatchReplayController {
     this.stepForward()
   }
 
-  toggleSelectedMoveHighlight() {
-    this.muteSelectedMoveHighlight = !this.muteSelectedMoveHighlight
+  toggleTopMoveHighlights() {
+    this.muteTopMoveHighlights = !this.muteTopMoveHighlights
     this.renderCurrentFrame()
   }
 
@@ -277,26 +277,26 @@ class MatchReplayController {
     ))
 
     if (clickedVisibleMove) {
-      this.selectedMoveKey = clickedVisibleMove.key
+      this.inspectedMoveKey = clickedVisibleMove.key
       this.renderCurrentFrame()
       return
     }
 
     if (board.teamAt(position) === inspection.team) {
       this.selectedStartPosition = this.selectedStartPosition === position ? null : position
-      this.selectedMoveKey = null
+      this.inspectedMoveKey = null
       this.renderCurrentFrame()
       return
     }
 
     this.selectedStartPosition = null
-    this.selectedMoveKey = null
+    this.inspectedMoveKey = null
     this.renderCurrentFrame()
   }
 
   resetInspectionSelection() {
     this.selectedStartPosition = null
-    this.selectedMoveKey = null
+    this.inspectedMoveKey = null
   }
 
   currentBoard() {
@@ -328,13 +328,13 @@ class MatchReplayController {
     const inspector = new ReplayMoveInspector({ compiledProgram })
     const result = inspector.inspectPosition({
       board,
-      selectedMoveKey: this.selectedMoveKey,
+      inspectedMoveKey: this.inspectedMoveKey,
       restrictToStartPosition: this.selectedStartPosition,
-      autoSelectVisibleMove: !(this.selectedStartPosition && this.selectedMoveKey === null)
+      autoSelectVisibleMove: !(this.selectedStartPosition && this.inspectedMoveKey === null)
     })
 
-    if (this.selectedMoveKey !== result.explicitSelectedMoveKey) {
-      this.selectedMoveKey = result.explicitSelectedMoveKey
+    if (this.inspectedMoveKey !== result.explicitInspectedMoveKey) {
+      this.inspectedMoveKey = result.explicitInspectedMoveKey
     }
 
     return {
@@ -363,7 +363,7 @@ class MatchReplayController {
       totalMoves: this.totalPlayableMoves,
       warning: this.warning,
       inspection,
-      muteSelectedMoveHighlight: this.muteSelectedMoveHighlight
+      muteTopMoveHighlights: this.muteTopMoveHighlights
     })
   }
 

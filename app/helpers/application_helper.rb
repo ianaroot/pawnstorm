@@ -7,6 +7,34 @@ module ApplicationHelper
     'organizer' => { width: 140, height: 112 }
   }.freeze
 
+  BOT_GUIDE_INLINE_TERMS = [
+    'Current Condition',
+    'Prior Board State',
+    'Enemy Captured Piece Value',
+    'Enemy Moved Piece Value',
+    'Captured Piece Value',
+    'Moved Piece Value',
+    'Enemy Captured Piece',
+    'Enemy Moved Piece',
+    'Captured Piece',
+    'Moved Piece',
+    'Same-Piece',
+    'Target filter',
+    'Subject',
+    'Filter',
+    'Operator',
+    'Target',
+    'Comparison',
+    'Template',
+    'Action',
+    'Return',
+    'Cover'
+  ].sort_by { |term| -term.length }.freeze
+
+  BOT_GUIDE_INLINE_TERM_PATTERN = Regexp.union(
+    BOT_GUIDE_INLINE_TERMS.map { |term| ERB::Util.html_escape(term) }
+  )
+
   def bot_guide_structured_snippet?(body)
     lines = body.to_s.lines.map(&:strip).reject(&:empty?)
     return false if lines.empty?
@@ -31,17 +59,8 @@ module ApplicationHelper
 
     formatted = ERB::Util.html_escape(text)
 
-    [
-      'Subject',
-      'Subject specifier',
-      'Relation',
-      'Relation specifier',
-      'Comparison',
-      'Comparison value'
-    ].each do |term|
-      escaped_term = ERB::Util.html_escape(term)
-      replacement = %(<span class="bot-guide-inline-key">#{escaped_term}</span>)
-      formatted = formatted.gsub(escaped_term, replacement)
+    formatted.gsub!(BOT_GUIDE_INLINE_TERM_PATTERN) do |term|
+      %(<span class="bot-guide-inline-key">#{term}</span>)
     end
 
     formatted.html_safe
