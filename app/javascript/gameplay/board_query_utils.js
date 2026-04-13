@@ -27,21 +27,17 @@ function pawnControlsSquare({ board, attackerPosition, targetPosition }) {
 
 function rookControlsSquare({ board, attackerPosition, targetPosition }) {
     if (attackerPosition === targetPosition) return false
-
     const attackerFile = attackerPosition % 8
     const targetFile = targetPosition % 8
     const attackerRank = Math.floor(attackerPosition / 8)
     const targetRank = Math.floor(targetPosition / 8)
-
     if (attackerFile !== targetFile && attackerRank !== targetRank) { return false }
-
     let step
     if (attackerFile === targetFile) {
         step = targetPosition > attackerPosition ? 8 : -8
     } else { //same rank not file
         step = targetPosition > attackerPosition ? 1 : -1
     }
-
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
@@ -56,83 +52,53 @@ function squaresBetweenClear({ board, attackerPosition, targetPosition, step }) 
 
 function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
     if (attackerPosition === targetPosition) return false
-
     const fileDiff = (targetPosition % 8) - (attackerPosition % 8)
     const rankDiff = Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8)
-
     if (Math.abs(fileDiff) !== Math.abs(rankDiff)) {
         return false
     }
-
     let step
     if (fileDiff > 0 && rankDiff > 0) step = 9
     if (fileDiff < 0 && rankDiff > 0) step = 7
     if (fileDiff > 0 && rankDiff < 0) step = -7
     if (fileDiff < 0 && rankDiff < 0) step = -9
-
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
 function sliderStep(attackerPosition, targetPosition) {
     const fileDiff = (targetPosition % 8) - (attackerPosition % 8)
     const rankDiff = Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8)
-
-    if (fileDiff === 0 && rankDiff !== 0) {
-        return rankDiff > 0 ? 8 : -8
-    }
-
-    if (rankDiff === 0 && fileDiff !== 0) {
-        return fileDiff > 0 ? 1 : -1
-    }
-
+    if (fileDiff === 0 && rankDiff !== 0) { return rankDiff > 0 ? 8 : -8 }
+    if (rankDiff === 0 && fileDiff !== 0) { return fileDiff > 0 ? 1 : -1 }
     if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
         if (fileDiff > 0 && rankDiff > 0) return 9
         if (fileDiff < 0 && rankDiff > 0) return 7
         if (fileDiff > 0 && rankDiff < 0) return -7
         if (fileDiff < 0 && rankDiff < 0) return -9
     }
-
     return null
 }
 
 function sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition }) {
     const attackerType = board.pieceTypeAt(attackerPosition)
     const step = sliderStep(attackerPosition, targetPosition)
-
-    if (step === null) {
-        return false
-    }
-
+    if (step === null) { return false }
     const isStraight = Math.abs(step) === 1 || Math.abs(step) === 8
     const isDiagonal = Math.abs(step) === 7 || Math.abs(step) === 9
 
-    if (attackerType === Board.ROOK) {
-        return isStraight
-    }
-
-    if (attackerType === Board.BISHOP) {
-        return isDiagonal
-    }
-
-    if (attackerType === Board.QUEEN) {
-        return isStraight || isDiagonal
-    }
-
+    if (attackerType === Board.ROOK) { return isStraight }
+    if (attackerType === Board.BISHOP) { return isDiagonal }
+    if (attackerType === Board.QUEEN) { return isStraight || isDiagonal }
     return false
 }
 
 function positionsBetween(attackerPosition, targetPosition) {
     const step = sliderStep(attackerPosition, targetPosition)
-    if (step === null) {
-        return []
-    }
-
+    if (step === null) { return [] }
     const between = []
-
     for (let current = attackerPosition + step; current !== targetPosition; current += step) {
         between.push(current)
     }
-
     return between
 }
 
@@ -142,21 +108,13 @@ function raySteps() {
 
 function nextPositionOnRay(position, step) {
     const nextPosition = position + step
-    if (!Board._inBounds(nextPosition)) {
-        return null
-    }
-
+    if (!Board._inBounds(nextPosition)) { return null }
     const currentFile = position % 8
     const nextFile = nextPosition % 8
-
-    if (Math.abs(step) === 1 && Math.abs(nextFile - currentFile) !== 1) {
-        return null
-    }
-
+    if (Math.abs(step) === 1 && Math.abs(nextFile - currentFile) !== 1) { return null }
     if ((Math.abs(step) === 7 || Math.abs(step) === 9) && Math.abs(nextFile - currentFile) !== 1) {
         return null
     }
-
     return nextPosition
 }
 
@@ -173,50 +131,28 @@ function compatibleSliderOnRay({ board, position, step, opposingTeam }) {
 
 function firstOccupiedOnRay({ board, startPosition, step }) {
     for (let current = nextPositionOnRay(startPosition, step); current !== null; current = nextPositionOnRay(current, step)) {
-        if (!board.positionEmpty(current)) {
-            return current
-        }
+        if (!board.positionEmpty(current)) { return current }
     }
-
     return null
 }
 
 function covererOnRay({ board, targetPosition, team, step }) {
     return profileCollector.measure('board_query.coverer_on_ray', () => {
         const blockerPosition = firstOccupiedOnRay({ board, startPosition: targetPosition, step })
-
-        if (blockerPosition === null || board.teamAt(blockerPosition) !== team) {
-            return null
-        }
-
+        if (blockerPosition === null || board.teamAt(blockerPosition) !== team) { return null }
         const firstSquareBeyondBlocker = nextPositionOnRay(blockerPosition, step)
-        if (firstSquareBeyondBlocker === null) {
-            return null
-        }
-
+        if (firstSquareBeyondBlocker === null) { return null }
         const potentialAttacker = hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, step })
-        if (potentialAttacker) {
-            return blockerPosition
-        }
-
+        if (potentialAttacker) { return blockerPosition }
         return null
     })
 }
 
 function cachedValue({ cache, cacheType, cacheKey, compute }) {
-    if (!cache) {
-        return compute()
-    }
-
-    if (!cache[cacheType]) {
-        cache[cacheType] = new Map()
-    }
-
+    if (!cache) { return compute() }
+    if (!cache[cacheType]) { cache[cacheType] = new Map() }
     const bucket = cache[cacheType]
-    if (bucket.has(cacheKey)) {
-        return bucket.get(cacheKey)
-    }
-
+    if (bucket.has(cacheKey)) { return bucket.get(cacheKey) }
     const value = compute()
     bucket.set(cacheKey, value)
     return value
@@ -272,7 +208,6 @@ function buildCoverMap({ board, team, cache = null, cacheScope = 'after' }) {
                     sourceToCoveredTargets.get(sourcePosition).push(targetPosition)
                 })
             })
-
             return {
                 targetToCoverers,
                 sourceToCoveredTargets
@@ -294,7 +229,6 @@ function buildShieldMap({ board, team, cache = null, cacheScope = 'after' }) {
                 return pieceType === Board.ROOK || pieceType === Board.BISHOP || pieceType === Board.QUEEN
             })
             const alliedPositions = board._positionsOccupiedByTeam(team)
-
             sliderPositions.forEach((attackerPosition) => {
                 alliedPositions.forEach((targetPosition) => {
                     if (!sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })) { return }
@@ -302,20 +236,15 @@ function buildShieldMap({ board, team, cache = null, cacheScope = 'after' }) {
                         return !board.positionEmpty(position)
                     })
                     if (occupiedBetween.length !== 1) { return }
-
                     const blockerPosition = occupiedBetween[0]
                     if (board.teamAt(blockerPosition) !== team || blockerPosition === targetPosition) { return }
-
                     if (!sourceToShieldedTargets.has(blockerPosition)) {
                         sourceToShieldedTargets.set(blockerPosition, [])
                     }
                     sourceToShieldedTargets.get(blockerPosition).push(targetPosition)
                 })
             })
-
-            return {
-                sourceToShieldedTargets
-            }
+            return { sourceToShieldedTargets }
         }
     })
 }
@@ -325,7 +254,6 @@ function hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, s
         const farSideSquares = cachedSquaresBeyondBlockerOnRay({ blockerPosition, step, cache, cacheScope })
         if (farSideSquares.length === 0) { return false }
         const enemySliders = cachedCompatibleEnemySlidersOnRay({ board, team, step, cache, cacheScope })
-
         return enemySliders.some((sliderPosition) => {
             return sliderCanReachFarSideSquareWithoutCrossingBlocker({
                 board,
@@ -343,25 +271,20 @@ function sliderCouldReachSquareForCover({ board, sliderPosition, targetSquare })
     const targetFile = targetSquare % 8
     const sliderRank = Math.floor(sliderPosition / 8)
     const targetRank = Math.floor(targetSquare / 8)
-
     const sameFile = sliderFile === targetFile
     const sameRank = sliderRank === targetRank
     const fileDiff = Math.abs(sliderFile - targetFile)
     const rankDiff = Math.abs(sliderRank - targetRank)
     const sameDiagonal = fileDiff === rankDiff
-
     const geometricallyReachable =
         (pieceType === Board.ROOK && (sameFile || sameRank)) ||
         (pieceType === Board.BISHOP && sameDiagonal) ||
         (pieceType === Board.QUEEN && (sameFile || sameRank || sameDiagonal))
-
     if (!geometricallyReachable) {
         return false
     } else {
         return true
     }
-
-    
 }
 
 function pieceValue(species) {
@@ -441,13 +364,11 @@ function sliderControlledSquares({ board, attackerPosition, steps }) {
 
 function sourceShieldsTarget({ board, sourcePosition, targetPosition, team }) {
     if (sourcePosition === targetPosition) { return false }
-
     const opposingTeam = Board.opposingTeam(team)
     const sliderPositions = board._positionsOccupiedByTeam(opposingTeam).filter(position => {
         const pieceType = board.pieceTypeAt(position)
         return pieceType === Board.ROOK || pieceType === Board.BISHOP || pieceType === Board.QUEEN
     })
-
     return sliderPositions.some((attackerPosition) => {
         if (!sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })) { return false }
         const occupiedBetween = positionsBetween(attackerPosition, targetPosition).filter(position => {
@@ -459,7 +380,6 @@ function sourceShieldsTarget({ board, sourcePosition, targetPosition, team }) {
 
 function sourceCoversTarget({ board, sourcePosition, targetPosition, team }) {
     if (sourcePosition === targetPosition) { return false }
-
     return raySteps().some((step) => {
         return covererOnRay({ board, targetPosition, team, step }) === sourcePosition
     })
@@ -502,16 +422,10 @@ function cachedCompatibleEnemySlidersOnRay({ board, team, step, cache = null, ca
 
 function pathToTargetSquareClearsBlocker({ board, sliderPosition, targetSquare, blockerPosition }) {
     const step = sliderStep(sliderPosition, targetSquare)
-    if (step === null) {
-        return false
-    }
-
+    if (step === null) { return false }
     for (let current = sliderPosition + step; current !== targetSquare; current += step) {
-        if (current === blockerPosition) {
-            return false
-        }
+        if (current === blockerPosition) { return false }
     }
-
     return true
 }
 
@@ -525,7 +439,6 @@ function sliderCanReachFarSideSquareWithoutCrossingBlocker({
         if (!sliderCouldReachSquareForCover({ board, sliderPosition, targetSquare })) {
             return false
         }
-
         return pathToTargetSquareClearsBlocker({
             board,
             sliderPosition,
@@ -561,17 +474,11 @@ export function attackerCount(args) {
 export function adjacentPositions({ board, targetPosition, team, species = null }) {
     return profileCollector.measure('board_query.adjacent_positions', () => {
         return board._positionsOccupiedByTeam(team).filter(position => {
-            if (position === targetPosition) {
-                return false
-            }
+            if (position === targetPosition) { return false }
             const fileDiff = Math.abs((targetPosition % 8) - (position % 8))
             const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(position / 8))
-            if (Math.max(fileDiff, rankDiff) !== 1) {
-                return false
-            }
-            if (species !== null && board.pieceTypeAt(position) !== species) {
-                return false
-            }
+            if (Math.max(fileDiff, rankDiff) !== 1) { return false }
+            if (species !== null && board.pieceTypeAt(position) !== species) { return false }
             return true
         })
     })
@@ -590,22 +497,14 @@ export function shieldingPositions({ board, targetPosition, team, species = null
         })
         const shielding = new Set()
         sliderPositions.forEach(attackerPosition => {
-            if (!sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })) {
-                return
-            }
+            if (!sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })) { return }
             const occupiedBetween = positionsBetween(attackerPosition, targetPosition).filter(position => {
                 return !board.positionEmpty(position)
             })
-            if (occupiedBetween.length !== 1) {
-                return
-            }
+            if (occupiedBetween.length !== 1) { return }
             const blockerPosition = occupiedBetween[0]
-            if (board.teamAt(blockerPosition) !== team) {
-                return
-            }
-            if (species !== null && board.pieceTypeAt(blockerPosition) !== species) {
-                return
-            }
+            if (board.teamAt(blockerPosition) !== team) { return }
+            if (species !== null && board.pieceTypeAt(blockerPosition) !== species) { return }
             shielding.add(blockerPosition)
         })
         return Array.from(shielding)
@@ -616,11 +515,7 @@ export function coveringPositions({ board, targetPosition, team, species = null,
     return profileCollector.measure('board_query.covering_positions', () => {
         const { targetToCoverers } = buildCoverMap({ board, team, cache, cacheScope })
         const covering = targetToCoverers.get(targetPosition) || []
-
-        if (species === null) {
-            return covering
-        }
-
+        if (species === null) { return covering }
         return covering.filter((position) => board.pieceTypeAt(position) === species)
     })
 }
@@ -629,11 +524,7 @@ export function shieldedPositions({ board, sourcePosition, team, species = null,
     return profileCollector.measure('board_query.shielded_positions', () => {
         const { sourceToShieldedTargets } = buildShieldMap({ board, team, cache, cacheScope })
         const shielded = sourceToShieldedTargets.get(sourcePosition) || []
-
-        if (species === null) {
-            return shielded
-        }
-
+        if (species === null) { return shielded }
         return shielded.filter((position) => board.pieceTypeAt(position) === species)
     })
 }
@@ -642,11 +533,7 @@ export function coveredPositions({ board, sourcePosition, team, species = null, 
     return profileCollector.measure('board_query.covered_positions', () => {
         const { sourceToCoveredTargets } = buildCoverMap({ board, team, cache, cacheScope })
         const covered = sourceToCoveredTargets.get(sourcePosition) || []
-
-        if (species === null) {
-            return covered
-        }
-
+        if (species === null) { return covered }
         return covered.filter((position) => board.pieceTypeAt(position) === species)
     })
 }
@@ -721,11 +608,7 @@ export function pieceControlsSquare({ board, attackerPosition, targetPosition })
     const attacker = board.pieceObject(attackerPosition)
     const attackerTeam = Board.parseTeam(attacker)
     const attackerType = Board.parseSpecies(attacker)
-
-    if (attackerTeam === Board.EMPTY) {
-        return false
-    }
-
+    if (attackerTeam === Board.EMPTY) { return false }
     switch (attackerType) {
         case Board.NIGHT:
         return knightControlsSquare(attackerPosition, targetPosition)
@@ -752,10 +635,7 @@ export function controllingPositions({ board, targetPosition, team, species = nu
     const positions = board._positionsOccupiedByTeam(team)
 
     return positions.filter((attackerPosition) => {
-        if (species !== null && board.pieceTypeAt(attackerPosition) !== species) {
-        return false
-        }
-
+        if (species !== null && board.pieceTypeAt(attackerPosition) !== species) { return false }
         return pieceControlsSquare({ board, attackerPosition, targetPosition })
     })
 }
@@ -763,9 +643,7 @@ export function controllingPositions({ board, targetPosition, team, species = nu
 export function controlledSquares({ board, attackerPosition }) {
     return profileCollector.measure('board_query.controlled_squares', () => {
         const attacker = board.pieceObject(attackerPosition)
-        if (Board.parseTeam(attacker) === Board.EMPTY) {
-            return []
-        }
+        if (Board.parseTeam(attacker) === Board.EMPTY) { return [] }
         switch (Board.parseSpecies(attacker)) {
             case Board.PAWN: {
                 const attacks = pawnAttackPositions({ board, startPosition: attackerPosition })

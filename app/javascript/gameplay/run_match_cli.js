@@ -10,16 +10,12 @@ const DEFAULT_MAX_PLIES = 1000
 
 async function readStdin() {
   const chunks = []
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk)
-  }
-
+  for await (const chunk of process.stdin) { chunks.push(chunk) }
   return Buffer.concat(chunks).toString()
 }
 
 function serializableError(error) {
   if (!error) { return null }
-
   return {
     name: error.name,
     message: error.message,
@@ -29,7 +25,6 @@ function serializableError(error) {
 
 function boardSnapshot(board) {
   if (!board) { return null }
-
   return {
     lay_out: board.layOut,
     captured_pieces: board.capturedPieces,

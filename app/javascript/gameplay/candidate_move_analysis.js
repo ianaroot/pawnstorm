@@ -14,10 +14,7 @@ class CandidateMoveAnalysis {
 
   cachedRawRelatedPositions({ relation, targetPosition, team, boardScope = 'after' }) {
     const key = `${boardScope}:${relation}:${targetPosition}:${team}`
-    if (this._rawRelatedPositionsCache.has(key)) {
-      return this._rawRelatedPositionsCache.get(key)
-    }
-
+    if (this._rawRelatedPositionsCache.has(key)) { return this._rawRelatedPositionsCache.get(key) }
     const board = this.boardForScope(boardScope)
     const positions = this.rawRelatedPositions({ relation, targetPosition, team, board })
     this._rawRelatedPositionsCache.set(key, positions)
@@ -31,7 +28,6 @@ class CandidateMoveAnalysis {
         nextBoard._hypotheticallyMovePiece(this.moveObject)
         this._afterBoard = nextBoard
       }
-
       return this._afterBoard
     })
   }
@@ -40,7 +36,6 @@ class CandidateMoveAnalysis {
     return profileCollector.measure('cma.v1.available_moves_from', () => {
       const key = `${boardScope}:${position}`
       if (this._availableMovesCache.has(key)) return this._availableMovesCache.get(key)
-
       const board = this.boardForScope(boardScope)
       const moves = Rules.availableMovesFrom({ board, startPosition: position })
       this._availableMovesCache.set(key, moves)
@@ -61,9 +56,7 @@ class CandidateMoveAnalysis {
   }
 
   movedPiecePosition(boardScope = 'after') {
-    return boardScope === 'prior'
-      ? this.moveObject.startPosition
-      : this.moveObject.endPosition
+    return boardScope === 'prior' ? this.moveObject.startPosition : this.moveObject.endPosition
   }
 
   movedPieceAttackerCount() {
@@ -83,7 +76,6 @@ class CandidateMoveAnalysis {
         // this branch may want a broader shared path later.
         return this.capturedPieceQueryValue(query)
       }
-
       const positions = this.subjectPositions(query, boardScope)
       return this.positionalQueryValue(query, positions, boardScope)
     })
@@ -241,10 +233,7 @@ class CandidateMoveAnalysis {
   }
 
   positionsMatchingSpecifier(positions, subjectSpecifier = 'any', subjectSpecifierMode = 'include', board = this.afterBoard()) {
-    if (subjectSpecifier === 'any') {
-      return positions
-    }
-
+    if (subjectSpecifier === 'any') { return positions }
     return positions.filter(position => {
       return this.matchesSpecifier(board.pieceTypeAt(position), subjectSpecifier, subjectSpecifierMode)
     })
@@ -258,7 +247,6 @@ class CandidateMoveAnalysis {
 
   valueOfPositions(positions, boardScope = 'after') {
     const board = this.boardForScope(boardScope)
-
     return positions.reduce((sum, position) => {
       const pieceValue = materialValue(board.pieceTypeAt(position))
       return Number.isFinite(pieceValue) ? sum + pieceValue : sum
@@ -269,12 +257,10 @@ class CandidateMoveAnalysis {
     const board = this.boardForScope(boardScope)
     const pieceType = board.pieceTypeAt(position)
     const moveObjects = this.availableMovesFrom(position, boardScope)
-
     if (pieceType === Board.PAWN) {
       const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
       return destinations.size
     }
-
     return moveObjects.length
   }
 
@@ -292,7 +278,6 @@ class CandidateMoveAnalysis {
 
   relatedTeamFor({ query, relation }) {
     const subjectTeam = this.subjectTeam(query)
-
     switch (relation) {
       case 'adjacent':
       case 'defender':
@@ -350,7 +335,6 @@ class CandidateMoveAnalysis {
   relatedPositions({ query, relation, targetPosition, relationSpecifier, relationSpecifierMode, boardScope = 'after' }) {
     const team = this.relatedTeamFor({ query, relation })
     const positions = this.cachedRawRelatedPositions({ relation, targetPosition, team, boardScope })
-
     return this.filterRelationPositions({
       positions,
       relationSpecifier,
@@ -427,10 +411,7 @@ class CandidateMoveAnalysis {
   }
 
   filterRelationPositions({ positions, relationSpecifier = 'any', relationSpecifierMode = 'include', boardScope = 'after' }) {
-    if (relationSpecifier === 'any') {
-      return positions
-    }
-
+    if (relationSpecifier === 'any') { return positions }
     if (relationSpecifier === 'moved_piece') {
     const movedPiecePosition = this.movedPiecePosition(boardScope)
     return positions.filter(position => {
@@ -438,7 +419,6 @@ class CandidateMoveAnalysis {
       return relationSpecifierMode === 'exclude' ? !baseMatch : baseMatch
     })
   }
-
     const board = this.boardForScope(boardScope)
     return this.positionsMatchingSpecifier(positions, relationSpecifier, relationSpecifierMode, board)
   }
@@ -448,12 +428,9 @@ class CandidateMoveAnalysis {
   }
 
   matchesSpecifier(species, specifier = 'any', specifierMode = 'include') {
-    if (species === null) {
-      return false
-    }
-
-    if (specifier === 'any') { return true}
-    else{
+    if (species === null) { return false }
+    if (specifier === 'any') { return true
+    } else{
       const baseMatch = species === this.specifierToSpecies(specifier)
       return specifierMode === 'exclude' ? !baseMatch : baseMatch
     }
@@ -495,19 +472,11 @@ class CandidateMoveAnalysis {
     const startPosition = this.moveObject.startPosition
     const endPosition = this.moveObject.endPosition
     const movedPieceType = this.board.pieceTypeAt(startPosition)
-
-    if (this.board.teamAt(endPosition) !== Board.EMPTY) {
-      return endPosition
-    }
-
+    if (this.board.teamAt(endPosition) !== Board.EMPTY) { return endPosition }
     const changedFiles = Board.file(startPosition) !== Board.file(endPosition)
-
     if (movedPieceType === Board.PAWN && changedFiles) {
-      return this.movedPieceTeam() === Board.WHITE
-        ? endPosition - 8
-        : endPosition + 8
+      return this.movedPieceTeam() === Board.WHITE ? endPosition - 8 : endPosition + 8 
     }
-
     return null
   }
 
@@ -519,10 +488,7 @@ class CandidateMoveAnalysis {
 
   capturedPieceValue() {
     const species = this.capturedPieceSpecies()
-    if (species === null) {
-      return 0
-    }
-
+    if (species === null) { return 0 }
     return materialValue(species)
   }
   capturedPieceSpecies() {

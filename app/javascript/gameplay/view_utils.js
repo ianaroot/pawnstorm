@@ -59,11 +59,9 @@ export function pieceInitials(pieceObject) {
 
 export function renderBoardPieces(board) {
   const layOut = board.layOut
-
   for (let i = 0; i < layOut.length; i++) {
     const gridPosition = Board.gridCalculator(i)
     undisplayPiece(gridPosition)
-
     const pieceObject = board.pieceObject(i)
     if (Board.parseTeam(pieceObject) !== Board.EMPTY) {
       displayPiece({ pieceInitials: pieceInitials(pieceObject), gridPosition })
@@ -81,38 +79,31 @@ export function updateCaptures(board) {
   const blackCaptureDiv = document.getElementById("B-captures")
   const whiteCaptureDiv = document.getElementById("W-captures")
   if (!blackCaptureDiv || !whiteCaptureDiv) { return }
-
   blackCaptureDiv.innerHTML = "<br><br><br>"
   whiteCaptureDiv.innerHTML = "<br><br><br>"
-
   for (let i = 0; i < board.capturedPieces.length; i++) {
     const pieceObject = board.capturedPieces[i]
     const team = Board.parseTeam(pieceObject)
     const captureDiv = document.getElementById(team + "-captures")
     if (!captureDiv) { continue }
-
     captureDiv.appendChild(buildPieceGlyph(pieceInitials(pieceObject), 'capture-piece-glyph'))
   }
 }
 
 function capturedCountForTeam(board, team) {
   let total = 0
-
   for (let i = 0; i < board.capturedPieces.length; i++) {
     if (Board.parseTeam(board.capturedPieces[i]) === team) { total++ }
   }
-
   return total
 }
 
 export function updateCaptureAreaSizing(board) {
   const whiteCaptureDiv = document.getElementById("W-captures")
   const blackCaptureDiv = document.getElementById("B-captures")
-
   if (whiteCaptureDiv && capturedCountForTeam(board, Board.WHITE) === 11) {
     whiteCaptureDiv.style.height = 98
   }
-
   if (blackCaptureDiv && capturedCountForTeam(board, Board.BLACK) === 11) {
     blackCaptureDiv.style.height = 98
   }

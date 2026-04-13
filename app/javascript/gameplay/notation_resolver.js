@@ -23,12 +23,10 @@ class NotationResolver {
       const candidateNotation = this.emittedNotation({ board, moveObject })
       return this.parser.equivalent(notation, candidateNotation)
     })
-
     if (matchingMoves.length === 1) { return matchingMoves[0] }
     if (matchingMoves.length === 0) {
       throw new Error(`Unable to resolve notation on current board: ${notation}`)
     }
-
     throw new Error(`Notation resolved to multiple legal moves: ${notation}`)
   }
 }

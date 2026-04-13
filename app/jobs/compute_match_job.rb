@@ -43,7 +43,6 @@ class ComputeMatchJob < ApplicationJob
       end
 
       result_payload = parse_result_payload(raw_result)
-
       match.update!(
         status: :completed,
         result: result_payload.fetch('result'),

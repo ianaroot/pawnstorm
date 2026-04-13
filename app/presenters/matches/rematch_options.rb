@@ -5,14 +5,11 @@ class Matches::RematchOptions
   end
 
   def bot_vs_bot_params
-    return nil unless bot_vs_bot_match?
-
+    return nil if !bot_vs_bot_match?
     owned_bots = bots.select { |bot| bot.user_id == user.id }
     return nil if owned_bots.empty?
-
     own_bot = owned_bots.first
     opponent_bot = bots.find { |bot| bot.id != own_bot.id } || own_bot
-
     {
       own_bot_id: own_bot.id,
       opponent_bot_id: opponent_bot.id
@@ -20,10 +17,9 @@ class Matches::RematchOptions
   end
 
   def human_vs_bot_params
-    return nil unless human_vs_bot_context?
-    return nil unless bot&.user_id == user.id
-    return nil unless bot_ready?
-
+    return nil if !human_vs_bot_context?
+    return nil if bot&.user_id != user.id
+    return nil if !bot_ready?
     {
       bot_id: bot.id,
       human_color: 'random'
@@ -31,9 +27,8 @@ class Matches::RematchOptions
   end
 
   def human_vs_bot_unavailable_message
-    return nil unless human_vs_bot_context?
+    return nil if !human_vs_bot_context?
     return nil if human_vs_bot_params.present?
-
     if bot.blank?
       'Play again is unavailable because the green chess goblin from this match has been deleted.'
     elsif bot.user_id != user.id
@@ -64,19 +59,16 @@ class Matches::RematchOptions
   def human_side
     return :white if match.white_player == user
     return :black if match.black_player == user
-
     nil
   end
 
   def bot_side
     return nil if human_side.blank?
-
     human_side == :white ? :black : :white
   end
 
   def bot
     return nil if bot_side.blank?
-
     player = bot_side == :white ? match.white_player : match.black_player
     player if player.is_a?(Bot)
   end
@@ -87,7 +79,6 @@ class Matches::RematchOptions
 
   def bot_snapshot
     return nil if bot_side.blank? || match.tournament.present?
-
     bot_side == :white ? match.white_compiled_program_snapshot : match.black_compiled_program_snapshot
   end
 end

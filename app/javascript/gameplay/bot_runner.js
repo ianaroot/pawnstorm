@@ -19,13 +19,8 @@ class BotRunner {
         halted: false,
         trace: withTrace ? [] : null
       }
-
       this.runNode(this.compiledProgram.root, analysis, state)
-
-      if (!withTrace) {
-        return state.score
-      }
-
+      if (!withTrace) { return state.score }
       return {
         score: state.score,
         halted: state.halted,
@@ -38,7 +33,6 @@ class BotRunner {
     return profileCollector.measure('bot.legal_moves', () => {
       const movingTeam = board.allowedToMove
       const positions = board._positionsOccupiedByTeam(movingTeam)
-
       return positions.flatMap(startPosition => {
         return Rules.availableMovesFrom({ board, startPosition })
       })
@@ -50,18 +44,8 @@ class BotRunner {
     profileCollector.increment('bot.legal_move_count', legalMoves.length)
     return legalMoves.map(moveObject => {
       const scoreResult = this.scoreMove({ board, moveObject, withTrace })
-
-      if (!withTrace) {
-        return {
-          moveObject,
-          score: scoreResult
-        }
-      }
-
-      return {
-        moveObject,
-        ...scoreResult
-      }
+      if (!withTrace) { return { moveObject, score: scoreResult } }
+      return { moveObject, ...scoreResult }
     })
   }
 
@@ -76,15 +60,9 @@ class BotRunner {
   }
 
   runNode(nodeId, analysis, state) {
-    if (state.halted) {
-      return
-    }
-
+    if (state.halted) { return }
     const node = this.compiledProgram.nodes[nodeId]
-    if (!node) {
-      throw new Error(`Unknown compiled node: ${nodeId}`)
-    }
-
+    if (!node) { throw new Error(`Unknown compiled node: ${nodeId}`) }
     switch (node.type) {
       case 'root':
       case 'organizer':
@@ -101,10 +79,7 @@ class BotRunner {
             passed,
             data: node.data
           })
-
-          if (passed) {
-            this.runChildren(node.children || [], analysis, state)
-          }
+          if (passed) { this.runChildren(node.children || [], analysis, state) }
         }
         break
       case 'action':
@@ -118,10 +93,7 @@ class BotRunner {
 
   runChildren(childIds, analysis, state) {
     for (const childId of childIds) {
-      if (state.halted) {
-        break
-      }
-
+      if (state.halted) { break }
       this.runNode(childId, analysis, state)
     }
   }
@@ -129,7 +101,6 @@ class BotRunner {
   applyAction(nodeId, actionNode, state) {
     profileCollector.measure('bot.apply_action', () => {
       const scoreBefore = state.score
-
       switch (actionNode.actionType) {
         case 'add':
           state.score += actionNode.value
@@ -161,10 +132,7 @@ class BotRunner {
   }
 
   recordTrace(state, entry) {
-    if (!state.trace) {
-      return
-    }
-
+    if (!state.trace) { return }
     state.trace.push(entry)
   }
 }

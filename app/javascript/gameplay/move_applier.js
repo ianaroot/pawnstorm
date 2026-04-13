@@ -18,7 +18,6 @@ class MoveApplier {
       boardBeforeMove: this.board,
       moveObject: this.moveObject
     })
-
     this.board.history.recordInitialPositionIfNeeded(this.board)
     this.board.recentMoveContext = recentMoveContext
     this.board._emptify(startPosition)
@@ -34,7 +33,6 @@ class MoveApplier {
       recentMoveContext.movedPieceSpeciesBeforeMove === this.board.constructor.PAWN ||
       recentMoveContext.capturedPiecePosition !== null
     ) ? 0 : this.board.history.halfmoveClock + 1
-
     if (!this.board.gameOver) {
       this.board._nextTurn()
       this.board.history.recordPositionKey(this.board)

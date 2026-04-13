@@ -17,8 +17,8 @@ class GameController {
 		this._completionSubmitted = false
 		this.view.displayLayOut({board: this.board, alert: ""})
 		this.view.setTileClickListener()
-		this.view.setUndoClickListener(this)
-		this.view.setPauseClickListener(this)
+		// this.view.setUndoClickListener(this)
+		// this.view.setPauseClickListener(this)
 		this.api = new Api({board: this.board, gameController: this});
 		this.configurePlayBots()
 		if(this._whiteBot && !this._paused){ this.queryNextBotMove()}
@@ -26,7 +26,6 @@ class GameController {
 
 	buildPlayConfig(){
 		if (this.rootElement?.dataset.gameMode !== 'human-vs-bot') { return null }
-
 		return {
 			humanTeam: this.rootElement.dataset.humanTeam,
 			botTeam: this.rootElement.dataset.botTeam,
@@ -38,7 +37,6 @@ class GameController {
 
 	configurePlayBots(){
 		if (!this.playConfig) { return }
-
 		const botRunner = new BotRunner(this.playConfig.botCompiledProgram)
 		if (this.playConfig.botTeam === Board.WHITE) {
 			this._whiteBot = botRunner
@@ -47,13 +45,12 @@ class GameController {
 		}
 	}
 
-	pause(){
-		this._paused = true
-	}
+	// pause(){
+	// 	this._paused = true
+	// }
 
 	attemptMove(startPosition = throwIfMissing("startPosition"), endPosition = throwIfMissing("endPosition")) {
 		if (!this.canHumanMove()) { return }
-
 		var board = this.board,
 			alert = "",
 			sound = "";
@@ -64,9 +61,9 @@ class GameController {
 		// shouldn't the board be making sure neither of these happens?
 		// also, what happens after the alert????
 		if ( !Board._inBounds(endPosition) ){
-		alert = 'stay on the board, fool'
+			alert = 'stay on the board, fool'
 		} else if( board.occupiedByTeamMate({position: endPosition, teamString: board.allowedToMove}) ){
-		alert = "what, are you trying to capture your own piece?"
+			alert = "what, are you trying to capture your own piece?"
 		} else {
 
 			// TODO: replace this queen default with explicit promotion UI.
@@ -76,10 +73,8 @@ class GameController {
 				// also, what happens after the alert????
 
 			} else {
-
 				board._officiallyMovePiece( moveObject )
 				let alerts_and_sounds = this.getAlertsAndSounds();
-
 				alert = alerts_and_sounds.alert
 				sound = alerts_and_sounds.sound
 			}
@@ -109,10 +104,7 @@ class GameController {
 
 	queryBotMove(team){
 		try {
-			let moveObject = team === Board.WHITE
-				? this.selectBotMove(this._whiteBot)
-				: this.selectBotMove(this._blackBot)
-
+			let moveObject = team === Board.WHITE ? this.selectBotMove(this._whiteBot) : this.selectBotMove(this._blackBot)
 			this.applyBotMove(moveObject)
 		} catch (error) {
 			this.failInteractiveMatch(error)
@@ -120,18 +112,12 @@ class GameController {
 	}
 
 	selectBotMove(bot){
-		if (typeof bot.selectMove === 'function') {
-			return bot.selectMove({ board: this.board })
-		}
-
+		if (typeof bot.selectMove === 'function') { return bot.selectMove({ board: this.board }) }
 		return bot.determineMove({ board: this.board, api: this.api })
 	}
 
 	applyBotMove(moveObject){
-		if (!moveObject) {
-			throw new Error('Bot did not select a move.')
-		}
-
+		if (!moveObject) { throw new Error('Bot did not select a move.') }
 		this.board._officiallyMovePiece(moveObject)
 		let alerts_and_sounds = this.getAlertsAndSounds()
 		this.view.displayLayOut({board: this.board, alert: alerts_and_sounds.alert, startPosition: moveObject.startPosition})
@@ -144,13 +130,12 @@ class GameController {
 		this.queryBotMove(team);
 	}
 
-	undo(){
-		return
-	}
+	// undo(){
+	// 	return
+	// }
 
 	submitCompletionIfGameOver(){
 		if (!this.playConfig || !this.board.gameOver || this._completionSubmitted) { return }
-
 		this._completionSubmitted = true
 		this.updatePlayStatus(`${this.resultMessage()} Redirecting to replay...`)
 		setTimeout(() => this.persistInteractiveMatch(this.completedPayload()), 1200)
@@ -175,7 +160,6 @@ class GameController {
 		if (this.board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
 		if (this.board._winner === Board.WHITE) { return 'white_win' }
 		if (this.board._winner === Board.BLACK) { return 'black_win' }
-
 		return 'stalemate'
 	}
 
@@ -184,13 +168,11 @@ class GameController {
 		if (this.board._winner === this.playConfig.botTeam) { return 'Bot wins.' }
 		if (this.board._resultType === 'fifty_move_rule') { return 'Draw by 50-move rule.' }
 		if (this.board._resultType === 'threefold_repetition') { return 'Draw by threefold repetition.' }
-
 		return 'Draw by stalemate.'
 	}
 
 	failInteractiveMatch(error){
 		if (!this.playConfig || this._completionSubmitted) { throw error }
-
 		this._completionSubmitted = true
 		this.updatePlayStatus('Game failed. Redirecting to match details...')
 		this.persistInteractiveMatch({

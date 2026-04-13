@@ -42,11 +42,6 @@ class Rules {
   }
 
   static checkQueryWithMove({board: board, moveObject: moveObject}){
-    // if(
-    //   !Board.prototype.isPrototypeOf( board ) || typeof startPosition !== "number" || !(typeof additionalActions === "function" || typeof additionalActions === "undefined") || !(typeof endPosition !== "number" || typeof endPosition !== "string") //not sure where this got turned into a string...
-    // ){
-    //   throw new Error("missing params in checkQuery")
-    // }
     const startPosition = moveObject.startPosition
     const teamString = board.teamAt(startPosition)
     let newBoard = board.lightCloneForCheckQuery();
@@ -63,7 +58,6 @@ class Rules {
   }
 
   static checkQuery({board: board, teamString: teamString}){
-    // let opposingTeamString = Board.opposingTeam(teamString),
       let kingPosition = board._kingPosition(teamString);
       return this.pieceIsAttacked({board: board, defensePosition: kingPosition, defendingTeam: teamString})
   }
@@ -112,11 +106,6 @@ class Rules {
     })
   }
   static viablePositionsFromKeysOnly({board: board, startPosition: startPosition}){
-    // if(
-    //   !Board.prototype.isPrototypeOf( board ) ||  typeof startPosition !== "number"
-    // ){
-    //   throw new Error("missing params in viablePositionsFromKeysOnly")
-    // }
     let movesCalculator = new MovesCalculator({board: board, startPosition: startPosition}),
         keysOnly = [];
     for (let i = 0; i < movesCalculator.moveObjects.length; i++){
@@ -137,7 +126,6 @@ class Rules {
         movesCalculator = new MovesCalculator({board: board, startPosition: startPosition});
       for (let i = 0; i < movesCalculator.moveObjects.length; i++){
         let moveObject = movesCalculator.moveObjects[i];
-           // endPosition = moveObject.endPosition;
          if( !this.checkQueryWithMove( {moveObject: moveObject, board: board}) ){
            noLegalMoves = false
            break

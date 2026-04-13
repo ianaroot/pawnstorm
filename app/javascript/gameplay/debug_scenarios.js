@@ -29,21 +29,13 @@ export function resetScenarioBoard(gameController) {
 
 export function runScenarioMoves(gameController, moveArray, delay = 500) {
   const moves = cloneMoves(moveArray)
-
   const step = () => {
-    if (moves.length < 2) {
-      return
-    }
-
+    if (moves.length < 2) { return }
     const startPosition = moves.shift()
     const endPosition = moves.shift()
     gameController.attemptMove(startPosition, endPosition)
-
-    if (moves.length >= 2) {
-      setTimeout(step, delay)
-    }
+    if (moves.length >= 2) { setTimeout(step, delay) }
   }
-
   step()
 }
 
@@ -51,15 +43,9 @@ export function loadScenario(gameController, name, options = {}) {
   const { delay = 500, reset = true } = options
   const moves = DEBUG_SCENARIOS[name]
 
-  if (!moves) {
-    throw new Error(`Unknown debug scenario: ${name}`)
-  }
-
-  if (reset) {
-    resetScenarioBoard(gameController)
-  } else {
-    gameController.pause()
-  }
+  if (!moves) { throw new Error(`Unknown debug scenario: ${name}`) }
+  if (reset) { resetScenarioBoard(gameController)
+  } else { gameController.pause() }
 
   runScenarioMoves(gameController, moves, delay)
 }

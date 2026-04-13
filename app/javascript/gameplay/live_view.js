@@ -21,13 +21,10 @@ class LiveView {
     this.boundAttemptMove = this.attemptMove.bind(this)
     this._gameController = _gameController
   }
-
   static get TILE_HEIGHT() { return "49" }
-
   displayLayOut(args){
     let board = args["board"],
         alert = args["alert"] || ""
-
     renderBoardPieces(board)
     this.setTileClickListener()
     updateCaptureAreaSizing(board)
@@ -57,7 +54,6 @@ class LiveView {
 
   buildControlPreview(position, team){
     if (!SHOW_CONTROL_PREVIEW) { return null }
-
     return {
       position,
       squares: controlledSquares({
@@ -84,12 +80,8 @@ class LiveView {
 
   renderControlPreview(controlPreview){
     if (!controlPreview) { return }
-
     let sourceSquare = document.getElementById(Board.gridCalculator(controlPreview.position))
-    if (!controlPreview.sourceIsMovable) {
-      sourceSquare?.classList.add("control-preview-source")
-    }
-
+    if (!controlPreview.sourceIsMovable) { sourceSquare?.classList.add("control-preview-source") }
     for (let i = 0; i < controlPreview.squares.length; i++) {
       let previewSquare = document.getElementById(Board.gridCalculator(controlPreview.squares[i]))
       previewSquare?.classList.add("control-preview-square")
@@ -142,15 +134,15 @@ class LiveView {
     }
   }
 
-  setUndoClickListener(gameController){
-    let undoButton = document.getElementById("undo-button")
-    undoButton.addEventListener("click", gameController.undo.bind(gameController))
-  }
+  // setUndoClickListener(gameController){
+  //   let undoButton = document.getElementById("undo-button")
+  //   undoButton.addEventListener("click", gameController.undo.bind(gameController))
+  // }
 
-  setPauseClickListener(gameController){
-    let pauseButton = document.getElementById("pause-button")
-    pauseButton.addEventListener("click", gameController.pause.bind(gameController))
-  }
+  // setPauseClickListener(gameController){
+  //   let pauseButton = document.getElementById("pause-button")
+  //   pauseButton.addEventListener("click", gameController.pause.bind(gameController))
+  // }
 }
 
 export default LiveView
