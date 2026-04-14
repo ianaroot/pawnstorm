@@ -40,6 +40,9 @@ class ClickHandler {
       if (e.target.classList.contains('node-connector')) { return }
       if (this.store.shouldSuppressClicks()) { return }
       this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
+      if (this.isPlainClick(e)) {
+        this.openEditor(clientId)
+      }
     })
     
     element.addEventListener('dblclick', (e) => {
@@ -91,6 +94,10 @@ class ClickHandler {
     return event.shiftKey
   }
 
+  isPlainClick(event) {
+    return !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey
+  }
+
   handleClick(event) {
     if (this.store.shouldSuppressClicks()) { return }
 
@@ -98,6 +105,7 @@ class ClickHandler {
     const clickedOnEditor = this.editorPanel?.contains(event.target)
     if (!clickedOnNode && !clickedOnEditor) {
       this.deselectAll()
+      this.closeEditor()
     }
   }
 
