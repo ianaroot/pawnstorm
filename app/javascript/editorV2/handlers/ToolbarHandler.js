@@ -107,7 +107,7 @@ class ToolbarHandler {
 
     this.templatePicker = new TemplatePicker(modal, {
       onInsert: async (template) => {
-        const organizerAnchor = findTemplateAnchor(template, this.viewport, this.store)
+        const organizerAnchor = findTemplateAnchor(template, this.viewport, this.store, this.store.getRecentPlacementAnchor())
         const result = await this.syncManager.insertTemplate(template, organizerAnchor)
 
         if (result?.organizerClientId) {
@@ -125,11 +125,11 @@ class ToolbarHandler {
   }
 
   findPlacementPosition(type) {
-    const center = this.viewport?.getVisibleCanvasCenter() || { x: 200, y: 200 }
     const dims = NODE_DIMENSIONS[type] || NODE_DIMENSIONS.default
+    const origin = this.store.getRecentPlacementAnchor() || this.viewport?.getVisibleCanvasCenter() || { x: 200, y: 200 }
     const anchor = {
-      x: Math.max(0, center.x - (dims.width / 2)),
-      y: Math.max(0, center.y - (dims.height / 2))
+      x: Math.max(0, Math.round(origin.x - (dims.width / 2))),
+      y: Math.max(0, Math.round(origin.y - (dims.height / 2)))
     }
 
     if (this.isPositionClear(anchor, dims)) {

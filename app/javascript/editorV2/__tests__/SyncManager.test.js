@@ -364,6 +364,7 @@ describe('SyncManager', () => {
       expect(store.getNode(clientId)).toBeDefined()
       expect(store.getNode(clientId).type).toBe('condition')
       expect(store.getNode(clientId).data).toEqual(DEFAULT_CONDITION_DATA)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('optimistically adds node to store', async () => {
@@ -443,6 +444,7 @@ describe('SyncManager', () => {
 
       expect(store.getNode('n1').position.x).toBe(100)
       expect(store.getNode('n1').position.y).toBe(200)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 200 })
     })
 
     it('calls API with correct params', async () => {
@@ -493,6 +495,7 @@ describe('SyncManager', () => {
 
       expect(store.getNode('n1').data.foo).toBe('bar')
       expect(store.getNode('n1').data.baz).toBe('qux')
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
     })
 
     it('pushes to history after success', async () => {
@@ -526,6 +529,7 @@ describe('SyncManager', () => {
       await syncManager.deleteNode('n1')
 
       expect(store.getNodes()).toHaveLength(0)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
     })
 
     it('stores node data for history', async () => {
@@ -576,6 +580,7 @@ describe('SyncManager', () => {
 
       expect(clientId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       expect(store.getConnection(clientId)).toBeDefined()
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('optimistically adds connection to store', async () => {
@@ -632,6 +637,7 @@ describe('SyncManager', () => {
       await syncManager.deleteConnection('c1')
 
       expect(store.getConnections()).toHaveLength(0)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('pushes to history after success', async () => {

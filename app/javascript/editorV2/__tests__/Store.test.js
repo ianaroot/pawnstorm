@@ -29,6 +29,23 @@ describe('Store', () => {
       expect(store.viewState.panY).toBe(0)
       expect(store.viewState.selectedNodeIds).toEqual([])
       expect(store.viewState.primarySelectedNodeId).toBe(null)
+      expect(store.getRecentPlacementAnchor()).toBe(null)
+    })
+  })
+
+  describe('recent placement anchor', () => {
+    it('sets, clones, and clears the anchor', () => {
+      store.setRecentPlacementAnchor({ x: 120, y: 240 })
+
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 120, y: 240 })
+
+      const anchor = store.getRecentPlacementAnchor()
+      anchor.x = 999
+
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 120, y: 240 })
+
+      store.clearRecentPlacementAnchor()
+      expect(store.getRecentPlacementAnchor()).toBe(null)
     })
   })
 

@@ -65,7 +65,7 @@ function isPositionClear(position, store) {
   })
 }
 
-export function findTemplateAnchor(template, viewport, store) {
+export function findTemplateAnchor(template, viewport, store, recentAnchor = null) {
   const organizer = organizerNodeFor(template)
   if (!organizer) {
     throw new Error(`Template "${template.id}" is missing its organizer node`)
@@ -74,9 +74,10 @@ export function findTemplateAnchor(template, viewport, store) {
   const center = viewport?.getVisibleCanvasCenter() || { x: 200, y: 200 }
   const organizerDims = NODE_DIMENSIONS.organizer || NODE_DIMENSIONS.default
   const visibleBounds = viewport ? getVisibleBounds(viewport) : null
+  const origin = recentAnchor || center
   const centeredAnchor = {
-    x: Math.max(0, Math.round(center.x - (organizerDims.width / 2))),
-    y: Math.max(0, Math.round(center.y - (organizerDims.height / 2)))
+    x: Math.max(0, Math.round(origin.x - (organizerDims.width / 2))),
+    y: Math.max(0, Math.round(origin.y - (organizerDims.height / 2)))
   }
 
   if (!viewport) {

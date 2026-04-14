@@ -189,6 +189,8 @@ class ClickHandler {
     if (node.type === 'root') {
       return
     }
+
+    this.store.setRecentPlacementAnchor(node.position)
     
     this.editingNodeId = clientId
     this.store.setEditingNode(clientId)

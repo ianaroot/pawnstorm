@@ -48,6 +48,16 @@ class SyncManager {
   notifyPersistedMutation() {
     this.onPersistedMutation?.()
   }
+
+  setRecentPlacementAnchorFromNode(node) {
+    if (node?.position) {
+      this.store.setRecentPlacementAnchor(node.position)
+    }
+  }
+
+  setRecentPlacementAnchorForClientId(clientId) {
+    this.setRecentPlacementAnchorFromNode(this.store.getNode(clientId))
+  }
   
   /**
    * Set loading state for undo/redo
@@ -362,6 +372,8 @@ class SyncManager {
         }
       })
 
+      this.store.setRecentPlacementAnchor(position)
+
       this.notifyPersistedMutation()
       
       return clientId
@@ -406,6 +418,10 @@ class SyncManager {
       }
 
       this.history.push(`Insert template: ${template.name}`, operation)
+      const anchorNode = operation.nodes.find(nodeData => nodeData.clientId === operation.organizerClientId) || operation.nodes[0]
+      if (anchorNode?.entity?.position) {
+        this.store.setRecentPlacementAnchor(anchorNode.entity.position)
+      }
       this.notifyPersistedMutation()
 
       return {
@@ -455,6 +471,8 @@ class SyncManager {
         newValue: newPosition
       })
 
+      this.store.setRecentPlacementAnchor(newPosition)
+
       this.notifyPersistedMutation()
       
     } catch (error) {
@@ -503,6 +521,8 @@ class SyncManager {
         previousValue: previousData,
         newValue: data
       })
+
+      this.store.setRecentPlacementAnchor(existingNode.position)
 
       this.notifyPersistedMutation()
       
@@ -564,6 +584,8 @@ class SyncManager {
         entity: deletedEntity,
         connections: deletedConnections
       })
+
+      this.store.setRecentPlacementAnchor(deletedEntity.position)
 
       this.notifyPersistedMutation()
       
@@ -637,6 +659,8 @@ class SyncManager {
         targetId: targetClientId
       })
 
+      this.setRecentPlacementAnchorFromNode(targetNode)
+
       this.notifyPersistedMutation()
       
       return clientId
@@ -683,6 +707,8 @@ class SyncManager {
         sourceId,
         targetId
       })
+
+      this.setRecentPlacementAnchorForClientId(targetId)
 
       this.notifyPersistedMutation()
       

@@ -318,6 +318,23 @@ describe('DragHandler', () => {
       expect(store.getNode('child').position).toEqual({ x: 200, y: 150 })
     })
 
+    it('updates the recent placement anchor after a successful single-node drag', async () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+      const anchorSpy = vi.spyOn(store, 'setRecentPlacementAnchor')
+
+      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+
+      beginDrag(dragHandler, 'node-1', mockElement, startEvent)
+      dragHandler.handleMouseMove(moveEvent)
+      dragHandler.handleMouseUp(endEvent)
+
+      await vi.waitFor(() => {
+        expect(anchorSpy).toHaveBeenCalledWith({ x: 150, y: 160 })
+      })
+    })
+
   })
 
   describe('cancelDrag', () => {

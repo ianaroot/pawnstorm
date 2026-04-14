@@ -325,6 +325,7 @@ class DragHandler {
     // Sync with server if we moved
     if (this.hasMoved && this.draggedClientId && this.draggedNode) {
       const node = this.store.getNode(this.draggedClientId)
+      const anchorPoint = node ? { x: node.position.x, y: node.position.y } : null
       if (node) {
         if (this.draggedClientIds.length > 1) {
           // Multi-node drag: use batch update
@@ -337,6 +338,11 @@ class DragHandler {
           const description = `Move ${this.draggedNode.type} node (+ ${additionalCount} selected)`
           
           this.syncManager.batchUpdatePositions(positions, description)
+            .then(() => {
+              if (anchorPoint) {
+                this.store.setRecentPlacementAnchor(anchorPoint)
+              }
+            })
             .catch(err => {
               console.error('Failed to sync drag positions:', err)
             })
@@ -346,7 +352,11 @@ class DragHandler {
             this.draggedClientId,
             node.position.x,
             node.position.y
-          ).catch(err => {
+          ).then(() => {
+            if (anchorPoint) {
+              this.store.setRecentPlacementAnchor(anchorPoint)
+            }
+          }).catch(err => {
             console.error('Failed to sync drag position:', err)
           })
         }

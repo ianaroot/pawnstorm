@@ -29,6 +29,7 @@ class Store {
       selectedNodeIds: [],
       primarySelectedNodeId: null,
       editingNodeId: null,
+      recentPlacementAnchor: null,
       isMarqueeSelecting: false,
       marqueeStart: null,
       marqueeCurrent: null
@@ -357,6 +358,23 @@ class Store {
     return this.viewState.editingNodeId
   }
 
+  setRecentPlacementAnchor(point) {
+    if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+      this.viewState.recentPlacementAnchor = null
+      return
+    }
+    this.viewState.recentPlacementAnchor = { x: point.x, y: point.y }
+  }
+
+  getRecentPlacementAnchor() {
+    const anchor = this.viewState.recentPlacementAnchor
+    return anchor ? { x: anchor.x, y: anchor.y } : null
+  }
+
+  clearRecentPlacementAnchor() {
+    this.viewState.recentPlacementAnchor = null
+  }
+
   startMarquee(point) {
     this.viewState.isMarqueeSelecting = true
     this.viewState.marqueeStart = point
@@ -441,6 +459,7 @@ class Store {
       selectedNodeIds: [],
       primarySelectedNodeId: null,
       editingNodeId: null,
+      recentPlacementAnchor: null,
       isMarqueeSelecting: false,
       marqueeStart: null,
       marqueeCurrent: null
@@ -458,6 +477,7 @@ class Store {
     this.subscribers = []
     this.graph = new Graph()
     this.clickSuppressedUntil = 0
+    this.viewState.recentPlacementAnchor = null
   }
 }
 
