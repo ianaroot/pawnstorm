@@ -58,6 +58,61 @@ class SyncManager {
   setRecentPlacementAnchorForClientId(clientId) {
     this.setRecentPlacementAnchorFromNode(this.store.getNode(clientId))
   }
+
+  getDeletedNodeBackups(clientIds) {
+    const uniqueClientIds = [...new Set((clientIds || []).filter(Boolean))]
+    return uniqueClientIds
+      .map(clientId => this.store.getNode(clientId))
+      .filter(node => node && node.type !== 'root')
+      .map(node => ({
+        clientId: node.clientId,
+        serverId: node.serverId,
+        type: node.type,
+        position: { ...node.position },
+        data: { ...node.data }
+      }))
+  }
+
+  getDeletedConnectionBackups(clientIds) {
+    const backups = new Map()
+
+    clientIds.forEach(clientId => {
+      const { outgoing, incoming } = this.store.getConnectionsFor(clientId)
+
+      const touchedConnections = [...outgoing, ...incoming]
+
+      touchedConnections.forEach(connection => {
+        if (!backups.has(connection.clientId)) {
+          backups.set(connection.clientId, {
+            clientId: connection.clientId,
+            serverId: connection.serverId,
+            sourceId: connection.sourceId,
+            targetId: connection.targetId
+          })
+        }
+      })
+    })
+
+    return [...backups.values()]
+  }
+
+  restoreDeletedNodes(nodeBackups) {
+    nodeBackups.forEach(nodeData => {
+      this.store.addNode(new Node({
+        clientId: nodeData.clientId,
+        serverId: nodeData.serverId,
+        type: nodeData.type,
+        position: nodeData.position,
+        data: nodeData.data
+      }))
+    })
+  }
+
+  restoreDeletedConnections(connectionBackups) {
+    connectionBackups.forEach(connectionData => {
+      this.store.addConnection(new Connection(connectionData))
+    })
+  }
   
   /**
    * Set loading state for undo/redo
@@ -244,6 +299,24 @@ class SyncManager {
         )
         break
 
+      case 'deleteNodes':
+        for (const node of operation.nodes) {
+          await this.api.createNode({
+            type: node.type,
+            position: node.position,
+            data: node.data
+          }, node.clientId)
+        }
+
+        for (const connection of operation.connections) {
+          await this.api.createConnection(
+            connection.sourceId,
+            connection.targetId,
+            connection.clientId
+          )
+        }
+        break
+
       case 'insertTemplate':
         for (const connection of [...operation.connections].reverse()) {
           await this.api.deleteConnection(connection.clientId, connection.sourceId)
@@ -316,6 +389,10 @@ class SyncManager {
       case 'deleteConnection':
         // Redo: delete the connection again
         await this.api.deleteConnection(operation.clientId, operation.sourceId)
+        break
+
+      case 'deleteNodes':
+        await this.api.deleteNodes(operation.nodes.map(node => node.clientId))
         break
 
       case 'insertTemplate':
@@ -558,13 +635,7 @@ class SyncManager {
     const deletedServerId = existingNode.serverId
     
     // Get connections that will be deleted
-    const { outgoing, incoming } = this.store.getConnectionsFor(clientId)
-    const deletedConnections = [...outgoing, ...incoming].map(conn => ({
-      clientId: conn.clientId,
-      serverId: conn.serverId,
-      sourceId: conn.sourceId,
-      targetId: conn.targetId
-    }))
+    const deletedConnections = this.getDeletedConnectionBackups([clientId])
     
     // Store for rollback
     const nodeBackup = existingNode
@@ -600,6 +671,60 @@ class SyncManager {
       showError(`Failed to delete node: ${error.message}`)
       console.error('Failed to delete node:', error)
       
+      throw error
+    }
+  }
+
+  /**
+   * Delete multiple nodes selected as a set
+   * @param {string[]} clientIds - Node client IDs
+   * @returns {Promise<void>}
+   */
+  async deleteNodes(clientIds) {
+    const deletedNodes = this.getDeletedNodeBackups(clientIds)
+    if (deletedNodes.length === 0) {
+      return
+    }
+
+    const deletedConnections = this.getDeletedConnectionBackups(deletedNodes.map(node => node.clientId))
+
+    deletedNodes.forEach(node => {
+      this.store.removeNode(node.clientId)
+    })
+
+    try {
+      await this.api.deleteNodes(deletedNodes.map(node => node.clientId))
+
+      if (deletedNodes.length === 1) {
+        const deletedNode = deletedNodes[0]
+        this.history.push(`Delete ${deletedNode.type} node`, {
+          type: 'deleteNode',
+          clientId: deletedNode.clientId,
+          serverId: deletedNode.serverId,
+          entity: {
+            type: deletedNode.type,
+            position: deletedNode.position,
+            data: deletedNode.data
+          },
+          connections: deletedConnections
+        })
+      } else {
+        this.history.push(`Delete ${deletedNodes.length} selected nodes`, {
+          type: 'deleteNodes',
+          nodes: deletedNodes,
+          connections: deletedConnections
+        })
+      }
+
+      this.setRecentPlacementAnchorFromNode(deletedNodes[0])
+      this.notifyPersistedMutation()
+    } catch (error) {
+      this.restoreDeletedNodes(deletedNodes)
+      this.restoreDeletedConnections(deletedConnections)
+
+      showError(`Failed to delete nodes: ${error.message}`)
+      console.error('Failed to delete nodes:', error)
+
       throw error
     }
   }

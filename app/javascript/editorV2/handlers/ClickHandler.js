@@ -127,8 +127,8 @@ class ClickHandler {
         return
       }
       
-      if (this.store.getPrimarySelectedNode()) {
-        this.deleteSelectedNode()
+      if (this.getDeletableSelectedNodeIds().length > 0) {
+        this.deleteSelectedNodes()
       }
     }
     // Escape: close editor panel
@@ -367,44 +367,55 @@ class ClickHandler {
   }
   
 
-  async deleteSelectedNode() {
-    const selectedNodeId = this.store.getPrimarySelectedNode()
-    if (!selectedNodeId) {
+  getSelectedNodeIds() {
+    return this.store.getSelectedNodeIds()
+  }
+
+  getDeletableSelectedNodeIds() {
+    return this.getSelectedNodeIds().filter(clientId => {
+      const node = this.store.getNode(clientId)
+      return node && node.type !== 'root'
+    })
+  }
+
+  async deleteSelectedNodes() {
+    const selectedNodeIds = this.getSelectedNodeIds()
+    const deletableNodeIds = this.getDeletableSelectedNodeIds()
+    if (deletableNodeIds.length === 0) {
       return
     }
 
-    const node = this.store.getNode(selectedNodeId)
-    if (!node) {
+    const confirmationMessage = deletableNodeIds.length === 1
+      ? 'Delete 1 selected node?'
+      : `Delete ${deletableNodeIds.length} selected nodes?`
+
+    if (!confirm(confirmationMessage)) {
       return
     }
-    
-    // Don't delete root nodes
-    if (node.type === 'root') {
-      console.warn('Cannot delete root node')
-      return
-    }
-    
-    // Confirm deletion
-    if (!confirm('Delete this node?')) {
-      return
-    }
-    
-    const clientId = selectedNodeId
-    
-    // Deselect first
-    this.deselectAll()
-    
-    // Close editor if editing this node
-    if (this.editingNodeId === clientId) {
-      this.closeEditor()
-    }
-    
-    // SyncManager handles: optimistic delete, server sync, history push
+
     try {
-      await this.syncManager?.deleteNode(clientId)
+      await this.syncManager?.deleteNodes(deletableNodeIds)
+
+      const remainingSelectedIds = selectedNodeIds.filter(clientId => !deletableNodeIds.includes(clientId))
+      this.store.setSelectedNodeIds(remainingSelectedIds)
+      this.syncSelectionClasses()
+
+      if (this.editingNodeId && deletableNodeIds.includes(this.editingNodeId)) {
+        this.closeEditor()
+      }
+
+      if (remainingSelectedIds.length > 0) {
+        this.onNodeSelected?.(remainingSelectedIds[0])
+      } else {
+        this.onNodeDeselected?.()
+      }
     } catch (error) {
       console.error('Failed to delete node:', error)
     }
+  }
+
+  async deleteSelectedNode() {
+    return this.deleteSelectedNodes()
   }
   
 

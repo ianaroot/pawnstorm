@@ -43,6 +43,7 @@ function dispatchClick(element, overrides = {}) {
 describe('ClickHandler', () => {
   let store
   let history
+  let syncManager
   let editorPanel
   let clickHandler
   let rootNode
@@ -68,7 +69,12 @@ describe('ClickHandler', () => {
     conditionElement = buildNodeElement(conditionNode.clientId)
     actionElement = buildNodeElement(actionNode.clientId)
 
+    syncManager = {
+      deleteNodes: vi.fn().mockResolvedValue({})
+    }
+
     clickHandler = new ClickHandler(store, history, editorPanel)
+    clickHandler.setSyncManager(syncManager)
     clickHandler.attach(rootElement, rootNode.clientId)
     clickHandler.attach(conditionElement, conditionNode.clientId)
     clickHandler.attach(actionElement, actionNode.clientId)
@@ -130,6 +136,23 @@ describe('ClickHandler', () => {
 
     expect(store.getSelectedNodeIds()).toEqual([])
     expect(store.getEditingNode()).toBe(null)
+    expect(editorPanel.classList.contains('hidden')).toBe(true)
+  })
+
+  it('deletes the selected node set with one confirmation and closes the editor when needed', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    dispatchClick(conditionElement)
+    dispatchClick(actionElement, { shiftKey: true })
+
+    expect(store.getSelectedNodeIds()).toEqual([conditionNode.clientId, actionNode.clientId])
+    expect(store.getEditingNode()).toBe(conditionNode.clientId)
+
+    await clickHandler.deleteSelectedNodes()
+
+    expect(confirmSpy).toHaveBeenCalledWith('Delete 2 selected nodes?')
+    expect(syncManager.deleteNodes).toHaveBeenCalledWith([conditionNode.clientId, actionNode.clientId])
+    expect(store.getSelectedNodeIds()).toEqual([])
+    expect(clickHandler.getEditingNodeId()).toBe(null)
     expect(editorPanel.classList.contains('hidden')).toBe(true)
   })
 })

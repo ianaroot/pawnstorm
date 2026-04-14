@@ -9,7 +9,7 @@ import DragHandler from './handlers/DragHandler.js'
 import ConnectionHandler from './handlers/ConnectionHandler.js'
 import ClickHandler from './handlers/ClickHandler.js'
 import KeyboardHandler from './handlers/KeyboardHandler.js'
-import { MAX_HISTORY } from './constants.js'
+import { EVENTS, MAX_HISTORY } from './constants.js'
 import { showError } from './utils/errors.js'
 import ToolbarHandler from './handlers/ToolbarHandler.js'
 
@@ -78,6 +78,11 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   toolbarHandler.attach()
   clickHandler.onNodeSelected = () => toolbarHandler.updateButtons()
   clickHandler.onNodeDeselected = () => toolbarHandler.updateButtons()
+  const unsubscribeToolbarSelection = store.subscribe((event) => {
+    if (event === EVENTS.SELECTION_CHANGE) {
+      toolbarHandler.updateButtons()
+    }
+  })
   const deleteButtonContainer = svgContainer.parentElement
   connectionHandler.setupDeleteHandler(deleteButtonContainer)
 
@@ -138,6 +143,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
       connectionHandler.destroy()
       clickHandler.destroy()
       keyboardHandler.destroy()
+      unsubscribeToolbarSelection()
       store.destroy()
     }
   }

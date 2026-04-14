@@ -225,7 +225,12 @@ class ToolbarHandler {
    * Handle delete node button click
    */
   handleDeleteClick() {
-    this.clickHandler?.deleteSelectedNode()
+    if (this.clickHandler?.deleteSelectedNodes) {
+      this.clickHandler.deleteSelectedNodes()
+      return
+    }
+
+    this.clickHandler?.deleteSelectedNode?.()
   }
   
   /**
@@ -235,11 +240,13 @@ class ToolbarHandler {
     const deleteBtn = document.querySelector('.btn-delete-node')
     if (!deleteBtn) return
     
-    const selectedId = this.clickHandler?.getSelectedNodeId()
-    const node = selectedId ? this.store.getNode(selectedId) : null
-    
-    // Disable if: no selection OR root node
-    const isDisabled = !selectedId || (node && node.type === 'root')
+    const selectedIds = this.clickHandler?.getDeletableSelectedNodeIds?.() || this.store.getSelectedNodeIds().filter(clientId => {
+      const node = this.store.getNode(clientId)
+      return node && node.type !== 'root'
+    })
+
+    // Disable if: no deletable selection
+    const isDisabled = selectedIds.length === 0
     deleteBtn.disabled = isDisabled
   }
 

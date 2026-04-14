@@ -58,6 +58,7 @@ export const EVENTS = {
   CONNECTION_ADD: 'connection:add',
   CONNECTION_UPDATE: 'connection:update',
   CONNECTION_REMOVE: 'connection:remove',
+  SELECTION_CHANGE: 'selection:change',
   GRAPH_REPLACE: 'graph:replace',
   GRAPH_RESTORE: 'graph:restore'
 }

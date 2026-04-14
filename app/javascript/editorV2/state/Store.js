@@ -276,12 +276,15 @@ class Store {
 
     if (uniqueIds.length === 0) {
       this.viewState.primarySelectedNodeId = null
+      this.emitSelectionChange()
       return
     }
 
     if (!uniqueIds.includes(this.viewState.primarySelectedNodeId)) {
       this.viewState.primarySelectedNodeId = uniqueIds[0]
     }
+
+    this.emitSelectionChange()
   }
 
   selectOnlyNode(clientId) {
@@ -292,6 +295,7 @@ class Store {
 
     this.viewState.selectedNodeIds = [clientId]
     this.viewState.primarySelectedNodeId = clientId
+    this.emitSelectionChange()
   }
 
   addNodeToSelection(clientId) {
@@ -301,6 +305,7 @@ class Store {
     if (!this.viewState.primarySelectedNodeId) {
       this.viewState.primarySelectedNodeId = clientId
     }
+    this.emitSelectionChange()
   }
 
   removeNodeFromSelection(clientId) {
@@ -311,6 +316,7 @@ class Store {
     if (this.viewState.primarySelectedNodeId === clientId) {
       this.viewState.primarySelectedNodeId = this.viewState.selectedNodeIds[0] || null
     }
+    this.emitSelectionChange()
   }
 
   toggleNodeSelection(clientId) {
@@ -327,6 +333,14 @@ class Store {
   clearSelection() {
     this.viewState.selectedNodeIds = []
     this.viewState.primarySelectedNodeId = null
+    this.emitSelectionChange()
+  }
+
+  emitSelectionChange() {
+    this.emit(EVENTS.SELECTION_CHANGE, {
+      selectedNodeIds: this.getSelectedNodeIds(),
+      primarySelectedNodeId: this.getPrimarySelectedNode()
+    })
   }
 
   isNodeSelected(clientId) {

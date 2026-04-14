@@ -54,4 +54,31 @@ describe('ToolbarHandler', () => {
     expect(position.x).toBeGreaterThanOrEqual(0)
     expect(position.y).toBeGreaterThanOrEqual(0)
   })
+
+  it('enables the delete button when at least one selected node is deletable', () => {
+    const deleteBtn = document.createElement('button')
+    deleteBtn.className = 'btn-delete-node'
+    document.body.appendChild(deleteBtn)
+
+    addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
+    addNode(store, { clientId: 'child', type: 'condition', x: 100, y: 100 })
+    store.setSelectedNodeIds(['root', 'child'])
+
+    toolbarHandler.updateDeleteButton()
+
+    expect(deleteBtn.disabled).toBe(false)
+  })
+
+  it('disables the delete button when only root nodes are selected', () => {
+    const deleteBtn = document.createElement('button')
+    deleteBtn.className = 'btn-delete-node'
+    document.body.appendChild(deleteBtn)
+
+    addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
+    store.setSelectedNodeIds(['root'])
+
+    toolbarHandler.updateDeleteButton()
+
+    expect(deleteBtn.disabled).toBe(true)
+  })
 })

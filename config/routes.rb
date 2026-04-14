@@ -19,6 +19,7 @@ Rails.application.routes.draw do
         post :update_position
       end
       collection do
+        delete :batch_destroy
         post :batch_update_positions
       end
     end

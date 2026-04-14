@@ -511,6 +511,18 @@ describe('Store', () => {
       expect(store.getPrimarySelectedNode()).toBe('node-1')
     })
 
+    it('emits selection changes when selected node ids are set directly', () => {
+      const callback = vi.fn()
+      store.subscribe(callback)
+
+      store.setSelectedNodeIds(['node-1', 'node-2'])
+
+      expect(callback).toHaveBeenCalledWith(EVENTS.SELECTION_CHANGE, {
+        selectedNodeIds: ['node-1', 'node-2'],
+        primarySelectedNodeId: 'node-1'
+      })
+    })
+
     it('tracks marquee state', () => {
       store.startMarquee({ x: 10, y: 20 })
       expect(store.getMarqueeState()).toEqual({
