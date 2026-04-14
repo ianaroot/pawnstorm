@@ -14,20 +14,13 @@ import { showError } from './utils/errors.js'
 import ToolbarHandler from './handlers/ToolbarHandler.js'
 
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
-  if (!container) {
-    throw new Error('Container element is required')
-  }
-  if (!svgContainer) {
-    throw new Error('SVG container element is required')
-  }
-
+  if (!container) { throw new Error('Container element is required') }
+  if (!svgContainer) { throw new Error('SVG container element is required') }
   const workspace = document.getElementById('canvas-workspace')
   const scene = document.getElementById('canvas-scene')
   const canvasContainer = container.closest('.canvas-container')
 
-  if (!workspace || !scene || !canvasContainer) {
-    throw new Error('Canvas viewport elements are required')
-  }
+  if (!workspace || !scene || !canvasContainer) { throw new Error('Canvas viewport elements are required') }
   
   // 1. Initialize core state/services
   const api = new API(botId)
@@ -154,13 +147,7 @@ function updateUndoRedoUI(history) {
   const redoBtn = document.querySelector('.btn-redo')
   const countDisplay = document.querySelector('.undo-count')
   
-  if (undoBtn) {
-    undoBtn.disabled = !history.canUndo()
-  }
-  if (redoBtn) {
-    redoBtn.disabled = !history.canRedo()
-  }
-  if (countDisplay) {
-    countDisplay.textContent = history.getHistoryDisplay()
-  }
+  if (undoBtn)      { undoBtn.disabled = !history.canUndo() }
+  if (redoBtn)      { redoBtn.disabled = !history.canRedo() }
+  if (countDisplay) { countDisplay.textContent = history.getHistoryDisplay() }
 }

@@ -1,6 +1,3 @@
-// state/Store.js
-// Central state container with subscriber pattern
-
 import { EVENTS } from '../constants.js'
 import Graph from '../models/Graph.js'
 import Node from '../models/Node.js'
@@ -33,15 +30,9 @@ class Store {
       isMarqueeSelecting: false,
       marqueeStart: null,
       marqueeCurrent: null
-    }
-    
-    // Subscribers: Array of { event, callback }
-    this.subscribers = []
-    
-    // Flag to prevent recursive updates
-    this.isUpdating = false
-    
-    // Flag to prevent updates after destruction
+    } 
+    this.subscribers = [] 
+    this.isUpdating = false 
     this.destroyed = false
 
     // Transient click suppression used to prevent post-drag/post-marquee clicks
@@ -50,15 +41,8 @@ class Store {
   }
   
   // ===== Subscriber Pattern =====
-  
-  /**
-   * Subscribe to store events
-   * @param {Function} callback - Called with (event, data)
-   * @returns {Function} Unsubscribe function
-   */
   subscribe(callback) {
-    this.subscribers.push(callback)
-    
+    this.subscribers.push(callback) 
     // Return unsubscribe function
     return () => {
       const index = this.subscribers.indexOf(callback)
@@ -68,23 +52,12 @@ class Store {
     }
   }
   
-/**
-    * Emit an event to all subscribers
-    * @param {string} event - Event name (use EVENTS constant)
-    * @param {Object} data - Event data
-    */
   emit(event, data) {
-    // Don't emit if store is destroyed
-    if (this.destroyed) {
-      return
-    }
-    
-    // Prevent recursive updates
+    if (this.destroyed) { return }
     if (this.isUpdating) {
       console.warn(`Recursive emit prevented: ${event}`)
       return
-    }
-    
+    } 
     this.isUpdating = true
     try {
       this.subscribers.forEach(callback => {
@@ -100,126 +73,68 @@ class Store {
   }
   
   // ===== Graph State Operations =====
-  
-  /**
-   * Replace the entire graph (used by History for undo/redo)
-   * @param {Graph} newGraph - New Graph instance
-   */
   replaceGraph(newGraph) {
     this.graph = newGraph
     this.emit(EVENTS.GRAPH_REPLACE, { graph: newGraph })
   }
   
   // --- Node Operations ---
-  
-  /**
-   * Add a node
-   * @param {Node} node - Node instance to add
-   */
   addNode(node) {
-    if (!(node instanceof Node)) {
-      throw new Error('addNode requires a Node instance')
-    }
-    
+    if (!(node instanceof Node)) { throw new Error('addNode requires a Node instance') }
     this.graph = this.graph.addNode(node)
     this.emit(EVENTS.NODE_ADD, { node, clientId: node.clientId })
   }
   
-  /**
-   * Update a node
-   * @param {string} clientId - Node clientId
-   * @param {Object} updates - Properties to update
-   */
   updateNode(clientId, updates) {
     const existingNode = this.graph.getNode(clientId)
     if (!existingNode) {
       console.warn(`Node ${clientId} not found, cannot update`)
       return
     }
-    
     this.graph = this.graph.updateNode(clientId, updates)
     const updatedNode = this.graph.getNode(clientId)
     this.emit(EVENTS.NODE_UPDATE, { node: updatedNode, clientId, updates })
   }
   
-  /**
-   * Remove a node and all its connections
-   * @param {string} clientId - Node clientId
-   */
   removeNode(clientId) {
     if (!this.graph.hasNode(clientId)) {
       console.warn(`Node ${clientId} not found, cannot remove`)
       return
     }
-    
     // Get connections before removal (for emit)
     const { outgoing, incoming } = this.graph.getConnectionsFor(clientId)
-    
     this.graph = this.graph.removeNode(clientId)
     this.emit(EVENTS.NODE_REMOVE, { clientId })
-    
     // Emit connection removal events
-    outgoing.forEach(conn => {
-      this.emit(EVENTS.CONNECTION_REMOVE, { clientId: conn.clientId })
-    })
-    incoming.forEach(conn => {
-      this.emit(EVENTS.CONNECTION_REMOVE, { clientId: conn.clientId })
-    })
+    outgoing.forEach(conn => { this.emit(EVENTS.CONNECTION_REMOVE, { clientId: conn.clientId }) })
+    incoming.forEach(conn => { this.emit(EVENTS.CONNECTION_REMOVE, { clientId: conn.clientId }) })
   }
   
-  /**
-   * Get a node by clientId
-   * @param {string} clientId - Node clientId
-   * @returns {Node|undefined}
-   */
   getNode(clientId) {
     return this.graph.getNode(clientId)
   }
   
-  /**
-   * Get all nodes
-   * @returns {Node[]}
-   */
   getNodes() {
     return this.graph.getNodes()
   }
   
-  /**
-   * Get nodes by type
-   * @param {string} type - Node type
-   * @returns {Node[]}
-   */
   getNodesByType(type) {
     return this.graph.getNodesByType(type)
   }
-  
   // --- Connection Operations ---
   
-  /**
-   * Add a connection
-   * @param {Connection} connection - Connection instance to add
-   */
   addConnection(connection) {
-    if (!(connection instanceof Connection)) {
-      throw new Error('addConnection requires a Connection instance')
-    }
-    
+    if (!(connection instanceof Connection)) { throw new Error('addConnection requires a Connection instance') }
     this.graph = this.graph.addConnection(connection)
     this.emit(EVENTS.CONNECTION_ADD, { connection, clientId: connection.clientId })
   }
   
-  /**
-   * Update a connection
-   * @param {string} clientId - Connection clientId
-   * @param {Object} updates - Properties to update
-   */
   updateConnection(clientId, updates) {
     const existingConn = this.graph.getConnection(clientId)
     if (!existingConn) {
       console.warn(`Connection ${clientId} not found, cannot update`)
       return
     }
-    
     this.graph = this.graph.updateConnection(clientId, updates)
     const updatedConn = this.graph.getConnection(clientId)
     this.emit(EVENTS.CONNECTION_UPDATE, { connection: updatedConn, clientId, updates })
@@ -230,7 +145,6 @@ class Store {
       console.warn(`Connection ${clientId} not found, cannot remove`)
       return
     }
-    
     this.graph = this.graph.removeConnection(clientId)
     this.emit(EVENTS.CONNECTION_REMOVE, { clientId })
   }
@@ -257,10 +171,6 @@ class Store {
   
 // ===== View State Operations =====
 
-  /**
-   * Set zoom level
-   * @param {number} zoom - Zoom level (1 = 100%)
-   */
   setZoom(zoom) {
     this.viewState.zoom = Math.max(0.1, Math.min(5, zoom))
   }
@@ -273,17 +183,14 @@ class Store {
   setSelectedNodeIds(clientIds) {
     const uniqueIds = [...new Set((clientIds || []).filter(Boolean))]
     this.viewState.selectedNodeIds = uniqueIds
-
     if (uniqueIds.length === 0) {
       this.viewState.primarySelectedNodeId = null
       this.emitSelectionChange()
       return
     }
-
     if (!uniqueIds.includes(this.viewState.primarySelectedNodeId)) {
       this.viewState.primarySelectedNodeId = uniqueIds[0]
     }
-
     this.emitSelectionChange()
   }
 
@@ -430,40 +337,22 @@ class Store {
   }
   
   // ===== Serialization =====
-  
-  /**
-   * Get serializable state (for history snapshots)
-   * @returns {Object} JSON representation
-   */
   getState() {
     return {
       graph: this.graph.toJSON()
-      // Note: viewState is NOT included - it's not undoable
     }
   }
   
-  /**
-   * Restore state (from history)
-   * @param {Object} state - JSON state from getState()
-   */
   restoreState(state) {
     this.graph = Graph.fromJSON(state.graph)
     this.emit(EVENTS.GRAPH_RESTORE, { graph: this.graph })
   }
   
-  // ===== Utility =====
-  
-  /**
-   * Get graph size
-   * @returns {Object} { nodes: number, connections: number }
-   */
+  // ===== Utility ===== 
   getSize() {
     return this.graph.getSize()
   }
   
-  /**
-   * Clear all state
-   */
   clear() {
     this.graph = new Graph()
     this.viewState = {
@@ -482,10 +371,6 @@ class Store {
     this.emit(EVENTS.GRAPH_REPLACE, { graph: this.graph })
   }
   
-  /**
-   * Destroy the store and prevent further updates
-   * Called when editor is torn down
-   */
   destroy() {
     this.destroyed = true
     this.subscribers = []

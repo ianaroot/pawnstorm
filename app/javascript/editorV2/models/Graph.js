@@ -1,21 +1,9 @@
-// models/Graph.js
-// Graph container with nodes and connections
-
 import Node from './Node.js'
 import Connection from './Connection.js'
 import generateUUID from '../utils/uuid.js'
 
-/**
- * Graph container
- * Holds nodes and connections in Maps keyed by clientId
- * All mutation methods return new Graph instances (immutable)
- */
 class Graph {
-  /**
-   * Create a new Graph
-   * @param {Node[]} [nodes=[]] - Initial nodes
-   * @param {Connection[]} [connections=[]] - Initial connections
-   */
+  
   constructor(nodes = [], connections = []) {
     // Store as Maps for O(1) lookup
     this.nodes = new Map()
@@ -42,47 +30,22 @@ class Graph {
   }
   
   // ===== Node Operations =====
-  
-  /**
-   * Get a node by clientId
-   * @param {string} clientId - Node clientId
-   * @returns {Node|undefined} Node or undefined if not found
-   */
   getNode(clientId) {
     return this.nodes.get(clientId)
   }
   
-  /**
-   * Check if a node exists
-   * @param {string} clientId - Node clientId
-   * @returns {boolean} True if node exists
-   */
   hasNode(clientId) {
     return this.nodes.has(clientId)
   }
   
-  /**
-   * Get all nodes as an array
-   * @returns {Node[]} Array of all nodes
-   */
   getNodes() {
     return Array.from(this.nodes.values())
   }
   
-  /**
-   * Get nodes by type
-   * @param {string} type - Node type (root, condition, action, organizer)
-   * @returns {Node[]} Array of matching nodes
-   */
   getNodesByType(type) {
     return this.getNodes().filter(node => node.type === type)
   }
   
-  /**
-   * Add a new node, returns new Graph
-   * @param {Node} node - Node to add
-   * @returns {Graph} New Graph with node added
-   */
   addNode(node) {
     if (this.nodes.has(node.clientId)) {
       console.warn(`Node with clientId ${node.clientId} already exists, replacing`)
@@ -97,12 +60,6 @@ class Graph {
     )
   }
   
-  /**
-   * Update a node, returns new Graph
-   * @param {string} clientId - Node clientId to update
-   * @param {Object} updates - Properties to update
-   * @returns {Graph} New Graph with updated node
-   */
   updateNode(clientId, updates) {
     const existingNode = this.nodes.get(clientId)
     if (!existingNode) {
@@ -120,11 +77,6 @@ class Graph {
     )
   }
   
-  /**
-   * Remove a node and all its connections, returns new Graph
-   * @param {string} clientId - Node clientId to remove
-   * @returns {Graph} New Graph with node removed
-   */
   removeNode(clientId) {
     if (!this.nodes.has(clientId)) {
       console.warn(`Node ${clientId} not found, cannot remove`)
@@ -150,39 +102,18 @@ class Graph {
   }
   
   // ===== Connection Operations =====
-  
-  /**
-   * Get a connection by clientId
-   * @param {string} clientId - Connection clientId
-   * @returns {Connection|undefined} Connection or undefined if not found
-   */
   getConnection(clientId) {
     return this.connections.get(clientId)
   }
   
-  /**
-   * Check if a connection exists
-   * @param {string} clientId - Connection clientId
-   * @returns {boolean} True if connection exists
-   */
   hasConnection(clientId) {
     return this.connections.has(clientId)
   }
   
-  /**
-   * Get all connections as an array
-   * @returns {Connection[]} Array of all connections
-   */
   getConnections() {
     return Array.from(this.connections.values())
   }
   
-  /**
-   * Find connection between two nodes
-   * @param {string} sourceClientId - Source node clientId
-   * @param {string} targetClientId - Target node clientId
-   * @returns {Connection|undefined} Connection or undefined if not found
-   */
   findConnection(sourceClientId, targetClientId) {
     for (const conn of this.connections.values()) {
       if (conn.sourceId === sourceClientId && conn.targetId === targetClientId) {
@@ -192,11 +123,6 @@ class Graph {
     return undefined
   }
   
-  /**
-   * Get all connections for a node (both incoming and outgoing)
-   * @param {string} clientId - Node clientId
-   * @returns {Object} { outgoing: Connection[], incoming: Connection[] }
-   */
   getConnectionsFor(clientId) {
     const outgoing = []
     const incoming = []
@@ -209,11 +135,6 @@ class Graph {
     return { outgoing, incoming }
   }
   
-  /**
-   * Get outgoing connections for a node
-   * @param {string} clientId - Node clientId
-   * @returns {Connection[]} Array of outgoing connections
-   */
   getOutgoingConnections(clientId) {
     const result = []
     this.connections.forEach(conn => {
@@ -222,11 +143,6 @@ class Graph {
     return result
   }
   
-  /**
-   * Get incoming connections for a node
-   * @param {string} clientId - Node clientId
-   * @returns {Connection[]} Array of incoming connections
-   */
   getIncomingConnections(clientId) {
     const result = []
     this.connections.forEach(conn => {
@@ -235,12 +151,6 @@ class Graph {
     return result
   }
   
-  /**
-   * Get descendant node IDs (children, grandchildren, etc.)
-   * Uses BFS to traverse the tree
-   * @param {string} clientId - Starting node clientId
-   * @returns {Set<string>} Set of descendant clientIds
-   */
   getDescendantIds(clientId) {
     const descendants = new Set()
     const queue = [clientId]
@@ -265,11 +175,6 @@ class Graph {
     return descendants
   }
   
-  /**
-   * Add a connection, returns new Graph
-   * @param {Connection} connection - Connection to add
-   * @returns {Graph} New Graph with connection added
-   */
   addConnection(connection) {
     // Validate that both source and target nodes exist
     if (!this.nodes.has(connection.sourceId)) {
@@ -297,12 +202,6 @@ class Graph {
     )
   }
   
-  /**
-   * Update a connection, returns new Graph
-   * @param {string} clientId - Connection clientId to update
-   * @param {Object} updates - Properties to update
-   * @returns {Graph} New Graph with updated connection
-   */
   updateConnection(clientId, updates) {
     const existingConn = this.connections.get(clientId)
     if (!existingConn) {
@@ -320,11 +219,6 @@ class Graph {
     )
   }
   
-  /**
-   * Remove a connection, returns new Graph
-   * @param {string} clientId - Connection clientId to remove
-   * @returns {Graph} New Graph with connection removed
-   */
   removeConnection(clientId) {
     if (!this.connections.has(clientId)) {
       console.warn(`Connection ${clientId} not found, cannot remove`)
@@ -341,11 +235,6 @@ class Graph {
   }
   
   // ===== Serialization =====
-  
-  /**
-   * Serialize to JSON
-   * @returns {Object} JSON representation
-   */
   toJSON() {
     return {
       nodes: this.getNodes().map(n => n.toJSON()),
@@ -353,11 +242,6 @@ class Graph {
     }
   }
   
-  /**
-   * Create Graph from JSON
-   * @param {Object} json - JSON representation
-   * @returns {Graph} New Graph instance
-   */
   static fromJSON(json) {
     const nodes = json.nodes.map(n => Node.fromJSON(n))
     const connections = json.connections.map(c => Connection.fromJSON(c))
@@ -365,11 +249,6 @@ class Graph {
   }
   
   // ===== Utility Methods =====
-  
-  /**
-   * Get total count of nodes and connections
-   * @returns {Object} { nodes: number, connections: number }
-   */
   getSize() {
     return {
       nodes: this.nodes.size,
@@ -377,18 +256,10 @@ class Graph {
     }
   }
   
-  /**
-   * Check if graph is empty
-   * @returns {boolean} True if no nodes or connections
-   */
   isEmpty() {
     return this.nodes.size === 0 && this.connections.size === 0
   }
   
-  /**
-   * Create a deep clone of this graph
-   * @returns {Graph} New Graph instance with same data
-   */
   clone() {
     return Graph.fromJSON(this.toJSON())
   }
