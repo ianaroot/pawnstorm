@@ -52,7 +52,6 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
   const connectionHandler = new ConnectionHandler(store, syncManager, connectionRenderer, canvasViewport)
   const clickHandler = new ClickHandler(store, history, editorPanel)
-  const keyboardHandler = new KeyboardHandler(store, history, syncManager)
   const toolbarHandler = new ToolbarHandler(store, history, syncManager, container, clickHandler, canvasViewport)
   function attachHandlersToNode(element, clientId) {
     dragHandler.attach(element, clientId)
@@ -73,6 +72,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   
   // 6. Attach Global UI handlers
   clickHandler.setSyncManager(syncManager)
+  const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   toolbarHandler.attach()
