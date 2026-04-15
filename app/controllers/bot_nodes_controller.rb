@@ -1,7 +1,7 @@
 class BotNodesController < ApplicationController
   before_action :authenticate_registered_or_guest_user!
   before_action :set_bot
-  before_action :set_node, only: [:show, :edit, :update, :destroy, :update_position]
+  before_action :set_node, only: [:show, :edit, :update, :update_position]
 
   def show
     respond_to do |format|
@@ -29,16 +29,6 @@ class BotNodesController < ApplicationController
     else
       render json: @node.errors, status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    # Prevent deletion of root nodes
-    if @node.root?
-      render json: { error: "Cannot delete root node" }, status: :unprocessable_entity
-      return
-    end
-    @node.destroy
-    head :no_content
   end
 
   def batch_destroy

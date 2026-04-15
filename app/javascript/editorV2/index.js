@@ -106,7 +106,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     
     // Convenience methods
     createNode: (type, position, data) => syncManager.createNode(type, position, data),
-    deleteNode: (clientId) => syncManager.deleteNode(clientId),
+    deleteNode: (clientId) => syncManager.deleteNodes([clientId]),
     createConnection: (sourceId, targetId) => syncManager.createConnection(sourceId, targetId),
     deleteConnection: (clientId) => syncManager.deleteConnection(clientId),
     updateNodeData: (clientId, data) => syncManager.updateNodeData(clientId, data),

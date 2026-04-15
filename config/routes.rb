@@ -13,7 +13,7 @@ Rails.application.routes.draw do
     member do
       post :compile
     end
-    resources :nodes, controller: 'bot_nodes', except: [:index, :new] do
+    resources :nodes, controller: 'bot_nodes', except: [:index, :new, :destroy] do
       member do
         post :connect
         post :update_position

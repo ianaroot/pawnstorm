@@ -144,15 +144,6 @@ class API {
    * @param {string} clientId - Node client ID
    * @returns {Promise<null>}
    */
-  async deleteNode(clientId) {
-    return this.deleteNodes([clientId])
-  }
-
-  /**
-   * Delete multiple nodes from the server
-   * @param {string[]} clientIds - Node client IDs
-   * @returns {Promise<Object>} Server response
-   */
   async deleteNodes(clientIds) {
     const uniqueClientIds = [...new Set((clientIds || []).filter(Boolean))]
     const deletableIds = uniqueClientIds
@@ -183,13 +174,13 @@ class API {
     const deletedNodeIds = json.deleted_node_ids || []
     const deletedConnectionIds = json.deleted_connection_ids || []
 
-    deletedNodeIds.forEach(serverId => this.removeNodeMappingByServerId(serverId))
-    deletedConnectionIds.forEach(serverId => this.removeConnectionMappingByServerId(serverId))
+    deletedNodeIds.forEach(serverId => this._removeNodeMappingByServerId(serverId))
+    deletedConnectionIds.forEach(serverId => this._removeConnectionMappingByServerId(serverId))
 
     return json
   }
 
-  removeNodeMappingByServerId(serverId) {
+  _removeNodeMappingByServerId(serverId) {
     const clientId = this.nodeServerToClient.get(serverId)
     if (clientId) {
       this.nodeClientToServer.delete(clientId)
@@ -197,30 +188,14 @@ class API {
     this.nodeServerToClient.delete(serverId)
   }
 
-  removeConnectionMappingByServerId(serverId) {
+  _removeConnectionMappingByServerId(serverId) {
     const clientId = this.connectionServerToClient.get(serverId)
     if (clientId) {
       this.connectionClientToServer.delete(clientId)
     }
     this.connectionServerToClient.delete(serverId)
-  }
+}
 
-  removeNodeMappingByClientId(clientId) {
-    const serverId = this.nodeClientToServer.get(clientId)
-    if (serverId) {
-      this.nodeServerToClient.delete(serverId)
-    }
-    this.nodeClientToServer.delete(clientId)
-  }
-
-  removeConnectionMappingByClientId(clientId) {
-    const serverConnectionId = this.connectionClientToServer.get(clientId)
-    if (serverConnectionId) {
-      this.connectionServerToClient.delete(serverConnectionId)
-    }
-    this.connectionClientToServer.delete(clientId)
-  }
-  
   // ===== Connection Operations =====
   
   /**

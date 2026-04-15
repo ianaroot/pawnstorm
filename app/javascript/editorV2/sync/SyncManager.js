@@ -239,8 +239,7 @@ class SyncManager {
   async executeInverseOperation(operation) {
     switch (operation.type) {
       case 'createNode':
-        // Undo: delete the created node
-        await this.api.deleteNode(operation.clientId)
+        await this.api.deleteNodes([operation.clientId])
         break
         
       case 'deleteNode':
@@ -343,14 +342,7 @@ class SyncManager {
         }
 
         if (operation.nodes.length > 0) {
-          await this.requireAllSettled(
-            Promise.allSettled(
-              operation.nodes.map(node =>
-                this.api.deleteNode(node.clientId)
-              )
-            ),
-            'delete nodes'
-          )
+          await this.api.deleteNodes(operation.nodes.map(node => node.clientId))
         }
         break
         
@@ -375,8 +367,7 @@ class SyncManager {
         break
         
       case 'deleteNode':
-        // Redo: delete the node again (connections already cascade-deleted)
-        await this.api.deleteNode(operation.clientId)
+        await this.api.deleteNodes([operation.clientId])
         break
         
       case 'updateNodePosition':
@@ -461,7 +452,6 @@ class SyncManager {
       const error = failures.length === 1 ? failures[0].reason : new Error(message)
       throw error
     }
-    return results.map(r => r.value)
   }
 
   // ===== Node Operations =====
@@ -668,67 +658,6 @@ class SyncManager {
     }
   }
   
-  /**
-   * Delete a node
-   * @param {string} clientId - Node client ID
-   * @returns {Promise<void>}
-   */
-  async deleteNode(clientId) {
-    const existingNode = this.store.getNode(clientId)
-    if (!existingNode) {
-      console.warn(`Node ${clientId} not found, cannot delete`)
-      return
-    }
-    
-    // Store node data for rollback and history
-    const deletedEntity = {
-      type: existingNode.type,
-      position: { ...existingNode.position },
-      data: { ...existingNode.data }
-    }
-    const deletedServerId = existingNode.serverId
-    
-    // Get connections that will be deleted
-    const deletedConnections = this.getDeletedConnectionBackups([clientId])
-    
-    // Store for rollback
-    const nodeBackup = existingNode
-    
-    // 1. Optimistic update: Remove from store
-    this.store.removeNode(clientId)
-    
-    try {
-      // 2. Sync with server
-      await this.api.deleteNode(clientId)
-      
-      // 3. Push to history after success
-      this.history.push(`Delete ${nodeBackup.type} node`, {
-        type: 'deleteNode',
-        clientId,
-        serverId: deletedServerId,
-        entity: deletedEntity,
-        connections: deletedConnections
-      })
-
-      this.store.setRecentPlacementAnchor(deletedEntity.position)
-
-      this.notifyPersistedMutation()
-      
-    } catch (error) {
-      // 4. Rollback: Re-add the node AND connections
-      this.store.addNode(nodeBackup)
-      deletedConnections.forEach(connData => {
-        const conn = new Connection(connData)
-        this.store.addConnection(conn)
-      })
-      
-      showError(`Failed to delete node: ${error.message}`)
-      console.error('Failed to delete node:', error)
-      
-      throw error
-    }
-  }
-
   /**
    * Delete multiple nodes selected as a set
    * @param {string[]} clientIds - Node client IDs
@@ -976,11 +905,11 @@ class SyncManager {
       }
     }
 
-    for (const node of [...persistedNodes].reverse()) {
+    if (persistedNodes.length > 0) {
       try {
-        await this.api.deleteNode(node.clientId)
+        await this.api.deleteNodes(persistedNodes.map(node => node.clientId))
       } catch (rollbackError) {
-        console.error('Failed to roll back template node:', rollbackError)
+        console.error('Failed to roll back template nodes:', rollbackError)
       }
     }
   }
