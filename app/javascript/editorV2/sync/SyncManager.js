@@ -244,19 +244,22 @@ class SyncManager {
         break
         
       case 'deleteNode':
-        // Undo: recreate the node
+        // Undo: recreate the node first (connections reference it)
         await this.api.createNode({
           type: operation.entity.type,
           position: operation.entity.position,
           data: operation.entity.data
         }, operation.clientId)
         
-        // Undo: recreate cascade-deleted connections
-        // NOTE: If node recreation succeeds but some connections fail,
-        // the server state will be partially inconsistent. User can retry
-        // or refresh the page to see actual server state.
-        for (const conn of operation.connections) {
-          await this.api.createConnection(conn.sourceId, conn.targetId, conn.clientId)
+        if (operation.connections.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.connections.map(conn =>
+                this.api.createConnection(conn.sourceId, conn.targetId, conn.clientId)
+              )
+            ),
+            'recreate connections'
+          )
         }
         break
         
@@ -300,30 +303,54 @@ class SyncManager {
         break
 
       case 'deleteNodes':
-        for (const node of operation.nodes) {
-          await this.api.createNode({
-            type: node.type,
-            position: node.position,
-            data: node.data
-          }, node.clientId)
+        if (operation.nodes.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.nodes.map(node =>
+                this.api.createNode({
+                  type: node.type,
+                  position: node.position,
+                  data: node.data
+                }, node.clientId)
+              )
+            ),
+            'recreate nodes'
+          )
         }
 
-        for (const connection of operation.connections) {
-          await this.api.createConnection(
-            connection.sourceId,
-            connection.targetId,
-            connection.clientId
+        if (operation.connections.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.connections.map(connection =>
+                this.api.createConnection(connection.sourceId, connection.targetId, connection.clientId)
+              )
+            ),
+            'recreate connections'
           )
         }
         break
 
       case 'insertTemplate':
-        for (const connection of [...operation.connections].reverse()) {
-          await this.api.deleteConnection(connection.clientId, connection.sourceId)
+        if (operation.connections.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.connections.map(conn =>
+                this.api.deleteConnection(conn.clientId, conn.sourceId)
+              )
+            ),
+            'delete connections'
+          )
         }
 
-        for (const node of [...operation.nodes].reverse()) {
-          await this.api.deleteNode(node.clientId)
+        if (operation.nodes.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.nodes.map(node =>
+                this.api.deleteNode(node.clientId)
+              )
+            ),
+            'delete nodes'
+          )
         }
         break
         
@@ -396,12 +423,26 @@ class SyncManager {
         break
 
       case 'insertTemplate':
-        for (const node of operation.nodes) {
-          await this.api.createNode(node.entity, node.clientId)
+        if (operation.nodes.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.nodes.map(node =>
+                this.api.createNode(node.entity, node.clientId)
+              )
+            ),
+            'create nodes'
+          )
         }
 
-        for (const connection of operation.connections) {
-          await this.api.createConnection(connection.sourceId, connection.targetId, connection.clientId)
+        if (operation.connections.length > 0) {
+          await this.requireAllSettled(
+            Promise.allSettled(
+              operation.connections.map(connection =>
+                this.api.createConnection(connection.sourceId, connection.targetId, connection.clientId)
+              )
+            ),
+            'create connections'
+          )
         }
         break
         
@@ -410,6 +451,19 @@ class SyncManager {
     }
   }
   
+  // ===== Batch Helper =====
+
+  async requireAllSettled(settledPromise, context) {
+    const results = await settledPromise
+    const failures = results.filter(r => r.status === 'rejected')
+    if (failures.length > 0) {
+      const message = `${failures.length} of ${results.length} ${context} failed`
+      const error = failures.length === 1 ? failures[0].reason : new Error(message)
+      throw error
+    }
+    return results.map(r => r.value)
+  }
+
   // ===== Node Operations =====
   
   /**
