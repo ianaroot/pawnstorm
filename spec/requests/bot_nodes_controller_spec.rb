@@ -176,7 +176,7 @@ RSpec.describe BotNodesController, type: :request do
     before { sign_in user }
 
     it 'destroys deletable nodes in one transaction and ignores root nodes' do
-      root = create(:node, :root, bot: bot)
+      root = bot.root_node
       node1 = create(:node, bot: bot)
       node2 = create(:node, bot: bot)
       connection_1 = connect_nodes(root, node1)
@@ -203,7 +203,7 @@ RSpec.describe BotNodesController, type: :request do
     end
 
     it 'returns success when only root nodes are requested' do
-      root = create(:node, :root, bot: bot)
+      root = bot.root_node
 
       expect {
         delete batch_destroy_bot_nodes_path(bot), params: { node_ids: [root.id] }

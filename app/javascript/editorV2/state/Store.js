@@ -30,7 +30,7 @@ class Store {
       isMarqueeSelecting: false,
       marqueeStart: null,
       marqueeCurrent: null
-    } 
+    }
     this.subscribers = [] 
     this.isUpdating = false 
     this.destroyed = false
@@ -42,7 +42,7 @@ class Store {
   
   // ===== Subscriber Pattern =====
   subscribe(callback) {
-    this.subscribers.push(callback) 
+    this.subscribers.push(callback)
     // Return unsubscribe function
     return () => {
       const index = this.subscribers.indexOf(callback)
