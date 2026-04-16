@@ -24,29 +24,22 @@ class ClickHandler {
     this.onNodeDeselected = null
     this.onNodeEdit = null
 
-    if (this.editorPanel) {
-      this.attachEditorPanelHandlers()
-    }
+    if (this.editorPanel) { this.attachEditorPanelHandlers() }
     this.unsubscribeStore = this.store.subscribe(this.boundHandleStoreUpdate)
   }
   
   attach(element, clientId) {
-    // Prevent duplicate attachments
-    if (this.attachedElements.has(element)) {
-      return
-    }
+    if (this.attachedElements.has(element)) { return }
     this.attachedElements.set(element, clientId)
     element.addEventListener('click', (e) => {
       if (e.target.classList.contains('node-connector')) { return }
       if (this.store.shouldSuppressClicks()) { return }
       this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
+      if (this.isPlainClick(e)) { this.openEditor(clientId) }
     })
     
     element.addEventListener('dblclick', (e) => {
-      // Don't edit if clicking on connector
-      if (e.target.classList.contains('node-connector')) { 
-        return 
-      }
+      if (e.target.classList.contains('node-connector')) {  return  }
       this.openEditor(clientId)  
     })
   }
@@ -80,7 +73,6 @@ class ClickHandler {
 
   syncSelectionClasses() {
     const selectedIds = new Set(this.store.getSelectedNodeIds())
-
     document.querySelectorAll('.node').forEach(el => {
       const clientId = el.dataset?.clientId
       el.classList.toggle('selected', selectedIds.has(clientId))
@@ -91,13 +83,17 @@ class ClickHandler {
     return event.shiftKey
   }
 
+  isPlainClick(event) {
+    return !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey
+  }
+
   handleClick(event) {
     if (this.store.shouldSuppressClicks()) { return }
-
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
     if (!clickedOnNode && !clickedOnEditor) {
       this.deselectAll()
+      this.closeEditor()
     }
   }
 
@@ -112,15 +108,12 @@ class ClickHandler {
   }
 
   handleKeyDown(event) {
-    // Delete key or backspace: delete selected node
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      // Only if not in an input field
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return
       }
-      
-      if (this.store.getPrimarySelectedNode()) {
-        this.deleteSelectedNode()
+      if (this.getDeletableSelectedNodeIds().length > 0) {
+        this.deleteSelectedNodes()
       }
     }
     // Escape: close editor panel
@@ -132,7 +125,6 @@ class ClickHandler {
   selectNode(clientId, element, { additive = false } = {}) {
     if (additive) {
       this.store.toggleNodeSelection(clientId)
-
       if (this.store.isNodeSelected(clientId)) {
         if (this.onNodeSelected) {
           this.onNodeSelected(clientId)
@@ -140,12 +132,9 @@ class ClickHandler {
       } else if (this.onNodeDeselected) {
         this.onNodeDeselected()
       }
-
       return
     }
-
     this.store.selectOnlyNode(clientId)
-
     if (this.onNodeSelected) {
       this.onNodeSelected(clientId)
     }
@@ -153,17 +142,13 @@ class ClickHandler {
 
   selectNodeById(clientId) {
     const element = document.querySelector(`.node[data-client-id="${clientId}"]`)
-    if (!element) {
-      return
-    }
-
+    if (!element) { return }
     this.selectNode(clientId, element)
   }
 
 
   deselectAll() {
     this.store.clearSelection()
-
     if (this.onNodeDeselected) {
       this.onNodeDeselected()
     }
@@ -178,10 +163,8 @@ class ClickHandler {
     }
     
     // Don't edit root nodes
-    if (node.type === 'root') {
-      return
-    }
-    
+    if (node.type === 'root') { return }
+    this.store.setRecentPlacementAnchor(node.position)
     this.editingNodeId = clientId
     this.store.setEditingNode(clientId)
     
@@ -197,20 +180,15 @@ class ClickHandler {
     }
   }
   
-  /**
-   * Close editor panel
-   */
   closeEditor() {
     this.editingNodeId = null
     this.store.setEditingNode(null)
-    
     if (this.editorPanel) {
       this.editorPanel.classList.add('hidden')
     }
   }
 
   // ===== Editor Panel Population =====
-
   populateEditorPanel(node) {
     if (!this.editorPanel) {
       return
@@ -227,7 +205,6 @@ class ClickHandler {
     const actionEditor = this.editorPanel.querySelector('#action-form')
     const organizerEditor = this.editorPanel.querySelector('#organizer-form')
     this.editorPanel.classList.toggle('node-form-panel--condition', node.type === 'condition')
-
     if (conditionForm) {
       conditionForm.classList.toggle('hidden', node.type !== 'condition')
     }
@@ -237,7 +214,6 @@ class ClickHandler {
     if (organizerEditor) {
       organizerEditor.classList.toggle('hidden', node.type !== 'organizer')
     }
-
     this.populateEditorByType(node)
   }
 
@@ -264,7 +240,6 @@ class ClickHandler {
 
 
   // ===== Action Editor =====
-
   buildActionDataPayload() {
     return {
       actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
@@ -273,7 +248,6 @@ class ClickHandler {
   }
 
   // ===== Organizer Editor =====
-
   buildOrganizerDataPayload() {
     return {
       title: this.editorPanel.querySelector('#organizer-title')?.value?.trim() || 'Organizer',
@@ -282,37 +256,19 @@ class ClickHandler {
   }
 
   populateActionEditor(node) {
-    if (!this.editorPanel) {
-      return
-    }
-
+    if (!this.editorPanel) { return }
     const actionType = this.editorPanel.querySelector('#action-type')
     const actionValue = this.editorPanel.querySelector('#action-value')
-
-    if (actionType) {
-      actionType.value = node.data.actionType || node.data.action_type || 'add'
-    }
-
-    if (actionValue) {
-      actionValue.value = node.data.value || 1
-    }
+    if (actionType) { actionType.value = node.data.actionType || node.data.action_type || 'add' }
+    if (actionValue) { actionValue.value = node.data.value || 1 }
   }
 
   populateOrganizerEditor(node) {
-    if (!this.editorPanel) {
-      return
-    }
-
+    if (!this.editorPanel) { return }
     const organizerTitle = this.editorPanel.querySelector('#organizer-title')
     const organizerNotes = this.editorPanel.querySelector('#organizer-notes')
-
-    if (organizerTitle) {
-      organizerTitle.value = node.data.title || 'Organizer'
-    }
-
-    if (organizerNotes) {
-      organizerNotes.value = node.data.notes || ''
-    }
+    if (organizerTitle) { organizerTitle.value = node.data.title || 'Organizer' }
+    if (organizerNotes) { organizerNotes.value = node.data.notes || '' }
   }
 
   // ===== Save Helpers =====
@@ -335,66 +291,61 @@ class ClickHandler {
   }
 
   async handleSave() {
-    if (!this.editingNodeId) {
-      return
-    }
-
+    if (!this.editingNodeId) { return }
     const node = this.store.getNode(this.editingNodeId)
-    if (!node || !this.syncManager) {
-      return
-    }
-
+    if (!node || !this.syncManager) { return }
     try {
       const payload = this.buildDataPayloadByType(node)
       if (payload) {
         await this.syncManager.updateNodeData(this.editingNodeId, payload)
       }
-
       this.closeEditor()
     } catch (error) {
       console.error('Failed to save node:', error)
     }
   }
-  
 
-  async deleteSelectedNode() {
-    const selectedNodeId = this.store.getPrimarySelectedNode()
-    if (!selectedNodeId) {
-      return
-    }
+  getSelectedNodeIds() {
+    return this.store.getSelectedNodeIds()
+  }
 
-    const node = this.store.getNode(selectedNodeId)
-    if (!node) {
-      return
-    }
-    
-    // Don't delete root nodes
-    if (node.type === 'root') {
-      console.warn('Cannot delete root node')
-      return
-    }
-    
-    // Confirm deletion
-    if (!confirm('Delete this node?')) {
-      return
-    }
-    
-    const clientId = selectedNodeId
-    
-    // Deselect first
-    this.deselectAll()
-    
-    // Close editor if editing this node
-    if (this.editingNodeId === clientId) {
-      this.closeEditor()
-    }
-    
-    // SyncManager handles: optimistic delete, server sync, history push
+  getDeletableSelectedNodeIds() {
+    return this.getSelectedNodeIds().filter(clientId => {
+      const node = this.store.getNode(clientId)
+      return node && node.type !== 'root'
+    })
+  }
+
+  async deleteSelectedNodes() {
+    const selectedNodeIds = this.getSelectedNodeIds()
+    const deletableNodeIds = this.getDeletableSelectedNodeIds()
+    if (deletableNodeIds.length === 0) { return }
+    const confirmationMessage = deletableNodeIds.length === 1
+      ? 'Delete 1 selected node?'
+      : `Delete ${deletableNodeIds.length} selected nodes?`
+    if (!confirm(confirmationMessage)) { return }
     try {
-      await this.syncManager?.deleteNode(clientId)
+      await this.syncManager?.deleteNodes(deletableNodeIds) 
+      const remainingSelectedIds = selectedNodeIds.filter(clientId => !deletableNodeIds.includes(clientId))
+      this.store.setSelectedNodeIds(remainingSelectedIds)
+      this.syncSelectionClasses()
+
+      if (this.editingNodeId && deletableNodeIds.includes(this.editingNodeId)) {
+        this.closeEditor()
+      }
+
+      if (remainingSelectedIds.length > 0) {
+        this.onNodeSelected?.(remainingSelectedIds[0])
+      } else {
+        this.onNodeDeselected?.()
+      }
     } catch (error) {
       console.error('Failed to delete node:', error)
     }
+  }
+
+  async deleteSelectedNode() {
+    return this.deleteSelectedNodes()
   }
   
 

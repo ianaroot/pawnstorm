@@ -144,31 +144,58 @@ class API {
    * @param {string} clientId - Node client ID
    * @returns {Promise<null>}
    */
-  async deleteNode(clientId) {
-    const serverId = this.nodeClientToServer.get(clientId)
-    if (!serverId) {
-      console.warn(`No server ID for node client ID ${clientId}, skipping delete`)
-      return null
+  async deleteNodes(clientIds) {
+    const uniqueClientIds = [...new Set((clientIds || []).filter(Boolean))]
+    const deletableIds = uniqueClientIds
+      .map(clientId => ({
+        clientId,
+        serverId: this.nodeClientToServer.get(clientId)
+      }))
+      .filter(({ serverId }) => serverId)
+
+    if (deletableIds.length === 0) {
+      return { deleted_node_ids: [], deleted_connection_ids: [] }
     }
-    
-    const response = await fetch(`${this.baseUrl}/nodes/${serverId}`, {
+
+    const response = await fetch(`${this.baseUrl}/nodes/batch_destroy`, {
       method: 'DELETE',
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        node_ids: deletableIds.map(({ serverId }) => serverId)
+      })
     })
-    
-    // 404 is OK (already deleted)
-    if (!response.ok && response.status !== 404) {
+
+    if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Failed to delete node: ${response.status} - ${errorText}`)
+      throw new Error(`Failed to delete nodes: ${response.status} - ${errorText}`)
     }
-    
-    // Clean up mapping
-    this.nodeClientToServer.delete(clientId)
-    this.nodeServerToClient.delete(serverId)
-    
-    return null
+
+    const json = await response.json()
+    const deletedNodeIds = json.deleted_node_ids || []
+    const deletedConnectionIds = json.deleted_connection_ids || []
+
+    deletedNodeIds.forEach(serverId => this._removeNodeMappingByServerId(serverId))
+    deletedConnectionIds.forEach(serverId => this._removeConnectionMappingByServerId(serverId))
+
+    return json
   }
-  
+
+  _removeNodeMappingByServerId(serverId) {
+    const clientId = this.nodeServerToClient.get(serverId)
+    if (clientId) {
+      this.nodeClientToServer.delete(clientId)
+    }
+    this.nodeServerToClient.delete(serverId)
+  }
+
+  _removeConnectionMappingByServerId(serverId) {
+    const clientId = this.connectionServerToClient.get(serverId)
+    if (clientId) {
+      this.connectionClientToServer.delete(clientId)
+    }
+    this.connectionServerToClient.delete(serverId)
+  }
+
   // ===== Connection Operations =====
   
   /**

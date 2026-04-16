@@ -9,25 +9,18 @@ import DragHandler from './handlers/DragHandler.js'
 import ConnectionHandler from './handlers/ConnectionHandler.js'
 import ClickHandler from './handlers/ClickHandler.js'
 import KeyboardHandler from './handlers/KeyboardHandler.js'
-import { MAX_HISTORY } from './constants.js'
+import { EVENTS, MAX_HISTORY } from './constants.js'
 import { showError } from './utils/errors.js'
 import ToolbarHandler from './handlers/ToolbarHandler.js'
 
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
-  if (!container) {
-    throw new Error('Container element is required')
-  }
-  if (!svgContainer) {
-    throw new Error('SVG container element is required')
-  }
-
+  if (!container) { throw new Error('Container element is required') }
+  if (!svgContainer) { throw new Error('SVG container element is required') }
   const workspace = document.getElementById('canvas-workspace')
   const scene = document.getElementById('canvas-scene')
   const canvasContainer = container.closest('.canvas-container')
 
-  if (!workspace || !scene || !canvasContainer) {
-    throw new Error('Canvas viewport elements are required')
-  }
+  if (!workspace || !scene || !canvasContainer) { throw new Error('Canvas viewport elements are required') }
   
   // 1. Initialize core state/services
   const api = new API(botId)
@@ -52,7 +45,6 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
   const connectionHandler = new ConnectionHandler(store, syncManager, connectionRenderer, canvasViewport)
   const clickHandler = new ClickHandler(store, history, editorPanel)
-  const keyboardHandler = new KeyboardHandler(store, history, syncManager)
   const toolbarHandler = new ToolbarHandler(store, history, syncManager, container, clickHandler, canvasViewport)
   function attachHandlersToNode(element, clientId) {
     dragHandler.attach(element, clientId)
@@ -73,11 +65,17 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   
   // 6. Attach Global UI handlers
   clickHandler.setSyncManager(syncManager)
+  const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   toolbarHandler.attach()
   clickHandler.onNodeSelected = () => toolbarHandler.updateButtons()
   clickHandler.onNodeDeselected = () => toolbarHandler.updateButtons()
+  const unsubscribeToolbarSelection = store.subscribe((event) => {
+    if (event === EVENTS.SELECTION_CHANGE) {
+      toolbarHandler.updateButtons()
+    }
+  })
   const deleteButtonContainer = svgContainer.parentElement
   connectionHandler.setupDeleteHandler(deleteButtonContainer)
 
@@ -108,7 +106,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     
     // Convenience methods
     createNode: (type, position, data) => syncManager.createNode(type, position, data),
-    deleteNode: (clientId) => syncManager.deleteNode(clientId),
+    deleteNode: (clientId) => syncManager.deleteNodes([clientId]),
     createConnection: (sourceId, targetId) => syncManager.createConnection(sourceId, targetId),
     deleteConnection: (clientId) => syncManager.deleteConnection(clientId),
     updateNodeData: (clientId, data) => syncManager.updateNodeData(clientId, data),
@@ -138,6 +136,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
       connectionHandler.destroy()
       clickHandler.destroy()
       keyboardHandler.destroy()
+      unsubscribeToolbarSelection()
       store.destroy()
     }
   }
@@ -148,13 +147,7 @@ function updateUndoRedoUI(history) {
   const redoBtn = document.querySelector('.btn-redo')
   const countDisplay = document.querySelector('.undo-count')
   
-  if (undoBtn) {
-    undoBtn.disabled = !history.canUndo()
-  }
-  if (redoBtn) {
-    redoBtn.disabled = !history.canRedo()
-  }
-  if (countDisplay) {
-    countDisplay.textContent = history.getHistoryDisplay()
-  }
+  if (undoBtn)      { undoBtn.disabled = !history.canUndo() }
+  if (redoBtn)      { redoBtn.disabled = !history.canRedo() }
+  if (countDisplay) { countDisplay.textContent = history.getHistoryDisplay() }
 }

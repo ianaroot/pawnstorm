@@ -32,18 +32,14 @@ export default class extends Controller {
   open() {
     this.sidebarTarget.classList.add('sidebar--open')
     this.sidebarTarget.classList.remove('sidebar--closed')
-    if (this.hasOverlayTarget) {
-      this.overlayTarget.classList.add('sidebar-overlay--visible')
-    }
+    if (this.hasOverlayTarget) { this.overlayTarget.classList.add('sidebar-overlay--visible') }
     document.body.style.overflow = 'hidden'
   }
   
   close() {
     this.sidebarTarget.classList.remove('sidebar--open')
     this.sidebarTarget.classList.add('sidebar--closed')
-    if (this.hasOverlayTarget) {
-      this.overlayTarget.classList.remove('sidebar-overlay--visible')
-    }
+    if (this.hasOverlayTarget) { this.overlayTarget.classList.remove('sidebar-overlay--visible') }
     document.body.style.overflow = ''
   }
   
