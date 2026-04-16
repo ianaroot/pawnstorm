@@ -43,8 +43,8 @@ class Bot < ApplicationRecord
   end
 
   def get_fresh_program
-    raise "#{id} has no compiled program" if compiled_program.blank?
-    raise "#{id} has a stale compiled program and must be recompiled" if compiled_program_stale?
+    raise "Bot: #{id} has no compiled program" if compiled_program.blank?
+    raise "Bot: #{id} has a stale compiled program and must be recompiled" if compiled_program_stale?
     compiled_program.deep_dup
   end
 
