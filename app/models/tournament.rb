@@ -1,5 +1,5 @@
 class Tournament < ApplicationRecord
-  DRAW_RESULTS = %w[stalemate threefold_repetition capped].freeze
+  DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
   PAUSED_CACHE_TTL = 7.days
 
   belongs_to :creator, class_name: 'User'

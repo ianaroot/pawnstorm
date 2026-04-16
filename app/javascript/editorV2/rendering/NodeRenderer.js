@@ -25,6 +25,9 @@ class NodeRenderer {
     // Map: clientId → DOM element
     this.elements = new Map()
     
+    // Map: clientId → { x, y, type, dataKey } — lightweight snapshot for diffing on GRAPH_RESTORE
+    this.nodeSnapshot = new Map()
+    
     // Pending preview fetch controllers (for cancellation)
     this.previewControllers = new Map()
     
@@ -56,8 +59,11 @@ class NodeRenderer {
         break
       
       case EVENTS.GRAPH_REPLACE:
-      case EVENTS.GRAPH_RESTORE:
         this.renderAllNodes()
+        break
+      
+      case EVENTS.GRAPH_RESTORE:
+        this.handleGraphRestore(data.graph)
         break
     }
   }
@@ -71,6 +77,12 @@ class NodeRenderer {
     const element = this.createNodeElement(node)
     this.container.appendChild(element)
     this.elements.set(node.clientId, element)
+    this.nodeSnapshot.set(node.clientId, {
+      x: node.position.x,
+      y: node.position.y,
+      type: node.type,
+      dataKey: JSON.stringify(node.data)
+    })
     this.onRender?.(node, element)
     this.fetchPreview(node.clientId)
   }
@@ -124,17 +136,24 @@ class NodeRenderer {
       return
     }
     
-    // Update position
+    const snapshot = this.nodeSnapshot.get(clientId)
+
     if (updates.position) {
       element.style.left = `${updates.position.x}px`
       element.style.top = `${updates.position.y}px`
+      if (snapshot) {
+        this.nodeSnapshot.set(clientId, { ...snapshot, x: updates.position.x, y: updates.position.y })
+      }
     }
-    
+
     // Refetch preview when data changes or when the server ID arrives.
     // Newly created nodes render optimistically before they have a server ID,
     // so the first preview fetch can only succeed after sync completes.
     if (updates.data !== undefined || updates.serverId !== undefined) {
       this.fetchPreview(clientId)
+      if (updates.data !== undefined && snapshot) {
+        this.nodeSnapshot.set(clientId, { ...snapshot, dataKey: JSON.stringify(updates.data) })
+      }
     }
   }
   
@@ -149,6 +168,8 @@ class NodeRenderer {
       this.elements.delete(clientId)
     }
     
+    this.nodeSnapshot.delete(clientId)
+
     // Cancel any pending preview fetch
     const controller = this.previewControllers.get(clientId)
     if (controller) {
@@ -204,6 +225,50 @@ class NodeRenderer {
     }
   }
   
+  handleGraphRestore(graph) {
+    const newNodeIds = new Set()
+    const newNodes = new Map()
+    for (const node of graph.getNodes()) {
+      newNodeIds.add(node.clientId)
+      newNodes.set(node.clientId, node)
+    }
+
+    for (const id of this.elements.keys()) {
+      if (!newNodeIds.has(id)) this.removeNode(id)
+    }
+
+    for (const node of newNodes.values()) {
+      this.reconcileNode(node)
+    }
+  }
+
+  reconcileNode(node) {
+    const existing = this.elements.get(node.clientId)
+    if (!existing) {
+      this.renderNode(node)
+      return
+    }
+
+    const snapshot = this.nodeSnapshot.get(node.clientId)
+    const typeChanged = node.type !== snapshot?.type
+    const dataChanged = JSON.stringify(node.data) !== snapshot?.dataKey
+    const positionChanged = node.position.x !== snapshot?.x || node.position.y !== snapshot?.y
+
+    if (typeChanged || dataChanged) {
+      this.removeNode(node.clientId)
+      this.renderNode(node)
+    } else if (positionChanged) {
+      existing.style.left = `${node.position.x}px`
+      existing.style.top = `${node.position.y}px`
+      this.nodeSnapshot.set(node.clientId, {
+        ...snapshot,
+        x: node.position.x,
+        y: node.position.y
+      })
+      this.onContentRender?.(node.clientId)
+    }
+  }
+
   renderAllNodes() {
     // Clear existing
     this.clear()
@@ -224,6 +289,7 @@ class NodeRenderer {
     // Remove all elements
     this.elements.forEach(element => element.remove())
     this.elements.clear()
+    this.nodeSnapshot.clear()
   }
   
   /**

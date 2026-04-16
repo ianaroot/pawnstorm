@@ -150,25 +150,70 @@ RSpec.describe BotNodesController, type: :request do
     end
   end
 
-  describe 'DELETE #destroy' do
+  describe 'DELETE #batch_destroy' do
     before { sign_in user }
 
-    it 'destroys the node' do
+    it 'destroys a single non-root node' do
       node_to_delete = create(:node, bot: bot)
       expect {
-        delete bot_node_path(bot, node_to_delete)
+        delete batch_destroy_bot_nodes_path(bot), params: { node_ids: [node_to_delete.id] }
       }.to change(Node, :count).by(-1)
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:success)
+      json = JSON.parse(response.body)
+      expect(json['deleted_node_ids']).to match_array([node_to_delete.id])
     end
 
-    it 'destroys associated connections' do
+    it 'destroys associated connections for a single node' do
+      root = bot.root_node
       node1 = create(:node, bot: bot)
       node2 = create(:node, bot: bot)
-      connect_nodes(node1, node2)
-      
+      connection = connect_nodes(node1, node2)
+
       expect {
-        delete bot_node_path(bot, node1)
+        delete batch_destroy_bot_nodes_path(bot), params: { node_ids: [node1.id] }
       }.to change(Connection, :count).by(-1)
+
+      json = JSON.parse(response.body)
+      expect(json['deleted_connection_ids']).to match_array([connection.id])
+    end
+
+    it 'destroys deletable nodes in one transaction and ignores root nodes' do
+      root = bot.root_node
+      node1 = create(:node, bot: bot)
+      node2 = create(:node, bot: bot)
+      connection_1 = connect_nodes(root, node1)
+      connection_2 = connect_nodes(node1, node2)
+      other_bot = create(:bot)
+      other_node = create(:node, bot: other_bot)
+
+      expect {
+        delete batch_destroy_bot_nodes_path(bot), params: {
+          node_ids: [root.id, node1.id, node2.id, other_node.id]
+        }
+      }.to change(Node, :count).by(-2).and change(Connection, :count).by(-2)
+
+      expect(response).to have_http_status(:success)
+
+      json = JSON.parse(response.body)
+      expect(json['deleted_node_ids']).to match_array([node1.id, node2.id])
+      expect(json['deleted_connection_ids']).to match_array([connection_1.id, connection_2.id])
+
+      expect(root.reload).to be_present
+      expect(other_node.reload).to be_present
+      expect { node1.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { node2.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it 'returns success when only root nodes are requested' do
+      root = bot.root_node
+
+      expect {
+        delete batch_destroy_bot_nodes_path(bot), params: { node_ids: [root.id] }
+      }.not_to change(Node, :count)
+
+      expect(response).to have_http_status(:success)
+      expect(JSON.parse(response.body)).to eq('deleted_node_ids' => [], 'deleted_connection_ids' => [])
+      expect(root.reload).to be_present
     end
   end
 

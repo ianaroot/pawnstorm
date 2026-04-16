@@ -92,7 +92,6 @@ class ReplayView {
       if (!tile) { return }
       if (result.key === inspection.result.currentChoiceKey) { return }
       if (result.key === inspection.result.explicitInspectedMoveKey) { return }
-
       if (!muteTopMoveHighlights && inspection.result.tiedTopMoveKeys.includes(result.key)) {
         tile.classList.add('match-replay-square--tied-move')
       } else if (inspection.selectedStartSquare) {
@@ -121,36 +120,28 @@ class ReplayView {
     if (this.playButton) {
       this.playButton.innerText = isPlaying && playDirection === 1 ? "Pause" : "Play"
     }
-
     if (this.reverseButton) {
       this.reverseButton.innerText = isPlaying && playDirection === -1 ? "Pause" : "Reverse"
     }
-
     if (this.startButton) {
       this.startButton.disabled = currentMoveIndex === -1
     }
-
     if (this.backButton) {
       this.backButton.disabled = currentMoveIndex === -1
     }
-
     if (this.forwardButton) {
       this.forwardButton.disabled = currentMoveIndex >= totalMoves - 1
     }
-
     if (this.playButton) {
       this.playButton.disabled = currentMoveIndex >= totalMoves - 1
     }
-
     if (this.reverseButton) {
       this.reverseButton.disabled = currentMoveIndex === -1
     }
-
     if (this.topMovesToggle) {
       this.topMovesToggle.innerText = muteTopMoveHighlights ? "Show top moves" : "Mute top moves"
       this.topMovesToggle.classList.toggle('match-replay-toggle-button--active', muteTopMoveHighlights)
     }
-
     this.speedButtons.forEach(button => {
       button.classList.toggle('match-replay-speed-button--active', Number(button.dataset.speedMultiplier) === speedMultiplier)
     })
@@ -170,15 +161,12 @@ class ReplayView {
 
   renderNotation({ movePairs, currentMoveIndex }) {
     if (!this.notationElement) { return }
-
     this.notationElement.innerHTML = ""
     let currentMoveRow = null
-
     for (let i = 0; i < movePairs.length; i++) {
       const [whiteMove, blackMove] = movePairs[i]
       const row = document.createElement("li")
       row.className = "match-replay-notation-row"
-
       const whiteSpan = document.createElement("button")
       whiteSpan.type = "button"
       whiteSpan.className = "match-replay-move"
@@ -211,19 +199,15 @@ class ReplayView {
 
   scrollNotationToCurrentMove({ currentMoveIndex, currentMoveRow }) {
     if (!this.notationElement) { return }
-
     if (currentMoveIndex === -1) {
       this.notationElement.scrollTop = 0
       return
     }
-
     if (!currentMoveRow) { return }
-
     const containerRect = this.notationElement.getBoundingClientRect()
     const rowRect = currentMoveRow.getBoundingClientRect()
     const upperBand = containerRect.top + (containerRect.height * 0.2)
     const lowerBand = containerRect.top + (containerRect.height * 0.7)
-
     if (rowRect.bottom > lowerBand) {
       this.notationElement.scrollTop += rowRect.bottom - lowerBand
       return
@@ -241,8 +225,7 @@ export function buildReplayBoard({ layout, capturedPieces, allowedToMove }) {
     layOut: layout,
     capturedPieces,
     allowedToMove,
-    movementNotation: [],
-    previousLayouts: []
+    movementNotation: []
   })
 }
 

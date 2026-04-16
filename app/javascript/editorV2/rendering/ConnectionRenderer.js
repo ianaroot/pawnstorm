@@ -38,6 +38,9 @@ class ConnectionRenderer {
     // Map: clientId → { line, hitArea, deleteBtn }
     this.elements = new Map()
     
+    // Map: clientId → { sourceX, sourceY, targetX, targetY } — lightweight snapshot for diffing on GRAPH_RESTORE
+    this.connectionSnapshot = new Map()
+    
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(this.handleChange.bind(this))
     this.unsubscribeViewport = this.viewport?.subscribe(() => this.updateDeleteButtonPositions())
@@ -98,8 +101,11 @@ class ConnectionRenderer {
         break
       
       case EVENTS.GRAPH_REPLACE:
-      case EVENTS.GRAPH_RESTORE:
         this.renderAllConnections()
+        break
+      
+      case EVENTS.GRAPH_RESTORE:
+        this.handleGraphRestore(data.graph)
         break
     }
   }
@@ -119,21 +125,8 @@ class ConnectionRenderer {
     const sourceNode = this.store.getNode(connection.sourceId)
     const targetNode = this.store.getNode(connection.targetId)
     
-    // if (!sourceNode || !targetNode) {
-    //   console.warn(`Cannot render connection: missing nodes`)
-    //   return
-    // }
-    //********** above is original, below is debugging 
     if (!sourceNode || !targetNode) {
-      console.warn('Cannot render connection: missing nodes', {
-        connectionClientId: connection.clientId,
-        sourceClientId: connection.sourceId,
-        targetClientId: connection.targetId,
-        sourceNodeInStore: !!sourceNode,
-        targetNodeInStore: !!targetNode,
-        storeNodeCount: this.store.getNodes().length,
-        storeNodeClientIds: this.store.getNodes().map(n => n.clientId).slice(0, 5)
-      })
+      console.warn(`Cannot render connection ${connection.clientId}: missing node`, connection.sourceId, connection.targetId)
       return
     }
     
@@ -142,7 +135,7 @@ class ConnectionRenderer {
     const targetEl = this.container.querySelector(`[data-client-id="${connection.targetId}"]`)
     
     if (!sourceEl || !targetEl) {
-      console.warn(`Cannot render connection: missing node elements`)
+      console.warn(`Cannot render connection ${connection.clientId}: missing node element`, connection.sourceId, connection.targetId)
       return
     }
     
@@ -169,6 +162,12 @@ class ConnectionRenderer {
     
     // Store references
     this.elements.set(connection.clientId, { line, hitArea, deleteBtn })
+    this.connectionSnapshot.set(connection.clientId, {
+      sourceX: sourceNode.position.x,
+      sourceY: sourceNode.position.y,
+      targetX: targetNode.position.x,
+      targetY: targetNode.position.y
+    })
   }
   
   /**
@@ -335,6 +334,14 @@ class ConnectionRenderer {
     elements.deleteBtn.style.left = `${sceneMidpoint.x}px`
     elements.deleteBtn.style.top = `${sceneMidpoint.y}px`
     this.applyInteractiveSizing(elements)
+
+    // Update snapshot
+    this.connectionSnapshot.set(clientId, {
+      sourceX: sourceNode.position.x,
+      sourceY: sourceNode.position.y,
+      targetX: targetNode.position.x,
+      targetY: targetNode.position.y
+    })
   }
 
   updateDeleteButtonPositions() {
@@ -371,6 +378,7 @@ class ConnectionRenderer {
       this.removeConnectionElements(elements)
       this.elements.delete(clientId)
     }
+    this.connectionSnapshot.delete(clientId)
   }
   
   /**
@@ -388,19 +396,59 @@ class ConnectionRenderer {
    * @param {string} clientId - Node client ID
    */
   removeConnectionsForNode(clientId) {
-    // Note: This is called when a node is removed
-    // The Store already removes connections cascade-style
-    // This is a safety cleanup for any remaining elements
     this.elements.forEach((elements, connClientId) => {
       const conn = this.store.getConnection(connClientId)
       if (!conn) {
-        // Connection was removed from store, clean up
         this.removeConnectionElements(elements)
         this.elements.delete(connClientId)
+        this.connectionSnapshot.delete(connClientId)
       }
     })
   }
   
+  handleGraphRestore(graph) {
+    const newConnectionIds = new Set()
+    const newConnections = new Map()
+    for (const conn of graph.getConnections()) {
+      newConnectionIds.add(conn.clientId)
+      newConnections.set(conn.clientId, conn)
+    }
+
+    for (const id of this.elements.keys()) {
+      if (!newConnectionIds.has(id)) this.removeConnection(id)
+    }
+
+    for (const conn of newConnections.values()) {
+      this.reconcileConnection(conn)
+    }
+  }
+
+  reconcileConnection(conn) {
+    const existing = this.elements.get(conn.clientId)
+    if (!existing) {
+      this.renderConnection(conn)
+      return
+    }
+
+    const sourceNode = this.store.getNode(conn.sourceId)
+    const targetNode = this.store.getNode(conn.targetId)
+    // Safety net: nodes should always exist by this point (NodeRenderer processes GRAPH_RESTORE
+    // first), but if a connection references a missing node, rebuild it from scratch.
+    if (!sourceNode || !targetNode) {
+      this.removeConnection(conn.clientId)
+      this.renderConnection(conn)
+      return
+    }
+
+    const snapshot = this.connectionSnapshot.get(conn.clientId)
+    const sourceMoved = !snapshot || sourceNode.position.x !== snapshot.sourceX || sourceNode.position.y !== snapshot.sourceY
+    const targetMoved = !snapshot || targetNode.position.x !== snapshot.targetX || targetNode.position.y !== snapshot.targetY
+
+    if (sourceMoved || targetMoved) {
+      this.updateConnectionPosition(conn.clientId)
+    }
+  }
+
   /**
    * Render all connections
    */
@@ -421,6 +469,7 @@ class ConnectionRenderer {
       this.removeConnectionElements(elements)
     })
     this.elements.clear()
+    this.connectionSnapshot.clear()
   }
   
   /**

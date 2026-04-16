@@ -89,7 +89,6 @@ class NotationParser {
   equivalent(leftNotation, rightNotation) {
     const left = this.parse(leftNotation)
     const right = this.parse(rightNotation)
-
     return (
       left.castle === right.castle &&
       left.pieceType === right.pieceType &&

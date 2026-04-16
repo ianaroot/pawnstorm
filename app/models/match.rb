@@ -34,7 +34,8 @@ class Match < ApplicationRecord
     stalemate: 2,
     threefold_repetition: 3,
     capped: 4,
-    error: 5
+    error: 5,
+    fifty_move_rule: 6
   }, allow_nil: true
 
   belongs_to :creator, class_name: 'User'

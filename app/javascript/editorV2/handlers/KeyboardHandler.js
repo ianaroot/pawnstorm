@@ -1,71 +1,52 @@
-// handlers/KeyboardHandler.js
-// Handles keyboard shortcuts for undo/redo and other actions
+import { findAnchoredNodePlacement } from '../utils/nodePlacement.js'
+import generateUUID from '../utils/uuid.js'
+import Node from '../models/Node.js'
+import Connection from '../models/Connection.js'
 
-/**
- * KeyboardHandler
- * 
- * Handles:
- * - Undo: Ctrl+Z / Cmd+Z
- * - Redo: Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y
- * - Delete: Delete key / Backspace (handled by ClickHandler)
- * 
- * IMPORTANT: Receives History directly (not via Store.history) to avoid circular dependency.
- */
 class KeyboardHandler {
-  /**
-   * Create KeyboardHandler
-   * @param {Store} store - Store instance
-   * @param {History} history - History instance (passed directly)
-   * @param {SyncManager} syncManager - SyncManager instance (for undo/redo)
-   */
-  constructor(store, history, syncManager) {
+  constructor(store, history, syncManager, clickHandler = null) {
     this.store = store
     this.history = history
     this.syncManager = syncManager
-    
-    // Pre-bound handler
+    this.clickHandler = clickHandler
+    this.clipboard = null
     this.boundHandleKeyDown = this.handleKeyDown.bind(this)
-    
-    // Attached state
     this.isAttached = false
   }
   
-  /**
-   * Attach keyboard listeners
-   */
   attach() {
-    if (this.isAttached) {
-      return
-    }
-    
+    if (this.isAttached) { return }
     document.addEventListener('keydown', this.boundHandleKeyDown)
     this.isAttached = true
   }
   
-  /**
-   * Detach keyboard listeners
-   */
   detach() {
-    if (!this.isAttached) {
-      return
-    }
-    
+    if (!this.isAttached) { return }
     document.removeEventListener('keydown', this.boundHandleKeyDown)
     this.isAttached = false
   }
-  
-  /**
-   * Handle keydown events
-   * @param {KeyboardEvent} event
-   */
+
   handleKeyDown(event) {
     // Ignore if in input field
-    if (this.isInputElement(event.target)) {
+    if (this.isInputElement(event.target)) { return }
+    const key = event.key?.toLowerCase()
+    // Copy: Ctrl/Cmd+C
+    if ((event.ctrlKey || event.metaKey) && key === 'c') {
+      event.preventDefault()
+      this.copySelectedNodes()
+      return
+    }
+    // Paste: Ctrl/Cmd+V
+    if ((event.ctrlKey || event.metaKey) && key === 'v') {
+      event.preventDefault()
+      this.pasteCopiedNodes().catch(error => {
+        console.error('Failed to paste nodes:', error)
+      })
       return
     }
     
     // Undo: Ctrl+Z / Cmd+Z
-    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+    if ((event.ctrlKey || event.metaKey) && key === 'z' && !event.shiftKey) {
       event.preventDefault()
       this.undo()
       return
@@ -73,58 +54,37 @@ class KeyboardHandler {
     
     // Redo: Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y
     if ((event.ctrlKey || event.metaKey) && 
-        ((event.key === 'z' && event.shiftKey) || event.key === 'y')) {
+        ((key === 'z' && event.shiftKey) || key === 'y')) {
       event.preventDefault()
       this.redo()
       return
     }
   }
-  
-  /**
-   * Check if target is an input element
-   * @param {EventTarget} target
-   * @returns {boolean}
-   */
+
   isInputElement(target) {
-    if (!target || !target.tagName) {
-      return false
-    }
-    
+    if (!target || !target.tagName) { return false }
     const tag = target.tagName.toLowerCase()
     const isEditable = target.isContentEditable
-    
     return tag === 'input' || tag === 'textarea' || tag === 'select' || isEditable
   }
   
-  /**
-   * Perform undo (async - syncs with server)
-   */
   async undo() {
     if (!this.history.canUndo()) return
-    if (this.syncManager.isUndoRedoPending) return
-    
+    if (this.syncManager.isUndoRedoPending) return  
     await this.syncManager.undo()
     this.updateUndoRedoUI()
   }
   
-  /**
-   * Perform redo (async - syncs with server)
-   */
   async redo() {
     if (!this.history.canRedo()) return
-    if (this.syncManager.isUndoRedoPending) return
-    
+    if (this.syncManager.isUndoRedoPending) return  
     await this.syncManager.redo()
     this.updateUndoRedoUI()
   }
   
-  /**
-   * Update undo/redo button UI
-   */
   updateUndoRedoUI() {
     const undoBtn = document.querySelector('.btn-undo')
-    const redoBtn = document.querySelector('.btn-redo')
-    
+    const redoBtn = document.querySelector('.btn-redo')  
     if (undoBtn) {
       undoBtn.disabled = !this.history.canUndo() || this.syncManager.isUndoRedoPending
       undoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
@@ -135,25 +95,87 @@ class KeyboardHandler {
     }
   }
   
-  /**
-   * Get undo availability
-   * @returns {boolean}
-   */
   canUndo() {
     return this.history.canUndo() && !this.syncManager.isUndoRedoPending
   }
   
-  /**
-   * Get redo availability
-   * @returns {boolean}
-   */
   canRedo() {
     return this.history.canRedo() && !this.syncManager.isUndoRedoPending
   }
+
+  deepClone(value) {
+    if (typeof structuredClone === 'function') { return structuredClone(value) }
+    return JSON.parse(JSON.stringify(value))
+  }
+
+  getCopyableSelectedNodes() {
+    const selectedIds = this.store.getSelectedNodeIds()
+    if (selectedIds.length === 0) { return [] }
+    return selectedIds
+      .map(clientId => this.store.getNode(clientId))
+      .filter(node => node && node.type !== 'root')
+  }
+
+  copySelectedNodes() {
+    const nodes = this.getCopyableSelectedNodes()
+    if (nodes.length === 0) { return false }
+
+    const anchorPosition = { x: nodes[0].position.x, y: nodes[0].position.y }
+    const nodeIdToIndex = new Map()
+    nodes.forEach((node, index) => { nodeIdToIndex.set(node.clientId, index) })
+
+    const connections = this.store.getInternalConnections(nodes.map(n => n.clientId))
+      .map(conn => ({
+        sourceIndex: nodeIdToIndex.get(conn.sourceId),
+        targetIndex: nodeIdToIndex.get(conn.targetId)
+      }))
+
+    this.clipboard = {
+      nodes: nodes.map(node => ({
+        type: node.type,
+        data: this.deepClone(node.data),
+        relativeX: node.position.x - anchorPosition.x,
+        relativeY: node.position.y - anchorPosition.y
+      })),
+      connections,
+      anchorPosition
+    }
+    return true
+  }
+
+  async pasteCopiedNodes() {
+    if (!this.clipboard || !this.syncManager) { return null }
+    if (this.clipboard.nodes.length === 0) { return null }
+
+    const anchorType = this.clipboard.nodes[0].type
+    const origin = this.store.getRecentPlacementAnchor() || this.clipboard.anchorPosition
+    const anchorPosition = findAnchoredNodePlacement(this.store, anchorType, origin)
+
+    const newClientIdMap = this.clipboard.nodes.map(() => generateUUID())
+
+    const nodeModels = this.clipboard.nodes.map((nodeData, index) => new Node({
+      clientId: newClientIdMap[index],
+      type: nodeData.type,
+      position: {
+        x: anchorPosition.x + nodeData.relativeX,
+        y: anchorPosition.y + nodeData.relativeY
+      },
+      data: this.deepClone(nodeData.data)
+    }))
+
+    const connectionModels = this.clipboard.connections.map(connData => new Connection({
+      clientId: generateUUID(),
+      sourceId: newClientIdMap[connData.sourceIndex],
+      targetId: newClientIdMap[connData.targetIndex]
+    }))
+
+    const result = await this.syncManager.insertNodeSet(nodeModels, connectionModels, 'Paste nodes')
+    if (result.clientIds.length > 0) {
+      this.store.setSelectedNodeIds(result.clientIds)
+    }
+    return result
+  }
   
-  /**
-   * Cleanup on destroy
-   */
   destroy() {
     this.detach()
   }

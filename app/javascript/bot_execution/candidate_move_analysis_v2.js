@@ -65,19 +65,16 @@
         return profileCollector.measure('cma.v2.position_mobility', () => {
           const key = `${boardScope}:${position}`
           if (this._positionMobilityCache.has(key)) { return this._positionMobilityCache.get(key) }
-
           const board = this.boardForScope(boardScope)
           const pieceType = board.pieceTypeAt(position)
           const moveObjects = this.availableMovesFrom(position, boardScope)
           let mobility
-
           if (pieceType === Board.PAWN) {
             const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
             mobility = destinations.size
           } else {
             mobility = moveObjects.length
           }
-
           this._positionMobilityCache.set(key, mobility)
           return mobility
         })
@@ -548,13 +545,10 @@
 
     valueOfPositions(positions, boardScope = AFTER_BOARD) {
         const board = this.boardForScope(boardScope)
-
         return positions.reduce((sum, position) => {
             return sum + materialValue(board.pieceTypeAt(position))
         }, 0)
     }
-
-
   }
 
   export default CandidateMoveAnalysisV2
