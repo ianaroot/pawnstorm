@@ -41,13 +41,7 @@ class Matches::CreateBotVsBot
       white_player: white_bot,
       black_player: black_bot,
       white_compiled_program_snapshot: white_snapshot,
-      black_compiled_program_snapshot: black_snapshot,
-      status: :pending,
-      result: nil,
-      allowed_to_move: 'W',
-      captured_pieces: [],
-      movement_notation: [],
-      previous_layouts: []
+      black_compiled_program_snapshot: black_snapshot
     )
     ComputeMatchJob.perform_later(@match.id)
 

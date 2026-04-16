@@ -47,13 +47,7 @@ class TournamentsController < ApplicationController
             white_player: white_bot,
             black_player: black_bot,
             white_tournament_entry: tournament_entries_by_bot_id.fetch(white_bot.id),
-            black_tournament_entry: tournament_entries_by_bot_id.fetch(black_bot.id),
-            status: :pending,
-            result: nil,
-            allowed_to_move: 'W',
-            captured_pieces: [],
-            movement_notation: [],
-            previous_layouts: []
+            black_tournament_entry: tournament_entries_by_bot_id.fetch(black_bot.id)
           )
         end
       end

@@ -21,6 +21,10 @@
  #  black_player_id   :bigint
  #
 class Match < ApplicationRecord
+  attribute :captured_pieces, default: []
+  attribute :movement_notation, default: []
+  attribute :previous_layouts, default: []
+
   enum :status, {
     pending: 0,
     running: 1,

@@ -28,12 +28,7 @@ class Matches::CreateHumanVsBot
       black_player:,
       white_compiled_program_snapshot: white_player == bot ? bot_snapshot : nil,
       black_compiled_program_snapshot: black_player == bot ? bot_snapshot : nil,
-      status: :running,
-      result: nil,
-      allowed_to_move: 'W',
-      captured_pieces: [],
-      movement_notation: [],
-      previous_layouts: []
+      status: :running
     )
 
     true

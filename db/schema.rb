@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_10_153000) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_11_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -41,10 +41,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_153000) do
 
   create_table "matches", force: :cascade do |t|
     t.json "lay_out"
-    t.json "captured_pieces"
+    t.json "captured_pieces", default: []
     t.string "allowed_to_move", default: "W", null: false
-    t.json "movement_notation"
-    t.json "previous_layouts"
+    t.json "movement_notation", default: []
+    t.json "previous_layouts", default: []
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "creator_id"
