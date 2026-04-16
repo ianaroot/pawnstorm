@@ -39,20 +39,15 @@ export default class extends Controller {
 
   scrollToSection(event) {
     event.preventDefault()
-
     const sectionId = event.currentTarget.dataset.sectionId
     if (!sectionId || !this.hasContentTarget) return
-
     const section = this.contentTarget.querySelector(`#${sectionId}`)
     if (!section) return
-
     section.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   handleKeydown(event) {
-    if (event.key === "Escape" && this.isOpen()) {
-      this.close()
-    }
+    if (event.key === "Escape" && this.isOpen()) { this.close() }
   }
 
   updateToggleState(expanded) {

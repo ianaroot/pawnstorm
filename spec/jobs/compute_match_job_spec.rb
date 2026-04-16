@@ -24,9 +24,9 @@ RSpec.describe ComputeMatchJob, type: :job do
 
       expect(payload).to include(
         white_compiled_program: { 'version' => 'white-snapshot' },
-        black_compiled_program: { 'version' => 'black-snapshot' },
-        max_plies: 200
+        black_compiled_program: { 'version' => 'black-snapshot' }
       )
+      expect(payload).not_to have_key(:max_plies)
     end
 
     it 'marks the match completed and persists computed state on success' do

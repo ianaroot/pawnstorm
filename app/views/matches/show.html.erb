@@ -6,19 +6,7 @@
   <% if @match.pending? || @match.running? %>
     <div class="match-replay-layout">
       <div class="game-page">
-        <div class="match-show-meta">
-          <h1 class="match-show-title">Match <%= @match.id %></h1>
-          <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
-          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
-          <% if @rematch_params.present? %>
-            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
-              <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
-              <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
-              <%= form.submit 'Rematch' %>
-            <% end %>
-          <% end %>
-        </div>
+        <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
         <% end %>
@@ -37,19 +25,7 @@
     </div>
   <% elsif @match.failed? %>
     <div class="game-page">
-      <div class="match-show-meta">
-        <h1 class="match-show-title">Match <%= @match.id %></h1>
-        <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-        <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
-        <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
-        <% if @rematch_params.present? %>
-          <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
-            <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
-            <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
-            <%= form.submit 'Rematch' %>
-          <% end %>
-        <% end %>
-      </div>
+      <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
       <p>Match generation failed.</p>
       <% if @match.error_message.present? %>
         <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
@@ -69,19 +45,7 @@
       data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
     >
       <div class="game-page">
-        <div class="match-show-meta">
-          <h1 class="match-show-title">Match <%= @match.id %></h1>
-          <p class="match-show-meta-item"><strong>Status:</strong> <%= @match.status %></p>
-          <p class="match-show-meta-item"><strong>White:</strong> <%= @match.player_display_name_for(:white) %></p>
-          <p class="match-show-meta-item"><strong>Black:</strong> <%= @match.player_display_name_for(:black) %></p>
-          <% if @rematch_params.present? %>
-            <%= form_with url: matches_path, scope: :match, method: :post, local: true do |form| %>
-              <%= form.hidden_field :own_bot_id, value: @rematch_params[:own_bot_id] %>
-              <%= form.hidden_field :opponent_bot_id, value: @rematch_params[:opponent_bot_id] %>
-              <%= form.submit 'Rematch' %>
-            <% end %>
-          <% end %>
-        </div>
+        <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
         <% end %>
@@ -103,7 +67,7 @@
             <button type="button" data-match-replay-target="forward-button">Forward</button>
             <button type="button" data-match-replay-target="play-button">Play</button>
             <button type="button" data-match-replay-target="reverse-button">Reverse</button>
-            <button type="button" data-match-replay-target="selected-move-toggle">Mute selected</button>
+            <button type="button" data-match-replay-target="top-moves-toggle">Mute top moves</button>
           </div>
           <div class="match-replay-speed">
             <span>Speed</span>

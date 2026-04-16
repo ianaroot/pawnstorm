@@ -353,7 +353,7 @@
   box-shadow: inset 0 0 0 5px var(--match-replay-chosen-move);
 }
 
-.match-replay-square--selected-move {
+.match-replay-square--inspected-move {
   box-shadow: inset 0 0 0 5px var(--match-replay-inspected-move);
 }
 

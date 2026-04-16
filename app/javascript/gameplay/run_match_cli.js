@@ -6,18 +6,16 @@ import Layout from 'gameplay/layout'
 import MatchRunner from 'gameplay/match_runner'
 import profileCollector from 'gameplay/profile_collector'
 
+const DEFAULT_MAX_PLIES = 1000
+
 async function readStdin() {
   const chunks = []
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk)
-  }
-
+  for await (const chunk of process.stdin) { chunks.push(chunk) }
   return Buffer.concat(chunks).toString()
 }
 
 function serializableError(error) {
   if (!error) { return null }
-
   return {
     name: error.name,
     message: error.message,
@@ -27,7 +25,6 @@ function serializableError(error) {
 
 function boardSnapshot(board) {
   if (!board) { return null }
-
   return {
     lay_out: board.layOut,
     captured_pieces: board.capturedPieces,
@@ -42,6 +39,7 @@ function boardSnapshot(board) {
 
 function resultFor(board, maxPlies, turnCount) {
   if (!board.gameOver && turnCount >= maxPlies) { return 'capped' }
+  if (board._resultType === 'fifty_move_rule') { return 'fifty_move_rule' }
   if (board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
   if (board._resultType === 'stalemate') { return 'stalemate' }
   if (board._winner === Board.WHITE) { return 'white_win' }
@@ -65,10 +63,10 @@ async function main() {
     layOut: Layout.default(),
     capturedPieces: [],
     allowedToMove: Board.WHITE,
-    movementNotation: [],
-    previousLayouts: JSON.stringify([])
+    movementNotation: []
   })
   currentBoard = board
+  const maxPlies = payload.max_plies ?? DEFAULT_MAX_PLIES
 
   const matchRunner = new MatchRunner({
     board,
@@ -79,10 +77,10 @@ async function main() {
   })
 
   const turns = profileCollector.measure('match.total', () => {
-    return matchRunner.play({ maxPlies: payload.max_plies || 200 })
+    return matchRunner.play({ maxPlies })
   })
   const resultPayload = {
-    result: resultFor(board, payload.max_plies || 200, turns.length),
+    result: resultFor(board, maxPlies, turns.length),
     lay_out: board.layOut,
     captured_pieces: board.capturedPieces,
     allowed_to_move: board.allowedToMove,

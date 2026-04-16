@@ -1,8 +1,9 @@
 <div class="match-setup-page">
   <h1>Set Up Match</h1>
   <p>Choose one of your bots and an opponent. Colors will be assigned randomly. Your stale bots can still be selected.</p>
+  <p><%= link_to 'Play against one of your bots instead', new_human_vs_bot_match_path %></p>
 
-  <%= form_with url: matches_path,
+  <%= form_with url: bot_vs_bot_matches_path,
       scope: :match,
       method: :post,
       local: true,

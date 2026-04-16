@@ -27,7 +27,34 @@ describe('CandidateMoveAnalysis', () => {
       expect(afterBoard.pieceObject(position('e2'))).toBe(Board.EMPTY_SQUARE)
       expect(afterBoard.pieceObject(position('e4'))).toBe('WP')
       expect(afterBoard.allowedToMove).toBe(board.allowedToMove)
-      expect(afterBoard.movementNotation).toEqual(board.movementNotation)
+      expect(afterBoard.movementNotation).toEqual([])
+    })
+
+    it('preserves en passant availability without copying movement notation', () => {
+      const board = buildBoard({
+        allowedToMove: Board.BLACK,
+        pieces: {
+          e1: 'wK',
+          a2: 'wP',
+          e5: 'wP',
+          d7: 'bP',
+          e8: 'bK'
+        }
+      })
+
+      board._officiallyMovePiece(getMove('d7', 'd5', board))
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysis({ board, moveObject })
+      const afterBoard = analysis.afterBoard()
+
+      const whitePawnTargets = moveTargets(
+        Rules.availableMovesFrom({ board: afterBoard, startPosition: position('e5') })
+      )
+
+      expect(whitePawnTargets).toContain('d6')
+      expect(afterBoard.movementNotation).toEqual([])
+      expect(board.movementNotation.length).toBeGreaterThan(0)
     })
 
     it('memoizes the post-move board for repeated analysis calls', () => {
@@ -43,30 +70,6 @@ describe('CandidateMoveAnalysis', () => {
       const analysis = new CandidateMoveAnalysis({ board, moveObject })
 
       expect(analysis.afterBoard()).toBe(analysis.afterBoard())
-    })
-
-    it('preserves en passant availability that depends on movement notation', () => {
-      const board = buildBoard({
-        allowedToMove: Board.WHITE,
-        movementNotation: ['h3', 'd5'],
-        pieces: {
-          e1: 'wK',
-          e8: 'bK',
-          a2: 'wP',
-          e5: 'wP',
-          d5: 'bP'
-        }
-      })
-
-      const moveObject = getMove('a2', 'a3', board)
-      const analysis = new CandidateMoveAnalysis({ board, moveObject })
-      const afterBoard = analysis.afterBoard()
-
-      const whitePawnTargets = moveTargets(
-        Rules.availableMovesFrom({ board: afterBoard, startPosition: position('e5') })
-      )
-
-      expect(whitePawnTargets).toContain('d6')
     })
 
     it('preserves castling availability when king and rook are untouched', () => {

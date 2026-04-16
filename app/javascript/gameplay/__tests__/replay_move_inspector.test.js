@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import ReplayMoveInspector from 'gameplay/replay_move_inspector'
 
 describe('ReplayMoveInspector', () => {
-  it('returns top-score ties and traces only the selected move', () => {
+  it('returns top-score ties and traces only the inspected move', () => {
     const moveA = { startPosition: 1, endPosition: 9 }
     const moveB = { startPosition: 2, endPosition: 10 }
     const moveC = { startPosition: 2, endPosition: 18, promotionPiece: 'Q' }
@@ -31,7 +31,7 @@ describe('ReplayMoveInspector', () => {
     const result = inspector.inspectPosition({
       board: {},
       actualMoveNotation: 'some-notation',
-      selectedMoveKey: ReplayMoveInspector.moveKey(moveB)
+      inspectedMoveKey: ReplayMoveInspector.moveKey(moveB)
     })
 
     expect(result.topScore).toBe(9)
@@ -40,9 +40,9 @@ describe('ReplayMoveInspector', () => {
       ReplayMoveInspector.moveKey(moveC)
     ])
     expect(result.actualMoveKey).toBe(ReplayMoveInspector.moveKey(moveC))
-    expect(result.selectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
-    expect(result.selectedMove.moveObject).toBe(moveB)
-    expect(result.selectedTrace).toEqual({
+    expect(result.inspectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
+    expect(result.inspectedMove.moveObject).toBe(moveB)
+    expect(result.inspectedTrace).toEqual({
       score: 9,
       halted: false,
       trace: [{ nodeId: 'selected', nodeType: 'action' }]
@@ -79,7 +79,7 @@ describe('ReplayMoveInspector', () => {
     ])
   })
 
-  it('tracks current choice separately from an explicitly selected move', () => {
+  it('tracks current choice separately from an explicitly inspected move', () => {
     const moveA = { startPosition: 1, endPosition: 9 }
     const moveB = { startPosition: 2, endPosition: 10 }
     const inspector = new ReplayMoveInspector({
@@ -96,13 +96,13 @@ describe('ReplayMoveInspector', () => {
 
     const result = inspector.inspectPosition({
       board: {},
-      selectedMoveKey: ReplayMoveInspector.moveKey(moveB)
+      inspectedMoveKey: ReplayMoveInspector.moveKey(moveB)
     })
 
     expect(result.currentChoiceKey).toBe(ReplayMoveInspector.moveKey(moveA))
     expect(result.currentChoiceMove.moveObject).toBe(moveA)
-    expect(result.explicitSelectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
-    expect(result.selectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
-    expect(result.selectedMove.moveObject).toBe(moveB)
+    expect(result.explicitInspectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
+    expect(result.inspectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
+    expect(result.inspectedMove.moveObject).toBe(moveB)
   })
 })

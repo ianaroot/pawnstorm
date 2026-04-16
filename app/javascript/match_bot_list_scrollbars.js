@@ -26,7 +26,6 @@ function updateMatchBotListScrollbar(frameElement) {
 function initializeMatchBotListScrollbar(frameElement) {
   const listElement = frameElement.querySelector('.match-bot-list')
   if (!listElement) { return }
-
   updateMatchBotListScrollbar(frameElement)
   listElement.addEventListener('scroll', () => updateMatchBotListScrollbar(frameElement))
 }

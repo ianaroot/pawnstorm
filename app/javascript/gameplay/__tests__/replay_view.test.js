@@ -11,7 +11,7 @@ function buildRoot() {
     <button data-match-replay-target="back-button"></button>
     <button data-match-replay-target="forward-button"></button>
     <button data-match-replay-target="start-button"></button>
-    <button data-match-replay-target="selected-move-toggle"></button>
+    <button data-match-replay-target="top-moves-toggle"></button>
     <div data-match-replay-target="status"></div>
     <div data-match-replay-target="result"></div>
     <ol data-match-replay-target="notation"></ol>
@@ -37,11 +37,11 @@ describe('ReplayView', () => {
     document.body.innerHTML = ''
   })
 
-  it('shows chosen move and explicitly selected move with distinct highlight classes', () => {
+  it('shows chosen move and explicitly inspected move with distinct highlight classes', () => {
     const root = buildRoot()
     const view = new ReplayView({ rootElement: root })
     const chosenTile = appendTile(9)
-    const selectedTile = appendTile(10)
+    const inspectedTile = appendTile(10)
     const tiedTile = appendTile(11)
 
     view.renderBoardHighlights({
@@ -51,8 +51,8 @@ describe('ReplayView', () => {
         result: {
           currentChoiceKey: '1:9:none',
           currentChoiceMove: { moveObject: { startPosition: 1, endPosition: 9 } },
-          explicitSelectedMoveKey: '2:10:none',
-          selectedMove: { moveObject: { startPosition: 2, endPosition: 10 } },
+          explicitInspectedMoveKey: '2:10:none',
+          inspectedMove: { moveObject: { startPosition: 2, endPosition: 10 } },
           tiedTopMoveKeys: ['3:11:none'],
           visibleMoves: [
             { key: '1:9:none', moveObject: { startPosition: 1, endPosition: 9 } },
@@ -61,11 +61,11 @@ describe('ReplayView', () => {
           ]
         }
       },
-      muteSelectedMoveHighlight: false
+      muteTopMoveHighlights: false
     })
 
     expect(chosenTile.classList.contains('match-replay-square--chosen-move')).toBe(true)
-    expect(selectedTile.classList.contains('match-replay-square--selected-move')).toBe(true)
+    expect(inspectedTile.classList.contains('match-replay-square--inspected-move')).toBe(true)
     expect(tiedTile.classList.contains('match-replay-square--tied-move')).toBe(true)
   })
 
@@ -83,8 +83,8 @@ describe('ReplayView', () => {
         result: {
           currentChoiceKey: '1:9:none',
           currentChoiceMove: { moveObject: { startPosition: 1, endPosition: 9 } },
-          explicitSelectedMoveKey: null,
-          selectedMove: null,
+          explicitInspectedMoveKey: null,
+          inspectedMove: null,
           tiedTopMoveKeys: ['1:9:none'],
           visibleMoves: [
             { key: '1:9:none', moveObject: { startPosition: 1, endPosition: 9 } },
@@ -92,7 +92,7 @@ describe('ReplayView', () => {
           ]
         }
       },
-      muteSelectedMoveHighlight: true
+      muteTopMoveHighlights: true
     })
 
     expect(selectedPieceTile.classList.contains('match-replay-square--selected-piece')).toBe(true)

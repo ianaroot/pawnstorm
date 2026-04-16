@@ -17,7 +17,7 @@ class ReplayView {
     this.backButton = rootElement.querySelector('[data-match-replay-target="back-button"]')
     this.forwardButton = rootElement.querySelector('[data-match-replay-target="forward-button"]')
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
-    this.selectedMoveToggle = rootElement.querySelector('[data-match-replay-target="selected-move-toggle"]')
+    this.topMovesToggle = rootElement.querySelector('[data-match-replay-target="top-moves-toggle"]')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.statusElement = rootElement.querySelector('[data-match-replay-target="status"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
@@ -33,28 +33,28 @@ class ReplayView {
     })
   }
 
-  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning, inspection, muteSelectedMoveHighlight }) {
+  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning, inspection, muteTopMoveHighlights }) {
     renderBoardPieces(board)
     updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
     displayAlerts("")
-    this.renderBoardHighlights({ inspection, muteSelectedMoveHighlight })
+    this.renderBoardHighlights({ inspection, muteTopMoveHighlights })
     this.renderStatus({ currentMoveIndex, totalMoves })
-    this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteSelectedMoveHighlight })
+    this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights })
     this.renderResult(result)
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
     this.traceView.render(inspection)
   }
 
-  renderBoardHighlights({ inspection, muteSelectedMoveHighlight }) {
+  renderBoardHighlights({ inspection, muteTopMoveHighlights }) {
     document.querySelectorAll('.chess-tile').forEach(tile => {
       tile.classList.remove(
         'match-replay-square--selected-piece',
         'match-replay-square--chosen-move',
-        'match-replay-square--selected-move',
+        'match-replay-square--inspected-move',
         'match-replay-square--tied-move',
         'match-replay-square--candidate-move'
       )
@@ -71,18 +71,18 @@ class ReplayView {
     const chosenMoveTile = chosenMove
       ? document.getElementById(Board.gridCalculator(chosenMove.endPosition))
       : null
-    if (!muteSelectedMoveHighlight) {
+    if (!muteTopMoveHighlights) {
       chosenMoveTile?.classList.add('match-replay-square--chosen-move')
     }
 
-    const selectedMove = inspection.result.explicitSelectedMoveKey
-      ? inspection.result.selectedMove?.moveObject || null
+    const inspectedMove = inspection.result.explicitInspectedMoveKey
+      ? inspection.result.inspectedMove?.moveObject || null
       : null
-    const selectedMoveTile = selectedMove
-      ? document.getElementById(Board.gridCalculator(selectedMove.endPosition))
+    const inspectedMoveTile = inspectedMove
+      ? document.getElementById(Board.gridCalculator(inspectedMove.endPosition))
       : null
-    if (selectedMoveTile) {
-      selectedMoveTile?.classList.add('match-replay-square--selected-move')
+    if (inspectedMoveTile) {
+      inspectedMoveTile?.classList.add('match-replay-square--inspected-move')
     }
 
     const visibleMoves = inspection.result.visibleMoves || []
@@ -91,9 +91,8 @@ class ReplayView {
       const tile = document.getElementById(destinationId)
       if (!tile) { return }
       if (result.key === inspection.result.currentChoiceKey) { return }
-      if (result.key === inspection.result.explicitSelectedMoveKey) { return }
-
-      if (!muteSelectedMoveHighlight && inspection.result.tiedTopMoveKeys.includes(result.key)) {
+      if (result.key === inspection.result.explicitInspectedMoveKey) { return }
+      if (!muteTopMoveHighlights && inspection.result.tiedTopMoveKeys.includes(result.key)) {
         tile.classList.add('match-replay-square--tied-move')
       } else if (inspection.selectedStartSquare) {
         tile.classList.add('match-replay-square--candidate-move')
@@ -117,40 +116,32 @@ class ReplayView {
     this.statusElement.innerText = `Move ${currentMoveIndex + 1} of ${totalMoves}`
   }
 
-  renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteSelectedMoveHighlight = false }) {
+  renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights = false }) {
     if (this.playButton) {
       this.playButton.innerText = isPlaying && playDirection === 1 ? "Pause" : "Play"
     }
-
     if (this.reverseButton) {
       this.reverseButton.innerText = isPlaying && playDirection === -1 ? "Pause" : "Reverse"
     }
-
     if (this.startButton) {
       this.startButton.disabled = currentMoveIndex === -1
     }
-
     if (this.backButton) {
       this.backButton.disabled = currentMoveIndex === -1
     }
-
     if (this.forwardButton) {
       this.forwardButton.disabled = currentMoveIndex >= totalMoves - 1
     }
-
     if (this.playButton) {
       this.playButton.disabled = currentMoveIndex >= totalMoves - 1
     }
-
     if (this.reverseButton) {
       this.reverseButton.disabled = currentMoveIndex === -1
     }
-
-    if (this.selectedMoveToggle) {
-      this.selectedMoveToggle.innerText = muteSelectedMoveHighlight ? "Show selected" : "Mute selected"
-      this.selectedMoveToggle.classList.toggle('match-replay-toggle-button--active', muteSelectedMoveHighlight)
+    if (this.topMovesToggle) {
+      this.topMovesToggle.innerText = muteTopMoveHighlights ? "Show top moves" : "Mute top moves"
+      this.topMovesToggle.classList.toggle('match-replay-toggle-button--active', muteTopMoveHighlights)
     }
-
     this.speedButtons.forEach(button => {
       button.classList.toggle('match-replay-speed-button--active', Number(button.dataset.speedMultiplier) === speedMultiplier)
     })
@@ -170,15 +161,12 @@ class ReplayView {
 
   renderNotation({ movePairs, currentMoveIndex }) {
     if (!this.notationElement) { return }
-
     this.notationElement.innerHTML = ""
     let currentMoveRow = null
-
     for (let i = 0; i < movePairs.length; i++) {
       const [whiteMove, blackMove] = movePairs[i]
       const row = document.createElement("li")
       row.className = "match-replay-notation-row"
-
       const whiteSpan = document.createElement("button")
       whiteSpan.type = "button"
       whiteSpan.className = "match-replay-move"
@@ -211,19 +199,15 @@ class ReplayView {
 
   scrollNotationToCurrentMove({ currentMoveIndex, currentMoveRow }) {
     if (!this.notationElement) { return }
-
     if (currentMoveIndex === -1) {
       this.notationElement.scrollTop = 0
       return
     }
-
     if (!currentMoveRow) { return }
-
     const containerRect = this.notationElement.getBoundingClientRect()
     const rowRect = currentMoveRow.getBoundingClientRect()
     const upperBand = containerRect.top + (containerRect.height * 0.2)
     const lowerBand = containerRect.top + (containerRect.height * 0.7)
-
     if (rowRect.bottom > lowerBand) {
       this.notationElement.scrollTop += rowRect.bottom - lowerBand
       return
@@ -241,8 +225,7 @@ export function buildReplayBoard({ layout, capturedPieces, allowedToMove }) {
     layOut: layout,
     capturedPieces,
     allowedToMove,
-    movementNotation: [],
-    previousLayouts: []
+    movementNotation: []
   })
 }
 

@@ -56,8 +56,7 @@ function buildInitialBoard() {
     layOut: Layout.default(),
     capturedPieces: [],
     allowedToMove: Board.WHITE,
-    movementNotation: [],
-    previousLayouts: JSON.stringify([])
+    movementNotation: []
   })
 }
 

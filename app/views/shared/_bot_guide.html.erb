@@ -91,6 +91,20 @@
                 <% end %>
               </div>
             </div>
+          <% when 'cover_boards' %>
+            <div class="bot-guide-cover-boards">
+              <% Array(section[:visual][:boards]).each do |board| %>
+                <article class="bot-guide-cover-card">
+                  <div class="bot-guide-cover-card__board">
+                    <%= render 'shared/bot_guide_cover_board', board: board %>
+                  </div>
+                  <div class="bot-guide-cover-card__copy">
+                    <h4><%= board[:title] %></h4>
+                    <p><%= board[:caption] %></p>
+                  </div>
+                </article>
+              <% end %>
+            </div>
           <% end %>
         </div>
       <% end %>
@@ -112,7 +126,77 @@
             <% Array(example[:snippets]).each do |snippet| %>
               <div class="bot-guide-snippet">
                 <p class="bot-guide-snippet__label"><%= snippet[:label] %></p>
-                <% if bot_guide_structured_snippet?(snippet[:body]) %>
+                <% if snippet[:kind].to_s == 'condition_editor' %>
+                  <div class="bot-guide-condition-editor">
+                    <% subject = snippet[:subject] || {} %>
+                    <% target = snippet[:target] || {} %>
+                    <% comparison = snippet[:comparison] || {} %>
+                    <% target_comparison = snippet[:target_comparison] || {} %>
+
+                    <section class="bot-guide-condition-editor__side">
+                      <div class="bot-guide-condition-editor__side-header">Subject</div>
+                      <label class="bot-guide-condition-editor__field-label">Subject</label>
+                      <div class="bot-guide-condition-editor__select"><%= subject[:subject] %></div>
+
+                      <% if subject[:filter].present? %>
+                        <div class="bot-guide-condition-editor__filter-row">
+                          <span class="bot-guide-condition-editor__non-toggle <%= 'bot-guide-condition-editor__non-toggle--checked' if subject[:non] %>">
+                            <span class="bot-guide-condition-editor__checkbox"></span>
+                            Non-
+                          </span>
+                          <div class="bot-guide-condition-editor__select"><%= subject[:filter] %></div>
+                        </div>
+                      <% end %>
+                    </section>
+
+                    <div class="bot-guide-condition-editor__operator">
+                      <label class="bot-guide-condition-editor__field-label">Operator</label>
+                      <div class="bot-guide-condition-editor__select bot-guide-condition-editor__select--operator"><%= snippet[:operator] %></div>
+                    </div>
+
+                    <section class="bot-guide-condition-editor__side">
+                      <% if snippet[:target].present? %>
+                        <div class="bot-guide-condition-editor__side-header">Target</div>
+                        <label class="bot-guide-condition-editor__field-label">Subject</label>
+                        <div class="bot-guide-condition-editor__select"><%= target[:subject] %></div>
+
+                        <% if target[:filter].present? %>
+                          <div class="bot-guide-condition-editor__filter-row">
+                            <span class="bot-guide-condition-editor__non-toggle <%= 'bot-guide-condition-editor__non-toggle--checked' if target[:non] %>">
+                              <span class="bot-guide-condition-editor__checkbox"></span>
+                              Non-
+                            </span>
+                            <div class="bot-guide-condition-editor__select"><%= target[:filter] %></div>
+                          </div>
+                        <% end %>
+
+                        <% if snippet[:target_comparison].present? %>
+                          <div class="bot-guide-condition-editor__comparison-panel">
+                            <div class="bot-guide-condition-editor__comparison-toggle">Hide comparison</div>
+                            <label class="bot-guide-condition-editor__field-label">Comparison</label>
+                            <div class="bot-guide-condition-editor__comparison-grid">
+                              <div class="bot-guide-condition-editor__select"><%= target_comparison[:metric] %></div>
+                              <div class="bot-guide-condition-editor__select"><%= target_comparison[:comparator] %></div>
+                              <div class="bot-guide-condition-editor__select"><%= target_comparison[:value] %></div>
+                            </div>
+                          </div>
+                        <% end %>
+                      <% else %>
+                        <div class="bot-guide-condition-editor__side-header">Comparison</div>
+                        <label class="bot-guide-condition-editor__field-label">Comparison</label>
+                        <div class="bot-guide-condition-editor__comparison-grid bot-guide-condition-editor__comparison-grid--unary">
+                          <div class="bot-guide-condition-editor__select"><%= comparison[:comparator] %></div>
+                          <div class="bot-guide-condition-editor__select"><%= comparison[:value] %></div>
+                        </div>
+                      <% end %>
+                    </section>
+
+                    <div class="bot-guide-condition-editor__preview">
+                      <span>Current Condition</span>
+                      <strong><%= snippet[:preview] %></strong>
+                    </div>
+                  </div>
+                <% elsif bot_guide_structured_snippet?(snippet[:body]) %>
                   <div class="bot-guide-snippet__rows">
                     <% bot_guide_snippet_rows(snippet[:body]).each do |row| %>
                       <div class="bot-guide-snippet__row">

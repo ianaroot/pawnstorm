@@ -31,7 +31,6 @@ class Connection < ApplicationRecord
   def source_and_target_must_be_different
     return unless source_node_id.present? && target_node_id.present?
     return unless source_node_id == target_node_id
-
     errors.add(:target_node_id, "cannot connect a node to itself")
   end
 
@@ -43,9 +42,7 @@ class Connection < ApplicationRecord
       source_node_id: target_node_id,
       target_node_id: source_node_id
     )
-
     return unless reverse_connection
-
     errors.add(:base, "cannot create bidirectional connection (reverse connection already exists)")
   end
 end

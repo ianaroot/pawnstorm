@@ -9,28 +9,11 @@ import {
 } from '../constants.js'
 
 /**
- * DragHandler
- * 
- * Handles:
- * - Mouse down on nodes to start drag
- * - Mouse move during drag
- * - Mouse up to end drag and sync
- * 
- * Selection dragging:
- * - Dragging a selected node moves the current selection
- * - Dragging an unselected node selects it, then drags it
- * - Shift-drag extends selection, then drags the selection
- * - Option-drag moves only the grabbed node
- * 
- * IMPORTANT: This handler never calls history.push() directly.
+ * * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
  */
 class DragHandler {
-  /**
-   * Create DragHandler
-   * @param {Store} store - Store instance
-   * @param {SyncManager} syncManager - SyncManager instance
-   */
+  
   constructor(store, syncManager, viewport = null) {
     this.store = store
     this.syncManager = syncManager
@@ -79,45 +62,25 @@ class DragHandler {
     })
   }
   
-  /**
-   * Attach drag handlers to a node element
-   * @param {HTMLElement} element - Node element
-   * @param {string} clientId - Node client ID
-   */
   attach(element, clientId) {
     // Prevent duplicate attachments
-    if (this.attachedElements.has(element)) {
-      return
-    }
-    
+    if (this.attachedElements.has(element)) { return }
     this.attachedElements.set(element, clientId)
     
     // Mouse down starts potential drag
     element.addEventListener('mousedown', (e) => this.handleMouseDown(e, clientId, element))
   }
   
-  /**
-   * Handle mouse down on a node
-   * @param {MouseEvent} event
-   * @param {string} clientId
-   * @param {HTMLElement} element
-   */
   handleMouseDown(event, clientId, element) {
     // Only left click
-    if (event.button !== 0) {
-      return
-    }
+    if (event.button !== 0) { return }
     
     // Don't interfere with connector clicks
-    if (event.target.classList.contains('node-connector')) {
-      return
-    }
+    if (event.target.classList.contains('node-connector')) { return }
     
     const node = this.store.getNode(clientId)
     // this seems like overkill?
-    if (!node) {
-      return
-    }
+    if (!node) { return }
     
     event.preventDefault()
     event.stopPropagation()
@@ -163,7 +126,6 @@ class DragHandler {
       if (selectedIds.length > 1) {
         return selectedIds
       }
-
       return [clientId, ...this.store.getDescendantIds(clientId)]
     }
 
@@ -172,10 +134,7 @@ class DragHandler {
   }
 
   handleBackgroundMouseDown(event) {
-    if (event.button !== 0) {
-      return
-    }
-
+    if (event.button !== 0) { return }
     if (event.target.closest('.node') || event.target.closest('.node-connector')) {
       return
     }
@@ -199,10 +158,6 @@ class DragHandler {
     document.addEventListener('mouseup', this.boundHandleMouseUp)
   }
   
-  /**
-   * Handle mouse move during drag
-   * @param {MouseEvent} event
-   */
   handleMouseMove(event) {
     if (this.isMarqueeSelecting) {
       const point = this.viewport?.screenToGraphPoint(event.clientX, event.clientY) || {
@@ -290,10 +245,6 @@ class DragHandler {
     this.renderMarquee()
   }
   
-  /**
-   * Handle mouse up to end drag
-   * @param {MouseEvent} event
-   */
   handleMouseUp(event) {
     if (this.pendingDrag) {
       document.removeEventListener('mousemove', this.boundHandleMouseMove)
@@ -325,6 +276,7 @@ class DragHandler {
     // Sync with server if we moved
     if (this.hasMoved && this.draggedClientId && this.draggedNode) {
       const node = this.store.getNode(this.draggedClientId)
+      const anchorPoint = node ? { x: node.position.x, y: node.position.y } : null
       if (node) {
         if (this.draggedClientIds.length > 1) {
           // Multi-node drag: use batch update
@@ -337,6 +289,11 @@ class DragHandler {
           const description = `Move ${this.draggedNode.type} node (+ ${additionalCount} selected)`
           
           this.syncManager.batchUpdatePositions(positions, description)
+            .then(() => {
+              if (anchorPoint) {
+                this.store.setRecentPlacementAnchor(anchorPoint)
+              }
+            })
             .catch(err => {
               console.error('Failed to sync drag positions:', err)
             })
@@ -346,7 +303,11 @@ class DragHandler {
             this.draggedClientId,
             node.position.x,
             node.position.y
-          ).catch(err => {
+          ).then(() => {
+            if (anchorPoint) {
+              this.store.setRecentPlacementAnchor(anchorPoint)
+            }
+          }).catch(err => {
             console.error('Failed to sync drag position:', err)
           })
         }
@@ -447,7 +408,6 @@ class DragHandler {
     if (this.marqueeElement || !this.viewport?.nodesLayer) {
       return this.marqueeElement
     }
-
     this.marqueeElement = document.createElement('div')
     this.marqueeElement.className = 'selection-marquee'
     this.viewport.nodesLayer.appendChild(this.marqueeElement)
@@ -457,8 +417,7 @@ class DragHandler {
   renderMarquee() {
     const { isMarqueeSelecting, marqueeStart, marqueeCurrent } = this.store.getMarqueeState()
     const marqueeEl = this.ensureMarqueeElement()
-    if (!marqueeEl) return
-
+    if (!marqueeEl) { return }
     if (!isMarqueeSelecting || !marqueeStart || !marqueeCurrent) {
       marqueeEl.classList.add('hidden')
       return
@@ -492,10 +451,7 @@ class DragHandler {
   }
 
   startAutoPanLoop() {
-    if (!this.viewport?.container || this.autoPanFrameId) {
-      return
-    }
-
+    if (!this.viewport?.container || this.autoPanFrameId) { return }
     this.autoPanFrameId = requestAnimationFrame(this.boundAutoPanStep)
   }
 
@@ -562,30 +518,18 @@ class DragHandler {
   extractScrollDelta(axis) {
     const remainder = this.autoPanRemainder[axis]
     const delta = remainder > 0 ? Math.floor(remainder) : Math.ceil(remainder)
-
     this.autoPanRemainder[axis] = remainder - delta
     return delta
   }
-
-  /**
-   * Check if currently dragging
-   * @returns {boolean}
-   */
+  
   isCurrentlyDragging() {
     return this.isDragging
   }
   
-  /**
-   * Get the currently dragged node's client ID
-   * @returns {string|null}
-   */
   getDraggedNodeId() {
     return this.draggedClientId
   }
   
-  /**
-   * Cancel current drag (for external use)
-   */
   cancelDrag() {
     this.pendingDrag = null
 
@@ -643,9 +587,6 @@ class DragHandler {
     }
   }
   
-  /**
-   * Cleanup on destroy
-   */
   destroy() {
     // Cancel any active drag
     this.cancelDrag()

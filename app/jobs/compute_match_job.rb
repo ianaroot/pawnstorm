@@ -10,7 +10,6 @@ class ComputeMatchJob < ApplicationJob
 
     Tempfile.create(['match-result', '.json']) do |result_file|
       stdout, stderr, status = run_match_process(match:, result_path: result_file.path)
-
       unless status.success?
         match.update!(
           status: :failed,
@@ -44,7 +43,6 @@ class ComputeMatchJob < ApplicationJob
       end
 
       result_payload = parse_result_payload(raw_result)
-
       match.update!(
         status: :completed,
         result: result_payload.fetch('result'),
@@ -70,8 +68,7 @@ class ComputeMatchJob < ApplicationJob
   def match_payload(match)
     {
       white_compiled_program: compiled_program_snapshot_for(match, :white),
-      black_compiled_program: compiled_program_snapshot_for(match, :black),
-      max_plies: 200
+      black_compiled_program: compiled_program_snapshot_for(match, :black)
     }
   end
 

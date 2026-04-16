@@ -110,6 +110,27 @@ RSpec.describe Bot, type: :model do
     end
   end
 
+  describe '#get_fresh_program' do
+    it 'returns a deep copy of compiled_program when fresh' do
+      bot = create(:bot, :compiled)
+      result = bot.get_fresh_program
+
+      expect(result).to eq(bot.compiled_program)
+      expect(result).not_to equal(bot.compiled_program)
+    end
+
+    it 'raises when compiled_program is blank' do
+      bot = create(:bot)
+      expect { bot.get_fresh_program }.to raise_error(RuntimeError, /has no compiled program/)
+    end
+
+    it 'raises when compiled_program is stale' do
+      bot = create(:bot, :compiled)
+      bot.update_column(:compiled_program_stale, true)
+      expect { bot.get_fresh_program }.to raise_error(RuntimeError, /stale compiled program/)
+    end
+  end
+
   describe 'compiled program lifecycle' do
     it 'compiles a program and clears the stale flag' do
       bot = create(:bot)

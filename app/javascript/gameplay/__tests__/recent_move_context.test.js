@@ -156,6 +156,12 @@ describe('recentMoveContext', () => {
       const clonedBoard = board.clone()
       const lightClonedBoard = board.lightClone()
 
+      expect(clonedBoard.movementNotation).toEqual(board.movementNotation)
+      expect(clonedBoard.movementNotation).not.toBe(board.movementNotation)
+
+      expect(lightClonedBoard.movementNotation).toEqual([])
+      expect(lightClonedBoard.movementNotation).not.toBe(board.movementNotation)
+
       expect(clonedBoard.recentMoveContext).toEqual(board.recentMoveContext)
       expect(clonedBoard.recentMoveContext).not.toBe(board.recentMoveContext)
 

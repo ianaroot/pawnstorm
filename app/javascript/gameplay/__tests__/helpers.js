@@ -33,16 +33,14 @@ export function buildBoard({
   allowedToMove = Board.WHITE,
   movementNotation = [],
   capturedPieces = [],
-  gameOver = false,
-  previousLayouts = JSON.stringify([])
+  gameOver = false
 } = {}) {
   const board = new Board({
     layOut: emptyLayout(),
     allowedToMove,
     movementNotation,
     capturedPieces,
-    gameOver,
-    previousLayouts
+    gameOver
   })
 
   Object.entries(pieces).forEach(([squareName, pieceCode]) => {

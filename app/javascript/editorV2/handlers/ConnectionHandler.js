@@ -1,25 +1,9 @@
-// handlers/ConnectionHandler.js
-// Handles connection creation and deletion
-
 /**
- * ConnectionHandler
- * 
- * Handles:
- * - Mouse down on output connector to start connection
- * - Mouse move during connection drag
- * - Mouse up on input connector to create connection
- * - Click on delete button to remove connection
- * 
  * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
  */
 class ConnectionHandler {
-  /**
-   * Create ConnectionHandler
-   * @param {Store} store - Store instance
-   * @param {SyncManager} syncManager - SyncManager instance
-   * @param {ConnectionRenderer} connectionRenderer - ConnectionRenderer instance
-   */
+  
   constructor(store, syncManager, connectionRenderer, viewport = null) {
     this.store = store
     this.syncManager = syncManager
@@ -40,52 +24,28 @@ class ConnectionHandler {
     this.attachedElements = new WeakMap()
   }
   
-  /**
-   * Attach connection handlers to a node element
-   * @param {HTMLElement} element - Node element
-   * @param {string} clientId - Node client ID
-   */
   attach(element, clientId) {
-    // Prevent duplicate attachments
-    if (this.attachedElements.has(element)) {
-      return
-    }
-    
+    if (this.attachedElements.has(element)) { return }
     this.attachedElements.set(element, clientId)
-    
-    // Find connector elements
     const outputConnector = element.querySelector('.node-connector.output')
-    
-    // Output connector: start new connection
     if (outputConnector) {
       outputConnector.addEventListener('mousedown', (e) => {
         this.startConnection(e, clientId, outputConnector)
       })
     }
-    
     // Handle delete button clicks (delegated from node canvas)
     // Note: Delete buttons are created by ConnectionRenderer
   }
   
-  /**
-   * Start creating a connection
-   * @param {MouseEvent} event
-   * @param {string} clientId - Source node client ID
-   * @param {HTMLElement} sourceConnector - Output connector element
-   */
   startConnection(event, clientId, sourceConnector) {
     event.preventDefault()
     event.stopPropagation()
-    
     const node = this.store.getNode(clientId)
-    if (!node) {
-      return
-    }
-    
+    if (!node) { return }
     this.isConnecting = true
     this.sourceClientId = clientId
     this.sourceElement = sourceConnector
-    
+
     // Create temporary line for visual feedback
     const svgContainer = document.getElementById('connections-canvas')
     if (!svgContainer) {
@@ -121,29 +81,17 @@ class ConnectionHandler {
     }
   }
   
-  /**
-   * Handle mouse move during connection drag
-   * @param {MouseEvent} event
-   */
   handleMouseMove(event) {
-    if (!this.isConnecting || !this.tempLine) {
-      return
-    }
-    
+    if (!this.isConnecting || !this.tempLine) { return }
     const pointer = this.viewport?.screenToGraphPoint(event.clientX, event.clientY) || {
       x: event.clientX,
       y: event.clientY
-    }
-    
+    }  
     // Update temp line endpoint
     this.tempLine.setAttribute('x2', pointer.x)
     this.tempLine.setAttribute('y2', pointer.y)
   }
   
-  /**
-   * Handle mouse up to end connection
-   * @param {MouseEvent} event
-   */
   handleMouseUp(event) {
     // Remove handlers immediately
     document.removeEventListener('mousemove', this.boundHandleMouseMove)
@@ -181,11 +129,6 @@ class ConnectionHandler {
     this.sourceElement = null
   }
   
-  /**
-   * Finish creating a connection
-   * @param {string} sourceClientId - Source node client ID
-   * @param {string} targetClientId - Target node client ID
-   */
   async finishConnection(sourceClientId, targetClientId) {
     // Validate
     if (sourceClientId === targetClientId) {
@@ -208,10 +151,6 @@ class ConnectionHandler {
     }
   }
   
-  /**
-   * Delete a connection
-   * @param {string} clientId - Connection client ID
-   */
   async deleteConnection(clientId) {
     try {
       await this.syncManager.deleteConnection(clientId)
@@ -220,19 +159,10 @@ class ConnectionHandler {
     }
   }
   
-  /**
-   * Get connector position relative to canvas
-   * @param {HTMLElement} connector - Connector element
-   * @returns {{ x: number, y: number }}
-   */
   getConnectorPosition(connector) {
     return this.viewport?.getElementCenterGraphPoint(connector) || { x: 0, y: 0 }
   }
   
-  /**
-   * Setup delegated delete button handler on canvas
-   * @param {HTMLElement} canvas - Nodes canvas element
-   */
   setupDeleteHandler(canvas) {
     canvas.addEventListener('click', (e) => {
       const deleteBtn = e.target.closest('.connection-delete-btn')
@@ -245,9 +175,6 @@ class ConnectionHandler {
     })
   }
   
-  /**
-   * Cancel current connection (for external use)
-   */
   cancelConnection() {
     if (this.isConnecting) {
       // Remove handlers
@@ -275,17 +202,10 @@ class ConnectionHandler {
     }
   }
   
-  /**
-   * Check if currently creating a connection
-   * @returns {boolean}
-   */
   isCurrentlyConnecting() {
     return this.isConnecting
   }
   
-  /**
-   * Cleanup on destroy
-   */
   destroy() {
     this.cancelConnection()
     this.attachedElements = new WeakMap()

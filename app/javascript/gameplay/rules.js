@@ -42,11 +42,6 @@ class Rules {
   }
 
   static checkQueryWithMove({board: board, moveObject: moveObject}){
-    // if(
-    //   !Board.prototype.isPrototypeOf( board ) || typeof startPosition !== "number" || !(typeof additionalActions === "function" || typeof additionalActions === "undefined") || !(typeof endPosition !== "number" || typeof endPosition !== "string") //not sure where this got turned into a string...
-    // ){
-    //   throw new Error("missing params in checkQuery")
-    // }
     const startPosition = moveObject.startPosition
     const teamString = board.teamAt(startPosition)
     let newBoard = board.lightCloneForCheckQuery();
@@ -63,7 +58,6 @@ class Rules {
   }
 
   static checkQuery({board: board, teamString: teamString}){
-    // let opposingTeamString = Board.opposingTeam(teamString),
       let kingPosition = board._kingPosition(teamString);
       return this.pieceIsAttacked({board: board, defensePosition: kingPosition, defendingTeam: teamString})
   }
@@ -112,11 +106,6 @@ class Rules {
     })
   }
   static viablePositionsFromKeysOnly({board: board, startPosition: startPosition}){
-    // if(
-    //   !Board.prototype.isPrototypeOf( board ) ||  typeof startPosition !== "number"
-    // ){
-    //   throw new Error("missing params in viablePositionsFromKeysOnly")
-    // }
     let movesCalculator = new MovesCalculator({board: board, startPosition: startPosition}),
         keysOnly = [];
     for (let i = 0; i < movesCalculator.moveObjects.length; i++){
@@ -137,7 +126,6 @@ class Rules {
         movesCalculator = new MovesCalculator({board: board, startPosition: startPosition});
       for (let i = 0; i < movesCalculator.moveObjects.length; i++){
         let moveObject = movesCalculator.moveObjects[i];
-           // endPosition = moveObject.endPosition;
          if( !this.checkQueryWithMove( {moveObject: moveObject, board: board}) ){
            noLegalMoves = false
            break
@@ -147,80 +135,8 @@ class Rules {
     return noLegalMoves
   }
 
-  static getDuplicatesForThreeFold( arr ) {
-    var all = {};
-    return arr.reduce(function( duplicates, value ) {// strip out clarifying rank or file letter
-      //TODO record clarifying rank or file letter
-      value = value.replace(/=[QRNB]/, "")
-      value = value.replace(/\+/, "")
-      if( /[RNBQ][a-h1-8][a-h]/.exec(value) ){
-        value = value.replace(/[a-h1-8]/, "")
-      }
-      if( all[value] ) {
-        duplicates.push(value);
-        all[value] = false;
-      } else if( typeof all[value] == "undefined" ) {
-        all[value] = true;
-      }
-      return duplicates;
-    }, []);
-  }
-
-
-  static threeFoldRepetition(board, prefixNotation){
-    let notations = Board._deepCopy(board.movementNotation),
-      notationsSinceCaptureOrPromotion = [];
-      notations.push(prefixNotation); //have to start with this one, don't want to skip the latest move
-    for(let i = notations.length -1; i >= 0; i --){
-      let notation = notations[i];
-      notationsSinceCaptureOrPromotion.push( notation )
-      if( /x/.exec(notation) || /^[a-h]/.exec(notation) ){
-        break
-      }
-    }
-    let teamOneNotation = [],
-      teamTwoNotation = [];
-    for(let i = 0; i < notationsSinceCaptureOrPromotion.length; i++){
-      let notation = notationsSinceCaptureOrPromotion[i];
-      if( i % 2 === 0 ){
-        teamOneNotation.push(notation)
-      } else {
-        teamTwoNotation.push(notation)
-      }
-    }
-
-    let teamOneDuplicates = this.getDuplicatesForThreeFold(teamOneNotation),
-      teamTwoDuplicates = this.getDuplicatesForThreeFold(teamTwoNotation);
-    if( teamOneDuplicates.length < 2 || teamTwoDuplicates.length < 2){//TODO setup more indicative three fold test to show why this is 2 not 3
-      return false
-    } else {
-      // console.log("threeFold triggered")
-      let previousLayouts = JSON.parse(board.previousLayouts),
-          repetitions = 0,
-          threeFoldRepetition = false,
-          // currentLayOut = board.layOut;
-          currentLayOut = JSON.stringify(board.layOut);
-
-      for( let i = 0; i < previousLayouts.length; i++ ){
-
-        let comparisonLayout = JSON.stringify(previousLayouts[i]);
-        if(comparisonLayout === currentLayOut){ repetitions++ }
-
-      //   let comparisonLayout = previousLayouts[i],
-      //     different = false;
-      //   for( let j = 0; j < comparisonLayout.length; j++){
-      //     if( comparisonLayout[j] !== currentLayOut[j] ){
-      //       different = true
-      //       break
-      //     }
-      //   };
-      // if( !different ){ repetitions ++ }
-      };
-      if(repetitions >= 2){
-        threeFoldRepetition = true
-      }
-    return threeFoldRepetition
-    }
+  static threeFoldRepetition(board){
+    return board.history.positionKeyCount(board) >= 3
   }
 
 
@@ -229,12 +145,24 @@ class Rules {
         attackingTeam = Board.opposingTeam(otherTeam),
         kingPosition = board._kingPosition(otherTeam),
         inCheck = this.checkQuery({board: board, teamString: otherTeam}),
-        noMoves = this.noLegalMoves({ board: board, teamString: otherTeam }),
-        threeFold = this.threeFoldRepetition(board, prefixNotation);
+        noMoves = this.noLegalMoves({ board: board, teamString: otherTeam });
     if( inCheck && noMoves ){ board._endGame({ winner: attackingTeam, resultType: "checkmate" }); return "#" }
     if( inCheck ){ return "+" }
     if( noMoves ){ board._endGame({ resultType: "stalemate" }); return "" }
-    if( threeFold ){ board._endGame({ resultType: "threefold_repetition" }); return "" }
+    return ""
+  }
+
+  static postTurnDrawQueries(board){
+    if( board.history.halfmoveClock >= 100 ){
+      board._endGame({ resultType: "fifty_move_rule" })
+      return ""
+    }
+
+    if( this.threeFoldRepetition(board) ){
+      board._endGame({ resultType: "threefold_repetition" })
+      return ""
+    }
+
     return ""
   }
 }

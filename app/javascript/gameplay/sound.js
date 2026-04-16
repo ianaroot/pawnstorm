@@ -4,7 +4,6 @@ class Sound {
         if( sound != '' ){
             var url = this.getSoundUrl(sound)
             if( !url ){ return }
-
             var a = new Audio(url);
             a.play();
         }

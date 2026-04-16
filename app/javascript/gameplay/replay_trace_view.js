@@ -10,14 +10,12 @@ class ReplayTraceView {
 
   render(inspection) {
     if (!this.tracePanelElement || !this.traceSummaryElement || !this.traceBranchesElement) { return }
-
-    if (!inspection?.enabled || !inspection.result?.selectedTrace) {
+    if (!inspection?.enabled || !inspection.result?.inspectedTrace) {
       this.tracePanelElement.hidden = true
       this.traceSummaryElement.innerHTML = ""
       this.traceBranchesElement.innerHTML = ""
       return
     }
-
     this.tracePanelElement.hidden = false
     this.renderSummary(inspection)
     this.renderBranches(inspection)
@@ -25,76 +23,59 @@ class ReplayTraceView {
 
   renderSummary(inspection) {
     const { result } = inspection
-    const selectedMove = result.selectedMove?.moveObject
-    const selectedNotation = selectedMove ? Board.gridCalculator(selectedMove.endPosition) : "none"
+    const inspectedMove = result.inspectedMove?.moveObject
+    const inspectedNotation = inspectedMove ? Board.gridCalculator(inspectedMove.endPosition) : "none"
     const tiedTopCount = result.tiedTopMoveKeys.length
-    const selectedTied = result.currentChoiceKey && result.tiedTopMoveKeys.includes(result.currentChoiceKey)
-
+    const inspectedTied = result.inspectedMoveKey && result.tiedTopMoveKeys.includes(result.inspectedMoveKey)
     this.traceSummaryElement.innerHTML = ""
-
     const summaryRow = document.createElement("div")
     summaryRow.className = "match-replay-trace-summary-row"
-
     const heading = document.createElement("span")
     heading.className = "match-replay-trace-heading"
     heading.innerText = "why this move"
     summaryRow.appendChild(heading)
-
     const score = document.createElement("span")
     score.className = "match-replay-trace-score"
-    score.innerText = `score ${result.selectedTrace.score}`
+    score.innerText = `score ${result.inspectedTrace.score}`
     summaryRow.appendChild(score)
-
     const moveSummary = document.createElement("span")
     moveSummary.className = "match-replay-trace-meta"
-    moveSummary.innerText = result.explicitSelectedMoveKey
-      ? `selected move: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
-      : `current choice: ${Board.gridCalculator(selectedMove.startPosition)} to ${selectedNotation}`
+    moveSummary.innerText = result.explicitInspectedMoveKey
+      ? `inspected move: ${Board.gridCalculator(inspectedMove.startPosition)} to ${inspectedNotation}`
+      : `current choice: ${Board.gridCalculator(inspectedMove.startPosition)} to ${inspectedNotation}`
     summaryRow.appendChild(moveSummary)
-
-    if (tiedTopCount > 1 && selectedTied) {
+    if (tiedTopCount > 1 && inspectedTied) {
       const tieSummary = document.createElement("span")
       tieSummary.className = "match-replay-trace-meta"
       tieSummary.innerText = `tied top moves: ${tiedTopCount}`
       summaryRow.appendChild(tieSummary)
     }
-
     this.traceSummaryElement.appendChild(summaryRow)
   }
 
   renderBranches(inspection) {
     this.traceBranchesElement.innerHTML = ""
-
     const groupedBranches = this.groupByBranch({
       compiledProgram: inspection.compiledProgram,
-      trace: inspection.result.selectedTrace.trace
+      trace: inspection.result.inspectedTrace.trace
     })
-
     groupedBranches.forEach(branch => {
       if (branch.entries.length === 0) { return }
-
       const branchElement = document.createElement("section")
       branchElement.className = "match-replay-trace-branch"
-
       const heading = document.createElement("h4")
       heading.className = "match-replay-trace-branch-heading"
       heading.innerText = branch.label
       branchElement.appendChild(heading)
-
-      branch.entries.forEach(entry => {
-        branchElement.appendChild(this.traceEntryElement(entry))
-      })
-
+      branch.entries.forEach(entry => { branchElement.appendChild(this.traceEntryElement(entry)) })
       this.traceBranchesElement.appendChild(branchElement)
     })
   }
 
   groupByBranch({ compiledProgram, trace }) {
     if (!compiledProgram?.nodes || !compiledProgram.root) { return [] }
-
     const rootNode = compiledProgram.nodes[compiledProgram.root]
     const branchIds = rootNode?.children || []
-
     return branchIds.map((branchId, index) => {
       const subtreeIds = this.collectSubtreeIds({ compiledProgram, nodeId: branchId })
       return {
@@ -106,7 +87,6 @@ class ReplayTraceView {
 
   collectSubtreeIds({ compiledProgram, nodeId, collected = new Set() }) {
     if (!nodeId || collected.has(nodeId)) { return collected }
-
     collected.add(nodeId)
     const node = compiledProgram.nodes[nodeId]
     const children = node?.children || []
@@ -161,10 +141,7 @@ class ReplayTraceView {
   }
 
   conditionSummary(data) {
-    if (Number(data.version || 1) === 2) {
-      return formatConditionPreview(data).text
-    }
-
+    if (Number(data.version || 1) === 2) { return formatConditionPreview(data).text }
     const relationLabel = this.relationLabel(data.relation)
     const relationSpecifier = data.relationSpecifier && data.relationSpecifier !== 'any'
       ? ` ${this.specifierSummary(data.relationSpecifier, data.relationSpecifierMode)}`
@@ -180,7 +157,6 @@ class ReplayTraceView {
       greater_than: '>',
       less_than: '<'
     }[data.comparison] || data.comparison
-
     return `${this.prettyToken(data.subject)}${subjectSpecifier} ${relationLabel}${relationSpecifier} ${operator} ${comparisonValue}`
   }
 

@@ -19,7 +19,7 @@ describe('SyncManager', () => {
     
     mockApi = {
       createNode: vi.fn(),
-      deleteNode: vi.fn(),
+      deleteNodes: vi.fn(),
       updateNodePosition: vi.fn(),
       updateNode: vi.fn(),
       batchUpdatePositions: vi.fn(),
@@ -101,7 +101,7 @@ describe('SyncManager', () => {
     })
 
     it('calls executeInverseOperation for createNode', async () => {
-      mockApi.deleteNode.mockResolvedValue({})
+      mockApi.deleteNodes.mockResolvedValue({ deleted_node_ids: [], deleted_connection_ids: [] })
 
       const node = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
       store.addNode(node)
@@ -113,7 +113,7 @@ describe('SyncManager', () => {
 
       const result = await syncManager.undo()
 
-      expect(mockApi.deleteNode).toHaveBeenCalledWith('n1')
+      expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1'])
       expect(result.success).toBe(true)
     })
 
@@ -138,7 +138,7 @@ describe('SyncManager', () => {
 
     it('shows error dialog on failure', async () => {
       const error = new Error('Network error')
-      mockApi.deleteNode.mockRejectedValue(error)
+      mockApi.deleteNodes.mockRejectedValue(error)
 
       // Mock showErrorDialog to return 'cancel'
       vi.mock('../utils/ErrorDialog.js', () => ({
@@ -214,14 +214,14 @@ describe('SyncManager', () => {
 
   describe('executeInverseOperation', () => {
     it('handles createNode', async () => {
-      mockApi.deleteNode.mockResolvedValue({})
+      mockApi.deleteNodes.mockResolvedValue({ deleted_node_ids: [], deleted_connection_ids: [] })
 
       await syncManager.executeInverseOperation({
         type: 'createNode',
         clientId: 'n1'
       })
 
-      expect(mockApi.deleteNode).toHaveBeenCalledWith('n1')
+      expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1'])
     })
 
     it('handles deleteNode', async () => {
@@ -323,14 +323,14 @@ describe('SyncManager', () => {
     })
 
     it('handles deleteNode', async () => {
-      mockApi.deleteNode.mockResolvedValue({})
+      mockApi.deleteNodes.mockResolvedValue({ deleted_node_ids: [], deleted_connection_ids: [] })
 
       await syncManager.executeOperation({
         type: 'deleteNode',
         clientId: 'n1'
       })
 
-      expect(mockApi.deleteNode).toHaveBeenCalledWith('n1')
+      expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1'])
     })
 
     it('handles createConnection', async () => {
@@ -364,6 +364,7 @@ describe('SyncManager', () => {
       expect(store.getNode(clientId)).toBeDefined()
       expect(store.getNode(clientId).type).toBe('condition')
       expect(store.getNode(clientId).data).toEqual(DEFAULT_CONDITION_DATA)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('optimistically adds node to store', async () => {
@@ -443,6 +444,7 @@ describe('SyncManager', () => {
 
       expect(store.getNode('n1').position.x).toBe(100)
       expect(store.getNode('n1').position.y).toBe(200)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 200 })
     })
 
     it('calls API with correct params', async () => {
@@ -493,6 +495,7 @@ describe('SyncManager', () => {
 
       expect(store.getNode('n1').data.foo).toBe('bar')
       expect(store.getNode('n1').data.baz).toBe('qux')
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
     })
 
     it('pushes to history after success', async () => {
@@ -515,21 +518,22 @@ describe('SyncManager', () => {
     })
   })
 
-  describe('deleteNode', () => {
+  describe('deleteNodes (single node)', () => {
     beforeEach(() => {
       const node = new Node({ clientId: 'n1', type: 'condition', position: { x: 0, y: 0 } })
       store.addNode(node)
-      mockApi.deleteNode.mockResolvedValue({})
+      mockApi.deleteNodes.mockResolvedValue({ deleted_node_ids: [1], deleted_connection_ids: [] })
     })
 
     it('removes node from store optimistically', async () => {
-      await syncManager.deleteNode('n1')
+      await syncManager.deleteNodes(['n1'])
 
       expect(store.getNodes()).toHaveLength(0)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
     })
 
     it('stores node data for history', async () => {
-      await syncManager.deleteNode('n1')
+      await syncManager.deleteNodes(['n1'])
 
       const snapshot = history.getCurrentSnapshot()
       expect(snapshot.description).toContain('Delete')
@@ -537,7 +541,6 @@ describe('SyncManager', () => {
     })
 
     it('handles cascade-deleted connections', async () => {
-      const errorSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       const node = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'root', targetId: 'n1' })
@@ -545,20 +548,110 @@ describe('SyncManager', () => {
       store.addNode(node)
       store.addConnection(conn)
 
-      await syncManager.deleteNode('n1')
+      await syncManager.deleteNodes(['n1'])
 
       expect(store.getNodes()).toHaveLength(1)
       expect(store.getConnections()).toHaveLength(0)
     })
 
     it('rolls back on failure', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockApi.deleteNode.mockRejectedValue(new Error('Network error'))
+      mockApi.deleteNodes.mockRejectedValue(new Error('Network error'))
 
-      await expect(syncManager.deleteNode('n1'))
+      await expect(syncManager.deleteNodes(['n1']))
         .rejects.toThrow('Network error')
 
       expect(store.getNodes()).toHaveLength(1)
+    })
+  })
+
+  describe('deleteNodes', () => {
+    beforeEach(() => {
+      const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
+      const node1 = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 200, y: 100 } })
+      const rootConnection = new Connection({ clientId: 'c-root', sourceId: 'root', targetId: 'n1' })
+      const internalConnection = new Connection({ clientId: 'c-internal', sourceId: 'n1', targetId: 'n2' })
+
+      store.addNode(root)
+      store.addNode(node1)
+      store.addNode(node2)
+      store.addConnection(rootConnection)
+      store.addConnection(internalConnection)
+
+      mockApi.deleteNodes.mockResolvedValue({ deleted_node_ids: [1, 2], deleted_connection_ids: [10, 11] })
+    })
+
+    it('deletes a selected node set with one history entry and ignores root nodes', async () => {
+      await syncManager.deleteNodes(['root', 'n1', 'n2'])
+
+      expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1', 'n2'])
+      expect(store.getNodes().map(node => node.clientId)).toEqual(['root'])
+      expect(store.getConnections()).toHaveLength(0)
+
+      const snapshot = history.getCurrentSnapshot()
+      expect(snapshot.description).toBe('Delete 2 selected nodes')
+      expect(snapshot.operation.type).toBe('deleteNodes')
+      expect(snapshot.operation.nodes).toHaveLength(2)
+      expect(snapshot.operation.connections).toHaveLength(2)
+      expect(snapshot.operation.connections.map(connection => connection.clientId)).toEqual(
+        expect.arrayContaining(['c-root', 'c-internal'])
+      )
+    })
+
+    it('no-ops when only root nodes are selected', async () => {
+      await syncManager.deleteNodes(['root'])
+
+      expect(mockApi.deleteNodes).not.toHaveBeenCalled()
+      expect(history.getCurrentSnapshot()).toBeNull()
+      expect(store.getNodes()).toHaveLength(3)
+      expect(store.getConnections()).toHaveLength(2)
+    })
+
+    it('restores all deleted nodes and connections when the API call fails', async () => {
+      mockApi.deleteNodes.mockRejectedValue(new Error('Network error'))
+
+      await expect(syncManager.deleteNodes(['n1', 'n2']))
+        .rejects.toThrow('Network error')
+
+      expect(store.getNodes()).toHaveLength(3)
+      expect(store.getConnections()).toHaveLength(2)
+    })
+
+    it('restores nodes before connections during undo', async () => {
+      const callOrder = []
+      mockApi.createNode.mockImplementation(async () => {
+        callOrder.push('createNode')
+        return { id: callOrder.length }
+      })
+      mockApi.createConnection.mockImplementation(async () => {
+        callOrder.push('createConnection')
+        return { id: callOrder.length }
+      })
+
+      await syncManager.executeInverseOperation({
+        type: 'deleteNodes',
+        nodes: [
+          { clientId: 'n1', type: 'condition', position: { x: 100, y: 100 }, data: {} },
+          { clientId: 'n2', type: 'action', position: { x: 200, y: 100 }, data: {} }
+        ],
+        connections: [
+          { clientId: 'c-internal', sourceId: 'n1', targetId: 'n2' }
+        ]
+      })
+
+      expect(callOrder).toEqual(['createNode', 'createNode', 'createConnection'])
+    })
+
+    it('deletes the same node set again during redo', async () => {
+      await syncManager.executeOperation({
+        type: 'deleteNodes',
+        nodes: [
+          { clientId: 'n1', type: 'condition', position: { x: 100, y: 100 }, data: {} },
+          { clientId: 'n2', type: 'action', position: { x: 200, y: 100 }, data: {} }
+        ]
+      })
+
+      expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1', 'n2'])
     })
   })
 
@@ -576,6 +669,7 @@ describe('SyncManager', () => {
 
       expect(clientId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       expect(store.getConnection(clientId)).toBeDefined()
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('optimistically adds connection to store', async () => {
@@ -632,6 +726,7 @@ describe('SyncManager', () => {
       await syncManager.deleteConnection('c1')
 
       expect(store.getConnections()).toHaveLength(0)
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
     })
 
     it('pushes to history after success', async () => {

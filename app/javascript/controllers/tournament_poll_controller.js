@@ -12,7 +12,6 @@ export default class extends Controller {
 
   connect() {
     if (!this.activeValue) { return }
-
     this.poll()
     this.startPolling()
   }
@@ -28,7 +27,6 @@ export default class extends Controller {
 
   stopPolling() {
     if (!this.pollTimer) { return }
-
     window.clearInterval(this.pollTimer)
     this.pollTimer = null
   }
@@ -39,18 +37,13 @@ export default class extends Controller {
         headers: { Accept: "application/json" },
         credentials: "same-origin"
       })
-
       if (!response.ok) { return }
-
       const payload = await response.json()
       this.replaceSection(this.metaTarget, payload.meta_html)
       this.updateSectionFields(this.progressTarget, payload.progress_html)
       this.updateStandings(this.standingsTarget, payload.standings_html)
       this.updateSectionFields(this.matrixTarget, payload.matrix_html)
-
-      if (payload.polling_complete) {
-        this.stopPolling()
-      }
+      if (payload.polling_complete) { this.stopPolling() }
     } catch (_error) {
       this.stopPolling()
     }
@@ -58,7 +51,6 @@ export default class extends Controller {
 
   replaceSection(target, html) {
     if (target.innerHTML === html) { return }
-
     target.innerHTML = html
   }
 
@@ -68,25 +60,20 @@ export default class extends Controller {
     const currentFieldsByKey = new Map(
       Array.from(target.querySelectorAll("[data-tournament-field]")).map((element) => [element.dataset.tournamentField, element])
     )
-
     if (incomingFields.length === 0 || currentFieldsByKey.size === 0) {
       this.replaceSection(target, html)
       return
     }
-
     const incomingKeys = incomingFields.map((element) => element.dataset.tournamentField)
     const currentKeys = Array.from(currentFieldsByKey.keys())
-
     if (!this.sameKeys(currentKeys, incomingKeys)) {
       this.replaceSection(target, html)
       return
     }
-
     incomingFields.forEach((incomingField) => {
       const currentField = currentFieldsByKey.get(incomingField.dataset.tournamentField)
       if (!currentField) { return }
       if (currentField.innerHTML === incomingField.innerHTML) { return }
-
       currentField.innerHTML = incomingField.innerHTML
       this.flash(currentField)
     })
@@ -96,38 +83,30 @@ export default class extends Controller {
     const fragment = this.fragmentFor(html)
     const incomingBody = fragment.querySelector("tbody")
     const currentBody = target.querySelector("tbody")
-
     if (!incomingBody || !currentBody) {
       this.replaceSection(target, html)
       return
     }
-
     const incomingRows = Array.from(incomingBody.querySelectorAll("[data-tournament-row]"))
     const currentRowsByKey = new Map(
       Array.from(currentBody.querySelectorAll("[data-tournament-row]")).map((row) => [row.dataset.tournamentRow, row])
     )
-
     if (incomingRows.length === 0 || currentRowsByKey.size === 0) {
       this.replaceSection(target, html)
       return
     }
-
     const incomingKeys = incomingRows.map((row) => row.dataset.tournamentRow)
     const currentKeys = Array.from(currentRowsByKey.keys())
-
     if (!this.sameMembers(currentKeys, incomingKeys)) {
       this.replaceSection(target, html)
       return
     }
-
     incomingRows.forEach((incomingRow, index) => {
       const key = incomingRow.dataset.tournamentRow
       const currentRow = currentRowsByKey.get(key)
       if (!currentRow) { return }
-
       currentBody.appendChild(currentRow)
       this.updateRowFields(currentRow, incomingRow)
-
       if (currentKeys[index] !== key) {
         this.flash(currentRow)
       }
@@ -139,12 +118,10 @@ export default class extends Controller {
     const currentFieldsByKey = new Map(
       Array.from(currentRow.querySelectorAll("[data-tournament-field]")).map((element) => [element.dataset.tournamentField, element])
     )
-
     incomingFields.forEach((incomingField) => {
       const currentField = currentFieldsByKey.get(incomingField.dataset.tournamentField)
       if (!currentField) { return }
       if (currentField.innerHTML === incomingField.innerHTML) { return }
-
       currentField.innerHTML = incomingField.innerHTML
       this.flash(currentField)
     })
@@ -158,13 +135,11 @@ export default class extends Controller {
 
   sameKeys(left, right) {
     if (left.length !== right.length) { return false }
-
     return left.every((key, index) => key === right[index])
   }
 
   sameMembers(left, right) {
     if (left.length !== right.length) { return false }
-
     const leftSet = new Set(left)
     return right.every((key) => leftSet.has(key))
   }
@@ -173,7 +148,6 @@ export default class extends Controller {
     element.classList.remove("tournament-poll-updated")
     void element.offsetWidth
     element.classList.add("tournament-poll-updated")
-
     window.setTimeout(() => {
       element.classList.remove("tournament-poll-updated")
     }, FLASH_DURATION_MS)

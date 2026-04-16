@@ -21,6 +21,10 @@
  #  black_player_id   :bigint
  #
 class Match < ApplicationRecord
+  attribute :captured_pieces, default: []
+  attribute :movement_notation, default: []
+  attribute :previous_layouts, default: []
+
   enum :status, {
     pending: 0,
     running: 1,
@@ -34,7 +38,8 @@ class Match < ApplicationRecord
     stalemate: 2,
     threefold_repetition: 3,
     capped: 4,
-    error: 5
+    error: 5,
+    fifty_move_rule: 6
   }, allow_nil: true
 
   belongs_to :creator, class_name: 'User'
@@ -62,10 +67,8 @@ class Match < ApplicationRecord
   def player_display_name_for(player)
     tournament_entry = tournament_entry_for_player(player)
     return tournament_entry.display_name if tournament_entry
-
     record = player_record_for(player)
     return record.name if record.respond_to?(:name)
-
     fallback_player_label(player)
   end
 

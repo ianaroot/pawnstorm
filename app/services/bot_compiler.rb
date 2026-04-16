@@ -5,7 +5,6 @@ class BotCompiler
 
   class InfiniteLoopError < StandardError
     attr_reader :cycle_path
-
     def initialize(cycle_path)
       @cycle_path = cycle_path
       super("Infinite loop detected while compiling bot graph: #{cycle_path.join(' -> ')}")
@@ -28,12 +27,9 @@ class BotCompiler
   def compile
     root = @bot.root_node
     raise "Bot has no root node" unless root
-
     @compiled_nodes = {}
     @compilation_stack = []
-
     compile_node(root.id)
-
     {
       version: PROGRAM_VERSION,
       root: root.id.to_s,

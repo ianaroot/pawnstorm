@@ -1,20 +1,40 @@
 import Layout from "gameplay/layout";
 import Rules from "gameplay/rules";
-import { cloneRecentMoveContext, buildRecentMoveContext } from "gameplay/recent_move_context"
+import MoveApplier from "gameplay/move_applier";
+import MatchHistory from "gameplay/match_history";
 
 class Board {
-  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, previousLayouts: previousLayouts, winner: winner, resultType: resultType, recentMoveContext: recentMoveContext}){
+  constructor({layOut: layOut, capturedPieces: capturedPieces, gameOver: gameOver, allowedToMove: allowedToMove, movementNotation: movementNotation, winner: winner, resultType: resultType, recentMoveContext: recentMoveContext, halfmoveClock: halfmoveClock, positionKeys: positionKeys}){
     this.layOut = layOut|| Layout.default()
     this.capturedPieces = capturedPieces || [];
     this.allowedToMove = allowedToMove || Board.WHITE;
     // EVERYTHING BELOW HERE IS SLATED FOR EXTRACTION
     this.gameOver = gameOver || false;
-    this.movementNotation = movementNotation || [];
-    this.previousLayouts = Array.isArray(previousLayouts) ? JSON.stringify(previousLayouts) : (previousLayouts || JSON.stringify([]))
     this._winner = winner
     this._resultType = resultType || null
-    this.recentMoveContext = recentMoveContext || null
+    this.history = new MatchHistory({
+      movementNotation,
+      recentMoveContext,
+      halfmoveClock,
+      positionKeys
+    })
     this._castlingRightsCache = null
+  }
+
+  get movementNotation() {
+    return this.history.movementNotation
+  }
+
+  set movementNotation(movementNotation) {
+    this.history.movementNotation = movementNotation || []
+  }
+
+  get recentMoveContext() {
+    return this.history.recentMoveContext
+  }
+
+  set recentMoveContext(recentMoveContext) {
+    this.history.recentMoveContext = recentMoveContext || null
   }
 
   static get WHITE()  { return "W" }
@@ -65,36 +85,31 @@ class Board {
   clone() {
     let newLayout = Board._deepCopy(this.layOut),
       newCaptures = Board._deepCopy(this.capturedPieces),
-      newMovementNotation = Board._deepCopy(this.movementNotation),
     newBoard = new Board({
       layOut: newLayout,
       capturedPieces: newCaptures,
       allowedToMove: this.allowedToMove,
       gameOver: this.gameOver,
-      movementNotation: newMovementNotation,
-      previousLayouts: this.previousLayouts,
       winner: this._winner,
       resultType: this._resultType,
-      recentMoveContext: cloneRecentMoveContext(this.recentMoveContext)
     });
+    newBoard.history = this.history.clone()
   return newBoard;
   }
 
   lightClone() {
     let newLayout = Board._deepCopy(this.layOut),
         newCaptures = Board._deepCopy(this.capturedPieces),
-        newMovementNotation = Board._deepCopy(this.movementNotation),
         newBoard = new Board({
           layOut: newLayout,
           capturedPieces: newCaptures,
           allowedToMove: this.allowedToMove,
           gameOver: this.gameOver,
-          movementNotation: newMovementNotation,
-          previousLayouts: JSON.stringify([]),
           winner: this._winner,
           resultType: this._resultType,
-          recentMoveContext: cloneRecentMoveContext(this.recentMoveContext)
         });
+    newBoard.history = this.history.lightClone()
+    newBoard._castlingRightsCache = JSON.parse(JSON.stringify(this.castlingRightsCache()))
     return newBoard;
   }
 
@@ -104,10 +119,10 @@ class Board {
           layOut: newLayout,
           allowedToMove: this.allowedToMove,
           gameOver: this.gameOver,
-          previousLayouts: JSON.stringify([]),
           winner: this._winner,
           resultType: this._resultType
         });
+    newBoard.history = this.history.lightCloneForCheckQuery()
     newBoard._castlingRightsCache = this._castlingRightsCache
     return newBoard;
   }
@@ -405,7 +420,7 @@ class Board {
   }
 
   // FUTURE EXTRACTION MOVE HISTORY AND MATCH STATE TRACKING 
-  // will also pull state: _winner, previousLayouts, movementNotation, _resultType, gameOver
+  // will also pull state: _winner, movementNotation, _resultType, gameOver
 
   movesNotationFor(team){
     let teamMoves = [];
@@ -422,14 +437,6 @@ class Board {
     return teamMoves;
   }
 
-  _recordLayout(stringyLayOut){
-    if(/,/.exec(this.previousLayouts)){
-      this.previousLayouts = this.previousLayouts.replace(/]$/, "," + stringyLayOut + "]" )
-    } else {
-      this.previousLayouts = "[" + stringyLayOut + "]"
-    }
-  }
-
   _endGame({ winner: winner = null, resultType: resultType = null } = {}){
     this.gameOver = true
     this._winner = winner
@@ -444,26 +451,16 @@ class Board {
     this.movementNotation.push(prefixedNotation)
   }
 
-  _undo(){
-    let parsedPrevious = JSON.parse(this.previousLayouts);
-    this.layOut = parsedPrevious.pop();
-    this.previousLayouts = JSON.stringify(parsedPrevious)
-    let undoneNotation = this.movementNotation.pop(),
-      captureNotationMatch = undoneNotation.match(/x/);
-    if( captureNotationMatch ){
-      this.capturedPieces.pop()
-    }
-    this._nextTurn()
-  }
-
   _reset(){
     this.layOut = Layout.default();
     this.capturedPieces = [];
     this.gameOver = false;
     this.allowedToMove = Board.WHITE;
-    // this.previousLayouts = [];
     this.movementNotation = [];
     this.recentMoveContext = null;
+    this.history.positionKeys = [];
+    this.history.halfmoveClock = 0;
+    this._castlingRightsCache = null
   }
 
   // FUTURE EXTRACTION STATE TRANSITIONS
@@ -484,26 +481,7 @@ class Board {
 
   _officiallyMovePiece( moveObject ){
     // if( !MoveObject.prototype.isPrototypeOf( moveObject ) ){ throw new Error("missing params in movePiece") }
-    let startPosition = moveObject.startPosition,
-      endPosition = moveObject.endPosition,
-      additionalActions = moveObject.additionalActions,
-      promotionPiece = moveObject.promotionPiece,
-      pieceObject = this.pieceObject(startPosition),
-      stringyLayOut = JSON.stringify(this.layOut),
-      baseNotation = this.baseNotationFor(moveObject);
-      
-    this.recentMoveContext = buildRecentMoveContext({boardBeforeMove: this, moveObject: moveObject})
-    this._recordLayout(stringyLayOut)
-    this._emptify(startPosition)
-    if( !this.positionEmpty(endPosition) ){ this._capture(endPosition); }
-    this._placePiece({ position: endPosition, pieceObject: pieceObject })
-    if( additionalActions ){ var epNotation = additionalActions.call(this, startPosition) }
-    if( promotionPiece ){
-      this._placePiece({ position: endPosition, pieceObject: this.allowedToMove + promotionPiece })
-    }
-    let notationSuffix = Rules.postMoveQueries(this, baseNotation);
-    this._recordNotation({ baseNotation: baseNotation, epNotation: (epNotation || ""), notationSuffix: notationSuffix })
-    if( !this.gameOver ){ this._nextTurn() }
+    return new MoveApplier({ board: this, moveObject }).apply()
   }
 
   baseNotationFor(moveObject){
@@ -753,6 +731,9 @@ class Board {
     } else if( /\+/.exec(lastNotation) ) {
       alert = "check"
       sound = "check"
+    } else if( this._resultType === "fifty_move_rule" ) {
+      alert = "50-move rule"
+      sound = "move"
     } else if( this._resultType === "threefold_repetition" ) {
       alert = "threefold repetition"
       sound = "move"

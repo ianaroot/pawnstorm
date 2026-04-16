@@ -46,7 +46,7 @@
 
     <div class="toolbar-section">
       <%= link_to 'Back to Bots', bots_path, class: 'btn-back' %>
-      <%= link_to 'Play Test Match', new_match_path, class: 'btn-test' %>
+      <%= link_to 'Play Test Match', new_bot_vs_bot_match_path, class: 'btn-test' %>
       <%= link_to 'compile and exit to match setup',
           compile_bot_path(@bot),
           data: { turbo_method: :post },

@@ -351,6 +351,158 @@ describe('Rules castling', () => {
   })
 })
 
+describe('Rules draw conditions', () => {
+  it('declares a draw after 100 halfmoves without a pawn move or capture', () => {
+    const board = buildBoard({
+      pieces: {
+        a1: 'wK',
+        b1: 'wN',
+        h8: 'bK',
+        g8: 'bN'
+      }
+    })
+    board.history.halfmoveClock = 99
+
+    board._officiallyMovePiece(getMove('b1', 'a3', board))
+
+    expect(board.gameOver).toBe(true)
+    expect(board._resultType).toBe('fifty_move_rule')
+    expect(board.history.halfmoveClock).toBe(100)
+  })
+
+  it('resets the halfmove clock after a pawn move', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e2: 'wP',
+        e8: 'bK'
+      }
+    })
+    board.history.halfmoveClock = 99
+
+    board._officiallyMovePiece(getMove('e2', 'e4', board))
+
+    expect(board.gameOver).toBe(false)
+    expect(board.history.halfmoveClock).toBe(0)
+  })
+
+  it('resets the halfmove clock after a capture', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        d1: 'wQ',
+        d4: 'bP'
+      }
+    })
+    board.history.halfmoveClock = 99
+
+    board._officiallyMovePiece(getMove('d1', 'd4', board))
+
+    expect(board.gameOver).toBe(false)
+    expect(board.history.halfmoveClock).toBe(0)
+  })
+
+  it('uses side to move in threefold position identity', () => {
+    const whiteToMove = buildBoard({
+      allowedToMove: Board.WHITE,
+      pieces: {
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+    const blackToMove = buildBoard({
+      allowedToMove: Board.BLACK,
+      pieces: {
+        e1: 'wK',
+        e8: 'bK'
+      }
+    })
+
+    expect(whiteToMove.history.positionKeyFor(whiteToMove)).not.toBe(
+      blackToMove.history.positionKeyFor(blackToMove)
+    )
+  })
+
+  it('uses castling rights in threefold position identity', () => {
+    const castlingStillAvailable = buildBoard({
+      pieces: {
+        e1: 'wK',
+        h1: 'wR',
+        e8: 'bK'
+      }
+    })
+    const castlingNoLongerAvailable = buildBoard({
+      movementNotation: ['1. Rh2', 'Nf6', '2. Rh1', 'Ng8'],
+      pieces: {
+        e1: 'wK',
+        h1: 'wR',
+        e8: 'bK'
+      }
+    })
+
+    expect(castlingStillAvailable.history.positionKeyFor(castlingStillAvailable)).not.toBe(
+      castlingNoLongerAvailable.history.positionKeyFor(castlingNoLongerAvailable)
+    )
+  })
+
+  it('uses en passant availability in threefold position identity', () => {
+    const enPassantAvailable = buildBoard({
+      allowedToMove: Board.WHITE,
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e5: 'wP',
+        d5: 'bP'
+      }
+    })
+    enPassantAvailable.recentMoveContext = {
+      movingTeam: Board.BLACK,
+      movedPieceStartPosition: position('d7'),
+      movedPieceEndPosition: position('d5'),
+      movedPieceSpeciesBeforeMove: Board.PAWN
+    }
+    const enPassantUnavailable = buildBoard({
+      allowedToMove: Board.WHITE,
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e5: 'wP',
+        d5: 'bP'
+      }
+    })
+
+    expect(enPassantAvailable.history.positionKeyFor(enPassantAvailable)).not.toBe(
+      enPassantUnavailable.history.positionKeyFor(enPassantUnavailable)
+    )
+  })
+
+  it('does not count repeated layouts as threefold when castling rights changed', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        h1: 'wR',
+        e8: 'bK',
+        g8: 'bN'
+      }
+    })
+
+    playMoveSequence(board, [
+      { from: 'h1', to: 'h2' },
+      { from: 'g8', to: 'f6' },
+      { from: 'h2', to: 'h1' },
+      { from: 'f6', to: 'g8' },
+      { from: 'h1', to: 'h2' },
+      { from: 'g8', to: 'f6' },
+      { from: 'h2', to: 'h1' },
+      { from: 'f6', to: 'g8' }
+    ])
+
+    expect(board.gameOver).toBe(false)
+    expect(board._resultType).not.toBe('threefold_repetition')
+  })
+})
+
 describe('Rules notation recording', () => {
   it('records a simple pawn move', () => {
     const board = buildBoard({

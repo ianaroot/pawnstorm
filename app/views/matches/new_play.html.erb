@@ -1,0 +1,48 @@
+<div class="match-setup-page">
+  <h1>Play Against Your Bot</h1>
+  <p>Choose one of your compiled bots, pick a side, and play a persisted match.</p>
+
+  <% if @play_bots.empty? %>
+    <p>You do not have any compiled bots ready to play. Compile a bot first, then come back and make it explain itself over the board.</p>
+  <% else %>
+    <%= form_with url: human_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
+      <div class="match-setup-section">
+        <h2>Opponent Bot</h2>
+        <div class="match-bot-list-frame">
+          <div class="match-bot-list">
+            <% @play_bots.each do |bot| %>
+              <label class="match-bot-option">
+                <%= form.radio_button :bot_id, bot.id, checked: @selected_bot_id.to_i == bot.id %>
+                <span>
+                  <strong><%= bot.name %></strong>
+                  <small>by <%= bot.user.email %></small>
+                </span>
+              </label>
+            <% end %>
+          </div>
+          <div class="match-bot-scroll-track" aria-hidden="true">
+            <div class="match-bot-scroll-thumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-setup-section">
+        <h2>Your Color</h2>
+        <label class="match-bot-option">
+          <%= form.radio_button :human_color, 'white', checked: @selected_color == 'white' %>
+          <span><strong>White</strong><small>You move first.</small></span>
+        </label>
+        <label class="match-bot-option">
+          <%= form.radio_button :human_color, 'black', checked: @selected_color == 'black' %>
+          <span><strong>Black</strong><small>Your bot moves first.</small></span>
+        </label>
+        <label class="match-bot-option">
+          <%= form.radio_button :human_color, 'random', checked: @selected_color == 'random' %>
+          <span><strong>Random</strong><small>Let fate wear the funny hat.</small></span>
+        </label>
+      </div>
+
+      <%= form.submit 'Start Game' %>
+    <% end %>
+  <% end %>
+</div>
