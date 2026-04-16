@@ -164,7 +164,18 @@ class Store {
   getConnectionsFor(clientId) {
     return this.graph.getConnectionsFor(clientId)
   }
-  
+
+  getInternalConnections(clientIds) {
+    const idSet = new Set(clientIds)
+    const internal = []
+    this.graph.getConnections().forEach(conn => {
+      if (idSet.has(conn.sourceId) && idSet.has(conn.targetId)) {
+        internal.push(conn)
+      }
+    })
+    return internal
+  }
+
   getDescendantIds(clientId) {
     return this.graph.getDescendantIds(clientId)
   }

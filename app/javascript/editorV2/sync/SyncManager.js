@@ -510,6 +510,98 @@ class SyncManager {
     }
   }
 
+  async insertNodeSet(nodeModels, connectionModels, description) {
+    nodeModels.forEach(node => this.store.addNode(node))
+    connectionModels.forEach(connection => this.store.addConnection(connection))
+
+    const persistedNodes = []
+    const persistedConnections = []
+
+    try {
+      if (nodeModels.length > 0) {
+        await this.requireAllSettled(
+          Promise.allSettled(
+            nodeModels.map(nodeData =>
+              this.api.createNode(
+                { type: nodeData.type, position: nodeData.position, data: nodeData.data },
+                nodeData.clientId
+              ).then(response => {
+                persistedNodes.push(nodeData)
+                this.store.updateNode(nodeData.clientId, { serverId: response.id })
+              })
+            )
+          ),
+          'create nodes'
+        )
+      }
+
+      if (connectionModels.length > 0) {
+        await this.requireAllSettled(
+          Promise.allSettled(
+            connectionModels.map(connectionData =>
+              this.api.createConnection(
+                connectionData.sourceId,
+                connectionData.targetId,
+                connectionData.clientId
+              ).then(response => {
+                persistedConnections.push(connectionData)
+                this.store.updateConnection(connectionData.clientId, { serverId: response.id })
+              })
+            )
+          ),
+          'create connections'
+        )
+      }
+
+      this.history.push(description, {
+        type: 'insertTemplate',
+        nodes: nodeModels.map(node => ({
+          clientId: node.clientId,
+          serverId: node.serverId,
+          entity: { type: node.type, position: { ...node.position }, data: { ...node.data } }
+        })),
+        connections: connectionModels.map(conn => ({
+          clientId: conn.clientId,
+          serverId: conn.serverId,
+          sourceId: conn.sourceId,
+          targetId: conn.targetId
+        }))
+      })
+
+      const anchorNode = nodeModels[0]
+      if (anchorNode?.position) {
+        this.store.setRecentPlacementAnchor(anchorNode.position)
+      }
+      this.notifyPersistedMutation()
+
+      return { clientIds: nodeModels.map(n => n.clientId) }
+    } catch (error) {
+      [...connectionModels].reverse().forEach(conn => this.store.removeConnection(conn.clientId))
+      ;[...nodeModels].reverse().forEach(node => this.store.removeNode(node.clientId))
+
+      for (const connection of [...persistedConnections].reverse()) {
+        try {
+          await this.api.deleteConnection(connection.clientId, connection.sourceId)
+        } catch (rollbackError) {
+          console.error('Failed to roll back connection:', rollbackError)
+        }
+      }
+
+      if (persistedNodes.length > 0) {
+        try {
+          await this.api.deleteNodes(persistedNodes.map(node => node.clientId))
+        } catch (rollbackError) {
+          console.error('Failed to roll back nodes:', rollbackError)
+        }
+      }
+
+      showError(`Failed to ${description.toLowerCase()}: ${error.message}`)
+      console.error(`Failed to ${description.toLowerCase()}:`, error)
+
+      throw error
+    }
+  }
+
   async insertTemplate(template, organizerAnchor) {
     const operation = buildTemplateInsertOperation(template, organizerAnchor)
     const nodeModels = operation.nodes.map(nodeData => new Node({
@@ -519,44 +611,9 @@ class SyncManager {
       data: nodeData.entity.data
     }))
     const connectionModels = operation.connections.map(connectionData => new Connection(connectionData))
-    const persistedNodes = []
-    const persistedConnections = []
 
-    nodeModels.forEach(node => this.store.addNode(node))
-    connectionModels.forEach(connection => this.store.addConnection(connection))
-
-    try {
-      for (const nodeData of operation.nodes) {
-        const response = await this.api.createNode(nodeData.entity, nodeData.clientId)
-        persistedNodes.push(nodeData)
-        this.store.updateNode(nodeData.clientId, { serverId: response.id })
-      }
-
-      for (const connectionData of operation.connections) {
-        const response = await this.api.createConnection(connectionData.sourceId, connectionData.targetId, connectionData.clientId)
-        persistedConnections.push(connectionData)
-        this.store.updateConnection(connectionData.clientId, { serverId: response.id })
-      }
-
-      this.history.push(`Insert template: ${template.name}`, operation)
-      const anchorNode = operation.nodes.find(nodeData => nodeData.clientId === operation.organizerClientId) || operation.nodes[0]
-      if (anchorNode?.entity?.position) {
-        this.store.setRecentPlacementAnchor(anchorNode.entity.position)
-      }
-      this.notifyPersistedMutation()
-
-      return {
-        organizerClientId: operation.organizerClientId
-      }
-    } catch (error) {
-      this.rollbackInsertedTemplateLocally(operation)
-      await this.rollbackInsertedTemplateRemotely(persistedConnections, persistedNodes)
-
-      showError(`Failed to insert template: ${error.message}`)
-      console.error('Failed to insert template:', error)
-
-      throw error
-    }
+    const result = await this.insertNodeSet(nodeModels, connectionModels, `Insert template: ${template.name}`)
+    return { organizerClientId: operation.organizerClientId, ...result }
   }
   
   /**
@@ -886,34 +943,6 @@ class SyncManager {
     }
   }
 
-  rollbackInsertedTemplateLocally(operation) {
-    [...operation.connections].reverse().forEach(connection => {
-      this.store.removeConnection(connection.clientId)
-    });
-
-    [...operation.nodes].reverse().forEach(node => {
-      this.store.removeNode(node.clientId)
-    });
-  }
-
-  async rollbackInsertedTemplateRemotely(persistedConnections, persistedNodes) {
-    for (const connection of [...persistedConnections].reverse()) {
-      try {
-        await this.api.deleteConnection(connection.clientId, connection.sourceId)
-      } catch (rollbackError) {
-        console.error('Failed to roll back template connection:', rollbackError)
-      }
-    }
-
-    if (persistedNodes.length > 0) {
-      try {
-        await this.api.deleteNodes(persistedNodes.map(node => node.clientId))
-      } catch (rollbackError) {
-        console.error('Failed to roll back template nodes:', rollbackError)
-      }
-    }
-  }
-  
   // ===== Initialization =====
   
   /**

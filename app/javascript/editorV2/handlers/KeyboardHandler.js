@@ -1,4 +1,7 @@
 import { findAnchoredNodePlacement } from '../utils/nodePlacement.js'
+import generateUUID from '../utils/uuid.js'
+import Node from '../models/Node.js'
+import Connection from '../models/Connection.js'
 
 class KeyboardHandler {
   constructor(store, history, syncManager, clickHandler = null) {
@@ -30,14 +33,14 @@ class KeyboardHandler {
     // Copy: Ctrl/Cmd+C
     if ((event.ctrlKey || event.metaKey) && key === 'c') {
       event.preventDefault()
-      this.copySelectedNode()
+      this.copySelectedNodes()
       return
     }
     // Paste: Ctrl/Cmd+V
     if ((event.ctrlKey || event.metaKey) && key === 'v') {
       event.preventDefault()
-      this.pasteCopiedNode().catch(error => {
-        console.error('Failed to paste node:', error)
+      this.pasteCopiedNodes().catch(error => {
+        console.error('Failed to paste nodes:', error)
       })
       return
     }
@@ -105,36 +108,72 @@ class KeyboardHandler {
     return JSON.parse(JSON.stringify(value))
   }
 
-  getCopyableSelectedNode() {
+  getCopyableSelectedNodes() {
     const selectedIds = this.store.getSelectedNodeIds()
-    if (selectedIds.length !== 1) { return null }
-    const node = this.store.getNode(selectedIds[0])
-    if (!node || node.type === 'root') { return null }
-    return node
+    if (selectedIds.length === 0) { return [] }
+    return selectedIds
+      .map(clientId => this.store.getNode(clientId))
+      .filter(node => node && node.type !== 'root')
   }
 
-  copySelectedNode() {
-    const node = this.getCopyableSelectedNode()
-    if (!node) { return false }
+  copySelectedNodes() {
+    const nodes = this.getCopyableSelectedNodes()
+    if (nodes.length === 0) { return false }
+
+    const anchorPosition = { x: nodes[0].position.x, y: nodes[0].position.y }
+    const nodeIdToIndex = new Map()
+    nodes.forEach((node, index) => { nodeIdToIndex.set(node.clientId, index) })
+
+    const connections = this.store.getInternalConnections(nodes.map(n => n.clientId))
+      .map(conn => ({
+        sourceIndex: nodeIdToIndex.get(conn.sourceId),
+        targetIndex: nodeIdToIndex.get(conn.targetId)
+      }))
+
     this.clipboard = {
-      type: node.type,
-      data: this.deepClone(node.data),
-      position: { ...node.position }
+      nodes: nodes.map(node => ({
+        type: node.type,
+        data: this.deepClone(node.data),
+        relativeX: node.position.x - anchorPosition.x,
+        relativeY: node.position.y - anchorPosition.y
+      })),
+      connections,
+      anchorPosition
     }
     return true
   }
 
-  async pasteCopiedNode() {
+  async pasteCopiedNodes() {
     if (!this.clipboard || !this.syncManager) { return null }
-    const origin = this.store.getRecentPlacementAnchor() || this.clipboard.position
-    const position = findAnchoredNodePlacement(this.store, this.clipboard.type, origin)
-    const clientId = await this.syncManager.createNode(
-      this.clipboard.type,
-      position,
-      this.deepClone(this.clipboard.data)
-    )
-    if (clientId) { this.store.selectOnlyNode(clientId) }
-    return clientId
+    if (this.clipboard.nodes.length === 0) { return null }
+
+    const anchorType = this.clipboard.nodes[0].type
+    const origin = this.store.getRecentPlacementAnchor() || this.clipboard.anchorPosition
+    const anchorPosition = findAnchoredNodePlacement(this.store, anchorType, origin)
+
+    const newClientIdMap = this.clipboard.nodes.map(() => generateUUID())
+
+    const nodeModels = this.clipboard.nodes.map((nodeData, index) => new Node({
+      clientId: newClientIdMap[index],
+      type: nodeData.type,
+      position: {
+        x: anchorPosition.x + nodeData.relativeX,
+        y: anchorPosition.y + nodeData.relativeY
+      },
+      data: this.deepClone(nodeData.data)
+    }))
+
+    const connectionModels = this.clipboard.connections.map(connData => new Connection({
+      clientId: generateUUID(),
+      sourceId: newClientIdMap[connData.sourceIndex],
+      targetId: newClientIdMap[connData.targetIndex]
+    }))
+
+    const result = await this.syncManager.insertNodeSet(nodeModels, connectionModels, 'Paste nodes')
+    if (result.clientIds.length > 0) {
+      this.store.setSelectedNodeIds(result.clientIds)
+    }
+    return result
   }
   
   destroy() {
