@@ -41,7 +41,13 @@ class Bot < ApplicationRecord
     return if compiled_program_stale?
     update_column(:compiled_program_stale, true)
   end
-  
+
+  def get_fresh_program
+    raise "#{id} has no compiled program" if compiled_program.blank?
+    raise "#{id} has a stale compiled program and must be recompiled" if compiled_program_stale?
+    compiled_program.deep_dup
+  end
+
   private
   
   def create_root_node

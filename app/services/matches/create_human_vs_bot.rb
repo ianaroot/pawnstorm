@@ -16,8 +16,11 @@ class Matches::CreateHumanVsBot
     human_team = resolve_human_team(selected_color)
     white_player = human_team == 'W' ? @user : bot
     black_player = human_team == 'B' ? @user : bot
-    bot_snapshot = compiled_program_snapshot_for(bot)
-    return fail_with('Please choose one of your compiled bots.') if bot_snapshot.blank?
+    bot_snapshot = begin
+      bot.get_fresh_program
+    rescue StandardError => e
+      return fail_with(e.message)
+    end
 
     @match = Match.create!(
       creator: @user,
@@ -60,13 +63,6 @@ class Matches::CreateHumanVsBot
     else
       'W'
     end
-  end
-
-  def compiled_program_snapshot_for(bot)
-    compiled_program = bot&.compiled_program
-    return nil if compiled_program.blank?
-
-    JSON.parse(compiled_program.to_json)
   end
 
   def fail_with(message)

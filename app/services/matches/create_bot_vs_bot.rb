@@ -29,10 +29,11 @@ class Matches::CreateBotVsBot
     end
 
     white_bot, black_bot = [own_bot, opponent_bot].shuffle
-    white_snapshot = compiled_program_snapshot_for(white_bot)
-    black_snapshot = compiled_program_snapshot_for(black_bot)
-    if white_snapshot.nil? || black_snapshot.nil?
-      return fail_with('Both bots must have a compiled program before match generation.')
+    begin
+      white_snapshot = white_bot.get_fresh_program
+      black_snapshot = black_bot.get_fresh_program
+    rescue StandardError => e
+      return fail_with(e.message)
     end
 
     @match = Match.create!(
@@ -59,6 +60,7 @@ class Matches::CreateBotVsBot
     @own_bots = @user.bots.order(:name)
     opponent_bots = Bot
       .where(compiled_program_stale: false)
+      .where.not(compiled_program: nil)
       .where.not(user_id: @user.id)
       .order(:name)
     @all_opponent_bots = (@own_bots + opponent_bots).uniq(&:id)
@@ -96,13 +98,6 @@ class Matches::CreateBotVsBot
     return "#{names} needs to be recompiled before match generation." if bots.length == 1
 
     "#{names} each need to be recompiled before match generation."
-  end
-
-  def compiled_program_snapshot_for(bot)
-    compiled_program = bot&.compiled_program
-    return nil if compiled_program.blank?
-
-    JSON.parse(compiled_program.to_json)
   end
 
   def fail_with(message)

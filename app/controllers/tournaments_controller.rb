@@ -20,39 +20,47 @@ class TournamentsController < ApplicationController
       return
     end
     tournament = nil
-    ActiveRecord::Base.transaction do
-      tournament = Tournament.create!(
-        creator: current_user,
-        games_per_pair: @games_per_pair
-      )
-      tournament_entries_by_bot_id = {}
-      selected_bots.each_with_index do |bot, index|
-        tournament_entries_by_bot_id[bot.id] = tournament.tournament_entries.create!(
-          bot:,
-          bot_owner: bot.user,
-          display_name: bot.name,
-          seed_order: index,
-          compiled_program_snapshot: compiled_program_snapshot_for(bot)
-        )
-      end
-      build_match_definitions(selected_bots, games_per_pair: @games_per_pair).shuffle.each do |definition|
-        white_bot = definition.fetch(:white_bot)
-        black_bot = definition.fetch(:black_bot)
-        Match.create!(
-          tournament: tournament,
+    begin
+      ActiveRecord::Base.transaction do
+        tournament = Tournament.create!(
           creator: current_user,
-          white_player: white_bot,
-          black_player: black_bot,
-          white_tournament_entry: tournament_entries_by_bot_id.fetch(white_bot.id),
-          black_tournament_entry: tournament_entries_by_bot_id.fetch(black_bot.id),
-          status: :pending,
-          result: nil,
-          allowed_to_move: 'W',
-          captured_pieces: [],
-          movement_notation: [],
-          previous_layouts: []
+          games_per_pair: @games_per_pair
         )
+
+        tournament_entries_by_bot_id = {}
+        selected_bots.each_with_index do |bot, index|
+          tournament_entries_by_bot_id[bot.id] = tournament.tournament_entries.create!(
+            bot:,
+            bot_owner: bot.user,
+            display_name: bot.name,
+            seed_order: index,
+            compiled_program_snapshot: bot.get_fresh_program
+          )
+        end
+
+        build_match_definitions(selected_bots, games_per_pair: @games_per_pair).shuffle.each do |definition|
+          white_bot = definition.fetch(:white_bot)
+          black_bot = definition.fetch(:black_bot)
+          Match.create!(
+            tournament: tournament,
+            creator: current_user,
+            white_player: white_bot,
+            black_player: black_bot,
+            white_tournament_entry: tournament_entries_by_bot_id.fetch(white_bot.id),
+            black_tournament_entry: tournament_entries_by_bot_id.fetch(black_bot.id),
+            status: :pending,
+            result: nil,
+            allowed_to_move: 'W',
+            captured_pieces: [],
+            movement_notation: [],
+            previous_layouts: []
+          )
+        end
       end
+    rescue StandardError => e
+      flash.now[:alert] = e.message
+      render :new, status: :unprocessable_entity
+      return
     end
     tournament.enqueue_next_match!
     redirect_to tournament_path(tournament), notice: 'Tournament created. Matches are generating now.'
@@ -108,7 +116,7 @@ class TournamentsController < ApplicationController
   private
 
   def load_selectable_bots
-    @selectable_bots = Bot.where(compiled_program_stale: false).order(:name).includes(:user)
+    @selectable_bots = Bot.where(compiled_program_stale: false).where.not(compiled_program: nil).order(:name).includes(:user)
   end
 
   def build_match_definitions(selected_bots, games_per_pair:)
@@ -121,13 +129,6 @@ class TournamentsController < ApplicationController
         end
       end
     end
-  end
-
-  def compiled_program_snapshot_for(bot)
-    compiled_program = bot&.compiled_program
-    return nil if compiled_program.blank?
-
-    JSON.parse(compiled_program.to_json)
   end
 
   def tournament_params
