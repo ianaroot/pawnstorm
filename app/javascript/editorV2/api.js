@@ -194,7 +194,7 @@ class API {
       this.connectionClientToServer.delete(clientId)
     }
     this.connectionServerToClient.delete(serverId)
-}
+  }
 
   // ===== Connection Operations =====
   
