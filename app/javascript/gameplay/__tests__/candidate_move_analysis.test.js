@@ -749,7 +749,7 @@ describe('CandidateMoveAnalysis', () => {
           relation: 'mobility',
           relationSpecifier: 'any'
         })
-      ).toBe(4)
+      ).toBe(3)
 
       expect(
         analysis.queryValue({
@@ -758,7 +758,7 @@ describe('CandidateMoveAnalysis', () => {
           relation: 'mobility',
           relationSpecifier: 'any'
         })
-      ).toBe(14)
+      ).toBe(13)
     })
 
     it('tracks prior board opponent mobility in the normal aggregate scenario', () => {
@@ -771,7 +771,7 @@ describe('CandidateMoveAnalysis', () => {
         }
       })
 
-      const moveObject = getMove('d1', 'd2', board)
+      const moveObject = getMove('d1', 'e2', board)
       const analysis = new CandidateMoveAnalysis({ board, moveObject })
 
       expect(
@@ -783,6 +783,17 @@ describe('CandidateMoveAnalysis', () => {
             relationSpecifier: 'any'
           },
           'prior'
+        )
+      ).toBe(3)
+
+      expect(
+        analysis.queryValue(
+          {
+            subject: 'opponents',
+            subjectSpecifier: 'king',
+            relation: 'mobility',
+            relationSpecifier: 'any'
+          },
         )
       ).toBe(4)
 
@@ -796,7 +807,7 @@ describe('CandidateMoveAnalysis', () => {
           },
           'prior'
         )
-      ).toBe(14)
+      ).toBe(13)
     })
 
     it('returns zero opponent mobility in a checkmate position', () => {

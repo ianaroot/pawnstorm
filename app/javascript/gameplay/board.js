@@ -657,7 +657,7 @@ class Board {
   
   kingSideCastleViableFor(team, startPosition){
     if( this.pieceObject(startPosition + 3) !== team + Board.ROOK ){ return false }
-    if (Rules.checkQuery({board: this, teamString: this.allowedToMove}) ){ return false }
+    if (Rules.checkQuery({board: this, teamString: team}) ){ return false }
     // thinks you can castle if rook was captured but never moved!
     const rights = this.castlingRightsCache()[team]
     if (rights.kingMoved || rights.kingSideRookMoved) { return false }
@@ -680,7 +680,7 @@ class Board {
 
   queenSideCastleViableFor(team, startPosition){
     if( this.pieceObject(startPosition - 4) !== team + Board.ROOK ){ return false }
-    if (Rules.checkQuery({board: this, teamString: this.allowedToMove}) ){ return false }
+    if (Rules.checkQuery({board: this, teamString: team}) ){ return false }
     // thinks you can castle if rook was captured but never moved!
     const rights = this.castlingRightsCache()[team]
     if (rights.kingMoved || rights.queenSideRookMoved) { return false }
@@ -694,30 +694,30 @@ class Board {
       alert('bad input for board.kingSideCastleViableFor :' + team)
     }
     if (!this.castleSquaresAreEmpty(necessaryEmptyPositions)) { return false }
-    if (!this.castlePathIsSafe(startPosition, [startPosition + 1, startPosition + 2])) {
+    if (!this.castlePathIsSafe(startPosition, [startPosition - 1, startPosition - 2])) {
       return false
     }
     return true;
   }
 
-  _kingSideCastleIsClear(kingPosition){
-    return this.positionEmpty(kingPosition + 1) && this.positionEmpty(kingPosition + 2 )
-  }
+  // _kingSideCastleIsClear(kingPosition){
+  //   return this.positionEmpty(kingPosition + 1) && this.positionEmpty(kingPosition + 2 )
+  // }
 
-  _queenSideCastleIsClear(kingPosition){
-    return this.positionEmpty(kingPosition - 1 ) && this.positionEmpty(kingPosition - 2 ) && this.positionEmpty(kingPosition - 3 )
-  }
+  // _queenSideCastleIsClear(kingPosition){
+  //   return this.positionEmpty(kingPosition - 1 ) && this.positionEmpty(kingPosition - 2 ) && this.positionEmpty(kingPosition - 3 )
+  // }
 
-  _kingSideRookHasNotMoved(kingPosition){
-    let kingSideRookStartPosition = kingPosition + 3;
-    return (this.pieceTypeAt( kingSideRookStartPosition ) ===Board.ROOK) && this.pieceHasNotMovedFrom( kingSideRookStartPosition )
-  }
+  // _kingSideRookHasNotMoved(kingPosition){
+  //   let kingSideRookStartPosition = kingPosition + 3;
+  //   return (this.pieceTypeAt( kingSideRookStartPosition ) ===Board.ROOK) && this.pieceHasNotMovedFrom( kingSideRookStartPosition )
+  // }
 
-  _queenSideRookHasNotMoved(kingPosition){
-    let queenSideRookStartPosition = kingPosition - 4;
+  // _queenSideRookHasNotMoved(kingPosition){
+  //   let queenSideRookStartPosition = kingPosition - 4;
 
-    return (this.pieceTypeAt( queenSideRookStartPosition ) ===Board.ROOK) && this.pieceHasNotMovedFrom( queenSideRookStartPosition )
-  }
+  //   return (this.pieceTypeAt( queenSideRookStartPosition ) ===Board.ROOK) && this.pieceHasNotMovedFrom( queenSideRookStartPosition )
+  // }
 
   // FUTURE EXTRACTION SOUND AND VIEW HELPERS
 
