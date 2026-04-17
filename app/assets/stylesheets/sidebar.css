@@ -158,8 +158,8 @@
   transition: transform 0.3s, opacity 0.3s;
 }
 
-/* Hamburger visible only on mobile */
-@media (max-width: 767px) {
+/* Hamburger visible on tablet and mobile */
+@media (max-width: 1024px) {
   .hamburger {
     display: flex;
     flex-direction: column;

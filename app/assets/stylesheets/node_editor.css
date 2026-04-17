@@ -974,7 +974,7 @@
 
 .condition-form-layout {
   display: grid;
-  grid-template-columns: minmax(25rem, 1fr) 8.5rem minmax(25rem, 1fr);
+  grid-template-columns: minmax(17rem, 1fr) 7.5rem minmax(17rem, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -1199,7 +1199,7 @@
   margin-bottom: 0;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 720px) {
   .condition-form-layout {
     grid-template-columns: 1fr;
   }

@@ -3,10 +3,14 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["sidebar", "overlay"]
   static classes = ["open", "closed"]
+
+  isCompactViewport() {
+    return window.innerWidth <= 1024
+  }
   
   connect() {
-    // Only close on mobile, let CSS handle desktop default (visible)
-    if (window.innerWidth < 768) {
+    // Collapse the sidebar on tablet/mobile widths so the hamburger remains usable.
+    if (this.isCompactViewport()) {
       this.close()
     }
     
@@ -48,7 +52,7 @@ export default class extends Controller {
   }
   
   navigate() {
-    if (window.innerWidth < 768) {
+    if (this.isCompactViewport()) {
       this.close()
     }
   }
