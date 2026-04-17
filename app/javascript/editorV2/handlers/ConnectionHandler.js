@@ -15,10 +15,12 @@ class ConnectionHandler {
     this.sourceClientId = null
     this.sourceElement = null
     this.tempLine = null
+    this.activePointerId = null
     
     // Pre-bound handlers (fixes removeEventListener bug)
-    this.boundHandleMouseMove = this.handleMouseMove.bind(this)
-    this.boundHandleMouseUp = this.handleMouseUp.bind(this)
+    this.boundHandlePointerMove = this.handlePointerMove.bind(this)
+    this.boundHandlePointerUp = this.handlePointerUp.bind(this)
+    this.boundHandlePointerCancel = this.handlePointerCancel.bind(this)
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
@@ -29,7 +31,7 @@ class ConnectionHandler {
     this.attachedElements.set(element, clientId)
     const outputConnector = element.querySelector('.node-connector.output')
     if (outputConnector) {
-      outputConnector.addEventListener('mousedown', (e) => {
+      outputConnector.addEventListener('pointerdown', (e) => {
         this.startConnection(e, clientId, outputConnector)
       })
     }
@@ -37,22 +39,33 @@ class ConnectionHandler {
     // Note: Delete buttons are created by ConnectionRenderer
   }
   
+  isPrimaryPointer(event) {
+    return event.isPrimary !== false && (event.pointerType !== 'mouse' || event.button === 0)
+  }
+
   startConnection(event, clientId, sourceConnector) {
+    if (!this.isPrimaryPointer(event)) { return }
+    if (this.isConnecting) {
+      this.resetConnection()
+    }
+
     event.preventDefault()
     event.stopPropagation()
     const node = this.store.getNode(clientId)
     if (!node) { return }
-    this.isConnecting = true
-    this.sourceClientId = clientId
-    this.sourceElement = sourceConnector
 
     // Create temporary line for visual feedback
     const svgContainer = document.getElementById('connections-canvas')
     if (!svgContainer) {
       console.error('SVG container not found')
-      this.isConnecting = false
       return
     }
+
+    this.isConnecting = true
+    this.sourceClientId = clientId
+    this.sourceElement = sourceConnector
+    this.activePointerId = event.pointerId
+    this.sourceElement?.setPointerCapture?.(event.pointerId)
     
     // Create temp line
     this.tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -60,6 +73,7 @@ class ConnectionHandler {
     this.tempLine.setAttribute('stroke', '#4CAF50')
     this.tempLine.setAttribute('stroke-width', '3')
     this.tempLine.setAttribute('stroke-dasharray', '5,5')
+    this.tempLine.style.pointerEvents = 'none'
     
     // Set initial position
     const { x, y } = this.getConnectorPosition(sourceConnector)
@@ -71,8 +85,9 @@ class ConnectionHandler {
     svgContainer.appendChild(this.tempLine)
     
     // Add document handlers
-    document.addEventListener('mousemove', this.boundHandleMouseMove)
-    document.addEventListener('mouseup', this.boundHandleMouseUp)
+    document.addEventListener('pointermove', this.boundHandlePointerMove)
+    document.addEventListener('pointerup', this.boundHandlePointerUp)
+    document.addEventListener('pointercancel', this.boundHandlePointerCancel)
     
     // Add connecting class to source node
     const nodeEl = sourceConnector.closest('.node')
@@ -81,7 +96,12 @@ class ConnectionHandler {
     }
   }
   
-  handleMouseMove(event) {
+  eventMatchesActivePointer(event) {
+    return this.activePointerId !== null && event.pointerId === this.activePointerId
+  }
+
+  handlePointerMove(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
     if (!this.isConnecting || !this.tempLine) { return }
     const pointer = this.viewport?.screenToGraphPoint(event.clientX, event.clientY) || {
       x: event.clientX,
@@ -92,21 +112,12 @@ class ConnectionHandler {
     this.tempLine.setAttribute('y2', pointer.y)
   }
   
-  handleMouseUp(event) {
-    // Remove handlers immediately
-    document.removeEventListener('mousemove', this.boundHandleMouseMove)
-    document.removeEventListener('mouseup', this.boundHandleMouseUp)
-    
-    // Clean up visual state
-    if (this.sourceElement) {
-      const nodeEl = this.sourceElement.closest('.node')
-      if (nodeEl) {
-        nodeEl.classList.remove('connecting-source')
-      }
-    }
+  handlePointerUp(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
     
     // Check if we're over an input connector
-    const inputConnector = event.target.closest('.node-connector.input')
+    const releaseTarget = this.releaseTargetFor(event)
+    const inputConnector = releaseTarget?.closest?.('.node-connector.input')
     if (inputConnector && this.sourceClientId) {
       const targetNode = inputConnector.closest('.node')
       const targetClientId = targetNode?.dataset.clientId
@@ -116,17 +127,17 @@ class ConnectionHandler {
         this.finishConnection(this.sourceClientId, targetClientId)
       }
     }
-    
-    // Clean up temp line
-    if (this.tempLine) {
-      this.tempLine.remove()
-      this.tempLine = null
-    }
-    
-    // Reset state
-    this.isConnecting = false
-    this.sourceClientId = null
-    this.sourceElement = null
+
+    this.resetConnection()
+  }
+
+  handlePointerCancel(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
+    this.resetConnection()
+  }
+
+  releaseTargetFor(event) {
+    return document.elementFromPoint?.(event.clientX, event.clientY) || event.target
   }
   
   async finishConnection(sourceClientId, targetClientId) {
@@ -177,28 +188,45 @@ class ConnectionHandler {
   
   cancelConnection() {
     if (this.isConnecting) {
-      // Remove handlers
-      document.removeEventListener('mousemove', this.boundHandleMouseMove)
-      document.removeEventListener('mouseup', this.boundHandleMouseUp)
-      
-      // Clean up visual state
-      if (this.sourceElement) {
-        const nodeEl = this.sourceElement.closest('.node')
-        if (nodeEl) {
-          nodeEl.classList.remove('connecting-source')
-        }
+      this.resetConnection()
+    }
+  }
+
+  resetConnection() {
+    document.removeEventListener('pointermove', this.boundHandlePointerMove)
+    document.removeEventListener('pointerup', this.boundHandlePointerUp)
+    document.removeEventListener('pointercancel', this.boundHandlePointerCancel)
+
+    if (this.activePointerId !== null) {
+      this.releasePointerCaptureSafely(this.sourceElement, this.activePointerId)
+    }
+
+    if (this.sourceElement) {
+      const nodeEl = this.sourceElement.closest('.node')
+      if (nodeEl) {
+        nodeEl.classList.remove('connecting-source')
       }
-      
-      // Remove temp line
-      if (this.tempLine) {
-        this.tempLine.remove()
-        this.tempLine = null
-      }
-      
-      // Reset state
-      this.isConnecting = false
-      this.sourceClientId = null
-      this.sourceElement = null
+    }
+
+    if (this.tempLine) {
+      this.tempLine.remove()
+      this.tempLine = null
+    }
+
+    this.isConnecting = false
+    this.sourceClientId = null
+    this.sourceElement = null
+    this.activePointerId = null
+  }
+
+  releasePointerCaptureSafely(element, pointerId) {
+    if (pointerId === null || !element?.releasePointerCapture) { return }
+    if (element.hasPointerCapture?.(pointerId) === false) { return }
+
+    try {
+      element.releasePointerCapture(pointerId)
+    } catch {
+      // Pointer capture may already be released after browser cancellation.
     }
   }
   
