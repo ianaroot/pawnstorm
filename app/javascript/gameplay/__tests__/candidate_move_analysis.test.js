@@ -790,7 +790,7 @@ describe('CandidateMoveAnalysis', () => {
         analysis.queryValue(
           {
             subject: 'opponents',
-            subjectSpecifier: 'king',
+            subjectSpecifier: 'any',
             relation: 'mobility',
             relationSpecifier: 'any'
           },

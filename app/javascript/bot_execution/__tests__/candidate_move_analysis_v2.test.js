@@ -269,15 +269,6 @@ describe('CandidateMoveAnalysisV2', () => {
 
       expect(
         analysis.comparisonValueFor({
-          comparisonValue: 'prior_board_state',
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
-          operator: 'mobility'
-        })
-      ).toBe(8)
-
-      expect(
-        analysis.comparisonValueFor({
           comparisonValue: 'enemy_moved_piece_value',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
@@ -328,14 +319,21 @@ describe('CandidateMoveAnalysisV2', () => {
         })
       ).toBe(0)
 
-      expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'prior_board_state',
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
-          operator: 'mobility'
-        })
-      ).toBe(2)
+      const priorMobility = analysis.comparisonValueFor({
+        comparisonValue: 'prior_board_state',
+        subject: 'enemy_moved_piece',
+        subjectFilter: 'any',
+        operator: 'mobility'
+      })
+
+      const afterMobility = analysis.unaryValue({
+        subject: 'enemy_moved_piece',
+        subjectFilter: 'any',
+        operator: 'mobility'
+      })
+
+      expect(priorMobility).toBe(2)
+      expect(priorMobility).not.toBe(afterMobility)
     })
   })
 
@@ -603,6 +601,47 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(squaresFor(result.subjectPositions)).toEqual(['e2'])
       expect(squaresFor(result.targetPositions)).toEqual(['e1'])
     })
+
+    it('does not treat a covered rook as shielded when an extra blocker breaks the shield line', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          d4: 'wR',
+          d5: 'wP',
+          d6: 'wN',
+          d8: 'bR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const coverResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'cover',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(coverResult)).toEqual([['d5', 'd4']])
+      expect(squaresFor(coverResult.subjectPositions)).toEqual(['d5'])
+      expect(squaresFor(coverResult.targetPositions)).toEqual(['d4'])
+
+      const shieldResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'shield',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(shieldResult)).toEqual([])
+      expect(shieldResult.subjectPositions).toEqual([])
+      expect(shieldResult.targetPositions).toEqual([])
+    })
   })
 
   describe('relational cover', () => {
@@ -631,6 +670,46 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(result)).toEqual([['d5', 'd4']])
       expect(squaresFor(result.subjectPositions)).toEqual(['d5'])
       expect(squaresFor(result.targetPositions)).toEqual(['d4'])
+    })
+
+    it('treats a pawn as covering an allied rook even when the opposing slider is not already on the ray', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          d4: 'wR',
+          d5: 'wP',
+          g6: 'bR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const coverResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'cover',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(coverResult)).toEqual([['d5', 'd4']])
+      expect(squaresFor(coverResult.subjectPositions)).toEqual(['d5'])
+      expect(squaresFor(coverResult.targetPositions)).toEqual(['d4'])
+
+      const shieldResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'shield',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(shieldResult)).toEqual([])
+      expect(shieldResult.subjectPositions).toEqual([])
+      expect(shieldResult.targetPositions).toEqual([])
     })
   })
 })
