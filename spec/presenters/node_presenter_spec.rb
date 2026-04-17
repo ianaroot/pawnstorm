@@ -13,6 +13,7 @@ RSpec.describe NodePresenter do
         subjectComparator: 'greater_than',
         subjectComparisonValue: 2,
         operator: 'attack',
+        mode: 'legal',
         target: 'enemy',
         targetFilter: 'any',
         targetFilterMode: 'exclude',
@@ -34,7 +35,7 @@ RSpec.describe NodePresenter do
           comparison_value: 2
         },
         { role: 'spacer' },
-        { role: 'operator', operator: 'attack' },
+        { role: 'operator', operator: 'attack', mode: 'legal' },
         { role: 'spacer' },
         {
           role: 'side',

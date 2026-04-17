@@ -47,6 +47,7 @@
         const result = analysis.relationalResult({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+          mode: conditionNode.mode,
           target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
           targetFilterMode: conditionNode.targetFilterMode || null
         })
@@ -99,6 +100,7 @@
         const priorResult = analysis.relationalResult({
           subject: conditionNode.subject,  subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+          mode: conditionNode.mode,
           target: conditionNode.target,  targetFilter: conditionNode.targetFilter || "any",
           targetFilterMode: conditionNode.targetFilterMode || null, boardScope: "prior"
         })

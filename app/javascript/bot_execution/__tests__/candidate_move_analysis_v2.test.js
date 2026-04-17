@@ -406,6 +406,7 @@ describe('CandidateMoveAnalysisV2', () => {
         subject: 'allied',
         subjectFilter: 'rook',
         operator: 'attack',
+        mode: 'ignore_king_safety',
         target: 'enemy',
         targetFilter: 'any'
       })
@@ -416,6 +417,48 @@ describe('CandidateMoveAnalysisV2', () => {
       ])
       expect(squaresFor(result.subjectPositions)).toEqual(['d4'])
       expect(squaresFor(result.targetPositions)).toEqual(['d7', 'g4'])
+    })
+
+    it('excludes pinned pieces from attack pairs when mode is legal and preserves the old geometry when mode ignores king safety', () => {
+      const board = buildBoard({
+        pieces: {
+          a8: 'bK',
+          h4: 'bB',
+          e1: 'wK',
+          f2: 'wN',
+          e4: 'bP',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const legalResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'knight',
+        operator: 'attack',
+        mode: 'legal',
+        target: 'enemy',
+        targetFilter: 'pawn'
+      })
+
+      expect(pairSquares(legalResult)).toEqual([])
+      expect(legalResult.subjectPositions).toEqual([])
+      expect(legalResult.targetPositions).toEqual([])
+
+      const ignoreResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'knight',
+        operator: 'attack',
+        mode: 'ignore_king_safety',
+        target: 'enemy',
+        targetFilter: 'pawn'
+      })
+
+      expect(pairSquares(ignoreResult)).toEqual([['f2', 'e4']])
+      expect(squaresFor(ignoreResult.subjectPositions)).toEqual(['f2'])
+      expect(squaresFor(ignoreResult.targetPositions)).toEqual(['e4'])
     })
 
     it('supports moved_piece and enemy_moved_piece as relational targets across after and prior board scopes', () => {
@@ -441,6 +484,7 @@ describe('CandidateMoveAnalysisV2', () => {
         subject: 'enemy',
         subjectFilter: 'bishop',
         operator: 'attack',
+        mode: 'ignore_king_safety',
         target: 'moved_piece',
         targetFilter: 'any'
       })
@@ -453,6 +497,7 @@ describe('CandidateMoveAnalysisV2', () => {
         subject: 'allied',
         subjectFilter: 'pawn',
         operator: 'attack',
+        mode: 'ignore_king_safety',
         target: 'enemy_moved_piece',
         targetFilter: 'any',
         boardScope: 'prior'
@@ -466,6 +511,7 @@ describe('CandidateMoveAnalysisV2', () => {
         subject: 'allied',
         subjectFilter: 'pawn',
         operator: 'attack',
+        mode: 'ignore_king_safety',
         target: 'enemy_moved_piece',
         targetFilter: 'any'
       })
@@ -493,6 +539,7 @@ describe('CandidateMoveAnalysisV2', () => {
         subject: 'allied',
         subjectFilter: 'knight',
         operator: 'defend',
+        mode: 'ignore_king_safety',
         target: 'moved_piece',
         targetFilter: 'any'
       })
@@ -500,6 +547,48 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(result)).toEqual([['f2', 'e4']])
       expect(squaresFor(result.subjectPositions)).toEqual(['f2'])
       expect(squaresFor(result.targetPositions)).toEqual(['e4'])
+    })
+
+    it('excludes pinned pieces from defend pairs when mode is legal and preserves the old geometry when mode ignores king safety', () => {
+      const board = buildBoard({
+        pieces: {
+          a8: 'bK',
+          h4: 'bB',
+          e1: 'wK',
+          f2: 'wN',
+          e4: 'wP',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const legalResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'knight',
+        operator: 'defend',
+        mode: 'legal',
+        target: 'allied',
+        targetFilter: 'pawn'
+      })
+
+      expect(pairSquares(legalResult)).toEqual([])
+      expect(legalResult.subjectPositions).toEqual([])
+      expect(legalResult.targetPositions).toEqual([])
+
+      const ignoreResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'knight',
+        operator: 'defend',
+        mode: 'ignore_king_safety',
+        target: 'allied',
+        targetFilter: 'pawn'
+      })
+
+      expect(pairSquares(ignoreResult)).toEqual([['f2', 'e4']])
+      expect(squaresFor(ignoreResult.subjectPositions)).toEqual(['f2'])
+      expect(squaresFor(ignoreResult.targetPositions)).toEqual(['e4'])
     })
   })
 

@@ -17,6 +17,7 @@
           <% if (value = chunk[:comparator] || chunk['comparator']).present? %>data-condition-preview-comparator="<%= value %>"<% end %>
           <% if (value = chunk[:comparison_value] || chunk['comparison_value']).present? %>data-condition-preview-comparison-value="<%= value %>"<% end %>
           <% if (value = chunk[:operator] || chunk['operator']).present? %>data-condition-preview-operator="<%= value %>"<% end %>
+          <% if (value = chunk[:mode] || chunk['mode']).present? %>data-condition-preview-mode="<%= value %>"<% end %>
         ></div>
       <% end %>
     <% elsif chunk == "" %>

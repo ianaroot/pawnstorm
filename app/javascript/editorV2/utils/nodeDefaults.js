@@ -26,6 +26,7 @@ export const CONDITION_DATA_KEYS = Object.freeze([
   'subjectFilter',
   'subjectFilterMode',
   'operator',
+  'mode',
   'comparator',
   'comparisonValue'
 ])
@@ -60,9 +61,6 @@ export function normalizeNodeData(type, data = {}) {
 
   switch (type) {
     case 'condition':
-      if (data.kind === 'relational') {
-        return { ...data }
-      }
       return { ...DEFAULT_CONDITION_DATA, ...data }
     case 'action':
       return { ...DEFAULT_ACTION_DATA, ...data }

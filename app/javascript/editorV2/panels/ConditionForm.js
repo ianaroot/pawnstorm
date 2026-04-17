@@ -2,6 +2,7 @@ import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter
 
 const DEFAULT_STATE = Object.freeze({
   kind: 'relational',
+  mode: 'legal',
   left: {
     subject: 'allied',
     filter: 'any',
@@ -71,6 +72,7 @@ class ConditionForm {
     const rightComparator = this.editorPanel.querySelector('#cond-right-comparator')
     const rightComparisonValueSource = this.editorPanel.querySelector('#cond-right-comparison-value-source')
     const rightComparisonValueNumber = this.editorPanel.querySelector('#cond-right-comparison-value-number')
+    const mode = this.editorPanel.querySelector('#cond-mode')
     const unaryComparator = this.editorPanel.querySelector('#cond-unary-comparator')
     const unaryComparisonValueSource = this.editorPanel.querySelector('#cond-unary-comparison-value-source')
     const unaryComparisonValueNumber = this.editorPanel.querySelector('#cond-unary-comparison-value-number')
@@ -91,6 +93,7 @@ class ConditionForm {
       rightComparator,
       rightComparisonValueSource,
       rightComparisonValueNumber,
+      mode,
       unaryComparator,
       unaryComparisonValueSource,
       unaryComparisonValueNumber,
@@ -100,6 +103,7 @@ class ConditionForm {
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
+      modeRow: this.editorPanel.querySelector('#cond-mode-row'),
       unaryComparisonSection: this.editorPanel.querySelector('#cond-unary-comparison-section'),
       leftComparisonSection: this.editorPanel.querySelector('#cond-left-comparison-section'),
       leftFilterRow: this.editorPanel.querySelector('#cond-left-filter-row'),
@@ -107,7 +111,7 @@ class ConditionForm {
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       all: [
         leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonValueSource,
-        operator,
+        operator, mode,
         rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, rightComparator, rightComparisonValueSource,
         unaryComparator, unaryComparisonValueSource
       ],
@@ -174,6 +178,7 @@ class ConditionForm {
           comparisonValue: nodeData.subjectComparisonValue
         }),
         operator: nodeData.operator || 'attack',
+        mode: nodeData.mode,
         right: this.relationalSideState({
           subject: nodeData.target,
           filter: nodeData.targetFilter,
@@ -232,6 +237,7 @@ class ConditionForm {
     if (fields.leftComparisonValueNumber) fields.leftComparisonValueNumber.value = this.state.left.comparisonValueNumber
 
     if (fields.operator) fields.operator.value = this.state.operator
+    if (fields.mode) fields.mode.value = this.state.mode || ''
 
     if (fields.rightSubject) fields.rightSubject.value = this.state.right.subject
     if (fields.rightFilterMode) fields.rightFilterMode.checked = this.state.right.filterMode === 'exclude'
@@ -251,6 +257,7 @@ class ConditionForm {
     }
     fields.rightCardLabel.textContent = this.state.kind === 'relational' ? 'Target' : 'Comparison'
     fields.rightRelationalFields.classList.toggle('hidden', this.state.kind !== 'relational')
+    fields.modeRow.classList.toggle('hidden', !this.supportsRelationalMode(this.state.operator))
     fields.unaryComparisonSection.classList.toggle('hidden', this.state.kind === 'relational')
     fields.leftComparisonBody.classList.toggle('hidden', !this.state.ui.leftComparisonOpen)
     fields.rightComparisonBody.classList.toggle('hidden', !this.state.ui.rightComparisonOpen || this.state.kind !== 'relational')
@@ -327,6 +334,9 @@ class ConditionForm {
       this.state.left.comparisonValueNumber = Number(fields.leftComparisonValueNumber?.value || 1)
 
       this.state.operator = fields.operator?.value || 'attack'
+      if (this.supportsRelationalMode(this.state.operator)) {
+        this.state.mode = fields.mode?.value
+      }
 
       this.state.right.subject = fields.rightSubject?.value || 'enemy'
       this.state.right.filterMode = fields.rightFilterMode?.checked ? 'exclude' : 'include'
@@ -381,6 +391,10 @@ class ConditionForm {
         targetFilter: this.state.right.filter
       }
 
+      if (this.supportsRelationalMode(this.state.operator)) {
+        payload.mode = this.state.mode
+      }
+
       if (this.state.left.filter !== 'any') {
         payload.subjectFilterMode = this.state.left.filterMode
       }
@@ -424,6 +438,10 @@ class ConditionForm {
 
   usesSamePiece() {
     return this.state.kind === 'relational' && this.state.operator === 'same_piece'
+  }
+
+  supportsRelationalMode(operator = this.state.operator) {
+    return ['attack', 'defend'].includes(operator)
   }
 
   clearComparator(side) {
@@ -479,6 +497,7 @@ class ConditionForm {
       this.clearComparator('left')
       this.state.ui.leftComparisonOpen = false
     }
+
   }
 
   leftUsesPriorBoardState() {

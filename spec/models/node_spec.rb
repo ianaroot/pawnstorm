@@ -120,6 +120,7 @@ RSpec.describe Node, type: :model do
           kind: 'relational',
           subject: 'allied',
           subjectFilter: 'any',
+          mode: 'legal',
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'queen',
@@ -128,6 +129,49 @@ RSpec.describe Node, type: :model do
 
         expect(node).not_to be_valid
         expect(node.errors[:data]).to include('has invalid targetFilterMode')
+      end
+
+      it 'accepts legal mode for relational attack and defend conditions' do
+        attack_node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          mode: 'legal',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        defend_node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          mode: 'ignore_king_safety',
+          operator: 'defend',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(attack_node).to be_valid
+        expect(defend_node).to be_valid
+      end
+
+      it 'strips mode for relational operators that do not support it' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          mode: 'legal',
+          operator: 'cover',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(node).to be_valid
+        expect(node.data).not_to include('mode')
       end
 
       it 'delegates data normalization before validation' do
@@ -162,6 +206,7 @@ RSpec.describe Node, type: :model do
           subjectComparisonMetric: 'count',
           subjectComparator: 'greater_than',
           subjectComparisonValue: 'prior_board_state',
+          mode: 'legal',
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'any',
@@ -183,6 +228,7 @@ RSpec.describe Node, type: :model do
           subjectComparisonMetric: 'count',
           subjectComparator: 'greater_than',
           subjectComparisonValue: 0,
+          mode: 'legal',
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'any',

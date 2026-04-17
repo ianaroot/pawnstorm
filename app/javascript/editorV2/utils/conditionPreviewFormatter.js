@@ -85,8 +85,19 @@ function operatorLabel(operator) {
   }
 }
 
-function operatorPreviewText(operator) {
-  return operator === 'same_piece' ? 'is same-piece-as' : operatorLabel(operator)
+function relationalOperatorPreviewText(operator, mode) {
+  if (operator === 'attack' || operator === 'defend') {
+    if (mode !== 'legal' && mode !== 'ignore_king_safety') {
+      throw new Error(`Unsupported relational legality mode for preview: ${mode}`)
+    }
+    const modeLabel = mode === 'legal' ? 'legal' : 'ignore king safety'
+    return `${operatorLabel(operator)} (${modeLabel})`
+  }
+  return operatorLabel(operator)
+}
+
+function operatorPreviewText(operator, mode) {
+  return operator === 'same_piece' ? 'is same-piece-as' : relationalOperatorPreviewText(operator, mode)
 }
 
 function metricLabel(metric) {
@@ -169,7 +180,7 @@ export function formatConditionPreview(nodeData = {}) {
         comparator: nodeData.subjectComparator,
         comparisonValue: nodeData.subjectComparisonValue
       }),
-      operator: operatorPreviewText(nodeData.operator),
+      operator: operatorPreviewText(nodeData.operator, nodeData.mode),
       right: sidePreview({
         subject: nodeData.target,
         filter: nodeData.targetFilter || 'any',
@@ -200,7 +211,7 @@ export function formatConditionPreviewChunk(chunk) {
     case 'side':
       return sidePreview(chunk)
     case 'operator':
-      return operatorPreviewText(chunk.operator)
+      return operatorPreviewText(chunk.operator, chunk.mode)
     case 'comparison':
       return unaryComparisonPreview(chunk)
     default:
@@ -220,6 +231,7 @@ function parseChunkDataset(element) {
     comparisonValue: dataset.conditionPreviewComparisonValue,
     comparisonValueNumber: dataset.conditionPreviewComparisonValueNumber,
     operator: dataset.conditionPreviewOperator,
+    mode: dataset.conditionPreviewMode,
     text: element.textContent
   }
 }

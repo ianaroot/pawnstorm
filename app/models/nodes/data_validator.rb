@@ -1,7 +1,8 @@
 module Nodes
   class DataValidator
     CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator comparisonValue ].freeze
-    CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonValue operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonValue ].freeze
+    CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode mode subjectComparisonMetric subjectComparator subjectComparisonValue operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonValue ].freeze
+    RELATIONAL_MODES = %w[legal ignore_king_safety].freeze
     ACTION_TYPES = %w[add subtract set return].freeze
     ACTION_KEYS = %w[actionType value].freeze
     ORGANIZER_KEYS = %w[title notes].freeze
@@ -92,6 +93,7 @@ module Nodes
       target = record.data['target']
       target_filter = record.data['targetFilter']
       target_filter_mode = record.data['targetFilterMode']
+      mode = record.data['mode']
       record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
       record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_relational_operator_for_subject?(subject:, operator:)
       record.errors.add(:data, 'has invalid target') unless NodeGrammarRules.valid_relational_target_for?(subject:, operator:, target:)
@@ -99,6 +101,13 @@ module Nodes
       record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
       record.errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
       record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
+      if mode.present?
+        if %w[attack defend].include?(operator)
+          record.errors.add(:data, 'has invalid mode') unless RELATIONAL_MODES.include?(mode)
+        else
+          record.errors.add(:data, 'has invalid mode') if mode.present?
+        end
+      end
       unless NodeGrammarRules.comparison_allowed_for_relational_operator?(operator)
         validate_v2_same_piece_relational!
         return

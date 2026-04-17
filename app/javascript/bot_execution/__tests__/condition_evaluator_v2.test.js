@@ -9,7 +9,11 @@ import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helper
 
 describe('ConditionEvaluatorV2', () => {
   function evaluate(conditionNode, board, moveObject) {
-    return new ConditionEvaluatorV2().evaluate(conditionNode, { board, moveObject })
+    const normalizedConditionNode =
+      conditionNode.kind === 'relational' && ['attack', 'defend'].includes(conditionNode.operator) && !conditionNode.mode
+        ? { ...conditionNode, mode: 'ignore_king_safety' }
+        : conditionNode
+    return new ConditionEvaluatorV2().evaluate(normalizedConditionNode, { board, moveObject })
   }
 
   function evaluateV1(conditionNode, board, moveObject) {

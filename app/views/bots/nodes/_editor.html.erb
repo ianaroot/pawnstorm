@@ -87,6 +87,13 @@
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
+          <div class="condition-form-field hidden" id="cond-mode-row">
+            <label>Legality</label>
+            <select id="cond-mode">
+              <option value="legal">legal</option>
+              <option value="ignore_king_safety">ignore king safety</option>
+            </select>
+          </div>
         </section>
 
         <section class="condition-form-side" id="cond-right-card">

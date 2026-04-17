@@ -125,6 +125,7 @@ RSpec.describe BotNodesController, type: :request do
             subjectFilter: 'any',
             subjectFilterMode: 'include',
             operator: 'attack',
+            mode: 'legal',
             target: 'enemy',
             targetFilter: 'any',
             targetFilterMode: 'include'

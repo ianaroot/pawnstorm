@@ -112,6 +112,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         kind: 'relational',
         subject: 'allied',
         subjectFilter: 'any',
+        mode: 'legal',
         subjectComparisonMetric: '',
         subjectComparator: 'greater_than',
         subjectComparisonValue: 0,
@@ -129,6 +130,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'kind' => 'relational',
           'subject' => 'allied',
           'subjectFilter' => 'any',
+          'mode' => 'legal',
           'operator' => 'attack',
           'target' => 'enemy',
           'targetFilter' => 'any',
@@ -145,6 +147,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         kind: 'relational',
         subject: 'allied',
         subjectFilter: 'any',
+        mode: 'legal',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
         subjectComparisonValue: 0,
@@ -162,6 +165,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'kind' => 'relational',
           'subject' => 'allied',
           'subjectFilter' => 'any',
+          'mode' => 'legal',
           'subjectComparisonMetric' => 'count',
           'subjectComparator' => 'greater_than',
           'subjectComparisonValue' => 0,
@@ -170,6 +174,36 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'targetFilter' => 'any'
         }
       )
+    end
+
+    it 'preserves relational mode when it is provided on supported operators' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'relational',
+        subject: 'allied',
+        subjectFilter: 'any',
+        mode: 'legal',
+        operator: 'attack',
+        target: 'enemy',
+        targetFilter: 'any'
+      })
+
+      expect(normalized).to include('mode' => 'legal')
+    end
+
+    it 'removes the mode from relational operators that do not support it' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'relational',
+        subject: 'allied',
+        subjectFilter: 'any',
+        mode: 'legal',
+        operator: 'cover',
+        target: 'enemy',
+        targetFilter: 'any'
+      })
+
+      expect(normalized).not_to include('mode')
     end
 
     it 'stringifies organizer keys and coerces title and notes to empty strings' do

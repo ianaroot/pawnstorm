@@ -115,6 +115,7 @@ class BotCompiler
           subjectComparator: raw['subjectComparator'] || raw[:subjectComparator],
           subjectComparisonValue: raw['subjectComparisonValue'] || raw[:subjectComparisonValue],
           operator: raw['operator'] || raw[:operator],
+          mode: raw['mode'] || raw[:mode],
           target: raw['target'] || raw[:target],
           targetFilter: raw['targetFilter'] || raw[:targetFilter],
           targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],

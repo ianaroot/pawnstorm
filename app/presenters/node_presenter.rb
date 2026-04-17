@@ -42,20 +42,20 @@ class NodePresenter
   end
 
   def self.condition_preview_chunks_v2_relational(data)
-    [
-      v2_side_chunk(
-        subject: data['subject'],
-        filter: data['subjectFilter'],
-        filter_mode: data['subjectFilterMode'],
-        comparison_metric: data['subjectComparisonMetric'],
-        comparator: data['subjectComparator'],
-        comparison_value: data['subjectComparisonValue']
-      ),
-      { role: 'spacer' },
-      { role: 'operator', operator: data['operator'] },
-      { role: 'spacer' },
-      v2_side_chunk(
-        subject: data['target'],
+      [
+        v2_side_chunk(
+          subject: data['subject'],
+          filter: data['subjectFilter'],
+          filter_mode: data['subjectFilterMode'],
+          comparison_metric: data['subjectComparisonMetric'],
+          comparator: data['subjectComparator'],
+          comparison_value: data['subjectComparisonValue']
+        ),
+        { role: 'spacer' },
+        { role: 'operator', operator: data['operator'], mode: data['mode'] },
+        { role: 'spacer' },
+        v2_side_chunk(
+          subject: data['target'],
         filter: data['targetFilter'],
         filter_mode: data['targetFilterMode'],
         comparison_metric: data['targetComparisonMetric'],

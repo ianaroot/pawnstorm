@@ -361,7 +361,7 @@
 
     relationalResult({ subject, subjectFilter = "any", subjectFilterMode = null,
         operator,
-        target, targetFilter = "any", targetFilterMode = null, boardScope = AFTER_BOARD
+        target, targetFilter = "any", targetFilterMode = null, mode, boardScope = AFTER_BOARD
     }) {
         const cacheKey = [
           boardScope,
@@ -369,6 +369,7 @@
           subjectFilter,
           subjectFilterMode || "include",
           operator,
+          mode,
           target,
           targetFilter,
           targetFilterMode || "include"
@@ -383,7 +384,7 @@
             const candidateTargetPositionSet = profileCollector.measure('cma.v2.relational_result.target_set', () => new Set(candidateTargetPositions))
             const pairs = []
             candidateSubjectPositions.forEach((subjectPosition) => {
-                const relatedTargetPositions = this.relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope })
+                const relatedTargetPositions = this.relatedTargetPositionsForSubject({ operator, subjectPosition, target, mode, boardScope })
                 relatedTargetPositions.forEach((targetPosition) => {
                     if (!candidateTargetPositionSet.has(targetPosition)) { return }
                     pairs.push({ subjectPosition, targetPosition })
@@ -457,8 +458,8 @@
       }
     }
 
-    relatedTargetPositionsForSubject({ operator, subjectPosition, target, boardScope = AFTER_BOARD }) {
-        const cacheKey = `${boardScope}:${operator}:${subjectPosition}:${target}`
+    relatedTargetPositionsForSubject({ operator, subjectPosition, target, mode, boardScope = AFTER_BOARD }) {
+        const cacheKey = `${boardScope}:${operator}:${mode}:${subjectPosition}:${target}`
         if (this._relatedTargetPositionsCache.has(cacheKey)) {
             return this._relatedTargetPositionsCache.get(cacheKey)
         }
@@ -469,25 +470,11 @@
             let positions
             switch (operator) {
                   case "attack": {
-                        const subjectTeam = board.teamAt(subjectPosition)
-                        positions = cachedControlledSquares({
-                          board,
-                          attackerPosition: subjectPosition,
-                          cache: this._boardQueryCache,
-                          cacheScope: boardScope
-                        }).filter((targetPosition) => {
-                        return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam })
+                        positions = this.relatedTargetPositionsByMode({ board, subjectPosition, targetTeam, boardScope, operator, mode })
                         break
                     }
                     case "defend": {
-                        const subjectTeam = board.teamAt(subjectPosition)
-                        positions = cachedControlledSquares({
-                          board,
-                          attackerPosition: subjectPosition,
-                          cache: this._boardQueryCache,
-                          cacheScope: boardScope
-                        }).filter((targetPosition) => {
-                        return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam })
+                        positions = this.relatedTargetPositionsByMode({ board, subjectPosition, targetTeam, boardScope, operator, mode })
                         break
                     }
                 case "adjacent":
@@ -508,9 +495,67 @@
                 default:
                     throw new Error(`Unsupported V2 relational operator: ${operator}`)
             }
-            this._relatedTargetPositionsCache.set(cacheKey, positions)
-            return positions
+            const uniquePositions = this.uniquePositions(positions)
+            this._relatedTargetPositionsCache.set(cacheKey, uniquePositions)
+            return uniquePositions
         })
+    }
+
+    relatedTargetPositionsByMode({ board, subjectPosition, targetTeam, boardScope = AFTER_BOARD, operator, mode }) {
+      if (mode === "legal") {
+        return this.legalRelatedTargetPositionsForSubject({ board, subjectPosition, targetTeam, boardScope, operator })
+      }
+      if (mode === "ignore_king_safety") {
+        return this.geometryRelatedTargetPositionsForSubject({ board, subjectPosition, targetTeam, boardScope, operator })
+      }
+      throw new Error(`Unsupported V2 relational legality mode: ${mode}`)
+    }
+
+    geometryRelatedTargetPositionsForSubject({ board, subjectPosition, targetTeam, boardScope = AFTER_BOARD, operator }) {
+      const subjectTeam = board.teamAt(subjectPosition)
+      let positions
+      switch (operator) {
+        case "attack":
+          positions = cachedControlledSquares({
+            board,
+            attackerPosition: subjectPosition,
+            cache: this._boardQueryCache,
+            cacheScope: boardScope
+          }).filter((targetPosition) => {
+            return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam
+          })
+          break
+        case "defend":
+          positions = cachedControlledSquares({
+            board,
+            attackerPosition: subjectPosition,
+            cache: this._boardQueryCache,
+            cacheScope: boardScope
+          }).filter((targetPosition) => {
+            return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam
+          })
+          break
+        default:
+          positions = []
+      }
+      return this.uniquePositions(positions)
+    }
+
+    legalRelatedTargetPositionsForSubject({ board, subjectPosition, targetTeam, boardScope = AFTER_BOARD, operator }) {
+      const subjectTeam = board.teamAt(subjectPosition)
+      const legalTargetPositions = this.uniquePositions(
+        this.availableMovesFrom(subjectPosition, boardScope).map(moveObject => moveObject.endPosition)
+      )
+
+      return legalTargetPositions.filter((targetPosition) => {
+        if (operator === "attack") {
+          return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam
+        }
+        if (operator === "defend") {
+          return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam
+        }
+        return false
+      })
     }
 
     relationalTeamForActor(actor) {

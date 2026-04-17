@@ -15,10 +15,11 @@ describe('conditionPreviewFormatter', () => {
           subject: 'allied',
           subjectFilter: 'queen',
           operator: 'attack',
+          mode: 'legal',
           target: 'enemy',
           targetFilter: 'any'
         }).text
-      ).toBe('Allied queen/s : attack : Enemies any')
+      ).toBe('Allied queen/s : attack (legal) : Enemies any')
     })
 
     it('keeps side comparisons attached to their own chunks', () => {
@@ -32,13 +33,14 @@ describe('conditionPreviewFormatter', () => {
           subjectComparator: 'greater_than',
           subjectComparisonValue: 2,
           operator: 'attack',
+          mode: 'ignore_king_safety',
           target: 'enemy',
           targetFilter: 'bishop',
           targetComparisonMetric: 'value',
           targetComparator: 'less_than',
           targetComparisonValue: 'prior_board_state'
         }).text
-      ).toBe('Allied pawn/s (count > 2) : attack : Enemy bishop/s (value < Prior Board State)')
+      ).toBe('Allied pawn/s (count > 2) : attack (ignore king safety) : Enemy bishop/s (value < Prior Board State)')
     })
 
     it('formats unary previews in a three-block layout', () => {
@@ -77,11 +79,13 @@ describe('conditionPreviewFormatter', () => {
           subject: 'allied',
           subjectFilter: 'king',
           operator: 'defend',
+          mode: 'legal',
           target: 'enemy',
           targetFilter: 'any'
         }).text
-      ).toBe('Allied king : defend : Enemies any')
+      ).toBe('Allied king : defend (legal) : Enemies any')
     })
+
   })
 
   describe('formatConditionPreviewChunk', () => {
@@ -103,6 +107,7 @@ describe('conditionPreviewFormatter', () => {
 
     it('formats an operator chunk', () => {
       expect(formatConditionPreviewChunk({ role: 'operator', operator: 'same_piece' })).toBe('is same-piece-as')
+      expect(formatConditionPreviewChunk({ role: 'operator', operator: 'attack', mode: 'legal' })).toBe('attack (legal)')
     })
 
     it('formats a comparison chunk', () => {

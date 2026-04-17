@@ -71,8 +71,13 @@ function validateDataShape(template, node) {
 
 function validateConditionDataShape(template, node, keys) {
   const kind = node.data?.kind
-  const allowedKeys = kind === 'unary' ? CONDITION_UNARY_ALLOWED_KEYS : CONDITION_RELATIONAL_ALLOWED_KEYS
-  const requiredKeys = kind === 'unary' ? CONDITION_UNARY_REQUIRED_KEYS : CONDITION_RELATIONAL_REQUIRED_KEYS
+  const operator = node.data?.operator
+  const allowedKeys = kind === 'unary'
+    ? CONDITION_UNARY_ALLOWED_KEYS
+    : relationalAllowedKeysForOperator(operator)
+  const requiredKeys = kind === 'unary'
+    ? CONDITION_UNARY_REQUIRED_KEYS
+    : relationalRequiredKeysForOperator(operator)
 
   assert(
     kind === 'unary' || kind === 'relational',
@@ -86,6 +91,22 @@ function validateConditionDataShape(template, node, keys) {
     extraKeys.length === 0 && missingKeys.length === 0,
     `Template "${template.id}" condition node "${node.key}" must define valid V2 condition data`
   )
+}
+
+function relationalAllowedKeysForOperator(operator) {
+  if (['attack', 'defend'].includes(operator)) {
+    return [...CONDITION_RELATIONAL_ALLOWED_KEYS, 'mode']
+  }
+
+  return CONDITION_RELATIONAL_ALLOWED_KEYS
+}
+
+function relationalRequiredKeysForOperator(operator) {
+  if (['attack', 'defend'].includes(operator)) {
+    return [...CONDITION_RELATIONAL_REQUIRED_KEYS, 'mode']
+  }
+
+  return CONDITION_RELATIONAL_REQUIRED_KEYS
 }
 
 export function validateTemplates(templates) {
