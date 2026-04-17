@@ -38,35 +38,6 @@ class Tournament < ApplicationRecord
     Rails.cache.read(paused_cache_key) == true
   end
 
-  def pending_matches_count
-    matches.pending.count
-  end
-
-  def running_matches_count
-    matches.running.count
-  end
-
-  def completed_matches_count
-    matches.completed.count
-  end
-
-  def failed_matches_count
-    matches.failed.count
-  end
-
-  def total_matches_count
-    matches.count
-  end
-
-  def overall_status
-    return 'paused' if paused?
-    return 'pending' if total_matches_count.zero? || pending_matches_count == total_matches_count
-    return 'running' if pending_matches_count.positive? || running_matches_count.positive?
-    return 'completed_with_failures' if failed_matches_count.positive?
-
-    'completed'
-  end
-
   private
 
   def paused_cache_key

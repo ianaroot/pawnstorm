@@ -3,6 +3,38 @@ class TournamentPresenter
     @tournament = tournament
   end
 
+  def pending_matches_count
+    stats.pending_count
+  end
+
+  def running_matches_count
+    stats.running_count
+  end
+
+  def completed_matches_count
+    stats.completed_count
+  end
+
+  def failed_matches_count
+    stats.failed_count
+  end
+
+  def total_matches_count
+    stats.total_count
+  end
+
+  def overall_status
+    stats.overall_status
+  end
+
+  def active?
+    stats.active?
+  end
+
+  def polling_complete?
+    stats.polling_complete?
+  end
+
   def entrants
     tournament.tournament_entries
   end
@@ -84,6 +116,10 @@ class TournamentPresenter
   private
 
   attr_reader :tournament
+
+  def stats
+    @stats ||= TournamentMatchStats.new(tournament)
+  end
 
   def normalize_pairing_entrants(entrant_a, entrant_b)
     [entrant_a, entrant_b].sort_by(&:id)

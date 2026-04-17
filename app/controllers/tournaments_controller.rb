@@ -28,10 +28,10 @@ class TournamentsController < ApplicationController
       format.json do
         render json: {
           meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, rematch_params: @rematch_params }),
-          progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament: @tournament }),
+          progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament_presenter: @tournament_presenter }),
           standings_html: render_to_string(partial: 'standings', formats: [:html], locals: { standings: @standings }),
           matrix_html: render_to_string(partial: 'matrix', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants }),
-          polling_complete: @tournament.pending_matches_count.zero? && @tournament.running_matches_count.zero?
+          polling_complete: @tournament_presenter.polling_complete?
         }
       end
     end
