@@ -65,7 +65,7 @@ module Nodes
         normalized.delete('targetComparator')
         normalized.delete('targetComparisonValue')
       elsif kind == 'relational'
-        unless NodeGrammarV2.comparison_allowed_for_relational_operator?(normalized['operator'])
+        unless NodeGrammarRules.comparison_allowed_for_relational_operator?(normalized['operator'])
           normalized.delete('subjectComparisonMetric')
           normalized.delete('subjectComparator')
           normalized.delete('subjectComparisonValue')

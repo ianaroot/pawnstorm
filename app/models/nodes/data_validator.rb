@@ -68,10 +68,10 @@ module Nodes
 
       record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
       record.errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
-      record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
-      record.errors.add(:data, 'has invalid operator') unless NodeGrammarV2.valid_unary_operator_for_subject?(subject, operator)
+      record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
+      record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_unary_operator_for_subject?(subject, operator)
       record.errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, 'has invalid comparisonValue') unless NodeGrammarV2.valid_comparison_value_for_subject?(subject, comparison_value)
+      record.errors.add(:data, 'has invalid comparisonValue') unless NodeGrammarRules.valid_comparison_value_for_subject?(subject, comparison_value)
     end
 
     def validate_condition_data_v2_relational
@@ -93,13 +93,13 @@ module Nodes
       target_filter = record.data['targetFilter']
       target_filter_mode = record.data['targetFilterMode']
       record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
-      record.errors.add(:data, 'has invalid operator') unless NodeGrammarV2.valid_relational_operator_for_subject?(subject:, operator:)
-      record.errors.add(:data, 'has invalid target') unless NodeGrammarV2.valid_relational_target_for?(subject:, operator:, target:)
+      record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_relational_operator_for_subject?(subject:, operator:)
+      record.errors.add(:data, 'has invalid target') unless NodeGrammarRules.valid_relational_target_for?(subject:, operator:, target:)
       record.errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
-      record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
+      record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
       record.errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
-      record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarV2.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
-      unless NodeGrammarV2.comparison_allowed_for_relational_operator?(operator)
+      record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
+      unless NodeGrammarRules.comparison_allowed_for_relational_operator?(operator)
         validate_v2_same_piece_relational!
         return
       end
@@ -181,7 +181,7 @@ module Nodes
       end
       record.errors.add(:data, "has invalid #{metric_key}") unless NodeGrammarV2.valid_comparison_metric?(metric)
       record.errors.add(:data, "has invalid #{comparator_key}") unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, "has invalid #{comparison_value_key}") unless NodeGrammarV2.valid_comparison_value_for_subject?(comparison_subject, comparison_value)
+      record.errors.add(:data, "has invalid #{comparison_value_key}") unless NodeGrammarRules.valid_comparison_value_for_subject?(comparison_subject, comparison_value)
     end
 
     def side_condition_present?(side_prefix)
