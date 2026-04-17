@@ -632,7 +632,7 @@ describe('CandidateMoveAnalysisV2', () => {
 
       const shieldResult = analysis.relationalResult({
         subject: 'allied',
-        subjectFilter: 'pawn',
+        subjectFilter: 'any',
         operator: 'shield',
         target: 'allied',
         targetFilter: 'rook'
@@ -670,6 +670,32 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(result)).toEqual([['d5', 'd4']])
       expect(squaresFor(result.subjectPositions)).toEqual(['d5'])
       expect(squaresFor(result.targetPositions)).toEqual(['d4'])
+    })
+
+    it('does not count cover when no opposing slider can potentially align to the ray', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          d4: 'wR',
+          d5: 'wP',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      const result = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'pawn',
+        operator: 'cover',
+        target: 'allied',
+        targetFilter: 'rook'
+      })
+
+      expect(pairSquares(result)).toEqual([])
+      expect(result.subjectPositions).toEqual([])
+      expect(result.targetPositions).toEqual([])
     })
 
     it('treats a pawn as covering an allied rook even when the opposing slider is not already on the ray', () => {
