@@ -18,7 +18,7 @@
           <div class="condition-form-field">
             <label>Subject</label>
             <select id="cond-left-subject">
-              <% NodeGrammarV2.editor_subject_options.each do |label, value| %>
+              <% NodeForm.editor_subject_options.each do |label, value| %>
                 <option value="<%= value %>"><%= label %></option>
               <% end %>
             </select>
@@ -31,7 +31,7 @@
                 <span>Non-</span>
               </label>
               <select id="cond-left-filter">
-                <% NodeGrammarV2.filter_options.each do |label, value| %>
+                <% NodeForm.filter_options.each do |label, value| %>
                   <option value="<%= value %>"><%= label %></option>
                 <% end %>
               </select>
@@ -46,7 +46,7 @@
                 <label>Comparison</label>
                 <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
                   <select id="cond-left-comparison-metric">
-                    <% NodeGrammarV2.comparison_metric_options.each do |label, value| %>
+                    <% NodeForm.comparison_metric_options.each do |label, value| %>
                       <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
@@ -60,8 +60,8 @@
                   <div class="condition-form-comparison-value-stack">
                     <select id="cond-left-comparison-value-source">
                       <option value="exact_number">Integer</option>
-                      <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
-                        <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                      <% NodeForm.comparison_value_options.each do |label, value| %>
+                        <option value="<%= value %>"><%= label %></option>
                       <% end %>
                     </select>
                     <input id="cond-left-comparison-value-number" type="number" min="0" step="1">
@@ -75,15 +75,15 @@
         <section class="condition-form-operator">
           <label>Operator</label>
           <select id="cond-operator">
-            <% NodeGrammarV2::RELATIONAL_OPERATORS.each do |value| %>
-              <option value="<%= value %>"><%= NodeGrammarV2.operator_label(value) %></option>
+            <% NodeForm.relational_operator_options.each do |label, value| %>
+              <option value="<%= value %>"><%= label %></option>
             <% end %>
             <option disabled>────────</option>
-            <% NodeGrammarV2::SPECIAL_TARGETED_OPERATORS.each do |value| %>
-              <option value="<%= value %>"><%= NodeGrammarV2.operator_label(value) %></option>
+            <% NodeForm.special_targeted_operator_options.each do |label, value| %>
+              <option value="<%= value %>"><%= label %></option>
             <% end %>
             <option disabled>────────</option>
-            <% NodeGrammarV2.unary_operator_options.each do |label, value| %>
+            <% NodeForm.unary_operator_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
@@ -98,7 +98,7 @@
             <div class="condition-form-field">
               <label>Subject</label>
               <select id="cond-right-subject">
-                <% NodeGrammarV2.editor_subject_options.each do |label, value| %>
+                <% NodeForm.editor_subject_options.each do |label, value| %>
                   <option value="<%= value %>"><%= label %></option>
                 <% end %>
               </select>
@@ -111,7 +111,7 @@
                   <span>Non-</span>
                 </label>
                 <select id="cond-right-filter">
-                  <% NodeGrammarV2.filter_options.each do |label, value| %>
+                  <% NodeForm.filter_options.each do |label, value| %>
                     <option value="<%= value %>"><%= label %></option>
                   <% end %>
                 </select>
@@ -126,7 +126,7 @@
                   <label>Comparison</label>
                   <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
                     <select id="cond-right-comparison-metric">
-                      <% NodeGrammarV2.comparison_metric_options.each do |label, value| %>
+                      <% NodeForm.comparison_metric_options.each do |label, value| %>
                         <option value="<%= value %>"><%= label %></option>
                       <% end %>
                     </select>
@@ -140,8 +140,8 @@
                     <div class="condition-form-comparison-value-stack">
                       <select id="cond-right-comparison-value-source">
                         <option value="exact_number">Integer</option>
-                        <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
-                          <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                        <% NodeForm.comparison_value_options.each do |label, value| %>
+                          <option value="<%= value %>"><%= label %></option>
                         <% end %>
                       </select>
                       <input id="cond-right-comparison-value-number" type="number" min="0" step="1">
@@ -165,8 +165,8 @@
                 <div class="condition-form-comparison-value-stack">
                   <select id="cond-unary-comparison-value-source">
                     <option value="exact_number">Integer</option>
-                    <% NodeGrammarV2::COMPARISON_VALUES.each do |value| %>
-                      <option value="<%= value %>"><%= NodeGrammarV2.comparison_value_label(value) %></option>
+                    <% NodeForm.comparison_value_options.each do |label, value| %>
+                      <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
                   <input id="cond-unary-comparison-value-number" type="number" min="0" step="1">

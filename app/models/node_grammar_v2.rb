@@ -70,81 +70,7 @@
       'enemy_captured_piece' => DISTINCT_PIECE_VALUES
     }.freeze
 
-    SUBJECT_LABELS = {
-      'allied' => 'Allied',
-      'enemy' => 'Enemy',
-      'moved_piece' => 'Moved Piece',
-      'captured_piece' => 'Captured Piece',
-      'enemy_moved_piece' => 'Enemy Moved Piece',
-      'enemy_captured_piece' => 'Enemy Captured Piece'
-    }.freeze
-
-    FILTER_LABELS = {
-      'any' => 'Any',
-      'king' => 'King',
-      'queen' => 'Queen',
-      'rook' => 'Rook',
-      'bishop' => 'Bishop',
-      'knight' => 'Knight',
-      'pawn' => 'Pawn'
-    }.freeze
-
-    OPERATOR_LABELS = {
-      'attack' => 'Attack',
-      'defend' => 'Defend',
-      'cover' => 'Cover',
-      'shield' => 'Shield',
-      'adjacent' => 'Adjacent',
-      'same_piece' => 'Same-Piece',
-      'count' => 'Count',
-      'mobility' => 'Mobility',
-      'value' => 'Value'
-    }.freeze
-
-    COMPARISON_METRIC_LABELS = {
-      'count' => 'Count',
-      'value' => 'Value'
-    }.freeze
-
-    COMPARATOR_SYMBOLS = {
-      'equal_to' => '=',
-      'greater_than' => '>',
-      'less_than' => '<'
-    }.freeze
-
-    COMPARISON_VALUE_LABELS = {
-      'moved_piece_value' => 'Moved Piece Value',
-      'captured_piece_value' => 'Captured Piece Value',
-      'enemy_moved_piece_value' => 'Enemy Moved Piece Value',
-      'enemy_captured_piece_value' => 'Enemy Captured Piece Value',
-      'prior_board_state' => 'Prior Board State'
-    }.freeze
-
     class << self
-      def subject_options
-        SUBJECTS.map { |value| [SUBJECT_LABELS.fetch(value), value] }
-      end
-
-      def editor_subject_options
-        EDITOR_SUBJECTS.map { |value| [SUBJECT_LABELS.fetch(value), value] }
-      end
-
-      def filter_options
-        FILTERS.map { |value| [FILTER_LABELS.fetch(value), value] }
-      end
-
-      def relational_operator_options
-        ALL_RELATIONAL_OPERATORS.map { |value| [OPERATOR_LABELS.fetch(value), value] }
-      end
-
-      def unary_operator_options
-        UNARY_OPERATORS.map { |value| [OPERATOR_LABELS.fetch(value), value] }
-      end
-
-      def comparison_metric_options
-        COMPARISON_METRICS.map { |value| [COMPARISON_METRIC_LABELS.fetch(value), value] }
-      end
-
       def valid_subject?(value)
         SUBJECTS.include?(value)
       end
@@ -221,29 +147,6 @@
         comparison_value.is_a?(Numeric) || comparison_values_for_subject(subject).include?(comparison_value)
       end
 
-      def comparator_symbol(value)
-        COMPARATOR_SYMBOLS.fetch(value)
-      end
-
-      def subject_label(value)
-        SUBJECT_LABELS[value]
-      end
-
-      def filter_label(value)
-        FILTER_LABELS[value]
-      end
-
-      def operator_label(value)
-        OPERATOR_LABELS[value]
-      end
-
-      def comparison_metric_label(value)
-        COMPARISON_METRIC_LABELS[value]
-      end
-
-      def comparison_value_label(value)
-        COMPARISON_VALUE_LABELS[value]
-      end
     end
 
   end
