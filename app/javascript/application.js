@@ -6,13 +6,24 @@ import Board from "gameplay/board"
 import BotClass from "gameplay/bot"
 // import NodeEditor from "editor/node_editor"
 import GameController from "gameplay/game_controller"
+import {
+  DEBUG_SCENARIOS,
+  loadScenario,
+  resetScenarioBoard,
+  runScenarioMoves,
+  scenarioNames
+} from "gameplay/debug_scenarios"
 import Layout from "gameplay/layout"
 import MoveObject from "gameplay/move_object"
 import MovementType from "gameplay/movement_type"
 import MovesCalculator from "gameplay/moves_calculator"
 import Rules from "gameplay/rules"
-import View from "gameplay/view"
 import Sound from "gameplay/sound"
+import MatchReplayController from "gameplay/match_replay_controller"
+import {
+  initializeMatchBotListScrollbars,
+  refreshMatchBotListScrollbars
+} from "./match_bot_list_scrollbars"
 
 // var gameController = new GameController()
 // window.addEventListener('load', function () {
@@ -20,7 +31,14 @@ import Sound from "gameplay/sound"
 // })
 
 document.addEventListener('turbo:load', () => {
-    if (document.getElementById('chess-board')) {
+    initializeMatchBotListScrollbars()
+
+    const replayRoot = document.querySelector('[data-match-replay-page="true"]')
+    if (replayRoot) {
+      new MatchReplayController({ rootElement: replayRoot })
+    }
+
+    if (document.querySelector('[data-game-controller-page="true"]')) {
       var gameController = new GameController()
       
       // Expose globally for debugging in development only
@@ -35,8 +53,17 @@ document.addEventListener('turbo:load', () => {
           Board,
           Rules,
           MovesCalculator,
-          MoveObject
+          MoveObject,
+          scenarios: DEBUG_SCENARIOS,
+          scenarioNames,
+          resetScenarioBoard: () => resetScenarioBoard(gameController),
+          runScenarioMoves: (moveArray, delay) => runScenarioMoves(gameController, moveArray, delay),
+          loadScenario: (name, options) => loadScenario(gameController, name, options)
         };
       }
     }
   });
+
+window.addEventListener('resize', () => {
+  refreshMatchBotListScrollbars()
+})

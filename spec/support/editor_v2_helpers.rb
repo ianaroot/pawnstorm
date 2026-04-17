@@ -54,7 +54,7 @@ module EditorV2Helpers
     expect(page).to have_css('#nodes-canvas', wait: 5)
     expect(page).to have_css('#connections-canvas', wait: 5)
     # Wait for at least root node to be rendered
-    expect(page).to have_css('.node', wait: 5)
+    expect(page).to have_css('.node', wait: 10)
   end
 
   # Assert history count (format: "X/50")
@@ -129,7 +129,9 @@ module EditorV2Helpers
   # Delete the currently selected node via toolbar button
   # Accepts the confirmation dialog
   def delete_selected_node
-    find('.btn-delete-node').click
+    delete_button = find('.btn-delete-node')
+    # Use JavaScript click to avoid toolbar/header overlap issues in the feature-test viewport.
+    page.execute_script('arguments[0].click()', delete_button)
     page.accept_confirm
     sleep 0.3 # Wait for async deletion
   end

@@ -1,0 +1,93 @@
+<div class="match-show-page">
+  <% if @match.pending? || @match.running? %>
+    <meta http-equiv="refresh" content="2">
+  <% end %>
+
+  <% if @match.pending? || @match.running? %>
+    <div class="match-replay-layout">
+      <div class="game-page">
+        <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
+        <% if @match.error_message.present? %>
+          <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+        <% end %>
+        <div id="arena">
+          <div id="notifications"></div>
+          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
+          <div id="W-captures" class="captures"><br><br><br></div>
+          <%= render partial: 'shared/chess_board' %>
+          <div id="B-captures" class="captures"><br><br><br></div>
+        </div>
+      </div>
+
+      <div class="match-replay-sidebar">
+        <p>Match is generating.</p>
+      </div>
+    </div>
+  <% elsif @match.failed? %>
+    <div class="game-page">
+      <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
+      <p>Match generation failed.</p>
+      <% if @match.error_message.present? %>
+        <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+      <% end %>
+    </div>
+  <% else %>
+    <div
+      class="match-replay-layout"
+      data-match-replay-page="true"
+      data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
+      data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
+      data-result="<%= @match.result %>"
+      data-current-user-id="<%= current_user.id %>"
+      data-white-bot-owner-id="<%= @match.white_tournament_entry&.bot_owner_id || (@match.white_player_type == 'Bot' ? @match.white_player&.user_id : '') %>"
+      data-black-bot-owner-id="<%= @match.black_tournament_entry&.bot_owner_id || (@match.black_player_type == 'Bot' ? @match.black_player&.user_id : '') %>"
+      data-white-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:white).to_json) %>"
+      data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
+    >
+      <div class="game-page">
+        <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
+        <% if @match.error_message.present? %>
+          <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
+        <% end %>
+        <div id="arena">
+          <div id="notifications"></div>
+          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
+          <div id="W-captures" class="captures"><br><br><br></div>
+          <%= render partial: 'shared/chess_board' %>
+          <div id="B-captures" class="captures"><br><br><br></div>
+        </div>
+      </div>
+
+      <div class="match-replay-sidebar">
+        <div class="match-replay-sidebar-top">
+          <p data-match-replay-target="result"></p>
+          <div class="match-replay-controls">
+            <button type="button" data-match-replay-target="start-button">Start</button>
+            <button type="button" data-match-replay-target="back-button">Back</button>
+            <button type="button" data-match-replay-target="forward-button">Forward</button>
+            <button type="button" data-match-replay-target="play-button">Play</button>
+            <button type="button" data-match-replay-target="reverse-button">Reverse</button>
+            <button type="button" data-match-replay-target="top-moves-toggle">Mute top moves</button>
+          </div>
+          <div class="match-replay-speed">
+            <span>Speed</span>
+            <div class="match-replay-speed-buttons">
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
+              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
+            </div>
+          </div>
+          <p data-match-replay-target="status"></p>
+          <p data-match-replay-target="warning" hidden></p>
+          <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
+        </div>
+        <div class="match-replay-trace" data-match-replay-target="trace-panel" hidden>
+          <div class="match-replay-trace-summary" data-match-replay-target="trace-summary"></div>
+          <div class="match-replay-trace-branches" data-match-replay-target="trace-branches"></div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

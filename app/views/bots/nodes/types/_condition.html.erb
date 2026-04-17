@@ -1,36 +1,28 @@
-<% 
-data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
-context = data['context'] || 'self'
-query = data['query'] || '?'
+<% chunks = presenter.condition_preview_chunks %>
 
-piece_info = ""
-if data['piece_filter_type'] == 'specific'
-  piece_info = "(#{data['piece_type'] || 'any'})"
-elsif data['piece_filter_type'] == 'negative'
-  piece_info = "(not #{data['piece_negative_type'] || 'pawn'})"
-elsif data['piece_filter_type'] == 'value'
-  piece_info = "(val #{data['piece_value_op']}#{data['piece_value_num']})"
-end
-
-details = ""
-if query == 'is_attacked' && data['attacker_filter_type']
-  if data['attacker_filter_type'] == 'specific'
-    details = " by #{data['attacker_type']}"
-  elsif data['attacker_filter_type'] == 'value'
-    details = " by val #{data['attacker_value_op']}#{data['attacker_value_num']}"
-  end
-elsif query == 'is_attacking' && data['attacked_filter_type']
-  if data['attacked_filter_type'] == 'specific'
-    details = " -> #{data['attacked_type']}"
-  elsif data['attacked_filter_type'] == 'value'
-    details = " -> val #{data['attacked_value_op']}#{data['attacked_value_num']}"
-  end
-elsif query == 'position'
-  if data['position_type'] == 'file'
-    details = " #{data['position_file']}"
-  else
-    details = " #{data['position_op']}#{data['position_num']}"
-  end
-end
-%>
-<div class="node-preview"><%= context %> <%= piece_info %>: <%= query %><%= details %></div>
+<div class="node-preview condition-preview">
+  <% chunks.each do |chunk| %>
+    <% if chunk.is_a?(Hash) %>
+      <% role = chunk[:role] || chunk['role'] %>
+      <% if role == 'spacer' %>
+        <div class="condition-preview__chunk condition-preview__chunk--spacer"></div>
+      <% else %>
+        <div
+          class="condition-preview__chunk"
+          data-condition-preview-role="<%= role %>"
+          <% if (value = chunk[:subject] || chunk['subject']).present? %>data-condition-preview-subject="<%= value %>"<% end %>
+          <% if (value = chunk[:filter] || chunk['filter']).present? %>data-condition-preview-filter="<%= value %>"<% end %>
+          <% if (value = chunk[:filter_mode] || chunk['filter_mode']).present? %>data-condition-preview-filter-mode="<%= value %>"<% end %>
+          <% if (value = chunk[:comparison_metric] || chunk['comparison_metric']).present? %>data-condition-preview-comparison-metric="<%= value %>"<% end %>
+          <% if (value = chunk[:comparator] || chunk['comparator']).present? %>data-condition-preview-comparator="<%= value %>"<% end %>
+          <% if (value = chunk[:comparison_value] || chunk['comparison_value']).present? %>data-condition-preview-comparison-value="<%= value %>"<% end %>
+          <% if (value = chunk[:operator] || chunk['operator']).present? %>data-condition-preview-operator="<%= value %>"<% end %>
+        ></div>
+      <% end %>
+    <% elsif chunk == "" %>
+      <div class="condition-preview__chunk condition-preview__chunk--spacer"></div>
+    <% else %>
+      <div class="condition-preview__chunk"><%= chunk %></div>
+    <% end %>
+  <% end %>
+</div>

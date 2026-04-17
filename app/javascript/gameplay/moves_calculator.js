@@ -1,6 +1,7 @@
 import MovementType from "gameplay/movement_type"
 import Board from "gameplay/board"
 import MoveObject from "gameplay/move_object"
+import { squareClassification, pawnAttackPositions } from "gameplay/board_query_utils"
 
 class MovesCalculator {
   constructor({  startPosition: startPosition, board: board, moveObjects: moveObjects, movementTypes: movementTypes, ignoreCastles: ignoreCastles//, countDefense: countDefense//, endPosition: endPosition
@@ -44,26 +45,54 @@ class MovesCalculator {
         if ( !boundaryCheck(j, increment, this.startPosition) ){
           break
         }
-        if ( this.board.positionEmpty(currentPosition) ){
-          this.moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: movementType.captureNotation}) )// illegal may change later
-          // if( this.endPosition === currentPosition){
-          //   return
-          // }
-        } else if( this.board.occupiedByOpponent({position: currentPosition, teamString: teamString} ) ){
-          this.moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: "x"}) )// illegal may change later
-          // if( this.endPosition === currentPosition){
-          //   return
-          // }
+        
+        const squareState = squareClassification({position: currentPosition, movingTeam: teamString, board: this.board})
+
+        if ( squareState.isEmpty ){
+          this.moveObjects.push(...this.buildMoveObjects({
+            additionalActions,
+            endPosition: currentPosition,
+            pieceNotation: movementType.pieceNotation,
+            captureNotation: movementType.captureNotation
+          }))
+        } else if( squareState.isOpponent ){
+          this.moveObjects.push(...this.buildMoveObjects({
+            additionalActions,
+            endPosition: currentPosition,
+            pieceNotation: movementType.pieceNotation,
+            captureNotation: "x"
+          }))// illegal may change later
           break
-        } else if( this.board.occupiedByTeamMate({position: currentPosition, teamString: teamString} ) ){
-          // if(this.countDefense){
-          //   moveObjects.push( new MoveObject({additionalActions: additionalActions, endPosition: currentPosition, startPosition: this.startPosition, pieceNotation: movementType.pieceNotation, captureNotation: "x"}) )
-          // }
+        } else if( squareState.isTeammate ){
           break
         }
+
       }
     }
   }
+
+  buildMoveObjects({ additionalActions, endPosition, pieceNotation, captureNotation }) {
+    return this.promotionPiecesFor(endPosition).map(promotionPiece => {
+      return new MoveObject({
+        additionalActions,
+        endPosition,
+        startPosition: this.startPosition,
+        pieceNotation,
+        captureNotation,
+        promotionPiece
+      })
+    })
+  }
+
+  promotionPiecesFor(endPosition) {
+    if (this.pieceType !== Board.PAWN) { return [null] }
+    if (Board.rank(endPosition) !== 1 && Board.rank(endPosition) !== 8) { return [null] }
+
+    return [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT]
+  }
+
+
+
 
   static get verticalUpIncrement(){ return 8 }
   static get verticalDownIncrement(){ return -8 }
@@ -81,7 +110,6 @@ class MovesCalculator {
   static get nightHorizontalRightDownIncrement(){ return -10 }
   static get horizontalRightIncrement(){ return 1 }
   static get horizontalLeftIncrement(){ return -1 }
-
 
 // TODO this is a movementType Factory
   static genericMovements({increment: increment, rangeLimit: rangeLimit, pieceNotation: pieceNotation, startPosition: startPosition}){
@@ -347,17 +375,6 @@ class MovesCalculator {
   }
 
   static pieceSpecificMovements(species, differential){
-
-    // if( differential ){
-    //   var possibleMovesTowardsEndPosition = []
-    //   for( let i = 0; i < MovesCalculator.allIncrements.length; i++){
-    //     let increment = MovesCalculator.allIncrements[i]
-    //     if( differential % increment === 0 ){
-    //       possibleMovesTowardsEndPosition.push( MovesCalculator.genericMovements( increment ) )
-    //     }
-    //   }
-    // }
-
     switch(species){
       case "P":
         return function({board: board, startPosition: startPosition}){
@@ -369,9 +386,7 @@ class MovesCalculator {
                 nonAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.verticalDownIncrement}),
                 singleStepCheck: board._oneSpaceDownIsEmpty(startPosition),
                 doubleStepCheck: Board.isSeventhRank(startPosition) && board._twoSpacesDownIsEmpty(startPosition) && board._oneSpaceDownIsEmpty(startPosition),
-                leftAttackCheck: board._downAndLeftIsAttackable(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashDownIncrement}),
-                rightAttackCheck: board._downAndRightIsAttackable(startPosition),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashDownIncrement}),
                 rightEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition + 1) && board.whitePawnDoubleSteppedTo(startPosition + 1),//board.whitePawnDoubleSteppedFrom(startPosition - 15),
                 leftEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition - 1) && board.whitePawnDoubleSteppedTo(startPosition - 1)// board.whitePawnDoubleSteppedFrom(startPosition - 17),
@@ -381,9 +396,7 @@ class MovesCalculator {
                 nonAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.verticalUpIncrement}),
                 singleStepCheck: board._oneSpaceUpIsEmpty(startPosition),
                 doubleStepCheck: Board.isSecondRank(startPosition) && board._twoSpacesUpIsEmpty( startPosition ) && board._oneSpaceUpIsEmpty(startPosition),
-                leftAttackCheck: board._upAndLeftIsAttackable(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashUpIncrement}),
-                rightAttackCheck: board._upAndRightIsAttackable(startPosition ),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashUpIncrement}),
                 leftEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition - 1) && board.blackPawnDoubleSteppedTo(startPosition - 1),//board.blackPawnDoubleSteppedFrom(startPosition + 15),
                 rightEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition + 1) && board.blackPawnDoubleSteppedTo(startPosition + 1)//board.blackPawnDoubleSteppedFrom(startPosition + 17),
@@ -403,19 +416,26 @@ class MovesCalculator {
             movementType.startPosition = startPosition
             movementTypes.push(movementType)
           }
-          if ( pawnVars.leftAttackCheck ) {
-            let movementType = pawnVars.leftAttackMove
-            movementType.rangeLimit = 1
-            movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)
-            movementTypes.push(movementType)
+          const attackPositions = pawnAttackPositions({startPosition, board})
+          if (attackPositions.left !== null) {
+            const leftSquare = squareClassification({position: attackPositions.left, movingTeam: teamString, board})
+            if (leftSquare.isOpponent) {
+              const movementType = pawnVars.leftAttackMove
+              movementType.rangeLimit = 1
+              movementType.startPosition = startPosition
+              movementType.pieceNotation = Board.file(startPosition)
+              movementTypes.push(movementType)
+            }
           }
-          if( pawnVars.rightAttackCheck ) {
-            let movementType = pawnVars.rightAttackMove
-            movementType.rangeLimit = 1
-            movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)
-            movementTypes.push(movementType)
+          if (attackPositions.right !== null) {
+            const rightSquare = squareClassification({position: attackPositions.right, movingTeam: teamString, board})
+            if (rightSquare.isOpponent) {
+              const movementType = pawnVars.rightAttackMove
+              movementType.rangeLimit = 1
+              movementType.startPosition = startPosition
+              movementType.pieceNotation = Board.file(startPosition)
+              movementTypes.push(movementType)
+            }
           }
           if( pawnVars.rightEnPassantCheck ){
             let movementType = pawnVars.rightAttackMove
@@ -423,7 +443,6 @@ class MovesCalculator {
             movementType.startPosition = startPosition
             movementType.pieceNotation = Board.file(startPosition)// + "x"
             movementType.captureNotation = "x" //might be quicker to assign a single hash at once
-            // let capture = board._capture.bind(board)
             movementType.additionalActions = function(startPosition){
               this._capture(startPosition + 1)
               this._emptify(startPosition + 1)
@@ -437,7 +456,6 @@ class MovesCalculator {
             movementType.startPosition = startPosition
             movementType.pieceNotation = Board.file(startPosition)// + "x"
             movementType.captureNotation = "x" //might be quicker to assign a single hash at once
-            // let capture = board._capture.bind(board)
             movementType.additionalActions = function(startPosition){
               this._capture(startPosition - 1)
               this._emptify(startPosition - 1)
@@ -445,7 +463,6 @@ class MovesCalculator {
             }
             movementTypes.push(movementType)
           }
-          // debugger
         return movementTypes
       }
       case "N":
@@ -456,14 +473,6 @@ class MovesCalculator {
               MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.nightVerticalLeftDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.nightHorizontalRightUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.nightHorizontalLeftUpIncrement}),
               MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.nightVerticalRightUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.nightVerticalLeftUpIncrement})
             ]
-          // if( possibleMovesTowardsEndPosition ){
-          //   movementTypes = MovesCalculator.getCommonMoveObjects(movementTypes, possibleMovesTowardsEndPosition)
-          // }
-          // for (let i = 0; i < movementTypes.length; i++ ) {
-          //     movementTypes[i].rangeLimit = 1
-          //     movementTypes[i].pieceNotation = "N";
-          //     movementTypes[i].startPosition = startPosition
-          // }
           return  movementTypes
         }
         break
@@ -472,14 +481,6 @@ class MovesCalculator {
           let pieceNotation = "R",
             rangeLimit = 7;
           var movementTypes = [MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.horizontalRightIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.horizontalLeftIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.verticalUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.verticalDownIncrement})]
-          // if( possibleMovesTowardsEndPosition ){
-          //   movementTypes = MovesCalculator.getCommonMoveObjects(movementTypes, possibleMovesTowardsEndPosition)
-          // }
-          // for (let i = 0; i < movementTypes.length; i++ ) {
-          //   movementTypes[i].rangeLimit = 7
-          //   movementTypes[i].pieceNotation = "R"
-          //   movementTypes[i].startPosition = startPosition
-          // }
           return movementTypes
         }
         break
@@ -488,14 +489,6 @@ class MovesCalculator {
           let pieceNotation = "B",
             rangeLimit = 7;
           var movementTypes = [MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashUpIncrement})]
-          // if( possibleMovesTowardsEndPosition ){
-          //   movementTypes = MovesCalculator.getCommonMoveObjects(movementTypes, possibleMovesTowardsEndPosition)
-          // }
-          // for (let i = 0; i < movementTypes.length; i++ ) {
-          //   movementTypes[i].rangeLimit = 7
-          //   movementTypes[i].pieceNotation = "B"
-          //   movementTypes[i].startPosition = startPosition
-          // }
           return movementTypes
         }
         break
@@ -503,21 +496,11 @@ class MovesCalculator {
         return function({board: board, startPosition: startPosition}){
           let pieceNotation = "Q",
             rangeLimit = 7;
-          // var movementTypes =  MovesCalculator.pieceSpecificMovements("R", differential)({startPosition: startPosition, board: board}).concat( MovesCalculator.pieceSpecificMovements("B", differential)({startPosition: startPosition, board: board}) )
-          //
           var movementTypes = [MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashUpIncrement}),
             MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashUpIncrement}),
             MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.horizontalRightIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.horizontalLeftIncrement}),
             MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.verticalUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.verticalDownIncrement})
           ]
-          // if( possibleMovesTowardsEndPosition ){
-          //   movementTypes = MovesCalculator.getCommonMoveObjects(movementTypes, possibleMovesTowardsEndPosition)
-          // }
-          // for (let i = 0; i < movementTypes.length; i++ ) {
-          //   movementTypes[i].rangeLimit = 7
-          //   movementTypes[i].pieceNotation = "Q"
-          //   movementTypes[i].startPosition = startPosition
-          // }
           return movementTypes
         }
         break
@@ -529,25 +512,12 @@ class MovesCalculator {
               MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.forwardSlashUpIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashDownIncrement}), MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.backSlashUpIncrement})
             ],
             team = board.teamAt(startPosition)
-            //
-            // if( possibleMovesTowardsEndPosition ){
-            //   movementTypes = MovesCalculator.getCommonMoveObjects(movementTypes, possibleMovesTowardsEndPosition)
-            // }
-
-          // for (let i = 0; i < movementTypes.length; i++ ) {
-          //   movementTypes[i].rangeLimit = 1
-          //   movementTypes[i].pieceNotation = "K"
-          //   movementTypes[i].startPosition = startPosition
-          // }
           if ( !ignoreCastles && board.kingSideCastleViableFor(team, startPosition) ){
             let movementType = MovesCalculator.genericMovements({startPosition: startPosition, rangeLimit: rangeLimit, pieceNotation: pieceNotation, increment: MovesCalculator.horizontalLeftIncrement})
             movementType.increment = + 2
             movementType.rangeLimit = 1
             movementType.pieceNotation = "O-O"
             movementType.startPosition = startPosition
-            // let _emptify = board._emptify.bind(board),
-            //   _placePiece = board._placePiece.bind(board),
-            //   pieceObject = board.pieceObject.bind(board)
             movementType.additionalActions = function(startPosition){
               let rook = this.pieceObject( startPosition + 3 )
               this._placePiece({ position: (startPosition + 1), pieceObject: rook })
@@ -562,9 +532,6 @@ class MovesCalculator {
             movementType.rangeLimit = 1
             movementType.pieceNotation = "O-O-O"
             movementType.startPosition = startPosition
-            // let _emptify = board._emptify.bind(board),
-            //   _placePiece = board._placePiece.bind(board),
-            //   pieceObject = board.pieceObject.bind(board)
             movementType.additionalActions = function(startPosition){
               let rook = this.pieceObject( startPosition - 4 )
               this._placePiece({ position: (startPosition - 1), pieceObject: rook })

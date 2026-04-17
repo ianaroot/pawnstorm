@@ -1,0 +1,41 @@
+<div class="match-setup-page">
+  <h1>Set Up Tournament</h1>
+  <p>Select the compiled bots you want entered. This dev-only tool creates a 10-game round robin pairing for every selected bot combination.</p>
+
+  <%= form_with url: tournaments_path, scope: :tournament, method: :post, local: true do |form| %>
+    <div class="match-setup-section">
+      <h2>Format</h2>
+      <p>Default is 10 games per pairing. Raise it for a larger sample.</p>
+      <%= form.label :games_per_pair, 'Games Per Pairing' %>
+      <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, step: 1 %>
+    </div>
+
+    <div class="match-setup-section">
+      <h2>Entrants</h2>
+      <div class="match-bot-list-frame">
+        <div class="match-bot-list">
+          <% @selectable_bots.each do |bot| %>
+            <label class="match-bot-option">
+              <%= form.check_box :entrant_bot_ids,
+                  {
+                    multiple: true,
+                    checked: @selected_bot_ids.include?(bot.id.to_s)
+                  },
+                  bot.id,
+                  nil %>
+              <span>
+                <strong><%= bot.name %></strong>
+                <small>by <%= bot.user.email %></small>
+              </span>
+            </label>
+          <% end %>
+        </div>
+        <div class="match-bot-scroll-track" aria-hidden="true">
+          <div class="match-bot-scroll-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <%= form.submit 'Create Tournament' %>
+  <% end %>
+</div>

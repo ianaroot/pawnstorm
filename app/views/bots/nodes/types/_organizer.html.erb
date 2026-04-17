@@ -1,0 +1,8 @@
+<% title = presenter.organizer_title %>
+<% notes = presenter.organizer_notes %>
+<div class="node-preview organizer-preview">
+  <div class="organizer-preview__title"><%= title %></div>
+  <% if notes.present? %>
+    <div class="organizer-preview__notes"><%= notes %></div>
+  <% end %>
+</div>

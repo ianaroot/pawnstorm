@@ -1,0 +1,26 @@
+<div class="match-show-page">
+  <div
+    class="match-replay-layout tournament-show-layout"
+    data-controller="tournament-poll"
+    data-tournament-poll-url-value="<%= tournament_path(@tournament, format: :json) %>"
+    data-tournament-poll-active-value="<%= @tournament_presenter.active? %>"
+  >
+    <div class="game-page tournament-page">
+      <div data-tournament-poll-target="meta">
+        <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
+      </div>
+
+      <div data-tournament-poll-target="progress">
+        <%= render 'progress', tournament_presenter: @tournament_presenter %>
+      </div>
+
+      <div data-tournament-poll-target="standings">
+        <%= render 'standings', standings: @standings %>
+      </div>
+
+      <div data-tournament-poll-target="matrix">
+        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants %>
+      </div>
+    </div>
+  </div>
+</div>

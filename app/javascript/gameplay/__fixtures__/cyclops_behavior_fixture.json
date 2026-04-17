@@ -1,0 +1,6523 @@
+{
+  "compiledProgram": {
+    "version": 1,
+    "root": "32358",
+    "nodes": {
+      "32358": {
+        "id": "32358",
+        "type": "root",
+        "data": {},
+        "children": [
+          "53810",
+          "53811",
+          "53812",
+          "53813",
+          "53814",
+          "53815"
+        ]
+      },
+      "53810": {
+        "id": "53810",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53816",
+          "53819"
+        ]
+      },
+      "53811": {
+        "id": "53811",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53822",
+          "53840",
+          "53858",
+          "53876"
+        ]
+      },
+      "53812": {
+        "id": "53812",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53894",
+          "53897",
+          "53899",
+          "53902",
+          "53906",
+          "53911"
+        ]
+      },
+      "53813": {
+        "id": "53813",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53914",
+          "53931",
+          "53918",
+          "53935",
+          "53923",
+          "53948",
+          "53953",
+          "53940",
+          "53928",
+          "53945"
+        ]
+      },
+      "53814": {
+        "id": "53814",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53958",
+          "53963",
+          "53968",
+          "53981",
+          "53974",
+          "53987"
+        ]
+      },
+      "53815": {
+        "id": "53815",
+        "type": "organizer",
+        "data": {},
+        "children": [
+          "53994",
+          "53999",
+          "54004",
+          "54009",
+          "54014",
+          "54019",
+          "54022",
+          "54026",
+          "54031",
+          "54036"
+        ]
+      },
+      "53816": {
+        "id": "53816",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53817"
+        ]
+      },
+      "53817": {
+        "id": "53817",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53818"
+        ]
+      },
+      "53818": {
+        "id": "53818",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 100
+        },
+        "children": []
+      },
+      "53819": {
+        "id": "53819",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53820"
+        ]
+      },
+      "53820": {
+        "id": "53820",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53821"
+        ]
+      },
+      "53821": {
+        "id": "53821",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": -100
+        },
+        "children": []
+      },
+      "53822": {
+        "id": "53822",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53823"
+        ]
+      },
+      "53823": {
+        "id": "53823",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53824"
+        ]
+      },
+      "53824": {
+        "id": "53824",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53825"
+        ]
+      },
+      "53825": {
+        "id": "53825",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53826"
+        ]
+      },
+      "53826": {
+        "id": "53826",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53827"
+        ]
+      },
+      "53827": {
+        "id": "53827",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53828"
+        ]
+      },
+      "53828": {
+        "id": "53828",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53829"
+        ]
+      },
+      "53829": {
+        "id": "53829",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53830"
+        ]
+      },
+      "53830": {
+        "id": "53830",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53831"
+        ]
+      },
+      "53831": {
+        "id": "53831",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53832"
+        ]
+      },
+      "53832": {
+        "id": "53832",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53833"
+        ]
+      },
+      "53833": {
+        "id": "53833",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53834"
+        ]
+      },
+      "53834": {
+        "id": "53834",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53835"
+        ]
+      },
+      "53835": {
+        "id": "53835",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53836"
+        ]
+      },
+      "53836": {
+        "id": "53836",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53837"
+        ]
+      },
+      "53837": {
+        "id": "53837",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53838"
+        ]
+      },
+      "53838": {
+        "id": "53838",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53839"
+        ]
+      },
+      "53839": {
+        "id": "53839",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 14
+        },
+        "children": []
+      },
+      "53840": {
+        "id": "53840",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53841"
+        ]
+      },
+      "53841": {
+        "id": "53841",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53842"
+        ]
+      },
+      "53842": {
+        "id": "53842",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53843"
+        ]
+      },
+      "53843": {
+        "id": "53843",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53844"
+        ]
+      },
+      "53844": {
+        "id": "53844",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53845"
+        ]
+      },
+      "53845": {
+        "id": "53845",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53846"
+        ]
+      },
+      "53846": {
+        "id": "53846",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53847"
+        ]
+      },
+      "53847": {
+        "id": "53847",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53848"
+        ]
+      },
+      "53848": {
+        "id": "53848",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53849"
+        ]
+      },
+      "53849": {
+        "id": "53849",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53850"
+        ]
+      },
+      "53850": {
+        "id": "53850",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53851"
+        ]
+      },
+      "53851": {
+        "id": "53851",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53852"
+        ]
+      },
+      "53852": {
+        "id": "53852",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53853"
+        ]
+      },
+      "53853": {
+        "id": "53853",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53854"
+        ]
+      },
+      "53854": {
+        "id": "53854",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53855"
+        ]
+      },
+      "53855": {
+        "id": "53855",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53856"
+        ]
+      },
+      "53856": {
+        "id": "53856",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53857"
+        ]
+      },
+      "53857": {
+        "id": "53857",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 13
+        },
+        "children": []
+      },
+      "53858": {
+        "id": "53858",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53859"
+        ]
+      },
+      "53859": {
+        "id": "53859",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53860"
+        ]
+      },
+      "53860": {
+        "id": "53860",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53861"
+        ]
+      },
+      "53861": {
+        "id": "53861",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53862"
+        ]
+      },
+      "53862": {
+        "id": "53862",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53863"
+        ]
+      },
+      "53863": {
+        "id": "53863",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53864"
+        ]
+      },
+      "53864": {
+        "id": "53864",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53865"
+        ]
+      },
+      "53865": {
+        "id": "53865",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53866"
+        ]
+      },
+      "53866": {
+        "id": "53866",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53867"
+        ]
+      },
+      "53867": {
+        "id": "53867",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53868"
+        ]
+      },
+      "53868": {
+        "id": "53868",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53869"
+        ]
+      },
+      "53869": {
+        "id": "53869",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53870"
+        ]
+      },
+      "53870": {
+        "id": "53870",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53871"
+        ]
+      },
+      "53871": {
+        "id": "53871",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53872"
+        ]
+      },
+      "53872": {
+        "id": "53872",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53873"
+        ]
+      },
+      "53873": {
+        "id": "53873",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53874"
+        ]
+      },
+      "53874": {
+        "id": "53874",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53875"
+        ]
+      },
+      "53875": {
+        "id": "53875",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 9
+        },
+        "children": []
+      },
+      "53876": {
+        "id": "53876",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53877"
+        ]
+      },
+      "53877": {
+        "id": "53877",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53878"
+        ]
+      },
+      "53878": {
+        "id": "53878",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53879"
+        ]
+      },
+      "53879": {
+        "id": "53879",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53880"
+        ]
+      },
+      "53880": {
+        "id": "53880",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53881"
+        ]
+      },
+      "53881": {
+        "id": "53881",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53882"
+        ]
+      },
+      "53882": {
+        "id": "53882",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53883"
+        ]
+      },
+      "53883": {
+        "id": "53883",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53884"
+        ]
+      },
+      "53884": {
+        "id": "53884",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "rook",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53885"
+        ]
+      },
+      "53885": {
+        "id": "53885",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53886"
+        ]
+      },
+      "53886": {
+        "id": "53886",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 2
+        },
+        "children": [
+          "53887"
+        ]
+      },
+      "53887": {
+        "id": "53887",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 8
+        },
+        "children": [
+          "53888"
+        ]
+      },
+      "53888": {
+        "id": "53888",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53889"
+        ]
+      },
+      "53889": {
+        "id": "53889",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53890"
+        ]
+      },
+      "53890": {
+        "id": "53890",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53891"
+        ]
+      },
+      "53891": {
+        "id": "53891",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "defended",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53892"
+        ]
+      },
+      "53892": {
+        "id": "53892",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53893"
+        ]
+      },
+      "53893": {
+        "id": "53893",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 8
+        },
+        "children": []
+      },
+      "53894": {
+        "id": "53894",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "value",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "moved_piece_value"
+        },
+        "children": [
+          "53895"
+        ]
+      },
+      "53895": {
+        "id": "53895",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53896"
+        ]
+      },
+      "53896": {
+        "id": "53896",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 110
+        },
+        "children": []
+      },
+      "53897": {
+        "id": "53897",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "value",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "moved_piece_value"
+        },
+        "children": [
+          "53898"
+        ]
+      },
+      "53898": {
+        "id": "53898",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 100
+        },
+        "children": []
+      },
+      "53899": {
+        "id": "53899",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53900"
+        ]
+      },
+      "53900": {
+        "id": "53900",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53901"
+        ]
+      },
+      "53901": {
+        "id": "53901",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 90
+        },
+        "children": []
+      },
+      "53902": {
+        "id": "53902",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53903"
+        ]
+      },
+      "53903": {
+        "id": "53903",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53904"
+        ]
+      },
+      "53904": {
+        "id": "53904",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53905"
+        ]
+      },
+      "53905": {
+        "id": "53905",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 58
+        },
+        "children": []
+      },
+      "53906": {
+        "id": "53906",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53907"
+        ]
+      },
+      "53907": {
+        "id": "53907",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53908"
+        ]
+      },
+      "53908": {
+        "id": "53908",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "shielder",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53909"
+        ]
+      },
+      "53909": {
+        "id": "53909",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53910"
+        ]
+      },
+      "53910": {
+        "id": "53910",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 48
+        },
+        "children": []
+      },
+      "53911": {
+        "id": "53911",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "shielded",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53912"
+        ]
+      },
+      "53912": {
+        "id": "53912",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53913"
+        ]
+      },
+      "53913": {
+        "id": "53913",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 44
+        },
+        "children": []
+      },
+      "53914": {
+        "id": "53914",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53915"
+        ]
+      },
+      "53915": {
+        "id": "53915",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53916"
+        ]
+      },
+      "53916": {
+        "id": "53916",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53917"
+        ]
+      },
+      "53917": {
+        "id": "53917",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 34
+        },
+        "children": []
+      },
+      "53918": {
+        "id": "53918",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53919"
+        ]
+      },
+      "53919": {
+        "id": "53919",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53920"
+        ]
+      },
+      "53920": {
+        "id": "53920",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53921"
+        ]
+      },
+      "53921": {
+        "id": "53921",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53922"
+        ]
+      },
+      "53922": {
+        "id": "53922",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 24
+        },
+        "children": []
+      },
+      "53923": {
+        "id": "53923",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53924"
+        ]
+      },
+      "53924": {
+        "id": "53924",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53925"
+        ]
+      },
+      "53925": {
+        "id": "53925",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "adjacent",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53926"
+        ]
+      },
+      "53926": {
+        "id": "53926",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53927"
+        ]
+      },
+      "53927": {
+        "id": "53927",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 22
+        },
+        "children": []
+      },
+      "53928": {
+        "id": "53928",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53929"
+        ]
+      },
+      "53929": {
+        "id": "53929",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53930"
+        ]
+      },
+      "53930": {
+        "id": "53930",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 16
+        },
+        "children": []
+      },
+      "53931": {
+        "id": "53931",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53932"
+        ]
+      },
+      "53932": {
+        "id": "53932",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53933"
+        ]
+      },
+      "53933": {
+        "id": "53933",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53934"
+        ]
+      },
+      "53934": {
+        "id": "53934",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 34
+        },
+        "children": []
+      },
+      "53935": {
+        "id": "53935",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53936"
+        ]
+      },
+      "53936": {
+        "id": "53936",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53937"
+        ]
+      },
+      "53937": {
+        "id": "53937",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53938"
+        ]
+      },
+      "53938": {
+        "id": "53938",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53939"
+        ]
+      },
+      "53939": {
+        "id": "53939",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 24
+        },
+        "children": []
+      },
+      "53940": {
+        "id": "53940",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53941"
+        ]
+      },
+      "53941": {
+        "id": "53941",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53942"
+        ]
+      },
+      "53942": {
+        "id": "53942",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "adjacent",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53943"
+        ]
+      },
+      "53943": {
+        "id": "53943",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53944"
+        ]
+      },
+      "53944": {
+        "id": "53944",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 22
+        },
+        "children": []
+      },
+      "53945": {
+        "id": "53945",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53946"
+        ]
+      },
+      "53946": {
+        "id": "53946",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53947"
+        ]
+      },
+      "53947": {
+        "id": "53947",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 16
+        },
+        "children": []
+      },
+      "53948": {
+        "id": "53948",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53949"
+        ]
+      },
+      "53949": {
+        "id": "53949",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53950"
+        ]
+      },
+      "53950": {
+        "id": "53950",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53951"
+        ]
+      },
+      "53951": {
+        "id": "53951",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53952"
+        ]
+      },
+      "53952": {
+        "id": "53952",
+        "type": "action",
+        "data": {
+          "actionType": "subtract",
+          "value": 14
+        },
+        "children": []
+      },
+      "53953": {
+        "id": "53953",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53954"
+        ]
+      },
+      "53954": {
+        "id": "53954",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53955"
+        ]
+      },
+      "53955": {
+        "id": "53955",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53956"
+        ]
+      },
+      "53956": {
+        "id": "53956",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "adjacent",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53957"
+        ]
+      },
+      "53957": {
+        "id": "53957",
+        "type": "action",
+        "data": {
+          "actionType": "subtract",
+          "value": 14
+        },
+        "children": []
+      },
+      "53958": {
+        "id": "53958",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53959"
+        ]
+      },
+      "53959": {
+        "id": "53959",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53960"
+        ]
+      },
+      "53960": {
+        "id": "53960",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 1
+        },
+        "children": [
+          "53961"
+        ]
+      },
+      "53961": {
+        "id": "53961",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53962"
+        ]
+      },
+      "53962": {
+        "id": "53962",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 88
+        },
+        "children": []
+      },
+      "53963": {
+        "id": "53963",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53964"
+        ]
+      },
+      "53964": {
+        "id": "53964",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53965"
+        ]
+      },
+      "53965": {
+        "id": "53965",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53966"
+        ]
+      },
+      "53966": {
+        "id": "53966",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53967"
+        ]
+      },
+      "53967": {
+        "id": "53967",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 24
+        },
+        "children": []
+      },
+      "53968": {
+        "id": "53968",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53969"
+        ]
+      },
+      "53969": {
+        "id": "53969",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53970"
+        ]
+      },
+      "53970": {
+        "id": "53970",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53971"
+        ]
+      },
+      "53971": {
+        "id": "53971",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53972"
+        ]
+      },
+      "53972": {
+        "id": "53972",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53973"
+        ]
+      },
+      "53973": {
+        "id": "53973",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 34
+        },
+        "children": []
+      },
+      "53974": {
+        "id": "53974",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53975"
+        ]
+      },
+      "53975": {
+        "id": "53975",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53976"
+        ]
+      },
+      "53976": {
+        "id": "53976",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53977"
+        ]
+      },
+      "53977": {
+        "id": "53977",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53978"
+        ]
+      },
+      "53978": {
+        "id": "53978",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53979"
+        ]
+      },
+      "53979": {
+        "id": "53979",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53980"
+        ]
+      },
+      "53980": {
+        "id": "53980",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 36
+        },
+        "children": []
+      },
+      "53981": {
+        "id": "53981",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53982"
+        ]
+      },
+      "53982": {
+        "id": "53982",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53983"
+        ]
+      },
+      "53983": {
+        "id": "53983",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53984"
+        ]
+      },
+      "53984": {
+        "id": "53984",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53985"
+        ]
+      },
+      "53985": {
+        "id": "53985",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53986"
+        ]
+      },
+      "53986": {
+        "id": "53986",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 34
+        },
+        "children": []
+      },
+      "53987": {
+        "id": "53987",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53988"
+        ]
+      },
+      "53988": {
+        "id": "53988",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": 3
+        },
+        "children": [
+          "53989"
+        ]
+      },
+      "53989": {
+        "id": "53989",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53990"
+        ]
+      },
+      "53990": {
+        "id": "53990",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53991"
+        ]
+      },
+      "53991": {
+        "id": "53991",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "moved_piece",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53992"
+        ]
+      },
+      "53992": {
+        "id": "53992",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53993"
+        ]
+      },
+      "53993": {
+        "id": "53993",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 36
+        },
+        "children": []
+      },
+      "53994": {
+        "id": "53994",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53995"
+        ]
+      },
+      "53995": {
+        "id": "53995",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "53996"
+        ]
+      },
+      "53996": {
+        "id": "53996",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53997"
+        ]
+      },
+      "53997": {
+        "id": "53997",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "53998"
+        ]
+      },
+      "53998": {
+        "id": "53998",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 7
+        },
+        "children": []
+      },
+      "53999": {
+        "id": "53999",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54000"
+        ]
+      },
+      "54000": {
+        "id": "54000",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54001"
+        ]
+      },
+      "54001": {
+        "id": "54001",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54002"
+        ]
+      },
+      "54002": {
+        "id": "54002",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "defended",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54003"
+        ]
+      },
+      "54003": {
+        "id": "54003",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 7
+        },
+        "children": []
+      },
+      "54004": {
+        "id": "54004",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "exclude",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54005"
+        ]
+      },
+      "54005": {
+        "id": "54005",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54006"
+        ]
+      },
+      "54006": {
+        "id": "54006",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54007"
+        ]
+      },
+      "54007": {
+        "id": "54007",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "defended",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54008"
+        ]
+      },
+      "54008": {
+        "id": "54008",
+        "type": "action",
+        "data": {
+          "actionType": "add",
+          "value": 7
+        },
+        "children": []
+      },
+      "54009": {
+        "id": "54009",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54010"
+        ]
+      },
+      "54010": {
+        "id": "54010",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54011"
+        ]
+      },
+      "54011": {
+        "id": "54011",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "adjacent",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54012"
+        ]
+      },
+      "54012": {
+        "id": "54012",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54013"
+        ]
+      },
+      "54013": {
+        "id": "54013",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 26
+        },
+        "children": []
+      },
+      "54014": {
+        "id": "54014",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "pawn",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54015"
+        ]
+      },
+      "54015": {
+        "id": "54015",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "coverer",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54016"
+        ]
+      },
+      "54016": {
+        "id": "54016",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54017"
+        ]
+      },
+      "54017": {
+        "id": "54017",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54018"
+        ]
+      },
+      "54018": {
+        "id": "54018",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": 18
+        },
+        "children": []
+      },
+      "54019": {
+        "id": "54019",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54020"
+        ]
+      },
+      "54020": {
+        "id": "54020",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54021"
+        ]
+      },
+      "54021": {
+        "id": "54021",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": -120
+        },
+        "children": []
+      },
+      "54022": {
+        "id": "54022",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "queen",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54023"
+        ]
+      },
+      "54023": {
+        "id": "54023",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54024"
+        ]
+      },
+      "54024": {
+        "id": "54024",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacker",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54025"
+        ]
+      },
+      "54025": {
+        "id": "54025",
+        "type": "action",
+        "data": {
+          "actionType": "return",
+          "value": -120
+        },
+        "children": []
+      },
+      "54026": {
+        "id": "54026",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "knight",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54027"
+        ]
+      },
+      "54027": {
+        "id": "54027",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54028"
+        ]
+      },
+      "54028": {
+        "id": "54028",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54029"
+        ]
+      },
+      "54029": {
+        "id": "54029",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "pawn",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54030"
+        ]
+      },
+      "54030": {
+        "id": "54030",
+        "type": "action",
+        "data": {
+          "actionType": "subtract",
+          "value": 8
+        },
+        "children": []
+      },
+      "54031": {
+        "id": "54031",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54032"
+        ]
+      },
+      "54032": {
+        "id": "54032",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "less_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54033"
+        ]
+      },
+      "54033": {
+        "id": "54033",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "defender",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54034"
+        ]
+      },
+      "54034": {
+        "id": "54034",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "attacked",
+          "relationSpecifier": "pawn",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54035"
+        ]
+      },
+      "54035": {
+        "id": "54035",
+        "type": "action",
+        "data": {
+          "actionType": "subtract",
+          "value": 8
+        },
+        "children": []
+      },
+      "54036": {
+        "id": "54036",
+        "type": "condition",
+        "data": {
+          "subject": "moved_piece",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54037"
+        ]
+      },
+      "54037": {
+        "id": "54037",
+        "type": "condition",
+        "data": {
+          "subject": "captured_piece",
+          "subjectSpecifier": "any",
+          "subjectSpecifierMode": "include",
+          "relation": "count",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": 0
+        },
+        "children": [
+          "54038"
+        ]
+      },
+      "54038": {
+        "id": "54038",
+        "type": "condition",
+        "data": {
+          "subject": "allies",
+          "subjectSpecifier": "bishop",
+          "subjectSpecifierMode": "include",
+          "relation": "defended",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "greater_than",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54039"
+        ]
+      },
+      "54039": {
+        "id": "54039",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "mobility",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54040"
+        ]
+      },
+      "54040": {
+        "id": "54040",
+        "type": "condition",
+        "data": {
+          "subject": "opponents",
+          "subjectSpecifier": "king",
+          "subjectSpecifierMode": "include",
+          "relation": "adjacent",
+          "relationSpecifier": "any",
+          "relationSpecifierMode": "include",
+          "comparison": "equal_to",
+          "comparisonValue": "prior_board_state"
+        },
+        "children": [
+          "54041"
+        ]
+      },
+      "54041": {
+        "id": "54041",
+        "type": "action",
+        "data": {
+          "actionType": "subtract",
+          "value": 10
+        },
+        "children": []
+      }
+    }
+  },
+  "positions": [
+    {
+      "matchId": 3665,
+      "plyNumber": 1,
+      "white": "Cyclops",
+      "black": "Phoenix",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "1. Nf3",
+      "selectedMove": "g1-f3",
+      "topScore": 14,
+      "topMoves": [
+        "b1-c3",
+        "b1-a3",
+        "g1-h3",
+        "g1-f3"
+      ],
+      "notationPrefix": []
+    },
+    {
+      "matchId": 3665,
+      "plyNumber": 5,
+      "white": "Cyclops",
+      "black": "Phoenix",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 22,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "3. Nd4",
+      "selectedMove": "f3-d4",
+      "topScore": 14,
+      "topMoves": [
+        "f3-d4"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "g6",
+        "2. Na3",
+        "d6"
+      ]
+    },
+    {
+      "matchId": 3665,
+      "plyNumber": 13,
+      "white": "Cyclops",
+      "black": "Phoenix",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 31,
+      "pieceCount": 31,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "7. Bg4",
+      "selectedMove": "e2-g4",
+      "topScore": 7,
+      "topMoves": [
+        "e2-g4"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "g6",
+        "2. Na3",
+        "d6",
+        "3. Nd4",
+        "b6",
+        "4. e4",
+        "Nd7",
+        "5. Be2",
+        "c5",
+        "6. Nab5",
+        "cxd4"
+      ]
+    },
+    {
+      "matchId": 3665,
+      "plyNumber": 21,
+      "white": "Cyclops",
+      "black": "Phoenix",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 36,
+      "pieceCount": 31,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "11. cxb3",
+      "selectedMove": "c2-b3",
+      "topScore": 110,
+      "topMoves": [
+        "a2-b3",
+        "c2-b3"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "g6",
+        "2. Na3",
+        "d6",
+        "3. Nd4",
+        "b6",
+        "4. e4",
+        "Nd7",
+        "5. Be2",
+        "c5",
+        "6. Nab5",
+        "cxd4",
+        "7. Bg4",
+        "e5",
+        "8. Ke2",
+        "Nc5",
+        "9. f3",
+        "Be6",
+        "10. d3",
+        "Nb3"
+      ]
+    },
+    {
+      "matchId": 3665,
+      "plyNumber": 33,
+      "white": "Cyclops",
+      "black": "Phoenix",
+      "result": "white_win",
+      "color": "white",
+      "phase": "midgame",
+      "tiedTopCount": 1,
+      "legalMoveCount": 42,
+      "pieceCount": 27,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "17. dxe6",
+      "selectedMove": "d5-e6",
+      "topScore": 110,
+      "topMoves": [
+        "d5-e6"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "g6",
+        "2. Na3",
+        "d6",
+        "3. Nd4",
+        "b6",
+        "4. e4",
+        "Nd7",
+        "5. Be2",
+        "c5",
+        "6. Nab5",
+        "cxd4",
+        "7. Bg4",
+        "e5",
+        "8. Ke2",
+        "Nc5",
+        "9. f3",
+        "Be6",
+        "10. d3",
+        "Nb3",
+        "11. cxb3",
+        "Bh6",
+        "12. Rf1",
+        "Be3",
+        "13. Bxe3",
+        "dxe3",
+        "14. Rc1",
+        "Nf6",
+        "15. Rc7",
+        "Nd5",
+        "16. exd5",
+        "Rc8"
+      ]
+    },
+    {
+      "matchId": 3511,
+      "plyNumber": 2,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 3,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nf6",
+      "selectedMove": "g8-f6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6"
+      ],
+      "notationPrefix": [
+        "1. d3"
+      ]
+    },
+    {
+      "matchId": 3511,
+      "plyNumber": 16,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 31,
+      "legalMoveCount": 32,
+      "pieceCount": 29,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "b6",
+      "selectedMove": "b7-b6",
+      "topScore": 0,
+      "topMoves": [
+        "d6-c5",
+        "d6-b4",
+        "d6-a3",
+        "d6-e7",
+        "d6-f8",
+        "d6-e5",
+        "d6-f4",
+        "d6-g3",
+        "e6-e5",
+        "e6-d5",
+        "a7-a6",
+        "a7-a5",
+        "b7-b6",
+        "b7-b5",
+        "c7-c6",
+        "c7-c5",
+        "f7-f6",
+        "f7-f5",
+        "g7-g6",
+        "g7-g5",
+        "h7-h6",
+        "h7-h5",
+        "a8-b8",
+        "d8-e7",
+        "d8-f6",
+        "d8-g5",
+        "e8-f8",
+        "e8-e7",
+        "e8-g8",
+        "h8-g8",
+        "h8-f8"
+      ],
+      "notationPrefix": [
+        "1. d3",
+        "Nf6",
+        "2. b3",
+        "Na6",
+        "3. g3",
+        "Nd5",
+        "4. Nd2",
+        "e6",
+        "5. c4",
+        "Bd6",
+        "6. cxd5",
+        "Nb4",
+        "7. e4",
+        "Nxd5",
+        "8. exd5"
+      ]
+    },
+    {
+      "matchId": 3511,
+      "plyNumber": 28,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 22,
+      "legalMoveCount": 24,
+      "pieceCount": 28,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "f6",
+      "selectedMove": "f7-f6",
+      "topScore": 0,
+      "topMoves": [
+        "h5-h4",
+        "b6-b5",
+        "c6-c5",
+        "c6-d5",
+        "e6-e5",
+        "e6-d5",
+        "a7-a6",
+        "a7-a5",
+        "d7-d6",
+        "f7-f6",
+        "f7-f5",
+        "g7-g6",
+        "g7-g5",
+        "a8-b8",
+        "c8-b7",
+        "c8-a6",
+        "d8-c7",
+        "d8-f6",
+        "d8-h4",
+        "e8-f8",
+        "e8-e7",
+        "g8-h8"
+      ],
+      "notationPrefix": [
+        "1. d3",
+        "Nf6",
+        "2. b3",
+        "Na6",
+        "3. g3",
+        "Nd5",
+        "4. Nd2",
+        "e6",
+        "5. c4",
+        "Bd6",
+        "6. cxd5",
+        "Nb4",
+        "7. e4",
+        "Nxd5",
+        "8. exd5",
+        "b6",
+        "9. Be2",
+        "O-O",
+        "10. Bb2",
+        "Re8",
+        "11. d4",
+        "Bf4",
+        "12. gxf4",
+        "h5",
+        "13. Qb1",
+        "c6",
+        "14. Ba3"
+      ]
+    },
+    {
+      "matchId": 3511,
+      "plyNumber": 44,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 23,
+      "legalMoveCount": 25,
+      "pieceCount": 24,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Bc8",
+      "selectedMove": "a6-c8",
+      "topScore": 0,
+      "topMoves": [
+        "a5-a4",
+        "a5-b4",
+        "a6-b7",
+        "a6-c8",
+        "a6-b5",
+        "a6-c4",
+        "a6-d3",
+        "c6-c5",
+        "e6-e5",
+        "f6-f5",
+        "g7-g6",
+        "g7-g5",
+        "b8-c8",
+        "b8-a8",
+        "b8-b7",
+        "b8-b6",
+        "b8-b5",
+        "b8-b4",
+        "d8-b6",
+        "d8-c8",
+        "e8-f8",
+        "e8-e7",
+        "g8-f8"
+      ],
+      "notationPrefix": [
+        "1. d3",
+        "Nf6",
+        "2. b3",
+        "Na6",
+        "3. g3",
+        "Nd5",
+        "4. Nd2",
+        "e6",
+        "5. c4",
+        "Bd6",
+        "6. cxd5",
+        "Nb4",
+        "7. e4",
+        "Nxd5",
+        "8. exd5",
+        "b6",
+        "9. Be2",
+        "O-O",
+        "10. Bb2",
+        "Re8",
+        "11. d4",
+        "Bf4",
+        "12. gxf4",
+        "h5",
+        "13. Qb1",
+        "c6",
+        "14. Ba3",
+        "f6",
+        "15. f3",
+        "b5",
+        "16. d6",
+        "a5",
+        "17. Nc4",
+        "bxc4",
+        "18. b4",
+        "Ba6",
+        "19. Bd3",
+        "cxd3",
+        "20. Ne2",
+        "dxe2",
+        "21. Qg6",
+        "Rb8",
+        "22. Qxh5"
+      ]
+    },
+    {
+      "matchId": 3511,
+      "plyNumber": 58,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 1,
+      "legalMoveCount": 18,
+      "pieceCount": 18,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Qg6+",
+      "selectedMove": "e8-g6",
+      "topScore": 34,
+      "topMoves": [
+        "e8-g6"
+      ],
+      "notationPrefix": [
+        "1. d3",
+        "Nf6",
+        "2. b3",
+        "Na6",
+        "3. g3",
+        "Nd5",
+        "4. Nd2",
+        "e6",
+        "5. c4",
+        "Bd6",
+        "6. cxd5",
+        "Nb4",
+        "7. e4",
+        "Nxd5",
+        "8. exd5",
+        "b6",
+        "9. Be2",
+        "O-O",
+        "10. Bb2",
+        "Re8",
+        "11. d4",
+        "Bf4",
+        "12. gxf4",
+        "h5",
+        "13. Qb1",
+        "c6",
+        "14. Ba3",
+        "f6",
+        "15. f3",
+        "b5",
+        "16. d6",
+        "a5",
+        "17. Nc4",
+        "bxc4",
+        "18. b4",
+        "Ba6",
+        "19. Bd3",
+        "cxd3",
+        "20. Ne2",
+        "dxe2",
+        "21. Qg6",
+        "Rb8",
+        "22. Qxh5",
+        "Bc8",
+        "23. Qxe8+",
+        "Qxe8",
+        "24. bxa5",
+        "Bb7",
+        "25. Kxe2",
+        "Ba6+",
+        "26. Ke3",
+        "Rb3+",
+        "27. axb3",
+        "Bf1",
+        "28. b4",
+        "Bd3",
+        "29. Kxd3"
+      ]
+    },
+    {
+      "matchId": 3811,
+      "plyNumber": 2,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nf6",
+      "selectedMove": "g8-f6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Nc3"
+      ]
+    },
+    {
+      "matchId": 3811,
+      "plyNumber": 8,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 26,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "d6",
+      "selectedMove": "d7-d6",
+      "topScore": 9,
+      "topMoves": [
+        "b7-b6",
+        "d7-d6"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "Nf6",
+        "2. Nh3",
+        "Na6",
+        "3. g3",
+        "Nc5",
+        "4. Nf4"
+      ]
+    },
+    {
+      "matchId": 3811,
+      "plyNumber": 18,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 31,
+      "pieceCount": 30,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Rg8",
+      "selectedMove": "h8-g8",
+      "topScore": 7,
+      "topMoves": [
+        "f6-e4",
+        "c8-d7",
+        "e8-d7",
+        "h8-g8"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "Nf6",
+        "2. Nh3",
+        "Na6",
+        "3. g3",
+        "Nc5",
+        "4. Nf4",
+        "d6",
+        "5. Ncd5",
+        "c6",
+        "6. Bh3",
+        "cxd5",
+        "7. Ne6",
+        "fxe6",
+        "8. Kf1",
+        "g6",
+        "9. Rg1"
+      ]
+    },
+    {
+      "matchId": 3811,
+      "plyNumber": 30,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 3,
+      "legalMoveCount": 35,
+      "pieceCount": 28,
+      "defensiveSignalCount": 5,
+      "actualMoveNotation": "Kb7",
+      "selectedMove": "c6-b7",
+      "topScore": 7,
+      "topMoves": [
+        "c6-b6",
+        "c6-c7",
+        "c6-b7"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "Nf6",
+        "2. Nh3",
+        "Na6",
+        "3. g3",
+        "Nc5",
+        "4. Nf4",
+        "d6",
+        "5. Ncd5",
+        "c6",
+        "6. Bh3",
+        "cxd5",
+        "7. Ne6",
+        "fxe6",
+        "8. Kf1",
+        "g6",
+        "9. Rg1",
+        "Rg8",
+        "10. Kg2",
+        "Kd7",
+        "11. g4",
+        "Nh5",
+        "12. gxh5",
+        "gxh5+",
+        "13. Kh1",
+        "Kc6",
+        "14. Rg3",
+        "b5",
+        "15. Kg2"
+      ]
+    },
+    {
+      "matchId": 3811,
+      "plyNumber": 44,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "black_win",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 1,
+      "legalMoveCount": 33,
+      "pieceCount": 23,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Rc4",
+      "selectedMove": "c8-c4",
+      "topScore": 7,
+      "topMoves": [
+        "c8-c4"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "Nf6",
+        "2. Nh3",
+        "Na6",
+        "3. g3",
+        "Nc5",
+        "4. Nf4",
+        "d6",
+        "5. Ncd5",
+        "c6",
+        "6. Bh3",
+        "cxd5",
+        "7. Ne6",
+        "fxe6",
+        "8. Kf1",
+        "g6",
+        "9. Rg1",
+        "Rg8",
+        "10. Kg2",
+        "Kd7",
+        "11. g4",
+        "Nh5",
+        "12. gxh5",
+        "gxh5+",
+        "13. Kh1",
+        "Kc6",
+        "14. Rg3",
+        "b5",
+        "15. Kg2",
+        "Kb7",
+        "16. Rxg8",
+        "Bd7",
+        "17. Rg3",
+        "Be8",
+        "18. Bg4",
+        "hxg4",
+        "19. Rf3",
+        "gxf3+",
+        "20. exf3",
+        "Ne4",
+        "21. fxe4",
+        "Rc8",
+        "22. Qg4"
+      ]
+    },
+    {
+      "matchId": 3773,
+      "plyNumber": 1,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "1. Nc3",
+      "selectedMove": "b1-c3",
+      "topScore": 14,
+      "topMoves": [
+        "b1-c3",
+        "b1-a3",
+        "g1-h3",
+        "g1-f3"
+      ],
+      "notationPrefix": []
+    },
+    {
+      "matchId": 3773,
+      "plyNumber": 3,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 3,
+      "legalMoveCount": 22,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "2. Nh3",
+      "selectedMove": "g1-h3",
+      "topScore": 14,
+      "topMoves": [
+        "g1-h3",
+        "g1-f3",
+        "c3-e4"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "g6"
+      ]
+    },
+    {
+      "matchId": 3773,
+      "plyNumber": 5,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 22,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "3. Ne4",
+      "selectedMove": "c3-e4",
+      "topScore": 14,
+      "topMoves": [
+        "c3-e4"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "g6",
+        "2. Nh3",
+        "e6"
+      ]
+    },
+    {
+      "matchId": 3773,
+      "plyNumber": 7,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 6,
+      "legalMoveCount": 24,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "4. g4",
+      "selectedMove": "g2-g4",
+      "topScore": 9,
+      "topMoves": [
+        "b2-b3",
+        "d2-d3",
+        "d2-d4",
+        "e2-e3",
+        "g2-g3",
+        "g2-g4"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "g6",
+        "2. Nh3",
+        "e6",
+        "3. Ne4",
+        "b6"
+      ]
+    },
+    {
+      "matchId": 3773,
+      "plyNumber": 9,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "white_win",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 24,
+      "pieceCount": 32,
+      "defensiveSignalCount": 0,
+      "actualMoveNotation": "5. Nf6#",
+      "selectedMove": "e4-f6",
+      "topScore": 100,
+      "topMoves": [
+        "e4-f6"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "g6",
+        "2. Nh3",
+        "e6",
+        "3. Ne4",
+        "b6",
+        "4. g4",
+        "Ne7"
+      ]
+    },
+    {
+      "matchId": 3562,
+      "plyNumber": 2,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nf6",
+      "selectedMove": "g8-f6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Na3"
+      ]
+    },
+    {
+      "matchId": 3562,
+      "plyNumber": 10,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 27,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "b6",
+      "selectedMove": "b7-b6",
+      "topScore": 9,
+      "topMoves": [
+        "b7-b6"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nf6",
+        "2. Nf3",
+        "Nc6",
+        "3. g4",
+        "Nd5",
+        "4. Rg1",
+        "g6",
+        "5. Bg2"
+      ]
+    },
+    {
+      "matchId": 3562,
+      "plyNumber": 22,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 22,
+      "legalMoveCount": 26,
+      "pieceCount": 31,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Nc3",
+      "selectedMove": "d5-c3",
+      "topScore": 0,
+      "topMoves": [
+        "d5-b4",
+        "d5-f4",
+        "d5-c3",
+        "d5-e3",
+        "d5-f6",
+        "a6-d3",
+        "b6-b5",
+        "g6-g5",
+        "c7-c6",
+        "c7-c5",
+        "d7-d6",
+        "e7-e6",
+        "e7-e5",
+        "f7-f6",
+        "f7-f5",
+        "b8-c8",
+        "b8-a8",
+        "b8-b7",
+        "d8-c8",
+        "f8-g7",
+        "f8-h6",
+        "h8-g8"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nf6",
+        "2. Nf3",
+        "Nc6",
+        "3. g4",
+        "Nd5",
+        "4. Rg1",
+        "g6",
+        "5. Bg2",
+        "b6",
+        "6. h4",
+        "Rb8",
+        "7. h5",
+        "Bb7",
+        "8. Rh1",
+        "Ncb4",
+        "9. Kf1",
+        "Ba6",
+        "10. h6",
+        "Nd3",
+        "11. exd3"
+      ]
+    },
+    {
+      "matchId": 3562,
+      "plyNumber": 40,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 3,
+      "legalMoveCount": 3,
+      "pieceCount": 26,
+      "defensiveSignalCount": 6,
+      "actualMoveNotation": "Kxd6",
+      "selectedMove": "e7-d6",
+      "topScore": 0,
+      "topMoves": [
+        "e7-d6",
+        "e7-f8",
+        "e7-f6"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nf6",
+        "2. Nf3",
+        "Nc6",
+        "3. g4",
+        "Nd5",
+        "4. Rg1",
+        "g6",
+        "5. Bg2",
+        "b6",
+        "6. h4",
+        "Rb8",
+        "7. h5",
+        "Bb7",
+        "8. Rh1",
+        "Ncb4",
+        "9. Kf1",
+        "Ba6",
+        "10. h6",
+        "Nd3",
+        "11. exd3",
+        "Nc3",
+        "12. bxc3",
+        "Bb7",
+        "13. Qe2",
+        "Ra8",
+        "14. Qxe7+",
+        "Bxe7",
+        "15. Rb1",
+        "Bd6",
+        "16. Bb2",
+        "Ke7",
+        "17. Re1+",
+        "Be4",
+        "18. dxe4",
+        "Rb8",
+        "19. e5",
+        "Rg8",
+        "20. exd6+"
+      ]
+    },
+    {
+      "matchId": 3562,
+      "plyNumber": 62,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 1,
+      "legalMoveCount": 1,
+      "pieceCount": 20,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Rxe8",
+      "selectedMove": "g8-e8",
+      "topScore": 0,
+      "topMoves": [
+        "g8-e8"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nf6",
+        "2. Nf3",
+        "Nc6",
+        "3. g4",
+        "Nd5",
+        "4. Rg1",
+        "g6",
+        "5. Bg2",
+        "b6",
+        "6. h4",
+        "Rb8",
+        "7. h5",
+        "Bb7",
+        "8. Rh1",
+        "Ncb4",
+        "9. Kf1",
+        "Ba6",
+        "10. h6",
+        "Nd3",
+        "11. exd3",
+        "Nc3",
+        "12. bxc3",
+        "Bb7",
+        "13. Qe2",
+        "Ra8",
+        "14. Qxe7+",
+        "Bxe7",
+        "15. Rb1",
+        "Bd6",
+        "16. Bb2",
+        "Ke7",
+        "17. Re1+",
+        "Be4",
+        "18. dxe4",
+        "Rb8",
+        "19. e5",
+        "Rg8",
+        "20. exd6+",
+        "Kxd6",
+        "21. Ke2",
+        "Qe7+",
+        "22. Ne5",
+        "Qxe5+",
+        "23. Kd3",
+        "Qg3+",
+        "24. fxg3",
+        "Rbe8",
+        "25. Nc4+",
+        "Kc5",
+        "26. Re5+",
+        "d5",
+        "27. Rxd5+",
+        "Kc6",
+        "28. Re5+",
+        "Kd7",
+        "29. Rf1",
+        "c5",
+        "30. Rxf7+",
+        "Kc8",
+        "31. Rxe8+"
+      ]
+    },
+    {
+      "matchId": 3547,
+      "plyNumber": 2,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nh6",
+      "selectedMove": "g8-h6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Nf3"
+      ]
+    },
+    {
+      "matchId": 3547,
+      "plyNumber": 10,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 34,
+      "pieceCount": 32,
+      "defensiveSignalCount": 2,
+      "actualMoveNotation": "Be7",
+      "selectedMove": "f8-e7",
+      "topScore": 13,
+      "topMoves": [
+        "f8-e7"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "Nh6",
+        "2. Nc3",
+        "Nf5",
+        "3. d3",
+        "Na6",
+        "4. Ne4",
+        "e6",
+        "5. Bd2"
+      ]
+    },
+    {
+      "matchId": 3547,
+      "plyNumber": 30,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 33,
+      "pieceCount": 30,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Re8",
+      "selectedMove": "f8-e8",
+      "topScore": 7,
+      "topMoves": [
+        "d7-d8",
+        "f8-e8"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "Nh6",
+        "2. Nc3",
+        "Nf5",
+        "3. d3",
+        "Na6",
+        "4. Ne4",
+        "e6",
+        "5. Bd2",
+        "Be7",
+        "6. Ne5",
+        "Rf8",
+        "7. Be3",
+        "Bb4+",
+        "8. Bd2",
+        "Ke7",
+        "9. a4",
+        "d6",
+        "10. Nc3",
+        "dxe5",
+        "11. Bg5+",
+        "Kd7",
+        "12. Bxd8",
+        "c6",
+        "13. Kd2",
+        "Bc5",
+        "14. Ne4",
+        "Bb4+",
+        "15. Kc1"
+      ]
+    },
+    {
+      "matchId": 3547,
+      "plyNumber": 70,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 2,
+      "legalMoveCount": 39,
+      "pieceCount": 20,
+      "defensiveSignalCount": 5,
+      "actualMoveNotation": "Kd6",
+      "selectedMove": "d5-d6",
+      "topScore": 7,
+      "topMoves": [
+        "d5-d6",
+        "d5-e6"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "Nh6",
+        "2. Nc3",
+        "Nf5",
+        "3. d3",
+        "Na6",
+        "4. Ne4",
+        "e6",
+        "5. Bd2",
+        "Be7",
+        "6. Ne5",
+        "Rf8",
+        "7. Be3",
+        "Bb4+",
+        "8. Bd2",
+        "Ke7",
+        "9. a4",
+        "d6",
+        "10. Nc3",
+        "dxe5",
+        "11. Bg5+",
+        "Kd7",
+        "12. Bxd8",
+        "c6",
+        "13. Kd2",
+        "Bc5",
+        "14. Ne4",
+        "Bb4+",
+        "15. Kc1",
+        "Re8",
+        "16. Nf6+",
+        "gxf6",
+        "17. Kb1",
+        "Kd6",
+        "18. Ra3",
+        "Bxa3",
+        "19. bxa3",
+        "Nc5",
+        "20. a5",
+        "Rf8",
+        "21. d4",
+        "exd4",
+        "22. Bxf6",
+        "Bd7",
+        "23. Qxd4+",
+        "Nxd4",
+        "24. Bxd4",
+        "Rfe8",
+        "25. Kb2",
+        "Rac8",
+        "26. Bc3",
+        "Rg8",
+        "27. Bf6",
+        "Kd5",
+        "28. Kc1",
+        "e5",
+        "29. h4",
+        "Ne4",
+        "30. Kb1",
+        "Nc3+",
+        "31. Kb2",
+        "Rce8",
+        "32. Rh3",
+        "Bxh3",
+        "33. gxh3",
+        "e4",
+        "34. Bd4",
+        "Rg6",
+        "35. h5"
+      ]
+    },
+    {
+      "matchId": 3547,
+      "plyNumber": 120,
+      "white": "Gambit",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 6,
+      "legalMoveCount": 6,
+      "pieceCount": 11,
+      "defensiveSignalCount": 5,
+      "actualMoveNotation": "Kg7",
+      "selectedMove": "h7-g7",
+      "topScore": 0,
+      "topMoves": [
+        "d4-d3",
+        "f5-f4",
+        "h7-g7",
+        "h7-h8",
+        "h7-g6",
+        "h7-g8"
+      ],
+      "notationPrefix": [
+        "1. Nf3",
+        "Nh6",
+        "2. Nc3",
+        "Nf5",
+        "3. d3",
+        "Na6",
+        "4. Ne4",
+        "e6",
+        "5. Bd2",
+        "Be7",
+        "6. Ne5",
+        "Rf8",
+        "7. Be3",
+        "Bb4+",
+        "8. Bd2",
+        "Ke7",
+        "9. a4",
+        "d6",
+        "10. Nc3",
+        "dxe5",
+        "11. Bg5+",
+        "Kd7",
+        "12. Bxd8",
+        "c6",
+        "13. Kd2",
+        "Bc5",
+        "14. Ne4",
+        "Bb4+",
+        "15. Kc1",
+        "Re8",
+        "16. Nf6+",
+        "gxf6",
+        "17. Kb1",
+        "Kd6",
+        "18. Ra3",
+        "Bxa3",
+        "19. bxa3",
+        "Nc5",
+        "20. a5",
+        "Rf8",
+        "21. d4",
+        "exd4",
+        "22. Bxf6",
+        "Bd7",
+        "23. Qxd4+",
+        "Nxd4",
+        "24. Bxd4",
+        "Rfe8",
+        "25. Kb2",
+        "Rac8",
+        "26. Bc3",
+        "Rg8",
+        "27. Bf6",
+        "Kd5",
+        "28. Kc1",
+        "e5",
+        "29. h4",
+        "Ne4",
+        "30. Kb1",
+        "Nc3+",
+        "31. Kb2",
+        "Rce8",
+        "32. Rh3",
+        "Bxh3",
+        "33. gxh3",
+        "e4",
+        "34. Bd4",
+        "Rg6",
+        "35. h5",
+        "Kd6",
+        "36. hxg6",
+        "Nd5",
+        "37. Bg2",
+        "Ke7",
+        "38. Bc5+",
+        "Kf6",
+        "39. Bd4+",
+        "Kxg6",
+        "40. Bf3",
+        "exf3",
+        "41. exf3",
+        "Re3",
+        "42. Bxe3",
+        "h5",
+        "43. Bxa7",
+        "b5",
+        "44. axb6e.p.",
+        "h4",
+        "45. b7",
+        "f5",
+        "46. b8=B",
+        "Ne7",
+        "47. Be3",
+        "Nd5",
+        "48. Be5",
+        "Nf4",
+        "49. Bc5",
+        "Nd5",
+        "50. Be3",
+        "Nf4",
+        "51. Bc5",
+        "Nd5",
+        "52. Be3",
+        "Nf4",
+        "53. Bc5",
+        "Nd5",
+        "54. Be3",
+        "Nc3",
+        "55. Kxc3",
+        "Kh5",
+        "56. Bh8",
+        "Kg6",
+        "57. Bhd4",
+        "Kh7",
+        "58. Bd2",
+        "c5",
+        "59. Kb3",
+        "cxd4",
+        "60. Kb4"
+      ]
+    },
+    {
+      "matchId": 3516,
+      "plyNumber": 2,
+      "white": "Nightcrawler",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nh6",
+      "selectedMove": "g8-h6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Na3"
+      ]
+    },
+    {
+      "matchId": 3516,
+      "plyNumber": 8,
+      "white": "Nightcrawler",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 26,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Ncd4",
+      "selectedMove": "c6-d4",
+      "topScore": 7,
+      "topMoves": [
+        "f5-d4",
+        "c6-d4"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nh6",
+        "2. Nh3",
+        "Nc6",
+        "3. Nf4",
+        "Nf5",
+        "4. Nc4"
+      ]
+    },
+    {
+      "matchId": 3516,
+      "plyNumber": 18,
+      "white": "Nightcrawler",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 26,
+      "pieceCount": 31,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Ng6",
+      "selectedMove": "h4-g6",
+      "topScore": 7,
+      "topMoves": [
+        "h4-g6"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nh6",
+        "2. Nh3",
+        "Nc6",
+        "3. Nf4",
+        "Nf5",
+        "4. Nc4",
+        "Ncd4",
+        "5. Nd5",
+        "Rg8",
+        "6. c3",
+        "Nh4",
+        "7. cxd4",
+        "g5",
+        "8. Ne5",
+        "Bg7",
+        "9. h3"
+      ]
+    },
+    {
+      "matchId": 3516,
+      "plyNumber": 28,
+      "white": "Nightcrawler",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 21,
+      "legalMoveCount": 21,
+      "pieceCount": 29,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "a6",
+      "selectedMove": "a7-a6",
+      "topScore": 0,
+      "topMoves": [
+        "g5-g4",
+        "h6-h5",
+        "a7-a6",
+        "a7-a5",
+        "b7-b6",
+        "b7-b5",
+        "c7-c6",
+        "c7-c5",
+        "d7-d6",
+        "d7-d5",
+        "e7-e6",
+        "f7-f6",
+        "f7-f5",
+        "g7-f6",
+        "g7-e5",
+        "a8-b8",
+        "d8-e8",
+        "f8-g8",
+        "f8-e8",
+        "h8-g8",
+        "h8-h7"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nh6",
+        "2. Nh3",
+        "Nc6",
+        "3. Nf4",
+        "Nf5",
+        "4. Nc4",
+        "Ncd4",
+        "5. Nd5",
+        "Rg8",
+        "6. c3",
+        "Nh4",
+        "7. cxd4",
+        "g5",
+        "8. Ne5",
+        "Bg7",
+        "9. h3",
+        "Ng6",
+        "10. Nc3",
+        "Nxe5",
+        "11. dxe5",
+        "h6",
+        "12. b3",
+        "Rh8",
+        "13. Rb1",
+        "Kf8",
+        "14. Bb2"
+      ]
+    },
+    {
+      "matchId": 3516,
+      "plyNumber": 40,
+      "white": "Nightcrawler",
+      "black": "Cyclops",
+      "result": "white_win",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 1,
+      "legalMoveCount": 24,
+      "pieceCount": 27,
+      "defensiveSignalCount": 5,
+      "actualMoveNotation": "Kf7",
+      "selectedMove": "f8-f7",
+      "topScore": 7,
+      "topMoves": [
+        "f8-f7"
+      ],
+      "notationPrefix": [
+        "1. Na3",
+        "Nh6",
+        "2. Nh3",
+        "Nc6",
+        "3. Nf4",
+        "Nf5",
+        "4. Nc4",
+        "Ncd4",
+        "5. Nd5",
+        "Rg8",
+        "6. c3",
+        "Nh4",
+        "7. cxd4",
+        "g5",
+        "8. Ne5",
+        "Bg7",
+        "9. h3",
+        "Ng6",
+        "10. Nc3",
+        "Nxe5",
+        "11. dxe5",
+        "h6",
+        "12. b3",
+        "Rh8",
+        "13. Rb1",
+        "Kf8",
+        "14. Bb2",
+        "a6",
+        "15. Rc1",
+        "b5",
+        "16. Ba1",
+        "f6",
+        "17. exf6",
+        "Bxf6",
+        "18. Qc2",
+        "Rg8",
+        "19. Rb1",
+        "Rg7",
+        "20. Kd1"
+      ]
+    },
+    {
+      "matchId": 3583,
+      "plyNumber": 2,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 3,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Nh6",
+      "selectedMove": "g8-h6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. e3"
+      ]
+    },
+    {
+      "matchId": 3583,
+      "plyNumber": 10,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 33,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Neg4",
+      "selectedMove": "e5-g4",
+      "topScore": 24,
+      "topMoves": [
+        "e5-g4",
+        "h6-g4"
+      ],
+      "notationPrefix": [
+        "1. e3",
+        "Nh6",
+        "2. h3",
+        "Nc6",
+        "3. b3",
+        "Ne5",
+        "4. g3",
+        "e6",
+        "5. f4"
+      ]
+    },
+    {
+      "matchId": 3583,
+      "plyNumber": 30,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 2,
+      "legalMoveCount": 39,
+      "pieceCount": 26,
+      "defensiveSignalCount": 6,
+      "actualMoveNotation": "b6",
+      "selectedMove": "b7-b6",
+      "topScore": 18,
+      "topMoves": [
+        "b7-b6",
+        "c7-c6"
+      ],
+      "notationPrefix": [
+        "1. e3",
+        "Nh6",
+        "2. h3",
+        "Nc6",
+        "3. b3",
+        "Ne5",
+        "4. g3",
+        "e6",
+        "5. f4",
+        "Neg4",
+        "6. hxg4",
+        "Bd6",
+        "7. g5",
+        "Nf5",
+        "8. Be2",
+        "h5",
+        "9. gxh6e.p.",
+        "Be7",
+        "10. h7",
+        "Nxe3",
+        "11. dxe3",
+        "Bb4+",
+        "12. Kf2",
+        "Ke7",
+        "13. Qxd7+",
+        "Bxd7",
+        "14. Bb2",
+        "Kd6",
+        "15. Rh5"
+      ]
+    },
+    {
+      "matchId": 3583,
+      "plyNumber": 70,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 1,
+      "legalMoveCount": 15,
+      "pieceCount": 16,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Bxc1",
+      "selectedMove": "a3-c1",
+      "topScore": 100,
+      "topMoves": [
+        "a3-c1"
+      ],
+      "notationPrefix": [
+        "1. e3",
+        "Nh6",
+        "2. h3",
+        "Nc6",
+        "3. b3",
+        "Ne5",
+        "4. g3",
+        "e6",
+        "5. f4",
+        "Neg4",
+        "6. hxg4",
+        "Bd6",
+        "7. g5",
+        "Nf5",
+        "8. Be2",
+        "h5",
+        "9. gxh6e.p.",
+        "Be7",
+        "10. h7",
+        "Nxe3",
+        "11. dxe3",
+        "Bb4+",
+        "12. Kf2",
+        "Ke7",
+        "13. Qxd7+",
+        "Bxd7",
+        "14. Bb2",
+        "Kd6",
+        "15. Rh5",
+        "b6",
+        "16. Bf3",
+        "Rb8",
+        "17. Bc3",
+        "c5",
+        "18. Be5+",
+        "Ke7",
+        "19. Bxb8",
+        "Bd2",
+        "20. Be5",
+        "Bb5",
+        "21. f5",
+        "c4",
+        "22. fxe6",
+        "c3",
+        "23. exf7",
+        "Bc6",
+        "24. f8=Q+",
+        "Rxf8",
+        "25. h8=R",
+        "Rxf3+",
+        "26. Nxf3",
+        "Bd5",
+        "27. Rxd8",
+        "Bxf3",
+        "28. Rhh8",
+        "Bc1",
+        "29. Rhe8+",
+        "Kf7",
+        "30. Bxc3",
+        "Bc6",
+        "31. Nd2",
+        "Bxe8",
+        "32. Bb4",
+        "Kg6",
+        "33. Rd6+",
+        "Kf7",
+        "34. g4",
+        "Ba3",
+        "35. Rc1"
+      ]
+    },
+    {
+      "matchId": 3583,
+      "plyNumber": 130,
+      "white": "Rogue",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 1,
+      "legalMoveCount": 1,
+      "pieceCount": 10,
+      "defensiveSignalCount": 5,
+      "actualMoveNotation": "Kf5",
+      "selectedMove": "g6-f5",
+      "topScore": 0,
+      "topMoves": [
+        "g6-f5"
+      ],
+      "notationPrefix": [
+        "1. e3",
+        "Nh6",
+        "2. h3",
+        "Nc6",
+        "3. b3",
+        "Ne5",
+        "4. g3",
+        "e6",
+        "5. f4",
+        "Neg4",
+        "6. hxg4",
+        "Bd6",
+        "7. g5",
+        "Nf5",
+        "8. Be2",
+        "h5",
+        "9. gxh6e.p.",
+        "Be7",
+        "10. h7",
+        "Nxe3",
+        "11. dxe3",
+        "Bb4+",
+        "12. Kf2",
+        "Ke7",
+        "13. Qxd7+",
+        "Bxd7",
+        "14. Bb2",
+        "Kd6",
+        "15. Rh5",
+        "b6",
+        "16. Bf3",
+        "Rb8",
+        "17. Bc3",
+        "c5",
+        "18. Be5+",
+        "Ke7",
+        "19. Bxb8",
+        "Bd2",
+        "20. Be5",
+        "Bb5",
+        "21. f5",
+        "c4",
+        "22. fxe6",
+        "c3",
+        "23. exf7",
+        "Bc6",
+        "24. f8=Q+",
+        "Rxf8",
+        "25. h8=R",
+        "Rxf3+",
+        "26. Nxf3",
+        "Bd5",
+        "27. Rxd8",
+        "Bxf3",
+        "28. Rhh8",
+        "Bc1",
+        "29. Rhe8+",
+        "Kf7",
+        "30. Bxc3",
+        "Bc6",
+        "31. Nd2",
+        "Bxe8",
+        "32. Bb4",
+        "Kg6",
+        "33. Rd6+",
+        "Kf7",
+        "34. g4",
+        "Ba3",
+        "35. Rc1",
+        "Bxc1",
+        "36. Nc4",
+        "a6",
+        "37. Rxb6",
+        "Bd2",
+        "38. Ne5+",
+        "Kg8",
+        "39. Rd6",
+        "Bb5",
+        "40. Rd8+",
+        "Kh7",
+        "41. g5",
+        "Bc4",
+        "42. bxc4",
+        "Bxe3+",
+        "43. Ke1",
+        "Bc5",
+        "44. c3",
+        "Be3",
+        "45. g6+",
+        "Kh6",
+        "46. Rh8+",
+        "Kg5",
+        "47. Be7+",
+        "Kf4",
+        "48. Rh4+",
+        "Kf5",
+        "49. Nf3",
+        "Bf4",
+        "50. Ng5",
+        "Bc7",
+        "51. Ne4",
+        "Bf4",
+        "52. Ng5",
+        "Ke5",
+        "53. Rh3",
+        "Kf5",
+        "54. Rh4",
+        "Be5",
+        "55. Ne4",
+        "Bf4",
+        "56. Ng5",
+        "Kxg6",
+        "57. Rh3",
+        "Bd2+",
+        "58. Kxd2",
+        "Kf5",
+        "59. Rf3+",
+        "Kg6",
+        "60. Rh3",
+        "a5",
+        "61. a4",
+        "Kf5",
+        "62. Rf3+",
+        "Kg6",
+        "63. Rh3",
+        "Kf5",
+        "64. Rf3+",
+        "Kg6",
+        "65. Rh3"
+      ]
+    },
+    {
+      "matchId": 3615,
+      "plyNumber": 2,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "Na6",
+      "selectedMove": "b8-a6",
+      "topScore": 14,
+      "topMoves": [
+        "b8-a6",
+        "b8-c6",
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Nh3"
+      ]
+    },
+    {
+      "matchId": 3615,
+      "plyNumber": 10,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 33,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Nf6",
+      "selectedMove": "g8-f6",
+      "topScore": 7,
+      "topMoves": [
+        "g8-f6",
+        "g8-h6"
+      ],
+      "notationPrefix": [
+        "1. Nh3",
+        "Na6",
+        "2. Na3",
+        "Nc5",
+        "3. g4",
+        "b6",
+        "4. Rg1",
+        "Bb7",
+        "5. Bg2"
+      ]
+    },
+    {
+      "matchId": 3615,
+      "plyNumber": 30,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "midgame",
+      "tiedTopCount": 3,
+      "legalMoveCount": 3,
+      "pieceCount": 26,
+      "defensiveSignalCount": 6,
+      "actualMoveNotation": "Ke8",
+      "selectedMove": "f7-e8",
+      "topScore": 0,
+      "topMoves": [
+        "e7-e6",
+        "f7-g6",
+        "f7-e8"
+      ],
+      "notationPrefix": [
+        "1. Nh3",
+        "Na6",
+        "2. Na3",
+        "Nc5",
+        "3. g4",
+        "b6",
+        "4. Rg1",
+        "Bb7",
+        "5. Bg2",
+        "Nf6",
+        "6. f3",
+        "Nce4",
+        "7. fxe4",
+        "Nxe4",
+        "8. Nf2",
+        "Nf6",
+        "9. Ne4",
+        "Bd5",
+        "10. Kf2",
+        "Nxe4+",
+        "11. Kf1",
+        "Rb8",
+        "12. Qe1",
+        "Nxd2+",
+        "13. Bxd2",
+        "f6",
+        "14. g5",
+        "Kf7",
+        "15. Bxd5+"
+      ]
+    },
+    {
+      "matchId": 3615,
+      "plyNumber": 70,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 2,
+      "legalMoveCount": 30,
+      "pieceCount": 18,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Rb6",
+      "selectedMove": "b8-b6",
+      "topScore": 7,
+      "topMoves": [
+        "b8-b6",
+        "d8-e8"
+      ],
+      "notationPrefix": [
+        "1. Nh3",
+        "Na6",
+        "2. Na3",
+        "Nc5",
+        "3. g4",
+        "b6",
+        "4. Rg1",
+        "Bb7",
+        "5. Bg2",
+        "Nf6",
+        "6. f3",
+        "Nce4",
+        "7. fxe4",
+        "Nxe4",
+        "8. Nf2",
+        "Nf6",
+        "9. Ne4",
+        "Bd5",
+        "10. Kf2",
+        "Nxe4+",
+        "11. Kf1",
+        "Rb8",
+        "12. Qe1",
+        "Nxd2+",
+        "13. Bxd2",
+        "f6",
+        "14. g5",
+        "Kf7",
+        "15. Bxd5+",
+        "Ke8",
+        "16. Qg3",
+        "h5",
+        "17. Kf2",
+        "Rh7",
+        "18. Ke3",
+        "e5",
+        "19. Raf1",
+        "Bc5+",
+        "20. Ke4",
+        "Bxg1",
+        "21. Qxe5+",
+        "fxe5",
+        "22. Be3",
+        "Ke7",
+        "23. Nc4",
+        "d6",
+        "24. Rf7+",
+        "Ke8",
+        "25. a3",
+        "b5",
+        "26. Nxe5",
+        "dxe5",
+        "27. Bb7",
+        "Qd4+",
+        "28. Bxd4",
+        "exd4",
+        "29. Rf6",
+        "gxf6",
+        "30. Bc6+",
+        "Kf7",
+        "31. Bd5+",
+        "Kg7",
+        "32. b4",
+        "Be3",
+        "33. h4",
+        "Rhh8",
+        "34. g6",
+        "Rhd8",
+        "35. c3"
+      ]
+    },
+    {
+      "matchId": 3615,
+      "plyNumber": 190,
+      "white": "Bishop",
+      "black": "Cyclops",
+      "result": "capped",
+      "color": "black",
+      "phase": "closing",
+      "tiedTopCount": 6,
+      "legalMoveCount": 42,
+      "pieceCount": 8,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "Bh2",
+      "selectedMove": "e5-h2",
+      "topScore": 32,
+      "topMoves": [
+        "e5-h2",
+        "e5-c7",
+        "g7-h7",
+        "g7-g6",
+        "g7-f6",
+        "g7-h8"
+      ],
+      "notationPrefix": [
+        "1. Nh3",
+        "Na6",
+        "2. Na3",
+        "Nc5",
+        "3. g4",
+        "b6",
+        "4. Rg1",
+        "Bb7",
+        "5. Bg2",
+        "Nf6",
+        "6. f3",
+        "Nce4",
+        "7. fxe4",
+        "Nxe4",
+        "8. Nf2",
+        "Nf6",
+        "9. Ne4",
+        "Bd5",
+        "10. Kf2",
+        "Nxe4+",
+        "11. Kf1",
+        "Rb8",
+        "12. Qe1",
+        "Nxd2+",
+        "13. Bxd2",
+        "f6",
+        "14. g5",
+        "Kf7",
+        "15. Bxd5+",
+        "Ke8",
+        "16. Qg3",
+        "h5",
+        "17. Kf2",
+        "Rh7",
+        "18. Ke3",
+        "e5",
+        "19. Raf1",
+        "Bc5+",
+        "20. Ke4",
+        "Bxg1",
+        "21. Qxe5+",
+        "fxe5",
+        "22. Be3",
+        "Ke7",
+        "23. Nc4",
+        "d6",
+        "24. Rf7+",
+        "Ke8",
+        "25. a3",
+        "b5",
+        "26. Nxe5",
+        "dxe5",
+        "27. Bb7",
+        "Qd4+",
+        "28. Bxd4",
+        "exd4",
+        "29. Rf6",
+        "gxf6",
+        "30. Bc6+",
+        "Kf7",
+        "31. Bd5+",
+        "Kg7",
+        "32. b4",
+        "Be3",
+        "33. h4",
+        "Rhh8",
+        "34. g6",
+        "Rhd8",
+        "35. c3",
+        "Rb6",
+        "36. cxd4",
+        "Re8+",
+        "37. Be6",
+        "Rexe6+",
+        "38. Kd5",
+        "Re5+",
+        "39. dxe5",
+        "Bf4",
+        "40. e6",
+        "Rd6+",
+        "41. Kc5",
+        "c6",
+        "42. e7",
+        "Rd5+",
+        "43. Kxc6",
+        "Bg3",
+        "44. e3",
+        "Be5",
+        "45. e4",
+        "Rd4",
+        "46. e8=N+",
+        "Kxg6",
+        "47. Nd6",
+        "Rxd6+",
+        "48. Kb7",
+        "Rd7+",
+        "49. Ka6",
+        "Kg7",
+        "50. Ka5",
+        "Rd6",
+        "51. Kxb5",
+        "Bd4",
+        "52. a4",
+        "Rc6",
+        "53. e5",
+        "Rc5+",
+        "54. bxc5",
+        "fxe5",
+        "55. a5",
+        "e4",
+        "56. c6",
+        "e3",
+        "57. c7",
+        "e2",
+        "58. c8=Q",
+        "e1=Q",
+        "59. Qc6",
+        "Qe2+",
+        "60. Qc4",
+        "Qe8+",
+        "61. Kb4",
+        "Be5",
+        "62. Qf7+",
+        "Kh6",
+        "63. Kb3",
+        "Qxf7+",
+        "64. Kb4",
+        "Bd6+",
+        "65. Kc3",
+        "Be5+",
+        "66. Kb4",
+        "Bd6+",
+        "67. Kc3",
+        "Be5+",
+        "68. Kd2",
+        "Qa2+",
+        "69. Kd3",
+        "Kg7",
+        "70. Ke3",
+        "Kh7",
+        "71. Ke4",
+        "Qc2+",
+        "72. Ke3",
+        "a6",
+        "73. Kf3",
+        "Kg7",
+        "74. Ke3",
+        "Kg6",
+        "75. Kf3",
+        "Kg7",
+        "76. Ke3",
+        "Kh8",
+        "77. Kf3",
+        "Kh7",
+        "78. Ke3",
+        "Kg7",
+        "79. Kf3",
+        "Kf6",
+        "80. Ke3",
+        "Kg7",
+        "81. Kf3",
+        "Bh2",
+        "82. Ke3",
+        "Be5",
+        "83. Kf3",
+        "Kh7",
+        "84. Ke3",
+        "Kg7",
+        "85. Kf3",
+        "Bh2",
+        "86. Ke3",
+        "Be5",
+        "87. Kf3",
+        "Kh8",
+        "88. Ke3",
+        "Kh7",
+        "89. Kf3",
+        "Kg7",
+        "90. Ke3",
+        "Kf6",
+        "91. Kf3",
+        "Kg7",
+        "92. Ke3",
+        "Kh8",
+        "93. Kf3",
+        "Kh7",
+        "94. Ke3",
+        "Kg7",
+        "95. Kf3"
+      ]
+    },
+    {
+      "matchId": 3787,
+      "plyNumber": 1,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "capped",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 4,
+      "legalMoveCount": 20,
+      "pieceCount": 32,
+      "defensiveSignalCount": 1,
+      "actualMoveNotation": "1. Nc3",
+      "selectedMove": "b1-c3",
+      "topScore": 14,
+      "topMoves": [
+        "b1-c3",
+        "b1-a3",
+        "g1-h3",
+        "g1-f3"
+      ],
+      "notationPrefix": []
+    },
+    {
+      "matchId": 3787,
+      "plyNumber": 9,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "capped",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 2,
+      "legalMoveCount": 27,
+      "pieceCount": 32,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "5. e3",
+      "selectedMove": "e2-e3",
+      "topScore": 9,
+      "topMoves": [
+        "b2-b3",
+        "e2-e3"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "b6",
+        "2. Ne4",
+        "e6",
+        "3. Nf3",
+        "h6",
+        "4. g4",
+        "g6"
+      ]
+    },
+    {
+      "matchId": 3787,
+      "plyNumber": 25,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "capped",
+      "color": "white",
+      "phase": "opening",
+      "tiedTopCount": 1,
+      "legalMoveCount": 38,
+      "pieceCount": 31,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "13. Qa4+",
+      "selectedMove": "d1-a4",
+      "topScore": 34,
+      "topMoves": [
+        "d1-a4"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "b6",
+        "2. Ne4",
+        "e6",
+        "3. Nf3",
+        "h6",
+        "4. g4",
+        "g6",
+        "5. e3",
+        "h5",
+        "6. Ke2",
+        "Ba6+",
+        "7. Ke1",
+        "Qe7",
+        "8. Rg1",
+        "b5",
+        "9. Ke2",
+        "b4+",
+        "10. c4",
+        "Bxc4+",
+        "11. Ke1",
+        "a5",
+        "12. Nd4",
+        "d5"
+      ]
+    },
+    {
+      "matchId": 3787,
+      "plyNumber": 121,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "capped",
+      "color": "white",
+      "phase": "closing",
+      "tiedTopCount": 14,
+      "legalMoveCount": 14,
+      "pieceCount": 17,
+      "defensiveSignalCount": 4,
+      "actualMoveNotation": "61. f4",
+      "selectedMove": "f3-f4",
+      "topScore": 0,
+      "topMoves": [
+        "a2-a3",
+        "a2-a4",
+        "c2-b2",
+        "c2-b1",
+        "c2-d3",
+        "c2-d1",
+        "h2-h3",
+        "f3-f4",
+        "c4-c5",
+        "c4-c6",
+        "c4-c7",
+        "c4-c3",
+        "h8-g7",
+        "h8-f6"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "b6",
+        "2. Ne4",
+        "e6",
+        "3. Nf3",
+        "h6",
+        "4. g4",
+        "g6",
+        "5. e3",
+        "h5",
+        "6. Ke2",
+        "Ba6+",
+        "7. Ke1",
+        "Qe7",
+        "8. Rg1",
+        "b5",
+        "9. Ke2",
+        "b4+",
+        "10. c4",
+        "Bxc4+",
+        "11. Ke1",
+        "a5",
+        "12. Nd4",
+        "d5",
+        "13. Qa4+",
+        "c6",
+        "14. Qxc6+",
+        "Nxc6",
+        "15. Rg3",
+        "dxe4",
+        "16. Rf3",
+        "exf3",
+        "17. Nxc6",
+        "Qb7",
+        "18. Ne5",
+        "h4",
+        "19. Bxc4",
+        "Qe7",
+        "20. Bd3",
+        "g5",
+        "21. Nxf3",
+        "Qc5",
+        "22. Kf1",
+        "Qd5",
+        "23. b3",
+        "Qxd3+",
+        "24. Kg1",
+        "Qd5",
+        "25. Bb2",
+        "Qb5",
+        "26. Bxh8",
+        "Qd5",
+        "27. Re1",
+        "Qb5",
+        "28. Ne5",
+        "Qd5",
+        "29. Kf1",
+        "Qh1+",
+        "30. Ke2",
+        "Qd5",
+        "31. Kd1",
+        "Qg2",
+        "32. f3",
+        "a4",
+        "33. Kc1",
+        "a3",
+        "34. Kb1",
+        "Qxd2",
+        "35. Nc4",
+        "Qd3+",
+        "36. Kc1",
+        "Qd5",
+        "37. Kb1",
+        "Qd3+",
+        "38. Ka1",
+        "Qd5",
+        "39. Kb1",
+        "Qd3+",
+        "40. Ka1",
+        "Qd5",
+        "41. Kb1",
+        "Qd3+",
+        "42. Kc1",
+        "Qd5",
+        "43. Kb1",
+        "Qd3+",
+        "44. Ka1",
+        "Qd5",
+        "45. Kb1",
+        "Qf5+",
+        "46. gxf5",
+        "exf5",
+        "47. Rc1",
+        "f6",
+        "48. Nb2",
+        "axb2",
+        "49. Rc4",
+        "Kd7",
+        "50. Kc2",
+        "f4",
+        "51. Rd4+",
+        "Ke6",
+        "52. Rd1",
+        "fxe3",
+        "53. Kd3",
+        "Rd8+",
+        "54. Kc2",
+        "Rd2+",
+        "55. Kb1",
+        "Rd7",
+        "56. Rg1",
+        "Rb7",
+        "57. Rg4",
+        "Kd6",
+        "58. Rd4+",
+        "Kc5",
+        "59. Rc4+",
+        "Kb6",
+        "60. Kc2",
+        "Rc7"
+      ]
+    },
+    {
+      "matchId": 3787,
+      "plyNumber": 181,
+      "white": "Cyclops",
+      "black": "Storm",
+      "result": "capped",
+      "color": "white",
+      "phase": "closing",
+      "tiedTopCount": 2,
+      "legalMoveCount": 2,
+      "pieceCount": 8,
+      "defensiveSignalCount": 6,
+      "actualMoveNotation": "91. Kb2",
+      "selectedMove": "a3-b2",
+      "topScore": 0,
+      "topMoves": [
+        "a3-a2",
+        "a3-b2"
+      ],
+      "notationPrefix": [
+        "1. Nc3",
+        "b6",
+        "2. Ne4",
+        "e6",
+        "3. Nf3",
+        "h6",
+        "4. g4",
+        "g6",
+        "5. e3",
+        "h5",
+        "6. Ke2",
+        "Ba6+",
+        "7. Ke1",
+        "Qe7",
+        "8. Rg1",
+        "b5",
+        "9. Ke2",
+        "b4+",
+        "10. c4",
+        "Bxc4+",
+        "11. Ke1",
+        "a5",
+        "12. Nd4",
+        "d5",
+        "13. Qa4+",
+        "c6",
+        "14. Qxc6+",
+        "Nxc6",
+        "15. Rg3",
+        "dxe4",
+        "16. Rf3",
+        "exf3",
+        "17. Nxc6",
+        "Qb7",
+        "18. Ne5",
+        "h4",
+        "19. Bxc4",
+        "Qe7",
+        "20. Bd3",
+        "g5",
+        "21. Nxf3",
+        "Qc5",
+        "22. Kf1",
+        "Qd5",
+        "23. b3",
+        "Qxd3+",
+        "24. Kg1",
+        "Qd5",
+        "25. Bb2",
+        "Qb5",
+        "26. Bxh8",
+        "Qd5",
+        "27. Re1",
+        "Qb5",
+        "28. Ne5",
+        "Qd5",
+        "29. Kf1",
+        "Qh1+",
+        "30. Ke2",
+        "Qd5",
+        "31. Kd1",
+        "Qg2",
+        "32. f3",
+        "a4",
+        "33. Kc1",
+        "a3",
+        "34. Kb1",
+        "Qxd2",
+        "35. Nc4",
+        "Qd3+",
+        "36. Kc1",
+        "Qd5",
+        "37. Kb1",
+        "Qd3+",
+        "38. Ka1",
+        "Qd5",
+        "39. Kb1",
+        "Qd3+",
+        "40. Ka1",
+        "Qd5",
+        "41. Kb1",
+        "Qd3+",
+        "42. Kc1",
+        "Qd5",
+        "43. Kb1",
+        "Qd3+",
+        "44. Ka1",
+        "Qd5",
+        "45. Kb1",
+        "Qf5+",
+        "46. gxf5",
+        "exf5",
+        "47. Rc1",
+        "f6",
+        "48. Nb2",
+        "axb2",
+        "49. Rc4",
+        "Kd7",
+        "50. Kc2",
+        "f4",
+        "51. Rd4+",
+        "Ke6",
+        "52. Rd1",
+        "fxe3",
+        "53. Kd3",
+        "Rd8+",
+        "54. Kc2",
+        "Rd2+",
+        "55. Kb1",
+        "Rd7",
+        "56. Rg1",
+        "Rb7",
+        "57. Rg4",
+        "Kd6",
+        "58. Rd4+",
+        "Kc5",
+        "59. Rc4+",
+        "Kb6",
+        "60. Kc2",
+        "Rc7",
+        "61. f4",
+        "g4",
+        "62. Rxc7",
+        "h3",
+        "63. Rc5",
+        "Bxc5",
+        "64. Kxb2",
+        "Bd4+",
+        "65. Kb1",
+        "f5",
+        "66. Bxd4+",
+        "Ka5",
+        "67. Bxe3",
+        "Nh6",
+        "68. a4",
+        "Ka6",
+        "69. Bc1",
+        "g3",
+        "70. hxg3",
+        "Ng4",
+        "71. Bb2",
+        "h2",
+        "72. Ka1",
+        "h1=Q+",
+        "73. Ka2",
+        "Qh6",
+        "74. Bh8",
+        "Qh2+",
+        "75. Bb2",
+        "Qh1",
+        "76. Bg7",
+        "Qh2+",
+        "77. Bb2",
+        "Qg1",
+        "78. Bf6",
+        "Qf2+",
+        "79. Bb2",
+        "Qxg3",
+        "80. Bg7",
+        "Qg2+",
+        "81. Ka1",
+        "Qg1+",
+        "82. Kb2",
+        "Qh2+",
+        "83. Ka1",
+        "Qh1+",
+        "84. Ka2",
+        "Qh2+",
+        "85. Bb2",
+        "Qg1",
+        "86. Ba3",
+        "bxa3",
+        "87. Kxa3",
+        "Qa1+",
+        "88. Kb4",
+        "Qd4+",
+        "89. Ka3",
+        "Qd6+",
+        "90. b4",
+        "Qd3+"
+      ]
+    }
+  ]
+}

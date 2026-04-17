@@ -40,25 +40,28 @@ RSpec.describe NodeSortOrder do
     it 'calculates bottom center of condition node' do
       node = double('node', node_type: 'condition', position_x: 100, position_y: 100)
       point = test_instance.output_anchor_point(node, node_dimensions)
+      dims = node_dimensions['condition']
       
-      expect(point[0]).to eq(150.0)  # 100 + 50 (half of 100 width)
-      expect(point[1]).to eq(160.0)  # 100 + 60 (full height)
+      expect(point[0]).to eq(100 + (dims[:width] / 2.0))
+      expect(point[1]).to eq(100 + dims[:height])
     end
     
     it 'calculates bottom center of root node' do
       node = double('node', node_type: 'root', position_x: 100, position_y: 100)
       point = test_instance.output_anchor_point(node, node_dimensions)
+      dims = node_dimensions['root']
       
-      expect(point[0]).to eq(160.0)  # 100 + 60 (half of 120 width)
-      expect(point[1]).to eq(220.0)  # 100 + 120 (full height)
+      expect(point[0]).to eq(100 + (dims[:width] / 2.0))
+      expect(point[1]).to eq(100 + dims[:height])
     end
     
     it 'uses defaults for unknown node types' do
       node = double('node', node_type: 'unknown', position_x: 100, position_y: 100)
       point = test_instance.output_anchor_point(node, node_dimensions)
+      default_dims = { width: 100, height: 60 }
       
-      expect(point[0]).to eq(150.0)  # 100 + 50 (default half width)
-      expect(point[1]).to eq(160.0)  # 100 + 60 (default height)
+      expect(point[0]).to eq(100 + (default_dims[:width] / 2.0))
+      expect(point[1]).to eq(100 + default_dims[:height])
     end
   end
   
@@ -66,17 +69,19 @@ RSpec.describe NodeSortOrder do
     it 'calculates top center of condition node' do
       node = double('node', node_type: 'condition', position_x: 100, position_y: 100)
       point = test_instance.input_anchor_point(node, node_dimensions)
+      dims = node_dimensions['condition']
       
-      expect(point[0]).to eq(150.0)  # 100 + 50 (half of 100 width)
-      expect(point[1]).to eq(100.0)   # 100 (top of node)
+      expect(point[0]).to eq(100 + (dims[:width] / 2.0))
+      expect(point[1]).to eq(100.0)
     end
     
     it 'calculates top center of root node' do
       node = double('node', node_type: 'root', position_x: 100, position_y: 100)
       point = test_instance.input_anchor_point(node, node_dimensions)
+      dims = node_dimensions['root']
       
-      expect(point[0]).to eq(160.0)  # 100 + 60 (half of 120 width)
-      expect(point[1]).to eq(100.0)  # 100 (top of node)
+      expect(point[0]).to eq(100 + (dims[:width] / 2.0))
+      expect(point[1]).to eq(100.0)
     end
   end
   

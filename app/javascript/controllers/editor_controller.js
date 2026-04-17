@@ -7,20 +7,15 @@ export default class extends Controller {
   connect() {
     const container = document.getElementById('nodes-canvas')
     const svgContainer = document.getElementById('connections-canvas')
-    const editorPanel = document.getElementById('node-editor-panel')
-    
+    const editorPanel = document.getElementById('node-form-panel')
     if (!container || !svgContainer) {
       console.error('Editor container elements not found')
       return
     }
-    
     initEditor(this.botIdValue, container, svgContainer, editorPanel)
       .then(api => {
         console.log('editorV2 initialized successfully')
-        // Expose API only in non-production environments
-        if (document.body.dataset.environment !== 'production') {
-          window.editorAPI = api
-        }
+        if (document.body.dataset.environment !== 'production') { window.editorAPI = api }
       })
       .catch(err => {
         console.error('Failed to initialize editorV2:', err)

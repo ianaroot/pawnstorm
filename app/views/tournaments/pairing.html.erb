@@ -1,0 +1,70 @@
+<div class="match-show-page">
+  <div class="match-replay-layout tournament-show-layout">
+    <div class="game-page tournament-page">
+      <div class="match-show-meta">
+        <h1 class="match-show-title"><%= @pairing[:entrant_a].display_name %> vs <%= @pairing[:entrant_b].display_name %></h1>
+        <p class="match-show-meta-item">
+          <%= link_to "Back to Tournament #{@tournament.id}", tournament_path(@tournament) %>
+        </p>
+      </div>
+
+      <div class="match-setup-section">
+        <h2>Pairing Summary</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><%= @pairing[:entrant_a].display_name %> as White</th>
+              <th><%= @pairing[:entrant_b].display_name %> as White</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <%= @pairing[:entrant_a].display_name %> <%= @pairing[:entrant_a_white_record][:record][:entrant_a_points] %> -
+                <%= @pairing[:entrant_a_white_record][:record][:entrant_b_points] %> <%= @pairing[:entrant_b].display_name %>
+                (<%= @pairing[:entrant_a_white_record][:record][:entrant_a_wins] %>-<%= @pairing[:entrant_a_white_record][:record][:entrant_b_wins] %>, draws: <%= @pairing[:entrant_a_white_record][:record][:draws] %>, failed: <%= @pairing[:entrant_a_white_record][:record][:failed] %>)
+              </td>
+              <td>
+                <%= @pairing[:entrant_b].display_name %> <%= @pairing[:entrant_b_white_record][:record][:entrant_a_points] %> -
+                <%= @pairing[:entrant_b_white_record][:record][:entrant_b_points] %> <%= @pairing[:entrant_a].display_name %>
+                (<%= @pairing[:entrant_b_white_record][:record][:entrant_a_wins] %>-<%= @pairing[:entrant_b_white_record][:record][:entrant_b_wins] %>, draws: <%= @pairing[:entrant_b_white_record][:record][:draws] %>, failed: <%= @pairing[:entrant_b_white_record][:record][:failed] %>)
+              </td>
+              <td>
+                <%= @pairing[:entrant_a].display_name %> <%= @pairing[:total_record][:entrant_a_points] %> -
+                <%= @pairing[:total_record][:entrant_b_points] %> <%= @pairing[:entrant_b].display_name %>
+                (<%= @pairing[:total_record][:entrant_a_wins] %>-<%= @pairing[:total_record][:entrant_b_wins] %>, draws: <%= @pairing[:total_record][:draws] %>, failed: <%= @pairing[:total_record][:failed] %>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="match-setup-section">
+        <h2>Matches</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Match</th>
+              <th>White</th>
+              <th>Black</th>
+              <th>Status</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @pairing[:matches].each do |match| %>
+              <tr>
+                <td><%= link_to "Match #{match.id}", match_path(match) %></td>
+                <td><%= match.player_display_name_for(:white) %></td>
+                <td><%= match.player_display_name_for(:black) %></td>
+                <td><%= match.status %></td>
+                <td><%= match.result.presence || '-' %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

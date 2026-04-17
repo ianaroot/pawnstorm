@@ -254,6 +254,7 @@ class CanvasViewport {
     this.scene.style.width = `${width}px`
     this.scene.style.height = `${height}px`
     this.scene.style.transform = `scale(${zoom})`
+    this.scene.style.setProperty('--editor-zoom', zoom)
 
     this.nodesLayer.style.width = `${width}px`
     this.nodesLayer.style.height = `${height}px`

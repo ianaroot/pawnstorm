@@ -19,12 +19,18 @@ class Connection < ApplicationRecord
   validate :source_and_target_must_be_different
   validate :bidirectional_connection_must_not_exist
 
+  after_commit :mark_bot_compiled_program_stale, on: [:create, :destroy]
+
   private
+
+  def mark_bot_compiled_program_stale
+    bot_id = source_node&.bot_id || target_node&.bot_id
+    Bot.where(id: bot_id).find_each(&:mark_compiled_program_stale!)
+  end
 
   def source_and_target_must_be_different
     return unless source_node_id.present? && target_node_id.present?
     return unless source_node_id == target_node_id
-
     errors.add(:target_node_id, "cannot connect a node to itself")
   end
 
@@ -36,9 +42,7 @@ class Connection < ApplicationRecord
       source_node_id: target_node_id,
       target_node_id: source_node_id
     )
-
     return unless reverse_connection
-
     errors.add(:base, "cannot create bidirectional connection (reverse connection already exists)")
   end
 end

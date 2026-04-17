@@ -44,6 +44,15 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       expect_node_count(1)
     end
+
+    it 'opens the in-editor guide drawer' do
+      click_button 'Guide'
+
+      expect(page).to have_css('#bot-guide-drawer', visible: true)
+      expect(page).to have_css('.bot-guide-drawer__eyebrow', text: /In-Editor Guide/i)
+      expect(page).to have_link('Read Full Guide', href: bot_help_path)
+      expect(page).to have_button('What Your Bot Does')
+    end
   end
 
   # ============================================================
@@ -69,8 +78,9 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'assigns stable client IDs to created nodes' do
       click_button '+ Condition'
+      expect_node_count(2)
 
-      node = Node.where(bot: bot, node_type: 'condition').first
+      node = Node.find_by!(bot: bot, node_type: 'condition')
       client_id = find_node_client_id(node.id)
 
       expect(client_id).not_to be_nil
@@ -79,8 +89,9 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'maps client ID to server ID correctly' do
       click_button '+ Condition'
+      expect_node_count(2)
 
-      node = Node.where(bot: bot, node_type: 'condition').first
+      node = Node.find_by!(bot: bot, node_type: 'condition')
       client_id = find_node_client_id(node.id)
       server_id = get_server_id(client_id)
 
@@ -442,6 +453,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'enables delete button when node selected' do
       click_button '+ Condition'
+      expect_node_count(2)
 
       # Select the condition node
       condition_node = Node.where(bot: bot, node_type: 'condition').first

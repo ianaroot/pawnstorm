@@ -1,0 +1,29 @@
+<div class="match-setup-section">
+  <h2>Standings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Bot</th>
+        <th>Points</th>
+        <th>Wins</th>
+        <th>Draws</th>
+        <th>Losses</th>
+        <th>Completed</th>
+        <th>Failed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% standings.each do |row| %>
+        <tr data-tournament-row="standings-<%= row[:entrant].id %>">
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-name"><%= row[:entrant].display_name %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-points"><%= row[:points] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-wins"><%= row[:wins] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-draws"><%= row[:draws] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-losses"><%= row[:losses] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-completed"><%= row[:completed] %></td>
+          <td data-tournament-field="standings-<%= row[:entrant].id %>-failed"><%= row[:failed] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

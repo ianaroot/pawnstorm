@@ -2,11 +2,17 @@ require 'rails_helper'
 
 RSpec.describe BotsController, type: :request do
   describe 'GET #index' do
-    it 'returns success for unauthenticated users' do
-      create_list(:bot, 3)
-      get bots_path
+    it 'returns an empty workspace when not authenticated' do
+      create(:bot, name: 'Someone Else')
+
+      expect {
+        get bots_path
+      }.not_to change { User.where(guest: true).count }
+
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Bots')
+      expect(response.body).to include('New Bot')
+      expect(response.body).not_to include('Someone Else')
     end
 
     it 'returns success for authenticated users' do
@@ -15,12 +21,33 @@ RSpec.describe BotsController, type: :request do
       get bots_path
       expect(response).to have_http_status(:success)
     end
+
+    it 'only lists the current users bots' do
+      user = create(:user)
+      own_bot = create(:bot, user:, name: 'Mine')
+      other_bot = create(:bot, name: 'Not Mine')
+      sign_in user
+
+      get bots_path
+
+      expect(response.body).to include(own_bot.name)
+      expect(response.body).not_to include(other_bot.name)
+    end
+
+    it 'records signed-in user activity when the timestamp is stale' do
+      user = create(:user, last_active_at: 13.hours.ago)
+      sign_in user
+
+      get bots_path
+
+      expect(user.reload.last_active_at).to be > 1.minute.ago
+    end
   end
 
   describe 'GET #new' do
-    it 'redirects to login when not authenticated' do
+    it 'returns success when not authenticated' do
       get new_bot_path
-      expect(response).to redirect_to(new_user_session_path)
+      expect(response).to have_http_status(:success)
     end
 
     it 'returns success for authenticated users' do
@@ -35,9 +62,29 @@ RSpec.describe BotsController, type: :request do
     let(:valid_params) { { bot: { name: 'Test Bot', description: 'A test bot' } } }
     let(:invalid_params) { { bot: { name: '', description: 'A test bot' } } }
 
-    it 'redirects to login when not authenticated' do
+    it 'creates a guest user when not authenticated' do
+      expect {
+        post bots_path, params: valid_params
+      }.to change { User.where(guest: true).count }.by(1)
+        .and change(Bot, :count).by(1)
+
+      created_bot = Bot.find_by!(name: 'Test Bot')
+      guest_user = created_bot.user
+
+      expect(guest_user).to be_guest
+      expect(guest_user.last_active_at).to be_present
+      expect(response).to redirect_to(edit_bot_path(created_bot))
+    end
+
+    it 'signs in the guest who owns the created bot' do
       post bots_path, params: valid_params
-      expect(response).to redirect_to(new_user_session_path)
+      created_bot = Bot.find_by!(name: 'Test Bot')
+
+      follow_redirect!
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(created_bot.name)
+      expect(created_bot.user).to be_guest
     end
 
     context 'when authenticated' do
@@ -146,6 +193,26 @@ RSpec.describe BotsController, type: :request do
       expect {
         delete bot_path(bot)
       }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
+  describe 'POST #compile' do
+    let(:bot) { create(:bot, compiled_program_stale: true) }
+
+    it 'redirects to login when not authenticated' do
+      post compile_bot_path(bot)
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it 'compiles the bot and exits to match setup' do
+      sign_in bot.user
+
+      post compile_bot_path(bot)
+
+      expect(response).to redirect_to(new_bot_vs_bot_match_path(own_bot_id: bot.id))
+      expect(flash[:notice]).to eq('Bot compiled. Exiting editor to match setup.')
+      expect(bot.reload.compiled_program_stale).to be(false)
+      expect(bot.compiled_program).to be_present
     end
   end
 end

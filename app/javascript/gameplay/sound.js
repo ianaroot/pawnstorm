@@ -3,7 +3,7 @@ class Sound {
     static playSound(sound){
         if( sound != '' ){
             var url = this.getSoundUrl(sound)
-
+            if( !url ){ return }
             var a = new Audio(url);
             a.play();
         }
@@ -24,7 +24,7 @@ class Sound {
             case "promote":
                 url = "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/promote.mp3"
                 break;
-            case "captue":
+            case "capture":
                 url = "https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"
                 break;
             default:

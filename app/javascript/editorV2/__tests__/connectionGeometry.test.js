@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import Node from '../models/Node.js'
+import { CONNECTOR_SIZE, NODE_DIMENSIONS } from '../constants.js'
 import {
   getNodeConnectionPoint,
   getConnectionPoints
 } from '../rendering/connectionGeometry.js'
 
 describe('connectionGeometry', () => {
+  const CONNECTOR_RADIUS = CONNECTOR_SIZE / 2
+
   describe('getNodeConnectionPoint', () => {
     it('uses static top-center geometry for input anchors', () => {
       const node = new Node({
@@ -15,8 +18,8 @@ describe('connectionGeometry', () => {
       })
 
       expect(getNodeConnectionPoint(node, 'input')).toEqual({
-        x: 150,
-        y: 193
+        x: 100 + (NODE_DIMENSIONS.condition.width / 2),
+        y: 200 - CONNECTOR_RADIUS
       })
     })
 
@@ -30,8 +33,8 @@ describe('connectionGeometry', () => {
       expect(
         getNodeConnectionPoint(node, 'output', { renderedOutputBottomOffset: 92 })
       ).toEqual({
-        x: 150,
-        y: 299
+        x: 100 + (NODE_DIMENSIONS.condition.width / 2),
+        y: 200 + 92 + CONNECTOR_RADIUS
       })
     })
   })
@@ -52,10 +55,10 @@ describe('connectionGeometry', () => {
       expect(
         getConnectionPoints(sourceNode, targetNode, { sourceOutputBottomOffset: 92 })
       ).toEqual({
-        startX: 150,
-        startY: 299,
-        endX: 350,
-        endY: 393
+        startX: 100 + (NODE_DIMENSIONS.condition.width / 2),
+        startY: 200 + 92 + CONNECTOR_RADIUS,
+        endX: 300 + (NODE_DIMENSIONS.action.width / 2),
+        endY: 400 - CONNECTOR_RADIUS
       })
     })
   })

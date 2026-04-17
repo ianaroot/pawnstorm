@@ -1,7 +1,7 @@
 import Board from "gameplay/board"
-import View	from "gameplay/view"
+import LiveView from "gameplay/live_view"
 import Api	from "gameplay/api"
-import Bot	from "gameplay/bot"
+import BotRunner from "gameplay/bot_runner"
 import Rules from "gameplay/rules"
 import Sound from "gameplay/sound"
 
@@ -9,24 +9,48 @@ const throwIfMissing = p => { throw new Error(`Missing parameter: ${p}`) }
 
 class GameController {
 	constructor(){
+		this.rootElement = document.querySelector('[data-game-controller-page="true"]')
+		this.playConfig = this.buildPlayConfig()
 		this.board = new Board({});
-		this.view = new View(this);
+		this.view = new LiveView(this);
 		this._paused = false
+		this._completionSubmitted = false
 		this.view.displayLayOut({board: this.board, alert: ""})
 		this.view.setTileClickListener()
-		this.view.setUndoClickListener(this)
-		this.view.setPauseClickListener(this)
+		// this.view.setUndoClickListener(this)
+		// this.view.setPauseClickListener(this)
 		this.api = new Api({board: this.board, gameController: this});
-		// this._whiteBot = new Bot(this.api, Board.WHITE)
-		// this._blackBot = new Bot(this.api, Board.BLACK)
+		this.configurePlayBots()
 		if(this._whiteBot && !this._paused){ this.queryNextBotMove()}
 	}
 
-	pause(){
-		this._paused = true
+	buildPlayConfig(){
+		if (this.rootElement?.dataset.gameMode !== 'human-vs-bot') { return null }
+		return {
+			humanTeam: this.rootElement.dataset.humanTeam,
+			botTeam: this.rootElement.dataset.botTeam,
+			completeUrl: this.rootElement.dataset.completeUrl,
+			replayUrl: this.rootElement.dataset.replayUrl,
+			botCompiledProgram: JSON.parse(this.rootElement.dataset.botCompiledProgram)
+		}
 	}
 
+	configurePlayBots(){
+		if (!this.playConfig) { return }
+		const botRunner = new BotRunner(this.playConfig.botCompiledProgram)
+		if (this.playConfig.botTeam === Board.WHITE) {
+			this._whiteBot = botRunner
+		} else {
+			this._blackBot = botRunner
+		}
+	}
+
+	// pause(){
+	// 	this._paused = true
+	// }
+
 	attemptMove(startPosition = throwIfMissing("startPosition"), endPosition = throwIfMissing("endPosition")) {
+		if (!this.canHumanMove()) { return }
 		var board = this.board,
 			alert = "",
 			sound = "";
@@ -37,21 +61,20 @@ class GameController {
 		// shouldn't the board be making sure neither of these happens?
 		// also, what happens after the alert????
 		if ( !Board._inBounds(endPosition) ){
-		alert = 'stay on the board, fool'
+			alert = 'stay on the board, fool'
 		} else if( board.occupiedByTeamMate({position: endPosition, teamString: board.allowedToMove}) ){
-		alert = "what, are you trying to capture your own piece?"
+			alert = "what, are you trying to capture your own piece?"
 		} else {
 
-			var moveObject = Rules.getMoveObject(startPosition, endPosition, board);
+			// TODO: replace this queen default with explicit promotion UI.
+			var moveObject = Rules.getMoveObject(startPosition, endPosition, board, Board.QUEEN);
 			if( moveObject.illegal ){
 				alert = "illegal move attempted"
 				// also, what happens after the alert????
 
 			} else {
-
 				board._officiallyMovePiece( moveObject )
 				let alerts_and_sounds = this.getAlertsAndSounds();
-
 				alert = alerts_and_sounds.alert
 				sound = alerts_and_sounds.sound
 			}
@@ -59,10 +82,15 @@ class GameController {
 
 		this.view.displayLayOut({board: board, alert: alert, startPosition: startPosition})
 		Sound.playSound(sound)
+		this.submitCompletionIfGameOver()
 		if(this.movingTeamHasBot() && !this._paused ){
 			let queryMove = this.queryNextBotMove.bind(this)
 			setTimeout( function(){  queryMove() }, 400)
 		}
+	}
+
+	canHumanMove(){
+		return !this.playConfig || this.board.allowedToMove === this.playConfig.humanTeam
 	}
 
 	getAlertsAndSounds(){
@@ -75,13 +103,26 @@ class GameController {
 	}
 
 	queryBotMove(team){
-		if( team === Board.WHITE ){
-			let moveObject = this._whiteBot.determineMove({ board: this.board, api: this.api })
-			this.attemptMove(moveObject.startPosition, moveObject.endPosition)
-		} else {
-			let moveObject = this._blackBot.determineMove({ board: this.board, api: this.api })
-			this.attemptMove(moveObject.startPosition, moveObject.endPosition)
+		try {
+			let moveObject = team === Board.WHITE ? this.selectBotMove(this._whiteBot) : this.selectBotMove(this._blackBot)
+			this.applyBotMove(moveObject)
+		} catch (error) {
+			this.failInteractiveMatch(error)
 		}
+	}
+
+	selectBotMove(bot){
+		if (typeof bot.selectMove === 'function') { return bot.selectMove({ board: this.board }) }
+		return bot.determineMove({ board: this.board, api: this.api })
+	}
+
+	applyBotMove(moveObject){
+		if (!moveObject) { throw new Error('Bot did not select a move.') }
+		this.board._officiallyMovePiece(moveObject)
+		let alerts_and_sounds = this.getAlertsAndSounds()
+		this.view.displayLayOut({board: this.board, alert: alerts_and_sounds.alert, startPosition: moveObject.startPosition})
+		Sound.playSound(alerts_and_sounds.sound)
+		this.submitCompletionIfGameOver()
 	}
 
 	queryNextBotMove(){
@@ -89,54 +130,85 @@ class GameController {
 		this.queryBotMove(team);
 	}
 
-	undo(){
-		if( JSON.parse( this.board.previousLayouts ).length){
-			this.board._undo()
-			this.view.displayLayOut({board: this.board})
+	// undo(){
+	// 	return
+	// }
+
+	submitCompletionIfGameOver(){
+		if (!this.playConfig || !this.board.gameOver || this._completionSubmitted) { return }
+		this._completionSubmitted = true
+		this.updatePlayStatus(`${this.resultMessage()} Redirecting to replay...`)
+		setTimeout(() => this.persistInteractiveMatch(this.completedPayload()), 1200)
+	}
+
+	completedPayload(){
+		return {
+			match: {
+				status: 'completed',
+				result: this.matchResult(),
+				lay_out: this.board.layOut,
+				captured_pieces: this.board.capturedPieces,
+				allowed_to_move: this.board.allowedToMove,
+				movement_notation: this.board.movementNotation,
+				previous_layouts: []
+			}
 		}
 	}
-	// THIS FUNCTION NOT CURRENTLY IN USE, STILL HAS GHOST COMMENTED OUT BELOW
 
-	runMoves(moveArray){
-		var func = this.runMoves.bind(this)
-		if (moveArray.length > 1 ) {
-			// console.log('move is ' + moveArray[0] + ' to ' + moveArray[1])
-			this.attemptMove( moveArray[0], moveArray[1] )
-			moveArray.shift()
-			moveArray.shift()
-			setTimeout( function(){ func(moveArray)  }, 500)
-		}
+	matchResult(){
+		if (this.board._resultType === 'fifty_move_rule') { return 'fifty_move_rule' }
+		if (this.board._resultType === 'threefold_repetition') { return 'threefold_repetition' }
+		if (this.board._winner === Board.WHITE) { return 'white_win' }
+		if (this.board._winner === Board.BLACK) { return 'black_win' }
+		return 'stalemate'
+	}
+
+	resultMessage(){
+		if (this.board._winner === this.playConfig.humanTeam) { return 'You win.' }
+		if (this.board._winner === this.playConfig.botTeam) { return 'Bot wins.' }
+		if (this.board._resultType === 'fifty_move_rule') { return 'Draw by 50-move rule.' }
+		if (this.board._resultType === 'threefold_repetition') { return 'Draw by threefold repetition.' }
+		return 'Draw by stalemate.'
+	}
+
+	failInteractiveMatch(error){
+		if (!this.playConfig || this._completionSubmitted) { throw error }
+		this._completionSubmitted = true
+		this.updatePlayStatus('Game failed. Redirecting to match details...')
+		this.persistInteractiveMatch({
+			match: {
+				status: 'failed',
+				error_message: `${error.name || 'Error'}: ${error.message || error}`
+			}
+		})
+	}
+
+	persistInteractiveMatch(payload){
+		fetch(this.playConfig.completeUrl, {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+			},
+			body: JSON.stringify(payload)
+		})
+			.then(response => {
+				if (!response.ok) { throw new Error(`Match save failed with ${response.status}`) }
+				return response.json()
+			})
+			.then(data => {
+				window.location.href = data.redirect_url || this.playConfig.replayUrl
+			})
+			.catch(error => {
+				this.updatePlayStatus(`Could not save match: ${error.message}`)
+			})
+	}
+
+	updatePlayStatus(message){
+		const status = this.rootElement?.querySelector('[data-play-status]')
+		if (status) { status.textContent = message }
 	}
 }
-
-var tests = {
-	pawnPromotion: 	[1,18, 50,42, 11,27, 59,41, 3,19, 42,34, 14,22, 34,27, 18,24, 51, 43, 10, 26, 41, 17, 26, 34, 49, 33, 19, 33, 57, 42, 33, 49, 27, 19, 34, 43, 19, 12, 43, 52, 12,  5, 4,   5, 17,  9, 52, 61 ],
-  sim2: 					[1,18, 50,42, 11,27, 59,41, 3,19, 42,34, 14,22, 34,27, 0,1,   27, 18, 9,  18, 51, 35, 15, 23, 58, 23 ],
-  blackEnPassant: [1,18, 50,42, 11,27, 59,41, 3,19, 42,34, 14,22, 34,27, 18,24, 51, 43],// 10,26],
-  whiteEnPassant: [1,18, 50,42, 11,27, 59,41, 3,19, 42,34, 14,22, 34,27, 18,24, 51, 43, 10, 26, 41, 17, 26, 34, 49, 33],
-  checkmate: 			[12,20, 57,42, 5,26, 42,32, 3,21, 32,17, 21,53],
-  queensCastles: 	[11,19, 51,43, 2,20, 58,44, 3,11, 59,51, 1,18, 57,42, 4,2, 60,58],
-  kingsCastles: 	[12,20, 52,44, 5,12, 61,43, 6,23, 62,52, 4,6, 60,62],
-  singleMoveTest: [1, 18],
-  threeFold: 			[1,18, 62,45, 18,1, 45,62, 1,18, 62,45, 18,1, 45,62],
-	// movingIntoCheck
-	// castlingOutOfCheck
-	// startPosition straight step pawn capture
-
-  notThreeFold: 	[1,18, 62,45, 18,1, 45,62, 1,18, 62,45, 18,1, 50,42, 1,18, 45,62, 18,1, 62,45],
-
-	touchKings: 		[12,28, 51,35, 28,35, 60,51, 4,12, 51, 43, 12,20, 43,36, 20,28],
-  check: 					[12,20, 57,42, 3,21, 42,32, 21,53, 32,17, ],
-}
-
-// runAllTests= function(){
-// 	for (let property in tests) {
-// 		if (tests.hasOwnProperty(property) ){
-// 			gameController.board._reset();
-// 			console.log(tests[property])
-// 			gameController.runMoves(tests[property])
-// 		}
-// 	}
-// }
 
 export default GameController

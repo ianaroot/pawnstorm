@@ -1,39 +1,20 @@
-// handlers/ClickHandler.js
-// Handles node selection and editor panel
-
-/**
- * ClickHandler
- * 
- * Handles:
- * - Click on node to select
- * - Double-click on node to open editor panel
- * - Click outside nodes to deselect
- * - Delete key to delete selected node
- * 
- * Note: Form handling is delegated to NodeFormHandler (kept separate).
- */
+ import ConditionForm from '../panels/ConditionForm'
 class ClickHandler {
-  /**
-   * Create ClickHandler
-   * @param {Store} store - Store instance
-   * @param {History} history - History instance (for UI updates)
-   * @param {HTMLElement} editorPanel - Editor panel element (optional)
-   */
   constructor(store, history, editorPanel = null) {
     this.store = store
     this.history = history
     this.editorPanel = editorPanel
     
-    // Pre-bound handlers
     this.boundHandleClick = this.handleClick.bind(this)
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this)
     this.boundHandleKeyDown = this.handleKeyDown.bind(this)
+    this.boundHandleSave = this.handleSave.bind(this)
+    this.boundHandleCancel = this.closeEditor.bind(this)
+    this.boundHandleStoreUpdate = this.handleStoreUpdate.bind(this)
+    this.conditionForm = this.editorPanel ? new ConditionForm(this.editorPanel) : null
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
-    
-    // Currently selected node
-    this.selectedNodeId = null
     
     // Currently editing node
     this.editingNodeId = null
@@ -42,46 +23,28 @@ class ClickHandler {
     this.onNodeSelected = null
     this.onNodeDeselected = null
     this.onNodeEdit = null
+
+    if (this.editorPanel) { this.attachEditorPanelHandlers() }
+    this.unsubscribeStore = this.store.subscribe(this.boundHandleStoreUpdate)
   }
   
-  /**
-   * Attach click handlers to a node element
-   * @param {HTMLElement} element - Node element
-   * @param {string} clientId - Node client ID
-   */
   attach(element, clientId) {
-    // Prevent duplicate attachments
-    if (this.attachedElements.has(element)) {
-      return
-    }
-    
+    if (this.attachedElements.has(element)) { return }
     this.attachedElements.set(element, clientId)
-    
-    // Single click: select node
     element.addEventListener('click', (e) => {
-      // Don't select if clicking on connector
-      if (e.target.classList.contains('node-connector')) {
-        return
-      }
-      
-      this.selectNode(clientId, element)
+      if (e.target.classList.contains('node-connector')) { return }
+      if (this.store.shouldSuppressClicks()) { return }
+      this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
+      if (this.isPlainClick(e)) { this.openEditor(clientId) }
     })
     
-    // Double click: open editor panel
     element.addEventListener('dblclick', (e) => {
-      // Don't edit if clicking on connector
-      if (e.target.classList.contains('node-connector')) {
-        return
-      }
-      
-      this.openEditor(clientId)
+      if (e.target.classList.contains('node-connector')) {  return  }
+      this.openEditor(clientId)  
     })
   }
   
-  /**
-   * Setup global handlers
-   * Call this once after all nodes are attached
-   */
+  // * Setup global handlers * Call this once after all nodes are attached
   setupGlobalHandlers() {
     // Document click: deselect when clicking outside nodes
     document.addEventListener('click', this.boundHandleClick)
@@ -89,32 +52,51 @@ class ClickHandler {
     // Keyboard: delete selected node
     document.addEventListener('keydown', this.boundHandleKeyDown)
   }
-  
-  /**
-   * Set editor panel element
-   * @param {HTMLElement} panel - Editor panel element
-   */
+
   setEditorPanel(panel) {
+    this.conditionForm?.detach()
     this.editorPanel = panel
+    this.conditionForm = panel ? new ConditionForm(panel) : null
+    this.attachEditorPanelHandlers()
   }
-  
-  /**
-   * Handle document click (for deselection)
-   * @param {MouseEvent} event
-   */
+
+  attachEditorPanelHandlers() {
+    if (!this.editorPanel) { return }
+    this.editorPanel.querySelector('#save-node')?.addEventListener('click', this.boundHandleSave)
+    this.editorPanel.querySelector('#cancel-edit')?.addEventListener('click', this.boundHandleCancel)
+    this.conditionForm?.attach()
+  }
+
+  handleStoreUpdate() {
+    this.syncSelectionClasses()
+  }
+
+  syncSelectionClasses() {
+    const selectedIds = new Set(this.store.getSelectedNodeIds())
+    document.querySelectorAll('.node').forEach(el => {
+      const clientId = el.dataset?.clientId
+      el.classList.toggle('selected', selectedIds.has(clientId))
+    })
+  }
+
+  isShiftSelection(event) {
+    return event.shiftKey
+  }
+
+  isPlainClick(event) {
+    return !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey
+  }
+
   handleClick(event) {
+    if (this.store.shouldSuppressClicks()) { return }
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
-    
     if (!clickedOnNode && !clickedOnEditor) {
       this.deselectAll()
+      this.closeEditor()
     }
   }
-  
-  /**
-   * Handle double click (for editing)
-   * @param {MouseEvent} event
-   */
+
   handleDoubleClick(event) {
     const nodeEl = event.target.closest('.node')
     if (nodeEl) {
@@ -124,74 +106,55 @@ class ClickHandler {
       }
     }
   }
-  
-  /**
-   * Handle keyboard events (for deletion)
-   * @param {KeyboardEvent} event
-   */
+
   handleKeyDown(event) {
-    // Delete key or backspace: delete selected node
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      // Only if not in an input field
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return
       }
-      
-      if (this.selectedNodeId) {
-        this.deleteSelectedNode()
+      if (this.getDeletableSelectedNodeIds().length > 0) {
+        this.deleteSelectedNodes()
       }
     }
-    
     // Escape: close editor panel
     if (event.key === 'Escape') {
       this.closeEditor()
     }
   }
-  
-  /**
-   * Select a node
-   * @param {string} clientId - Node client ID
-   * @param {HTMLElement} element - Node element
-   */
-  selectNode(clientId, element) {
-    // Deselect previous
-    this.deselectAll()
-    
-    // Select this node
-    this.selectedNodeId = clientId
-    this.store.setSelectedNode(clientId)
-    element.classList.add('selected')
-    
-    // Callback
+
+  selectNode(clientId, element, { additive = false } = {}) {
+    if (additive) {
+      this.store.toggleNodeSelection(clientId)
+      if (this.store.isNodeSelected(clientId)) {
+        if (this.onNodeSelected) {
+          this.onNodeSelected(clientId)
+        }
+      } else if (this.onNodeDeselected) {
+        this.onNodeDeselected()
+      }
+      return
+    }
+    this.store.selectOnlyNode(clientId)
     if (this.onNodeSelected) {
       this.onNodeSelected(clientId)
     }
   }
-  
-  /**
-   * Deselect all nodes
-   */
+
+  selectNodeById(clientId) {
+    const element = document.querySelector(`.node[data-client-id="${clientId}"]`)
+    if (!element) { return }
+    this.selectNode(clientId, element)
+  }
+
+
   deselectAll() {
-    // Remove selection from store
-    this.store.setSelectedNode(null)
-    
-    // Remove visual selection from all nodes
-    document.querySelectorAll('.node.selected').forEach(el => {
-      el.classList.remove('selected')
-    })
-    
-    this.selectedNodeId = null
-    
-    // Callback
+    this.store.clearSelection()
     if (this.onNodeDeselected) {
       this.onNodeDeselected()
     }
   }
-  
-  /**
-   * Open editor panel for a node
-   * @param {string} clientId - Node client ID
-   */
+
+
   openEditor(clientId) {
     const node = this.store.getNode(clientId)
     if (!node) {
@@ -200,10 +163,8 @@ class ClickHandler {
     }
     
     // Don't edit root nodes
-    if (node.type === 'root') {
-      return
-    }
-    
+    if (node.type === 'root') { return }
+    this.store.setRecentPlacementAnchor(node.position)
     this.editingNodeId = clientId
     this.store.setEditingNode(clientId)
     
@@ -219,23 +180,15 @@ class ClickHandler {
     }
   }
   
-  /**
-   * Close editor panel
-   */
   closeEditor() {
     this.editingNodeId = null
     this.store.setEditingNode(null)
-    
     if (this.editorPanel) {
       this.editorPanel.classList.add('hidden')
     }
   }
-  
-  /**
-   * Populate editor panel with node data
-   * Override this or use NodeFormHandler
-   * @param {Node} node - Node instance
-   */
+
+  // ===== Editor Panel Population =====
   populateEditorPanel(node) {
     if (!this.editorPanel) {
       return
@@ -248,95 +201,172 @@ class ClickHandler {
     }
     
     // Hide/show appropriate editor sections
-    const conditionEditor = this.editorPanel.querySelector('#condition-editor')
-    const actionEditor = this.editorPanel.querySelector('#action-editor')
-    
-    if (conditionEditor) {
-      conditionEditor.classList.toggle('hidden', node.type !== 'condition')
+    const conditionForm = this.editorPanel.querySelector('#condition-form')
+    const actionEditor = this.editorPanel.querySelector('#action-form')
+    const organizerEditor = this.editorPanel.querySelector('#organizer-form')
+    this.editorPanel.classList.toggle('node-form-panel--condition', node.type === 'condition')
+    if (conditionForm) {
+      conditionForm.classList.toggle('hidden', node.type !== 'condition')
     }
     if (actionEditor) {
       actionEditor.classList.toggle('hidden', node.type !== 'action')
     }
-    
-    // Note: Detailed form population is handled by NodeFormHandler
-    // This is a minimal implementation
+    if (organizerEditor) {
+      organizerEditor.classList.toggle('hidden', node.type !== 'organizer')
+    }
+    this.populateEditorByType(node)
   }
-  
-  /**
-   * Delete the currently selected node
-   */
-  async deleteSelectedNode() {
-    if (!this.selectedNodeId) {
-      return
+
+  populateEditorByType(node) {
+    switch (node.type) {
+      case 'condition':
+        this.populateConditionForm(node)
+        break
+      case 'action':
+        this.populateActionEditor(node)
+        break
+      case 'organizer':
+        this.populateOrganizerEditor(node)
+        break
+      default:
+        break
     }
-    
-    const node = this.store.getNode(this.selectedNodeId)
-    if (!node) {
-      return
+  }
+
+  populateConditionForm(node) {
+    this.conditionForm?.populate(node.data)
+  }
+
+
+
+  // ===== Action Editor =====
+  buildActionDataPayload() {
+    return {
+      actionType: this.editorPanel.querySelector('#action-type')?.value || 'add',
+      value: Number(this.editorPanel.querySelector('#action-value')?.value || 1)
     }
-    
-    // Don't delete root nodes
-    if (node.type === 'root') {
-      console.warn('Cannot delete root node')
-      return
+  }
+
+  // ===== Organizer Editor =====
+  buildOrganizerDataPayload() {
+    return {
+      title: this.editorPanel.querySelector('#organizer-title')?.value?.trim() || 'Organizer',
+      notes: this.editorPanel.querySelector('#organizer-notes')?.value?.trim() || ''
     }
-    
-    // Confirm deletion
-    if (!confirm('Delete this node?')) {
-      return
+  }
+
+  populateActionEditor(node) {
+    if (!this.editorPanel) { return }
+    const actionType = this.editorPanel.querySelector('#action-type')
+    const actionValue = this.editorPanel.querySelector('#action-value')
+    if (actionType) { actionType.value = node.data.actionType || node.data.action_type || 'add' }
+    if (actionValue) { actionValue.value = node.data.value || 1 }
+  }
+
+  populateOrganizerEditor(node) {
+    if (!this.editorPanel) { return }
+    const organizerTitle = this.editorPanel.querySelector('#organizer-title')
+    const organizerNotes = this.editorPanel.querySelector('#organizer-notes')
+    if (organizerTitle) { organizerTitle.value = node.data.title || 'Organizer' }
+    if (organizerNotes) { organizerNotes.value = node.data.notes || '' }
+  }
+
+  // ===== Save Helpers =====
+
+  buildDataPayloadByType(node) {
+    switch (node.type) {
+      case 'condition':
+        return this.buildConditionDataPayload()
+      case 'action':
+        return this.buildActionDataPayload()
+      case 'organizer':
+        return this.buildOrganizerDataPayload()
+      default:
+        return null
     }
-    
-    const clientId = this.selectedNodeId
-    
-    // Deselect first
-    this.deselectAll()
-    
-    // Close editor if editing this node
-    if (this.editingNodeId === clientId) {
-      this.closeEditor()
-    }
-    
-    // SyncManager handles: optimistic delete, server sync, history push
+  }
+
+  buildConditionDataPayload() {
+    return this.conditionForm?.buildPayload()
+  }
+
+  async handleSave() {
+    if (!this.editingNodeId) { return }
+    const node = this.store.getNode(this.editingNodeId)
+    if (!node || !this.syncManager) { return }
     try {
-      await this.syncManager?.deleteNode(clientId)
+      const payload = this.buildDataPayloadByType(node)
+      if (payload) {
+        await this.syncManager.updateNodeData(this.editingNodeId, payload)
+      }
+      this.closeEditor()
+    } catch (error) {
+      console.error('Failed to save node:', error)
+    }
+  }
+
+  getSelectedNodeIds() {
+    return this.store.getSelectedNodeIds()
+  }
+
+  getDeletableSelectedNodeIds() {
+    return this.getSelectedNodeIds().filter(clientId => {
+      const node = this.store.getNode(clientId)
+      return node && node.type !== 'root'
+    })
+  }
+
+  async deleteSelectedNodes() {
+    const selectedNodeIds = this.getSelectedNodeIds()
+    const deletableNodeIds = this.getDeletableSelectedNodeIds()
+    if (deletableNodeIds.length === 0) { return }
+    const confirmationMessage = deletableNodeIds.length === 1
+      ? 'Delete 1 selected node?'
+      : `Delete ${deletableNodeIds.length} selected nodes?`
+    if (!confirm(confirmationMessage)) { return }
+    try {
+      await this.syncManager?.deleteNodes(deletableNodeIds) 
+      const remainingSelectedIds = selectedNodeIds.filter(clientId => !deletableNodeIds.includes(clientId))
+      this.store.setSelectedNodeIds(remainingSelectedIds)
+      this.syncSelectionClasses()
+
+      if (this.editingNodeId && deletableNodeIds.includes(this.editingNodeId)) {
+        this.closeEditor()
+      }
+
+      if (remainingSelectedIds.length > 0) {
+        this.onNodeSelected?.(remainingSelectedIds[0])
+      } else {
+        this.onNodeDeselected?.()
+      }
     } catch (error) {
       console.error('Failed to delete node:', error)
     }
   }
+
+  async deleteSelectedNode() {
+    return this.deleteSelectedNodes()
+  }
   
-  /**
-   * Set sync manager (needed for delete)
-   * @param {SyncManager} syncManager
-   */
+
   setSyncManager(syncManager) {
     this.syncManager = syncManager
   }
-  
-  /**
-   * Get currently selected node ID
-   * @returns {string|null}
-   */
+
   getSelectedNodeId() {
-    return this.selectedNodeId
+    return this.store.getPrimarySelectedNode()
   }
-  
-  /**
-   * Get currently editing node ID
-   * @returns {string|null}
-   */
+
   getEditingNodeId() {
     return this.editingNodeId
   }
-  
-  /**
-   * Cleanup on destroy
-   */
+
   destroy() {
     document.removeEventListener('click', this.boundHandleClick)
     document.removeEventListener('keydown', this.boundHandleKeyDown)
-    
+    this.conditionForm?.detach()
+    this.unsubscribeStore?.()
     this.attachedElements = new WeakMap()
-    this.selectedNodeId = null
     this.editingNodeId = null
   }
 }

@@ -7,9 +7,9 @@ export const NODE_HEIGHT = 60
 export const CONNECTOR_SIZE = 14
 export const NODE_DIMENSIONS = {
   root: { width: 100, height: 100 },
-  condition: { width: 100, height: 60 },
-  action: { width: 100, height: 60 },
-  organizer: { width: 40, height: 40 },
+  condition: { width: 100, height: 128 },
+  action: { width: 108, height: 108 },
+  organizer: { width: 140, height: 112 },
   default: { width: NODE_WIDTH, height: NODE_HEIGHT }
 }
 
@@ -17,6 +17,10 @@ export const NODE_DIMENSIONS = {
 export const CONNECTION_COLOR = '#4CAF50'
 export const CONNECTION_STROKE_WIDTH = 2
 export const CONNECTION_HITAREA_WIDTH = 20
+export const CONNECTION_HOVER_HITAREA_WIDTH = 44
+export const CONNECTION_DELETE_BUTTON_SIZE = 26
+export const CONNECTION_DELETE_BUTTON_MIN_SIZE = 26
+export const CONNECTION_DELETE_BUTTON_MAX_SIZE = 44
 
 // Temp line styling (during connection drag)
 export const TEMP_LINE_COLOR = '#4CAF50'
@@ -35,13 +39,14 @@ export const VIEWPORT_PADDING = 200
 export const FIT_PADDING = 120
 export const DRAG_AUTOPAN_EDGE_THRESHOLD = 24
 export const DRAG_AUTOPAN_SPEED = 1
+export const DRAG_START_THRESHOLD = 4
 
 // Node type colors (matching existing CSS)
 export const NODE_COLORS = {
   root: '#FFD700',
   condition: '#e94560',
   action: '#4CAF50',
-  organizer: '#9C27B0'
+  organizer: '#3b82f6'
 }
 
 // Event names for Store subscriber pattern
@@ -53,6 +58,7 @@ export const EVENTS = {
   CONNECTION_ADD: 'connection:add',
   CONNECTION_UPDATE: 'connection:update',
   CONNECTION_REMOVE: 'connection:remove',
+  SELECTION_CHANGE: 'selection:change',
   GRAPH_REPLACE: 'graph:replace',
   GRAPH_RESTORE: 'graph:restore'
 }
