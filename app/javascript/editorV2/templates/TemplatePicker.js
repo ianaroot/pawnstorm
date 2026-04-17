@@ -1,5 +1,4 @@
 import { NODE_DIMENSIONS } from 'editorV2/constants'
-import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 import {
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_CATEGORY_ORDER
@@ -53,7 +52,7 @@ function nodeAnchor(node, edge) {
   }
 }
 
-function renderTemplatePreview(template) {
+export function renderTemplatePreview(template) {
   const bounds = previewBounds(template)
   const previewContainer = document.querySelector('[data-template-picker-preview]')
   const availableWidth = previewContainer?.clientWidth || 320
@@ -93,30 +92,12 @@ function renderTemplatePreview(template) {
     const top = (node.position.y * scale) + offsetY
     const width = dims.width * scale
     const height = dims.height * scale
-    let content = ''
-
-    if (node.type === 'organizer') {
-      content = `
-        <div class="template-picker-preview__organizer-title">${escapeHtml(node.data.title)}</div>
-      `
-    } else if (node.type === 'condition') {
-      content = `
-        <div class="template-picker-preview__condition-line">${escapeHtml(formatConditionPreview(node.data).text)}</div>
-      `
-    } else if (node.type === 'action') {
-      content = `
-        <div class="template-picker-preview__action-type">${escapeHtml(node.data.actionType)}</div>
-        <div class="template-picker-preview__action-value">${escapeHtml(node.data.value)}</div>
-      `
-    }
 
     return `
       <div
         class="template-picker-preview__node template-picker-preview__node--${node.type}"
         style="left:${left}px;top:${top}px;width:${width}px;height:${height}px;">
-        <div class="template-picker-preview__node-content">
-          ${content}
-        </div>
+        <div class="template-picker-preview__node-content" aria-hidden="true"></div>
       </div>
     `
   }).join('')
