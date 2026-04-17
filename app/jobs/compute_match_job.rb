@@ -82,9 +82,9 @@ class ComputeMatchJob < ApplicationJob
   def run_match_process(match:, result_path:)
     Open3.capture3(
       { 'MATCH_RESULT_PATH' => result_path, 'MATCH_PROFILE' => match_profile_env_value },
-      Rails.root.join('node_modules/.bin/vite-node').to_s,
-      '--config',
-      Rails.root.join('vitest.config.js').to_s,
+      'node',
+      '--loader',
+      Rails.root.join('app/javascript/node_alias_loader.mjs').to_s,
       Rails.root.join('app/javascript/gameplay/run_match_cli.js').to_s,
       stdin_data: match_payload(match).to_json,
       chdir: Rails.root.to_s
