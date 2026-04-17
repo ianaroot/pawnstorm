@@ -20,16 +20,17 @@ class TournamentsController < ApplicationController
 
   def show
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
-    @entrants = @tournament.entrants
-    @standings = @tournament.standings_rows
+    @tournament_presenter = TournamentPresenter.new(@tournament)
+    @entrants = @tournament_presenter.entrants
+    @standings = @tournament_presenter.standings_rows
     respond_to do |format|
       format.html
       format.json do
         render json: {
-          meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, rematch_params: @rematch_params }),
+          meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, rematch_params: @rematch_params }),
           progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament: @tournament }),
           standings_html: render_to_string(partial: 'standings', formats: [:html], locals: { standings: @standings }),
-          matrix_html: render_to_string(partial: 'matrix', formats: [:html], locals: { tournament: @tournament, entrants: @entrants }),
+          matrix_html: render_to_string(partial: 'matrix', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants }),
           polling_complete: @tournament.pending_matches_count.zero? && @tournament.running_matches_count.zero?
         }
       end
@@ -38,13 +39,14 @@ class TournamentsController < ApplicationController
 
   def pairing
     @tournament = Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry]).find(params[:id])
+    @tournament_presenter = TournamentPresenter.new(@tournament)
     requested_entrant_ids = [params[:entrant_a_id], params[:entrant_b_id]].map(&:to_i).uniq
-    requested_entrants = @tournament.entrants.where(id: requested_entrant_ids)
+    requested_entrants = @tournament_presenter.entrants.where(id: requested_entrant_ids)
     if requested_entrant_ids.size != 2 || requested_entrants.size != 2
       redirect_to tournament_path(@tournament), alert: 'That pairing is not valid for this tournament.'
       return
     end
-    @pairing = @tournament.pairing_row(requested_entrants.first, requested_entrants.last)
+    @pairing = @tournament_presenter.pairing_row(requested_entrants.first, requested_entrants.last)
   end
 
   def abort

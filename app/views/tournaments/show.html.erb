@@ -7,7 +7,7 @@
   >
     <div class="game-page tournament-page">
       <div data-tournament-poll-target="meta">
-        <%= render 'meta', tournament: @tournament %>
+        <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
       </div>
 
       <div data-tournament-poll-target="progress">
@@ -19,7 +19,7 @@
       </div>
 
       <div data-tournament-poll-target="matrix">
-        <%= render 'matrix', tournament: @tournament, entrants: @entrants %>
+        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants %>
       </div>
     </div>
   </div>

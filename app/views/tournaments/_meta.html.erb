@@ -1,7 +1,7 @@
 <div class="match-show-meta">
   <h1 class="match-show-title">Tournament <%= tournament.id %></h1>
   <p class="match-show-meta-item"><strong>Status:</strong> <%= tournament.overall_status.humanize %></p>
-  <p class="match-show-meta-item"><strong>Entrants:</strong> <%= tournament.entrants.map(&:display_name).join(', ') %></p>
+  <p class="match-show-meta-item"><strong>Entrants:</strong> <%= tournament_presenter.entrants.map(&:display_name).join(', ') %></p>
   <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= tournament.games_per_pair %></p>
   <% if tournament.pending_matches_count.positive? || tournament.running_matches_count.positive? %>
     <p class="match-show-meta-item">
