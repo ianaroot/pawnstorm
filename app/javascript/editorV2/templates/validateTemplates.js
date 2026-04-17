@@ -1,8 +1,8 @@
 import {
   ACTION_DATA_KEYS,
   ORGANIZER_DATA_KEYS
-} from '../utils/nodeDefaults.js'
-import { TEMPLATE_CATEGORY_ORDER } from './TemplateCategories.js'
+} from 'editorV2/utils/nodeDefaults'
+import { TEMPLATE_CATEGORY_ORDER } from 'editorV2/templates/TemplateCategories'
 
 const ALLOWED_NODE_TYPES = Object.freeze(['organizer', 'condition', 'action'])
 const CONDITION_UNARY_REQUIRED_KEYS = Object.freeze([

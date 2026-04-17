@@ -1,7 +1,7 @@
-import { EVENTS } from '../constants.js'
-import Graph from '../models/Graph.js'
-import Node from '../models/Node.js'
-import Connection from '../models/Connection.js'
+import { EVENTS } from 'editorV2/constants'
+import Graph from 'editorV2/models/Graph'
+import Node from 'editorV2/models/Node'
+import Connection from 'editorV2/models/Connection'
 
 /**
  * Store - Single source of truth for application state

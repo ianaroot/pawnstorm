@@ -1,4 +1,4 @@
-import { NODE_DIMENSIONS } from '../constants.js'
+import { NODE_DIMENSIONS } from 'editorV2/constants'
 
 const TEMPLATE_PLACEMENT = Object.freeze({
   padding: 40,

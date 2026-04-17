@@ -1,10 +1,10 @@
 // api.js
 // HTTP client for server communication with client/server ID translation
 
-import Node from './models/Node.js'
-import Connection from './models/Connection.js'
-import Graph from './models/Graph.js'
-import generateUUID from './utils/uuid.js'
+import Node from 'editorV2/models/Node'
+import Connection from 'editorV2/models/Connection'
+import Graph from 'editorV2/models/Graph'
+import generateUUID from 'editorV2/utils/uuid'
 
 /**
  * API wrapper for server communication

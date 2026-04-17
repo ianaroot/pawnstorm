@@ -1,8 +1,8 @@
 // rendering/NodeRenderer.js
 // Creates and updates node DOM elements from state
 
-import { EVENTS, NODE_COLORS } from '../constants.js'
-import { formatConditionPreviewElement } from '../utils/conditionPreviewFormatter.js'
+import { EVENTS, NODE_COLORS } from 'editorV2/constants'
+import { formatConditionPreviewElement } from 'editorV2/utils/conditionPreviewFormatter'
 
 /**
  * NodeRenderer

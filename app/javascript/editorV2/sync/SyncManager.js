@@ -1,13 +1,13 @@
 // sync/SyncManager.js
 // Orchestrates server synchronization with optimistic updates and rollback
 
-import generateUUID from '../utils/uuid.js'
-import Node from '../models/Node.js'
-import Connection from '../models/Connection.js'
-import { showError } from '../utils/errors.js'
-import { showErrorDialog } from '../utils/ErrorDialog.js'
-import { normalizeNodeData } from '../utils/nodeDefaults.js'
-import { buildTemplateInsertOperation } from '../templates/TemplateInserter.js'
+import generateUUID from 'editorV2/utils/uuid'
+import Node from 'editorV2/models/Node'
+import Connection from 'editorV2/models/Connection'
+import { showError } from 'editorV2/utils/errors'
+import { showErrorDialog } from 'editorV2/utils/ErrorDialog'
+import { normalizeNodeData } from 'editorV2/utils/nodeDefaults'
+import { buildTemplateInsertOperation } from 'editorV2/templates/TemplateInserter'
 
 /**
  * SyncManager

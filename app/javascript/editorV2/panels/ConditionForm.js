@@ -1,4 +1,4 @@
-import { formatConditionPreview } from '../utils/conditionPreviewFormatter.js'
+import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 
 const DEFAULT_STATE = Object.freeze({
   kind: 'relational',

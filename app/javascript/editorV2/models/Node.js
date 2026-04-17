@@ -1,4 +1,4 @@
-import generateUUID from '../utils/uuid.js'
+import generateUUID from 'editorV2/utils/uuid'
 
 class Node {
   constructor({ clientId, serverId = null, type, position, data = {} }) {

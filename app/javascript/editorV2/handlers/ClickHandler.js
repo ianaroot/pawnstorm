@@ -1,4 +1,4 @@
-import ConditionForm from '../panels/ConditionForm.js'
+import ConditionForm from 'editorV2/panels/ConditionForm'
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
     this.store = store

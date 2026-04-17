@@ -1,6 +1,6 @@
-import { DEFAULT_ACTION_DATA, DEFAULT_ORGANIZER_DATA } from '../utils/nodeDefaults.js'
-import { TEMPLATE_CATEGORIES } from './TemplateCategories.js'
-import { validateTemplates } from './validateTemplates.js'
+import { DEFAULT_ACTION_DATA, DEFAULT_ORGANIZER_DATA } from 'editorV2/utils/nodeDefaults'
+import { TEMPLATE_CATEGORIES } from 'editorV2/templates/TemplateCategories'
+import { validateTemplates } from 'editorV2/templates/validateTemplates'
 
 function organizerNode(title) {
   return {

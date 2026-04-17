@@ -1,6 +1,6 @@
-import Node from './Node.js'
-import Connection from './Connection.js'
-import generateUUID from '../utils/uuid.js'
+import Node from 'editorV2/models/Node'
+import Connection from 'editorV2/models/Connection'
+import generateUUID from 'editorV2/utils/uuid'
 
 class Graph {
   

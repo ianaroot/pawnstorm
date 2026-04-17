@@ -10,8 +10,8 @@ import {
   CONNECTION_DELETE_BUTTON_SIZE,
   CONNECTION_DELETE_BUTTON_MIN_SIZE,
   CONNECTION_DELETE_BUTTON_MAX_SIZE
-} from '../constants.js'
-import { getConnectionPoints } from './connectionGeometry.js'
+} from 'editorV2/constants'
+import { getConnectionPoints } from 'editorV2/rendering/connectionGeometry'
 
 /**
  * ConnectionRenderer

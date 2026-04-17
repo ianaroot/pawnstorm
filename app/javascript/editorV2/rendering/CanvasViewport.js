@@ -7,7 +7,7 @@ import {
   ZOOM_MAX,
   ZOOM_MIN,
   ZOOM_STEP
-} from '../constants.js'
+} from 'editorV2/constants'
 
 class CanvasViewport {
   constructor(container, workspace, scene, nodesLayer, svgLayer, store) {

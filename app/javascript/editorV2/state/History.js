@@ -1,4 +1,4 @@
-import { MAX_HISTORY } from '../constants.js'
+import { MAX_HISTORY } from 'editorV2/constants'
 
 class History {
   constructor(store, maxHistory = MAX_HISTORY) {

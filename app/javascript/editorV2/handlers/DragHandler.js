@@ -6,7 +6,7 @@ import {
   DRAG_AUTOPAN_SPEED,
   DRAG_START_THRESHOLD,
   NODE_DIMENSIONS
-} from '../constants.js'
+} from 'editorV2/constants'
 
 /**
  * * IMPORTANT: This handler never calls history.push() directly.

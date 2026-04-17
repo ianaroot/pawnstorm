@@ -1,6 +1,6 @@
-import TemplatePicker from '../templates/TemplatePicker.js'
-import { findTemplateAnchor } from '../templates/TemplatePlacement.js'
-import { findAnchoredNodePlacement } from '../utils/nodePlacement.js'
+import TemplatePicker from 'editorV2/templates/TemplatePicker'
+import { findTemplateAnchor } from 'editorV2/templates/TemplatePlacement'
+import { findAnchoredNodePlacement } from 'editorV2/utils/nodePlacement'
 
 
 class ToolbarHandler {

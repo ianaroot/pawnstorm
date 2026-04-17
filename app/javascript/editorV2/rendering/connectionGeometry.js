@@ -1,7 +1,7 @@
 // rendering/connectionGeometry.js
 // Shared graph-space geometry helpers for connection anchors.
 
-import { NODE_DIMENSIONS, CONNECTOR_SIZE } from '../constants.js'
+import { NODE_DIMENSIONS, CONNECTOR_SIZE } from 'editorV2/constants'
 
 const DEFAULT_INPUT_ANCHOR = { x: 0.5, y: 0 }
 const DEFAULT_OUTPUT_ANCHOR = { x: 0.5, y: 1 }

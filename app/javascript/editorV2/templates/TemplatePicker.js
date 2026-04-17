@@ -1,10 +1,10 @@
-import { NODE_DIMENSIONS } from '../constants.js'
-import { formatConditionPreview } from '../utils/conditionPreviewFormatter.js'
+import { NODE_DIMENSIONS } from 'editorV2/constants'
+import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 import {
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_CATEGORY_ORDER
-} from './TemplateCategories.js'
-import { TEMPLATES, templatesForCategory } from './TemplateRegistry.js'
+} from 'editorV2/templates/TemplateCategories'
+import { TEMPLATES, templatesForCategory } from 'editorV2/templates/TemplateRegistry'
 
 const TEMPLATE_PREVIEW = Object.freeze({
   framePadding: 28,

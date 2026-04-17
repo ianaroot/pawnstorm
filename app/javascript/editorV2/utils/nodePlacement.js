@@ -1,4 +1,4 @@
-import { NODE_DIMENSIONS } from '../constants.js'
+import { NODE_DIMENSIONS } from 'editorV2/constants'
 
 const NODE_PLACEMENT_PADDING = 40
 const NODE_PLACEMENT_STEP = 36

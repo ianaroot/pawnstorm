@@ -1,7 +1,7 @@
 // utils/validators.js
 // Input validation for models
 
-import { NODE_COLORS } from '../constants.js'
+import { NODE_COLORS } from 'editorV2/constants'
 
 const VALID_NODE_TYPES = ['root', 'condition', 'action', 'organizer']
 

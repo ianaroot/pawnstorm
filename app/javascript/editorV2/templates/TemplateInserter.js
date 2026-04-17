@@ -1,5 +1,5 @@
-import generateUUID from '../utils/uuid.js'
-import { normalizeNodeData } from '../utils/nodeDefaults.js'
+import generateUUID from 'editorV2/utils/uuid'
+import { normalizeNodeData } from 'editorV2/utils/nodeDefaults'
 
 export function buildTemplateInsertOperation(template, organizerAnchor) {
   const nodeIdMap = new Map()
