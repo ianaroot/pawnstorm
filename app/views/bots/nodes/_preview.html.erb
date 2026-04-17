@@ -1,1 +1,2 @@
-<%= render partial: "bots/nodes/types/#{node.node_type}", locals: { node: node } rescue render(partial: "bots/nodes/types/default", locals: { node: node }) %>
+<% presenter = NodePresenter.new(node) %>
+<%= render partial: "bots/nodes/types/#{node.node_type}", locals: { node: node, presenter: presenter } rescue render(partial: "bots/nodes/types/default", locals: { node: node, presenter: presenter }) %>

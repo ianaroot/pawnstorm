@@ -1,7 +1,4 @@
-<%
-  data = node.data.is_a?(Hash) ? node.data : (JSON.parse(node.data) rescue {})
-  chunks = Node.condition_preview_chunks(data)
-%>
+<% chunks = presenter.condition_preview_chunks %>
 
 <div class="node-preview condition-preview">
   <% chunks.each do |chunk| %>
