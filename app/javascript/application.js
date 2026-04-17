@@ -23,7 +23,7 @@ import MatchReplayController from "gameplay/match_replay_controller"
 import {
   initializeMatchBotListScrollbars,
   refreshMatchBotListScrollbars
-} from "./match_bot_list_scrollbars"
+} from "match_bot_list_scrollbars"
 
 // var gameController = new GameController()
 // window.addEventListener('load', function () {
