@@ -15,9 +15,12 @@ class MockSyncManager {
 
 const DEFAULT_POINTER = { clientX: 50, clientY: 50 }
 // helpers
-function buildMouseEvent(overrides = {}) {
+function buildPointerEvent(overrides = {}) {
   return {
     button: 0,
+    pointerId: 1,
+    pointerType: 'mouse',
+    isPrimary: true,
     ...DEFAULT_POINTER,
     shiftKey: false,
     altKey: false,
@@ -78,15 +81,15 @@ function buildElement(clientId = 'node-1') {
 
 function beginDrag(dragHandler, clientId, element, startEvent, moveEvent = null) {
   const dragDelta = DRAG_START_THRESHOLD + 2
-  const thresholdMove = moveEvent || buildMouseEvent({
+  const thresholdMove = moveEvent || buildPointerEvent({
     clientX: startEvent.clientX + dragDelta,
     clientY: startEvent.clientY + dragDelta,
     shiftKey: startEvent.shiftKey,
     altKey: startEvent.altKey
   })
 
-  dragHandler.handleMouseDown(startEvent, clientId, element)
-  dragHandler.handleMouseMove(thresholdMove)
+  dragHandler.handlePointerDown(startEvent, clientId, element)
+  dragHandler.handlePointerMove(thresholdMove)
 }
 
 describe('DragHandler', () => {
@@ -100,7 +103,7 @@ describe('DragHandler', () => {
     store = new Store()
     syncManager = new MockSyncManager()
     viewport = buildViewport()
-     mockElement = buildElement()
+    mockElement = buildElement()
     vi.spyOn(document, 'addEventListener').mockImplementation(() => {})
     vi.spyOn(document, 'removeEventListener').mockImplementation(() => {})
     vi.spyOn(document, 'querySelector').mockImplementation(() => mockElement)
@@ -114,6 +117,7 @@ describe('DragHandler', () => {
   })
   
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -126,10 +130,10 @@ describe('DragHandler', () => {
     })
   })
 
-  describe('handleMouseDown', () => {
+  describe('handlePointerDown', () => {
     it('starts drag on root nodes', () => {
       addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
-      const event = buildMouseEvent()
+      const event = buildPointerEvent()
       beginDrag(dragHandler, 'root', mockElement, event)
 
       expect(dragHandler.isDragging).toBe(true)
@@ -137,23 +141,23 @@ describe('DragHandler', () => {
 
     it('does not start drag on right click', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-      const event = buildMouseEvent({ button: 2 })
-      dragHandler.handleMouseDown(event, 'node-1', mockElement)
+      const event = buildPointerEvent({ button: 2 })
+      dragHandler.handlePointerDown(event, 'node-1', mockElement)
 
       expect(dragHandler.isDragging).toBe(false)
     })
 
     it('does not start drag on connector click', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-      const event = buildMouseEvent({ target: { classList: { contains: vi.fn(() => true) } } })
-      dragHandler.handleMouseDown(event, 'node-1', mockElement)
+      const event = buildPointerEvent({ target: { classList: { contains: vi.fn(() => true) } } })
+      dragHandler.handlePointerDown(event, 'node-1', mockElement)
 
       expect(dragHandler.isDragging).toBe(false)
     })
 
     it('initializes drag state for valid drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-      const event = buildMouseEvent()
+      const event = buildPointerEvent()
       beginDrag(dragHandler, 'node-1', mockElement, event)
 
       expect(dragHandler.isDragging).toBe(true)
@@ -163,7 +167,7 @@ describe('DragHandler', () => {
 
     it('calls beginInteraction on valid drag start', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-      const event = buildMouseEvent()
+      const event = buildPointerEvent()
       beginDrag(dragHandler, 'node-1', mockElement, event)
 
       expect(viewport.beginInteraction).toHaveBeenCalledTimes(1)
@@ -175,7 +179,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
-      const event = buildMouseEvent()
+      const event = buildPointerEvent()
       beginDrag(dragHandler, 'parent', mockElement, event)
 
       expect(store.getSelectedNodeIds()).toEqual(['parent'])
@@ -193,7 +197,7 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       store.selectOnlyNode('child')
 
-      const event = buildMouseEvent({ shiftKey: true })
+      const event = buildPointerEvent({ shiftKey: true })
       beginDrag(dragHandler, 'parent', mockElement, event)
 
       expect(store.getSelectedNodeIds()).toEqual(['child', 'parent'])
@@ -211,23 +215,92 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
-      const event = buildMouseEvent({ altKey: true })
+      const event = buildPointerEvent({ altKey: true })
       beginDrag(dragHandler, 'parent', mockElement, event)
 
       expect(dragHandler.draggedClientIds).toEqual(['parent'])
       expect(dragHandler.dragOffsets.size).toBe(0)
     })
+
+    it('treats touch long press as additive selection without starting drag', () => {
+      vi.useFakeTimers()
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+      const suppressSpy = vi.spyOn(store, 'suppressClicksFor')
+
+      const event = buildPointerEvent({ pointerType: 'touch', button: undefined })
+      dragHandler.handlePointerDown(event, 'node-1', mockElement)
+      vi.advanceTimersByTime(450)
+      vi.advanceTimersByTime(1000)
+      dragHandler.handlePointerUp(buildPointerEvent({ pointerType: 'touch', button: undefined }))
+
+      expect(store.getSelectedNodeIds()).toEqual(['node-1'])
+      expect(dragHandler.isDragging).toBe(false)
+      expect(viewport.beginInteraction).not.toHaveBeenCalled()
+      expect(suppressSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('cancels touch long press when movement crosses the drag threshold', () => {
+      vi.useFakeTimers()
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+
+      const startEvent = buildPointerEvent({
+        clientX: 100,
+        clientY: 100,
+        pointerType: 'touch',
+        button: undefined
+      })
+      const moveEvent = buildPointerEvent({
+        clientX: 100 + DRAG_START_THRESHOLD + 2,
+        clientY: 100,
+        pointerType: 'touch',
+        button: undefined
+      })
+
+      dragHandler.handlePointerDown(startEvent, 'node-1', mockElement)
+      dragHandler.handlePointerMove(moveEvent)
+      vi.advanceTimersByTime(450)
+
+      expect(dragHandler.isDragging).toBe(true)
+      expect(store.getSelectedNodeIds()).toEqual(['node-1'])
+      expect(viewport.beginInteraction).toHaveBeenCalledTimes(1)
+    })
   })
 
-  describe('handleMouseUp', () => {
+  describe('pointer lifecycle', () => {
+    it('ignores move and release events when no active pointer is tracked', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+
+      dragHandler.handlePointerMove(buildPointerEvent({ clientX: 150, clientY: 160 }))
+      dragHandler.handlePointerUp(buildPointerEvent({ clientX: 150, clientY: 160 }))
+
+      expect(viewport.beginInteraction).not.toHaveBeenCalled()
+      expect(viewport.endInteraction).not.toHaveBeenCalled()
+      expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
+      expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
+    })
+
+    it('does not throw when pointer capture was already released during cleanup', () => {
+      const element = buildElement()
+      element.releasePointerCapture = vi.fn(() => {
+        throw new Error('capture already released')
+      })
+
+      expect(() => {
+        dragHandler.beginPointerTracking(buildPointerEvent(), element)
+        dragHandler.endPointerTracking()
+      }).not.toThrow()
+    })
+  })
+
+  describe('handlePointerUp', () => {
     it('calls endInteraction when drag ends', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
-      const startEvent = buildMouseEvent()
+      const startEvent = buildPointerEvent()
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
-      const endEvent = buildMouseEvent()
-      dragHandler.handleMouseUp(endEvent)
+      const endEvent = buildPointerEvent()
+      dragHandler.handlePointerUp(endEvent)
 
       expect(viewport.endInteraction).toHaveBeenCalledTimes(1)
     })
@@ -235,13 +308,13 @@ describe('DragHandler', () => {
     it('calls updateNodePosition for single-node drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
+      const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
 
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
-      dragHandler.handleMouseMove(moveEvent)
-      dragHandler.handleMouseUp(endEvent)
+      dragHandler.handlePointerMove(moveEvent)
+      dragHandler.handlePointerUp(endEvent)
 
       expect(syncManager.updateNodePosition).toHaveBeenCalledTimes(1)
       expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
@@ -252,14 +325,14 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       beginDrag(dragHandler, 'parent', mockElement, startEvent)
 
-      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseMove(moveEvent)
+      const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerMove(moveEvent)
 
-      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseUp(endEvent)
+      const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerUp(endEvent)
 
       expect(syncManager.batchUpdatePositions).toHaveBeenCalledWith(
         expect.arrayContaining([
@@ -276,14 +349,14 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       beginDrag(dragHandler, 'parent', mockElement, startEvent)
 
-      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseMove(moveEvent)
+      const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerMove(moveEvent)
 
-      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseUp(endEvent)
+      const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerUp(endEvent)
 
       expect(syncManager.batchUpdatePositions).toHaveBeenCalledWith(
         expect.arrayContaining([
@@ -300,18 +373,18 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
-      const startEvent = buildMouseEvent({
+      const startEvent = buildPointerEvent({
         clientX: 100,
         clientY: 100,
         altKey: true
       })
       beginDrag(dragHandler, 'parent', mockElement, startEvent)
 
-      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseMove(moveEvent)
+      const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerMove(moveEvent)
 
-      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      dragHandler.handleMouseUp(endEvent)
+      const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      dragHandler.handlePointerUp(endEvent)
 
       expect(syncManager.updateNodePosition).toHaveBeenCalledWith('parent', 150, 160)
       expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
@@ -322,13 +395,13 @@ describe('DragHandler', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
       const anchorSpy = vi.spyOn(store, 'setRecentPlacementAnchor')
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
-      const moveEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
-      const endEvent = buildMouseEvent({ clientX: 150, clientY: 160 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
+      const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
+      const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
 
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
-      dragHandler.handleMouseMove(moveEvent)
-      dragHandler.handleMouseUp(endEvent)
+      dragHandler.handlePointerMove(moveEvent)
+      dragHandler.handlePointerUp(endEvent)
 
       await vi.waitFor(() => {
         expect(anchorSpy).toHaveBeenCalledWith({ x: 150, y: 160 })
@@ -341,7 +414,7 @@ describe('DragHandler', () => {
     it('clears drag state', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       dragHandler.cancelDrag()
@@ -354,7 +427,7 @@ describe('DragHandler', () => {
     it('calls endInteraction', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
-      const startEvent = buildMouseEvent()
+      const startEvent = buildPointerEvent()
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       dragHandler.cancelDrag()
@@ -369,7 +442,7 @@ describe('DragHandler', () => {
 
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
 
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       expect(dragHandler.isCurrentlyDragging()).toBe(true)
@@ -380,7 +453,7 @@ describe('DragHandler', () => {
     it('returns dragged node ID during drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
    
-      const startEvent = buildMouseEvent({ clientX: 100, clientY: 100 })
+      const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       beginDrag(dragHandler, 'node-1', mockElement, startEvent)
 
       expect(dragHandler.getDraggedNodeId()).toBe('node-1')

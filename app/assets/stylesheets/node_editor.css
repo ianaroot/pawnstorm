@@ -368,6 +368,7 @@
   border-radius: 8px;
   cursor: move;
   user-select: none;
+  touch-action: none;
   pointer-events: auto;
 }
 
@@ -483,6 +484,7 @@
   cursor: crosshair;
   border: 2px solid #fff;
   transition: transform 0.2s, box-shadow 0.2s;
+  touch-action: none;
 }
 
 .node-connector::before {

@@ -8,6 +8,8 @@ import {
   NODE_DIMENSIONS
 } from 'editorV2/constants'
 
+const TOUCH_LONG_PRESS_MS = 450
+
 /**
  * * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
@@ -30,6 +32,10 @@ class DragHandler {
     this.offset = { x: 0, y: 0 }
     this.hasMoved = false
     this.lastPointerClient = null
+    this.activePointerId = null
+    this.pointerCaptureElement = null
+    this.longPressTimer = null
+    this.longPressFired = false
     this.autoPanFrameId = null
     this.autoPanRemainder = { x: 0, y: 0 }
 
@@ -40,10 +46,11 @@ class DragHandler {
     this.marqueeElement = null
     
     // Pre-bound handlers (fixes removeEventListener bug)
-    this.boundHandleMouseMove = this.handleMouseMove.bind(this)
-    this.boundHandleMouseUp = this.handleMouseUp.bind(this)
+    this.boundHandlePointerMove = this.handlePointerMove.bind(this)
+    this.boundHandlePointerUp = this.handlePointerUp.bind(this)
+    this.boundHandlePointerCancel = this.handlePointerCancel.bind(this)
     this.boundAutoPanStep = this.autoPanStep.bind(this)
-    this.boundHandleBackgroundMouseDown = this.handleBackgroundMouseDown.bind(this)
+    this.boundHandleBackgroundPointerDown = this.handleBackgroundPointerDown.bind(this)
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
@@ -58,7 +65,7 @@ class DragHandler {
       this.viewport?.scene,
       this.viewport?.workspace
     ].filter(Boolean).forEach(layer => {
-      layer.addEventListener('mousedown', this.boundHandleBackgroundMouseDown)
+      layer.addEventListener('pointerdown', this.boundHandleBackgroundPointerDown)
     })
   }
   
@@ -67,19 +74,20 @@ class DragHandler {
     if (this.attachedElements.has(element)) { return }
     this.attachedElements.set(element, clientId)
     
-    // Mouse down starts potential drag
-    element.addEventListener('mousedown', (e) => this.handleMouseDown(e, clientId, element))
+    element.addEventListener('pointerdown', (e) => this.handlePointerDown(e, clientId, element))
   }
   
-  handleMouseDown(event, clientId, element) {
-    // Only left click
-    if (event.button !== 0) { return }
+  isPrimaryPointer(event) {
+    return event.isPrimary !== false && (event.pointerType !== 'mouse' || event.button === 0)
+  }
+
+  handlePointerDown(event, clientId, element) {
+    if (!this.isPrimaryPointer(event)) { return }
     
     // Don't interfere with connector clicks
     if (event.target.classList.contains('node-connector')) { return }
     
     const node = this.store.getNode(clientId)
-    // this seems like overkill?
     if (!node) { return }
     
     event.preventDefault()
@@ -97,11 +105,70 @@ class DragHandler {
       pointerClient: { x: event.clientX, y: event.clientY },
       pointerGraph: pointer,
       shiftKey: event.shiftKey,
-      altKey: event.altKey
+      altKey: event.altKey,
+      pointerId: event.pointerId,
+      pointerType: event.pointerType
     }
 
-    document.addEventListener('mousemove', this.boundHandleMouseMove)
-    document.addEventListener('mouseup', this.boundHandleMouseUp)
+    this.beginPointerTracking(event, element)
+    this.startLongPressTimer(event, clientId)
+  }
+
+  beginPointerTracking(event, captureElement) {
+    this.endPointerTracking()
+    this.activePointerId = event.pointerId
+    this.pointerCaptureElement = captureElement
+    this.pointerCaptureElement?.setPointerCapture?.(event.pointerId)
+    document.addEventListener('pointermove', this.boundHandlePointerMove)
+    document.addEventListener('pointerup', this.boundHandlePointerUp)
+    document.addEventListener('pointercancel', this.boundHandlePointerCancel)
+  }
+
+  endPointerTracking() {
+    if (this.activePointerId !== null) {
+      this.releasePointerCaptureSafely(this.pointerCaptureElement, this.activePointerId)
+    }
+    document.removeEventListener('pointermove', this.boundHandlePointerMove)
+    document.removeEventListener('pointerup', this.boundHandlePointerUp)
+    document.removeEventListener('pointercancel', this.boundHandlePointerCancel)
+    this.activePointerId = null
+    this.pointerCaptureElement = null
+  }
+
+  releasePointerCaptureSafely(element, pointerId) {
+    if (pointerId === null || !element?.releasePointerCapture) { return }
+    if (element.hasPointerCapture?.(pointerId) === false) { return }
+
+    try {
+      element.releasePointerCapture(pointerId)
+    } catch {
+      // Pointer capture may already be released after browser cancellation.
+    }
+  }
+
+  eventMatchesActivePointer(event) {
+    return this.activePointerId !== null && event.pointerId === this.activePointerId
+  }
+
+  startLongPressTimer(event, clientId) {
+    this.clearLongPressTimer()
+    this.longPressFired = false
+    if (event.pointerType !== 'touch') { return }
+
+    this.longPressTimer = window.setTimeout(() => {
+      if (!this.pendingDrag || this.pendingDrag.clientId !== clientId) { return }
+      this.store.toggleNodeSelection(clientId)
+      this.pendingDrag = null
+      this.longPressFired = true
+      this.store.suppressClicksFor()
+    }, TOUCH_LONG_PRESS_MS)
+  }
+
+  clearLongPressTimer() {
+    if (this.longPressTimer) {
+      window.clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
   }
 
   resolveDragTargetIds(event, clientId) {
@@ -133,8 +200,8 @@ class DragHandler {
     return [clientId, ...this.store.getDescendantIds(clientId)]
   }
 
-  handleBackgroundMouseDown(event) {
-    if (event.button !== 0) { return }
+  handleBackgroundPointerDown(event) {
+    if (!this.isPrimaryPointer(event)) { return }
     if (event.target.closest('.node') || event.target.closest('.node-connector')) {
       return
     }
@@ -151,14 +218,17 @@ class DragHandler {
       background: true,
       pointerClient: { x: event.clientX, y: event.clientY },
       pointerGraph: startPoint,
-      shiftKey: event.shiftKey
+      shiftKey: event.shiftKey,
+      pointerId: event.pointerId,
+      pointerType: event.pointerType
     }
 
-    document.addEventListener('mousemove', this.boundHandleMouseMove)
-    document.addEventListener('mouseup', this.boundHandleMouseUp)
+    this.beginPointerTracking(event, event.currentTarget)
   }
   
-  handleMouseMove(event) {
+  handlePointerMove(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
+
     if (this.isMarqueeSelecting) {
       const point = this.viewport?.screenToGraphPoint(event.clientX, event.clientY) || {
         x: event.clientX,
@@ -182,6 +252,8 @@ class DragHandler {
       if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD) {
         return
       }
+
+      this.clearLongPressTimer()
 
       if (this.pendingDrag.background) {
         this.beginMarqueeSelection(this.pendingDrag)
@@ -245,17 +317,26 @@ class DragHandler {
     this.renderMarquee()
   }
   
-  handleMouseUp(event) {
+  handlePointerUp(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
+
+    if (this.longPressFired) {
+      this.clearLongPressTimer()
+      this.endPointerTracking()
+      this.longPressFired = false
+      this.store.suppressClicksFor()
+      return
+    }
+
     if (this.pendingDrag) {
-      document.removeEventListener('mousemove', this.boundHandleMouseMove)
-      document.removeEventListener('mouseup', this.boundHandleMouseUp)
+      this.clearLongPressTimer()
+      this.endPointerTracking()
       this.pendingDrag = null
       return
     }
 
     if (this.isMarqueeSelecting) {
-      document.removeEventListener('mousemove', this.boundHandleMouseMove)
-      document.removeEventListener('mouseup', this.boundHandleMouseUp)
+      this.endPointerTracking()
       this.finishMarqueeSelection()
       return
     }
@@ -264,8 +345,8 @@ class DragHandler {
     this.viewport?.endInteraction()
 
     // Remove document handlers immediately
-    document.removeEventListener('mousemove', this.boundHandleMouseMove)
-    document.removeEventListener('mouseup', this.boundHandleMouseUp)
+    this.clearLongPressTimer()
+    this.endPointerTracking()
     
     // Remove visual feedback
     this.draggedClientIds.forEach(id => {
@@ -326,8 +407,15 @@ class DragHandler {
     this.draggedClientIds = []
     this.hasMoved = false
     this.lastPointerClient = null
+    this.longPressFired = false
     this.autoPanRemainder = { x: 0, y: 0 }
     this.dragOffsets.clear()
+  }
+
+  handlePointerCancel(event) {
+    if (!this.eventMatchesActivePointer(event)) { return }
+    this.cancelDrag()
+    this.store.suppressClicksFor()
   }
 
   updateDragPosition(clientX, clientY) {
@@ -531,11 +619,11 @@ class DragHandler {
   }
   
   cancelDrag() {
+    this.clearLongPressTimer()
     this.pendingDrag = null
 
     if (this.isMarqueeSelecting) {
-      document.removeEventListener('mousemove', this.boundHandleMouseMove)
-      document.removeEventListener('mouseup', this.boundHandleMouseUp)
+      this.endPointerTracking()
       this.clearMarquee()
       return
     }
@@ -569,8 +657,7 @@ class DragHandler {
       })
       
       // Remove handlers
-      document.removeEventListener('mousemove', this.boundHandleMouseMove)
-      document.removeEventListener('mouseup', this.boundHandleMouseUp)
+      this.endPointerTracking()
       this.stopAutoPanLoop()
       this.viewport?.endInteraction()
       
@@ -582,8 +669,14 @@ class DragHandler {
       this.startPosition = null
       this.hasMoved = false
       this.lastPointerClient = null
+      this.longPressFired = false
       this.autoPanRemainder = { x: 0, y: 0 }
       this.dragOffsets.clear()
+    }
+
+    if (!this.isDragging && !this.isMarqueeSelecting) {
+      this.endPointerTracking()
+      this.longPressFired = false
     }
   }
   
@@ -597,7 +690,7 @@ class DragHandler {
       this.viewport?.scene,
       this.viewport?.workspace
     ].filter(Boolean).forEach(layer => {
-      layer.removeEventListener('mousedown', this.boundHandleBackgroundMouseDown)
+      layer.removeEventListener('pointerdown', this.boundHandleBackgroundPointerDown)
     })
     this.marqueeElement?.remove()
     
