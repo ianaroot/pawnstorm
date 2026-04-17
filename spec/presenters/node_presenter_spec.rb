@@ -47,10 +47,48 @@ RSpec.describe NodePresenter do
         }
       ])
     end
+
+    it 'preserves unary chunk structure' do
+      node = build(:node, :condition, data: {
+        'version' => 2,
+        'kind' => 'unary',
+        'subject' => 'enemy_moved_piece',
+        'subjectFilter' => 'pawn',
+        'subjectFilterMode' => 'include',
+        'operator' => 'value',
+        'comparator' => 'equal_to',
+        'comparisonValue' => 'captured_piece_value'
+      })
+
+      chunks = described_class.new(node).condition_preview_chunks
+
+      expect(chunks).to eq([
+        {
+          role: 'side',
+          subject: 'enemy_moved_piece',
+          filter: 'pawn',
+          filter_mode: 'include',
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_value: nil
+        },
+        { role: 'spacer' },
+        { role: 'operator', operator: 'value' },
+        { role: 'spacer' },
+        {
+          role: 'comparison',
+          comparator: 'equal_to',
+          comparison_value: 'captured_piece_value'
+        }
+      ])
+    end
   end
 
   describe '#action_type' do
     it 'prefers actionType, then action_type, then add' do
+      node = build(:node, :action, data: { actionType: 'multiply', action_type: 'subtract', value: 1 })
+      expect(described_class.new(node).action_type).to eq('multiply')
+
       node = build(:node, :action, data: { action_type: 'subtract', value: 1 })
       expect(described_class.new(node).action_type).to eq('subtract')
 

@@ -51,10 +51,6 @@ class Node < ApplicationRecord
     node_type == 'organizer'
   end
 
-  def self.condition_preview_chunks(data)
-    NodePresenter.condition_preview_chunks_for(data)
-  end
-  
   private
   def normalize_node_data
     normalize_condition_data if condition?
