@@ -25,15 +25,12 @@ class TournamentPresenter
       black_entrant = match.black_tournament_entry
       next unless white_entrant && black_entrant
       next unless rows.key?(white_entrant.id) && rows.key?(black_entrant.id)
-
       if match.failed?
         rows[white_entrant.id][:failed] += 1
         rows[black_entrant.id][:failed] += 1
         next
       end
-
       next unless match.completed?
-
       if Tournament::DRAW_RESULTS.include?(match.result)
         rows[white_entrant.id][:points] += 0.5
         rows[black_entrant.id][:points] += 0.5
@@ -48,11 +45,9 @@ class TournamentPresenter
         rows[black_entrant.id][:wins] += 1
         rows[white_entrant.id][:losses] += 1
       end
-
       rows[white_entrant.id][:completed] += 1
       rows[black_entrant.id][:completed] += 1
     end
-
     rows.values.sort_by do |row|
       [-row[:points], -row[:wins], row[:losses], row[:entrant].display_name]
     end
