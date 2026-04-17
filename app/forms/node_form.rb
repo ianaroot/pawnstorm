@@ -63,7 +63,7 @@ class NodeForm
     end
 
     def relational_operator_options
-      NodeGrammarV2::ALL_RELATIONAL_OPERATORS.map { |value| [operator_label(value), value] }
+      NodeGrammarV2::RELATIONAL_OPERATORS.map { |value| [operator_label(value), value] }
     end
 
     def special_targeted_operator_options
