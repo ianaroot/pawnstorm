@@ -130,62 +130,27 @@ RSpec.describe Node, type: :model do
         expect(node.errors[:data]).to include('has invalid targetFilterMode')
       end
 
-      it 'normalizes same_piece by stripping non-any filters and filter modes' do
-        node = build(:node, :condition, data: {
+      it 'delegates data normalization before validation' do
+        input_data = {
           version: 2,
-          kind: 'relational',
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'pawn',
-          subjectFilterMode: 'exclude',
-          operator: 'same_piece',
-          target: 'captured_piece',
-          targetFilter: 'pawn',
-          targetFilterMode: 'exclude'
-        })
-
-        expect(node).to be_valid
-        expect(node.data).to eq(
-          {
-            'version' => 2,
-            'kind' => 'relational',
-            'subject' => 'enemy_moved_piece',
-            'subjectFilter' => 'any',
-            'operator' => 'same_piece',
-            'target' => 'captured_piece',
-            'targetFilter' => 'any'
-          }
-        )
-      end
-
-      it 'normalizes same_piece by stripping both comparison blocks' do
-        node = build(:node, :condition, data: {
-          version: 2,
-          kind: 'relational',
-          subject: 'enemy_moved_piece',
+          kind: 'unary',
+          subject: 'moved_piece',
           subjectFilter: 'any',
-          subjectComparisonMetric: 'count',
-          subjectComparator: 'greater_than',
-          subjectComparisonValue: 0,
-          operator: 'same_piece',
-          target: 'captured_piece',
-          targetFilter: 'any',
-          targetComparisonMetric: 'count',
-          targetComparator: 'greater_than',
-          targetComparisonValue: 0
-        })
+          operator: 'value',
+          comparator: 'greater_than',
+          comparisonValue: 0
+        }
+        normalized_data = input_data.transform_keys(&:to_s)
+
+        expect(Nodes::DataNormalizer).to receive(:normalize).with(
+          node_type: 'condition',
+          data: include('kind' => 'unary', 'subject' => 'moved_piece')
+        ).and_return(normalized_data)
+
+        node = build(:node, :condition, data: input_data)
 
         expect(node).to be_valid
-        expect(node.data).to eq(
-          {
-            'version' => 2,
-            'kind' => 'relational',
-            'subject' => 'enemy_moved_piece',
-            'subjectFilter' => 'any',
-            'operator' => 'same_piece',
-            'target' => 'captured_piece',
-            'targetFilter' => 'any'
-          }
-        )
+        expect(node.data).to eq(normalized_data)
       end
 
       it 'rejects a target-side comparison when subjectComparisonValue is prior_board_state' do

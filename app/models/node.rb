@@ -53,74 +53,7 @@ class Node < ApplicationRecord
 
   private
   def normalize_node_data
-    normalize_condition_data if condition?
-    normalize_organizer_data if organizer?
-  end
-
-  def normalize_condition_data
-    raw = data.is_a?(Hash) ? data : {}
-    normalized = raw.each_with_object({}) do |(key, value), memo|
-      memo[key.to_s] = value
-    end
-    normalize_condition_data_v2!(normalized)
-    self.data = normalized
-  end
-
-  def normalize_condition_data_v2!(normalized)
-    kind = normalized['kind']
-    if %w[any].include?(normalized['subjectFilter'])
-      normalized.delete('subjectFilterMode')
-    end
-    if %w[any].include?(normalized['targetFilter'])
-      normalized.delete('targetFilterMode')
-    end
-    if kind == 'unary'
-      normalized.delete('subjectComparisonMetric')
-      normalized.delete('subjectComparator')
-      normalized.delete('subjectComparisonValue')
-      normalized.delete('target')
-      normalized.delete('targetFilter')
-      normalized.delete('targetFilterMode')
-      normalized.delete('targetComparisonMetric')
-      normalized.delete('targetComparator')
-      normalized.delete('targetComparisonValue')
-    elsif kind == 'relational'
-      unless NodeGrammarV2.comparison_allowed_for_relational_operator?(normalized['operator'])
-        normalized.delete('subjectComparisonMetric')
-        normalized.delete('subjectComparator')
-        normalized.delete('subjectComparisonValue')
-        normalized.delete('targetComparisonMetric')
-        normalized.delete('targetComparator')
-        normalized.delete('targetComparisonValue')
-        normalized['subjectFilter'] = 'any'
-        normalized.delete('subjectFilterMode')
-        normalized['targetFilter'] = 'any'
-        normalized.delete('targetFilterMode')
-      else
-        unless normalized['subjectComparisonMetric'].present?
-          normalized.delete('subjectComparisonMetric')
-          normalized.delete('subjectComparator')
-          normalized.delete('subjectComparisonValue')
-        end
-
-        unless normalized['targetComparisonMetric'].present?
-          normalized.delete('targetComparisonMetric')
-          normalized.delete('targetComparator')
-          normalized.delete('targetComparisonValue')
-        end
-      end
-    end
-  end
-
-
-  def normalize_organizer_data
-    raw = data.is_a?(Hash) ? data : {}
-    normalized = raw.each_with_object({}) do |(key, value), memo|
-      memo[key.to_s] = value
-    end
-    normalized['title'] = (normalized['title'] || '').to_s
-    normalized['notes'] = (normalized['notes'] || '').to_s
-    self.data = normalized
+    self.data = Nodes::DataNormalizer.normalize(node_type: node_type, data: data)
   end
 
   def validate_node_data?
