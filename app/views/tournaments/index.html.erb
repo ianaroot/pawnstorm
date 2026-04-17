@@ -1,0 +1,23 @@
+<div class="match-show-page">
+  <div class="game-page tournament-page">
+    <h1>Tournaments</h1>
+
+    <% if user_signed_in? && !current_user.guest? %>
+      <p><%= link_to 'Create Tournament', new_tournament_path %></p>
+    <% end %>
+
+    <% if @tournaments.any? %>
+      <ul>
+        <% @tournaments.each do |tournament| %>
+          <li>
+            <%= link_to tournament.name, tournament_path(tournament) %>
+            <span><%= tournament.status.humanize %></span>
+            <span><%= tournament.created_at.to_date.to_fs(:long) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No public tournaments yet.</p>
+    <% end %>
+  </div>
+</div>

@@ -3,7 +3,7 @@
   <p class="match-show-meta-item"><strong>Status:</strong> <%= tournament_presenter.overall_status.humanize %></p>
   <p class="match-show-meta-item"><strong>Entrants:</strong> <%= tournament_presenter.entrants.map(&:display_name).join(', ') %></p>
   <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= tournament.games_per_pair %></p>
-  <% if tournament_presenter.active? %>
+  <% if tournament_presenter.active? && current_user == tournament.creator %>
     <p class="match-show-meta-item">
       <% if tournament.paused? %>
         <%= button_to 'Resume Tournament', resume_tournament_path(tournament), method: :post %>

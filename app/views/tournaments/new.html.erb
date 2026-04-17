@@ -1,13 +1,13 @@
 <div class="match-setup-page">
   <h1>Set Up Tournament</h1>
-  <p>Select the compiled bots you want entered. This dev-only tool creates a 10-game round robin pairing for every selected bot combination.</p>
+  <p>Select the compiled bots you want entered. This creates a round robin tournament for every selected bot combination.</p>
 
   <%= form_with url: tournaments_path, scope: :tournament, method: :post, local: true do |form| %>
     <div class="match-setup-section">
       <h2>Format</h2>
-      <p>Default is 10 games per pairing. Raise it for a larger sample.</p>
+      <p>Default is 10 games per pairing. Maximum is <%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>.</p>
       <%= form.label :games_per_pair, 'Games Per Pairing' %>
-      <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, step: 1 %>
+      <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, max: Tournaments::CreateTournament::MAX_GAMES_PER_PAIR, step: 1 %>
     </div>
 
     <div class="match-setup-section">

@@ -2,7 +2,7 @@
   <div
     class="match-replay-layout tournament-show-layout"
     data-controller="tournament-poll"
-    data-tournament-poll-url-value="<%= tournament_path(@tournament, format: :json) %>"
+    data-tournament-poll-url-value="<%= @tournament_poll_url %>"
     data-tournament-poll-active-value="<%= @tournament_presenter.active? %>"
   >
     <div class="game-page tournament-page">
@@ -19,7 +19,7 @@
       </div>
 
       <div data-tournament-poll-target="matrix">
-        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants %>
+        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token %>
       </div>
     </div>
   </div>

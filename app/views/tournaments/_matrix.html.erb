@@ -26,7 +26,12 @@
                   -
                 <% else %>
                   <% summary = tournament_presenter.directional_pairing_summary(white_entrant, black_entrant) %>
-                  <%= link_to pairing_tournament_path(tournament, white_entrant, black_entrant), class: 'tournament-pairing-matrix__link' do %>
+                  <% pairing_path = if local_assigns[:invite_token].present?
+                    invite_pairing_tournament_path(local_assigns[:invite_token], white_entrant, black_entrant)
+                  else
+                    pairing_tournament_path(tournament, white_entrant, black_entrant)
+                  end %>
+                  <%= link_to pairing_path, class: 'tournament-pairing-matrix__link' do %>
                     <span class="tournament-pairing-matrix__primary">
                       <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
                     </span>

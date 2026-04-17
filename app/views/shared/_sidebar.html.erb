@@ -64,11 +64,11 @@
         <%= link_to "Match Sandbox", match_sandbox_path,
             class: "sidebar__link #{'sidebar__link--active' if current_page?(match_sandbox_path)}",
             data: { action: "click->sidebar#navigate" } %>
-
-        <%= link_to "Tournaments", new_tournament_path,
-            class: "sidebar__link #{'sidebar__link--active' if controller_name == 'tournaments'}",
-            data: { action: "click->sidebar#navigate" } %>
       <% end %>
+
+      <%= link_to "Tournaments", tournaments_path,
+          class: "sidebar__link #{'sidebar__link--active' if controller_name == 'tournaments'}",
+          data: { action: "click->sidebar#navigate" } %>
       
       <%= link_to "Bots", bots_path,
           class: "sidebar__link #{'sidebar__link--active' if controller_name == 'bots'}",

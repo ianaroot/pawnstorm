@@ -125,19 +125,32 @@ RSpec.describe TournamentsController, type: :request do
       expect(tournament.matches.count { |match| match.white_player == bot_a }).to eq(7)
       expect(tournament.matches.count { |match| match.white_player == bot_b }).to eq(7)
     end
+
+    it 'rejects games-per-pairing values above the production max' do
+      bot_a = create(:bot, :compiled, user: user)
+      bot_b = create(:bot, :compiled)
+
+      expect do
+        post tournaments_path, params: {
+          tournament: {
+            entrant_bot_ids: [bot_a.id, bot_b.id],
+            games_per_pair: 21
+          }
+        }
+      end.not_to change(Tournament, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Games per pairing cannot exceed 20.')
+    end
   end
 
   describe 'GET #show' do
     let(:user) { create(:user) }
 
-    before do
-      sign_in user
-    end
-
     it 'shows standings, progress, and pairing detail with match links' do
       skip 'tournament show expectations are outdated after the standings/matrix UI overhaul'
 
-      tournament = create(:tournament, creator: user)
+      tournament = create(:tournament, creator: user, visibility: :public)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
@@ -168,8 +181,8 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include(match_path(match))
     end
 
-    it 'keeps deleted-bot entrants visible in standings and pairing pages' do
-      tournament = create(:tournament, creator: user)
+    it 'is publicly viewable and keeps deleted-bot entrants visible in standings and pairing pages' do
+      tournament = create(:tournament, creator: user, visibility: :public)
       deleted_bot = create(:bot, :compiled, name: 'Deleted Phoenix')
       surviving_bot = create(:bot, :compiled, name: 'Surviving Storm')
       deleted_entry = create(
@@ -218,6 +231,102 @@ RSpec.describe TournamentsController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Deleted Phoenix')
       expect(response.body).to include('Surviving Storm')
+    end
+
+    it 'does not show tournament controls to anonymous visitors' do
+      tournament = create(:tournament, creator: user, visibility: :public)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Pause Tournament')
+      expect(response.body).not_to include('Resume Tournament')
+      expect(response.body).not_to include('Abort Tournament')
+    end
+
+    it 'shows tournament controls to the creator' do
+      tournament = create(:tournament, creator: user)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+      sign_in user
+
+      get tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Pause Tournament')
+      expect(response.body).to include('Abort Tournament')
+    end
+
+    it 'uses invite-token pairing links on invite-token tournament pages and polling responses' do
+      tournament = create(:tournament, creator: user)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
+      invite_pairing_path = invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+
+      get invite_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(invite_pairing_path)
+      expect(response.body).not_to include(pairing_tournament_path(tournament, entry_a, entry_b))
+
+      get invite_tournament_path(tournament.invite_token, format: :json)
+
+      expect(response).to have_http_status(:success)
+      expect(JSON.parse(response.body).fetch('matrix_html')).to include(invite_pairing_path)
+    end
+  end
+
+  describe 'GET #pairing' do
+    let(:user) { create(:user) }
+
+    it 'does not expose link-only tournaments through predictable id pairing routes' do
+      tournament = create(:tournament, creator: user)
+
+      get pairing_tournament_path(tournament, 1, 2)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'shows link-only pairings through invite-token routes' do
+      tournament = create(:tournament, creator: user)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
+
+      get invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Alpha vs Beta')
+      expect(response.body).to include(invite_tournament_path(tournament.invite_token))
     end
   end
 
@@ -268,6 +377,30 @@ RSpec.describe TournamentsController, type: :request do
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')
       expect(running_match.reload).to be_running
+    end
+
+    it 'does not allow a different registered user to abort the tournament' do
+      tournament = create(:tournament)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      pending_match = Match.create!(
+        tournament: tournament,
+        creator: tournament.creator,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      post abort_tournament_path(tournament)
+
+      expect(response).to redirect_to(tournament_path(tournament))
+      expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
+      expect(pending_match.reload).to be_pending
     end
   end
 

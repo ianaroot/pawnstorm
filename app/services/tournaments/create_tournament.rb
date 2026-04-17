@@ -1,6 +1,7 @@
 module Tournaments
   class CreateTournament
     DEFAULT_GAMES_PER_PAIR = 10
+    MAX_GAMES_PER_PAIR = 20
 
     attr_reader :error_message,
       :games_per_pair,
@@ -17,6 +18,8 @@ module Tournaments
     end
 
     def call
+      return fail_with("Games per pairing cannot exceed #{MAX_GAMES_PER_PAIR}.") if games_per_pair > MAX_GAMES_PER_PAIR
+
       selected_bots = self.selected_bots
       return fail_with('Please choose at least two compiled bots.') if selected_bots.length < 2
       ActiveRecord::Base.transaction do
