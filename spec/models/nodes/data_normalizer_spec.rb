@@ -172,6 +172,32 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       )
     end
 
+    it 'removes stale unary comparison fields from relational conditions' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'relational',
+        subject: 'allied',
+        subjectFilter: 'any',
+        operator: 'attack',
+        comparator: 'greater_than',
+        comparisonValue: 0,
+        target: 'enemy',
+        targetFilter: 'any'
+      })
+
+      expect(normalized).to eq(
+        {
+          'version' => 2,
+          'kind' => 'relational',
+          'subject' => 'allied',
+          'subjectFilter' => 'any',
+          'operator' => 'attack',
+          'target' => 'enemy',
+          'targetFilter' => 'any'
+        }
+      )
+    end
+
     it 'stringifies organizer keys and coerces title and notes to empty strings' do
       normalized = described_class.normalize(node_type: 'organizer', data: {
         title: nil,
