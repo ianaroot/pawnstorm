@@ -21,6 +21,7 @@ class Bot < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
   
+  before_destroy :destroy_open_tournament_entries, prepend: true
   after_create :create_root_node
   
   validate :root_node_must_exist, on: :update
@@ -49,6 +50,13 @@ class Bot < ApplicationRecord
   end
 
   private
+
+  def destroy_open_tournament_entries
+    tournament_entries
+      .joins(:tournament)
+      .where(tournaments: { status: Tournament.statuses.fetch('open') })
+      .destroy_all
+  end
   
   def create_root_node
     nodes.create!(

@@ -54,6 +54,35 @@ RSpec.describe Bot, type: :model do
       connection = Connection.create!(source_node: node1, target_node: node2)
       expect(bot.connections).to include(connection)
     end
+
+    it 'destroys open tournament entries when destroyed' do
+      bot = create(:bot, :compiled)
+      tournament = create(:tournament, status: :open)
+      entry = create(:tournament_entry, tournament: tournament, bot: bot, seed_order: 0)
+
+      bot.destroy!
+
+      expect(TournamentEntry.exists?(entry.id)).to be(false)
+    end
+
+    it 'preserves non-open tournament entries when destroyed' do
+      bot = create(:bot, :compiled)
+      tournament = create(:tournament, status: :running)
+      entry = create(
+        :tournament_entry,
+        tournament: tournament,
+        bot: bot,
+        display_name: bot.name,
+        compiled_program_snapshot: bot.compiled_program,
+        seed_order: 0
+      )
+
+      bot.destroy!
+
+      expect(entry.reload.bot).to be_nil
+      expect(entry.display_name).to eq(bot.name)
+      expect(entry.compiled_program_snapshot).to eq(bot.compiled_program)
+    end
   end
 
   describe 'root node lifecycle' do

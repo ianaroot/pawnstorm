@@ -1,39 +1,43 @@
 <div class="match-setup-page">
   <h1>Set Up Tournament</h1>
-  <p>Select the compiled bots you want entered. This creates a round robin tournament for every selected bot combination.</p>
+  <p>Create the tournament shell now. Bot submission will be available next.</p>
 
   <%= form_with url: tournaments_path, scope: :tournament, method: :post, local: true do |form| %>
+    <div class="match-setup-section">
+      <h2>Details</h2>
+      <%= form.label :name, 'Name' %>
+      <%= form.text_field :name, value: @name %>
+
+      <%= form.label :description, 'Description' %>
+      <%= form.text_area :description, value: @description %>
+    </div>
+
+    <div class="match-setup-section">
+      <h2>Access</h2>
+      <p>Public tournaments are listed. Link-only tournaments are accessible by invite link.</p>
+      <%= form.label :visibility, 'Visibility' %>
+      <%= form.select :visibility,
+        Tournament.visibilities.keys.map { |visibility| [visibility.humanize, visibility] },
+        selected: @visibility %>
+    </div>
+
+    <div class="match-setup-section">
+      <h2>Entries</h2>
+      <p>One-entry mode lets each user replace their entry before start. Unlimited mode allows multiple entries per user, one per bot.</p>
+      <%= form.label :entries_per_user, 'Entries Per User' %>
+      <%= form.select :entries_per_user,
+        Tournament.entries_per_users.keys.map { |entries_per_user| [entries_per_user.humanize, entries_per_user] },
+        selected: @entries_per_user %>
+
+      <%= form.label :max_entries, 'Max Entries' %>
+      <%= form.number_field :max_entries, value: @max_entries, min: 2, step: 1 %>
+    </div>
+
     <div class="match-setup-section">
       <h2>Format</h2>
       <p>Default is 10 games per pairing. Maximum is <%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>.</p>
       <%= form.label :games_per_pair, 'Games Per Pairing' %>
       <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, max: Tournaments::CreateTournament::MAX_GAMES_PER_PAIR, step: 1 %>
-    </div>
-
-    <div class="match-setup-section">
-      <h2>Entrants</h2>
-      <div class="match-bot-list-frame">
-        <div class="match-bot-list">
-          <% @selectable_bots.each do |bot| %>
-            <label class="match-bot-option">
-              <%= form.check_box :entrant_bot_ids,
-                  {
-                    multiple: true,
-                    checked: @selected_bot_ids.include?(bot.id.to_s)
-                  },
-                  bot.id,
-                  nil %>
-              <span>
-                <strong><%= bot.name %></strong>
-                <small>by <%= bot.user.email %></small>
-              </span>
-            </label>
-          <% end %>
-        </div>
-        <div class="match-bot-scroll-track" aria-hidden="true">
-          <div class="match-bot-scroll-thumb"></div>
-        </div>
-      </div>
     </div>
 
     <%= form.submit 'Create Tournament' %>

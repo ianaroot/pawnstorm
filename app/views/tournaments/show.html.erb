@@ -10,17 +10,23 @@
         <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
       </div>
 
-      <div data-tournament-poll-target="progress">
-        <%= render 'progress', tournament_presenter: @tournament_presenter %>
-      </div>
+      <% if @tournament.status_open? %>
+        <%= render 'open_registration', tournament: @tournament %>
+      <% else %>
+        <div data-tournament-poll-target="progress">
+          <%= render 'progress', tournament_presenter: @tournament_presenter %>
+        </div>
 
-      <div data-tournament-poll-target="standings">
-        <%= render 'standings', standings: @standings %>
-      </div>
+        <div data-tournament-poll-target="standings">
+          <%= render 'standings', standings: @standings %>
+        </div>
 
-      <div data-tournament-poll-target="matrix">
-        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token %>
-      </div>
+        <% if @entrants.size >= 2 %>
+          <div data-tournament-poll-target="matrix">
+            <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token %>
+          </div>
+        <% end %>
+      <% end %>
     </div>
   </div>
 </div>

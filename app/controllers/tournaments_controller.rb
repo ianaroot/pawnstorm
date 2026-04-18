@@ -1,8 +1,8 @@
 class TournamentsController < ApplicationController
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
-  before_action :set_tournament, only: [:show, :pairing, :abort, :pause, :resume]
+  before_action :set_tournament, only: [:show, :pairing, :abort, :pause, :resume, :start]
   before_action :authorize_tournament_access!, only: [:show, :pairing]
-  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume]
+  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
 
   def index
     @tournaments = Tournament.visibility_public.order(created_at: :desc)
@@ -17,7 +17,7 @@ class TournamentsController < ApplicationController
     creation = Tournaments::CreateTournament.new(user: current_user, params: tournament_params)
 
     if creation.call
-      redirect_to tournament_path(creation.tournament), notice: 'Tournament created. Matches are generating now.'
+      redirect_to tournament_path(creation.tournament), notice: 'Tournament created.'
     else
       assign_form_state(creation)
       flash.now[:alert] = creation.error_message
@@ -66,6 +66,16 @@ class TournamentsController < ApplicationController
     redirect_to tournament_path(@tournament), notice: 'Tournament resumed.'
   end
 
+  def start
+    start_tournament = Tournaments::StartTournament.new(user: current_user, tournament: @tournament)
+
+    if start_tournament.call
+      redirect_to tournament_path(@tournament), notice: 'Tournament started.'
+    else
+      redirect_to tournament_path(@tournament), alert: start_tournament.error_message
+    end
+  end
+
   private
 
   def assign_pairing_state
@@ -92,6 +102,14 @@ class TournamentsController < ApplicationController
     @tournament_presenter = TournamentPresenter.new(@tournament)
     @entrants = @tournament_presenter.entrants
     @standings = @tournament_presenter.standings_rows
+    assign_open_registration_state if @tournament.status_open?
+  end
+
+  def assign_open_registration_state
+    @open_registration_entries = @tournament.tournament_entries.includes(:bot_owner, :bot).order(:seed_order)
+    @current_user_entry = current_user ? @open_registration_entries.detect { |entry| entry.bot_owner == current_user } : nil
+    @eligible_bots = current_user&.guest? || current_user.nil? ? Bot.none : current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil).order(:name)
+    @tournament_full = @tournament.max_entries.present? && @open_registration_entries.size >= @tournament.max_entries
   end
 
   def render_show_response
@@ -102,11 +120,21 @@ class TournamentsController < ApplicationController
           meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, rematch_params: @rematch_params }),
           progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament_presenter: @tournament_presenter }),
           standings_html: render_to_string(partial: 'standings', formats: [:html], locals: { standings: @standings }),
-          matrix_html: render_to_string(partial: 'matrix', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token }),
+          matrix_html: matrix_html,
           polling_complete: @tournament_presenter.polling_complete?
         }
       end
     end
+  end
+
+  def matrix_html
+    return '' if @tournament.status_open? && @entrants.size < 2
+
+    render_to_string(
+      partial: 'matrix',
+      formats: [:html],
+      locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token }
+    )
   end
 
   def authorize_tournament_access!
@@ -122,16 +150,19 @@ class TournamentsController < ApplicationController
   end
 
   def assign_form_state(creation)
-    @selectable_bots = creation.selectable_bots
-    @selected_bot_ids = creation.selected_bot_ids
+    @name = creation.name
+    @description = creation.description
+    @visibility = creation.visibility
+    @entries_per_user = creation.entries_per_user
+    @max_entries = creation.max_entries
     @games_per_pair = creation.games_per_pair
   end
 
   def setup_params
-    params.permit(:games_per_pair, bot_ids: [])
+    params.permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
   end
 
   def tournament_params
-    params.fetch(:tournament, {}).permit(:games_per_pair, entrant_bot_ids: [])
+    params.fetch(:tournament, {}).permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
   end
 end
