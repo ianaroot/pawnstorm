@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import Board from 'gameplay/board'
-import ReplayView from 'gameplay/replay_view'
+import Layout from 'gameplay/layout'
+import ReplayView, { buildReplayBoard } from 'gameplay/replay_view'
 
 function buildRoot() {
   const root = document.createElement('div')
@@ -30,6 +31,14 @@ function appendTile(position) {
   tile.id = Board.gridCalculator(position)
   document.body.appendChild(tile)
   return tile
+}
+
+function buildBoard() {
+  return buildReplayBoard({
+    layout: Layout.default(),
+    capturedPieces: [],
+    allowedToMove: Board.WHITE
+  })
 }
 
 describe('ReplayView', () => {
@@ -98,5 +107,120 @@ describe('ReplayView', () => {
     expect(selectedPieceTile.classList.contains('match-replay-square--selected-piece')).toBe(true)
     expect(chosenTile.classList.contains('match-replay-square--chosen-move')).toBe(false)
     expect(candidateTile.classList.contains('match-replay-square--candidate-move')).toBe(true)
+  })
+
+  it('shows the hidden spoiler message with a reveal button before reveal', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 0,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: false,
+      warning: null,
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false
+    })
+
+    const resultElement = root.querySelector('[data-match-replay-target="result"]')
+    const revealButton = resultElement.querySelector('[data-match-replay-spoiler-reveal]')
+
+    expect(resultElement.textContent).toBe('Result hidden to avoid spoilers. Click HERE to reveal results early.')
+    expect(revealButton).not.toBeNull()
+    expect(revealButton.type).toBe('button')
+  })
+
+  it('omits the total move count before the spoiler is revealed', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 1,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: false,
+      warning: null,
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false
+    })
+
+    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Move 2')
+  })
+
+  it('shows the total move count after the spoiler is revealed', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 0,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: true,
+      warning: null,
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false
+    })
+
+    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Move 1 of 2')
+  })
+
+  it('shows the formatted result after the spoiler is revealed', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 0,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: true,
+      warning: null,
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false
+    })
+
+    expect(root.querySelector('[data-match-replay-target="result"]').textContent).toBe('white wins')
+  })
+
+  it('uses the final position wording after the spoiler is revealed', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 1,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: true,
+      warning: null,
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false
+    })
+
+    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Final position after move 2')
   })
 })

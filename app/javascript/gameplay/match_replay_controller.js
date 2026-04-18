@@ -19,6 +19,7 @@ class MatchReplayController {
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
     this.topMovesToggle = rootElement.querySelector('[data-match-replay-target="top-moves-toggle"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
+    this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.playButton?.addEventListener('click', () => this.togglePlayback(1))
@@ -28,6 +29,7 @@ class MatchReplayController {
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
     this.topMovesToggle?.addEventListener('click', this.toggleTopMoveHighlights.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
+    this.resultElement?.addEventListener('click', this.handleResultClick.bind(this))
     this.boardElement?.addEventListener('click', this.handleBoardClick.bind(this))
     this.speedButtons.forEach(button => {
       button.addEventListener('click', () => this.setSpeed(Number(button.dataset.speedMultiplier)))
@@ -38,6 +40,7 @@ class MatchReplayController {
     this.playDirection = 1
     this.currentMoveIndex = -1
     this.warning = null
+    this.spoilerRevealed = false
     this.notationResolver = new NotationResolver()
 
     this.finalLayout = JSON.parse(rootElement.dataset.finalLayout)
@@ -184,6 +187,7 @@ class MatchReplayController {
     this.currentMoveIndex += 1
     this.resetInspectionSelection()
     this.playReplaySound(this.movementNotation[this.currentMoveIndex])
+    if (this.atEnd()) { this.spoilerRevealed = true }
     this.renderCurrentFrame()
     if (this.atEnd()) {
       this.pause()
@@ -232,6 +236,13 @@ class MatchReplayController {
     if (this.isPlaying) { this.pause() }
     this.currentMoveIndex = Number(moveButton.dataset.moveIndex)
     this.resetInspectionSelection()
+    this.renderCurrentFrame()
+  }
+
+  handleResultClick(event) {
+    const revealButton = event.target.closest('[data-match-replay-spoiler-reveal]')
+    if (!revealButton) { return }
+    this.spoilerRevealed = true
     this.renderCurrentFrame()
   }
 
@@ -321,6 +332,7 @@ class MatchReplayController {
       movePairs: this.movePairs,
       result: this.result,
       totalMoves: this.totalPlayableMoves,
+      spoilerRevealed: this.spoilerRevealed,
       warning: this.warning,
       inspection,
       muteTopMoveHighlights: this.muteTopMoveHighlights
