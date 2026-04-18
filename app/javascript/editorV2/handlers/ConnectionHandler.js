@@ -9,6 +9,7 @@ class ConnectionHandler {
     this.syncManager = syncManager
     this.connectionRenderer = connectionRenderer
     this.viewport = viewport
+    this.connectionDragClass = 'connection-drag-active'
     
     // Connection drag state
     this.isConnecting = false
@@ -66,6 +67,7 @@ class ConnectionHandler {
     this.sourceElement = sourceConnector
     this.activePointerId = event.pointerId
     this.sourceElement?.setPointerCapture?.(event.pointerId)
+    this.setInputConnectorHitTesting(true)
     
     // Create temp line
     this.tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -196,6 +198,7 @@ class ConnectionHandler {
     document.removeEventListener('pointermove', this.boundHandlePointerMove)
     document.removeEventListener('pointerup', this.boundHandlePointerUp)
     document.removeEventListener('pointercancel', this.boundHandlePointerCancel)
+    this.setInputConnectorHitTesting(false)
 
     if (this.activePointerId !== null) {
       this.releasePointerCaptureSafely(this.sourceElement, this.activePointerId)
@@ -217,6 +220,10 @@ class ConnectionHandler {
     this.sourceClientId = null
     this.sourceElement = null
     this.activePointerId = null
+  }
+
+  setInputConnectorHitTesting(isActive) {
+    document.body?.classList.toggle(this.connectionDragClass, isActive)
   }
 
   releasePointerCaptureSafely(element, pointerId) {

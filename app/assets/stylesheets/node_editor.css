@@ -487,6 +487,14 @@
   touch-action: none;
 }
 
+.node-connector.input {
+  pointer-events: none;
+}
+
+.connection-drag-active .node-connector.input {
+  pointer-events: auto;
+}
+
 .node-connector::before {
   content: '';
   position: absolute;
@@ -601,15 +609,19 @@
 .node-connector.input {
   left: var(--connector-input-x);
   top: var(--connector-input-y);
-  z-index: 2;
+  z-index: 0;
   transform: translate(-50%, -50%);
   margin-top: -9px;
+}
+
+.connection-drag-active .node-connector.input {
+  z-index: 2;
 }
 
 .node-connector.output {
   left: var(--connector-output-x);
   bottom: var(--connector-output-y);
-  z-index: 1;
+  z-index: 0;
   transform: translate(-50%, 50%);
   margin-bottom: -9px;
 }
