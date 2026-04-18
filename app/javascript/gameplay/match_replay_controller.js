@@ -306,6 +306,7 @@ class MatchReplayController {
     const inspector = new ReplayMoveInspector({ compiledProgram })
     const result = inspector.inspectPosition({
       board,
+      actualMoveNotation: this.movementNotation[this.currentMoveIndex + 1] || null,
       inspectedMoveKey: this.inspectedMoveKey,
       restrictToStartPosition: this.selectedStartPosition,
       autoSelectVisibleMove: !(this.selectedStartPosition && this.inspectedMoveKey === null)
