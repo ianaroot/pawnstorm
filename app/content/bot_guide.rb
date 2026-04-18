@@ -528,8 +528,9 @@ class BotGuide
         visual: {
           kind: 'replay_panel',
           title: 'This Is What You Might See During Replay',
-          caption: 'The replay view can highlight the move the bot chose, other moves tied for best score, and the move you are currently inspecting.',
+          caption: 'The replay view can highlight the last move played, the move the bot chose, other moves tied for best score, and the move you are currently inspecting.',
           legend: [
+            { label: 'Last move played', tone: 'last-move' },
             { label: 'Piece you selected', tone: 'selected-piece' },
             { label: 'Other legal move', tone: 'candidate' },
             { label: 'Chosen move', tone: 'chosen' },
@@ -542,6 +543,7 @@ class BotGuide
           'Compile from the editor before leaving if the bot is marked stale.',
           'Use match setup to choose your bot and an opponent.',
           'In replay, you can step forward, step backward, jump through notation, change speed, and restart from the beginning.',
+          'Orange squares show the piece that just moved and the square it vacated.',
           'Pause on a position to inspect your bot choices for that turn.',
           'Click one of your bot pieces to narrow the move choices to that piece.',
           'Click a destination square to inspect that move in more detail.',

@@ -19,6 +19,7 @@ class MatchReplayController {
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
     this.topMovesToggle = rootElement.querySelector('[data-match-replay-target="top-moves-toggle"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
+    this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.playButton?.addEventListener('click', () => this.togglePlayback(1))
@@ -28,6 +29,7 @@ class MatchReplayController {
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
     this.topMovesToggle?.addEventListener('click', this.toggleTopMoveHighlights.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
+    this.resultElement?.addEventListener('click', this.handleResultClick.bind(this))
     this.boardElement?.addEventListener('click', this.handleBoardClick.bind(this))
     this.speedButtons.forEach(button => {
       button.addEventListener('click', () => this.setSpeed(Number(button.dataset.speedMultiplier)))
@@ -38,6 +40,7 @@ class MatchReplayController {
     this.playDirection = 1
     this.currentMoveIndex = -1
     this.warning = null
+    this.spoilerRevealed = false
     this.notationResolver = new NotationResolver()
 
     this.finalLayout = JSON.parse(rootElement.dataset.finalLayout)
@@ -49,6 +52,7 @@ class MatchReplayController {
     this.whiteCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.whiteCompiledProgramSnapshot)
     this.blackCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.blackCompiledProgramSnapshot)
 
+    this.resolvedMoves = []
     this.frames = this.buildFrames()
     this.totalPlayableMoves = this.frames.length - 1
     this.movePairs = this.buildMovePairs()
@@ -71,10 +75,12 @@ class MatchReplayController {
       movementNotation: []
     })
     const frames = [this.snapshotBoard(board)]
+    const resolvedMoves = []
     for (const notation of this.movementNotation) {
       try {
         const moveObject = this.notationResolver.resolve({ board, notation })
         board._officiallyMovePiece(moveObject)
+        resolvedMoves.push(moveObject)
         frames.push(this.snapshotBoard(board))
       } catch (error) {
         this.warning = `Replay stopped at ${notation}: ${error.message}`
@@ -82,6 +88,7 @@ class MatchReplayController {
         break
       }
     }
+    this.resolvedMoves = resolvedMoves
 
     if (frames.length > 0 && JSON.stringify(frames.at(-1).layout) !== JSON.stringify(this.finalLayout)) {
       this.warning = this.warning || 'Replay reconstruction did not match the persisted final layout.'
@@ -184,6 +191,7 @@ class MatchReplayController {
     this.currentMoveIndex += 1
     this.resetInspectionSelection()
     this.playReplaySound(this.movementNotation[this.currentMoveIndex])
+    if (this.atEnd()) { this.spoilerRevealed = true }
     this.renderCurrentFrame()
     if (this.atEnd()) {
       this.pause()
@@ -232,6 +240,13 @@ class MatchReplayController {
     if (this.isPlaying) { this.pause() }
     this.currentMoveIndex = Number(moveButton.dataset.moveIndex)
     this.resetInspectionSelection()
+    this.renderCurrentFrame()
+  }
+
+  handleResultClick(event) {
+    const revealButton = event.target.closest('[data-match-replay-spoiler-reveal]')
+    if (!revealButton) { return }
+    this.spoilerRevealed = true
     this.renderCurrentFrame()
   }
 
@@ -291,6 +306,7 @@ class MatchReplayController {
     const inspector = new ReplayMoveInspector({ compiledProgram })
     const result = inspector.inspectPosition({
       board,
+      actualMoveNotation: this.movementNotation[this.currentMoveIndex + 1] || null,
       inspectedMoveKey: this.inspectedMoveKey,
       restrictToStartPosition: this.selectedStartPosition,
       autoSelectVisibleMove: !(this.selectedStartPosition && this.inspectedMoveKey === null)
@@ -312,6 +328,9 @@ class MatchReplayController {
   renderCurrentFrame() {
     const board = this.currentBoard()
     const inspection = this.inspectionContextForBoard(board)
+    const lastMove = this.currentMoveIndex === -1
+      ? null
+      : this.resolvedMoves[this.currentMoveIndex] || null
     this.view.renderFrame({
       board,
       currentMoveIndex: this.currentMoveIndex,
@@ -321,6 +340,8 @@ class MatchReplayController {
       movePairs: this.movePairs,
       result: this.result,
       totalMoves: this.totalPlayableMoves,
+      spoilerRevealed: this.spoilerRevealed,
+      lastMove,
       warning: this.warning,
       inspection,
       muteTopMoveHighlights: this.muteTopMoveHighlights

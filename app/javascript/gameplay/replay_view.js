@@ -33,32 +33,41 @@ class ReplayView {
     })
   }
 
-  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, warning, inspection, muteTopMoveHighlights }) {
+  renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, spoilerRevealed, lastMove, warning, inspection, muteTopMoveHighlights }) {
     renderBoardPieces(board)
     updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
     displayAlerts("")
-    this.renderBoardHighlights({ inspection, muteTopMoveHighlights })
-    this.renderStatus({ currentMoveIndex, totalMoves })
+    this.renderBoardHighlights({ inspection, muteTopMoveHighlights, lastMove })
+    this.renderStatus({ currentMoveIndex, totalMoves, spoilerRevealed })
     this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights })
-    this.renderResult(result)
+    this.renderResult({ result, spoilerRevealed })
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
     this.traceView.render(inspection)
   }
 
-  renderBoardHighlights({ inspection, muteTopMoveHighlights }) {
+  renderBoardHighlights({ inspection, muteTopMoveHighlights, lastMove }) {
     document.querySelectorAll('.chess-tile').forEach(tile => {
       tile.classList.remove(
         'match-replay-square--selected-piece',
         'match-replay-square--chosen-move',
         'match-replay-square--inspected-move',
         'match-replay-square--tied-move',
-        'match-replay-square--candidate-move'
+        'match-replay-square--candidate-move',
+        'match-replay-square--last-move-start',
+        'match-replay-square--last-move-end'
       )
     })
+
+    if (lastMove) {
+      document.getElementById(Board.gridCalculator(lastMove.startPosition))
+        ?.classList.add('match-replay-square--last-move-start')
+      document.getElementById(Board.gridCalculator(lastMove.endPosition))
+        ?.classList.add('match-replay-square--last-move-end')
+    }
 
     if (!inspection?.enabled || !inspection.result) { return }
 
@@ -100,20 +109,22 @@ class ReplayView {
     })
   }
 
-  renderStatus({ currentMoveIndex, totalMoves }) {
+  renderStatus({ currentMoveIndex, totalMoves, spoilerRevealed }) {
     if (!this.statusElement) { return }
 
     if (currentMoveIndex === -1) {
-      this.statusElement.innerText = "Start position"
+      this.statusElement.textContent = "Start position"
       return
     }
 
-    if (currentMoveIndex >= totalMoves - 1) {
-      this.statusElement.innerText = `Final position after move ${currentMoveIndex + 1}`
+    if (spoilerRevealed && currentMoveIndex >= totalMoves - 1) {
+      this.statusElement.textContent = `Final position after move ${currentMoveIndex + 1}`
       return
     }
 
-    this.statusElement.innerText = `Move ${currentMoveIndex + 1} of ${totalMoves}`
+    this.statusElement.textContent = spoilerRevealed
+      ? `Move ${currentMoveIndex + 1} of ${totalMoves}`
+      : `Move ${currentMoveIndex + 1}`
   }
 
   renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights = false }) {
@@ -147,9 +158,29 @@ class ReplayView {
     })
   }
 
-  renderResult(result) {
+  renderResult({ result, spoilerRevealed }) {
     if (!this.resultElement) { return }
-    this.resultElement.innerText = result.replaceAll('_', ' ')
+    this.resultElement.innerHTML = ""
+
+    if (spoilerRevealed) {
+      this.resultElement.textContent = result.replaceAll('_', ' ')
+      return
+    }
+
+    this.resultElement.append(
+      document.createTextNode('Result hidden to avoid spoilers. Click '),
+      this.buildSpoilerRevealButton(),
+      document.createTextNode(' to reveal results early.')
+    )
+  }
+
+  buildSpoilerRevealButton() {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.dataset.matchReplaySpoilerReveal = 'true'
+    button.className = 'match-replay-spoiler-reveal'
+    button.textContent = 'HERE'
+    return button
   }
 
   renderWarning(warning) {

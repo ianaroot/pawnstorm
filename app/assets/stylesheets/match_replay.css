@@ -20,11 +20,11 @@
   --match-replay-pill-action-bg: #798596;
   --match-replay-pill-action-text: #192535;
   --match-replay-pill-action-border: #677384;
-  --match-replay-selected-piece: #0f766e;
-  --match-replay-chosen-move: #be185d;
-  --match-replay-inspected-move: #2563eb;
-  --match-replay-tied-move: #6d28d9;
-  --match-replay-candidate-move: rgba(56, 189, 248, 0.55);
+  --match-replay-selected-piece: #14b8a6;
+  --match-replay-chosen-move: #a21caf;
+  --match-replay-inspected-move: #3b82f6;
+  --match-replay-tied-move: #6366f1;
+  --match-replay-candidate-move: rgba(103, 232, 249, 0.68);
 }
 
 .match-show-meta {
@@ -158,6 +158,20 @@
 
 .match-replay-move:hover {
   text-decoration: underline;
+}
+
+.match-replay-spoiler-reveal {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.match-replay-spoiler-reveal:hover {
+  text-decoration-thickness: 2px;
 }
 
 .match-replay-move--current {
@@ -345,24 +359,39 @@
   color: var(--match-replay-trace-heading-text);
 }
 
+.match-replay-square--last-move-start,
+.match-replay-square--last-move-end {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 78, 106, 0.98),
+    inset 0 0 18px rgba(255, 78, 106, 0.34),
+    0 0 10px rgba(255, 78, 106, 0.3);
+}
+
+.match-replay-square--last-move-end {
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 106, 82, 1),
+    inset 0 0 24px rgba(255, 106, 82, 0.4),
+    0 0 14px rgba(255, 106, 82, 0.36);
+}
+
 .match-replay-square--selected-piece {
-  box-shadow: inset 0 0 0 4px var(--match-replay-selected-piece);
+  box-shadow: inset 0 0 0 4px var(--match-replay-selected-piece), 0 0 10px rgba(20, 184, 166, 0.26);
 }
 
 .match-replay-square--chosen-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-chosen-move);
+  box-shadow: inset 0 0 0 5px var(--match-replay-chosen-move), 0 0 10px rgba(162, 28, 175, 0.26);
 }
 
 .match-replay-square--inspected-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-inspected-move);
+  box-shadow: inset 0 0 0 5px var(--match-replay-inspected-move), 0 0 10px rgba(59, 130, 246, 0.24);
 }
 
 .match-replay-square--tied-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-tied-move);
+  box-shadow: inset 0 0 0 5px var(--match-replay-tied-move), 0 0 10px rgba(99, 102, 241, 0.24);
 }
 
 .match-replay-square--candidate-move {
-  box-shadow: inset 0 0 0 4px var(--match-replay-candidate-move);
+  box-shadow: inset 0 0 0 4px var(--match-replay-candidate-move), 0 0 10px rgba(103, 232, 249, 0.22);
 }
 
 @media (max-width: 900px) {

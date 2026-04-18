@@ -40,6 +40,8 @@ describe('ReplayMoveInspector', () => {
       ReplayMoveInspector.moveKey(moveC)
     ])
     expect(result.actualMoveKey).toBe(ReplayMoveInspector.moveKey(moveC))
+    expect(result.currentChoiceKey).toBe(ReplayMoveInspector.moveKey(moveC))
+    expect(result.currentChoiceMove.moveObject).toBe(moveC)
     expect(result.inspectedMoveKey).toBe(ReplayMoveInspector.moveKey(moveB))
     expect(result.inspectedMove.moveObject).toBe(moveB)
     expect(result.inspectedTrace).toEqual({
