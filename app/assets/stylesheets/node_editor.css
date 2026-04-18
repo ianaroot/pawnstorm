@@ -477,8 +477,8 @@
 
 .node-connector {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   background: #A855F7;
   border-radius: 50%;
   cursor: crosshair;
@@ -492,8 +492,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: calc(28px / var(--editor-zoom, 1));
-  height: calc(28px / var(--editor-zoom, 1));
+  width: calc(34px / var(--editor-zoom, 1));
+  height: calc(34px / var(--editor-zoom, 1));
   transform: translate(-50%, -50%);
   border-radius: 50%;
 }
@@ -601,15 +601,17 @@
 .node-connector.input {
   left: var(--connector-input-x);
   top: var(--connector-input-y);
+  z-index: 2;
   transform: translate(-50%, -50%);
-  margin-top: -7px;
+  margin-top: -9px;
 }
 
 .node-connector.output {
   left: var(--connector-output-x);
   bottom: var(--connector-output-y);
+  z-index: 1;
   transform: translate(-50%, 50%);
-  margin-bottom: -7px;
+  margin-bottom: -9px;
 }
 
 .node-connector.output:hover {
