@@ -109,6 +109,63 @@ describe('ReplayView', () => {
     expect(candidateTile.classList.contains('match-replay-square--candidate-move')).toBe(true)
   })
 
+  it('applies start and end classes for the last move', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    const startTile = appendTile(1)
+    const endTile = appendTile(9)
+
+    view.renderBoardHighlights({
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false,
+      lastMove: { startPosition: 1, endPosition: 9 }
+    })
+
+    expect(startTile.classList.contains('match-replay-square--last-move-start')).toBe(true)
+    expect(endTile.classList.contains('match-replay-square--last-move-end')).toBe(true)
+  })
+
+  it('clears previous last-move classes on rerender', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    const firstStartTile = appendTile(1)
+    const firstEndTile = appendTile(9)
+    const secondStartTile = appendTile(2)
+    const secondEndTile = appendTile(10)
+
+    view.renderBoardHighlights({
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false,
+      lastMove: { startPosition: 1, endPosition: 9 }
+    })
+
+    view.renderBoardHighlights({
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false,
+      lastMove: { startPosition: 2, endPosition: 10 }
+    })
+
+    expect(firstStartTile.classList.contains('match-replay-square--last-move-start')).toBe(false)
+    expect(firstEndTile.classList.contains('match-replay-square--last-move-end')).toBe(false)
+    expect(secondStartTile.classList.contains('match-replay-square--last-move-start')).toBe(true)
+    expect(secondEndTile.classList.contains('match-replay-square--last-move-end')).toBe(true)
+  })
+
+  it('does not apply last-move classes when lastMove is null', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    const tile = appendTile(1)
+
+    view.renderBoardHighlights({
+      inspection: { enabled: false, result: null },
+      muteTopMoveHighlights: false,
+      lastMove: null
+    })
+
+    expect(tile.classList.contains('match-replay-square--last-move-start')).toBe(false)
+    expect(tile.classList.contains('match-replay-square--last-move-end')).toBe(false)
+  })
+
   it('shows the hidden spoiler message with a reveal button before reveal', () => {
     const root = buildRoot()
     const view = new ReplayView({ rootElement: root })

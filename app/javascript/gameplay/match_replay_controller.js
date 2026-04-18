@@ -52,6 +52,7 @@ class MatchReplayController {
     this.whiteCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.whiteCompiledProgramSnapshot)
     this.blackCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.blackCompiledProgramSnapshot)
 
+    this.resolvedMoves = []
     this.frames = this.buildFrames()
     this.totalPlayableMoves = this.frames.length - 1
     this.movePairs = this.buildMovePairs()
@@ -74,10 +75,12 @@ class MatchReplayController {
       movementNotation: []
     })
     const frames = [this.snapshotBoard(board)]
+    const resolvedMoves = []
     for (const notation of this.movementNotation) {
       try {
         const moveObject = this.notationResolver.resolve({ board, notation })
         board._officiallyMovePiece(moveObject)
+        resolvedMoves.push(moveObject)
         frames.push(this.snapshotBoard(board))
       } catch (error) {
         this.warning = `Replay stopped at ${notation}: ${error.message}`
@@ -85,6 +88,7 @@ class MatchReplayController {
         break
       }
     }
+    this.resolvedMoves = resolvedMoves
 
     if (frames.length > 0 && JSON.stringify(frames.at(-1).layout) !== JSON.stringify(this.finalLayout)) {
       this.warning = this.warning || 'Replay reconstruction did not match the persisted final layout.'
@@ -323,6 +327,9 @@ class MatchReplayController {
   renderCurrentFrame() {
     const board = this.currentBoard()
     const inspection = this.inspectionContextForBoard(board)
+    const lastMove = this.currentMoveIndex === -1
+      ? null
+      : this.resolvedMoves[this.currentMoveIndex] || null
     this.view.renderFrame({
       board,
       currentMoveIndex: this.currentMoveIndex,
@@ -333,6 +340,7 @@ class MatchReplayController {
       result: this.result,
       totalMoves: this.totalPlayableMoves,
       spoilerRevealed: this.spoilerRevealed,
+      lastMove,
       warning: this.warning,
       inspection,
       muteTopMoveHighlights: this.muteTopMoveHighlights
