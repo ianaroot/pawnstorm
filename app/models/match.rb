@@ -72,6 +72,15 @@ class Match < ApplicationRecord
     fallback_player_label(player)
   end
 
+  def winner
+    return false if result != "white_win" && result != "black_win"
+    if result == "white_win"
+      player_display_name_for(:white)
+    else
+      player_display_name_for(:black)
+    end
+  end
+
   private
 
   def tournament_compiled_program_snapshot_for(player)

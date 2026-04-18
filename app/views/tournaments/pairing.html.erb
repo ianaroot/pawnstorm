@@ -59,7 +59,7 @@
                 <td><%= match.player_display_name_for(:white) %></td>
                 <td><%= match.player_display_name_for(:black) %></td>
                 <td><%= match.status %></td>
-                <td><%= match.result.presence || '-' %></td>
+                <td><%= match.winner || match.result.presence || '-' %></td>
               </tr>
             <% end %>
           </tbody>
