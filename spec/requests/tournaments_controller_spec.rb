@@ -160,7 +160,7 @@ RSpec.describe TournamentsController, type: :request do
     end
 
     it 'is publicly viewable and keeps deleted-bot entrants visible in standings and pairing pages' do
-      tournament = create(:tournament, creator: user, visibility: :public)
+      tournament = create(:tournament, creator: user, visibility: :public, status: :completed)
       deleted_bot = create(:bot, :compiled, name: 'Deleted Phoenix')
       surviving_bot = create(:bot, :compiled, name: 'Surviving Storm')
       deleted_entry = create(

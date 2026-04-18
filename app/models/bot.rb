@@ -55,7 +55,15 @@ class Bot < ApplicationRecord
     tournament_entries
       .joins(:tournament)
       .where(tournaments: { status: Tournament.statuses.fetch('open') })
-      .destroy_all
+      .find_each do |entry|
+        entry.destroy! unless tournament_entry_referenced_by_match?(entry)
+      end
+  end
+
+  def tournament_entry_referenced_by_match?(entry)
+    Match.where(white_tournament_entry_id: entry.id)
+      .or(Match.where(black_tournament_entry_id: entry.id))
+      .exists?
   end
   
   def create_root_node

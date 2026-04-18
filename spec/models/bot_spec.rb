@@ -83,6 +83,41 @@ RSpec.describe Bot, type: :model do
       expect(entry.display_name).to eq(bot.name)
       expect(entry.compiled_program_snapshot).to eq(bot.compiled_program)
     end
+
+    it 'preserves match-referenced open tournament entries when destroyed' do
+      user = create(:user)
+      bot = create(:bot, :compiled, user: user)
+      opponent = create(:bot, :compiled)
+      tournament = create(:tournament, creator: user, status: :open)
+      entry = create(
+        :tournament_entry,
+        tournament: tournament,
+        bot: bot,
+        display_name: bot.name,
+        compiled_program_snapshot: bot.compiled_program,
+        seed_order: 0
+      )
+      opponent_entry = create(
+        :tournament_entry,
+        tournament: tournament,
+        bot: opponent,
+        display_name: opponent.name,
+        compiled_program_snapshot: opponent.compiled_program,
+        seed_order: 1
+      )
+      Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot,
+        black_player: opponent,
+        white_tournament_entry: entry,
+        black_tournament_entry: opponent_entry
+      )
+
+      bot.destroy!
+
+      expect(entry.reload.bot).to be_nil
+    end
   end
 
   describe 'root node lifecycle' do
