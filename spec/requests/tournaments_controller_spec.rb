@@ -25,19 +25,16 @@ RSpec.describe TournamentsController, type: :request do
       expect(flash[:alert]).to eq('Please create an account to use that feature.')
     end
 
-    it 'shows compiled bots from any user and hides stale bots' do
+    it 'shows tournament shell fields' do
       user = create(:user)
-      own_bot = create(:bot, :compiled, user: user)
-      other_bot = create(:bot, :compiled)
-      stale_bot = create(:bot, compiled_program_stale: true)
 
       sign_in user
       get new_tournament_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include(own_bot.name)
-      expect(response.body).to include(other_bot.name)
-      expect(response.body).not_to include(stale_bot.name)
+      expect(response.body).to include('Name')
+      expect(response.body).to include('Visibility')
+      expect(response.body).to include('Entries Per User')
       expect(response.body).to include('Games Per Pairing')
     end
   end
@@ -49,95 +46,89 @@ RSpec.describe TournamentsController, type: :request do
       sign_in user
     end
 
-    it 'requires at least two selected bots' do
-      bot = create(:bot, :compiled, user: user)
-
-      expect do
-        post tournaments_path, params: { tournament: { entrant_bot_ids: [bot.id] } }
-      end.not_to change(Tournament, :count)
-
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include('Please choose at least two compiled bots.')
-    end
-
-    it 'creates a tournament, entries, and randomized round robin matches' do
-      bot_a = create(:bot, :compiled, user: user)
-      bot_b = create(:bot, :compiled)
-      bot_c = create(:bot, :compiled)
-
-      expect do
-        post tournaments_path, params: { tournament: { entrant_bot_ids: [bot_a.id, bot_b.id, bot_c.id] } }
-      end.to change(Tournament, :count).by(1)
-        .and change(TournamentEntry, :count).by(3)
-        .and change(Match, :count).by(30)
-
-      tournament = Tournament.order(:created_at).last
-      expect(response).to redirect_to(tournament_path(tournament))
-      expect(tournament.creator).to eq(user)
-      expect(tournament.games_per_pair).to eq(10)
-
-      entries_by_bot_id = tournament.tournament_entries.index_by(&:bot_id)
-      [bot_a, bot_b, bot_c].each do |bot|
-        entry = entries_by_bot_id.fetch(bot.id)
-        expect(entry.display_name).to eq(bot.name)
-        expect(entry.bot_owner).to eq(bot.user)
-        expect(entry.compiled_program_snapshot).to eq(bot.compiled_program)
-      end
-
-      pair_counts = tournament.matches.group_by do |match|
-        [match.white_player_id, match.black_player_id].sort
-      end.transform_values(&:count)
-
-      expect(pair_counts.values).to all(eq(10))
-
-      pairing_matches = tournament.matches.select do |match|
-        [match.white_player, match.black_player].include?(bot_a) &&
-          [match.white_player, match.black_player].include?(bot_b)
-      end
-
-      expect(pairing_matches.count { |match| match.white_player == bot_a }).to eq(5)
-      expect(pairing_matches.count { |match| match.white_player == bot_b }).to eq(5)
-      expect(tournament.matches).to all(have_attributes(white_tournament_entry: be_present, black_tournament_entry: be_present))
-      tournament.matches.each do |match|
-        expect(match.white_tournament_entry).to eq(entries_by_bot_id.fetch(match.white_player_id))
-        expect(match.black_tournament_entry).to eq(entries_by_bot_id.fetch(match.black_player_id))
-      end
-      expect(ComputeMatchJob).to have_been_enqueued.exactly(1).times
-    end
-
-    it 'allows a larger games-per-pairing value than the default' do
-      bot_a = create(:bot, :compiled, user: user)
-      bot_b = create(:bot, :compiled)
-
+    it 'creates an open tournament shell without entries or matches' do
       expect do
         post tournaments_path, params: {
           tournament: {
-            entrant_bot_ids: [bot_a.id, bot_b.id],
+            name: 'Spring Open',
+            description: 'Bring one reliable bot.',
+            visibility: 'public',
+            entries_per_user: 'unlimited',
+            max_entries: 12,
             games_per_pair: 14
           }
         }
       end.to change(Tournament, :count).by(1)
-        .and change(Match, :count).by(14)
+        .and change(TournamentEntry, :count).by(0)
+        .and change(Match, :count).by(0)
 
       tournament = Tournament.order(:created_at).last
-      expect(tournament.games_per_pair).to eq(14)
-      expect(tournament.matches.count).to eq(14)
-      expect(tournament.matches.count { |match| match.white_player == bot_a }).to eq(7)
-      expect(tournament.matches.count { |match| match.white_player == bot_b }).to eq(7)
+      expect(response).to redirect_to(tournament_path(tournament))
+      expect(tournament.creator).to eq(user)
+      expect(tournament).to have_attributes(
+        name: 'Spring Open',
+        description: 'Bring one reliable bot.',
+        visibility: 'public',
+        entries_per_user: 'unlimited',
+        max_entries: 12,
+        games_per_pair: 14,
+        status: 'open'
+      )
+      expect(ComputeMatchJob).not_to have_been_enqueued
+    end
+
+    it 'rejects blank names' do
+      expect do
+        post tournaments_path, params: {
+          tournament: {
+            name: '',
+            visibility: 'public',
+            entries_per_user: 'one',
+            games_per_pair: 10
+          }
+        }
+      end.not_to change(Tournament, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(flash[:alert]).to include("Name can't be blank")
+    end
+
+    it 'rejects games-per-pairing values above the production max' do
+      expect do
+        post tournaments_path, params: {
+          tournament: {
+            name: 'Too Many Games',
+            games_per_pair: 21
+          }
+        }
+      end.not_to change(Tournament, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Games per pairing cannot exceed 20.')
+    end
+
+    it 'rejects invalid max entries' do
+      expect do
+        post tournaments_path, params: {
+          tournament: {
+            name: 'Tiny Tournament',
+            max_entries: 1
+          }
+        }
+      end.not_to change(Tournament, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(flash[:alert]).to include('Max entries must be greater than or equal to 2')
     end
   end
 
   describe 'GET #show' do
     let(:user) { create(:user) }
 
-    before do
-      sign_in user
-    end
-
     it 'shows standings, progress, and pairing detail with match links' do
       skip 'tournament show expectations are outdated after the standings/matrix UI overhaul'
 
-      tournament = create(:tournament, creator: user)
+      tournament = create(:tournament, creator: user, visibility: :public)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
@@ -168,8 +159,8 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include(match_path(match))
     end
 
-    it 'keeps deleted-bot entrants visible in standings and pairing pages' do
-      tournament = create(:tournament, creator: user)
+    it 'is publicly viewable and keeps deleted-bot entrants visible in standings and pairing pages' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :completed)
       deleted_bot = create(:bot, :compiled, name: 'Deleted Phoenix')
       surviving_bot = create(:bot, :compiled, name: 'Surviving Storm')
       deleted_entry = create(
@@ -218,6 +209,130 @@ RSpec.describe TournamentsController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Deleted Phoenix')
       expect(response.body).to include('Surviving Storm')
+    end
+
+    it 'does not show tournament controls to anonymous visitors' do
+      tournament = create(:tournament, creator: user, visibility: :public)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Pause Tournament')
+      expect(response.body).not_to include('Resume Tournament')
+      expect(response.body).not_to include('Abort Tournament')
+    end
+
+    it 'shows tournament controls to the creator' do
+      tournament = create(:tournament, creator: user, status: :running)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+      sign_in user
+
+      get tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Pause Tournament')
+      expect(response.body).to include('Abort Tournament')
+    end
+
+    it 'uses invite-token pairing links on invite-token tournament pages and polling responses' do
+      tournament = create(:tournament, creator: user, status: :running)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
+      invite_pairing_path = invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+
+      get invite_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(invite_pairing_path)
+      expect(response.body).not_to include(pairing_tournament_path(tournament, entry_a, entry_b))
+
+      get invite_tournament_path(tournament.invite_token, format: :json)
+
+      expect(response).to have_http_status(:success)
+      expect(JSON.parse(response.body).fetch('matrix_html')).to include(invite_pairing_path)
+    end
+
+    it 'renders open-registration state without standings or matrix for empty open tournaments' do
+      tournament = create(
+        :tournament,
+        creator: user,
+        name: 'Registration Cup',
+        description: 'Open now.',
+        visibility: :link_only,
+        entries_per_user: :unlimited,
+        max_entries: 8,
+        games_per_pair: 12
+      )
+      sign_in user
+
+      get tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Registration Cup')
+      expect(response.body).to include('Open now.')
+      expect(response.body).to include('Link only')
+      expect(response.body).to include('Unlimited')
+      expect(response.body).to include('Max Entries')
+      expect(response.body).to include('12')
+      expect(response.body).to include(invite_tournament_path(tournament.invite_token))
+      expect(response.body).to include('Entries are open. Submit a compiled bot before the tournament starts.')
+      expect(response.body).not_to include('Matchup Matrix')
+      expect(response.body).not_to include('Standings')
+    end
+  end
+
+  describe 'GET #pairing' do
+    let(:user) { create(:user) }
+
+    it 'does not expose link-only tournaments through predictable id pairing routes' do
+      tournament = create(:tournament, creator: user)
+
+      get pairing_tournament_path(tournament, 1, 2)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'shows link-only pairings through invite-token routes' do
+      tournament = create(:tournament, creator: user)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
+
+      get invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Alpha vs Beta')
+      expect(response.body).to include(invite_tournament_path(tournament.invite_token))
     end
   end
 
@@ -268,6 +383,30 @@ RSpec.describe TournamentsController, type: :request do
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')
       expect(running_match.reload).to be_running
+    end
+
+    it 'does not allow a different registered user to abort the tournament' do
+      tournament = create(:tournament)
+      bot_a = create(:bot, :compiled, name: 'Alpha')
+      bot_b = create(:bot, :compiled, name: 'Beta')
+      pending_match = Match.create!(
+        tournament: tournament,
+        creator: tournament.creator,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        result: nil,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      post abort_tournament_path(tournament)
+
+      expect(response).to redirect_to(tournament_path(tournament))
+      expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
+      expect(pending_match.reload).to be_pending
     end
   end
 
@@ -343,6 +482,37 @@ RSpec.describe TournamentsController, type: :request do
       expect(response).to redirect_to(tournament_path(tournament))
       expect(tournament.reload).not_to be_paused
       expect(ComputeMatchJob).to have_been_enqueued.with(pending_match.id)
+    end
+  end
+
+  describe 'POST #start' do
+    let(:user) { create(:user) }
+
+    it 'starts the tournament for the creator' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :open)
+      create(:tournament_entry, tournament: tournament, bot: create(:bot, :compiled, user: user), bot_owner: user, seed_order: 0)
+      create(:tournament_entry, tournament: tournament, bot: create(:bot, :compiled, user: user), bot_owner: user, seed_order: 1)
+      sign_in user
+
+      post start_tournament_path(tournament)
+
+      expect(response).to redirect_to(tournament_path(tournament))
+      expect(flash[:notice]).to eq('Tournament started.')
+      expect(tournament.reload).to be_status_running
+      expect(tournament.started_at).to be_present
+    end
+
+    it 'does not let a different user start the tournament' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :open)
+      create(:tournament_entry, tournament: tournament, bot: create(:bot, :compiled, user: user), bot_owner: user, seed_order: 0)
+      create(:tournament_entry, tournament: tournament, bot: create(:bot, :compiled, user: user), bot_owner: user, seed_order: 1)
+      sign_in create(:user)
+
+      post start_tournament_path(tournament)
+
+      expect(response).to redirect_to(tournament_path(tournament))
+      expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
+      expect(tournament.reload).to be_status_open
     end
   end
 end

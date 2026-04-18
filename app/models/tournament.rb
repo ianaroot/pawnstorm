@@ -1,12 +1,37 @@
+require 'securerandom'
+
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
   PAUSED_CACHE_TTL = 7.days
+
+  enum :status, {
+    open: 0,
+    starting: 1,
+    running: 2,
+    completed: 3,
+    aborted: 4
+  }, prefix: true
+
+  enum :visibility, {
+    public: 0,
+    link_only: 1
+  }, prefix: true
+
+  enum :entries_per_user, {
+    one: 0,
+    unlimited: 1
+  }, prefix: true
 
   belongs_to :creator, class_name: 'User'
   has_many :tournament_entries, -> { order(:seed_order) }, dependent: :destroy
   has_many :bots, through: :tournament_entries
   has_many :matches, dependent: :nullify
 
+  before_validation :generate_invite_token
+
+  validates :name, :invite_token, presence: true
+  validates :invite_token, uniqueness: true
+  validates :max_entries, numericality: { only_integer: true, greater_than_or_equal_to: 2, allow_nil: true }
   validates :games_per_pair, numericality: { only_integer: true, greater_than: 0 }
 
   def enqueue_next_match!
@@ -39,6 +64,10 @@ class Tournament < ApplicationRecord
   end
 
   private
+
+  def generate_invite_token
+    self.invite_token ||= SecureRandom.hex(16)
+  end
 
   def paused_cache_key
     "tournaments/#{id}/paused"

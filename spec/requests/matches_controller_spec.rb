@@ -586,7 +586,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'shows tournament match history after a bot has been deleted' do
-      tournament = create(:tournament, creator: user)
+      tournament = create(:tournament, creator: user, status: :running)
       deleted_bot = create(:bot, :compiled, name: 'Deleted Rogue')
       surviving_bot = create(:bot, :compiled, name: 'Surviving Beast')
       deleted_entry = create(

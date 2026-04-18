@@ -4,7 +4,7 @@
       <div class="match-show-meta">
         <h1 class="match-show-title"><%= @pairing[:entrant_a].display_name %> vs <%= @pairing[:entrant_b].display_name %></h1>
         <p class="match-show-meta-item">
-          <%= link_to "Back to Tournament #{@tournament.id}", tournament_path(@tournament) %>
+          <%= link_to "Back to Tournament #{@tournament.id}", @tournament_back_path %>
         </p>
       </div>
 

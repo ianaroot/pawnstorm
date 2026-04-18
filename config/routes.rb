@@ -28,15 +28,25 @@ Rails.application.routes.draw do
 
   if Rails.env.development? || Rails.env.test?
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
-    resources :tournaments, only: [:new, :create, :show] do
-      member do
-        get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
-        post :abort
-        post :pause
-        post :resume
-      end
+  end
+
+  resources :tournaments, only: [:index, :new, :create, :show] do
+    resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
+    member do
+      get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
+      post :start
+      post :abort
+      post :pause
+      post :resume
     end
   end
+  get 't/:invite_token', to: 'tournaments#show_by_invite', as: :invite_tournament
+  get 't/:invite_token/pairings/:entrant_a_id/:entrant_b_id',
+    to: 'tournaments#pairing_by_invite',
+    as: :invite_pairing_tournament
+  post 't/:invite_token/entries', to: 'tournament_entries#create', as: :invite_tournament_entries
+  patch 't/:invite_token/entries/:id', to: 'tournament_entries#update', as: :invite_tournament_entry
+  delete 't/:invite_token/entries/:id', to: 'tournament_entries#destroy'
 
   get 'matches/bot-vs-bot/new', to: 'matches/bot_vs_bot#new', as: :new_bot_vs_bot_match
   post 'matches/bot-vs-bot', to: 'matches/bot_vs_bot#create', as: :bot_vs_bot_matches
