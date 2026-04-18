@@ -180,10 +180,6 @@ const RAW_TEMPLATES = [
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
         subjectComparisonValue: 0
-      }),
-      actionNode('action', 0, 2400, {
-        actionType: 'return',
-        value: 15
       })
     ],
     connections: [
@@ -200,8 +196,7 @@ const RAW_TEMPLATES = [
       { source: 'opponents_bishops_present', target: 'opponents_knights_present' },
       { source: 'opponents_knights_present', target: 'opponents_pawns_present' },
       { source: 'opponents_pawns_present', target: 'allies_unattacked' },
-      { source: 'allies_unattacked', target: 'opponents_unattacked' },
-      { source: 'opponents_unattacked', target: 'action' }
+      { source: 'allies_unattacked', target: 'opponents_unattacked' }
     ]
   },
   {
