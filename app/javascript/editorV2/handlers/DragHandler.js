@@ -202,7 +202,7 @@ class DragHandler {
 
   handleBackgroundPointerDown(event) {
     if (!this.isPrimaryPointer(event)) { return }
-    if (event.target.closest('.node') || event.target.closest('.node-connector')) {
+    if (event.target.closest('.node') || event.target.closest('.node-connector') || event.target.closest('.connection-delete-btn')) {
       return
     }
 
