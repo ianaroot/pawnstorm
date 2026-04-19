@@ -32,13 +32,50 @@ const DEFAULT_STATE = Object.freeze({
   }
 })
 
+const DEFAULT_GRAMMAR_RULES = Object.freeze({
+  editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
+  regularRelationalSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+  regularRelationalTargets: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+  relationalOperatorTargetRules: {
+    attack: 'opposing_team',
+    defend: 'same_team',
+    cover: 'same_team',
+    shield: 'same_team',
+    adjacent: 'any_regular'
+  },
+  samePieceTargets: {
+    enemy_moved_piece: ['captured_piece'],
+    captured_piece: ['enemy_moved_piece']
+  },
+  teamSubjectGroups: {
+    allied: ['allied', 'moved_piece'],
+    enemy: ['enemy', 'enemy_moved_piece']
+  },
+  opposingTeamGroups: {
+    allied: 'enemy',
+    enemy: 'allied'
+  }
+})
+
 class ConditionForm {
   constructor(editorPanel) {
     this.editorPanel = editorPanel
+    this.grammarRules = this.readGrammarRules()
     this.state = structuredClone(DEFAULT_STATE)
     this.boundHandleFieldChange = this.handleFieldChange.bind(this)
     this.boundHandleLeftComparisonToggle = this.toggleLeftComparison.bind(this)
     this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
+  }
+
+  readGrammarRules() {
+    const element = document.getElementById('node-grammar-rules')
+    if (!element?.textContent) { return DEFAULT_GRAMMAR_RULES }
+
+    try {
+      return JSON.parse(element.textContent)
+    } catch {
+      return DEFAULT_GRAMMAR_RULES
+    }
   }
 
   attach() {
@@ -448,12 +485,12 @@ class ConditionForm {
     }
 
     if (this.usesSamePiece()) {
-      const allowedLeft = ['enemy_moved_piece', 'captured_piece']
+      const allowedLeft = Object.keys(this.grammarRules.samePieceTargets)
       if (!allowedLeft.includes(this.state.left.subject)) {
-        this.state.left.subject = 'enemy_moved_piece'
+        this.state.left.subject = allowedLeft[0]
       }
 
-      this.state.right.subject = this.state.left.subject === 'enemy_moved_piece' ? 'captured_piece' : 'enemy_moved_piece'
+      this.state.right.subject = this.samePieceTargetsFor(this.state.left.subject)[0]
 
       this.state.left.filter = 'any'
       this.state.left.filterMode = 'include'
@@ -476,7 +513,7 @@ class ConditionForm {
 
     const allowedRight = this.regularRelationalTargets()
     if (!allowedRight.includes(this.state.right.subject)) {
-      this.state.right.subject = 'enemy'
+      this.state.right.subject = allowedRight[0]
     }
 
     if (this.leftUsesPriorBoardState()) {
@@ -526,11 +563,39 @@ class ConditionForm {
   }
 
   regularRelationalSubjects() {
-    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+    return this.grammarRules.regularRelationalSubjects
   }
 
   regularRelationalTargets() {
-    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+    const targetRule = this.grammarRules.relationalOperatorTargetRules[this.state.operator] || 'any_regular'
+    if (targetRule === 'opposing_team') {
+      return this.opposingTeamTargetsFor(this.state.left.subject)
+    } else if (targetRule === 'same_team') {
+      return this.sameTeamTargetsFor(this.state.left.subject)
+    } else {
+      return this.grammarRules.regularRelationalTargets
+    }
+  }
+
+  samePieceTargetsFor(subject) {
+    return this.grammarRules.samePieceTargets[subject] || []
+  }
+
+  sameTeamTargetsFor(subject) {
+    const team = this.teamGroupForSubject(subject)
+    return team ? this.grammarRules.teamSubjectGroups[team] : []
+  }
+
+  opposingTeamTargetsFor(subject) {
+    const team = this.teamGroupForSubject(subject)
+    const opposingTeam = this.grammarRules.opposingTeamGroups[team]
+    return opposingTeam ? this.grammarRules.teamSubjectGroups[opposingTeam] : []
+  }
+
+  teamGroupForSubject(subject) {
+    return Object.keys(this.grammarRules.teamSubjectGroups).find(team => {
+      return this.grammarRules.teamSubjectGroups[team].includes(subject)
+    })
   }
 
   allowedUnaryOperatorsForSubject(subject) {
@@ -619,8 +684,8 @@ class ConditionForm {
     }
 
     if (samePieceMode) {
-      const leftAllowed = ['enemy_moved_piece', 'captured_piece']
-      const rightAllowed = this.state.left.subject === 'enemy_moved_piece' ? ['captured_piece'] : ['enemy_moved_piece']
+      const leftAllowed = Object.keys(this.grammarRules.samePieceTargets)
+      const rightAllowed = this.samePieceTargetsFor(this.state.left.subject)
 
       this.disableOptions(fields.leftSubject, this.editorSubjects().filter(value => !leftAllowed.includes(value)))
       this.disableOptions(fields.rightSubject, this.editorSubjects().filter(value => !rightAllowed.includes(value)))
@@ -632,7 +697,7 @@ class ConditionForm {
   }
 
   editorSubjects() {
-    return ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+    return this.grammarRules.editorSubjects
   }
 
 }

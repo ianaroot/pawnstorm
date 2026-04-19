@@ -1,4 +1,8 @@
 <div id="node-form-panel" class="node-form-panel condition-form-panel hidden">
+  <script type="application/json" id="node-grammar-rules">
+    <%= raw json_escape(NodeGrammarRules.editor_config.to_json) %>
+  </script>
+
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
       <div class="condition-form-layout">

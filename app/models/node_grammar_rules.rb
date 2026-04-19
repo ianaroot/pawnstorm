@@ -27,6 +27,24 @@ class NodeGrammarRules
     'captured_piece' => %w[enemy_moved_piece]
   }.freeze
 
+  RELATIONAL_OPERATOR_TARGET_RULES = {
+    'attack' => 'opposing_team',
+    'defend' => 'same_team',
+    'cover' => 'same_team',
+    'shield' => 'same_team',
+    'adjacent' => 'any_regular'
+  }.freeze
+
+  TEAM_SUBJECT_GROUPS = {
+    'allied' => %w[allied moved_piece],
+    'enemy' => %w[enemy enemy_moved_piece]
+  }.freeze
+
+  OPPOSING_TEAM_GROUPS = {
+    'allied' => 'enemy',
+    'enemy' => 'allied'
+  }.freeze
+
   DISTINCT_PIECE_VALUES = %w[moved_piece_value captured_piece_value enemy_moved_piece_value enemy_captured_piece_value].freeze
 
   COMPARISON_VALUES_BY_SUBJECT = {
@@ -71,8 +89,28 @@ class NodeGrammarRules
       if operator == 'same_piece'
         SAME_PIECE_TARGETS.fetch(subject, []).include?(target)
       else
-        REGULAR_RELATIONAL_TARGETS.include?(target)
+        regular_relational_targets_for(subject:, operator:).include?(target)
       end
+    end
+
+    def regular_relational_targets_for(subject:, operator:)
+      case RELATIONAL_OPERATOR_TARGET_RULES.fetch(operator, 'any_regular')
+      when 'opposing_team' then opposing_team_targets_for(subject)
+      when 'same_team' then same_team_targets_for(subject)
+      else REGULAR_RELATIONAL_TARGETS
+      end
+    end
+
+    def editor_config
+      {
+        'editorSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
+        'regularRelationalSubjects' => REGULAR_RELATIONAL_SUBJECTS,
+        'regularRelationalTargets' => REGULAR_RELATIONAL_TARGETS,
+        'relationalOperatorTargetRules' => RELATIONAL_OPERATOR_TARGET_RULES,
+        'samePieceTargets' => SAME_PIECE_TARGETS,
+        'teamSubjectGroups' => TEAM_SUBJECT_GROUPS,
+        'opposingTeamGroups' => OPPOSING_TEAM_GROUPS
+      }
     end
 
     def comparison_allowed_for_relational_operator?(operator)
@@ -85,6 +123,23 @@ class NodeGrammarRules
 
     def valid_comparison_value_for_subject?(subject, comparison_value)
       comparison_value.is_a?(Numeric) || comparison_values_for_subject(subject).include?(comparison_value)
+    end
+
+    private
+
+    def same_team_targets_for(subject)
+      team = team_group_for_subject(subject)
+      team ? TEAM_SUBJECT_GROUPS.fetch(team) : []
+    end
+
+    def opposing_team_targets_for(subject)
+      team = team_group_for_subject(subject)
+      opposing_team = OPPOSING_TEAM_GROUPS[team]
+      opposing_team ? TEAM_SUBJECT_GROUPS.fetch(opposing_team) : []
+    end
+
+    def team_group_for_subject(subject)
+      TEAM_SUBJECT_GROUPS.find { |_team, subjects| subjects.include?(subject) }&.first
     end
   end
 end

@@ -6,11 +6,18 @@ function option(value, label = value) {
   return `<option value="${value}">${label}</option>`
 }
 
+const subjectOptions = ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+  .map(value => option(value))
+  .join('')
+const operatorOptions = ['attack', 'defend', 'cover', 'shield', 'adjacent', 'same_piece', 'count', 'mobility', 'value']
+  .map(value => option(value))
+  .join('')
+
 function buildPanel() {
   const panel = document.createElement('div')
   panel.id = 'node-form-panel'
   panel.innerHTML = `
-    <select id="cond-left-subject">${option('allied')}</select>
+    <select id="cond-left-subject">${subjectOptions}</select>
     <label class="condition-form-checkbox">
       <input id="cond-left-filter-mode" type="checkbox">
       <span>Non-</span>
@@ -30,9 +37,9 @@ function buildPanel() {
       <input id="cond-left-comparison-value-number" type="number">
     </div>
 
-    <select id="cond-operator">${option('attack')}</select>
+    <select id="cond-operator">${operatorOptions}</select>
 
-    <select id="cond-right-subject">${option('enemy')}</select>
+    <select id="cond-right-subject">${subjectOptions}</select>
     <label class="condition-form-checkbox">
       <input id="cond-right-filter-mode" type="checkbox">
       <span>Non-</span>
@@ -195,5 +202,116 @@ describe('ConditionForm', () => {
     expect(rightFilterMode.checked).toBe(false)
     expect(rightFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(true)
     expect(form.buildPayload()).not.toHaveProperty('targetFilterMode')
+  })
+
+  it('limits attack targets to the opposing team from the selected subject', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'allied',
+      targetFilter: 'any'
+    })
+
+    const rightSubject = panel.querySelector('#cond-right-subject')
+    expect(form.buildPayload().target).toBe('enemy')
+    expect(rightSubject.querySelector('option[value="enemy"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(true)
+    expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(true)
+  })
+
+  it('limits defend cover and shield targets to the same team as the selected subject', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'enemy',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'any'
+    })
+
+    const rightSubject = panel.querySelector('#cond-right-subject')
+    expect(form.buildPayload().target).toBe('enemy')
+    expect(rightSubject.querySelector('option[value="enemy"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(true)
+    expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(true)
+
+    const operator = panel.querySelector('#cond-operator')
+    operator.value = 'cover'
+    operator.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(form.buildPayload().target).toBe('enemy')
+
+    operator.value = 'shield'
+    operator.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(form.buildPayload().target).toBe('enemy')
+  })
+
+  it('keeps adjacent targets unrestricted among regular relational targets', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'adjacent',
+      target: 'enemy_moved_piece',
+      targetFilter: 'any'
+    })
+
+    const rightSubject = panel.querySelector('#cond-right-subject')
+    expect(form.buildPayload().target).toBe('enemy_moved_piece')
+    expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="enemy"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="captured_piece"]').disabled).toBe(true)
+  })
+
+  it('uses rendered grammar config for relational target scoping', () => {
+    const rules = document.createElement('script')
+    rules.type = 'application/json'
+    rules.id = 'node-grammar-rules'
+    rules.textContent = JSON.stringify({
+      editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
+      regularRelationalSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+      regularRelationalTargets: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+      relationalOperatorTargetRules: { attack: 'same_team' },
+      samePieceTargets: { enemy_moved_piece: ['captured_piece'], captured_piece: ['enemy_moved_piece'] },
+      teamSubjectGroups: { allied: ['allied', 'moved_piece'], enemy: ['enemy', 'enemy_moved_piece'] },
+      opposingTeamGroups: { allied: 'enemy', enemy: 'allied' }
+    })
+    document.body.appendChild(rules)
+
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any'
+    })
+
+    expect(form.buildPayload().target).toBe('allied')
   })
 })

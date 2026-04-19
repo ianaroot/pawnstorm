@@ -19,6 +19,30 @@ RSpec.describe NodeGrammarRules, type: :model do
       expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'same_piece', target: 'captured_piece')).to be(true)
       expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'same_piece', target: 'enemy')).to be(false)
     end
+
+    it 'allows attack targets only across teams' do
+      expect(described_class.valid_relational_target_for?(subject: 'allied', operator: 'attack', target: 'enemy')).to be(true)
+      expect(described_class.valid_relational_target_for?(subject: 'moved_piece', operator: 'attack', target: 'enemy_moved_piece')).to be(true)
+      expect(described_class.valid_relational_target_for?(subject: 'enemy', operator: 'attack', target: 'allied')).to be(true)
+      expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'attack', target: 'moved_piece')).to be(true)
+
+      expect(described_class.valid_relational_target_for?(subject: 'allied', operator: 'attack', target: 'moved_piece')).to be(false)
+      expect(described_class.valid_relational_target_for?(subject: 'enemy', operator: 'attack', target: 'enemy_moved_piece')).to be(false)
+    end
+
+    it 'allows defend cover and shield targets only within the same team' do
+      %w[defend cover shield].each do |operator|
+        expect(described_class.valid_relational_target_for?(subject: 'allied', operator:, target: 'moved_piece')).to be(true)
+        expect(described_class.valid_relational_target_for?(subject: 'enemy', operator:, target: 'enemy_moved_piece')).to be(true)
+        expect(described_class.valid_relational_target_for?(subject: 'allied', operator:, target: 'enemy')).to be(false)
+        expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator:, target: 'moved_piece')).to be(false)
+      end
+    end
+
+    it 'keeps adjacent targets unrestricted among regular relational targets' do
+      expect(described_class.valid_relational_target_for?(subject: 'allied', operator: 'adjacent', target: 'enemy')).to be(true)
+      expect(described_class.valid_relational_target_for?(subject: 'enemy', operator: 'adjacent', target: 'moved_piece')).to be(true)
+    end
   end
 
   describe '.valid_comparison_value_for_subject?' do
