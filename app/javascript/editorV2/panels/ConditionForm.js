@@ -96,8 +96,10 @@ class ConditionForm {
       unaryComparisonValueNumber,
       leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
+      leftFilterModeControl: leftFilterMode?.closest('.condition-form-checkbox'),
       rightComparisonToggle: this.editorPanel.querySelector('#cond-right-comparison-toggle'),
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
+      rightFilterModeControl: rightFilterMode?.closest('.condition-form-checkbox'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
       unaryComparisonSection: this.editorPanel.querySelector('#cond-unary-comparison-section'),
@@ -222,9 +224,11 @@ class ConditionForm {
     const leftComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.leftComparisonOpen
     const rightComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.rightComparisonOpen
     const unaryComparisonActive = this.state.kind === 'unary'
+    const leftFilterModeAvailable = this.state.left.filter !== 'any'
+    const rightFilterModeAvailable = this.state.right.filter !== 'any'
 
     if (fields.leftSubject) fields.leftSubject.value = this.state.left.subject
-    if (fields.leftFilterMode) fields.leftFilterMode.checked = this.state.left.filterMode === 'exclude'
+    if (fields.leftFilterMode) fields.leftFilterMode.checked = leftFilterModeAvailable && this.state.left.filterMode === 'exclude'
     if (fields.leftFilter) fields.leftFilter.value = this.state.left.filter
     if (fields.leftComparisonMetric) fields.leftComparisonMetric.value = this.state.left.comparisonMetric || 'count'
     if (fields.leftComparator) fields.leftComparator.value = this.state.left.comparator
@@ -234,7 +238,7 @@ class ConditionForm {
     if (fields.operator) fields.operator.value = this.state.operator
 
     if (fields.rightSubject) fields.rightSubject.value = this.state.right.subject
-    if (fields.rightFilterMode) fields.rightFilterMode.checked = this.state.right.filterMode === 'exclude'
+    if (fields.rightFilterMode) fields.rightFilterMode.checked = rightFilterModeAvailable && this.state.right.filterMode === 'exclude'
     if (fields.rightFilter) fields.rightFilter.value = this.state.right.filter
     if (fields.rightComparisonMetric) fields.rightComparisonMetric.value = this.state.right.comparisonMetric || 'count'
     if (fields.rightComparator) fields.rightComparator.value = this.state.right.comparator
@@ -260,6 +264,8 @@ class ConditionForm {
 
     fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
     fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
+    fields.leftFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !leftFilterModeAvailable)
+    fields.rightFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !rightFilterModeAvailable)
     fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
     fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
     this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
@@ -482,6 +488,8 @@ class ConditionForm {
       this.clearComparator('left')
       this.state.ui.leftComparisonOpen = false
     }
+
+    this.applyFilterModeCompatibilityRules()
   }
 
   leftUsesPriorBoardState() {
@@ -535,6 +543,8 @@ class ConditionForm {
 
   applyUnaryCompatibilityRules(changedId) {
     const allowedUnaryOperators = this.allowedUnaryOperatorsForSubject(this.state.left.subject)
+    this.applyFilterModeCompatibilityRules()
+
     if (allowedUnaryOperators.includes(this.state.operator)) {
       return
     }
@@ -543,6 +553,16 @@ class ConditionForm {
       this.state.left.subject = 'allied'
     } else {
       this.state.operator = allowedUnaryOperators[0]
+    }
+  }
+
+  applyFilterModeCompatibilityRules() {
+    if (this.state.left.filter === 'any') {
+      this.state.left.filterMode = 'include'
+    }
+
+    if (this.state.right.filter === 'any') {
+      this.state.right.filterMode = 'include'
     }
   }
   

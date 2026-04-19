@@ -11,8 +11,11 @@ function buildPanel() {
   panel.id = 'node-form-panel'
   panel.innerHTML = `
     <select id="cond-left-subject">${option('allied')}</select>
-    <input id="cond-left-filter-mode" type="checkbox">
-    <select id="cond-left-filter">${option('any')}</select>
+    <label class="condition-form-checkbox">
+      <input id="cond-left-filter-mode" type="checkbox">
+      <span>Non-</span>
+    </label>
+    <select id="cond-left-filter">${option('any')}${option('pawn')}</select>
     <select id="cond-left-comparison-metric">${option('count')}</select>
     <select id="cond-left-comparator">${option('equal_to', '=')}</select>
     <div id="cond-left-comparison-section" class="condition-form-comparison">
@@ -30,8 +33,11 @@ function buildPanel() {
     <select id="cond-operator">${option('attack')}</select>
 
     <select id="cond-right-subject">${option('enemy')}</select>
-    <input id="cond-right-filter-mode" type="checkbox">
-    <select id="cond-right-filter">${option('any')}</select>
+    <label class="condition-form-checkbox">
+      <input id="cond-right-filter-mode" type="checkbox">
+      <span>Non-</span>
+    </label>
+    <select id="cond-right-filter">${option('any')}${option('pawn')}</select>
     <select id="cond-right-comparison-metric">${option('count')}</select>
     <select id="cond-right-comparator">${option('equal_to', '=')}</select>
     <div id="cond-right-comparison-section" class="condition-form-comparison">
@@ -66,7 +72,7 @@ function buildPanel() {
   return panel
 }
 
-describe('ConditionForm comparison value stacks', () => {
+describe('ConditionForm', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
   })
@@ -129,5 +135,65 @@ describe('ConditionForm comparison value stacks', () => {
     expect(panel.querySelector('#cond-left-comparison-value-number').classList.contains('hidden')).toBe(true)
     expect(panel.querySelector('#cond-right-comparison-value-number').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-left-comparison-value-source').classList.contains('hidden')).toBe(false)
+  })
+
+  it('hides and clears the subject non toggle when the subject filter is any', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'pawn',
+      subjectFilterMode: 'exclude',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'pawn'
+    })
+
+    const leftFilterMode = panel.querySelector('#cond-left-filter-mode')
+    const leftFilterModeControl = leftFilterMode.closest('.condition-form-checkbox')
+    expect(leftFilterMode.checked).toBe(true)
+    expect(leftFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(false)
+
+    const leftFilter = panel.querySelector('#cond-left-filter')
+    leftFilter.value = 'any'
+    leftFilter.dispatchEvent(new Event('change', { bubbles: true }))
+
+    expect(leftFilterMode.checked).toBe(false)
+    expect(leftFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(true)
+    expect(form.buildPayload()).not.toHaveProperty('subjectFilterMode')
+  })
+
+  it('hides and clears the target non toggle when the target filter is any', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'pawn',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'pawn',
+      targetFilterMode: 'exclude'
+    })
+
+    const rightFilterMode = panel.querySelector('#cond-right-filter-mode')
+    const rightFilterModeControl = rightFilterMode.closest('.condition-form-checkbox')
+    expect(rightFilterMode.checked).toBe(true)
+    expect(rightFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(false)
+
+    const rightFilter = panel.querySelector('#cond-right-filter')
+    rightFilter.value = 'any'
+    rightFilter.dispatchEvent(new Event('change', { bubbles: true }))
+
+    expect(rightFilterMode.checked).toBe(false)
+    expect(rightFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(true)
+    expect(form.buildPayload()).not.toHaveProperty('targetFilterMode')
   })
 })

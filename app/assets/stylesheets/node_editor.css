@@ -1113,6 +1113,11 @@
   font-size: 12px;
 }
 
+.condition-form-checkbox--unavailable {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .condition-form-checkbox input {
   width: auto;
   margin: 0;
