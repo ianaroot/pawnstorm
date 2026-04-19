@@ -254,6 +254,9 @@ class ConditionForm {
     fields.unaryComparisonSection.classList.toggle('hidden', this.state.kind === 'relational')
     fields.leftComparisonBody.classList.toggle('hidden', !this.state.ui.leftComparisonOpen)
     fields.rightComparisonBody.classList.toggle('hidden', !this.state.ui.rightComparisonOpen || this.state.kind !== 'relational')
+    fields.leftComparisonValueNumber?.classList.toggle('hidden', this.state.left.comparisonValueSource !== 'exact_number')
+    fields.rightComparisonValueNumber?.classList.toggle('hidden', this.state.right.comparisonValueSource !== 'exact_number')
+    fields.unaryComparisonValueNumber?.classList.toggle('hidden', this.state.unary.comparisonValueSource !== 'exact_number')
 
     fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
     fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
