@@ -144,9 +144,17 @@ RSpec.describe BotNodesController, type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'returns unprocessable entity with invalid params' do
+    it 'ignores invalid node type updates' do
       patch bot_node_path(bot, node), params: { node: { node_type: '' } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:success)
+      expect(node.reload.node_type).to eq('condition')
+    end
+
+    it 'does not allow node type updates' do
+      patch bot_node_path(bot, node), params: { node: { node_type: 'action' } }
+
+      expect(response).to have_http_status(:success)
+      expect(node.reload.node_type).to eq('condition')
     end
   end
 

@@ -117,7 +117,8 @@ class BotNodesController < ApplicationController
   end
 
   def node_params
-    permitted = params.require(:node).permit(:node_type, :position_x, :position_y)
+    permitted_keys = action_name == 'create' ? [:node_type, :position_x, :position_y] : [:position_x, :position_y]
+    permitted = params.require(:node).permit(*permitted_keys)
     if params.dig(:node, :data).present?
       permitted[:data] =
         if params[:node][:data].respond_to?(:to_unsafe_h)

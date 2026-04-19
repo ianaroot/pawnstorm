@@ -79,12 +79,14 @@ RSpec.describe BotsController, type: :request do
     it 'signs in the guest who owns the created bot' do
       post bots_path, params: valid_params
       created_bot = Bot.find_by!(name: 'Test Bot')
+      guest_user = created_bot.user
 
-      follow_redirect!
+      expect(response).to redirect_to(edit_bot_path(created_bot))
+      expect(guest_user).to be_guest
+
+      get edit_bot_path(created_bot, format: :json)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include(created_bot.name)
-      expect(created_bot.user).to be_guest
     end
 
     context 'when authenticated' do

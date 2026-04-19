@@ -10,12 +10,14 @@ vi.mock('../utils/nodePlacement.js', () => ({
 }))
 
 describe('KeyboardHandler', () => {
+  const clipboardStorageKey = 'editorV2.nodeClipboard'
   let store
   let history
   let syncManager
   let keyboardHandler
 
   beforeEach(() => {
+    localStorage.clear()
     store = new Store()
     history = {
       canUndo: vi.fn(() => true),
@@ -39,6 +41,7 @@ describe('KeyboardHandler', () => {
   })
 
   afterEach(() => {
+    localStorage.clear()
     vi.restoreAllMocks()
   })
 
@@ -66,6 +69,19 @@ describe('KeyboardHandler', () => {
 
       keyboardHandler.clipboard.nodes[0].data.nested.value = 99
       expect(store.getNode('condition').data.nested.value).toBe(1)
+    })
+
+    it('persists copied nodes to local storage', () => {
+      store.selectOnlyNode('condition')
+
+      expect(keyboardHandler.copySelectedNodes()).toBe(true)
+
+      const storedPayload = JSON.parse(localStorage.getItem(clipboardStorageKey))
+      expect(storedPayload.version).toBe(1)
+      expect(storedPayload.clipboard.nodes).toHaveLength(1)
+      expect(storedPayload.clipboard.nodes[0].type).toBe('condition')
+      expect(storedPayload.clipboard.nodes[0].data).toEqual({ nested: { value: 1 } })
+      expect(storedPayload.clipboard.anchorPosition).toEqual({ x: 300, y: 300 })
     })
 
     it('copies multiple non-root nodes and their internal connections', () => {
@@ -169,6 +185,71 @@ describe('KeyboardHandler', () => {
       await keyboardHandler.pasteCopiedNodes()
 
       expect(syncManager.insertNodeSet).not.toHaveBeenCalled()
+    })
+
+    it('hydrates persisted clipboard for a new handler instance', async () => {
+      store.selectOnlyNode('condition')
+      keyboardHandler.copySelectedNodes()
+      const hydratedHandler = new KeyboardHandler(store, history, syncManager)
+
+      await hydratedHandler.pasteCopiedNodes()
+
+      expect(syncManager.insertNodeSet).toHaveBeenCalledTimes(1)
+      const [nodeModels] = syncManager.insertNodeSet.mock.calls[0]
+      expect(nodeModels).toHaveLength(1)
+      expect(nodeModels[0].type).toBe('condition')
+      expect(nodeModels[0].data).toEqual({ nested: { value: 1 } })
+    })
+
+    it('ignores and clears invalid persisted clipboard data', async () => {
+      localStorage.setItem(clipboardStorageKey, JSON.stringify({
+        version: 1,
+        clipboard: {
+          nodes: [{ type: 'condition', relativeX: 0, relativeY: 0 }],
+          connections: [{ sourceIndex: 0, targetIndex: 3 }],
+          anchorPosition: { x: 300, y: 300 }
+        }
+      }))
+
+      const hydratedHandler = new KeyboardHandler(store, history, syncManager)
+
+      expect(hydratedHandler.clipboard).toBe(null)
+      expect(localStorage.getItem(clipboardStorageKey)).toBe(null)
+
+      await hydratedHandler.pasteCopiedNodes()
+      expect(syncManager.insertNodeSet).not.toHaveBeenCalled()
+    })
+
+    it('rejects root nodes from persisted clipboard data', async () => {
+      localStorage.setItem(clipboardStorageKey, JSON.stringify({
+        version: 1,
+        clipboard: {
+          nodes: [{ type: 'root', relativeX: 0, relativeY: 0 }],
+          connections: [],
+          anchorPosition: { x: 300, y: 300 }
+        }
+      }))
+
+      const hydratedHandler = new KeyboardHandler(store, history, syncManager)
+
+      expect(hydratedHandler.clipboard).toBe(null)
+      expect(localStorage.getItem(clipboardStorageKey)).toBe(null)
+
+      await hydratedHandler.pasteCopiedNodes()
+      expect(syncManager.insertNodeSet).not.toHaveBeenCalled()
+    })
+
+    it('keeps in-memory clipboard available when local storage writes fail', async () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('storage unavailable')
+      })
+      store.selectOnlyNode('condition')
+
+      expect(keyboardHandler.copySelectedNodes()).toBe(true)
+      await keyboardHandler.pasteCopiedNodes()
+
+      expect(setItemSpy).toHaveBeenCalled()
+      expect(syncManager.insertNodeSet).toHaveBeenCalledTimes(1)
     })
   })
 

@@ -13,6 +13,13 @@ RSpec.describe Node, type: :model do
       expect(node.errors[:node_type]).to include("can't be blank")
     end
 
+    it 'rejects unknown node types' do
+      node = build(:node, node_type: 'banana')
+
+      expect(node).not_to be_valid
+      expect(node.errors[:node_type]).to include('is not included in the list')
+    end
+
     it 'is valid with position_x and position_y' do
       node = build(:node, position_x: 150.5, position_y: 200.0)
       expect(node).to be_valid

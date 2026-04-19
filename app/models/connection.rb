@@ -17,6 +17,7 @@ class Connection < ApplicationRecord
   validates :source_node_id, uniqueness: { scope: :target_node_id, message: "connection already exists" }
 
   validate :source_and_target_must_be_different
+  validate :source_and_target_must_belong_to_same_bot
   validate :bidirectional_connection_must_not_exist
 
   after_commit :mark_bot_compiled_program_stale, on: [:create, :destroy]
@@ -32,6 +33,13 @@ class Connection < ApplicationRecord
     return unless source_node_id.present? && target_node_id.present?
     return unless source_node_id == target_node_id
     errors.add(:target_node_id, "cannot connect a node to itself")
+  end
+
+  def source_and_target_must_belong_to_same_bot
+    return unless source_node && target_node
+    return if source_node.bot_id == target_node.bot_id
+
+    errors.add(:target_node_id, "must belong to the same bot as source node")
   end
 
   def bidirectional_connection_must_not_exist

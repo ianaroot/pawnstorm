@@ -53,6 +53,15 @@ RSpec.describe Connection, type: :model do
       expect(bidirectional.errors[:base]).to include("cannot create bidirectional connection (reverse connection already exists)")
     end
 
+    it 'is invalid when source and target belong to different bots' do
+      source_node = create(:node)
+      target_node = create(:node)
+      connection = described_class.new(source_node: source_node, target_node: target_node)
+
+      expect(connection).not_to be_valid
+      expect(connection.errors[:target_node_id]).to include("must belong to the same bot as source node")
+    end
+
     it 'allows multiple connections from the same source to different targets' do
       node1 = create(:node)
       node2 = create(:node, bot: node1.bot)
