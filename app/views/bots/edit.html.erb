@@ -1,5 +1,3 @@
-<h1>Editing Bot: <%= @bot.name %></h1>
-
 <div class="bot-editor"
      data-controller="editor bot-guide"
      data-editor-bot-id-value="<%= @bot.id %>"
@@ -45,9 +43,7 @@
     </div>
 
     <div class="toolbar-section">
-      <%= link_to 'Back to Bots', bots_path, class: 'btn-back' %>
-      <%= link_to 'Play Test Match', new_bot_vs_bot_match_path, class: 'btn-test' %>
-      <%= link_to 'compile and exit to match setup',
+      <%= link_to 'compile & run match',
           compile_bot_path(@bot),
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
