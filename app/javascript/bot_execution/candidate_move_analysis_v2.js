@@ -166,6 +166,68 @@
       }
     }
 
+    singularActor(actor) {
+      return [
+        "moved_piece",
+        "enemy_moved_piece",
+        "captured_piece",
+        "enemy_captured_piece"
+      ].includes(actor)
+    }
+
+    relationalSingularActor(actor) {
+      return ["moved_piece", "enemy_moved_piece"].includes(actor)
+    }
+
+    singularActorSpecies(actor, boardScope = AFTER_BOARD) {
+      switch (actor) {
+        case "moved_piece":
+          return this.resolvedMovedPiece(boardScope).species
+        case "enemy_moved_piece": {
+          const resolved = this.resolvedEnemyMovedPiece(boardScope)
+          return resolved ? resolved.species : null
+        }
+        case "captured_piece": {
+          const resolved = this.resolvedCapturedPiece()
+          return resolved ? resolved.species : null
+        }
+        case "enemy_captured_piece": {
+          const resolved = this.resolvedEnemyCapturedPiece()
+          return resolved ? resolved.species : null
+        }
+        default:
+          return null
+      }
+    }
+
+    singularActorMatchesFilter({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      return this.matchesFilter({
+        species: this.singularActorSpecies(actor, boardScope),
+        filter,
+        filterMode
+      })
+    }
+
+    singularActorPresentForMobility({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      switch (actor) {
+        case "moved_piece": {
+          const resolved = this.resolvedMovedPiece(boardScope)
+          return this.matchesFilter({ species: resolved.species, filter, filterMode })
+        }
+        case "enemy_moved_piece": {
+          const resolved = this.resolvedEnemyMovedPiece(boardScope)
+          return Boolean(resolved?.presentOnBoard) && this.matchesFilter({ species: resolved.species, filter, filterMode })
+        }
+        default:
+          return false
+      }
+    }
+
+    relationalSingularActorResolves({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      if (!this.relationalSingularActor(actor)) { return true }
+      return this.relationalActorPositions({ actor, filter, filterMode, boardScope }).length > 0
+    }
+
     capturedPiecePosition() {
       const startPosition = this.moveObject.startPosition
       const endPosition = this.moveObject.endPosition

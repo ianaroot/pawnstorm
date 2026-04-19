@@ -29,6 +29,7 @@
     evaluateUnary(conditionNode, analysis) {
       return profileCollector.measure('condition.v2.unary', () => {
         const operator = conditionNode.operator
+        if (!this.unarySingularActorCanEvaluate(conditionNode, analysis)) { return false }
         const leftValue = analysis.unaryValue({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator
@@ -44,6 +45,7 @@
       return profileCollector.measure('condition.v2.relational', () => {
         const operator = conditionNode.operator
         if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
+        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) { return false }
         const result = analysis.relationalResult({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
@@ -59,6 +61,38 @@
           const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
           return subjectPasses && targetPasses
         }
+      })
+    }
+
+    unarySingularActorCanEvaluate(conditionNode, analysis) {
+      if (!analysis.singularActor(conditionNode.subject)) { return true }
+      const subjectFilter = conditionNode.subjectFilter || "any"
+      const subjectFilterMode = conditionNode.subjectFilterMode || null
+      if (conditionNode.operator === "count") { return true }
+      if (conditionNode.operator === "mobility") {
+        return analysis.singularActorPresentForMobility({
+          actor: conditionNode.subject,
+          filter: subjectFilter,
+          filterMode: subjectFilterMode
+        })
+      }
+      if (subjectFilter === "any") { return true }
+      return analysis.singularActorMatchesFilter({
+        actor: conditionNode.subject,
+        filter: subjectFilter,
+        filterMode: subjectFilterMode
+      })
+    }
+
+    relationalSingularActorsCanEvaluate(conditionNode, analysis) {
+      return analysis.relationalSingularActorResolves({
+        actor: conditionNode.subject,
+        filter: conditionNode.subjectFilter || "any",
+        filterMode: conditionNode.subjectFilterMode || null
+      }) && analysis.relationalSingularActorResolves({
+        actor: conditionNode.target,
+        filter: conditionNode.targetFilter || "any",
+        filterMode: conditionNode.targetFilterMode || null
       })
     }
 
