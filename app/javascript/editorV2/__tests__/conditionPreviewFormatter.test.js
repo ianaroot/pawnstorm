@@ -82,6 +82,20 @@ describe('conditionPreviewFormatter', () => {
         }).text
       ).toBe('Allied king : defend : Enemies any')
     })
+
+    it('formats major and minor filters', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'relational',
+          subject: 'enemy',
+          subjectFilter: 'major',
+          operator: 'attack',
+          target: 'allied',
+          targetFilter: 'minor'
+        }).text
+      ).toBe('Enemy major piece/s : attack : Allied minor piece/s')
+    })
   })
 
   describe('formatConditionPreviewChunk', () => {
@@ -114,6 +128,26 @@ describe('conditionPreviewFormatter', () => {
           comparisonValueNumber: 0
         })
       ).toBe('= Captured Piece Value')
+    })
+
+    it('formats excluded major and minor filters', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'side',
+          subject: 'enemy',
+          filter: 'major',
+          filterMode: 'exclude'
+        })
+      ).toBe('Enemy non-major piece/s')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'side',
+          subject: 'allied',
+          filter: 'minor',
+          filterMode: 'exclude'
+        })
+      ).toBe('Allied non-minor piece/s')
     })
   })
 })

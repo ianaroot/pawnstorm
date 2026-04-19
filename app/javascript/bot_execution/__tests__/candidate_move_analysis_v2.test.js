@@ -95,6 +95,73 @@ describe('CandidateMoveAnalysisV2', () => {
         })
       ).toBe(7)
     })
+
+    it('supports major and minor filters for unary aggregate queries', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d1: 'wQ',
+          a1: 'wR',
+          c3: 'wN',
+          f1: 'wB',
+          h2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'major',
+          operator: 'count'
+        })
+      ).toBe(2)
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'major',
+          operator: 'value'
+        })
+      ).toBe(14)
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'minor',
+          operator: 'count'
+        })
+      ).toBe(2)
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'minor',
+          operator: 'value'
+        })
+      ).toBe(6)
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'major',
+          subjectFilterMode: 'exclude',
+          operator: 'count'
+        })
+      ).toBe(4)
+
+      expect(
+        analysis.unaryValue({
+          subject: 'allied',
+          subjectFilter: 'minor',
+          subjectFilterMode: 'exclude',
+          operator: 'count'
+        })
+      ).toBe(4)
+    })
   })
 
   describe('moved_piece', () => {
@@ -473,6 +540,47 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(enemyMovedPieceAfterResult)).toEqual([])
       expect(enemyMovedPieceAfterResult.subjectPositions).toEqual([])
       expect(enemyMovedPieceAfterResult.targetPositions).toEqual([])
+    })
+
+    it('supports major and minor filters for relational subjects and targets', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          d4: 'wR',
+          c4: 'wB',
+          d7: 'bQ',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const majorTargetResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'major',
+        operator: 'attack',
+        target: 'enemy',
+        targetFilter: 'major'
+      })
+
+      expect(pairSquares(majorTargetResult)).toEqual([['d4', 'd7']])
+      expect(squaresFor(majorTargetResult.subjectPositions)).toEqual(['d4'])
+      expect(squaresFor(majorTargetResult.targetPositions)).toEqual(['d7'])
+
+      const minorTargetResult = analysis.relationalResult({
+        subject: 'allied',
+        subjectFilter: 'major',
+        operator: 'attack',
+        target: 'enemy',
+        targetFilter: 'minor'
+      })
+
+      expect(pairSquares(minorTargetResult)).toEqual([['d4', 'g4']])
+      expect(squaresFor(minorTargetResult.subjectPositions)).toEqual(['d4'])
+      expect(squaresFor(minorTargetResult.targetPositions)).toEqual(['g4'])
     })
   })
 

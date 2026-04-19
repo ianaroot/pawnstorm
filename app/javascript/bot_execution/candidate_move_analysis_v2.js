@@ -256,24 +256,28 @@
       if (species === null) return false
       if (filter === "any") return true
       const normalizedFilterMode = this.normalizedFilterMode(filter, filterMode)
-      const baseMatch = species === this.filterToSpecies(filter)
+      const baseMatch = this.matchesSpeciesFilter({ species, filter })
       return normalizedFilterMode === "exclude" ? !baseMatch : baseMatch
     }
 
-    filterToSpecies(filter) {
+    matchesSpeciesFilter({ species, filter }) {
       switch (filter) {
         case "king":
-          return Board.KING
+          return species === Board.KING
         case "queen":
-          return Board.QUEEN
+          return species === Board.QUEEN
         case "rook":
-          return Board.ROOK
+          return species === Board.ROOK
         case "bishop":
-          return Board.BISHOP
+          return species === Board.BISHOP
         case "knight":
-          return Board.NIGHT
+          return species === Board.NIGHT
         case "pawn":
-          return Board.PAWN
+          return species === Board.PAWN
+        case "major":
+          return species === Board.QUEEN || species === Board.ROOK
+        case "minor":
+          return species === Board.BISHOP || species === Board.NIGHT
         default:
           throw new Error(`Unknown V2 filter: ${filter}`)
       }

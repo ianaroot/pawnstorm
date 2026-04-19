@@ -15,7 +15,9 @@ class NodeForm
     'rook' => 'Rook',
     'bishop' => 'Bishop',
     'knight' => 'Knight',
-    'pawn' => 'Pawn'
+    'pawn' => 'Pawn',
+    'major' => 'Major (Queen/Rook)',
+    'minor' => 'Minor (Bishop/Knight)'
   }.freeze
 
   OPERATOR_LABELS = {

@@ -35,6 +35,10 @@ function filterNoun(filter) {
       return 'knight/s'
     case 'pawn':
       return 'pawn/s'
+    case 'major':
+      return 'major piece/s'
+    case 'minor':
+      return 'minor piece/s'
     default:
       return filter
   }

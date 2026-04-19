@@ -17,8 +17,8 @@
       enemy_captured_piece
     ].freeze
 
-    FILTERS = %w[any king queen rook bishop knight pawn].freeze
-    CONCRETE_FILTERS = %w[king queen rook bishop knight pawn].freeze
+    FILTERS = %w[any king queen rook bishop knight pawn major minor].freeze
+    CONCRETE_FILTERS = %w[king queen rook bishop knight pawn major minor].freeze
     FILTER_MODES = %w[include exclude].freeze
 
     RELATIONAL_OPERATORS = %w[attack defend cover shield adjacent].freeze
