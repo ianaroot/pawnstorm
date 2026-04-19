@@ -174,7 +174,9 @@ class BotGuide
           'Attack and defend use controlled squares on the current board. Mobility uses legal moves.',
           'Target appears for relationship operators like attack or defend.',
           'Comparison appears for measurement operators like count, mobility, and value.',
-          'For relationship operators, + comparison can restrict the matching subject or target by count or value.'
+          'For relationship operators, + comparison can restrict the matching subject or target by count or value.',
+          'Count can check that a specific single-piece subject did not match, such as Moved Piece knight count = 0 after a queen move.',
+          'Mobility and filtered value questions only apply when that specific piece exists. Captured pieces are off the board, so they do not have mobility or relationships.'
         ],
         examples: [
           {
