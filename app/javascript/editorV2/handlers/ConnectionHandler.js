@@ -2,6 +2,8 @@
  * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
  */
+const SPACE_PAN_ACTIVE_CLASS = 'editor-space-pan-active'
+
 class ConnectionHandler {
   
   constructor(store, syncManager, connectionRenderer, viewport = null) {
@@ -46,6 +48,7 @@ class ConnectionHandler {
 
   startConnection(event, clientId, sourceConnector) {
     if (!this.isPrimaryPointer(event)) { return }
+    if (this.isSpacePanActive()) { return }
     if (this.isConnecting) {
       this.resetConnection()
     }
@@ -178,6 +181,7 @@ class ConnectionHandler {
   
   setupDeleteHandler(canvas) {
     canvas.addEventListener('click', (e) => {
+      if (this.isSpacePanActive()) { return }
       const deleteBtn = e.target.closest('.connection-delete-btn')
       if (deleteBtn) {
         const clientId = deleteBtn.dataset.clientId
@@ -244,6 +248,10 @@ class ConnectionHandler {
   destroy() {
     this.cancelConnection()
     this.attachedElements = new WeakMap()
+  }
+
+  isSpacePanActive() {
+    return document.body?.classList.contains(SPACE_PAN_ACTIVE_CLASS)
   }
 }
 

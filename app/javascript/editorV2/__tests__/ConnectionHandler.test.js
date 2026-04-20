@@ -86,6 +86,7 @@ describe('ConnectionHandler', () => {
     } else {
       delete document.elementFromPoint
     }
+    document.body.classList.remove('editor-space-pan-active')
     document.body.innerHTML = ''
   })
 
@@ -107,6 +108,21 @@ describe('ConnectionHandler', () => {
     expect(document.addEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function))
     expect(tempLine).not.toBe(null)
     expect(tempLine.style.pointerEvents).toBe('none')
+  })
+
+  it('does not start a connection while space-pan mode is active', () => {
+    document.body.classList.add('editor-space-pan-active')
+
+    connectionHandler.startConnection(
+      buildPointerEvent({ target: source.connector }),
+      'source',
+      source.connector
+    )
+
+    expect(connectionHandler.isCurrentlyConnecting()).toBe(false)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
+    expect(source.connector.setPointerCapture).not.toHaveBeenCalled()
+    expect(document.querySelector('.connection-temp-line')).toBe(null)
   })
 
   it('updates the temporary connection line as the pointer moves', () => {
