@@ -169,6 +169,17 @@ RSpec.describe BotsController, type: :request do
         patch bot_path(bot), params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
       end
+
+      it 'returns JSON for the editor rename modal' do
+        patch bot_path(bot), params: { bot: { name: 'Updated Name', description: 'Updated Description' } }, as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body).to include(
+          'name' => 'Updated Name',
+          'description' => 'Updated Description',
+          'compiled_program_stale' => bot.reload.compiled_program_stale
+        )
+      end
     end
   end
 

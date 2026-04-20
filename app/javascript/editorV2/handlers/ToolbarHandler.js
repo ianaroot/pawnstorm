@@ -13,7 +13,20 @@ class ToolbarHandler {
     this.viewport = viewport
     this.compileAndExitLink = document.getElementById('compile-and-exit-link')
     this.editorRoot = document.querySelector('.bot-editor')
+    this.botNameDisplay = document.getElementById('bot-name-display')
+    this.renameButton = document.querySelector('[data-bot-rename-open]')
+    this.renameModal = document.getElementById('bot-rename-modal')
+    this.renameNameInput = document.getElementById('bot-rename-name')
+    this.renameDescriptionInput = document.getElementById('bot-rename-description')
+    this.renameError = document.querySelector('[data-bot-rename-error]')
+    this.renameSaveButton = document.querySelector('[data-bot-rename-save]')
+    this.renameCancelButton = document.querySelector('[data-bot-rename-cancel]')
     this.templatePicker = null
+    this.isRenameSubmitting = false
+
+    this.boundHandleRenameOpen = this.openRenameModal.bind(this)
+    this.boundHandleRenameSave = this.handleRenameSave.bind(this)
+    this.boundHandleRenameCancel = this.closeRenameModal.bind(this)
   }
 
   attach() {
@@ -45,6 +58,15 @@ class ToolbarHandler {
     const deleteBtn = document.querySelector('.btn-delete-node')
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => this.handleDeleteClick())
+    }
+    if (this.renameButton) {
+      this.renameButton.addEventListener('click', this.boundHandleRenameOpen)
+    }
+    if (this.renameSaveButton) {
+      this.renameSaveButton.addEventListener('click', this.boundHandleRenameSave)
+    }
+    if (this.renameCancelButton) {
+      this.renameCancelButton.addEventListener('click', this.boundHandleRenameCancel)
     }
     this.syncManager.setPersistedMutationCallback(() => this.markBotStale())
     this.updateCompileAction()
@@ -147,6 +169,89 @@ class ToolbarHandler {
   updateCompileAction() {
     if (!this.compileAndExitLink) return
     this.compileAndExitLink.classList.toggle('hidden', !this.isBotStale())
+  }
+
+  openRenameModal() {
+    if (!this.renameModal || !this.renameNameInput || !this.renameDescriptionInput) { return }
+    this.clearRenameError()
+    this.renameNameInput.value = this.editorRoot?.dataset.editorBotNameValue || this.botNameDisplay?.textContent || ''
+    this.renameDescriptionInput.value = this.editorRoot?.dataset.editorBotDescriptionValue || ''
+    this.renameModal.classList.remove('hidden')
+    this.renameModal.setAttribute('aria-hidden', 'false')
+    this.renameNameInput?.focus()
+    this.renameNameInput?.select()
+  }
+
+  closeRenameModal() {
+    if (!this.renameModal) { return }
+    this.renameModal.classList.add('hidden')
+    this.renameModal.setAttribute('aria-hidden', 'true')
+    this.isRenameSubmitting = false
+    if (this.renameSaveButton) {
+      this.renameSaveButton.disabled = false
+    }
+  }
+
+  clearRenameError() {
+    if (!this.renameError) { return }
+    this.renameError.textContent = ''
+    this.renameError.classList.add('hidden')
+  }
+
+  showRenameError(message) {
+    if (!this.renameError) { return }
+    this.renameError.textContent = message
+    this.renameError.classList.remove('hidden')
+  }
+
+  async handleRenameSave() {
+    if (this.isRenameSubmitting || !this.renameNameInput || !this.renameDescriptionInput) { return }
+    if (!this.syncManager?.updateBot) {
+      this.showRenameError('Rename is unavailable right now.')
+      return
+    }
+
+    const name = this.renameNameInput?.value.trim() || ''
+    const description = this.renameDescriptionInput?.value || ''
+
+    if (!name) {
+      this.showRenameError('Bot name cannot be blank.')
+      this.renameNameInput?.focus()
+      return
+    }
+
+    this.clearRenameError()
+    this.isRenameSubmitting = true
+    if (this.renameSaveButton) {
+      this.renameSaveButton.disabled = true
+    }
+
+    try {
+      const updatedBot = await this.syncManager.updateBot({ name, description })
+      this.applyRenamedBot(updatedBot || { name, description })
+      this.closeRenameModal()
+    } catch (error) {
+      const message = error?.message || 'Failed to rename bot.'
+      this.showRenameError(message)
+      this.isRenameSubmitting = false
+      if (this.renameSaveButton) {
+        this.renameSaveButton.disabled = false
+      }
+    }
+  }
+
+  applyRenamedBot(bot) {
+    if (!bot) { return }
+    const name = bot.name || ''
+    const description = bot.description || ''
+    if (this.botNameDisplay) {
+      this.botNameDisplay.textContent = name
+      this.botNameDisplay.title = name
+    }
+    if (this.editorRoot) {
+      this.editorRoot.dataset.editorBotNameValue = name
+      this.editorRoot.dataset.editorBotDescriptionValue = description
+    }
   }
   
 

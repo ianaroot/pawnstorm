@@ -59,6 +59,10 @@ class SyncManager {
     this.setRecentPlacementAnchorFromNode(this.store.getNode(clientId))
   }
 
+  async updateBot(updates) {
+    return this.api.updateBot(updates)
+  }
+
   getDeletedNodeBackups(clientIds) {
     const uniqueClientIds = [...new Set((clientIds || []).filter(Boolean))]
     return uniqueClientIds

@@ -127,6 +127,26 @@ class API {
     
     return response.json()
   }
+
+  /**
+   * Update bot metadata on the server
+   * @param {Object} updates - { name, description }
+   * @returns {Promise<Object>} Server response
+   */
+  async updateBot(updates) {
+    const response = await fetch(this.baseUrl, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ bot: updates })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Failed to update bot: ${response.status} - ${errorText}`)
+    }
+
+    return response.json()
+  }
   
   /**
    * Update node position only
