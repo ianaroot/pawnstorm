@@ -252,12 +252,32 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  font-size: var(--connection-delete-button-font-size);
   line-height: 1;
+  padding: 0;
   display: none;
   pointer-events: auto;
   transform: translate(-50%, -50%);
   z-index: 100;
+}
+
+.connection-delete-btn::before,
+.connection-delete-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+}
+
+.connection-delete-btn::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.connection-delete-btn::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 /* Action nodes have no output connector (they are end points) */
