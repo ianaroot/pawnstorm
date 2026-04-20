@@ -1,7 +1,7 @@
 module Tournaments
   class CreateTournament
     DEFAULT_GAMES_PER_PAIR = 10
-    MAX_GAMES_PER_PAIR = 20
+    MAX_GAMES_PER_PAIR = 50
 
     attr_reader :description,
       :entries_per_user,

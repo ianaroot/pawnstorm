@@ -479,6 +479,94 @@
   color: #9CA3AF;
 }
 
+/* ============================================
+   TOURNAMENT REGISTRATION
+   ============================================ */
+
+.tournament-registration {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tournament-registration h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tournament-entries-table {
+  font-size: 0.875rem;
+}
+
+.tournament-entries-table th,
+.tournament-entries-table td {
+  padding: 0.5rem 0.75rem;
+}
+
+.tournament-entries-table__owner {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.tournament-entries-table__actions {
+  white-space: nowrap;
+  text-align: right;
+  width: 1%;
+}
+
+.tournament-entry-change-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-right: 0.5rem;
+}
+
+.tournament-entry-change-form select {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.tournament-entry-change-form input[type="submit"] {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.tournament-submit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.tournament-submit-section p {
+  margin: 0;
+}
+
+.tournament-submit-section__note {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.tournament-submit-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tournament-submit-form select {
+  width: auto;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+}
+
+.tournament-registration__empty {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
 .tournament-poll-updated {
   animation: tournament-poll-flash 0.9s ease-out;
 }
