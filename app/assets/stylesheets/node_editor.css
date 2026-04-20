@@ -1,3 +1,12 @@
+.page-content.page-content--bot-editor {
+  max-width: none;
+  padding: 0;
+}
+
+.bot-editor-shell {
+  min-height: 100vh;
+}
+
 .bot-editor {
   position: relative;
   display: flex;
@@ -11,8 +20,12 @@
 }
 
 .editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   gap: 20px;
+  margin-top: 10px;
   padding: 10px 20px;
   background: #252220;
   border-bottom: 1px solid #3d3a35;

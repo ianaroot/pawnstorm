@@ -1,4 +1,7 @@
-<div class="bot-editor"
+<% content_for :page_content_class, 'page-content--bot-editor' %>
+
+<div class="bot-editor-shell">
+  <div class="bot-editor"
      data-controller="editor bot-guide"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
@@ -139,4 +142,5 @@
   </div>
 
   <%= render "bots/nodes/editor" %>
+  </div>
 </div>
