@@ -709,7 +709,7 @@
 .node-form-panel {
   position: absolute;
   right: 20px;
-  top: 20px;
+  top: 12px;
   width: 280px;
   background: #252220;
   border: 1px solid #3d3a35;
@@ -910,7 +910,7 @@
 .panel-actions {
   display: flex;
   gap: 10px;
-  margin-top: 15px;
+  margin-top: 8px;
 }
 
 .btn-save, .btn-cancel {
@@ -985,8 +985,8 @@
 }
 
 .node-form-section {
-  margin-top: 15px;
-  padding-top: 15px;
+  margin-top: 0;
+  padding-top: 0;
   border-top: 1px solid #3d3a35;
 }
 
@@ -1052,7 +1052,7 @@
 .condition-form-panel .panel-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .node-form-panel {
