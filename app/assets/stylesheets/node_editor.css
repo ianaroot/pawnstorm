@@ -45,6 +45,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .toolbar-section button.active {
