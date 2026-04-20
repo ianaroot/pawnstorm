@@ -58,6 +58,11 @@
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
           id: 'compile-and-exit-link' %>
+      <%= button_to 'Clone Bot',
+          clone_bot_path(@bot),
+          method: :post,
+          class: 'btn-clone',
+          data: { turbo_confirm: "Clone \"#{@bot.name}\"? A compiled copy will be created." } %>
     </div>
   </div>
 

@@ -1,6 +1,6 @@
 class BotsController < ApplicationController
   before_action :authenticate_registered_or_guest_user!, except: [:index, :new, :create]
-  before_action :set_bot, only: [:edit, :update, :destroy, :compile]
+  before_action :set_bot, only: [:edit, :update, :destroy, :compile, :clone]
 
   def index
     @bots = current_user ? current_user.bots.order(:name) : Bot.none
@@ -52,6 +52,14 @@ end
     redirect_to edit_bot_path(@bot), notice: 'Bot compiled. Reloading editor.'
   rescue StandardError => error
     redirect_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}"
+  end
+
+  def clone
+    cloner = BotCloner.new(@bot, current_user)
+    new_bot = cloner.clone!
+    redirect_to edit_bot_path(new_bot), notice: "Cloned as \"#{new_bot.name}\"."
+  rescue StandardError => error
+    redirect_to edit_bot_path(@bot), alert: "Clone failed: #{error.message}"
   end
 
   def destroy

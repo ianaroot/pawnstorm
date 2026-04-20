@@ -138,6 +138,17 @@
   background: #C084FC;
 }
 
+.btn-clone {
+  background: #3F3F46;
+  color: #E5E5E5;
+  border: 1px solid #52525B;
+  text-decoration: none;
+}
+
+.btn-clone:hover {
+  background: #52525B;
+}
+
 .btn-guide {
   background: #1a1815;
   color: #f4efe6;
