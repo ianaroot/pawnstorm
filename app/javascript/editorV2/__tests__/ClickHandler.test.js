@@ -26,7 +26,10 @@ function buildEditorPanel() {
     <span id="edit-node-type"></span>
     <div id="condition-form" class="hidden"></div>
     <div id="action-form" class="hidden"></div>
-    <div id="organizer-form" class="hidden"></div>
+    <div id="organizer-form" class="hidden">
+      <input id="organizer-title" type="text" value="Organizer">
+      <textarea id="organizer-notes"></textarea>
+    </div>
   `
   document.body.appendChild(panel)
   return panel
@@ -49,9 +52,11 @@ describe('ClickHandler', () => {
   let rootNode
   let conditionNode
   let actionNode
+  let organizerNode
   let rootElement
   let conditionElement
   let actionElement
+  let organizerElement
 
   beforeEach(() => {
     store = new Store()
@@ -61,16 +66,20 @@ describe('ClickHandler', () => {
     rootNode = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
     conditionNode = new Node({ clientId: 'condition', type: 'condition', position: { x: 100, y: 100 } })
     actionNode = new Node({ clientId: 'action', type: 'action', position: { x: 200, y: 100 } })
+    organizerNode = new Node({ clientId: 'organizer', type: 'organizer', position: { x: 300, y: 100 } })
     store.addNode(rootNode)
     store.addNode(conditionNode)
     store.addNode(actionNode)
+    store.addNode(organizerNode)
 
     rootElement = buildNodeElement(rootNode.clientId)
     conditionElement = buildNodeElement(conditionNode.clientId)
     actionElement = buildNodeElement(actionNode.clientId)
+    organizerElement = buildNodeElement(organizerNode.clientId)
 
     syncManager = {
-      deleteNodes: vi.fn().mockResolvedValue({})
+      deleteNodes: vi.fn().mockResolvedValue({}),
+      updateNodeData: vi.fn().mockResolvedValue({})
     }
 
     clickHandler = new ClickHandler(store, history, editorPanel)
@@ -78,6 +87,7 @@ describe('ClickHandler', () => {
     clickHandler.attach(rootElement, rootNode.clientId)
     clickHandler.attach(conditionElement, conditionNode.clientId)
     clickHandler.attach(actionElement, actionNode.clientId)
+    clickHandler.attach(organizerElement, organizerNode.clientId)
     clickHandler.setupGlobalHandlers()
   })
 
@@ -154,5 +164,38 @@ describe('ClickHandler', () => {
     expect(store.getSelectedNodeIds()).toEqual([])
     expect(clickHandler.getEditingNodeId()).toBe(null)
     expect(editorPanel.classList.contains('hidden')).toBe(true)
+  })
+
+  it('saves the editor on Enter and leaves Shift+Enter alone in the organizer textarea', async () => {
+    dispatchClick(organizerElement)
+
+    const notes = editorPanel.querySelector('#organizer-notes')
+    notes.value = 'Line 1'
+
+    const shiftEnter = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true
+    })
+    const shiftEnterResult = notes.dispatchEvent(shiftEnter)
+
+    expect(shiftEnterResult).toBe(true)
+    expect(shiftEnter.defaultPrevented).toBe(false)
+    expect(syncManager.updateNodeData).not.toHaveBeenCalled()
+
+    const enter = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true
+    })
+    const enterResult = notes.dispatchEvent(enter)
+
+    expect(enterResult).toBe(false)
+    expect(enter.defaultPrevented).toBe(true)
+    expect(syncManager.updateNodeData).toHaveBeenCalledWith(organizerNode.clientId, {
+      title: 'Organizer',
+      notes: 'Line 1'
+    })
   })
 })
