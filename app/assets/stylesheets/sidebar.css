@@ -7,7 +7,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 240px;
+  width: 160px;
   height: 100vh;
   background-color: #252526;
   border-right: 1px solid #3F3F46;
@@ -167,7 +167,7 @@
   }
   
   [data-sidebar-target="sidebar"] {
-    transform: translateX(-240px);
+    transform: translateX(-160px);
   }
   
   [data-sidebar-target="sidebar"].sidebar--open {
@@ -180,7 +180,7 @@
    ============================================ */
 
 .sidebar--closed {
-  transform: translateX(-240px);
+  transform: translateX(-160px);
 }
 
 /* ============================================

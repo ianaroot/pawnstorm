@@ -1373,7 +1373,7 @@
 }
 
 .template-picker-modal {
-  --template-sidebar-offset: 240px;
+  --template-sidebar-offset: 160px;
   position: fixed;
   inset: 0;
   z-index: 240;
