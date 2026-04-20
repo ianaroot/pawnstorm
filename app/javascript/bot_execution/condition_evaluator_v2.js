@@ -1,7 +1,7 @@
-  import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
-  import profileCollector from "gameplay/profile_collector"
+import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
+import profileCollector from "gameplay/profile_collector"
 
-  class ConditionEvaluatorV2 {
+class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
       const v2Analysis = this.v2AnalysisFor(analysis)
       switch (conditionNode.kind) {
@@ -29,15 +29,23 @@
     evaluateUnary(conditionNode, analysis) {
       return profileCollector.measure('condition.v2.unary', () => {
         const operator = conditionNode.operator
-        if (!this.unarySingularActorCanEvaluate(conditionNode, analysis)) { return false }
-        const leftValue = analysis.unaryValue({
-          subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
-          subjectFilterMode: conditionNode.subjectFilterMode || null, operator
+        if (!this.unarySideCanEvaluate({
+          actor: conditionNode.subject,
+          filter: conditionNode.subjectFilter || "any",
+          filterMode: conditionNode.subjectFilterMode || null,
+          operator,
+          role: "subject"
+        }, analysis)) { return false }
+        if (!this.unaryTargetCanEvaluate(conditionNode, analysis)) { return false }
+
+        const leftTotal = analysis.unaryTotal({
+          actor: conditionNode.subject,
+          filter: conditionNode.subjectFilter || "any",
+          filterMode: conditionNode.subjectFilterMode || null,
+          operator
         })
-        const rightValue = analysis.comparisonValueFor({ comparisonValue: conditionNode.comparisonValue, subject: conditionNode.subject,
-          subjectFilter: conditionNode.subjectFilter || "any", subjectFilterMode: conditionNode.subjectFilterMode || null, operator
-        })
-        return this.compare({ comparator: conditionNode.comparator, leftValue, rightValue })
+        const rightTotal = this.unaryTargetTotal(conditionNode, analysis)
+        return this.compare({ comparator: conditionNode.comparator, leftTotal, rightTotal })
       })
     }
 
@@ -64,23 +72,52 @@
       })
     }
 
-    unarySingularActorCanEvaluate(conditionNode, analysis) {
-      if (!analysis.singularActor(conditionNode.subject)) { return true }
-      const subjectFilter = conditionNode.subjectFilter || "any"
-      const subjectFilterMode = conditionNode.subjectFilterMode || null
-      if (conditionNode.operator === "count") { return true }
-      if (conditionNode.operator === "mobility") {
+    unarySideCanEvaluate({ actor, filter = "any", filterMode = null, operator, role = "subject" }, analysis) {
+      if (!analysis.singularActor(actor)) { return true }
+      if (role === "subject" && operator === "count") { return true }
+      if (operator === "mobility") {
         return analysis.singularActorPresentForMobility({
-          actor: conditionNode.subject,
-          filter: subjectFilter,
-          filterMode: subjectFilterMode
+          actor,
+          filter,
+          filterMode
         })
       }
-      if (subjectFilter === "any") { return true }
+      if (filter === "any") { return true }
       return analysis.singularActorMatchesFilter({
-        actor: conditionNode.subject,
-        filter: subjectFilter,
-        filterMode: subjectFilterMode
+        actor,
+        filter,
+        filterMode
+      })
+    }
+
+    unaryTargetCanEvaluate(conditionNode, analysis) {
+      if (conditionNode.target === "exact_number" || conditionNode.target === "prior_board_state") { return true }
+      return this.unarySideCanEvaluate({
+        actor: conditionNode.target,
+        filter: conditionNode.targetFilter || "any",
+        filterMode: conditionNode.targetFilterMode || null,
+        operator: conditionNode.operator,
+        role: "target"
+      }, analysis)
+    }
+
+    unaryTargetTotal(conditionNode, analysis) {
+      if (conditionNode.target === "exact_number") { return conditionNode.targetTotal }
+      if (conditionNode.target === "prior_board_state") {
+        return analysis.unaryTotal({
+          actor: conditionNode.subject,
+          filter: conditionNode.subjectFilter || "any",
+          filterMode: conditionNode.subjectFilterMode || null,
+          operator: conditionNode.operator,
+          boardScope: "prior"
+        })
+      }
+
+      return analysis.unaryTotal({
+        actor: conditionNode.target,
+        filter: conditionNode.targetFilter || "any",
+        filterMode: conditionNode.targetFilterMode || null,
+        operator: conditionNode.operator
       })
     }
 
@@ -96,14 +133,14 @@
       })
     }
 
-    compare({ comparator, leftValue, rightValue }) {
+    compare({ comparator, leftTotal, rightTotal }) {
       switch (comparator) {
         case "equal_to":
-          return leftValue === rightValue
+          return leftTotal === rightTotal
         case "greater_than":
-          return leftValue > rightValue
+          return leftTotal > rightTotal
         case "less_than":
-          return leftValue < rightValue
+          return leftTotal < rightTotal
         default:
           throw new Error(`Unknown V2 comparator: ${comparator}`)
       }
@@ -115,46 +152,61 @@
         positions: result.subjectPositions
       })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.subjectComparator, leftValue: subjectTotal, rightValue: referenceTotal })
+      return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal })
     }
 
     evaluateRelationalTargetComparison(conditionNode, analysis, result) {
       const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions: result.targetPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.targetComparator, leftValue: targetTotal, rightValue: referenceTotal })
+      return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal })
     }
 
     relationalComparisonReferenceTotal({ side, conditionNode, analysis }) {
-      const comparisonValueKey = side === "subject" ? "subjectComparisonValue" : "targetComparisonValue"
+      const comparisonSourceKey = side === "subject" ? "subjectComparisonSource" : "targetComparisonSource"
+      const comparisonSourceTotalKey = side === "subject" ? "subjectComparisonSourceTotal" : "targetComparisonSourceTotal"
       const comparisonMetricKey = side === "subject" ? "subjectComparisonMetric" : "targetComparisonMetric"
-      const comparisonValue = conditionNode[comparisonValueKey]
+      const comparisonSource = conditionNode[comparisonSourceKey]
       const operator = conditionNode.operator
-      if (comparisonValue === "prior_board_state") {
+      if (comparisonSource === "exact_number") {
+        return conditionNode[comparisonSourceTotalKey]
+      }
+      if (comparisonSource === "prior_board_state") {
         const priorResult = analysis.relationalResult({
-          subject: conditionNode.subject,  subjectFilter: conditionNode.subjectFilter || "any",
-          subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
-          target: conditionNode.target,  targetFilter: conditionNode.targetFilter || "any",
-          targetFilterMode: conditionNode.targetFilterMode || null, boardScope: "prior"
+          subject: conditionNode.subject,
+          subjectFilter: conditionNode.subjectFilter || "any",
+          subjectFilterMode: conditionNode.subjectFilterMode || null,
+          operator,
+          target: conditionNode.target,
+          targetFilter: conditionNode.targetFilter || "any",
+          targetFilterMode: conditionNode.targetFilterMode || null,
+          boardScope: "prior"
         })
         const priorPositions = side === "subject" ? priorResult.subjectPositions : priorResult.targetPositions
         return analysis.metricForPositions({ metric: conditionNode[comparisonMetricKey], positions: priorPositions, boardScope: "prior" })
       } else {
-          return analysis.comparisonValueFor({
-            comparisonValue,  subject: conditionNode.subject,  subjectFilter: conditionNode.subjectFilter || "any",
-            subjectFilterMode: conditionNode.subjectFilterMode || null, operator
-          })
+        return analysis.comparisonSourceTotal({
+          comparisonSource,
+          subject: conditionNode.subject,
+          subjectFilter: conditionNode.subjectFilter || "any",
+          subjectFilterMode: conditionNode.subjectFilterMode || null,
+          operator
+        })
       }
     }
 
     relationalComparisonPresent(conditionNode, side) {
       const metricKey = side === "subject" ? "subjectComparisonMetric" : "targetComparisonMetric"
       const comparatorKey = side === "subject" ? "subjectComparator" : "targetComparator"
-      const comparisonValueKey = side === "subject" ? "subjectComparisonValue" : "targetComparisonValue"
+      const comparisonSourceKey = side === "subject" ? "subjectComparisonSource" : "targetComparisonSource"
+      const comparisonSourceTotalKey = side === "subject" ? "subjectComparisonSourceTotal" : "targetComparisonSourceTotal"
       return Boolean(
         conditionNode[metricKey] && conditionNode[comparatorKey] &&
-        conditionNode[comparisonValueKey] !== undefined && conditionNode[comparisonValueKey] !== null
+        (
+          conditionNode[comparisonSourceKey] ||
+          conditionNode[comparisonSourceTotalKey] !== undefined
+        )
       )
     }
   }
 
-  export default ConditionEvaluatorV2
+export default ConditionEvaluatorV2

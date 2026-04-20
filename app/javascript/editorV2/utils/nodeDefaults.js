@@ -28,7 +28,10 @@ export const CONDITION_DATA_KEYS = Object.freeze([
   'subjectFilterMode',
   'operator',
   'comparator',
-  'comparisonValue'
+  'target',
+  'targetFilter',
+  'targetFilterMode',
+  'targetTotal'
 ])
 
 export const ACTION_DATA_KEYS = Object.freeze([

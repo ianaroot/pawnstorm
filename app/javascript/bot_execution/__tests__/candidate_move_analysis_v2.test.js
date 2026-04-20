@@ -62,35 +62,35 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'any',
           operator: 'count'
         })
       ).toBe(4)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy',
-          subjectFilter: 'king',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'enemy',
+          filter: 'king',
+          filterMode: 'exclude',
           operator: 'value'
         })
       ).toBe(4)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'pawn',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'pawn',
+          filterMode: 'exclude',
           operator: 'count'
         })
       ).toBe(3)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy',
-          subjectFilter: 'knight',
+        analysis.unaryTotal({
+          actor: 'enemy',
+          filter: 'knight',
           operator: 'mobility'
         })
       ).toBe(7)
@@ -113,51 +113,51 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'major',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'major',
           operator: 'count'
         })
       ).toBe(2)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'major',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'major',
           operator: 'value'
         })
       ).toBe(14)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'minor',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'minor',
           operator: 'count'
         })
       ).toBe(2)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'minor',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'minor',
           operator: 'value'
         })
       ).toBe(6)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'major',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'major',
+          filterMode: 'exclude',
           operator: 'count'
         })
       ).toBe(4)
 
       expect(
-        analysis.unaryValue({
-          subject: 'allied',
-          subjectFilter: 'minor',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'minor',
+          filterMode: 'exclude',
           operator: 'count'
         })
       ).toBe(4)
@@ -178,32 +178,32 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'moved_piece',
-          subjectFilter: 'queen',
+        analysis.unaryTotal({
+          actor: 'moved_piece',
+          filter: 'queen',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'moved_piece',
+          filter: 'any',
           operator: 'value'
         })
       ).toBe(9)
 
       expect(
-        analysis.unaryValue({
-          subject: 'moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'moved_piece',
+          filter: 'any',
           operator: 'mobility'
         })
       ).toBe(17)
 
       expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'prior_board_state',
+        analysis.comparisonSourceTotal({
+          comparisonSource: 'prior_board_state',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value'
@@ -211,8 +211,8 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toBe(1)
 
       expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'moved_piece_value',
+        analysis.comparisonSourceTotal({
+          comparisonSource: 'moved_piece',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value'
@@ -236,24 +236,24 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'captured_piece',
-          subjectFilter: 'knight',
+        analysis.unaryTotal({
+          actor: 'captured_piece',
+          filter: 'knight',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'captured_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'captured_piece',
+          filter: 'any',
           operator: 'value'
         })
       ).toBe(3)
 
       expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'captured_piece_value',
+        analysis.comparisonSourceTotal({
+          comparisonSource: 'captured_piece',
           subject: 'captured_piece',
           subjectFilter: 'any',
           operator: 'value'
@@ -277,18 +277,18 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'captured_piece',
-          subjectFilter: 'pawn',
+        analysis.unaryTotal({
+          actor: 'captured_piece',
+          filter: 'pawn',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'captured_piece',
-          subjectFilter: 'pawn',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'captured_piece',
+          filter: 'pawn',
+          filterMode: 'exclude',
           operator: 'count'
         })
       ).toBe(0)
@@ -311,32 +311,32 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'knight',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'knight',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'any',
           operator: 'value'
         })
       ).toBe(3)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'any',
           operator: 'mobility'
         })
       ).toBe(8)
 
       expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'enemy_moved_piece_value',
+        analysis.comparisonSourceTotal({
+          comparisonSource: 'enemy_moved_piece',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
           operator: 'value'
@@ -363,49 +363,49 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'pawn',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'pawn',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'any',
           operator: 'value'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'enemy_moved_piece',
+          filter: 'any',
           operator: 'mobility'
         })
       ).toBe(0)
 
-      const priorMobility = analysis.comparisonValueFor({
-        comparisonValue: 'prior_board_state',
+      const priorMobilityTotal = analysis.comparisonSourceTotal({
+        comparisonSource: 'prior_board_state',
         subject: 'enemy_moved_piece',
         subjectFilter: 'any',
         operator: 'mobility'
       })
 
-      const afterMobility = analysis.unaryValue({
-        subject: 'enemy_moved_piece',
-        subjectFilter: 'any',
+      const afterMobility = analysis.unaryTotal({
+        actor: 'enemy_moved_piece',
+        filter: 'any',
         operator: 'mobility'
       })
 
-      expect(priorMobility).toBe(2)
-      expect(priorMobility).not.toBe(afterMobility)
+      expect(priorMobilityTotal).toBe(2)
+      expect(priorMobilityTotal).not.toBe(afterMobility)
     })
   })
 
   describe('enemy_captured_piece', () => {
-    it('resolves the enemy captured piece from recent move context for unary queries and comparison values', () => {
+    it('resolves the enemy captured piece from recent move context for unary queries and comparison sources', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -419,33 +419,33 @@ describe('CandidateMoveAnalysisV2', () => {
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_captured_piece',
-          subjectFilter: 'bishop',
+        analysis.unaryTotal({
+          actor: 'enemy_captured_piece',
+          filter: 'bishop',
           operator: 'count'
         })
       ).toBe(1)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_captured_piece',
-          subjectFilter: 'any',
+        analysis.unaryTotal({
+          actor: 'enemy_captured_piece',
+          filter: 'any',
           operator: 'value'
         })
       ).toBe(3)
 
       expect(
-        analysis.unaryValue({
-          subject: 'enemy_captured_piece',
-          subjectFilter: 'bishop',
-          subjectFilterMode: 'exclude',
+        analysis.unaryTotal({
+          actor: 'enemy_captured_piece',
+          filter: 'bishop',
+          filterMode: 'exclude',
           operator: 'count'
         })
       ).toBe(0)
 
       expect(
-        analysis.comparisonValueFor({
-          comparisonValue: 'enemy_captured_piece_value',
+        analysis.comparisonSourceTotal({
+          comparisonSource: 'enemy_captured_piece',
           subject: 'enemy_captured_piece',
           subjectFilter: 'any',
           operator: 'value'

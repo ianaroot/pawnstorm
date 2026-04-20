@@ -22,19 +22,19 @@ function buildPanel() {
       <input id="cond-left-filter-mode" type="checkbox">
       <span>Non-</span>
     </label>
-    <select id="cond-left-filter">${option('any')}${option('pawn')}</select>
+    <select id="cond-left-filter">${option('any')}${option('pawn')}${option('rook')}</select>
     <select id="cond-left-comparison-metric">${option('count')}</select>
     <select id="cond-left-comparator">${option('equal_to', '=')}</select>
     <div id="cond-left-comparison-section" class="condition-form-comparison">
       <button type="button" id="cond-left-comparison-toggle"></button>
       <div id="cond-left-comparison-body" class="hidden"></div>
     </div>
-    <div id="cond-left-comparison-value-stack" class="condition-form-comparison-value-stack">
-      <select id="cond-left-comparison-value-source">
+    <div id="cond-left-comparison-source-stack" class="condition-form-comparison-source-stack">
+      <select id="cond-left-comparison-source">
         ${option('exact_number', 'Integer')}
         ${option('prior_board_state', 'Prior Board State')}
       </select>
-      <input id="cond-left-comparison-value-number" type="number">
+      <input id="cond-left-comparison-source-total" type="number">
     </div>
 
     <select id="cond-operator">${operatorOptions}</select>
@@ -44,19 +44,19 @@ function buildPanel() {
       <input id="cond-right-filter-mode" type="checkbox">
       <span>Non-</span>
     </label>
-    <select id="cond-right-filter">${option('any')}${option('pawn')}</select>
+    <select id="cond-right-filter">${option('any')}${option('pawn')}${option('rook')}</select>
     <select id="cond-right-comparison-metric">${option('count')}</select>
     <select id="cond-right-comparator">${option('equal_to', '=')}</select>
     <div id="cond-right-comparison-section" class="condition-form-comparison">
       <button type="button" id="cond-right-comparison-toggle"></button>
       <div id="cond-right-comparison-body" class="hidden"></div>
     </div>
-    <div id="cond-right-comparison-value-stack" class="condition-form-comparison-value-stack">
-      <select id="cond-right-comparison-value-source">
+    <div id="cond-right-comparison-source-stack" class="condition-form-comparison-source-stack">
+      <select id="cond-right-comparison-source">
         ${option('exact_number', 'Integer')}
         ${option('prior_board_state', 'Prior Board State')}
       </select>
-      <input id="cond-right-comparison-value-number" type="number">
+      <input id="cond-right-comparison-source-total" type="number">
     </div>
 
     <div id="cond-right-card-label"></div>
@@ -67,12 +67,25 @@ function buildPanel() {
     <div id="cond-formulation-preview"></div>
 
     <select id="cond-unary-comparator">${option('greater_than', '>')}</select>
-    <select id="cond-unary-comparison-value-source">
+    <select id="cond-unary-target">
       ${option('exact_number', 'Integer')}
+      ${option('allied', 'Allied')}
+      ${option('enemy', 'Enemy')}
+      ${option('moved_piece', 'Moved Piece')}
+      ${option('captured_piece', 'Captured Piece')}
+      ${option('enemy_moved_piece', 'Enemy Moved Piece')}
+      ${option('enemy_captured_piece', 'Enemy Captured Piece')}
       ${option('prior_board_state', 'Prior Board State')}
     </select>
-    <div id="cond-unary-comparison-value-stack" class="condition-form-comparison-value-stack">
-      <input id="cond-unary-comparison-value-number" type="number">
+    <div id="cond-unary-target-stack" class="condition-form-comparison-source-stack">
+      <input id="cond-unary-target-total" type="number">
+      <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
+        <label class="condition-form-checkbox">
+          <input id="cond-unary-target-filter-mode" type="checkbox">
+          <span>Non-</span>
+        </label>
+        <select id="cond-unary-target-filter">${option('any')}${option('pawn')}${option('rook')}</select>
+      </div>
     </div>
   `
   document.body.appendChild(panel)
@@ -96,25 +109,26 @@ describe('ConditionForm', () => {
       subjectFilter: 'any',
       subjectComparisonMetric: 'count',
       subjectComparator: 'equal_to',
-      subjectComparisonValue: 2,
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 2,
       operator: 'attack',
       target: 'enemy',
       targetFilter: 'any'
     })
 
-    expect(panel.querySelector('#cond-left-comparison-value-source').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-left-comparison-value-number').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-right-comparison-value-number').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-unary-comparison-value-number').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-unary-target-total').classList.contains('hidden')).toBe(false)
 
-    const rightSource = panel.querySelector('#cond-right-comparison-value-source')
+    const rightSource = panel.querySelector('#cond-right-comparison-source')
     rightSource.value = 'prior_board_state'
     rightSource.dispatchEvent(new Event('change', { bubbles: true }))
 
-    expect(panel.querySelector('#cond-left-comparison-value-number').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-right-comparison-value-number').classList.contains('hidden')).toBe(true)
-    expect(panel.querySelector('#cond-unary-comparison-value-number').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-right-comparison-value-source').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-unary-target-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-right-comparison-source').classList.contains('hidden')).toBe(false)
   })
 
   it('hides the numeric selector when the left source is symbolic and leaves the right side alone', () => {
@@ -129,19 +143,20 @@ describe('ConditionForm', () => {
       subjectFilter: 'any',
       subjectComparisonMetric: 'count',
       subjectComparator: 'equal_to',
-      subjectComparisonValue: 2,
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 2,
       operator: 'attack',
       target: 'enemy',
       targetFilter: 'any'
     })
 
-    const leftSource = panel.querySelector('#cond-left-comparison-value-source')
+    const leftSource = panel.querySelector('#cond-left-comparison-source')
     leftSource.value = 'prior_board_state'
     leftSource.dispatchEvent(new Event('change', { bubbles: true }))
 
-    expect(panel.querySelector('#cond-left-comparison-value-number').classList.contains('hidden')).toBe(true)
-    expect(panel.querySelector('#cond-right-comparison-value-number').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-left-comparison-value-source').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source').classList.contains('hidden')).toBe(false)
   })
 
   it('hides and clears the subject non toggle when the subject filter is any', () => {
@@ -313,5 +328,91 @@ describe('ConditionForm', () => {
     })
 
     expect(form.buildPayload().target).toBe('allied')
+  })
+
+  it('builds unary actor-target payloads with target filters', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'unary',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'value',
+      comparator: 'greater_than',
+      target: 'enemy',
+      targetFilter: 'rook',
+      targetFilterMode: 'exclude'
+    })
+
+    expect(panel.querySelector('#cond-unary-target-total').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-unary-target-filter-row').classList.contains('hidden')).toBe(false)
+    expect(form.buildPayload()).toMatchObject({
+      version: 2,
+      kind: 'unary',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'value',
+      comparator: 'greater_than',
+      target: 'enemy',
+      targetFilter: 'rook',
+      targetFilterMode: 'exclude'
+    })
+  })
+
+  it('hides and clears the unary target non toggle when the target filter is any', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'unary',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'value',
+      comparator: 'greater_than',
+      target: 'enemy',
+      targetFilter: 'rook',
+      targetFilterMode: 'exclude'
+    })
+
+    const targetFilterMode = panel.querySelector('#cond-unary-target-filter-mode')
+    const targetFilterModeControl = targetFilterMode.closest('.condition-form-checkbox')
+    expect(targetFilterMode.checked).toBe(true)
+    expect(targetFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(false)
+
+    const targetFilter = panel.querySelector('#cond-unary-target-filter')
+    targetFilter.value = 'any'
+    targetFilter.dispatchEvent(new Event('change', { bubbles: true }))
+
+    expect(targetFilterMode.checked).toBe(false)
+    expect(targetFilterModeControl.classList.contains('condition-form-checkbox--unavailable')).toBe(true)
+    expect(form.buildPayload()).not.toHaveProperty('targetFilterMode')
+  })
+
+  it('disallows captured-piece unary targets for mobility', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'unary',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'mobility',
+      comparator: 'greater_than',
+      target: 'captured_piece',
+      targetFilter: 'any'
+    })
+
+    const targetSource = panel.querySelector('#cond-unary-target')
+    expect(form.buildPayload().target).toBe('exact_number')
+    expect(targetSource.querySelector('option[value="captured_piece"]').disabled).toBe(true)
+    expect(targetSource.querySelector('option[value="enemy_captured_piece"]').disabled).toBe(true)
+    expect(targetSource.querySelector('option[value="enemy"]').disabled).toBe(false)
   })
 })

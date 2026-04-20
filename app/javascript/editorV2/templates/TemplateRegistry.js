@@ -45,7 +45,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 1
+        target: 'exact_number',
+        targetTotal: 1
       }),
       conditionNode('allies_queen_present', 0, 320, {
         version: 2,
@@ -55,7 +56,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 1
+        target: 'exact_number',
+        targetTotal: 1
       }),
       conditionNode('allies_rooks_present', 0, 480, {
         version: 2,
@@ -65,7 +67,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('allies_bishops_present', 0, 640, {
         version: 2,
@@ -75,7 +78,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('allies_knights_present', 0, 800, {
         version: 2,
@@ -85,7 +89,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('allies_pawns_present', 0, 960, {
         version: 2,
@@ -95,7 +100,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 8
+        target: 'exact_number',
+        targetTotal: 8
       }),
       conditionNode('opponents_king_present', 0, 1120, {
         version: 2,
@@ -105,7 +111,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 1
+        target: 'exact_number',
+        targetTotal: 1
       }),
       conditionNode('opponents_queen_present', 0, 1280, {
         version: 2,
@@ -115,7 +122,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 1
+        target: 'exact_number',
+        targetTotal: 1
       }),
       conditionNode('opponents_rooks_present', 0, 1440, {
         version: 2,
@@ -125,7 +133,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('opponents_bishops_present', 0, 1600, {
         version: 2,
@@ -135,7 +144,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('opponents_knights_present', 0, 1760, {
         version: 2,
@@ -145,7 +155,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 2
+        target: 'exact_number',
+        targetTotal: 2
       }),
       conditionNode('opponents_pawns_present', 0, 1920, {
         version: 2,
@@ -155,7 +166,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'equal_to',
-        comparisonValue: 8
+        target: 'exact_number',
+        targetTotal: 8
       }),
       conditionNode('allies_unattacked', 0, 2080, {
         version: 2,
@@ -167,7 +179,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       conditionNode('opponents_unattacked', 0, 2240, {
         version: 2,
@@ -179,7 +192,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       })
     ],
     connections: [
@@ -213,7 +227,8 @@ const RAW_TEMPLATES = [
         subjectFilter: 'any',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 'moved_piece_value'
+        target: 'moved_piece',
+        targetFilter: 'any'
       }),
       actionNode('action', 8, 320, {
         actionType: 'return',
@@ -239,7 +254,8 @@ const RAW_TEMPLATES = [
         subjectFilter: 'any',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       actionNode('action', 8, 320, {
         actionType: 'add',
@@ -293,7 +309,7 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'mobility',
         comparator: 'greater_than',
-        comparisonValue: 'prior_board_state'
+        target: 'prior_board_state'
       }),
       actionNode('action', 8, 320, {
         actionType: 'add',
@@ -320,7 +336,7 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'mobility',
         comparator: 'greater_than',
-        comparisonValue: 'prior_board_state'
+        target: 'prior_board_state'
       }),
       conditionNode('attackers_equal_prior', -140, 320, {
         version: 2,
@@ -332,7 +348,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('attackers_less_than_prior', 140, 320, {
         version: 2,
@@ -344,7 +360,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('defended_after_equal', -140, 480, {
         version: 2,
@@ -394,7 +410,7 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'mobility',
         comparator: 'greater_than',
-        comparisonValue: 'prior_board_state'
+        target: 'prior_board_state'
       }),
       conditionNode('attackers_equal_prior', -140, 320, {
         version: 2,
@@ -406,7 +422,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('attackers_less_than_prior', 140, 320, {
         version: 2,
@@ -418,7 +434,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('defended_after_equal', -140, 480, {
         version: 2,
@@ -477,7 +493,8 @@ const RAW_TEMPLATES = [
         subjectFilter: 'any',
         operator: 'mobility',
         comparator: 'equal_to',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       actionNode('action', 0, 480, {
         actionType: 'return',
@@ -505,7 +522,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('double_attack', 0, 320, {
         version: 2,
@@ -518,7 +536,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 1
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 1
       }),
       conditionNode('defended', -140, 480, {
         version: 2,
@@ -539,7 +558,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       actionNode('action', 0, 640, {
         actionType: 'return',
@@ -573,7 +593,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         targetComparisonMetric: 'count',
         targetComparator: 'greater_than',
-        targetComparisonValue: 'prior_board_state'
+        targetComparisonSource: 'prior_board_state'
       }),
       conditionNode('not_queen', 0, 320, {
         version: 2,
@@ -583,7 +603,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('not_rook', 0, 480, {
         version: 2,
@@ -593,7 +614,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('pawn_attacks_equal_prior', -140, 640, {
         version: 2,
@@ -606,7 +628,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('pawn_attacks_less_than_prior', 140, 640, {
         version: 2,
@@ -619,7 +641,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       actionNode('action', 0, 800, {
         actionType: 'return',
@@ -654,7 +676,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         targetComparisonMetric: 'count',
         targetComparator: 'greater_than',
-        targetComparisonValue: 'prior_board_state'
+        targetComparisonSource: 'prior_board_state'
       }),
       conditionNode('not_queen', 0, 320, {
         version: 2,
@@ -664,7 +686,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('not_rook', 0, 480, {
         version: 2,
@@ -674,7 +697,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('pawn_attacks_equal_prior', -140, 640, {
         version: 2,
@@ -687,7 +711,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('pawn_attacks_less_than_prior', 140, 640, {
         version: 2,
@@ -700,7 +724,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       actionNode('action', 0, 800, {
         actionType: 'return',
@@ -745,7 +769,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       conditionNode('queen_is_shielding_one_piece', 0, 480, {
         version: 2,
@@ -758,7 +783,8 @@ const RAW_TEMPLATES = [
         targetFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 1
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 1
       }),
       conditionNode('moved_piece_defended', 0, 640, {
         version: 2,
@@ -797,7 +823,7 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'mobility',
         comparator: 'less_than',
-        comparisonValue: 'prior_board_state'
+        target: 'prior_board_state'
       }),
       conditionNode('king_attackers_up', 0, 320, {
         version: 2,
@@ -810,7 +836,7 @@ const RAW_TEMPLATES = [
         targetFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('moved_piece_defended', -140, 480, {
         version: 2,
@@ -831,7 +857,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       actionNode('action', 0, 640, {
         actionType: 'return',
@@ -865,7 +892,7 @@ const RAW_TEMPLATES = [
         targetFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('king_coverers_down', 0, 320, {
         version: 2,
@@ -878,7 +905,7 @@ const RAW_TEMPLATES = [
         targetFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('moved_piece_defended', -140, 480, {
         version: 2,
@@ -899,7 +926,8 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       actionNode('action', 0, 640, {
         actionType: 'return',
@@ -930,7 +958,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'less_than',
-        comparisonValue: 3
+        target: 'exact_number',
+        targetTotal: 3
       }),
       conditionNode('opponents_low_material', 0, 320, {
         version: 2,
@@ -940,7 +969,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'exclude',
         operator: 'count',
         comparator: 'less_than',
-        comparisonValue: 3
+        target: 'exact_number',
+        targetTotal: 3
       }),
       conditionNode('moved_piece_is_pawn', 0, 480, {
         version: 2,
@@ -950,7 +980,8 @@ const RAW_TEMPLATES = [
         subjectFilterMode: 'include',
         operator: 'count',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('pawn_attackers_equal_prior', -140, 640, {
         version: 2,
@@ -962,7 +993,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('pawn_attackers_less_than_prior', 140, 640, {
         version: 2,
@@ -974,7 +1005,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'less_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('pawn_defense_up_equal', -140, 800, {
         version: 2,
@@ -987,7 +1018,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       conditionNode('pawn_defense_up_less', 140, 800, {
         version: 2,
@@ -1000,7 +1031,7 @@ const RAW_TEMPLATES = [
         targetFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 'prior_board_state'
+        subjectComparisonSource: 'prior_board_state'
       }),
       actionNode('action', 0, 960, {
         actionType: 'return',
@@ -1033,7 +1064,8 @@ const RAW_TEMPLATES = [
         subjectFilter: 'any',
         operator: 'mobility',
         comparator: 'equal_to',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }),
       conditionNode('opponent_king_attackers_zero', 0, 320, {
         version: 2,
@@ -1046,7 +1078,8 @@ const RAW_TEMPLATES = [
         targetFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'equal_to',
-        subjectComparisonValue: 0
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0
       }),
       actionNode('action', 0, 480, {
         actionType: 'return',

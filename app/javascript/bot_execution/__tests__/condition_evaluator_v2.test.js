@@ -38,14 +38,14 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 'prior_board_state'
+          target: 'prior_board_state'
         },
         { board, moveObject }
       )
     ).toBe(true)
   })
 
-  it('evaluates captured_piece_value through the unary comparison path', () => {
+  it('evaluates captured_piece targets through the unary comparison path', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -67,7 +67,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 'captured_piece_value'
+          target: 'captured_piece',
+          targetFilter: 'any'
         },
         { board, moveObject }
       )
@@ -101,7 +102,7 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'mobility',
           comparator: 'less_than',
-          comparisonValue: 'prior_board_state'
+          target: 'prior_board_state'
         },
         { board, moveObject }
       )
@@ -134,7 +135,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'pawn',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 1
+          target: 'exact_number',
+          targetTotal: 1
         },
         board,
         moveObject
@@ -150,7 +152,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'pawn',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -184,7 +187,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'pawn',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 1
+          target: 'exact_number',
+          targetTotal: 1
         },
         board,
         moveObject
@@ -218,7 +222,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'pawn',
           operator: 'mobility',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -253,7 +258,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilterMode: 'exclude',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 1
+          target: 'exact_number',
+          targetTotal: 1
         },
         board,
         moveObject
@@ -270,7 +276,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilterMode: 'exclude',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -301,7 +308,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilterMode: 'exclude',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 1
+          target: 'exact_number',
+          targetTotal: 1
         },
         { board, moveObject }
       )
@@ -328,7 +336,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'knight',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -356,7 +365,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'knight',
           operator: 'mobility',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -384,7 +394,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'knight',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 3
+          target: 'exact_number',
+          targetTotal: 3
         },
         board,
         moveObject
@@ -412,7 +423,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'queen',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -440,7 +452,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         },
         board,
         moveObject
@@ -468,7 +481,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'queen',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 9
+          target: 'exact_number',
+          targetTotal: 9
         },
         board,
         moveObject
@@ -497,7 +511,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'queen',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 9
+          target: 'exact_number',
+          targetTotal: 9
         },
         board,
         moveObject
@@ -526,7 +541,8 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'queen',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 9
+          target: 'exact_number',
+          targetTotal: 9
         },
         board,
         moveObject
@@ -619,7 +635,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'rook',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -651,7 +668,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'king',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -683,7 +701,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'rook',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -836,7 +855,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any'
@@ -870,7 +890,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any'
@@ -902,7 +923,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'pawn',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 0,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -934,7 +956,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'pawn',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 0,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -971,7 +994,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1005,7 +1029,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1038,7 +1063,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'queen',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -1071,7 +1097,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'queen',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -1102,13 +1129,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1139,13 +1168,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1176,13 +1207,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1213,13 +1246,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -1248,7 +1283,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 'prior_board_state',
+            subjectComparisonSource: 'prior_board_state',
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -1280,7 +1315,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 'prior_board_state',
+            subjectComparisonSource: 'prior_board_state',
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -1315,7 +1350,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'bishop',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1347,7 +1382,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'bishop',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1384,7 +1419,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'less_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1421,7 +1456,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'less_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1453,7 +1488,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'bishop',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1747,7 +1782,8 @@ describe('ConditionEvaluatorV2', () => {
         targetFilter: 'king',
         targetComparisonMetric: 'count',
         targetComparator: 'equal_to',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
       }
 
       expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
@@ -1822,7 +1858,8 @@ describe('ConditionEvaluatorV2', () => {
         targetFilter: 'king',
         targetComparisonMetric: 'count',
         targetComparator: 'equal_to',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
       }
 
       expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
@@ -2113,7 +2150,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'king',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject

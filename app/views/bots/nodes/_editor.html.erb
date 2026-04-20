@@ -53,14 +53,14 @@
                     <option value="less_than"><</option>
                   </select>
 
-                  <div class="condition-form-comparison-value-stack">
-                    <select id="cond-left-comparison-value-source">
+                  <div class="condition-form-comparison-source-stack">
+                    <select id="cond-left-comparison-source">
                       <option value="exact_number">Integer</option>
-                      <% NodeForm.comparison_value_options.each do |label, value| %>
+                      <% NodeForm.comparison_source_options.each do |label, value| %>
                         <option value="<%= value %>"><%= label %></option>
                       <% end %>
                     </select>
-                    <input id="cond-left-comparison-value-number" type="number" min="0" step="1">
+                    <input id="cond-left-comparison-source-total" type="number" min="0" step="1">
                   </div>
                 </div>
               </div>
@@ -133,14 +133,14 @@
                       <option value="less_than"><</option>
                     </select>
 
-                    <div class="condition-form-comparison-value-stack">
-                      <select id="cond-right-comparison-value-source">
+                    <div class="condition-form-comparison-source-stack">
+                      <select id="cond-right-comparison-source">
                         <option value="exact_number">Integer</option>
-                        <% NodeForm.comparison_value_options.each do |label, value| %>
+                        <% NodeForm.comparison_source_options.each do |label, value| %>
                           <option value="<%= value %>"><%= label %></option>
                         <% end %>
                       </select>
-                      <input id="cond-right-comparison-value-number" type="number" min="0" step="1">
+                      <input id="cond-right-comparison-source-total" type="number" min="0" step="1">
                     </div>
                   </div>
                 </div>
@@ -150,7 +150,7 @@
 
           <div class="condition-form-comparison hidden" id="cond-unary-comparison-section">
             <div class="condition-form-field">
-              <label>Comparison</label>
+              <label>Target</label>
               <div class="condition-form-comparison-grid condition-form-comparison-grid--unary">
                 <select id="cond-unary-comparator">
                   <option value="equal_to">=</option>
@@ -158,14 +158,26 @@
                   <option value="less_than"><</option>
                 </select>
 
-                <div class="condition-form-comparison-value-stack">
-                  <select id="cond-unary-comparison-value-source">
-                    <option value="exact_number">Integer</option>
-                    <% NodeForm.comparison_value_options.each do |label, value| %>
+                <div class="condition-form-comparison-source-stack">
+                  <select id="cond-unary-target">
+                    <% NodeForm.unary_target_options.each do |label, value| %>
                       <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
-                  <input id="cond-unary-comparison-value-number" type="number" min="0" step="1">
+
+                  <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
+                    <label class="condition-form-checkbox">
+                      <input id="cond-unary-target-filter-mode" type="checkbox">
+                      <span>Non-</span>
+                    </label>
+                    <select id="cond-unary-target-filter">
+                      <% NodeForm.filter_options.each do |label, value| %>
+                        <option value="<%= value %>"><%= label %></option>
+                      <% end %>
+                    </select>
+                  </div>
+
+                  <input id="cond-unary-target-total" type="number" min="0" step="1">
                 </div>
               </div>
             </div>

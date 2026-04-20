@@ -117,45 +117,51 @@ function comparatorLabel(comparator) {
   }
 }
 
-function comparisonValuePreview(comparisonValue, comparisonValueNumber) {
-  if (comparisonValue === undefined || comparisonValue === null || comparisonValue === '') {
+function comparisonSourcePreview(comparisonSource, comparisonSourceTotal) {
+  if (comparisonSource === undefined || comparisonSource === null || comparisonSource === '') {
     return ''
   }
-  if (typeof comparisonValue === 'number') {
-    return String(comparisonValue)
+  if (typeof comparisonSource === 'number') {
+    return String(comparisonSource)
   }
-  if (comparisonValue === 'exact_number') {
-    return String(comparisonValueNumber)
+  if (comparisonSource === 'exact_number') {
+    return String(comparisonSourceTotal)
   }
-  switch (comparisonValue) {
-    case 'moved_piece_value':
-      return 'Moved Piece Value'
-    case 'captured_piece_value':
-      return 'Captured Piece Value'
-    case 'enemy_moved_piece_value':
-      return 'Enemy Moved Piece Value'
-    case 'enemy_captured_piece_value':
-      return 'Enemy Captured Piece Value'
+  switch (comparisonSource) {
+    case 'moved_piece':
+      return 'Moved Piece'
+    case 'captured_piece':
+      return 'Captured Piece'
+    case 'enemy_moved_piece':
+      return 'Enemy Moved Piece'
+    case 'enemy_captured_piece':
+      return 'Enemy Captured Piece'
     case 'prior_board_state':
       return 'Prior Board State'
     default:
-      return String(comparisonValue)
+      return String(comparisonSource)
   }
 }
 
-function sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber }) {
+function sideComparisonPreview({ comparisonMetric, comparator, comparisonSource, comparisonSourceTotal }) {
   if (!comparisonMetric) { return '' }
-  return `${metricLabel(comparisonMetric)} ${comparatorLabel(comparator)} ${comparisonValuePreview(comparisonValue, comparisonValueNumber)}`
+  return `${metricLabel(comparisonMetric)} ${comparatorLabel(comparator)} ${comparisonSourcePreview(comparisonSource, comparisonSourceTotal)}`
 }
 
-function sidePreview({ subject, filter, filterMode, comparisonMetric, comparator, comparisonValue, comparisonValueNumber }) {
+function sidePreview({ subject, filter, filterMode, comparisonMetric, comparator, comparisonSource, comparisonSourceTotal }) {
   const base = subjectPreview(subject, filter, filterMode)
-  const comparison = sideComparisonPreview({ comparisonMetric, comparator, comparisonValue, comparisonValueNumber })
+  const comparison = sideComparisonPreview({ comparisonMetric, comparator, comparisonSource, comparisonSourceTotal })
   return comparison ? `${base} (${comparison})` : base
 }
 
-function unaryComparisonPreview({ comparator, comparisonValue, comparisonValueNumber }) {
-  return `${comparatorLabel(comparator)} ${comparisonValuePreview(comparisonValue, comparisonValueNumber)}`
+function unaryTargetPreview({ target, targetFilter, targetFilterMode, targetTotal }) {
+  if (target === 'exact_number') { return String(targetTotal) }
+  if (target === 'prior_board_state') { return 'Prior Board State' }
+  return subjectPreview(target, targetFilter || 'any', targetFilterMode || 'include')
+}
+
+function unaryTargetComparisonPreview({ comparator, target, targetFilter, targetFilterMode, targetTotal }) {
+  return `${comparatorLabel(comparator)} ${unaryTargetPreview({ target, targetFilter, targetFilterMode, targetTotal })}`
 }
 
 function previewText({ left, operator, right }) {
@@ -171,7 +177,8 @@ export function formatConditionPreview(nodeData = {}) {
         filterMode: nodeData.subjectFilterMode || 'include',
         comparisonMetric: nodeData.subjectComparisonMetric,
         comparator: nodeData.subjectComparator,
-        comparisonValue: nodeData.subjectComparisonValue
+        comparisonSource: nodeData.subjectComparisonSource,
+        comparisonSourceTotal: nodeData.subjectComparisonSourceTotal
       }),
       operator: operatorPreviewText(nodeData.operator),
       right: sidePreview({
@@ -180,7 +187,8 @@ export function formatConditionPreview(nodeData = {}) {
         filterMode: nodeData.targetFilterMode || 'include',
         comparisonMetric: nodeData.targetComparisonMetric,
         comparator: nodeData.targetComparator,
-        comparisonValue: nodeData.targetComparisonValue
+        comparisonSource: nodeData.targetComparisonSource,
+        comparisonSourceTotal: nodeData.targetComparisonSourceTotal
       })
     }
     preview.text = previewText(preview)
@@ -190,9 +198,12 @@ export function formatConditionPreview(nodeData = {}) {
   const preview = {
     left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
     operator: operatorLabel(nodeData.operator),
-    right: unaryComparisonPreview({
+    right: unaryTargetComparisonPreview({
       comparator: nodeData.comparator,
-      comparisonValue: nodeData.comparisonValue
+      target: nodeData.target,
+      targetFilter: nodeData.targetFilter,
+      targetFilterMode: nodeData.targetFilterMode,
+      targetTotal: nodeData.targetTotal
     })
   }
   preview.text = previewText(preview)
@@ -206,7 +217,7 @@ export function formatConditionPreviewChunk(chunk) {
     case 'operator':
       return operatorPreviewText(chunk.operator)
     case 'comparison':
-      return unaryComparisonPreview(chunk)
+      return unaryTargetComparisonPreview(chunk)
     default:
       return chunk.text || ''
   }
@@ -221,8 +232,12 @@ function parseChunkDataset(element) {
     filterMode: dataset.conditionPreviewFilterMode,
     comparisonMetric: dataset.conditionPreviewComparisonMetric,
     comparator: dataset.conditionPreviewComparator,
-    comparisonValue: dataset.conditionPreviewComparisonValue,
-    comparisonValueNumber: dataset.conditionPreviewComparisonValueNumber,
+    comparisonSource: dataset.conditionPreviewComparisonSource,
+    comparisonSourceTotal: dataset.conditionPreviewComparisonSourceTotal,
+    target: dataset.conditionPreviewTarget,
+    targetFilter: dataset.conditionPreviewTargetFilter,
+    targetFilterMode: dataset.conditionPreviewTargetFilterMode,
+    targetTotal: dataset.conditionPreviewTargetTotal,
     operator: dataset.conditionPreviewOperator,
     text: element.textContent
   }

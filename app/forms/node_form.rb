@@ -43,13 +43,18 @@ class NodeForm
     'less_than' => '<'
   }.freeze
 
-  COMPARISON_VALUE_LABELS = {
-    'moved_piece_value' => 'Moved Piece Value',
-    'captured_piece_value' => 'Captured Piece Value',
-    'enemy_moved_piece_value' => 'Enemy Moved Piece Value',
-    'enemy_captured_piece_value' => 'Enemy Captured Piece Value',
+  COMPARISON_SOURCE_LABELS = {
+    'moved_piece' => 'Moved Piece',
+    'captured_piece' => 'Captured Piece',
+    'enemy_moved_piece' => 'Enemy Moved Piece',
+    'enemy_captured_piece' => 'Enemy Captured Piece',
     'prior_board_state' => 'Prior Board State'
   }.freeze
+
+  UNARY_TARGET_LABELS = SUBJECT_LABELS.merge(
+    'exact_number' => 'Integer',
+    'prior_board_state' => 'Prior Board State'
+  ).freeze
 
   class << self
     def subject_options
@@ -80,8 +85,12 @@ class NodeForm
       NodeGrammarV2::COMPARISON_METRICS.map { |value| [comparison_metric_label(value), value] }
     end
 
-    def comparison_value_options
-      NodeGrammarV2::COMPARISON_VALUES.map { |value| [comparison_value_label(value), value] }
+    def comparison_source_options
+      NodeGrammarV2::COMPARISON_SOURCES.reject { |value| value == NodeGrammarV2::EXACT_COMPARISON_SOURCE }.map { |value| [comparison_source_label(value), value] }
+    end
+
+    def unary_target_options
+      NodeGrammarV2::UNARY_TARGETS.map { |value| [UNARY_TARGET_LABELS.fetch(value), value] }
     end
 
     def comparator_symbol(value)
@@ -104,8 +113,8 @@ class NodeForm
       COMPARISON_METRIC_LABELS[value]
     end
 
-    def comparison_value_label(value)
-      COMPARISON_VALUE_LABELS[value]
+    def comparison_source_label(value)
+      COMPARISON_SOURCE_LABELS[value]
     end
   end
 end

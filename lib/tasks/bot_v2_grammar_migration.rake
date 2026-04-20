@@ -212,7 +212,8 @@ class BotV2GrammarMigrator
       comparison_prefix = rule.fetch(:comparison_side) == :subject ? 'subject' : 'target'
       data[:"#{comparison_prefix}ComparisonMetric"] = comparison.fetch(:metric)
       data[:"#{comparison_prefix}Comparator"] = comparison.fetch(:comparator)
-      data[:"#{comparison_prefix}ComparisonValue"] = comparison.fetch(:comparison_value)
+      data[:"#{comparison_prefix}ComparisonSource"] = 'exact_number'
+      data[:"#{comparison_prefix}ComparisonSourceTotal"] = comparison.fetch(:comparison_value)
     end
 
     data

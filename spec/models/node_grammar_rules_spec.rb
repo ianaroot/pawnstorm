@@ -45,11 +45,34 @@ RSpec.describe NodeGrammarRules, type: :model do
     end
   end
 
-  describe '.valid_comparison_value_for_subject?' do
-    it 'allows numeric values and subject-specific symbolic values' do
-      expect(described_class.valid_comparison_value_for_subject?('captured_piece', 3)).to be(true)
-      expect(described_class.valid_comparison_value_for_subject?('captured_piece', 'moved_piece_value')).to be(true)
-      expect(described_class.valid_comparison_value_for_subject?('captured_piece', 'prior_board_state')).to be(false)
+  describe '.valid_comparison_source_for_metric?' do
+    it 'allows exact numbers and prior board state for count comparisons' do
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'count', source: 'exact_number')).to be(true)
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'count', source: 'prior_board_state')).to be(true)
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'count', source: 'moved_piece')).to be(false)
+    end
+
+    it 'allows distinct piece sources for value comparisons' do
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'value', source: 'moved_piece')).to be(true)
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'value', source: 'captured_piece')).to be(true)
+    end
+  end
+
+  describe '.valid_unary_target_for_operator?' do
+    it 'allows exact numbers and prior board state for every unary operator' do
+      expect(described_class.valid_unary_target_for_operator?(target: 'exact_number', operator: 'mobility')).to be(true)
+      expect(described_class.valid_unary_target_for_operator?(target: 'prior_board_state', operator: 'mobility')).to be(true)
+    end
+
+    it 'allows actor targets when the target actor supports the unary operator' do
+      expect(described_class.valid_unary_target_for_operator?(target: 'enemy', operator: 'mobility')).to be(true)
+      expect(described_class.valid_unary_target_for_operator?(target: 'enemy_moved_piece', operator: 'mobility')).to be(true)
+      expect(described_class.valid_unary_target_for_operator?(target: 'captured_piece', operator: 'value')).to be(true)
+    end
+
+    it 'rejects captured-piece actor targets for mobility' do
+      expect(described_class.valid_unary_target_for_operator?(target: 'captured_piece', operator: 'mobility')).to be(false)
+      expect(described_class.valid_unary_target_for_operator?(target: 'enemy_captured_piece', operator: 'mobility')).to be(false)
     end
   end
 end

@@ -45,15 +45,9 @@ class NodeGrammarRules
     'enemy' => 'allied'
   }.freeze
 
-  DISTINCT_PIECE_VALUES = %w[moved_piece_value captured_piece_value enemy_moved_piece_value enemy_captured_piece_value].freeze
-
-  COMPARISON_VALUES_BY_SUBJECT = {
-    'allied' => NodeGrammarV2::COMPARISON_VALUES,
-    'enemy' => NodeGrammarV2::COMPARISON_VALUES,
-    'moved_piece' => NodeGrammarV2::COMPARISON_VALUES,
-    'enemy_moved_piece' => NodeGrammarV2::COMPARISON_VALUES,
-    'captured_piece' => DISTINCT_PIECE_VALUES,
-    'enemy_captured_piece' => DISTINCT_PIECE_VALUES
+  COMPARISON_SOURCES_BY_METRIC = {
+    'count' => %w[exact_number prior_board_state],
+    'value' => NodeGrammarV2::COMPARISON_SOURCES
   }.freeze
 
   class << self
@@ -69,6 +63,13 @@ class NodeGrammarRules
 
     def valid_unary_operator_for_subject?(subject, operator)
       UNARY_OPERATORS_BY_SUBJECT.fetch(subject, []).include?(operator)
+    end
+
+    def valid_unary_target_for_operator?(target:, operator:)
+      return false unless NodeGrammarV2.valid_unary_target?(target)
+      return true if NodeGrammarV2::SPECIAL_UNARY_TARGETS.include?(target)
+
+      valid_unary_operator_for_subject?(target, operator)
     end
 
     def valid_relational_operator_for_subject?(subject:, operator:)
@@ -117,12 +118,12 @@ class NodeGrammarRules
       NodeGrammarV2::RELATIONAL_OPERATORS.include?(operator)
     end
 
-    def comparison_values_for_subject(subject)
-      COMPARISON_VALUES_BY_SUBJECT.fetch(subject, [])
+    def comparison_sources_for_metric(metric)
+      COMPARISON_SOURCES_BY_METRIC.fetch(metric, [])
     end
 
-    def valid_comparison_value_for_subject?(subject, comparison_value)
-      comparison_value.is_a?(Numeric) || comparison_values_for_subject(subject).include?(comparison_value)
+    def valid_comparison_source_for_metric?(metric:, source:)
+      comparison_sources_for_metric(metric).include?(source)
     end
 
     private

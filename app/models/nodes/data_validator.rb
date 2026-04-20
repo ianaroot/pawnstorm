@@ -1,7 +1,7 @@
 module Nodes
   class DataValidator
-    CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator comparisonValue ].freeze
-    CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonValue operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonValue ].freeze
+    CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator target targetFilter targetFilterMode targetTotal ].freeze
+    CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonSource subjectComparisonSourceTotal operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonSource targetComparisonSourceTotal ].freeze
     ACTION_TYPES = %w[add subtract set return].freeze
     ACTION_KEYS = %w[actionType value].freeze
     ORGANIZER_KEYS = %w[title notes].freeze
@@ -51,7 +51,7 @@ module Nodes
     def validate_condition_data_v2_unary
       keys = record.data.keys.map(&:to_s)
       extra_keys = keys - CONDITION_V2_UNARY_KEYS
-      missing_keys = %w[version kind subject subjectFilter operator comparator comparisonValue] - keys
+      missing_keys = %w[version kind subject subjectFilter operator comparator target] - keys
       if extra_keys.any?
         record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
       end
@@ -64,14 +64,18 @@ module Nodes
       subject_filter_mode = record.data['subjectFilterMode']
       operator = record.data['operator']
       comparator = record.data['comparator']
-      comparison_value = record.data['comparisonValue']
+      target = record.data['target']
+      target_filter = record.data['targetFilter']
+      target_filter_mode = record.data['targetFilterMode']
+      target_total = record.data['targetTotal']
 
       record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
       record.errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
       record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
       record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_unary_operator_for_subject?(subject, operator)
       record.errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, 'has invalid comparisonValue') unless NodeGrammarRules.valid_comparison_value_for_subject?(subject, comparison_value)
+      record.errors.add(:data, 'has invalid target') unless NodeGrammarRules.valid_unary_target_for_operator?(target:, operator:)
+      validate_unary_target_shape!(target:, target_filter:, target_filter_mode:, target_total:)
     end
 
     def validate_condition_data_v2_relational
@@ -106,20 +110,20 @@ module Nodes
       validate_v2_side_comparator!(
         metric_key: 'subjectComparisonMetric',
         comparator_key: 'subjectComparator',
-        comparison_value_key: 'subjectComparisonValue',
-        comparison_subject: subject
+        source_key: 'subjectComparisonSource',
+        source_total_key: 'subjectComparisonSourceTotal'
       )
       validate_v2_side_comparator!(
         metric_key: 'targetComparisonMetric',
         comparator_key: 'targetComparator',
-        comparison_value_key: 'targetComparisonValue',
-        comparison_subject: target
+        source_key: 'targetComparisonSource',
+        source_total_key: 'targetComparisonSourceTotal'
       )
-      if record.data['subjectComparisonValue'] == 'prior_board_state' && side_condition_present?('target')
-        record.errors.add(:data, 'cannot use target-side comparison when subjectComparisonValue is prior_board_state')
+      if record.data['subjectComparisonSource'] == 'prior_board_state' && side_condition_present?('target')
+        record.errors.add(:data, 'cannot use target-side comparison when subjectComparisonSource is prior_board_state')
       end
-      if record.data['targetComparisonValue'] == 'prior_board_state' && side_condition_present?('subject')
-        record.errors.add(:data, 'cannot use subject-side comparison when targetComparisonValue is prior_board_state')
+      if record.data['targetComparisonSource'] == 'prior_board_state' && side_condition_present?('subject')
+        record.errors.add(:data, 'cannot use subject-side comparison when targetComparisonSource is prior_board_state')
       end
     end
 
@@ -130,10 +134,10 @@ module Nodes
       if record.data['targetFilter'] != 'any'
         record.errors.add(:data, 'same_piece requires targetFilter to be any')
       end
-      if record.data['subjectComparisonMetric'].present? || record.data['subjectComparator'].present? || !record.data['subjectComparisonValue'].nil?
+      if side_condition_present?('subject')
         record.errors.add(:data, 'same_piece does not allow subject-side comparison')
       end
-      if record.data['targetComparisonMetric'].present? || record.data['targetComparator'].present? || !record.data['targetComparisonValue'].nil?
+      if side_condition_present?('target')
         record.errors.add(:data, 'same_piece does not allow target-side comparison')
       end
     end
@@ -169,27 +173,51 @@ module Nodes
       record.errors.add(:data, 'notes must be a string') unless notes.is_a?(String)
     end
 
-    def validate_v2_side_comparator!(metric_key:, comparator_key:, comparison_value_key:, comparison_subject:)
+    def validate_v2_side_comparator!(metric_key:, comparator_key:, source_key:, source_total_key:)
       metric = record.data[metric_key]
       comparator = record.data[comparator_key]
-      comparison_value = record.data[comparison_value_key]
+      source = record.data[source_key]
+      source_total = record.data[source_total_key]
       if metric.blank?
-        if comparator.present? || !comparison_value.nil?
-          record.errors.add(:data, "#{metric_key} is required when #{comparator_key} or #{comparison_value_key} is present")
+        if comparator.present? || source.present? || !source_total.nil?
+          record.errors.add(:data, "#{metric_key} is required when #{comparator_key}, #{source_key}, or #{source_total_key} is present")
         end
         return
       end
       record.errors.add(:data, "has invalid #{metric_key}") unless NodeGrammarV2.valid_comparison_metric?(metric)
       record.errors.add(:data, "has invalid #{comparator_key}") unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, "has invalid #{comparison_value_key}") unless NodeGrammarRules.valid_comparison_value_for_subject?(comparison_subject, comparison_value)
+      record.errors.add(:data, "has invalid #{source_key}") unless NodeGrammarRules.valid_comparison_source_for_metric?(metric:, source:)
+      if source == 'exact_number'
+        record.errors.add(:data, "#{source_total_key} must be numeric") unless source_total.is_a?(Numeric)
+      elsif !source_total.nil?
+        record.errors.add(:data, "#{source_key} does not allow #{source_total_key}")
+      end
+    end
+
+    def validate_unary_target_shape!(target:, target_filter:, target_filter_mode:, target_total:)
+      case target
+      when 'exact_number'
+        record.errors.add(:data, 'targetTotal must be numeric') unless target_total.is_a?(Numeric)
+        record.errors.add(:data, 'exact_number target does not allow targetFilter') if target_filter.present?
+        record.errors.add(:data, 'exact_number target does not allow targetFilterMode') if target_filter_mode.present?
+      when 'prior_board_state'
+        record.errors.add(:data, 'prior_board_state target does not allow targetTotal') unless target_total.nil?
+        record.errors.add(:data, 'prior_board_state target does not allow targetFilter') if target_filter.present?
+        record.errors.add(:data, 'prior_board_state target does not allow targetFilterMode') if target_filter_mode.present?
+      else
+        record.errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
+        record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
+        record.errors.add(:data, 'actor target does not allow targetTotal') unless target_total.nil?
+      end
     end
 
     def side_condition_present?(side_prefix)
       metric = record.data["#{side_prefix}ComparisonMetric"]
       comparator = record.data["#{side_prefix}Comparator"]
-      comparison_value = record.data["#{side_prefix}ComparisonValue"]
+      source = record.data["#{side_prefix}ComparisonSource"]
+      source_total = record.data["#{side_prefix}ComparisonSourceTotal"]
 
-      metric.present? || comparator.present? || !comparison_value.nil?
+      metric.present? || comparator.present? || source.present? || !source_total.nil?
     end
   end
 end

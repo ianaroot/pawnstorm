@@ -18,7 +18,8 @@ RSpec.describe BotCompiler do
           subjectFilterMode: 'include',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         })
       end
       let!(:action) do
@@ -55,7 +56,8 @@ RSpec.describe BotCompiler do
               subjectFilter: 'any',
               operator: 'value',
               comparator: 'greater_than',
-              comparisonValue: 0
+              target: 'exact_number',
+              targetTotal: 0
             },
             children: [action.id.to_s]
           }
@@ -77,7 +79,8 @@ RSpec.describe BotCompiler do
           targetFilterMode: 'include',
           targetComparisonMetric: 'count',
           targetComparator: 'greater_than',
-          targetComparisonValue: 0
+          targetComparisonSource: 'exact_number',
+          targetComparisonSourceTotal: 0
         })
       end
       let!(:unary_condition) do
@@ -89,7 +92,8 @@ RSpec.describe BotCompiler do
           subjectFilterMode: 'include',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 'captured_piece_value'
+          target: 'captured_piece',
+          targetFilter: 'any'
         })
       end
 
@@ -113,7 +117,8 @@ RSpec.describe BotCompiler do
             targetFilterMode: 'include',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           }
         )
       end
@@ -130,7 +135,8 @@ RSpec.describe BotCompiler do
             subjectFilterMode: 'include',
             operator: 'value',
             comparator: 'equal_to',
-            comparisonValue: 'captured_piece_value'
+            target: 'captured_piece',
+            targetFilter: 'any'
           }
         )
       end

@@ -1099,7 +1099,7 @@
   align-items: start;
 }
 
-.condition-form-comparison-value-stack {
+.condition-form-comparison-source-stack {
   display: grid;
   gap: 8px;
 }

@@ -73,7 +73,8 @@ RSpec.describe BotNodesController, type: :request do
             subjectFilterMode: 'include',
             operator: 'value',
             comparator: 'greater_than',
-            comparisonValue: 0
+            target: 'exact_number',
+            targetTotal: 0
           }
         }
       }

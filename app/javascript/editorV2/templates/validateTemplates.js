@@ -12,11 +12,14 @@ const CONDITION_UNARY_REQUIRED_KEYS = Object.freeze([
   'subjectFilter',
   'operator',
   'comparator',
-  'comparisonValue'
+  'target'
 ])
 const CONDITION_UNARY_ALLOWED_KEYS = Object.freeze([
   ...CONDITION_UNARY_REQUIRED_KEYS,
-  'subjectFilterMode'
+  'subjectFilterMode',
+  'targetFilter',
+  'targetFilterMode',
+  'targetTotal'
 ])
 const CONDITION_RELATIONAL_REQUIRED_KEYS = Object.freeze([
   'version',
@@ -32,11 +35,13 @@ const CONDITION_RELATIONAL_ALLOWED_KEYS = Object.freeze([
   'subjectFilterMode',
   'subjectComparisonMetric',
   'subjectComparator',
-  'subjectComparisonValue',
+  'subjectComparisonSource',
+  'subjectComparisonSourceTotal',
   'targetFilterMode',
   'targetComparisonMetric',
   'targetComparator',
-  'targetComparisonValue'
+  'targetComparisonSource',
+  'targetComparisonSourceTotal'
 ])
 
 function assert(condition, message) {

@@ -11,7 +11,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'include',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }
 
       normalized = described_class.normalize(node_type: 'condition', data: input)
@@ -25,7 +26,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'subjectFilterMode' => 'include',
           'operator' => 'value',
           'comparator' => 'greater_than',
-          'comparisonValue' => 0
+          'target' => 'exact_number',
+          'targetTotal' => 0
         }
       )
       expect(input).to eq(
@@ -36,7 +38,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'include',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       )
     end
 
@@ -49,16 +52,18 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 0,
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0,
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0,
-        target: 'captured_piece',
+        target: 'exact_number',
+        targetTotal: 0,
         targetFilter: 'pawn',
         targetFilterMode: 'exclude',
         targetComparisonMetric: 'count',
         targetComparator: 'greater_than',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+        targetComparisonSourceTotal: 0
       })
 
       expect(normalized).to eq(
@@ -69,9 +74,70 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'subjectFilter' => 'any',
           'operator' => 'value',
           'comparator' => 'greater_than',
-          'comparisonValue' => 0
+          'target' => 'exact_number',
+          'targetTotal' => 0
         }
       )
+    end
+
+    it 'removes target actor fields from exact-number unary targets' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'unary',
+        subject: 'allied',
+        subjectFilter: 'any',
+        operator: 'value',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 39,
+        targetFilter: 'rook',
+        targetFilterMode: 'include'
+      })
+
+      expect(normalized).to include(
+        'target' => 'exact_number',
+        'targetTotal' => 39
+      )
+      expect(normalized).not_to include('targetFilter', 'targetFilterMode')
+    end
+
+    it 'removes actor and numeric target fields from prior-board unary targets' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'unary',
+        subject: 'allied',
+        subjectFilter: 'any',
+        operator: 'mobility',
+        comparator: 'greater_than',
+        target: 'prior_board_state',
+        targetTotal: 4,
+        targetFilter: 'rook',
+        targetFilterMode: 'include'
+      })
+
+      expect(normalized).to include('target' => 'prior_board_state')
+      expect(normalized).not_to include('targetTotal', 'targetFilter', 'targetFilterMode')
+    end
+
+    it 'removes numeric and unnecessary filter-mode fields from actor unary targets' do
+      normalized = described_class.normalize(node_type: 'condition', data: {
+        version: 2,
+        kind: 'unary',
+        subject: 'allied',
+        subjectFilter: 'any',
+        operator: 'value',
+        comparator: 'greater_than',
+        target: 'enemy',
+        targetFilter: 'any',
+        targetFilterMode: 'exclude',
+        targetTotal: 4
+      })
+
+      expect(normalized).to include(
+        'target' => 'enemy',
+        'targetFilter' => 'any'
+      )
+      expect(normalized).not_to include('targetTotal', 'targetFilterMode')
     end
 
     it 'resets relational same_piece filters and removes comparison fields' do
@@ -83,14 +149,16 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'exclude',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 0,
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0,
         operator: 'same_piece',
         target: 'captured_piece',
         targetFilter: 'pawn',
         targetFilterMode: 'exclude',
         targetComparisonMetric: 'count',
         targetComparator: 'greater_than',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+        targetComparisonSourceTotal: 0
       })
 
       expect(normalized).to eq(
@@ -114,13 +182,15 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilter: 'any',
         subjectComparisonMetric: '',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 0,
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0,
         operator: 'attack',
         target: 'enemy',
         targetFilter: 'any',
         targetComparisonMetric: 'count',
         targetComparator: 'greater_than',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+        targetComparisonSourceTotal: 0
       })
 
       expect(normalized).to eq(
@@ -134,7 +204,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'targetFilter' => 'any',
           'targetComparisonMetric' => 'count',
           'targetComparator' => 'greater_than',
-          'targetComparisonValue' => 0
+          'targetComparisonSource' => 'exact_number',
+          'targetComparisonSourceTotal' => 0
         }
       )
     end
@@ -147,13 +218,15 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilter: 'any',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 0,
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 0,
         operator: 'attack',
         target: 'enemy',
         targetFilter: 'any',
         targetComparisonMetric: nil,
         targetComparator: 'greater_than',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+        targetComparisonSourceTotal: 0
       })
 
       expect(normalized).to eq(
@@ -164,7 +237,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'subjectFilter' => 'any',
           'subjectComparisonMetric' => 'count',
           'subjectComparator' => 'greater_than',
-          'subjectComparisonValue' => 0,
+          'subjectComparisonSource' => 'exact_number',
+          'subjectComparisonSourceTotal' => 0,
           'operator' => 'attack',
           'target' => 'enemy',
           'targetFilter' => 'any'
@@ -172,7 +246,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       )
     end
 
-    it 'removes stale unary comparison fields from relational conditions' do
+    it 'leaves legacy comparisonValue fields for validation to reject' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,
         kind: 'relational',
@@ -192,6 +266,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
           'subject' => 'allied',
           'subjectFilter' => 'any',
           'operator' => 'attack',
+          'comparisonValue' => 0,
           'target' => 'enemy',
           'targetFilter' => 'any'
         }
@@ -223,7 +298,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'include',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       }
 
       normalized = described_class.normalize(node_type: 'condition', data: input)
@@ -237,7 +313,8 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         subjectFilterMode: 'include',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       )
     end
 

@@ -142,7 +142,7 @@ class BotGuide
             {
               type: 'condition',
               title: 'Condition node',
-              preview: "Captured Piece\nvalue > Moved Piece Value",
+              preview: "Captured Piece\nvalue > Moved Piece",
               note: 'A yes/no question about the move being tested'
             },
             {
@@ -174,7 +174,7 @@ class BotGuide
           'Operator is what the condition checks: attack, defend, cover, shield, adjacent, same-piece, count, mobility, or value.',
           'Attack and defend use controlled squares on the current board. Mobility uses legal moves.',
           'Target appears for relationship operators like attack or defend.',
-          'Comparison appears for measurement operators like count, mobility, and value.',
+          'Comparison appears for measurement operators like count, mobility, and value. It can compare against an integer, Prior Board State, or another subject using the same operator.',
           'For relationship operators, + comparison can restrict the matching subject or target by count or value.',
           'King value is 0. For example, Allied any value = 39 can identify a full starting side because normal material totals 39 without adding king value.',
           'Because king value is 0, aggregate value checks can include a king without changing the total. Enemy any value = 2 attacking an allied rook could mean two pawns attack it, or two pawns and the king attack it.',
@@ -184,7 +184,7 @@ class BotGuide
         examples: [
           {
             title: 'Two condition shapes',
-            explanation: 'Unary conditions measure one side. Relational conditions ask whether one side has a relationship to another side.',
+            explanation: 'Unary conditions measure one side and compare it to a target. Relational conditions ask whether one side has a relationship to another side.',
             snippets: [
               {
                 label: 'Unary Condition',
@@ -353,8 +353,8 @@ class BotGuide
             kind: 'condition_editor',
             subject: { subject: 'Captured Piece', filter: 'Any' },
             operator: 'Value',
-            comparison: { comparator: '>', value: 'Moved Piece Value' },
-            preview: 'Captured Piece : value : > Moved Piece Value'
+            comparison: { comparator: '>', value: 'Moved Piece' },
+            preview: 'Captured Piece : value : > Moved Piece'
           }
         ]
       }
