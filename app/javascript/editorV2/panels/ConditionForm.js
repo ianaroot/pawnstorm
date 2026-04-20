@@ -151,6 +151,7 @@ class ConditionForm {
       leftComparisonSection: this.editorPanel.querySelector('#cond-left-comparison-section'),
       leftFilterRow: this.editorPanel.querySelector('#cond-left-filter-row'),
       rightFilterRow: this.editorPanel.querySelector('#cond-right-filter-row'),
+      unaryTargetSection: this.editorPanel.querySelector('#cond-unary-target-section'),
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       all: [
         leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonSource,
@@ -329,6 +330,7 @@ class ConditionForm {
     fields.unaryTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !unaryTargetFilterModeAvailable)
     fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
     fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
+    fields.unaryTargetSection?.classList.toggle('hidden', this.state.kind !== 'unary')
     this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
     this.setComparisonInputsDisabled('right', fields, !rightComparisonActive)
     this.setUnaryComparisonInputsDisabled(fields, !unaryComparisonActive)

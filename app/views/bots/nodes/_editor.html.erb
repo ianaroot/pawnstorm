@@ -83,6 +83,16 @@
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
+
+          <div class="condition-form-comparison hidden" id="cond-unary-comparison-section">
+            <div class="condition-form-field">
+              <select id="cond-unary-comparator">
+                <option value="equal_to">=</option>
+                <option value="greater_than">></option>
+                <option value="less_than"><</option>
+              </select>
+            </div>
+          </div>
         </section>
 
         <section class="condition-form-side" id="cond-right-card">
@@ -148,37 +158,29 @@
             </div>
           </div>
 
-          <div class="condition-form-comparison hidden" id="cond-unary-comparison-section">
+          <div class="condition-form-comparison hidden" id="cond-unary-target-section">
             <div class="condition-form-field">
               <label>Target</label>
-              <div class="condition-form-comparison-grid condition-form-comparison-grid--unary">
-                <select id="cond-unary-comparator">
-                  <option value="equal_to">=</option>
-                  <option value="greater_than">></option>
-                  <option value="less_than"><</option>
+              <div class="condition-form-comparison-source-stack">
+                <select id="cond-unary-target">
+                  <% NodeForm.unary_target_options.each do |label, value| %>
+                    <option value="<%= value %>"><%= label %></option>
+                  <% end %>
                 </select>
 
-                <div class="condition-form-comparison-source-stack">
-                  <select id="cond-unary-target">
-                    <% NodeForm.unary_target_options.each do |label, value| %>
+                <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
+                  <label class="condition-form-checkbox">
+                    <input id="cond-unary-target-filter-mode" type="checkbox">
+                    <span>Non-</span>
+                  </label>
+                  <select id="cond-unary-target-filter">
+                    <% NodeForm.filter_options.each do |label, value| %>
                       <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
-
-                  <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
-                    <label class="condition-form-checkbox">
-                      <input id="cond-unary-target-filter-mode" type="checkbox">
-                      <span>Non-</span>
-                    </label>
-                    <select id="cond-unary-target-filter">
-                      <% NodeForm.filter_options.each do |label, value| %>
-                        <option value="<%= value %>"><%= label %></option>
-                      <% end %>
-                    </select>
-                  </div>
-
-                  <input id="cond-unary-target-total" type="number" min="0" step="1">
                 </div>
+
+                <input id="cond-unary-target-total" type="number" min="0" step="1">
               </div>
             </div>
           </div>

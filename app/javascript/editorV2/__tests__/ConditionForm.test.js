@@ -61,22 +61,27 @@ function buildPanel() {
 
     <div id="cond-right-card-label"></div>
     <div id="cond-right-relational-fields"></div>
-    <div id="cond-unary-comparison-section" class="hidden"></div>
+    <div id="cond-unary-comparison-section" class="hidden">
+      <label>Comparator</label>
+      <select id="cond-unary-comparator">${option('greater_than', '>')}</select>
+    </div>
+    <div id="cond-unary-target-section" class="hidden">
+      <label>Target</label>
+      <select id="cond-unary-target">
+        ${option('exact_number', 'Integer')}
+        ${option('allied', 'Allied')}
+        ${option('enemy', 'Enemy')}
+        ${option('moved_piece', 'Moved Piece')}
+        ${option('captured_piece', 'Captured Piece')}
+        ${option('enemy_moved_piece', 'Enemy Moved Piece')}
+        ${option('enemy_captured_piece', 'Enemy Captured Piece')}
+        ${option('prior_board_state', 'Prior Board State')}
+      </select>
+    </div>
     <div id="cond-left-filter-row"></div>
     <div id="cond-right-filter-row"></div>
     <div id="cond-formulation-preview"></div>
 
-    <select id="cond-unary-comparator">${option('greater_than', '>')}</select>
-    <select id="cond-unary-target">
-      ${option('exact_number', 'Integer')}
-      ${option('allied', 'Allied')}
-      ${option('enemy', 'Enemy')}
-      ${option('moved_piece', 'Moved Piece')}
-      ${option('captured_piece', 'Captured Piece')}
-      ${option('enemy_moved_piece', 'Enemy Moved Piece')}
-      ${option('enemy_captured_piece', 'Enemy Captured Piece')}
-      ${option('prior_board_state', 'Prior Board State')}
-    </select>
     <div id="cond-unary-target-stack" class="condition-form-comparison-source-stack">
       <input id="cond-unary-target-total" type="number">
       <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
