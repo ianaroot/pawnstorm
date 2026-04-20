@@ -4,11 +4,16 @@ namespace :conditions do
     migrated = 0
 
     Node.where(node_type: 'condition').find_each do |node|
-      data = node.data
+      data = node.data.deep_dup
       next unless data.is_a?(Hash)
       next unless data['version'] == 2 && data['kind'] == 'relational'
 
       changed = false
+      if data.key?('mode')
+        data.delete('mode')
+        changed = true
+      end
+
       %w[subject target].each do |side|
         value_key = "#{side}ComparisonValue"
         source_key = "#{side}ComparisonSource"
