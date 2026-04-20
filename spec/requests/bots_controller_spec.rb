@@ -206,13 +206,13 @@ RSpec.describe BotsController, type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
-    it 'compiles the bot and exits to match setup' do
+    it 'compiles the bot and reloads the editor' do
       sign_in bot.user
 
       post compile_bot_path(bot)
 
-      expect(response).to redirect_to(new_bot_vs_bot_match_path(own_bot_id: bot.id))
-      expect(flash[:notice]).to eq('Bot compiled. Exiting editor to match setup.')
+      expect(response).to redirect_to(edit_bot_path(bot))
+      expect(flash[:notice]).to eq('Bot compiled. Reloading editor.')
       expect(bot.reload.compiled_program_stale).to be(false)
       expect(bot.compiled_program).to be_present
     end

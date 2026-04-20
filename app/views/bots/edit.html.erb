@@ -46,7 +46,7 @@
     </div>
 
     <div class="toolbar-section">
-      <%= link_to 'compile & run match',
+      <%= link_to 'compile bot',
           compile_bot_path(@bot),
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
