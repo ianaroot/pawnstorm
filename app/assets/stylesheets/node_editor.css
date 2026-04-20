@@ -1060,15 +1060,16 @@
 }
 
 .node-form-panel.node-form-panel--condition {
-  width: min(62rem, calc(100vw - 3rem));
+  width: min(34rem, calc(100vw - 3rem));
 }
 
 
 .condition-form-layout {
   display: grid;
-  grid-template-columns: minmax(17rem, 1fr) 7.5rem minmax(17rem, 1fr);
+  grid-template-columns: minmax(0, 12rem) 7.5rem minmax(0, 12rem);
   gap: 14px;
   align-items: start;
+  justify-content: center;
 }
 
 .condition-form-side,
@@ -1166,7 +1167,7 @@
 }
 
 .condition-form-comparison-grid--relational {
-  grid-template-columns: 4.75rem 3.0rem minmax(10.5rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
 }
 
@@ -1178,6 +1179,7 @@
 .condition-form-comparison-source-stack {
   display: grid;
   gap: 8px;
+  grid-column: 1 / -1;
 }
 
 .condition-form-checkbox {
