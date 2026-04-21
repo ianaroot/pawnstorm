@@ -12,6 +12,7 @@ class ToolbarHandler {
     this.clickHandler = clickHandler
     this.viewport = viewport
     this.compileAndExitLink = document.getElementById('compile-and-exit-link')
+    this.compileStatus = document.getElementById('compile-status')
     this.editorRoot = document.querySelector('.bot-editor')
     this.botNameDisplay = document.getElementById('bot-name-display')
     this.renameButton = document.querySelector('[data-bot-rename-open]')
@@ -43,6 +44,7 @@ class ToolbarHandler {
     if (undoBtn) {
       undoBtn.addEventListener('click', async () => {
         await this.undo()
+        this.markBotStale()
         this.updateButtons()
       })
     }
@@ -51,6 +53,7 @@ class ToolbarHandler {
     if (redoBtn) {
       redoBtn.addEventListener('click', async () => {
         await this.redo()
+        this.markBotStale()
         this.updateButtons()
       })
     }
@@ -67,6 +70,12 @@ class ToolbarHandler {
     }
     if (this.renameCancelButton) {
       this.renameCancelButton.addEventListener('click', this.boundHandleRenameCancel)
+    }
+    if (this.compileAndExitLink) {
+      this.compileAndExitLink.addEventListener('click', (e) => {
+        e.preventDefault()
+        this.handleCompile()
+      })
     }
     this.syncManager.setPersistedMutationCallback(() => this.markBotStale())
     this.updateCompileAction()
@@ -164,6 +173,51 @@ class ToolbarHandler {
   markBotStale() {
     if (this.editorRoot) { this.editorRoot.dataset.editorBotStaleValue = 'true' }
     this.updateCompileAction()
+  }
+
+  async handleCompile() {
+    if (!this.compileAndExitLink) return
+    const url = this.compileAndExitLink.href
+    this.compileAndExitLink.disabled = true
+    this.clearCompileStatus()
+
+    try {
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrf }
+      })
+      const data = await response.json()
+      if (data.success) {
+        if (this.editorRoot) { this.editorRoot.dataset.editorBotStaleValue = 'false' }
+        this.updateCompileAction()
+        this.showCompileStatus('Compiled.', false)
+      } else {
+        this.showCompileStatus(data.error || 'Compile failed.', true)
+      }
+    } catch {
+      this.showCompileStatus('Compile failed.', true)
+    } finally {
+      this.compileAndExitLink.disabled = false
+    }
+  }
+
+  showCompileStatus(message, isError) {
+    if (!this.compileStatus) return
+    this.compileStatus.textContent = message
+    this.compileStatus.classList.remove('hidden', 'compile-status--error')
+    if (isError) this.compileStatus.classList.add('compile-status--error')
+    clearTimeout(this._compileStatusTimer)
+    if (!isError) {
+      this._compileStatusTimer = setTimeout(() => this.clearCompileStatus(), 3000)
+    }
+  }
+
+  clearCompileStatus() {
+    if (!this.compileStatus) return
+    this.compileStatus.textContent = ''
+    this.compileStatus.classList.add('hidden')
+    this.compileStatus.classList.remove('compile-status--error')
   }
 
   updateCompileAction() {

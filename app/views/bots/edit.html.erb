@@ -58,6 +58,7 @@
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
           id: 'compile-and-exit-link' %>
+      <span id="compile-status" class="compile-status hidden"></span>
       <%= button_to 'Clone Bot',
           clone_bot_path(@bot),
           method: :post,

@@ -138,6 +138,15 @@
   background: #C084FC;
 }
 
+.compile-status {
+  font-size: 0.8125rem;
+  color: var(--success);
+}
+
+.compile-status--error {
+  color: var(--error);
+}
+
 .btn-clone {
   background: #3F3F46;
   color: #E5E5E5;

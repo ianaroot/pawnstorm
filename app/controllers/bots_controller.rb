@@ -49,9 +49,15 @@ end
 
   def compile
     @bot.compile_program!
-    redirect_to edit_bot_path(@bot), notice: 'Bot compiled. Reloading editor.'
+    respond_to do |format|
+      format.html { redirect_to edit_bot_path(@bot), notice: 'Bot compiled. Reloading editor.' }
+      format.json { render json: { success: true } }
+    end
   rescue StandardError => error
-    redirect_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}"
+    respond_to do |format|
+      format.html { redirect_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}" }
+      format.json { render json: { success: false, error: error.message }, status: :unprocessable_entity }
+    end
   end
 
   def clone
