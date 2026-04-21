@@ -19,7 +19,7 @@
         </div>
       </div>
 
-      <div class="bot-trace-panel">
+      <div class="bot-trace-panel replay-stack replay-shell">
         <p>Match is generating.</p>
       </div>
     </div>
@@ -48,21 +48,21 @@
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
         <% end %>
-        <div class="replay-controls">
+        <div class="replay-controls replay-stack replay-shrink-0">
           <div class="replay-meta-row">
             <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
             <p data-match-replay-target="result"></p>
           </div>
-          <div class="match-replay-controls">
-            <button type="button" data-match-replay-target="start-button">Start</button>
+          <div class="match-replay-controls replay-inline replay-inline--center">
+            <button type="button" data-match-replay-target="start-button">Restart</button>
             <button type="button" data-match-replay-target="back-button">Back</button>
             <button type="button" data-match-replay-target="forward-button">Forward</button>
             <button type="button" data-match-replay-target="play-button">Play</button>
             <button type="button" data-match-replay-target="reverse-button">Reverse</button>
             <button type="button" data-match-replay-target="top-moves-toggle">Mute top moves</button>
           </div>
-          <div class="match-replay-speed">
-            <div class="match-replay-speed-buttons">
+          <div class="match-replay-speed replay-inline replay-inline--center">
+            <div class="match-replay-speed-buttons replay-inline">
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
@@ -81,14 +81,14 @@
         </div>
       </div>
 
-      <div class="match-replay-notation-column">
+      <div class="match-replay-notation-column replay-scroll-y">
         <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
       </div>
 
-      <div class="bot-trace-panel">
-        <div class="match-replay-trace" data-match-replay-target="trace-panel" hidden>
+      <div class="bot-trace-panel replay-stack replay-shell">
+        <div class="match-replay-trace replay-stack replay-shell replay-grow" data-match-replay-target="trace-panel" hidden>
           <div class="match-replay-trace-summary" data-match-replay-target="trace-summary"></div>
-          <div class="match-replay-trace-branches" data-match-replay-target="trace-branches"></div>
+          <div class="match-replay-trace-branches replay-stack replay-scroll-y replay-grow" data-match-replay-target="trace-branches"></div>
         </div>
       </div>
     </div>

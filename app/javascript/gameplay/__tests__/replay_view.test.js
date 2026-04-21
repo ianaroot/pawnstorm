@@ -13,7 +13,6 @@ function buildRoot() {
     <button data-match-replay-target="forward-button"></button>
     <button data-match-replay-target="start-button"></button>
     <button data-match-replay-target="top-moves-toggle"></button>
-    <div data-match-replay-target="status"></div>
     <div data-match-replay-target="result"></div>
     <ol data-match-replay-target="notation"></ol>
     <div data-match-replay-target="warning"></div>

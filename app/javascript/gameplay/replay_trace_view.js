@@ -118,7 +118,7 @@ class ReplayTraceView {
 
   renderChildren(childIds, compiledProgram, queues, sharedNodeIds, totalHits) {
     const el = document.createElement('div')
-    el.className = 'trace-tree-children'
+    el.className = 'trace-tree-children replay-stack'
     for (const childId of childIds) {
       const child = this.renderNode(childId, compiledProgram, queues, sharedNodeIds, totalHits)
       if (child) el.appendChild(child)
@@ -139,7 +139,7 @@ class ReplayTraceView {
     details.appendChild(summary)
 
     const body = this.renderChildren(node.children || [], compiledProgram, queues, sharedNodeIds, totalHits)
-    body.classList.add('trace-tree-organizer__body')
+    body.classList.add('trace-tree-organizer__body', 'replay-stack')
     details.appendChild(body)
     return details
   }
@@ -168,7 +168,7 @@ class ReplayTraceView {
 
     if (passed === true) {
       const wrapper = document.createElement('div')
-      wrapper.className = 'trace-tree-node trace-tree-node--condition trace-tree-node--passed'
+      wrapper.className = 'trace-tree-node trace-tree-node--condition trace-tree-node--passed replay-stack'
       wrapper.appendChild(header)
       if (childIds.length > 0) {
         wrapper.appendChild(this.renderChildren(childIds, compiledProgram, queues, sharedNodeIds, totalHits))
@@ -177,7 +177,7 @@ class ReplayTraceView {
     }
 
     const details = document.createElement('details')
-    details.className = `trace-tree-node trace-tree-node--condition ${passed === false ? 'trace-tree-node--failed' : 'trace-tree-node--not-reached'}`
+    details.className = `trace-tree-node trace-tree-node--condition ${passed === false ? 'trace-tree-node--failed' : 'trace-tree-node--not-reached'} replay-stack`
 
     const summary = document.createElement('summary')
     summary.className = 'trace-tree-node__summary'
@@ -200,7 +200,8 @@ class ReplayTraceView {
     wrapper.className = [
       'trace-tree-node',
       'trace-tree-node--action',
-      executed ? (halted ? 'trace-tree-node--action-halted' : 'trace-tree-node--action-applied') : 'trace-tree-node--not-reached'
+      executed ? (halted ? 'trace-tree-node--action-halted' : 'trace-tree-node--action-applied') : 'trace-tree-node--not-reached',
+      'replay-stack'
     ].join(' ')
 
     const header = document.createElement('div')
