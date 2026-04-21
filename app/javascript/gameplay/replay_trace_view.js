@@ -18,7 +18,7 @@ class ReplayTraceView {
     }
     this.tracePanelElement.hidden = false
     this.renderSummary(inspection)
-    this.renderBranches(inspection)
+    this.renderTree(inspection)
   }
 
   renderSummary(inspection) {
@@ -53,91 +53,191 @@ class ReplayTraceView {
     this.traceSummaryElement.appendChild(summaryRow)
   }
 
-  renderBranches(inspection) {
+  renderTree(inspection) {
     this.traceBranchesElement.innerHTML = ""
-    const groupedBranches = this.groupByBranch({
-      compiledProgram: inspection.compiledProgram,
-      trace: inspection.result.inspectedTrace.trace
-    })
-    groupedBranches.forEach(branch => {
-      if (branch.entries.length === 0) { return }
-      const branchElement = document.createElement("section")
-      branchElement.className = "match-replay-trace-branch"
-      const heading = document.createElement("h4")
-      heading.className = "match-replay-trace-branch-heading"
-      heading.innerText = branch.label
-      branchElement.appendChild(heading)
-      branch.entries.forEach(entry => { branchElement.appendChild(this.traceEntryElement(entry)) })
-      this.traceBranchesElement.appendChild(branchElement)
-    })
-  }
+    const { compiledProgram, result } = inspection
+    const trace = result.inspectedTrace.trace
+    if (!compiledProgram?.nodes || !compiledProgram.root) { return }
 
-  groupByBranch({ compiledProgram, trace }) {
-    if (!compiledProgram?.nodes || !compiledProgram.root) { return [] }
-    const rootNode = compiledProgram.nodes[compiledProgram.root]
-    const branchIds = rootNode?.children || []
-    return branchIds.map((branchId, index) => {
-      const subtreeIds = this.collectSubtreeIds({ compiledProgram, nodeId: branchId })
-      return {
-        label: `branch ${index + 1}`,
-        entries: trace.filter(entry => subtreeIds.has(entry.nodeId))
-      }
-    })
-  }
-
-  collectSubtreeIds({ compiledProgram, nodeId, collected = new Set() }) {
-    if (!nodeId || collected.has(nodeId)) { return collected }
-    collected.add(nodeId)
-    const node = compiledProgram.nodes[nodeId]
-    const children = node?.children || []
-    children.forEach(childId => this.collectSubtreeIds({ compiledProgram, nodeId: childId, collected }))
-    return collected
-  }
-
-  traceEntryElement(entry) {
-    const row = document.createElement("div")
-    row.className = "match-replay-trace-entry"
-    const meta = document.createElement("div")
-    meta.className = "match-replay-trace-entry-meta"
-    const typePill = document.createElement("span")
-    typePill.className = "match-replay-trace-pill match-replay-trace-pill--type"
-    typePill.innerText = entry.nodeType
-    meta.appendChild(typePill)
-    
-    if (entry.nodeType === 'condition') {
-      row.classList.add('match-replay-trace-entry--condition')
-      row.classList.add(entry.passed ? 'match-replay-trace-entry--pass' : 'match-replay-trace-entry--fail')
-      const statusPill = document.createElement("span")
-      statusPill.className = `match-replay-trace-pill ${entry.passed ? 'match-replay-trace-pill--pass' : 'match-replay-trace-pill--fail'}`
-      statusPill.innerText = entry.passed ? 'true' : 'false'
-      meta.appendChild(statusPill)
-      row.appendChild(meta)
-
-      const body = document.createElement("div")
-      body.className = "match-replay-trace-entry-body"
-      body.innerText = this.conditionSummary(entry.data)
-      row.appendChild(body)
-      return row
+    const queues = {}
+    const totalHits = {}
+    for (const entry of trace) {
+      if (!queues[entry.nodeId]) queues[entry.nodeId] = []
+      queues[entry.nodeId].push(entry)
+      totalHits[entry.nodeId] = (totalHits[entry.nodeId] || 0) + 1
     }
 
-    row.classList.add('match-replay-trace-entry--action')
-    row.classList.add(entry.halted ? 'match-replay-trace-entry--action-halted' : 'match-replay-trace-entry--action-applied')
-    const statusPill = document.createElement("span")
-    statusPill.className = "match-replay-trace-pill match-replay-trace-pill--action"
-    statusPill.innerText = entry.halted ? 'halt' : 'applied'
-    meta.appendChild(statusPill)
-    row.appendChild(meta)
+    const sharedNodeIds = this.findSharedNodeIds(compiledProgram)
+    const rootNode = compiledProgram.nodes[compiledProgram.root]
 
-    const body = document.createElement("div")
-    body.className = "match-replay-trace-entry-body"
-    body.innerText = `${entry.actionType} ${entry.value}`
-    row.appendChild(body)
+    for (const childId of (rootNode?.children || [])) {
+      const el = this.renderNode(childId, compiledProgram, queues, sharedNodeIds, totalHits)
+      if (el) this.traceBranchesElement.appendChild(el)
+    }
+  }
 
-    const scoreMeta = document.createElement("div")
-    scoreMeta.className = "match-replay-trace-entry-score"
-    scoreMeta.innerText = `score ${entry.scoreBefore} -> ${entry.scoreAfter}`
-    row.appendChild(scoreMeta)
-    return row
+  findSharedNodeIds(compiledProgram) {
+    const parentCount = {}
+    for (const node of Object.values(compiledProgram.nodes)) {
+      for (const childId of (node.children || [])) {
+        parentCount[childId] = (parentCount[childId] || 0) + 1
+      }
+    }
+    return new Set(
+      Object.entries(parentCount).filter(([, c]) => c > 1).map(([id]) => id)
+    )
+  }
+
+  renderNode(nodeId, compiledProgram, queues, sharedNodeIds, totalHits) {
+    const node = compiledProgram.nodes[nodeId]
+    if (!node) { return null }
+
+    const isShared = sharedNodeIds.has(nodeId)
+
+    switch (node.type) {
+      case 'organizer':
+        return this.renderOrganizer(node, compiledProgram, queues, sharedNodeIds, totalHits)
+      case 'condition': {
+        const entry = queues[nodeId]?.shift() ?? null
+        const executionIndex = entry !== null
+          ? (totalHits[nodeId] || 0) - (queues[nodeId]?.length ?? 0)
+          : null
+        return this.renderCondition(node, entry, isShared, executionIndex, compiledProgram, queues, sharedNodeIds, totalHits)
+      }
+      case 'action': {
+        const entry = queues[nodeId]?.shift() ?? null
+        const executionIndex = entry !== null
+          ? (totalHits[nodeId] || 0) - (queues[nodeId]?.length ?? 0)
+          : null
+        return this.renderAction(node, entry, isShared, executionIndex)
+      }
+      default:
+        return null
+    }
+  }
+
+  renderChildren(childIds, compiledProgram, queues, sharedNodeIds, totalHits) {
+    const el = document.createElement('div')
+    el.className = 'trace-tree-children'
+    for (const childId of childIds) {
+      const child = this.renderNode(childId, compiledProgram, queues, sharedNodeIds, totalHits)
+      if (child) el.appendChild(child)
+    }
+    return el
+  }
+
+  renderOrganizer(node, compiledProgram, queues, sharedNodeIds, totalHits) {
+    const details = document.createElement('details')
+    details.className = 'trace-tree-organizer'
+    details.open = true
+
+    const summary = document.createElement('summary')
+    summary.className = 'trace-tree-organizer__summary'
+    const titleText = document.createElement('span')
+    titleText.innerText = node.data?.title || 'branch'
+    summary.appendChild(titleText)
+    details.appendChild(summary)
+
+    const body = this.renderChildren(node.children || [], compiledProgram, queues, sharedNodeIds, totalHits)
+    body.classList.add('trace-tree-organizer__body')
+    details.appendChild(body)
+    return details
+  }
+
+  renderCondition(node, entry, isShared, executionIndex, compiledProgram, queues, sharedNodeIds, totalHits) {
+    const passed = entry ? entry.passed : null
+    const childIds = node.children || []
+
+    const header = document.createElement('div')
+    header.className = 'trace-tree-node__header'
+
+    if (passed === true) {
+      header.appendChild(this.pill('pass', '✓'))
+    } else if (passed === false) {
+      header.appendChild(this.pill('fail', '✗'))
+    } else {
+      header.appendChild(this.pill('skip', '—'))
+    }
+
+    const text = document.createElement('span')
+    text.className = 'trace-tree-node__text'
+    text.innerText = this.conditionSummary(node.data)
+    header.appendChild(text)
+
+    if (isShared && executionIndex !== null) header.appendChild(this.hitBadge(executionIndex))
+
+    if (passed === true) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'trace-tree-node trace-tree-node--condition trace-tree-node--passed'
+      wrapper.appendChild(header)
+      if (childIds.length > 0) {
+        wrapper.appendChild(this.renderChildren(childIds, compiledProgram, queues, sharedNodeIds, totalHits))
+      }
+      return wrapper
+    }
+
+    const details = document.createElement('details')
+    details.className = `trace-tree-node trace-tree-node--condition ${passed === false ? 'trace-tree-node--failed' : 'trace-tree-node--not-reached'}`
+
+    const summary = document.createElement('summary')
+    summary.className = 'trace-tree-node__summary'
+    summary.appendChild(header)
+    details.appendChild(summary)
+
+    if (childIds.length > 0) {
+      const children = this.renderChildren(childIds, compiledProgram, {}, sharedNodeIds, totalHits)
+      children.classList.add('trace-tree-children--not-executed')
+      details.appendChild(children)
+    }
+    return details
+  }
+
+  renderAction(node, entry, isShared, executionIndex) {
+    const executed = entry !== null
+    const halted = executed && entry.halted
+
+    const wrapper = document.createElement('div')
+    wrapper.className = [
+      'trace-tree-node',
+      'trace-tree-node--action',
+      executed ? (halted ? 'trace-tree-node--action-halted' : 'trace-tree-node--action-applied') : 'trace-tree-node--not-reached'
+    ].join(' ')
+
+    const header = document.createElement('div')
+    header.className = 'trace-tree-node__header'
+
+    if (executed) header.appendChild(this.pill('action', halted ? 'halt' : 'applied'))
+
+    const text = document.createElement('span')
+    text.className = 'trace-tree-node__text'
+    text.innerText = `${node.data.actionType} ${node.data.value}`
+    header.appendChild(text)
+
+    if (isShared && executionIndex !== null) header.appendChild(this.hitBadge(executionIndex))
+
+    if (executed) {
+      const score = document.createElement('span')
+      score.className = 'trace-tree-node__score'
+      score.innerText = `${entry.scoreBefore} → ${entry.scoreAfter}`
+      header.appendChild(score)
+    }
+
+    wrapper.appendChild(header)
+    return wrapper
+  }
+
+  pill(type, text) {
+    const el = document.createElement('span')
+    el.className = `match-replay-trace-pill match-replay-trace-pill--${type}`
+    el.innerText = text
+    return el
+  }
+
+  hitBadge(executionIndex) {
+    const el = document.createElement('span')
+    el.className = 'trace-tree-hit-badge'
+    el.innerText = `hit ${executionIndex}`
+    return el
   }
 
   conditionSummary(data) {

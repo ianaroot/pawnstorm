@@ -138,8 +138,8 @@ class BotCompiler
     else
       # Organizers carry freeform user-authored text. We intentionally strip that
       # data out during compilation so annotation content never becomes part of the
-      # executable bot program.
-      {}
+      # executable bot program. The title is included as display metadata for trace rendering.
+      { title: raw['title'] || raw[:title] }
     end
   end
 
