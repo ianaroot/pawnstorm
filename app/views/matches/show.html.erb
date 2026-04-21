@@ -19,7 +19,7 @@
         </div>
       </div>
 
-      <div class="match-replay-sidebar">
+      <div class="bot-trace-panel">
         <p>Match is generating.</p>
       </div>
     </div>
@@ -45,22 +45,14 @@
       data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
     >
       <div class="game-page">
-        <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
         <% end %>
-        <div id="arena">
-          <div id="notifications"></div>
-          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
-          <div id="W-captures" class="captures"><br><br><br></div>
-          <%= render partial: 'shared/chess_board' %>
-          <div id="B-captures" class="captures"><br><br><br></div>
-        </div>
-      </div>
-
-      <div class="match-replay-sidebar">
-        <div class="match-replay-sidebar-top">
-          <p data-match-replay-target="result"></p>
+        <div class="replay-controls">
+          <div class="replay-meta-row">
+            <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
+            <p data-match-replay-target="result"></p>
+          </div>
           <div class="match-replay-controls">
             <button type="button" data-match-replay-target="start-button">Start</button>
             <button type="button" data-match-replay-target="back-button">Back</button>
@@ -70,7 +62,6 @@
             <button type="button" data-match-replay-target="top-moves-toggle">Mute top moves</button>
           </div>
           <div class="match-replay-speed">
-            <span>Speed</span>
             <div class="match-replay-speed-buttons">
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
@@ -79,10 +70,22 @@
               <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
             </div>
           </div>
-          <p data-match-replay-target="status"></p>
           <p data-match-replay-target="warning" hidden></p>
-          <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
         </div>
+        <div id="arena">
+          <div id="notifications"></div>
+          <div id="turn-marker"><span id="team-allowed-to-move">W</span>'s turn</div>
+          <div id="W-captures" class="captures"><br><br><br></div>
+          <%= render partial: 'shared/chess_board' %>
+          <div id="B-captures" class="captures"><br><br><br></div>
+        </div>
+      </div>
+
+      <div class="match-replay-notation-column">
+        <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
+      </div>
+
+      <div class="bot-trace-panel">
         <div class="match-replay-trace" data-match-replay-target="trace-panel" hidden>
           <div class="match-replay-trace-summary" data-match-replay-target="trace-summary"></div>
           <div class="match-replay-trace-branches" data-match-replay-target="trace-branches"></div>
