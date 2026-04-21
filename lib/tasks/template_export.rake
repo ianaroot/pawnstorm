@@ -9,6 +9,7 @@ namespace :templates do
   task export_from_bot: :environment do
     source_bot_name = ENV['SOURCE_BOT'].presence || ENV['BOT_NAME'].presence
     output_path = ENV['OUTPUT_PATH'].presence || Rails.root.join('tmp', 'template_export.js').to_s
+    output_dir = ENV['OUTPUT_DIR'].presence
     config_path = ENV['CONFIG_PATH'].presence
     organizer_ids = split_env_list('ORGANIZER_IDS').map(&:to_i)
     organizer_titles = split_env_list('ORGANIZER_TITLES')
@@ -27,10 +28,14 @@ namespace :templates do
     )
 
     templates = exporter.templates
-    FileUtils.mkdir_p(File.dirname(output_path))
-    File.write(output_path, BotTemplateExportRenderer.render(templates))
+    if output_dir.present?
+      BotTemplateExportRenderer.write_category_files(templates:, output_dir:)
+    else
+      FileUtils.mkdir_p(File.dirname(output_path))
+      File.write(output_path, BotTemplateExportRenderer.render(templates))
+    end
 
-    puts "Wrote #{output_path}"
+    puts output_dir.present? ? "Wrote template files to #{output_dir}" : "Wrote #{output_path}"
     puts "Source bot: #{bot.name}"
     puts "Templates exported: #{templates.length}"
   end
@@ -248,11 +253,42 @@ module BotTemplateExportRenderer
     'endgame' => 'ENDGAME'
   }.freeze
 
-  def render(templates)
+  EXPORT_NAMES = {
+    'opening' => 'OPENING_TEMPLATES',
+    'captures' => 'CAPTURE_TEMPLATES',
+    'defense' => 'DEFENSE_TEMPLATES',
+    'activity' => 'ACTIVITY_TEMPLATES',
+    'tactics' => 'TACTIC_TEMPLATES',
+    'king_pressure' => 'KING_PRESSURE_TEMPLATES',
+    'pawn_play' => 'PAWN_PLAY_TEMPLATES',
+    'endgame' => 'ENDGAME_TEMPLATES'
+  }.freeze
+
+  FILE_NAMES = {
+    'opening' => 'opening.js',
+    'captures' => 'captures.js',
+    'defense' => 'defense.js',
+    'activity' => 'activity.js',
+    'tactics' => 'tactics.js',
+    'king_pressure' => 'kingPressure.js',
+    'pawn_play' => 'pawnPlay.js',
+    'endgame' => 'endgame.js'
+  }.freeze
+
+  def write_category_files(templates:, output_dir:)
+    FileUtils.mkdir_p(output_dir)
+    templates.group_by { |template| template.fetch(:category).to_s }.each do |category, category_templates|
+      file_name = FILE_NAMES.fetch(category) { "#{category.gsub(/[^a-z0-9_]+/i, '_')}.js" }
+      export_name = EXPORT_NAMES.fetch(category) { "#{category.upcase.gsub(/[^A-Z0-9]+/, '_')}_TEMPLATES" }
+      File.write(File.join(output_dir, file_name), render(category_templates, export_name:))
+    end
+  end
+
+  def render(templates, export_name: 'EXPORTED_TEMPLATES')
     [
       "import { TEMPLATE_CATEGORIES } from 'editorV2/templates/TemplateCategories'",
       '',
-      'export const EXPORTED_TEMPLATES = [',
+      "export const #{export_name} = [",
       indent(templates.map { |template| render_template(template) }.join(",\n"), 2),
       ']',
       ''
