@@ -8,14 +8,7 @@
       enemy_captured_piece
     ].freeze
 
-    EDITOR_SUBJECTS = %w[
-      allied
-      enemy
-      moved_piece
-      captured_piece
-      enemy_moved_piece
-      enemy_captured_piece
-    ].freeze
+    EDITOR_SUBJECTS = SUBJECTS
 
     FILTERS = %w[any king queen rook bishop knight pawn major minor].freeze
     CONCRETE_FILTERS = %w[king queen rook bishop knight pawn major minor].freeze

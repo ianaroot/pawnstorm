@@ -5,10 +5,8 @@ class BotCloner
   end
 
   def clone!
-    clone = nil
-
     ActiveRecord::Base.transaction do
-      clone = @user.bots.create!(
+      new_bot = @user.bots.create!(
         name: next_clone_name,
         description: @source_bot.description,
         commands: @source_bot.commands
@@ -16,17 +14,17 @@ class BotCloner
 
       id_map = {}
       source_root = @source_bot.nodes.find_by(node_type: 'root')
-      clone_root = clone.nodes.find_by(node_type: 'root')
+      clone_root = new_bot.nodes.find_by(node_type: 'root')
       id_map[source_root.id] = clone_root.id if source_root && clone_root
 
       @source_bot.nodes.where.not(node_type: 'root').each do |node|
-        new_node = clone.nodes.create!(
+        copied_node = new_bot.nodes.create!(
           node_type: node.node_type,
           position_x: node.position_x,
           position_y: node.position_y,
           data: node.data.deep_dup
         )
-        id_map[node.id] = new_node.id
+        id_map[node.id] = copied_node.id
       end
 
       @source_bot.nodes.each do |node|
@@ -37,18 +35,18 @@ class BotCloner
           )
         end
       end
-    end
 
-    clone.compile_program!
-    clone
+      new_bot.compile_program!
+      new_bot
+    end
   end
 
   private
 
   def next_clone_name
     base = "Clone #{@source_bot.name}"
-    existing = Bot.where("name = ? OR name LIKE ?", base, "#{base}(%)")
-                  .pluck(:name)
+    safe_base = ActiveRecord::Base.sanitize_sql_like(base)
+    existing = Bot.where("name = ? OR name LIKE ?", base, "#{safe_base}(%)").pluck(:name)
     return base unless existing.include?(base)
 
     n = 2
