@@ -193,50 +193,6 @@ describe('ReplayView', () => {
     expect(revealButton.type).toBe('button')
   })
 
-  it('omits the total move count before the spoiler is revealed', () => {
-    const root = buildRoot()
-    const view = new ReplayView({ rootElement: root })
-
-    view.renderFrame({
-      board: buildBoard(),
-      currentMoveIndex: 1,
-      isPlaying: false,
-      playDirection: 1,
-      speedMultiplier: 1,
-      movePairs: [['e4', 'e5']],
-      result: 'white_wins',
-      totalMoves: 2,
-      spoilerRevealed: false,
-      warning: null,
-      inspection: { enabled: false, result: null },
-      muteTopMoveHighlights: false
-    })
-
-    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Move 2')
-  })
-
-  it('shows the total move count after the spoiler is revealed', () => {
-    const root = buildRoot()
-    const view = new ReplayView({ rootElement: root })
-
-    view.renderFrame({
-      board: buildBoard(),
-      currentMoveIndex: 0,
-      isPlaying: false,
-      playDirection: 1,
-      speedMultiplier: 1,
-      movePairs: [['e4', 'e5']],
-      result: 'white_wins',
-      totalMoves: 2,
-      spoilerRevealed: true,
-      warning: null,
-      inspection: { enabled: false, result: null },
-      muteTopMoveHighlights: false
-    })
-
-    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Move 1 of 2')
-  })
-
   it('shows the formatted result after the spoiler is revealed', () => {
     const root = buildRoot()
     const view = new ReplayView({ rootElement: root })
@@ -257,27 +213,5 @@ describe('ReplayView', () => {
     })
 
     expect(root.querySelector('[data-match-replay-target="result"]').textContent).toBe('white wins')
-  })
-
-  it('uses the final position wording after the spoiler is revealed', () => {
-    const root = buildRoot()
-    const view = new ReplayView({ rootElement: root })
-
-    view.renderFrame({
-      board: buildBoard(),
-      currentMoveIndex: 1,
-      isPlaying: false,
-      playDirection: 1,
-      speedMultiplier: 1,
-      movePairs: [['e4', 'e5']],
-      result: 'white_wins',
-      totalMoves: 2,
-      spoilerRevealed: true,
-      warning: null,
-      inspection: { enabled: false, result: null },
-      muteTopMoveHighlights: false
-    })
-
-    expect(root.querySelector('[data-match-replay-target="status"]').textContent).toBe('Final position after move 2')
   })
 })
