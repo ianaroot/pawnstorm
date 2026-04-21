@@ -57,7 +57,7 @@
 
 .match-replay-layout {
   display: grid;
-  grid-template-columns: minmax(min-content, 2fr) minmax(3rem, 0.7fr) minmax(0, 3fr);
+  grid-template-columns: minmax(min-content, 2fr) minmax(3rem, 0.7fr) minmax(0, 2.5fr);
   gap: 1.5rem;
   align-items: stretch;
   height: calc(100vh - 4rem);
@@ -81,7 +81,7 @@
 }
 
 .match-replay-layout #arena {
-  zoom: min(1, calc((100vh - 30rem) / 580px));
+  zoom: min(1, calc((100vh - 30rem) / 450px));
   margin-left: 0;
   margin-right: 0;
 }
