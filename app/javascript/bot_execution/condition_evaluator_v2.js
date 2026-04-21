@@ -141,6 +141,10 @@ class ConditionEvaluatorV2 {
           return leftTotal > rightTotal
         case "less_than":
           return leftTotal < rightTotal
+        case "greater_than_or_equal_to":
+          return leftTotal >= rightTotal
+        case "less_than_or_equal_to":
+          return leftTotal <= rightTotal
         default:
           throw new Error(`Unknown V2 comparator: ${comparator}`)
       }

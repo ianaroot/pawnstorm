@@ -30,7 +30,7 @@
     UNARY_TARGETS = (%w[exact_number] + SUBJECTS + %w[prior_board_state]).freeze
 
     COMPARISON_METRICS = %w[count value].freeze
-    COMPARATORS = %w[equal_to greater_than less_than].freeze
+    COMPARATORS = %w[equal_to greater_than less_than greater_than_or_equal_to less_than_or_equal_to].freeze
     EXACT_COMPARISON_SOURCE = 'exact_number'
     PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
     DISTINCT_PIECE_COMPARISON_SOURCES = %w[moved_piece enemy_moved_piece captured_piece enemy_captured_piece].freeze

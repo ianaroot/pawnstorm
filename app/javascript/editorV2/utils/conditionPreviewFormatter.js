@@ -112,6 +112,10 @@ function comparatorLabel(comparator) {
       return '>'
     case 'less_than':
       return '<'
+    case 'greater_than_or_equal_to':
+      return '≥'
+    case 'less_than_or_equal_to':
+      return '≤'
     default:
       return comparator
   }
