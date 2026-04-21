@@ -4,7 +4,7 @@
   <% end %>
 
   <% if @match.pending? || @match.running? %>
-    <div class="match-replay-layout">
+    <div class="match-replay-page match-replay-layout">
       <div class="game-page">
         <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
         <% if @match.error_message.present? %>
@@ -33,7 +33,7 @@
     </div>
   <% else %>
     <div
-      class="match-replay-layout"
+      class="match-replay-page match-replay-layout"
       data-match-replay-page="true"
       data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
