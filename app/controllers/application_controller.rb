@@ -1,6 +1,8 @@
 require 'securerandom'
 
 class ApplicationController < ActionController::Base
+  include Pagy::Method
+
   GUEST_EMAIL_DOMAIN = 'guest.local'
   USER_ACTIVITY_THROTTLE = 12.hours
 

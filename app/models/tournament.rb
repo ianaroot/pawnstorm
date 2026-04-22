@@ -27,6 +27,19 @@ class Tournament < ApplicationRecord
   has_many :bots, through: :tournament_entries
   has_many :matches, dependent: :nullify
 
+  scope :with_name,       ->(name)    { where("tournaments.name ILIKE ?", "%#{name}%") }
+  scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
+  scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
+  scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
+  scope :filtered, ->(name: nil, status: nil, owner: nil, entry_owner_id: nil) {
+    scope = all
+    scope = scope.with_name(name)                 if name.present?
+    scope = scope.with_status(status)             if status.present?
+    scope = scope.with_owner(owner)               if owner.present?
+    scope = scope.with_entry_from(entry_owner_id) if entry_owner_id.present?
+    scope
+  }
+
   before_validation :generate_invite_token
 
   validates :name, :invite_token, presence: true
@@ -38,7 +51,10 @@ class Tournament < ApplicationRecord
     return if paused?
     return if matches.running.exists?
     next_match = matches.pending.order(:created_at).first
-    return if next_match.nil?
+    if next_match.nil?
+      status_completed! if status_running?
+      return
+    end
     ComputeMatchJob.perform_later(next_match.id)
   end
 

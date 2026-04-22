@@ -1,23 +1,73 @@
 <div class="match-show-page">
   <div class="game-page tournament-page">
-    <h1>Tournaments</h1>
+    <div class="tournaments-index-header">
+      <h1>Tournaments</h1>
+      <% if user_signed_in? && !current_user.guest? %>
+        <%= link_to 'Create Tournament', new_tournament_path, class: 'btn btn-primary' %>
+      <% end %>
+    </div>
 
-    <% if user_signed_in? && !current_user.guest? %>
-      <p><%= link_to 'Create Tournament', new_tournament_path %></p>
+    <%= form_with url: tournaments_path, method: :get, local: true, class: 'tournaments-filter-form' do |f| %>
+      <div class="tournaments-filter-row">
+        <div class="tournaments-filter-field">
+          <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'tournaments-filter-input' %>
+        </div>
+        <div class="tournaments-filter-field">
+          <%= f.text_field :owner, value: params[:owner], placeholder: 'Search by owner', class: 'tournaments-filter-input' %>
+        </div>
+        <div class="tournaments-filter-field tournaments-filter-field--select">
+          <%= f.select :status,
+            [['Any status', ''], *Tournament.statuses.keys.map { |s| [s.humanize, s] }],
+            { selected: params[:status] },
+            class: 'tournaments-filter-select' %>
+        </div>
+        <% if user_signed_in? && !current_user.guest? %>
+          <label class="tournaments-filter-checkbox-label">
+            <%= f.check_box :my_entries, checked: params[:my_entries] == "1", class: 'tournaments-filter-checkbox' %>
+            My entries
+          </label>
+        <% end %>
+        <%= f.submit 'Filter', class: 'btn btn-secondary tournaments-filter-submit' %>
+        <% if @filter_params.values.any?(&:present?) %>
+          <%= link_to 'Clear', tournaments_path, class: 'btn btn-secondary' %>
+        <% end %>
+      </div>
     <% end %>
 
     <% if @tournaments.any? %>
-      <ul>
-        <% @tournaments.each do |tournament| %>
-          <li>
-            <%= link_to tournament.name, tournament_path(tournament) %>
-            <span><%= tournament.status.humanize %></span>
-            <span><%= tournament.created_at.to_date.to_fs(:long) %></span>
-          </li>
-        <% end %>
-      </ul>
+      <table class="tournaments-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Entries</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tournaments.each do |tournament| %>
+            <tr>
+              <td><%= link_to tournament.name, tournament_path(tournament) %></td>
+              <td class="tournaments-table-owner"><%= tournament.creator&.email %></td>
+              <td><span class="tournament-status-pill tournament-status-pill--<%= tournament.status %>"><%= tournament.status.humanize %></span></td>
+              <td class="tournaments-table-entries">
+                <%= tournament.tournament_entries.size %>
+                <% if tournament.max_entries %>
+                  <span class="tournaments-table-entries-cap">/ <%= tournament.max_entries %></span>
+                <% end %>
+              </td>
+              <td class="tournaments-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="tournaments-pagination">
+        <%== @pagy.series_nav if @pagy.pages > 1 %>
+      </div>
     <% else %>
-      <p>No public tournaments yet.</p>
+      <p class="tournaments-empty">No tournaments found.</p>
     <% end %>
   </div>
 </div>
