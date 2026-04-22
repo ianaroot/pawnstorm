@@ -1,33 +1,33 @@
 <div class="match-show-page">
   <div class="game-page tournament-page">
-    <div class="tournaments-index-header">
+    <div class="index-header">
       <h1>Tournaments</h1>
       <% if user_signed_in? && !current_user.guest? %>
         <%= link_to 'Create Tournament', new_tournament_path, class: 'btn btn-primary' %>
       <% end %>
     </div>
 
-    <%= form_with url: tournaments_path, method: :get, local: true, class: 'tournaments-filter-form' do |f| %>
-      <div class="tournaments-filter-row">
-        <div class="tournaments-filter-field">
-          <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'tournaments-filter-input' %>
+    <%= form_with url: tournaments_path, method: :get, local: true, class: 'index-filter-form' do |f| %>
+      <div class="index-filter-row">
+        <div class="index-filter-field">
+          <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'index-filter-input' %>
         </div>
-        <div class="tournaments-filter-field">
-          <%= f.text_field :owner, value: params[:owner], placeholder: 'Search by owner', class: 'tournaments-filter-input' %>
+        <div class="index-filter-field">
+          <%= f.text_field :owner, value: params[:owner], placeholder: 'Search by owner', class: 'index-filter-input' %>
         </div>
-        <div class="tournaments-filter-field tournaments-filter-field--select">
+        <div class="index-filter-field">
           <%= f.select :status,
             [['Any status', ''], *Tournament.statuses.keys.map { |s| [s.humanize, s] }],
             { selected: params[:status] },
-            class: 'tournaments-filter-select' %>
+            class: 'index-filter-select' %>
         </div>
         <% if user_signed_in? && !current_user.guest? %>
-          <label class="tournaments-filter-checkbox-label">
-            <%= f.check_box :my_entries, checked: params[:my_entries] == "1", class: 'tournaments-filter-checkbox' %>
+          <label class="index-filter-checkbox-label">
+            <%= f.check_box :my_entries, checked: params[:my_entries] == "1", class: 'index-filter-checkbox' %>
             My entries
           </label>
         <% end %>
-        <%= f.submit 'Filter', class: 'btn btn-secondary tournaments-filter-submit' %>
+        <%= f.submit 'Filter', class: 'btn btn-secondary' %>
         <% if @filter_params.values.any?(&:present?) %>
           <%= link_to 'Clear', tournaments_path, class: 'btn btn-secondary' %>
         <% end %>
@@ -35,7 +35,7 @@
     <% end %>
 
     <% if @tournaments.any? %>
-      <table class="tournaments-table">
+      <table>
         <thead>
           <tr>
             <th>Name</th>
@@ -49,25 +49,25 @@
           <% @tournaments.each do |tournament| %>
             <tr>
               <td><%= link_to tournament.name, tournament_path(tournament) %></td>
-              <td class="tournaments-table-owner"><%= tournament.creator&.email %></td>
+              <td class="index-table-secondary"><%= tournament.creator&.email %></td>
               <td><span class="tournament-status-pill tournament-status-pill--<%= tournament.status %>"><%= tournament.status.humanize %></span></td>
-              <td class="tournaments-table-entries">
+              <td>
                 <%= tournament.tournament_entries.size %>
                 <% if tournament.max_entries %>
-                  <span class="tournaments-table-entries-cap">/ <%= tournament.max_entries %></span>
+                  <span class="index-table-secondary">/ <%= tournament.max_entries %></span>
                 <% end %>
               </td>
-              <td class="tournaments-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
+              <td class="index-table-secondary index-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
             </tr>
           <% end %>
         </tbody>
       </table>
 
-      <div class="tournaments-pagination">
+      <div class="index-pagination">
         <%== @pagy.series_nav if @pagy.pages > 1 %>
       </div>
     <% else %>
-      <p class="tournaments-empty">No tournaments found.</p>
+      <p class="index-empty">No tournaments found.</p>
     <% end %>
   </div>
 </div>

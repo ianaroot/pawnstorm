@@ -19,6 +19,20 @@ class Bot < ApplicationRecord
   has_many :nodes, dependent: :destroy
   has_many :connections, through: :nodes, source: :outgoing_connections
 
+  scope :with_name,            ->(name)   { where("bots.name ILIKE ?", "%#{name}%") }
+  scope :with_compiled_status, ->(status) {
+    case status
+    when 'compiled' then where(compiled_program_stale: false).where.not(compiled_program: nil)
+    when 'stale'    then where(compiled_program_stale: true)
+    end
+  }
+  scope :filtered, ->(name: nil, compiled_status: nil) {
+    scope = all
+    scope = scope.with_name(name)                       if name.present?
+    scope = scope.with_compiled_status(compiled_status) if compiled_status.present?
+    scope
+  }
+
   validates :name, presence: true, uniqueness: true
   
   before_destroy :destroy_open_tournament_entries, prepend: true

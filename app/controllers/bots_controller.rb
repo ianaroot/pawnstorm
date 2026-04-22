@@ -3,7 +3,9 @@ class BotsController < ApplicationController
   before_action :set_bot, only: [:edit, :update, :destroy, :compile, :clone]
 
   def index
-    @bots = current_user ? current_user.bots.order(:name) : Bot.none
+    @filter_params = params.permit(:name, :compiled_status)
+    base = current_user ? current_user.bots : Bot.none
+    @pagy, @bots = pagy(base.filtered(**bot_filters).order(:name), limit: 8)
   end
 
   def new
@@ -50,12 +52,12 @@ class BotsController < ApplicationController
   def compile
     @bot.compile_program!
     respond_to do |format|
-      format.html { redirect_to edit_bot_path(@bot), notice: 'Bot compiled. Reloading editor.' }
+      format.html { redirect_back_or_to edit_bot_path(@bot), notice: 'Bot compiled.' }
       format.json { render json: { success: true } }
     end
   rescue StandardError => error
     respond_to do |format|
-      format.html { redirect_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}" }
+      format.html { redirect_back_or_to edit_bot_path(@bot), alert: "Bot could not be compiled: #{error.message}" }
       format.json { render json: { success: false, error: error.message }, status: :unprocessable_entity }
     end
   end
@@ -74,6 +76,10 @@ class BotsController < ApplicationController
   end
 
   private
+
+  def bot_filters
+    @filter_params.to_h.symbolize_keys.compact
+  end
 
   def set_bot
     @bot = current_user.bots.find(params[:id])
