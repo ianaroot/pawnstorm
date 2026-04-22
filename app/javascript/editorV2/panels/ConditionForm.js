@@ -81,17 +81,19 @@ class ConditionForm {
   }
 
   attach() {
-    this.fields().all.forEach(field => field?.addEventListener('change', this.boundHandleFieldChange))
-    this.fields().numberInputs.forEach(field => field?.addEventListener('input', this.boundHandleFieldChange))
-    this.fields().leftComparisonToggle?.addEventListener('click', this.boundHandleLeftComparisonToggle)
-    this.fields().rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
+    const fields = this.fields()
+    fields.all.forEach(field => field?.addEventListener('change', this.boundHandleFieldChange))
+    fields.numberInputs.forEach(field => field?.addEventListener('input', this.boundHandleFieldChange))
+    fields.leftComparisonToggle?.addEventListener('click', this.boundHandleLeftComparisonToggle)
+    fields.rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
   }
 
   detach() {
-    this.fields().all.forEach(field => field?.removeEventListener('change', this.boundHandleFieldChange))
-    this.fields().numberInputs.forEach(field => field?.removeEventListener('input', this.boundHandleFieldChange))
-    this.fields().leftComparisonToggle?.removeEventListener('click', this.boundHandleLeftComparisonToggle)
-    this.fields().rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
+    const fields = this.fields()
+    fields.all.forEach(field => field?.removeEventListener('change', this.boundHandleFieldChange))
+    fields.numberInputs.forEach(field => field?.removeEventListener('input', this.boundHandleFieldChange))
+    fields.leftComparisonToggle?.removeEventListener('click', this.boundHandleLeftComparisonToggle)
+    fields.rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
   }
 
   fields() {
@@ -139,13 +141,16 @@ class ConditionForm {
       unaryTargetFilter,
       leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
+      leftComparisonSourceStack: this.editorPanel.querySelector('#cond-left-comparison-source-stack'),
       leftFilterModeControl: leftFilterMode?.closest('.condition-form-checkbox'),
       rightComparisonToggle: this.editorPanel.querySelector('#cond-right-comparison-toggle'),
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
+      rightComparisonSourceStack: this.editorPanel.querySelector('#cond-right-comparison-source-stack'),
       rightFilterModeControl: rightFilterMode?.closest('.condition-form-checkbox'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
       unaryComparisonSection: this.editorPanel.querySelector('#cond-unary-comparison-section'),
+      unaryTargetStack: this.editorPanel.querySelector('#cond-unary-target-stack'),
       unaryTargetFilterRow: this.editorPanel.querySelector('#cond-unary-target-filter-row'),
       unaryTargetFilterModeControl: unaryTargetFilterMode?.closest('.condition-form-checkbox'),
       leftComparisonSection: this.editorPanel.querySelector('#cond-left-comparison-section'),
@@ -321,6 +326,9 @@ class ConditionForm {
     fields.leftComparisonSourceTotal?.classList.toggle('hidden', this.state.left.comparisonSource !== 'exact_number')
     fields.rightComparisonSourceTotal?.classList.toggle('hidden', this.state.right.comparisonSource !== 'exact_number')
     fields.unaryTargetTotal?.classList.toggle('hidden', this.state.unary.target !== 'exact_number')
+    fields.leftComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', this.state.left.comparisonSource === 'exact_number')
+    fields.rightComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', this.state.right.comparisonSource === 'exact_number')
+    fields.unaryTargetStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', this.state.unary.target === 'exact_number')
     fields.unaryTargetFilterRow?.classList.toggle('hidden', !unaryTargetFilterAvailable)
 
     fields.leftFilterRow.classList.toggle('hidden', samePieceMode)

@@ -55,7 +55,7 @@
                     <option value="less_than_or_equal_to">≤</option>
                   </select>
 
-                  <div class="condition-form-comparison-source-stack">
+                  <div class="condition-form-comparison-source-stack" id="cond-left-comparison-source-stack">
                     <select id="cond-left-comparison-source">
                       <option value="exact_number">Integer</option>
                       <% NodeForm.comparison_source_options.each do |label, value| %>
@@ -149,7 +149,7 @@
                       <option value="less_than_or_equal_to">≤</option>
                     </select>
 
-                    <div class="condition-form-comparison-source-stack">
+                    <div class="condition-form-comparison-source-stack" id="cond-right-comparison-source-stack">
                       <select id="cond-right-comparison-source">
                         <option value="exact_number">Integer</option>
                         <% NodeForm.comparison_source_options.each do |label, value| %>
@@ -167,7 +167,7 @@
           <div class="condition-form-comparison hidden" id="cond-unary-target-section">
             <div class="condition-form-field">
               <label>Target</label>
-              <div class="condition-form-comparison-source-stack">
+              <div class="condition-form-comparison-source-stack" id="cond-unary-target-stack">
                 <select id="cond-unary-target">
                   <% NodeForm.unary_target_options.each do |label, value| %>
                     <option value="<%= value %>"><%= label %></option>

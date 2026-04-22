@@ -125,6 +125,9 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-unary-target-total').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
+    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
+    expect(panel.querySelector('#cond-unary-target-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
 
     const rightSource = panel.querySelector('#cond-right-comparison-source')
     rightSource.value = 'prior_board_state'
@@ -134,6 +137,7 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(true)
     expect(panel.querySelector('#cond-unary-target-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-right-comparison-source').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(false)
   })
 
   it('hides the numeric selector when the left source is symbolic and leaves the right side alone', () => {
@@ -162,6 +166,8 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(true)
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-left-comparison-source').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-left-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(false)
+    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
   })
 
   it('hides and clears the subject non toggle when the subject filter is any', () => {
