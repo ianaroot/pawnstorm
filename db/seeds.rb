@@ -27,5 +27,5 @@
 # load Rails.root.join('db/seeds/magneto.rb')
 # puts "magneto seeded"
 
-load Rails.root.join('db/seeds/dentist.rb')
+load Rails.root.join('db/seeds/the_dentist.rb')
 puts "Dentist seeded"

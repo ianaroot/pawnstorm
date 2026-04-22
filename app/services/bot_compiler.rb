@@ -105,7 +105,7 @@ class BotCompiler
           target: raw['target'] || raw[:target],
           targetFilter: raw['targetFilter'] || raw[:targetFilter],
           targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
-          targetTotal: raw.key?('targetTotal') ? raw['targetTotal'] : raw[:targetTotal]
+          targetTotal: hash_value(raw, 'targetTotal')
         }.compact
       when 'relational'
         {
@@ -139,7 +139,7 @@ class BotCompiler
       # Organizers carry freeform user-authored text. We intentionally strip that
       # data out during compilation so annotation content never becomes part of the
       # executable bot program. The title is included as display metadata for trace rendering.
-      { title: raw['title'] || raw[:title] }
+      { title: raw['title'] || raw[:title] || '' }
     end
   end
 
