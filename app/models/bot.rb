@@ -19,6 +19,7 @@ class Bot < ApplicationRecord
   has_many :nodes, dependent: :destroy
   has_many :connections, through: :nodes, source: :outgoing_connections
 
+  scope :compiled,             ->         { where(compiled_program_stale: false).where.not(compiled_program: nil) }
   scope :with_name,            ->(name)   { where("bots.name ILIKE ?", "%#{name}%") }
   scope :with_compiled_status, ->(status) {
     case status

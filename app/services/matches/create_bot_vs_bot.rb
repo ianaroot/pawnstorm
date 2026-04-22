@@ -52,24 +52,21 @@ class Matches::CreateBotVsBot
 
   def load_bot_options
     @own_bots = @user.bots.order(:name)
-    opponent_bots = Bot
-      .where(compiled_program_stale: false)
-      .where.not(compiled_program: nil)
-      .where.not(user_id: @user.id)
-      .order(:name)
-    @all_opponent_bots = (@own_bots + opponent_bots).uniq(&:id)
+    @all_opponent_bots = Bot.where(user: @user)
+                           .or(Bot.compiled.where.not(user: @user))
+                           .order(:name)
   end
 
   def selected_own_bot
     return nil if selected_own_bot_id.blank?
 
-    own_bots.find { |bot| bot.id == selected_own_bot_id.to_i }
+    own_bots.find_by(id: selected_own_bot_id)
   end
 
   def selected_opponent_bot
     return nil if selected_opponent_bot_id.blank?
 
-    all_opponent_bots.find { |bot| bot.id == selected_opponent_bot_id.to_i }
+    all_opponent_bots.find_by(id: selected_opponent_bot_id)
   end
 
   def stale_selected_bots(*bots)
