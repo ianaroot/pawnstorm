@@ -1,3 +1,5 @@
+require 'json'
+
 def seed_user!
   seed_email = ENV.fetch('SEED_USER_EMAIL', 'ianaroot@gmail.com')
   seed_password = ENV.fetch('SEED_USER_PASSWORD', 'password123')
@@ -52,6 +54,71 @@ def create_organizer!(bot:, position_x:, position_y:, title:, notes: '')
       notes: notes
     }
   )
+end
+
+def seed_template_library
+  @seed_template_library ||= JSON.parse(File.read(File.expand_path('template_library.json', __dir__))).index_by { |template| template.fetch('id') }
+end
+
+def seed_template!(template_id)
+  seed_template_library.fetch(template_id) do
+    raise KeyError, "Unknown seed template #{template_id.inspect}"
+  end
+end
+
+def create_template_instance!(
+  bot:,
+  start_node:,
+  template_id:,
+  x:,
+  y:,
+  title: nil,
+  notes: nil,
+  action_value_multiplier: 1,
+  action_value_overrides: {}
+)
+  template = seed_template!(template_id)
+  node_map = {}
+
+  template.fetch('nodes').each do |template_node|
+    data = template_node.fetch('data').deep_dup
+    if template_node.fetch('type') == 'organizer'
+      data['title'] = title if title
+      data['notes'] = notes if notes
+    elsif template_node.fetch('type') == 'action'
+      action_key = template_node.fetch('key')
+      data['value'] = action_value_overrides.fetch(action_key, scaled_action_value(data.fetch('value'), action_value_multiplier))
+    end
+
+    position = template_node.fetch('position')
+    node_map[template_node.fetch('key')] = bot.nodes.create!(
+      node_type: template_node.fetch('type'),
+      position_x: x + position.fetch('x'),
+      position_y: y + position.fetch('y'),
+      data: data
+    )
+  end
+
+  template.fetch('connections').each do |connection|
+    connect!(node_map.fetch(connection.fetch('source')), node_map.fetch(connection.fetch('target')))
+  end
+
+  connect!(start_node, node_map.fetch('organizer'))
+  node_map
+end
+
+def create_template_instances!(bot:, start_node:, placements:)
+  placements.each do |placement|
+    create_template_instance!(
+      bot: bot,
+      start_node: start_node,
+      **placement
+    )
+  end
+end
+
+def scaled_action_value(value, multiplier)
+  (value * multiplier).round
 end
 
 def create_path!(bot:, start_node:, x:, y:, conditions:, action_type:, value:, step_y: 150, zigzag_offset: 0)
@@ -217,18 +284,36 @@ def create_condition_chain!(bot:, start_node:, x:, y:, conditions:, step_y: 150,
   previous_node
 end
 
-def unary_v2(subject:, operator:, comparator:, comparison_value:, filter: 'any', filter_mode: 'include')
+def unary_v2(
+  subject:,
+  operator:,
+  comparator:,
+  comparison_value: nil,
+  filter: 'any',
+  filter_mode: 'include',
+  target: nil,
+  target_filter: 'any',
+  target_filter_mode: 'include',
+  target_total: nil
+)
   data = {
     version: 2,
     kind: 'unary',
     subject: subject,
     subjectFilter: filter,
     operator: operator,
-    comparator: comparator,
-    comparisonValue: comparison_value
+    comparator: comparator
   }
 
   data[:subjectFilterMode] = filter_mode unless filter == 'any'
+  apply_unary_target!(
+    data,
+    target: target,
+    target_filter: target_filter,
+    target_filter_mode: target_filter_mode,
+    target_total: target_total,
+    comparison_value: comparison_value
+  )
   data
 end
 
@@ -245,7 +330,11 @@ def rel_v2(
   subject_comparison_value: nil,
   target_comparison_metric: nil,
   target_comparator: nil,
-  target_comparison_value: nil
+  target_comparison_value: nil,
+  subject_comparison_source: nil,
+  subject_comparison_source_total: nil,
+  target_comparison_source: nil,
+  target_comparison_source_total: nil
 )
   data = {
     version: 2,
@@ -263,16 +352,65 @@ def rel_v2(
   if subject_comparison_metric.present?
     data[:subjectComparisonMetric] = subject_comparison_metric
     data[:subjectComparator] = subject_comparator
-    data[:subjectComparisonValue] = subject_comparison_value
+    apply_relational_comparison_source!(
+      data,
+      prefix: :subject,
+      source: subject_comparison_source,
+      source_total: subject_comparison_source_total,
+      comparison_value: subject_comparison_value
+    )
   end
 
   if target_comparison_metric.present?
     data[:targetComparisonMetric] = target_comparison_metric
     data[:targetComparator] = target_comparator
-    data[:targetComparisonValue] = target_comparison_value
+    apply_relational_comparison_source!(
+      data,
+      prefix: :target,
+      source: target_comparison_source,
+      source_total: target_comparison_source_total,
+      comparison_value: target_comparison_value
+    )
   end
 
   data
+end
+
+def apply_unary_target!(data, target:, target_filter:, target_filter_mode:, target_total:, comparison_value:)
+  resolved_target, resolved_total = comparison_source_from_value(target || comparison_value, explicit_total: target_total)
+
+  data[:target] = resolved_target
+
+  if resolved_target == 'exact_number'
+    data[:targetTotal] = resolved_total
+  elsif resolved_target != 'prior_board_state'
+    data[:targetFilter] = target_filter
+    data[:targetFilterMode] = target_filter_mode unless target_filter == 'any'
+  end
+end
+
+def apply_relational_comparison_source!(data, prefix:, source:, source_total:, comparison_value:)
+  resolved_source, resolved_total = comparison_source_from_value(source || comparison_value, explicit_total: source_total)
+  source_key = "#{prefix}ComparisonSource".to_sym
+  source_total_key = "#{prefix}ComparisonSourceTotal".to_sym
+
+  data[source_key] = resolved_source
+  data[source_total_key] = resolved_total if resolved_source == 'exact_number'
+end
+
+def comparison_source_from_value(value, explicit_total:)
+  if value == 'exact_number'
+    raise ArgumentError, 'exact_number comparison source requires a numeric total' unless explicit_total.is_a?(Numeric)
+
+    return ['exact_number', explicit_total]
+  end
+
+  return ['prior_board_state', nil] if value == 'prior_board_state'
+  return [value.to_s.delete_suffix('_value'), nil] if value.is_a?(String)
+
+  raise ArgumentError, 'exact_number comparison source requires a numeric value' unless value.is_a?(Numeric)
+
+  ['exact_number', value]
 end
 
 def opening_game_conditions_v2
