@@ -46,7 +46,7 @@ class BotCloner
   def next_clone_name
     base = "Clone #{@source_bot.name}"
     safe_base = ActiveRecord::Base.sanitize_sql_like(base)
-    existing = @user.bots.where("name = ? OR name LIKE ?", base, "#{safe_base}(%)").pluck(:name)
+    existing = Bot.where("name = ? OR name LIKE ?", base, "#{safe_base}(%)").pluck(:name)
     return base unless existing.include?(base)
 
     n = 2
