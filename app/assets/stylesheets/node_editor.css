@@ -73,6 +73,10 @@
   border-bottom: 1px solid #3d3a35;
 }
 
+.toolbar-section--push-right {
+  margin-left: auto;
+}
+
 .toolbar-section h3 {
   margin: 0 0 8px 0;
   font-size: 12px;

@@ -52,13 +52,16 @@
       </button>
     </div>
 
-    <div class="toolbar-section">
+    <div class="toolbar-section toolbar-section--push-right">
       <%= link_to 'compile bot',
           compile_bot_path(@bot),
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
           id: 'compile-and-exit-link' %>
       <span id="compile-status" class="compile-status hidden"></span>
+    </div>
+
+    <div class="toolbar-section">
       <%= button_to 'Clone Bot',
           clone_bot_path(@bot),
           method: :post,
