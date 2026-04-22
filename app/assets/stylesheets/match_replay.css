@@ -635,16 +635,16 @@
 }
 
 .tournament-entries-table__actions {
-  white-space: nowrap;
   text-align: right;
   width: 1%;
 }
 
 .tournament-entry-change-form {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.375rem;
-  margin-right: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .tournament-entry-change-form select {
