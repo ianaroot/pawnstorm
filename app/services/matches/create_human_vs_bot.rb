@@ -43,7 +43,14 @@ class Matches::CreateHumanVsBot
   private
 
   def load_play_bot_options
-    @play_bots = @user.bots.order(:name)
+    system_bot = Bot.system_bot
+    if @user
+      base = @user.bots
+      base = base.or(Bot.where(id: system_bot.id)) if system_bot && system_bot.user_id != @user.id
+      @play_bots = base.order(:name)
+    else
+      @play_bots = system_bot ? Bot.where(id: system_bot.id) : Bot.none
+    end
   end
 
   def selected_bot

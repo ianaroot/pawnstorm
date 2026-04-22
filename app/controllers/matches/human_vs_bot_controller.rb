@@ -1,10 +1,12 @@
 class Matches::HumanVsBotController < ApplicationController
-  before_action :authenticate_registered_or_guest_user!
+  before_action -> { current_user_or_create_guest! }, only: [:create]
+  before_action :authenticate_registered_or_guest_user!, only: [:play, :complete]
 
   def new
     creation = Matches::CreateHumanVsBot.new(user: current_user, params: setup_params)
     assign_form_state(creation)
     paginate_bot_list
+    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
 
     render 'matches/new_play'
   end
@@ -17,6 +19,7 @@ class Matches::HumanVsBotController < ApplicationController
     else
       assign_form_state(creation)
       paginate_bot_list
+      @user_has_no_own_bots = current_user.bots.empty?
       flash.now[:alert] = creation.error_message
       render 'matches/new_play', status: :unprocessable_entity
     end

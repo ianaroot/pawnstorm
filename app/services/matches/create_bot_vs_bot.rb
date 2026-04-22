@@ -51,10 +51,15 @@ class Matches::CreateBotVsBot
   private
 
   def load_bot_options
-    @own_bots = @user.bots.order(:name)
-    @all_opponent_bots = Bot.where(user: @user)
-                           .or(Bot.compiled.where.not(user: @user))
-                           .order(:name)
+    if @user
+      @own_bots = @user.bots.order(:name)
+      @all_opponent_bots = Bot.where(user: @user)
+                             .or(Bot.compiled.where.not(user: @user))
+                             .order(:name)
+    else
+      @own_bots = Bot.none
+      @all_opponent_bots = Bot.compiled.order(:name)
+    end
   end
 
   def selected_own_bot

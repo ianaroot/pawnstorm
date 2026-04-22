@@ -52,10 +52,6 @@
     </div>
     
     <nav class="sidebar__nav">
-      <%= link_to "Home", root_path,
-          class: "sidebar__link #{'sidebar__link--active' if current_page?(root_path)}",
-          data: { action: "click->sidebar#navigate" } %>
-      
       <%= link_to "Play Match", new_bot_vs_bot_match_path,
           class: "sidebar__link #{'sidebar__link--active' if current_page?(new_bot_vs_bot_match_path)}",
           data: { action: "click->sidebar#navigate" } %>

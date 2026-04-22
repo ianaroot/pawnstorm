@@ -11,6 +11,11 @@
 #  description :text
 #
 class Bot < ApplicationRecord
+  SYSTEM_BOT_NAME = 'Clone newBot!'
+
+  def self.system_bot
+    find_by(name: SYSTEM_BOT_NAME)
+  end
   belongs_to :user
   has_many :matches_as_white_player, as: :white_player, class_name: 'Match', dependent: :nullify
   has_many :matches_as_black_player, as: :black_player, class_name: 'Match', dependent: :nullify

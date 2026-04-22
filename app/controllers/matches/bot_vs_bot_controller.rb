@@ -1,10 +1,11 @@
 class Matches::BotVsBotController < ApplicationController
-  before_action :authenticate_registered_or_guest_user!
+  before_action :authenticate_registered_or_guest_user!, only: [:create]
 
   def new
     creation = Matches::CreateBotVsBot.new(user: current_user, params: setup_params)
     assign_form_state(creation)
     paginate_bot_lists
+    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
 
     render 'matches/new'
   end
@@ -16,6 +17,8 @@ class Matches::BotVsBotController < ApplicationController
       redirect_to match_path(creation.match), notice: 'Match created. Generation will begin soon.'
     else
       assign_form_state(creation)
+      paginate_bot_lists
+      @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
       flash.now[:alert] = creation.error_message
       render 'matches/new', status: :unprocessable_entity
     end

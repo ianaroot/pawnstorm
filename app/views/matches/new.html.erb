@@ -2,6 +2,9 @@
   <h1>Set Up Match</h1>
   <p>Choose one of your bots and an opponent. Colors will be assigned randomly.</p>
   <p><%= link_to 'Play against one of your bots instead', new_human_vs_bot_match_path %></p>
+  <% if @user_has_no_own_bots %>
+    <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
+  <% end %>
 
   <%= form_with url: bot_vs_bot_matches_path,
       scope: :match,
@@ -83,7 +86,7 @@
                     <%= 'checked' if @selected_opponent_bot_id.to_i == bot.id %>
                     data-bot-name="<%= bot.name %>"
                     data-bot-stale="<%= bot.compiled_program_stale? %>"
-                    data-bot-owned="<%= bot.user_id == current_user.id %>">
+                    data-bot-owned="<%= current_user && bot.user_id == current_user.id %>">
                   <span>
                     <strong><%= bot.name %></strong>
                     <small>by <%= bot.user.email %></small>
