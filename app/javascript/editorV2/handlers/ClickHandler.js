@@ -108,6 +108,16 @@ class ClickHandler {
   }
 
   handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      if (this.isTextareaTarget(event.target) && event.shiftKey) { return }
+      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
+      if (this.editingNodeId) {
+        event.preventDefault()
+        this.handleSave()
+      }
+      return
+    }
+
     if (event.key === 'Delete' || event.key === 'Backspace') {
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return
@@ -120,6 +130,10 @@ class ClickHandler {
     if (event.key === 'Escape') {
       this.closeEditor()
     }
+  }
+
+  isTextareaTarget(target) {
+    return target?.tagName === 'TEXTAREA'
   }
 
   selectNode(clientId, element, { additive = false } = {}) {

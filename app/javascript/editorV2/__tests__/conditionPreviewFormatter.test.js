@@ -30,13 +30,14 @@ describe('conditionPreviewFormatter', () => {
           subjectFilter: 'pawn',
           subjectComparisonMetric: 'count',
           subjectComparator: 'greater_than',
-          subjectComparisonValue: 2,
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 2,
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'bishop',
           targetComparisonMetric: 'value',
           targetComparator: 'less_than',
-          targetComparisonValue: 'prior_board_state'
+          targetComparisonSource: 'prior_board_state'
         }).text
       ).toBe('Allied pawn/s (count > 2) : attack : Enemy bishop/s (value < Prior Board State)')
     })
@@ -50,9 +51,24 @@ describe('conditionPreviewFormatter', () => {
           subjectFilter: 'pawn',
           operator: 'mobility',
           comparator: 'less_than',
-          comparisonValue: 'prior_board_state'
+          target: 'prior_board_state'
         }).text
       ).toBe('Enemy Moved Piece pawn/s : mobility : < Prior Board State')
+    })
+
+    it('formats unary actor targets with filters', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'unary',
+          subject: 'allied',
+          subjectFilter: 'any',
+          operator: 'value',
+          comparator: 'greater_than',
+          target: 'enemy',
+          targetFilter: 'rook'
+        }).text
+      ).toBe('Allies any : value : > Enemy rook/s')
     })
 
     it('formats same_piece with the explicit operator phrase', () => {
@@ -82,6 +98,20 @@ describe('conditionPreviewFormatter', () => {
         }).text
       ).toBe('Allied king : defend : Enemies any')
     })
+
+    it('formats major and minor filters', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'relational',
+          subject: 'enemy',
+          subjectFilter: 'major',
+          operator: 'attack',
+          target: 'allied',
+          targetFilter: 'minor'
+        }).text
+      ).toBe('Enemy major piece/s : attack : Allied minor piece/s')
+    })
   })
 
   describe('formatConditionPreviewChunk', () => {
@@ -94,8 +124,8 @@ describe('conditionPreviewFormatter', () => {
           filterMode: 'include',
           comparisonMetric: 'count',
           comparator: 'greater_than',
-          comparisonValue: 'exact_number',
-          comparisonValueNumber: 2,
+          comparisonSource: 'exact_number',
+          comparisonSourceTotal: 2,
           comparisonOpen: true
         })
       ).toBe('Allied queen/s (count > 2)')
@@ -110,10 +140,30 @@ describe('conditionPreviewFormatter', () => {
         formatConditionPreviewChunk({
           role: 'comparison',
           comparator: 'equal_to',
-          comparisonValue: 'captured_piece_value',
-          comparisonValueNumber: 0
+          target: 'captured_piece',
+          targetFilter: 'any'
         })
-      ).toBe('= Captured Piece Value')
+      ).toBe('= Captured Piece')
+    })
+
+    it('formats excluded major and minor filters', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'side',
+          subject: 'enemy',
+          filter: 'major',
+          filterMode: 'exclude'
+        })
+      ).toBe('Enemy non-major piece/s')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'side',
+          subject: 'allied',
+          filter: 'minor',
+          filterMode: 'exclude'
+        })
+      ).toBe('Allied non-minor piece/s')
     })
   })
 })

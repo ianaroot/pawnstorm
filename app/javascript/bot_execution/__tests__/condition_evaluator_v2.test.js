@@ -38,14 +38,14 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 'prior_board_state'
+          target: 'prior_board_state'
         },
         { board, moveObject }
       )
     ).toBe(true)
   })
 
-  it('evaluates captured_piece_value through the unary comparison path', () => {
+  it('evaluates captured_piece targets through the unary comparison path', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -67,14 +67,15 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'equal_to',
-          comparisonValue: 'captured_piece_value'
+          target: 'captured_piece',
+          targetFilter: 'any'
         },
         { board, moveObject }
       )
     ).toBe(true)
   })
 
-  it('runs a full real move sequence for enemy_moved_piece mobility against prior_board_state', () => {
+  it('fails enemy_moved_piece mobility against prior_board_state when the current move captures it', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -101,9 +102,185 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilter: 'any',
           operator: 'mobility',
           comparator: 'less_than',
-          comparisonValue: 'prior_board_state'
+          target: 'prior_board_state'
         },
         { board, moveObject }
+      )
+    ).toBe(false)
+  })
+
+  it('keeps enemy_moved_piece count resolved after the current move captures it', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP',
+        f7: 'bP'
+      }
+    })
+
+    playMoveSequence(board, [
+      { from: 'e2', to: 'e4' },
+      { from: 'f7', to: 'f5' }
+    ])
+
+    const moveObject = getMove('e4', 'f5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 1
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('keeps enemy_moved_piece value resolved after the current move captures it', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP',
+        f7: 'bP'
+      }
+    })
+
+    playMoveSequence(board, [
+      { from: 'e2', to: 'e4' },
+      { from: 'f7', to: 'f5' }
+    ])
+
+    const moveObject = getMove('e4', 'f5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 1
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('fails enemy_moved_piece mobility when the current move captures it', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP',
+        f7: 'bP'
+      }
+    })
+
+    playMoveSequence(board, [
+      { from: 'e2', to: 'e4' },
+      { from: 'f7', to: 'f5' }
+    ])
+
+    const moveObject = getMove('e4', 'f5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          operator: 'mobility',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('applies exclude filters to enemy_moved_piece identity after the current move captures it', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP',
+        f7: 'bP'
+      }
+    })
+
+    playMoveSequence(board, [
+      { from: 'e2', to: 'e4' },
+      { from: 'f7', to: 'f5' }
+    ])
+
+    const moveObject = getMove('e4', 'f5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'knight',
+          subjectFilterMode: 'exclude',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 1
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'enemy_moved_piece',
+          subjectFilter: 'pawn',
+          subjectFilterMode: 'exclude',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
       )
     ).toBe(true)
   })
@@ -131,11 +308,246 @@ describe('ConditionEvaluatorV2', () => {
           subjectFilterMode: 'exclude',
           operator: 'count',
           comparator: 'equal_to',
-          comparisonValue: 1
+          target: 'exact_number',
+          targetTotal: 1
         },
         { board, moveObject }
       )
     ).toBe(true)
+  })
+
+  it('allows singular count queries to pass when the actor misses the piece filter', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        d2: 'wQ'
+      }
+    })
+
+    const moveObject = getMove('d2', 'd3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'knight',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('fails singular mobility queries when the actor misses the piece filter', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        d2: 'wQ'
+      }
+    })
+
+    const moveObject = getMove('d2', 'd3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'knight',
+          operator: 'mobility',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('fails singular value queries when the actor misses the piece filter', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        d2: 'wQ'
+      }
+    })
+
+    const moveObject = getMove('d2', 'd3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'knight',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 3
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('allows captured piece count queries to pass when no matching piece was captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP'
+      }
+    })
+
+    const moveObject = getMove('e2', 'e3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'captured_piece',
+          subjectFilter: 'queen',
+          operator: 'count',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('allows unfiltered captured piece value queries to return zero when no piece was captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP'
+      }
+    })
+
+    const moveObject = getMove('e2', 'e3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'captured_piece',
+          subjectFilter: 'any',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('fails filtered captured piece value queries when no matching piece was captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP'
+      }
+    })
+
+    const moveObject = getMove('e2', 'e3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'captured_piece',
+          subjectFilter: 'queen',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 9
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('passes filtered captured piece value queries when the matching piece was captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e4: 'wP',
+        d5: 'bQ'
+      }
+    })
+
+    const moveObject = getMove('e4', 'd5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'captured_piece',
+          subjectFilter: 'queen',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 9
+        },
+        board,
+        moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('fails filtered captured piece value queries when a different piece was captured', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e4: 'wP',
+        d5: 'bN'
+      }
+    })
+
+    const moveObject = getMove('e4', 'd5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'captured_piece',
+          subjectFilter: 'queen',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 9
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
   })
 
   describe('relational evaluation', () => {
@@ -197,6 +609,105 @@ describe('ConditionEvaluatorV2', () => {
           moveObject
         )
       ).toBe(false)
+    })
+
+    it('fails when the singular subject actor misses the piece filter', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          g1: 'wN',
+          a1: 'wR'
+        }
+      })
+
+      const moveObject = getMove('g1', 'f3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'king',
+            operator: 'adjacent',
+            target: 'allied',
+            targetFilter: 'rook',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('fails when the singular target actor misses the piece filter', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          g1: 'wN',
+          e4: 'bP'
+        }
+      })
+
+      const moveObject = getMove('g1', 'f3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy',
+            subjectFilter: 'pawn',
+            operator: 'attack',
+            target: 'moved_piece',
+            targetFilter: 'king',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('preserves collection zero-count behavior when no collection subjects match', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          a2: 'wP',
+          d5: 'bR'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'queen',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'rook',
+            targetComparisonMetric: 'count',
+            targetComparator: 'equal_to',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
     })
 
     it('honors subject exclude filters when the remaining subject can still make the relation true', () => {
@@ -344,7 +855,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any'
@@ -378,7 +890,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any'
@@ -410,7 +923,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'pawn',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 0,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -442,7 +956,8 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'pawn',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 0,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -479,7 +994,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -513,7 +1029,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -546,7 +1063,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'queen',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -579,7 +1097,8 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'queen',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 0
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
           },
           board,
           moveObject
@@ -610,13 +1129,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -647,13 +1168,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -684,13 +1207,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -721,13 +1246,15 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'rook',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 1,
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 2
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
           },
           board,
           moveObject
@@ -756,7 +1283,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             subjectComparisonMetric: 'count',
             subjectComparator: 'greater_than',
-            subjectComparisonValue: 'prior_board_state',
+            subjectComparisonSource: 'prior_board_state',
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -788,7 +1315,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             subjectComparisonMetric: 'count',
             subjectComparator: 'equal_to',
-            subjectComparisonValue: 'prior_board_state',
+            subjectComparisonSource: 'prior_board_state',
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'bishop'
@@ -823,7 +1350,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'bishop',
             targetComparisonMetric: 'count',
             targetComparator: 'greater_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -855,7 +1382,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'bishop',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -863,7 +1390,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(false)
     })
 
-    it('runs a full real move sequence for a target-side prior_board_state comparison against enemy_moved_piece', () => {
+    it('fails a target-side prior_board_state comparison against enemy_moved_piece when the current move captures it', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -892,7 +1419,76 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'any',
             targetComparisonMetric: 'count',
             targetComparator: 'less_than',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('passes a target-side prior_board_state comparison when the enemy moved piece remains relationally comparable', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'e5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'attack',
+            target: 'enemy_moved_piece',
+            targetFilter: 'any',
+            targetComparisonMetric: 'count',
+            targetComparator: 'less_than',
+            targetComparisonSource: 'prior_board_state'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes a target-side prior_board_state comparison when a moved piece creates a new relation', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          d5: 'bB'
+        }
+      })
+
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'bishop',
+            targetComparisonMetric: 'count',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject
@@ -1186,7 +1782,8 @@ describe('ConditionEvaluatorV2', () => {
         targetFilter: 'king',
         targetComparisonMetric: 'count',
         targetComparator: 'equal_to',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
       }
 
       expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
@@ -1261,7 +1858,8 @@ describe('ConditionEvaluatorV2', () => {
         targetFilter: 'king',
         targetComparisonMetric: 'count',
         targetComparator: 'equal_to',
-        targetComparisonValue: 0
+        targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 0
       }
 
       expect(evaluateV1(v1Condition, board, moveObject)).toBe(true)
@@ -1552,7 +2150,7 @@ describe('ConditionEvaluatorV2', () => {
             targetFilter: 'king',
             targetComparisonMetric: 'count',
             targetComparator: 'equal_to',
-            targetComparisonValue: 'prior_board_state'
+            targetComparisonSource: 'prior_board_state'
           },
           board,
           moveObject

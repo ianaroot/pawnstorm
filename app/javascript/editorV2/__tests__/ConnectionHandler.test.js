@@ -86,6 +86,7 @@ describe('ConnectionHandler', () => {
     } else {
       delete document.elementFromPoint
     }
+    document.body.classList.remove('editor-space-pan-active')
     document.body.innerHTML = ''
   })
 
@@ -99,6 +100,7 @@ describe('ConnectionHandler', () => {
     const tempLine = document.querySelector('.connection-temp-line')
 
     expect(connectionHandler.isCurrentlyConnecting()).toBe(true)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(true)
     expect(source.node.classList.contains('connecting-source')).toBe(true)
     expect(source.connector.setPointerCapture).toHaveBeenCalledWith(1)
     expect(document.addEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function))
@@ -106,6 +108,21 @@ describe('ConnectionHandler', () => {
     expect(document.addEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function))
     expect(tempLine).not.toBe(null)
     expect(tempLine.style.pointerEvents).toBe('none')
+  })
+
+  it('does not start a connection while space-pan mode is active', () => {
+    document.body.classList.add('editor-space-pan-active')
+
+    connectionHandler.startConnection(
+      buildPointerEvent({ target: source.connector }),
+      'source',
+      source.connector
+    )
+
+    expect(connectionHandler.isCurrentlyConnecting()).toBe(false)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
+    expect(source.connector.setPointerCapture).not.toHaveBeenCalled()
+    expect(document.querySelector('.connection-temp-line')).toBe(null)
   })
 
   it('updates the temporary connection line as the pointer moves', () => {
@@ -142,6 +159,7 @@ describe('ConnectionHandler', () => {
     expect(document.elementFromPoint).toHaveBeenCalledWith(200, 200)
     expect(syncManager.createConnection).toHaveBeenCalledWith('source', 'target')
     expect(connectionHandler.isCurrentlyConnecting()).toBe(false)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
     expect(source.node.classList.contains('connecting-source')).toBe(false)
     expect(document.querySelector('.connection-temp-line')).toBe(null)
     expect(source.connector.releasePointerCapture).toHaveBeenCalledWith(1)
@@ -159,6 +177,7 @@ describe('ConnectionHandler', () => {
 
     expect(syncManager.createConnection).not.toHaveBeenCalled()
     expect(connectionHandler.isCurrentlyConnecting()).toBe(false)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
   })
 
   it('cleans up without creating a connection on pointer cancel', () => {
@@ -172,6 +191,7 @@ describe('ConnectionHandler', () => {
 
     expect(syncManager.createConnection).not.toHaveBeenCalled()
     expect(connectionHandler.isCurrentlyConnecting()).toBe(false)
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
     expect(source.node.classList.contains('connecting-source')).toBe(false)
     expect(document.querySelector('.connection-temp-line')).toBe(null)
   })
@@ -195,6 +215,22 @@ describe('ConnectionHandler', () => {
     expect(document.querySelectorAll('.connection-temp-line')).toHaveLength(1)
     expect(source.connector.releasePointerCapture).toHaveBeenCalledWith(1)
     expect(source.connector.setPointerCapture).toHaveBeenCalledWith(2)
+  })
+
+  it('keeps input connectors inactive until a connection drag begins', () => {
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
+
+    connectionHandler.startConnection(
+      buildPointerEvent({ target: source.connector }),
+      'source',
+      source.connector
+    )
+
+    expect(document.body.classList.contains('connection-drag-active')).toBe(true)
+
+    connectionHandler.cancelConnection()
+
+    expect(document.body.classList.contains('connection-drag-active')).toBe(false)
   })
 
   it('ignores release events when no active pointer is tracked', () => {

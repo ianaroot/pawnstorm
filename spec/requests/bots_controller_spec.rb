@@ -79,12 +79,14 @@ RSpec.describe BotsController, type: :request do
     it 'signs in the guest who owns the created bot' do
       post bots_path, params: valid_params
       created_bot = Bot.find_by!(name: 'Test Bot')
+      guest_user = created_bot.user
 
-      follow_redirect!
+      expect(response).to redirect_to(edit_bot_path(created_bot))
+      expect(guest_user).to be_guest
+
+      get edit_bot_path(created_bot, format: :json)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include(created_bot.name)
-      expect(created_bot.user).to be_guest
     end
 
     context 'when authenticated' do
@@ -167,6 +169,17 @@ RSpec.describe BotsController, type: :request do
         patch bot_path(bot), params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
       end
+
+      it 'returns JSON for the editor rename modal' do
+        patch bot_path(bot), params: { bot: { name: 'Updated Name', description: 'Updated Description' } }, as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body).to include(
+          'name' => 'Updated Name',
+          'description' => 'Updated Description',
+          'compiled_program_stale' => bot.reload.compiled_program_stale
+        )
+      end
     end
   end
 
@@ -204,13 +217,13 @@ RSpec.describe BotsController, type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
-    it 'compiles the bot and exits to match setup' do
+    it 'compiles the bot and reloads the editor' do
       sign_in bot.user
 
       post compile_bot_path(bot)
 
-      expect(response).to redirect_to(new_bot_vs_bot_match_path(own_bot_id: bot.id))
-      expect(flash[:notice]).to eq('Bot compiled. Exiting editor to match setup.')
+      expect(response).to redirect_to(edit_bot_path(bot))
+      expect(flash[:notice]).to eq('Bot compiled. Reloading editor.')
       expect(bot.reload.compiled_program_stale).to be(false)
       expect(bot.compiled_program).to be_present
     end

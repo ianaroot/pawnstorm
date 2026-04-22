@@ -232,7 +232,8 @@ RSpec.describe Bot, type: :model do
         subjectFilterMode: 'include',
         operator: 'mobility',
         comparator: 'greater_than',
-        comparisonValue: 0
+        target: 'exact_number',
+        targetTotal: 0
       })
 
       expect(bot.reload.compiled_program_stale).to be(true)

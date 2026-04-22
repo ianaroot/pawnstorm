@@ -9,6 +9,7 @@ import {
 } from 'editorV2/constants'
 
 const TOUCH_LONG_PRESS_MS = 450
+const SPACE_PAN_ACTIVE_CLASS = 'editor-space-pan-active'
 
 /**
  * * IMPORTANT: This handler never calls history.push() directly.
@@ -38,6 +39,10 @@ class DragHandler {
     this.longPressFired = false
     this.autoPanFrameId = null
     this.autoPanRemainder = { x: 0, y: 0 }
+    this.spacePanKeyActive = false
+    this.isPanning = false
+    this.panStartPointer = null
+    this.panStartScroll = null
 
     // Marquee state
     this.isMarqueeSelecting = false
@@ -50,12 +55,15 @@ class DragHandler {
     this.boundHandlePointerUp = this.handlePointerUp.bind(this)
     this.boundHandlePointerCancel = this.handlePointerCancel.bind(this)
     this.boundAutoPanStep = this.autoPanStep.bind(this)
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
+    this.boundHandleKeyUp = this.handleKeyUp.bind(this)
     this.boundHandleBackgroundPointerDown = this.handleBackgroundPointerDown.bind(this)
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
 
     this.attachBackgroundHandlers()
+    this.attachKeyboardHandlers()
   }
 
   attachBackgroundHandlers() {
@@ -67,6 +75,11 @@ class DragHandler {
     ].filter(Boolean).forEach(layer => {
       layer.addEventListener('pointerdown', this.boundHandleBackgroundPointerDown)
     })
+  }
+
+  attachKeyboardHandlers() {
+    document.addEventListener('keydown', this.boundHandleKeyDown)
+    document.addEventListener('keyup', this.boundHandleKeyUp)
   }
   
   attach(element, clientId) {
@@ -83,13 +96,20 @@ class DragHandler {
 
   handlePointerDown(event, clientId, element) {
     if (!this.isPrimaryPointer(event)) { return }
-    
-    // Don't interfere with connector clicks
-    if (event.target.classList.contains('node-connector')) { return }
-    
+
     const node = this.store.getNode(clientId)
     if (!node) { return }
-    
+
+    if (this.isSpacePanActive()) {
+      event.preventDefault()
+      event.stopPropagation()
+      this.beginPan(event, element)
+      return
+    }
+
+    // Don't interfere with connector clicks
+    if (event.target.classList.contains('node-connector')) { return }
+
     event.preventDefault()
     event.stopPropagation()
 
@@ -202,12 +222,18 @@ class DragHandler {
 
   handleBackgroundPointerDown(event) {
     if (!this.isPrimaryPointer(event)) { return }
-    if (event.target.closest('.node') || event.target.closest('.node-connector')) {
-      return
-    }
 
     event.preventDefault()
     event.stopPropagation()
+
+    if (this.isSpacePanActive()) {
+      this.beginPan(event, event.currentTarget)
+      return
+    }
+
+    if (event.target.closest('.node') || event.target.closest('.node-connector') || event.target.closest('.connection-delete-btn')) {
+      return
+    }
 
     const startPoint = this.viewport?.screenToGraphPoint(event.clientX, event.clientY) || {
       x: event.clientX,
@@ -225,6 +251,21 @@ class DragHandler {
 
     this.beginPointerTracking(event, event.currentTarget)
   }
+
+  handleKeyDown(event) {
+    if (!this.isSpaceKey(event) || this.isEditableTarget(event.target)) { return }
+
+    this.spacePanKeyActive = true
+    this.updateSpacePanMode()
+    event.preventDefault()
+  }
+
+  handleKeyUp(event) {
+    if (!this.isSpaceKey(event)) { return }
+
+    this.spacePanKeyActive = false
+    this.updateSpacePanMode()
+  }
   
   handlePointerMove(event) {
     if (!this.eventMatchesActivePointer(event)) { return }
@@ -236,6 +277,11 @@ class DragHandler {
       }
       this.store.updateMarquee(point)
       this.renderMarquee()
+      return
+    }
+
+    if (this.isPanning) {
+      this.updatePanPosition(event.clientX, event.clientY)
       return
     }
 
@@ -328,6 +374,11 @@ class DragHandler {
       return
     }
 
+    if (this.isPanning) {
+      this.finishPan()
+      return
+    }
+
     if (this.pendingDrag) {
       this.clearLongPressTimer()
       this.endPointerTracking()
@@ -414,8 +465,54 @@ class DragHandler {
 
   handlePointerCancel(event) {
     if (!this.eventMatchesActivePointer(event)) { return }
+    if (this.isPanning) {
+      this.cancelPan()
+      this.store.suppressClicksFor()
+      return
+    }
     this.cancelDrag()
     this.store.suppressClicksFor()
+  }
+
+  beginPan(event, captureElement) {
+    this.clearLongPressTimer()
+    this.pendingDrag = null
+    this.isPanning = true
+    this.panStartPointer = { x: event.clientX, y: event.clientY }
+    this.panStartScroll = {
+      x: this.viewport?.container?.scrollLeft || 0,
+      y: this.viewport?.container?.scrollTop || 0
+    }
+
+    this.beginPointerTracking(event, captureElement)
+    this.store.suppressClicksFor()
+  }
+
+  updatePanPosition(clientX, clientY) {
+    if (!this.viewport?.container || !this.panStartPointer || !this.panStartScroll) {
+      return
+    }
+
+    const deltaX = clientX - this.panStartPointer.x
+    const deltaY = clientY - this.panStartPointer.y
+
+    this.viewport.container.scrollLeft = Math.max(0, this.panStartScroll.x - deltaX)
+    this.viewport.container.scrollTop = Math.max(0, this.panStartScroll.y - deltaY)
+  }
+
+  finishPan() {
+    this.endPointerTracking()
+    this.isPanning = false
+    this.panStartPointer = null
+    this.panStartScroll = null
+    this.store.suppressClicksFor()
+  }
+
+  cancelPan() {
+    this.endPointerTracking()
+    this.isPanning = false
+    this.panStartPointer = null
+    this.panStartScroll = null
   }
 
   updateDragPosition(clientX, clientY) {
@@ -622,6 +719,12 @@ class DragHandler {
     this.clearLongPressTimer()
     this.pendingDrag = null
 
+    if (this.isPanning) {
+      this.cancelPan()
+      this.store.suppressClicksFor()
+      return
+    }
+
     if (this.isMarqueeSelecting) {
       this.endPointerTracking()
       this.clearMarquee()
@@ -679,6 +782,24 @@ class DragHandler {
       this.longPressFired = false
     }
   }
+
+  isSpaceKey(event) {
+    return event?.code === 'Space' || event?.key === ' ' || event?.key === 'Spacebar'
+  }
+
+  isEditableTarget(target) {
+    if (!target || !target.tagName) { return false }
+    const tag = target.tagName.toLowerCase()
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable
+  }
+
+  isSpacePanActive() {
+    return this.spacePanKeyActive
+  }
+
+  updateSpacePanMode() {
+    document.body?.classList.toggle(SPACE_PAN_ACTIVE_CLASS, this.spacePanKeyActive)
+  }
   
   destroy() {
     // Cancel any active drag
@@ -692,6 +813,9 @@ class DragHandler {
     ].filter(Boolean).forEach(layer => {
       layer.removeEventListener('pointerdown', this.boundHandleBackgroundPointerDown)
     })
+    document.removeEventListener('keydown', this.boundHandleKeyDown)
+    document.removeEventListener('keyup', this.boundHandleKeyUp)
+    document.body?.classList.remove(SPACE_PAN_ACTIVE_CLASS)
     this.marqueeElement?.remove()
     
     // Clear mappings

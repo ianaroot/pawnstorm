@@ -57,21 +57,25 @@ module Nodes
       if kind == 'unary'
         normalized.delete('subjectComparisonMetric')
         normalized.delete('subjectComparator')
-        normalized.delete('subjectComparisonValue')
-        normalized.delete('target')
-        normalized.delete('targetFilter')
-        normalized.delete('targetFilterMode')
+        normalized.delete('subjectComparisonSource')
+        normalized.delete('subjectComparisonSourceTotal')
         normalized.delete('targetComparisonMetric')
         normalized.delete('targetComparator')
-        normalized.delete('targetComparisonValue')
+        normalized.delete('targetComparisonSource')
+        normalized.delete('targetComparisonSourceTotal')
+        normalize_unary_target!(normalized)
       elsif kind == 'relational'
+        normalized.delete('comparator')
+        normalized.delete('targetTotal')
         unless NodeGrammarRules.comparison_allowed_for_relational_operator?(normalized['operator'])
           normalized.delete('subjectComparisonMetric')
           normalized.delete('subjectComparator')
-          normalized.delete('subjectComparisonValue')
+          normalized.delete('subjectComparisonSource')
+          normalized.delete('subjectComparisonSourceTotal')
           normalized.delete('targetComparisonMetric')
           normalized.delete('targetComparator')
-          normalized.delete('targetComparisonValue')
+          normalized.delete('targetComparisonSource')
+          normalized.delete('targetComparisonSourceTotal')
           normalized['subjectFilter'] = 'any'
           normalized.delete('subjectFilterMode')
           normalized['targetFilter'] = 'any'
@@ -80,14 +84,47 @@ module Nodes
           unless normalized['subjectComparisonMetric'].present?
             normalized.delete('subjectComparisonMetric')
             normalized.delete('subjectComparator')
-            normalized.delete('subjectComparisonValue')
+            normalized.delete('subjectComparisonSource')
+            normalized.delete('subjectComparisonSourceTotal')
+          else
+            normalize_relational_comparison_source_shape!(normalized, 'subject')
           end
 
           unless normalized['targetComparisonMetric'].present?
             normalized.delete('targetComparisonMetric')
             normalized.delete('targetComparator')
-            normalized.delete('targetComparisonValue')
+            normalized.delete('targetComparisonSource')
+            normalized.delete('targetComparisonSourceTotal')
+          else
+            normalize_relational_comparison_source_shape!(normalized, 'target')
           end
+        end
+      end
+    end
+
+    def normalize_relational_comparison_source_shape!(normalized, side)
+      source_key = "#{side}ComparisonSource"
+      total_key = "#{side}ComparisonSourceTotal"
+      if normalized[source_key] == 'exact_number'
+        normalized[total_key] = normalized[total_key].to_i unless normalized[total_key].is_a?(Numeric)
+      else
+        normalized.delete(total_key)
+      end
+    end
+
+    def normalize_unary_target!(normalized)
+      case normalized['target']
+      when 'exact_number'
+        normalized.delete('targetFilter')
+        normalized.delete('targetFilterMode')
+      when 'prior_board_state'
+        normalized.delete('targetFilter')
+        normalized.delete('targetFilterMode')
+        normalized.delete('targetTotal')
+      else
+        normalized.delete('targetTotal')
+        if normalized['targetFilter'] == 'any'
+          normalized.delete('targetFilterMode')
         end
       end
     end

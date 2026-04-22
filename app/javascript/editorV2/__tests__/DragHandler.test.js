@@ -35,6 +35,17 @@ function buildPointerEvent(overrides = {}) {
   }
 }
 
+function buildKeyEvent(overrides = {}) {
+  return {
+    code: 'Space',
+    key: ' ',
+    target: document.body,
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
+    ...overrides
+  }
+}
+
 function addNode(store, { clientId, type = 'condition', x = 100, y = 100 }) {
   const node = new Node({
     clientId,
@@ -117,6 +128,7 @@ describe('DragHandler', () => {
   })
   
   afterEach(() => {
+    dragHandler?.destroy()
     vi.useRealTimers()
     vi.restoreAllMocks()
   })
@@ -155,6 +167,22 @@ describe('DragHandler', () => {
       expect(dragHandler.isDragging).toBe(false)
     })
 
+    it('activates space-pan mode on keydown and clears it on keyup', () => {
+      const downEvent = buildKeyEvent()
+      const upEvent = buildKeyEvent()
+
+      dragHandler.handleKeyDown(downEvent)
+
+      expect(downEvent.preventDefault).toHaveBeenCalled()
+      expect(document.body.classList.contains('editor-space-pan-active')).toBe(true)
+      expect(dragHandler.isSpacePanActive()).toBe(true)
+
+      dragHandler.handleKeyUp(upEvent)
+
+      expect(document.body.classList.contains('editor-space-pan-active')).toBe(false)
+      expect(dragHandler.isSpacePanActive()).toBe(false)
+    })
+
     it('initializes drag state for valid drag', () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
       const event = buildPointerEvent()
@@ -171,6 +199,29 @@ describe('DragHandler', () => {
       beginDrag(dragHandler, 'node-1', mockElement, event)
 
       expect(viewport.beginInteraction).toHaveBeenCalledTimes(1)
+    })
+
+    it('uses space-drag to pan the viewport instead of starting a node drag', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+      viewport.container.scrollLeft = 120
+      viewport.container.scrollTop = 90
+
+      dragHandler.handleKeyDown(buildKeyEvent())
+      dragHandler.handlePointerDown(buildPointerEvent({ clientX: 200, clientY: 150 }), 'node-1', mockElement)
+      dragHandler.handlePointerMove(buildPointerEvent({ clientX: 240, clientY: 190 }))
+
+      expect(dragHandler.isDragging).toBe(false)
+      expect(dragHandler.isCurrentlyDragging()).toBe(false)
+      expect(dragHandler.isPanning).toBe(true)
+      expect(viewport.beginInteraction).not.toHaveBeenCalled()
+      expect(viewport.container.scrollLeft).toBe(80)
+      expect(viewport.container.scrollTop).toBe(50)
+      expect(document.body.classList.contains('editor-space-pan-active')).toBe(true)
+
+      dragHandler.handlePointerUp(buildPointerEvent({ clientX: 240, clientY: 190 }))
+
+      expect(dragHandler.isPanning).toBe(false)
+      expect(document.body.classList.contains('editor-space-pan-active')).toBe(true)
     })
 
 

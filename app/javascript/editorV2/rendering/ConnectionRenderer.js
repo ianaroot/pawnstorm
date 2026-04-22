@@ -239,7 +239,8 @@ class ConnectionRenderer {
 
     const deleteBtn = document.createElement('button')
     deleteBtn.className = 'connection-delete-btn'
-    deleteBtn.textContent = '×'
+    deleteBtn.textContent = ''
+    deleteBtn.setAttribute('aria-label', 'Delete connection')
     deleteBtn.style.cssText = `
       position: absolute;
       left: ${sceneMidpoint.x}px;

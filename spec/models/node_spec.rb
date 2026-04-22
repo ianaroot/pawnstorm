@@ -13,6 +13,13 @@ RSpec.describe Node, type: :model do
       expect(node.errors[:node_type]).to include("can't be blank")
     end
 
+    it 'rejects unknown node types' do
+      node = build(:node, node_type: 'banana')
+
+      expect(node).not_to be_valid
+      expect(node.errors[:node_type]).to include('is not included in the list')
+    end
+
     it 'is valid with position_x and position_y' do
       node = build(:node, position_x: 150.5, position_y: 200.0)
       expect(node).to be_valid
@@ -59,7 +66,8 @@ RSpec.describe Node, type: :model do
         subjectFilterMode: 'include',
         operator: 'value',
         comparator: 'greater_than',
-        comparisonValue: 0,
+        target: 'exact_number',
+        targetTotal: 0,
         banana: 'crime'
       })
 
@@ -90,7 +98,8 @@ RSpec.describe Node, type: :model do
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 0,
+          target: 'exact_number',
+          targetTotal: 0,
           script: 'alert(1)'
         })
 
@@ -107,11 +116,28 @@ RSpec.describe Node, type: :model do
           subjectFilterMode: 'banana',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         })
 
         expect(node).not_to be_valid
         expect(node.errors[:data]).to include('has invalid subjectFilterMode')
+      end
+
+      it 'rejects captured-piece unary targets for mobility' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'unary',
+          subject: 'allied',
+          subjectFilter: 'any',
+          operator: 'mobility',
+          comparator: 'greater_than',
+          target: 'captured_piece',
+          targetFilter: 'any'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid target')
       end
 
       it 'rejects invalid targetFilterMode for relational V2 conditions' do
@@ -138,7 +164,8 @@ RSpec.describe Node, type: :model do
           subjectFilter: 'any',
           operator: 'value',
           comparator: 'greater_than',
-          comparisonValue: 0
+          target: 'exact_number',
+          targetTotal: 0
         }
         normalized_data = input_data.transform_keys(&:to_s)
 
@@ -153,7 +180,7 @@ RSpec.describe Node, type: :model do
         expect(node.data).to eq(normalized_data)
       end
 
-      it 'rejects a target-side comparison when subjectComparisonValue is prior_board_state' do
+      it 'rejects a target-side comparison when subjectComparisonSource is prior_board_state' do
         node = build(:node, :condition, data: {
           version: 2,
           kind: 'relational',
@@ -161,20 +188,21 @@ RSpec.describe Node, type: :model do
           subjectFilter: 'any',
           subjectComparisonMetric: 'count',
           subjectComparator: 'greater_than',
-          subjectComparisonValue: 'prior_board_state',
+          subjectComparisonSource: 'prior_board_state',
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'any',
           targetComparisonMetric: 'count',
           targetComparator: 'greater_than',
-          targetComparisonValue: 0
+          targetComparisonSource: 'exact_number',
+          targetComparisonSourceTotal: 0
         })
 
         expect(node).not_to be_valid
-        expect(node.errors[:data]).to include('cannot use target-side comparison when subjectComparisonValue is prior_board_state')
+        expect(node.errors[:data]).to include('cannot use target-side comparison when subjectComparisonSource is prior_board_state')
       end
 
-      it 'rejects a subject-side comparison when targetComparisonValue is prior_board_state' do
+      it 'rejects a subject-side comparison when targetComparisonSource is prior_board_state' do
         node = build(:node, :condition, data: {
           version: 2,
           kind: 'relational',
@@ -182,17 +210,18 @@ RSpec.describe Node, type: :model do
           subjectFilter: 'any',
           subjectComparisonMetric: 'count',
           subjectComparator: 'greater_than',
-          subjectComparisonValue: 0,
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 0,
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'any',
           targetComparisonMetric: 'count',
           targetComparator: 'greater_than',
-          targetComparisonValue: 'prior_board_state'
+          targetComparisonSource: 'prior_board_state'
         })
 
         expect(node).not_to be_valid
-        expect(node.errors[:data]).to include('cannot use subject-side comparison when targetComparisonValue is prior_board_state')
+        expect(node.errors[:data]).to include('cannot use subject-side comparison when targetComparisonSource is prior_board_state')
       end
     end
 

@@ -166,6 +166,68 @@
       }
     }
 
+    singularActor(actor) {
+      return [
+        "moved_piece",
+        "enemy_moved_piece",
+        "captured_piece",
+        "enemy_captured_piece"
+      ].includes(actor)
+    }
+
+    relationalSingularActor(actor) {
+      return ["moved_piece", "enemy_moved_piece"].includes(actor)
+    }
+
+    singularActorSpecies(actor, boardScope = AFTER_BOARD) {
+      switch (actor) {
+        case "moved_piece":
+          return this.resolvedMovedPiece(boardScope).species
+        case "enemy_moved_piece": {
+          const resolved = this.resolvedEnemyMovedPiece(boardScope)
+          return resolved ? resolved.species : null
+        }
+        case "captured_piece": {
+          const resolved = this.resolvedCapturedPiece()
+          return resolved ? resolved.species : null
+        }
+        case "enemy_captured_piece": {
+          const resolved = this.resolvedEnemyCapturedPiece()
+          return resolved ? resolved.species : null
+        }
+        default:
+          return null
+      }
+    }
+
+    singularActorMatchesFilter({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      return this.matchesFilter({
+        species: this.singularActorSpecies(actor, boardScope),
+        filter,
+        filterMode
+      })
+    }
+
+    singularActorPresentForMobility({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      switch (actor) {
+        case "moved_piece": {
+          const resolved = this.resolvedMovedPiece(boardScope)
+          return this.matchesFilter({ species: resolved.species, filter, filterMode })
+        }
+        case "enemy_moved_piece": {
+          const resolved = this.resolvedEnemyMovedPiece(boardScope)
+          return Boolean(resolved?.presentOnBoard) && this.matchesFilter({ species: resolved.species, filter, filterMode })
+        }
+        default:
+          return false
+      }
+    }
+
+    relationalSingularActorResolves({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+      if (!this.relationalSingularActor(actor)) { return true }
+      return this.relationalActorPositions({ actor, filter, filterMode, boardScope }).length > 0
+    }
+
     capturedPiecePosition() {
       const startPosition = this.moveObject.startPosition
       const endPosition = this.moveObject.endPosition
@@ -194,109 +256,110 @@
       if (species === null) return false
       if (filter === "any") return true
       const normalizedFilterMode = this.normalizedFilterMode(filter, filterMode)
-      const baseMatch = species === this.filterToSpecies(filter)
+      const baseMatch = this.matchesSpeciesFilter({ species, filter })
       return normalizedFilterMode === "exclude" ? !baseMatch : baseMatch
     }
 
-    filterToSpecies(filter) {
+    matchesSpeciesFilter({ species, filter }) {
       switch (filter) {
         case "king":
-          return Board.KING
+          return species === Board.KING
         case "queen":
-          return Board.QUEEN
+          return species === Board.QUEEN
         case "rook":
-          return Board.ROOK
+          return species === Board.ROOK
         case "bishop":
-          return Board.BISHOP
+          return species === Board.BISHOP
         case "knight":
-          return Board.NIGHT
+          return species === Board.NIGHT
         case "pawn":
-          return Board.PAWN
+          return species === Board.PAWN
+        case "major":
+          return species === Board.QUEEN || species === Board.ROOK
+        case "minor":
+          return species === Board.BISHOP || species === Board.NIGHT
         default:
           throw new Error(`Unknown V2 filter: ${filter}`)
       }
     }
 
-    comparisonValueFor({ comparisonValue, subject, subjectFilter = "any", subjectFilterMode = null, operator }) {
-        return profileCollector.measure('cma.v2.comparison_value_for', () => {
-          if (typeof comparisonValue === "number") {
-              return comparisonValue
-          }
-          switch (comparisonValue) {
-          case "moved_piece_value":
+    comparisonSourceTotal({ comparisonSource, subject, subjectFilter = "any", subjectFilterMode = null, operator }) {
+        return profileCollector.measure('cma.v2.comparison_source_total', () => {
+          switch (comparisonSource) {
+          case "moved_piece":
               return this.movedPieceValue(AFTER_BOARD)
-          case "enemy_moved_piece_value":
+          case "enemy_moved_piece":
               return this.enemyMovedPieceValue()
-          case "captured_piece_value":
+          case "captured_piece":
               return this.capturedPieceValue()
-          case "enemy_captured_piece_value":
+          case "enemy_captured_piece":
               return this.enemyCapturedPieceValue()
           case "prior_board_state":
-              return this.priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator })
+              return this.priorComparisonSourceTotal({ subject, subjectFilter, subjectFilterMode, operator })
           default:
-              throw new Error(`Unsupported V2 comparison value: ${comparisonValue}`)
+              throw new Error(`Unsupported V2 comparison source: ${comparisonSource}`)
           }
         })
     }
 
     // ---------------------------------------------     UNARY BLOCK     ------------------------------------------
-    unaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      return profileCollector.measure('cma.v2.unary_value', () => {
-        switch (subject) {
+    unaryTotal({ actor, filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
+      return profileCollector.measure('cma.v2.unary_total', () => {
+        switch (actor) {
           case "allied":
           case "enemy":
-            return this.generalSubjectUnaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope })
+            return this.generalSubjectUnaryTotal({ actor, filter, filterMode, operator, boardScope })
           case "moved_piece":
-            return this.movedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
+            return this.movedPieceUnaryTotal({ filter, filterMode, operator, boardScope })
           case "captured_piece":
-            return this.capturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
+            return this.capturedPieceUnaryTotal({ filter, filterMode, operator })
           case "enemy_moved_piece":
-            return this.enemyMovedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator, boardScope })
+            return this.enemyMovedPieceUnaryTotal({ filter, filterMode, operator, boardScope })
           case "enemy_captured_piece":
-            return this.enemyCapturedPieceUnaryValue({ subjectFilter, subjectFilterMode, operator })
+            return this.enemyCapturedPieceUnaryTotal({ filter, filterMode, operator })
           default:
-            throw new Error(`Unsupported V2 unary subject: ${subject}`)
+            throw new Error(`Unsupported V2 unary actor: ${actor}`)
         }
       })
     }
 
-    priorComparisonValueFor({ subject, subjectFilter, subjectFilterMode, operator }) {
-        return this.unaryValue({ subject, subjectFilter, subjectFilterMode, operator, boardScope: PRIOR_BOARD })
+    priorComparisonSourceTotal({ subject, subjectFilter, subjectFilterMode, operator }) {
+        return this.unaryTotal({ actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, operator, boardScope: PRIOR_BOARD })
     }
 
-    generalSubjectUnaryValue({ subject, subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      return profileCollector.measure('cma.v2.general_subject_unary_value', () => {
-        const team = subject === "allied" ? this.movedPieceTeam() : this.enemyTeam()
+    generalSubjectUnaryTotal({ actor, filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
+      return profileCollector.measure('cma.v2.general_subject_unary_total', () => {
+        const team = actor === "allied" ? this.movedPieceTeam() : this.enemyTeam()
         const board = this.boardForScope(boardScope)
         const positions = board._positionsOccupiedByTeam(team).filter(position => {
-          return this.matchesFilter({ species: board.pieceTypeAt(position), filter: subjectFilter, filterMode: subjectFilterMode })
+          return this.matchesFilter({ species: board.pieceTypeAt(position), filter, filterMode })
         })
 
         switch (operator) {
           case "count":
             return positions.length
           case "value":
-            return profileCollector.measure('cma.v2.general_subject_unary_value.value', () => {
+            return profileCollector.measure('cma.v2.general_subject_unary_total.value', () => {
               return positions.reduce((sum, position) => {
                 return sum + materialValue(board.pieceTypeAt(position))
               }, 0)
             })
           case "mobility":
-            return profileCollector.measure('cma.v2.general_subject_unary_value.mobility', () => {
+            return profileCollector.measure('cma.v2.general_subject_unary_total.mobility', () => {
               return positions.reduce((sum, position) => {
                 return sum + this.positionMobility(position, boardScope)
               }, 0)
             })
           default:
-            throw new Error(`Unsupported V2 unary operator for ${subject}: ${operator}`)
+            throw new Error(`Unsupported V2 unary operator for ${actor}: ${operator}`)
         }
       })
     }
 
-    movedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      return profileCollector.measure('cma.v2.moved_piece_unary_value', () => {
+    movedPieceUnaryTotal({ filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
+      return profileCollector.measure('cma.v2.moved_piece_unary_total', () => {
         const resolved = this.resolvedMovedPiece(boardScope)
-        if (!this.matchesFilter({species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode})) { return 0 }
+        if (!this.matchesFilter({species: resolved.species, filter, filterMode})) { return 0 }
         switch (operator) {
           case "count":
             return 1
@@ -310,10 +373,10 @@
       })
     }
 
-    capturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
+    capturedPieceUnaryTotal({ filter = "any", filterMode = null, operator }) {
       const resolved = this.resolvedCapturedPiece()
       if (!resolved) { return 0 }
-      if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
+      if (!this.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
       switch (operator) {
         case "count":
           return 1
@@ -324,11 +387,11 @@
       }
     }
 
-    enemyMovedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator, boardScope = AFTER_BOARD }) {
-      return profileCollector.measure('cma.v2.enemy_moved_piece_unary_value', () => {
+    enemyMovedPieceUnaryTotal({ filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
+      return profileCollector.measure('cma.v2.enemy_moved_piece_unary_total', () => {
         const resolved = this.resolvedEnemyMovedPiece(boardScope)
         if (!resolved) { return 0 }
-        if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
+        if (!this.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
         switch (operator) {
           case "count":
             return 1
@@ -343,10 +406,10 @@
       })
     }
 
-    enemyCapturedPieceUnaryValue({ subjectFilter = "any", subjectFilterMode = null, operator }) {
+    enemyCapturedPieceUnaryTotal({ filter = "any", filterMode = null, operator }) {
       const resolved = this.resolvedEnemyCapturedPiece()
       if (!resolved) { return 0 }
-      if (!this.matchesFilter({ species: resolved.species, filter: subjectFilter, filterMode: subjectFilterMode })) { return 0 }
+      if (!this.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
       switch (operator) {
         case "count":
           return 1

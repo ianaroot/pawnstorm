@@ -19,7 +19,6 @@ class ReplayView {
     this.startButton = rootElement.querySelector('[data-match-replay-target="start-button"]')
     this.topMovesToggle = rootElement.querySelector('[data-match-replay-target="top-moves-toggle"]')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
-    this.statusElement = rootElement.querySelector('[data-match-replay-target="status"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.warningElement = rootElement.querySelector('[data-match-replay-target="warning"]')
@@ -41,7 +40,6 @@ class ReplayView {
     updateTeamAllowedToMove(board)
     displayAlerts("")
     this.renderBoardHighlights({ inspection, muteTopMoveHighlights, lastMove })
-    this.renderStatus({ currentMoveIndex, totalMoves, spoilerRevealed })
     this.renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights })
     this.renderResult({ result, spoilerRevealed })
     this.renderWarning(warning)
@@ -107,24 +105,6 @@ class ReplayView {
         tile.classList.add('match-replay-square--candidate-move')
       }
     })
-  }
-
-  renderStatus({ currentMoveIndex, totalMoves, spoilerRevealed }) {
-    if (!this.statusElement) { return }
-
-    if (currentMoveIndex === -1) {
-      this.statusElement.textContent = "Start position"
-      return
-    }
-
-    if (spoilerRevealed && currentMoveIndex >= totalMoves - 1) {
-      this.statusElement.textContent = `Final position after move ${currentMoveIndex + 1}`
-      return
-    }
-
-    this.statusElement.textContent = spoilerRevealed
-      ? `Move ${currentMoveIndex + 1} of ${totalMoves}`
-      : `Move ${currentMoveIndex + 1}`
   }
 
   renderControls({ isPlaying, playDirection, speedMultiplier, currentMoveIndex, totalMoves, muteTopMoveHighlights = false }) {

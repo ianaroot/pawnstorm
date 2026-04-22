@@ -2,6 +2,8 @@
  * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
  */
+const SPACE_PAN_ACTIVE_CLASS = 'editor-space-pan-active'
+
 class ConnectionHandler {
   
   constructor(store, syncManager, connectionRenderer, viewport = null) {
@@ -9,6 +11,7 @@ class ConnectionHandler {
     this.syncManager = syncManager
     this.connectionRenderer = connectionRenderer
     this.viewport = viewport
+    this.connectionDragClass = 'connection-drag-active'
     
     // Connection drag state
     this.isConnecting = false
@@ -45,6 +48,7 @@ class ConnectionHandler {
 
   startConnection(event, clientId, sourceConnector) {
     if (!this.isPrimaryPointer(event)) { return }
+    if (this.isSpacePanActive()) { return }
     if (this.isConnecting) {
       this.resetConnection()
     }
@@ -66,6 +70,7 @@ class ConnectionHandler {
     this.sourceElement = sourceConnector
     this.activePointerId = event.pointerId
     this.sourceElement?.setPointerCapture?.(event.pointerId)
+    this.setInputConnectorHitTesting(true)
     
     // Create temp line
     this.tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -176,6 +181,7 @@ class ConnectionHandler {
   
   setupDeleteHandler(canvas) {
     canvas.addEventListener('click', (e) => {
+      if (this.isSpacePanActive()) { return }
       const deleteBtn = e.target.closest('.connection-delete-btn')
       if (deleteBtn) {
         const clientId = deleteBtn.dataset.clientId
@@ -196,6 +202,7 @@ class ConnectionHandler {
     document.removeEventListener('pointermove', this.boundHandlePointerMove)
     document.removeEventListener('pointerup', this.boundHandlePointerUp)
     document.removeEventListener('pointercancel', this.boundHandlePointerCancel)
+    this.setInputConnectorHitTesting(false)
 
     if (this.activePointerId !== null) {
       this.releasePointerCaptureSafely(this.sourceElement, this.activePointerId)
@@ -219,6 +226,10 @@ class ConnectionHandler {
     this.activePointerId = null
   }
 
+  setInputConnectorHitTesting(isActive) {
+    document.body?.classList.toggle(this.connectionDragClass, isActive)
+  }
+
   releasePointerCaptureSafely(element, pointerId) {
     if (pointerId === null || !element?.releasePointerCapture) { return }
     if (element.hasPointerCapture?.(pointerId) === false) { return }
@@ -237,6 +248,10 @@ class ConnectionHandler {
   destroy() {
     this.cancelConnection()
     this.attachedElements = new WeakMap()
+  }
+
+  isSpacePanActive() {
+    return document.body?.classList.contains(SPACE_PAN_ACTIVE_CLASS)
   }
 }
 

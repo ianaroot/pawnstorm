@@ -19,7 +19,7 @@
     <%= render "shared/sidebar" %>
     
     <main class="content-wrapper">
-      <div class="page-content">
+      <div class="page-content <%= yield(:page_content_class) %>">
         <% if notice.present? %>
           <div class="notice"><%= notice %></div>
         <% end %>

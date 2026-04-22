@@ -1,9 +1,17 @@
-<h1>Editing Bot: <%= @bot.name %></h1>
+<% content_for :page_content_class, 'page-content--bot-editor' %>
 
-<div class="bot-editor"
+<div class="bot-editor-shell">
+  <div class="bot-editor"
      data-controller="editor bot-guide"
      data-editor-bot-id-value="<%= @bot.id %>"
+     data-editor-bot-name-value="<%= @bot.name %>"
+     data-editor-bot-description-value="<%= @bot.description.to_s %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
+  <div class="bot-editor-header">
+    <div class="bot-editor-header__name" id="bot-name-display" title="<%= @bot.name %>"><%= @bot.name %></div>
+    <button type="button" class="bot-editor-header__rename" data-bot-rename-open>Rename</button>
+  </div>
+
   <div class="editor-toolbar">
     <div class="toolbar-section">
       <h3>Add Node</h3>
@@ -45,13 +53,17 @@
     </div>
 
     <div class="toolbar-section">
-      <%= link_to 'Back to Bots', bots_path, class: 'btn-back' %>
-      <%= link_to 'Play Test Match', new_bot_vs_bot_match_path, class: 'btn-test' %>
-      <%= link_to 'compile and exit to match setup',
+      <%= link_to 'compile bot',
           compile_bot_path(@bot),
           data: { turbo_method: :post },
           class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
           id: 'compile-and-exit-link' %>
+      <span id="compile-status" class="compile-status hidden"></span>
+      <%= button_to 'Clone Bot',
+          clone_bot_path(@bot),
+          method: :post,
+          class: 'btn-clone',
+          data: { turbo_confirm: "Clone \"#{@bot.name}\"? A compiled copy will be created." } %>
     </div>
   </div>
 
@@ -142,5 +154,34 @@
     </div>
   </div>
 
+  <div id="bot-rename-modal" class="bot-rename-modal hidden" aria-hidden="true">
+    <div class="bot-rename-modal__backdrop" aria-hidden="true"></div>
+    <div class="bot-rename-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="bot-rename-title">
+      <div class="bot-rename-modal__header">
+        <h2 id="bot-rename-title">Rename Bot</h2>
+      </div>
+
+      <div class="bot-rename-modal__body">
+        <div class="bot-rename-modal__field">
+          <label for="bot-rename-name">Name</label>
+          <input id="bot-rename-name" type="text" maxlength="80" value="<%= h(@bot.name) %>">
+        </div>
+
+        <div class="bot-rename-modal__field">
+          <label for="bot-rename-description">Description</label>
+          <textarea id="bot-rename-description" rows="5"><%= h(@bot.description.to_s) %></textarea>
+        </div>
+
+        <p class="bot-rename-modal__error hidden" data-bot-rename-error></p>
+      </div>
+
+      <div class="bot-rename-modal__actions">
+        <button type="button" class="bot-rename-modal__cancel" data-bot-rename-cancel>Cancel</button>
+        <button type="button" class="bot-rename-modal__save" data-bot-rename-save>Save</button>
+      </div>
+    </div>
+  </div>
+
   <%= render "bots/nodes/editor" %>
+  </div>
 </div>

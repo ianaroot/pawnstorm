@@ -11,14 +11,15 @@ RSpec.describe NodePresenter do
         subjectFilterMode: 'include',
         subjectComparisonMetric: 'count',
         subjectComparator: 'greater_than',
-        subjectComparisonValue: 2,
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 2,
         operator: 'attack',
         target: 'enemy',
         targetFilter: 'any',
         targetFilterMode: 'exclude',
         targetComparisonMetric: 'value',
         targetComparator: 'less_than',
-        targetComparisonValue: 'prior_board_state'
+        targetComparisonSource: 'prior_board_state'
       }))
 
       chunks = described_class.new(node).condition_preview_chunks
@@ -31,7 +32,8 @@ RSpec.describe NodePresenter do
           filter_mode: 'include',
           comparison_metric: 'count',
           comparator: 'greater_than',
-          comparison_value: 2
+          comparison_source: 'exact_number',
+          comparison_source_total: 2
         },
         { role: 'spacer' },
         { role: 'operator', operator: 'attack' },
@@ -43,7 +45,8 @@ RSpec.describe NodePresenter do
           filter_mode: 'exclude',
           comparison_metric: 'value',
           comparator: 'less_than',
-          comparison_value: 'prior_board_state'
+          comparison_source: 'prior_board_state',
+          comparison_source_total: nil
         }
       ])
     end
@@ -57,7 +60,8 @@ RSpec.describe NodePresenter do
         'subjectFilterMode' => 'include',
         'operator' => 'value',
         'comparator' => 'equal_to',
-        'comparisonValue' => 'captured_piece_value'
+        'target' => 'captured_piece',
+        'targetFilter' => 'any'
       })
 
       chunks = described_class.new(node).condition_preview_chunks
@@ -70,7 +74,8 @@ RSpec.describe NodePresenter do
           filter_mode: 'include',
           comparison_metric: nil,
           comparator: nil,
-          comparison_value: nil
+          comparison_source: nil,
+          comparison_source_total: nil
         },
         { role: 'spacer' },
         { role: 'operator', operator: 'value' },
@@ -78,7 +83,10 @@ RSpec.describe NodePresenter do
         {
           role: 'comparison',
           comparator: 'equal_to',
-          comparison_value: 'captured_piece_value'
+          target: 'captured_piece',
+          target_filter: 'any',
+          target_filter_mode: nil,
+          target_total: nil
         }
       ])
     end

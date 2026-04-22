@@ -59,6 +59,10 @@ class SyncManager {
     this.setRecentPlacementAnchorFromNode(this.store.getNode(clientId))
   }
 
+  async updateBot(updates) {
+    return this.api.updateBot(updates)
+  }
+
   getDeletedNodeBackups(clientIds) {
     const uniqueClientIds = [...new Set((clientIds || []).filter(Boolean))]
     return uniqueClientIds
@@ -284,7 +288,7 @@ class SyncManager {
         
       case 'updateNodeData':
         // Undo: restore previous data
-        await this.api.updateNode(operation.clientId, operation.previousValue)
+        await this.api.updateNode(operation.clientId, { data: operation.previousValue })
         break
         
       case 'createConnection':
@@ -392,7 +396,7 @@ class SyncManager {
         
       case 'updateNodeData':
         // Redo: apply the new data
-        await this.api.updateNode(operation.clientId, operation.newValue)
+        await this.api.updateNode(operation.clientId, { data: operation.newValue })
         break
         
       case 'createConnection':
@@ -667,7 +671,7 @@ class SyncManager {
   /**
    * Update node data
    * @param {string} clientId - Node client ID
-   * @param {Object} data - New data (merged with existing)
+   * @param {Object} data - Complete replacement data
    * @returns {Promise<void>}
    */
   async updateNodeData(clientId, data) {
@@ -679,14 +683,14 @@ class SyncManager {
     
     // Store original data for rollback and history
     const previousData = { ...existingNode.data }
-    const newData = { ...existingNode.data, ...data }
+    const newData = { ...data }
     
     // 1. Optimistic update
     this.store.updateNode(clientId, { data: newData })
     
     try {
       // 2. Sync with server
-      await this.api.updateNode(clientId, { data: data })
+      await this.api.updateNode(clientId, { data: newData })
 
       // 3. Re-emit the data update after the server save completes so
       // preview rendering refetches against committed server state.
@@ -697,7 +701,7 @@ class SyncManager {
         type: 'updateNodeData',
         clientId,
         previousValue: previousData,
-        newValue: data
+        newValue: newData
       })
 
       this.store.setRecentPlacementAnchor(existingNode.position)

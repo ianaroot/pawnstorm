@@ -49,7 +49,8 @@ class NodePresenter
         filter_mode: data['subjectFilterMode'],
         comparison_metric: data['subjectComparisonMetric'],
         comparator: data['subjectComparator'],
-        comparison_value: data['subjectComparisonValue']
+        comparison_source: data['subjectComparisonSource'],
+        comparison_source_total: data['subjectComparisonSourceTotal']
       ),
       { role: 'spacer' },
       { role: 'operator', operator: data['operator'] },
@@ -60,7 +61,8 @@ class NodePresenter
         filter_mode: data['targetFilterMode'],
         comparison_metric: data['targetComparisonMetric'],
         comparator: data['targetComparator'],
-        comparison_value: data['targetComparisonValue']
+        comparison_source: data['targetComparisonSource'],
+        comparison_source_total: data['targetComparisonSourceTotal']
       )
     ]
   end
@@ -78,12 +80,15 @@ class NodePresenter
       {
         role: 'comparison',
         comparator: data['comparator'],
-        comparison_value: data['comparisonValue']
+        target: data['target'],
+        target_filter: data['targetFilter'],
+        target_filter_mode: data['targetFilterMode'],
+        target_total: data['targetTotal']
       }
     ]
   end
 
-  def self.v2_side_chunk(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_value: nil)
+  def self.v2_side_chunk(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_source: nil, comparison_source_total: nil)
     {
       role: 'side',
       subject: subject,
@@ -91,7 +96,8 @@ class NodePresenter
       filter_mode: filter_mode,
       comparison_metric: comparison_metric,
       comparator: comparator,
-      comparison_value: comparison_value
+      comparison_source: comparison_source,
+      comparison_source_total: comparison_source_total
     }
   end
 

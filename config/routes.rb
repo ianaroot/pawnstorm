@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   resources :bots, except: :show do
     member do
       post :compile
+      post :clone
     end
     resources :nodes, controller: 'bot_nodes', except: [:index, :new, :destroy] do
       member do

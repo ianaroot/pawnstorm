@@ -8,8 +8,8 @@ const DEFAULT_STATE = Object.freeze({
     filterMode: 'include',
     comparisonMetric: '',
     comparator: 'equal_to',
-    comparisonValueSource: 'exact_number',
-    comparisonValueNumber: 1
+    comparisonSource: 'exact_number',
+    comparisonSourceTotal: 1
   },
   operator: 'attack',
   right: {
@@ -18,13 +18,15 @@ const DEFAULT_STATE = Object.freeze({
     filterMode: 'include',
     comparisonMetric: '',
     comparator: 'equal_to',
-    comparisonValueSource: 'exact_number',
-    comparisonValueNumber: 1
+    comparisonSource: 'exact_number',
+    comparisonSourceTotal: 1
   },
   unary: {
     comparator: 'greater_than',
-    comparisonValueSource: 'exact_number',
-    comparisonValueNumber: 0
+    target: 'exact_number',
+    targetFilter: 'any',
+    targetFilterMode: 'include',
+    targetTotal: 0
   },
   ui: {
     leftComparisonOpen: false,
@@ -32,13 +34,50 @@ const DEFAULT_STATE = Object.freeze({
   }
 })
 
+const DEFAULT_GRAMMAR_RULES = Object.freeze({
+  editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
+  regularRelationalSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+  regularRelationalTargets: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+  relationalOperatorTargetRules: {
+    attack: 'opposing_team',
+    defend: 'same_team',
+    cover: 'same_team',
+    shield: 'same_team',
+    adjacent: 'any_regular'
+  },
+  samePieceTargets: {
+    enemy_moved_piece: ['captured_piece'],
+    captured_piece: ['enemy_moved_piece']
+  },
+  teamSubjectGroups: {
+    allied: ['allied', 'moved_piece'],
+    enemy: ['enemy', 'enemy_moved_piece']
+  },
+  opposingTeamGroups: {
+    allied: 'enemy',
+    enemy: 'allied'
+  }
+})
+
 class ConditionForm {
   constructor(editorPanel) {
     this.editorPanel = editorPanel
+    this.grammarRules = this.readGrammarRules()
     this.state = structuredClone(DEFAULT_STATE)
     this.boundHandleFieldChange = this.handleFieldChange.bind(this)
     this.boundHandleLeftComparisonToggle = this.toggleLeftComparison.bind(this)
     this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
+  }
+
+  readGrammarRules() {
+    const element = document.getElementById('node-grammar-rules')
+    if (!element?.textContent) { return DEFAULT_GRAMMAR_RULES }
+
+    try {
+      return JSON.parse(element.textContent)
+    } catch {
+      return DEFAULT_GRAMMAR_RULES
+    }
   }
 
   attach() {
@@ -61,19 +100,21 @@ class ConditionForm {
     const leftFilter = this.editorPanel.querySelector('#cond-left-filter')
     const leftComparisonMetric = this.editorPanel.querySelector('#cond-left-comparison-metric')
     const leftComparator = this.editorPanel.querySelector('#cond-left-comparator')
-    const leftComparisonValueSource = this.editorPanel.querySelector('#cond-left-comparison-value-source')
-    const leftComparisonValueNumber = this.editorPanel.querySelector('#cond-left-comparison-value-number')
+    const leftComparisonSource = this.editorPanel.querySelector('#cond-left-comparison-source')
+    const leftComparisonSourceTotal = this.editorPanel.querySelector('#cond-left-comparison-source-total')
     const operator = this.editorPanel.querySelector('#cond-operator')
     const rightSubject = this.editorPanel.querySelector('#cond-right-subject')
     const rightFilterMode = this.editorPanel.querySelector('#cond-right-filter-mode')
     const rightFilter = this.editorPanel.querySelector('#cond-right-filter')
     const rightComparisonMetric = this.editorPanel.querySelector('#cond-right-comparison-metric')
     const rightComparator = this.editorPanel.querySelector('#cond-right-comparator')
-    const rightComparisonValueSource = this.editorPanel.querySelector('#cond-right-comparison-value-source')
-    const rightComparisonValueNumber = this.editorPanel.querySelector('#cond-right-comparison-value-number')
+    const rightComparisonSource = this.editorPanel.querySelector('#cond-right-comparison-source')
+    const rightComparisonSourceTotal = this.editorPanel.querySelector('#cond-right-comparison-source-total')
     const unaryComparator = this.editorPanel.querySelector('#cond-unary-comparator')
-    const unaryComparisonValueSource = this.editorPanel.querySelector('#cond-unary-comparison-value-source')
-    const unaryComparisonValueNumber = this.editorPanel.querySelector('#cond-unary-comparison-value-number')
+    const unaryTarget = this.editorPanel.querySelector('#cond-unary-target')
+    const unaryTargetTotal = this.editorPanel.querySelector('#cond-unary-target-total')
+    const unaryTargetFilterMode = this.editorPanel.querySelector('#cond-unary-target-filter-mode')
+    const unaryTargetFilter = this.editorPanel.querySelector('#cond-unary-target-filter')
 
     return {
       leftSubject,
@@ -81,40 +122,47 @@ class ConditionForm {
       leftFilter,
       leftComparisonMetric,
       leftComparator,
-      leftComparisonValueSource,
-      leftComparisonValueNumber,
+      leftComparisonSource,
+      leftComparisonSourceTotal,
       operator,
       rightSubject,
       rightFilterMode,
       rightFilter,
       rightComparisonMetric,
       rightComparator,
-      rightComparisonValueSource,
-      rightComparisonValueNumber,
+      rightComparisonSource,
+      rightComparisonSourceTotal,
       unaryComparator,
-      unaryComparisonValueSource,
-      unaryComparisonValueNumber,
+      unaryTarget,
+      unaryTargetTotal,
+      unaryTargetFilterMode,
+      unaryTargetFilter,
       leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
+      leftFilterModeControl: leftFilterMode?.closest('.condition-form-checkbox'),
       rightComparisonToggle: this.editorPanel.querySelector('#cond-right-comparison-toggle'),
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
+      rightFilterModeControl: rightFilterMode?.closest('.condition-form-checkbox'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
       unaryComparisonSection: this.editorPanel.querySelector('#cond-unary-comparison-section'),
+      unaryTargetFilterRow: this.editorPanel.querySelector('#cond-unary-target-filter-row'),
+      unaryTargetFilterModeControl: unaryTargetFilterMode?.closest('.condition-form-checkbox'),
       leftComparisonSection: this.editorPanel.querySelector('#cond-left-comparison-section'),
       leftFilterRow: this.editorPanel.querySelector('#cond-left-filter-row'),
       rightFilterRow: this.editorPanel.querySelector('#cond-right-filter-row'),
+      unaryTargetSection: this.editorPanel.querySelector('#cond-unary-target-section'),
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       all: [
-        leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonValueSource,
+        leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonSource,
         operator,
-        rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, rightComparator, rightComparisonValueSource,
-        unaryComparator, unaryComparisonValueSource
+        rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, rightComparator, rightComparisonSource,
+        unaryComparator, unaryTarget, unaryTargetFilterMode, unaryTargetFilter
       ],
       numberInputs: [
-        leftComparisonValueNumber,
-        rightComparisonValueNumber,
-        unaryComparisonValueNumber
+        leftComparisonSourceTotal,
+        rightComparisonSourceTotal,
+        unaryTargetTotal
       ]
     }
   }
@@ -125,7 +173,11 @@ class ConditionForm {
     } else {
       this.state = structuredClone(DEFAULT_STATE)
     }
-    this.applyCompatibilityRules()
+    if (this.state.kind === 'unary') {
+      this.applyUnaryCompatibilityRules()
+    } else {
+      this.applyRelationalCompatibilityRules()
+    }
     this.render()
   }
 
@@ -143,8 +195,8 @@ class ConditionForm {
           filterMode: nodeData.subjectFilterMode || 'include',
           comparisonMetric: '',
           comparator: 'equal_to',
-          comparisonValueSource: 'exact_number',
-          comparisonValueNumber: 1
+          comparisonSource: 'exact_number',
+          comparisonSourceTotal: 1
         },
         operator: nodeData.operator || 'count',
         right: {
@@ -153,8 +205,8 @@ class ConditionForm {
           filterMode: 'include',
           comparisonMetric: '',
           comparator: 'equal_to',
-          comparisonValueSource: 'exact_number',
-          comparisonValueNumber: 1
+          comparisonSource: 'exact_number',
+          comparisonSourceTotal: 1
         },
         unary: this.unaryStateFromNodeData(nodeData),
         ui: {
@@ -171,7 +223,8 @@ class ConditionForm {
           filterMode: nodeData.subjectFilterMode,
           comparisonMetric: nodeData.subjectComparisonMetric,
           comparator: nodeData.subjectComparator,
-          comparisonValue: nodeData.subjectComparisonValue
+          comparisonSource: nodeData.subjectComparisonSource,
+          comparisonSourceTotal: nodeData.subjectComparisonSourceTotal
         }),
         operator: nodeData.operator || 'attack',
         right: this.relationalSideState({
@@ -180,12 +233,15 @@ class ConditionForm {
           filterMode: nodeData.targetFilterMode,
           comparisonMetric: nodeData.targetComparisonMetric,
           comparator: nodeData.targetComparator,
-          comparisonValue: nodeData.targetComparisonValue
+          comparisonSource: nodeData.targetComparisonSource,
+          comparisonSourceTotal: nodeData.targetComparisonSourceTotal
         }),
         unary: {
           comparator: 'greater_than',
-          comparisonValueSource: 'exact_number',
-          comparisonValueNumber: 0
+          target: 'exact_number',
+          targetFilter: 'any',
+          targetFilterMode: 'include',
+          targetTotal: 0
         },
         ui: {
           leftComparisonOpen: Boolean(nodeData.subjectComparisonMetric),
@@ -195,24 +251,26 @@ class ConditionForm {
     }
   }
   
-  relationalSideState({ subject, filter, filterMode, comparisonMetric, comparator, comparisonValue }) {
+  relationalSideState({ subject, filter, filterMode, comparisonMetric, comparator, comparisonSource, comparisonSourceTotal }) {
+    const source = comparisonSource || 'exact_number'
     return {
       subject: subject || 'allied',
       filter: filter || 'any',
       filterMode: filterMode || 'include',
       comparisonMetric: comparisonMetric || '',
       comparator: comparator || 'equal_to',
-      comparisonValueSource: typeof comparisonValue === 'number' ? 'exact_number' : (comparisonValue || 'exact_number'),
-      comparisonValueNumber: typeof comparisonValue === 'number' ? comparisonValue : 1
+      comparisonSource: source,
+      comparisonSourceTotal: source === 'exact_number' && typeof comparisonSourceTotal === 'number' ? comparisonSourceTotal : 1
     }
   }
 
   unaryStateFromNodeData(nodeData) {
-    const comparisonValue = nodeData.comparisonValue
     return {
       comparator: nodeData.comparator || 'greater_than',
-      comparisonValueSource: typeof comparisonValue === 'number' ? 'exact_number' : (comparisonValue || 'exact_number'),
-      comparisonValueNumber: typeof comparisonValue === 'number' ? comparisonValue : 0
+      target: nodeData.target || 'exact_number',
+      targetFilter: nodeData.targetFilter || 'any',
+      targetFilterMode: nodeData.targetFilterMode || 'include',
+      targetTotal: typeof nodeData.targetTotal === 'number' ? nodeData.targetTotal : 0
     }
   }
 
@@ -222,43 +280,57 @@ class ConditionForm {
     const leftComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.leftComparisonOpen
     const rightComparisonActive = this.state.kind === 'relational' && !samePieceMode && this.state.ui.rightComparisonOpen
     const unaryComparisonActive = this.state.kind === 'unary'
+    const leftFilterModeAvailable = this.state.left.filter !== 'any'
+    const rightFilterModeAvailable = this.state.right.filter !== 'any'
+    const unaryTargetFilterAvailable = this.unaryTargetUsesActor()
+    const unaryTargetFilterModeAvailable = unaryTargetFilterAvailable && this.state.unary.targetFilter !== 'any'
 
     if (fields.leftSubject) fields.leftSubject.value = this.state.left.subject
-    if (fields.leftFilterMode) fields.leftFilterMode.checked = this.state.left.filterMode === 'exclude'
+    if (fields.leftFilterMode) fields.leftFilterMode.checked = leftFilterModeAvailable && this.state.left.filterMode === 'exclude'
     if (fields.leftFilter) fields.leftFilter.value = this.state.left.filter
     if (fields.leftComparisonMetric) fields.leftComparisonMetric.value = this.state.left.comparisonMetric || 'count'
     if (fields.leftComparator) fields.leftComparator.value = this.state.left.comparator
-    if (fields.leftComparisonValueSource) fields.leftComparisonValueSource.value = this.state.left.comparisonValueSource
-    if (fields.leftComparisonValueNumber) fields.leftComparisonValueNumber.value = this.state.left.comparisonValueNumber
+    if (fields.leftComparisonSource) fields.leftComparisonSource.value = this.state.left.comparisonSource
+    if (fields.leftComparisonSourceTotal) fields.leftComparisonSourceTotal.value = this.state.left.comparisonSourceTotal
 
     if (fields.operator) fields.operator.value = this.state.operator
 
     if (fields.rightSubject) fields.rightSubject.value = this.state.right.subject
-    if (fields.rightFilterMode) fields.rightFilterMode.checked = this.state.right.filterMode === 'exclude'
+    if (fields.rightFilterMode) fields.rightFilterMode.checked = rightFilterModeAvailable && this.state.right.filterMode === 'exclude'
     if (fields.rightFilter) fields.rightFilter.value = this.state.right.filter
     if (fields.rightComparisonMetric) fields.rightComparisonMetric.value = this.state.right.comparisonMetric || 'count'
     if (fields.rightComparator) fields.rightComparator.value = this.state.right.comparator
-    if (fields.rightComparisonValueSource) fields.rightComparisonValueSource.value = this.state.right.comparisonValueSource
-    if (fields.rightComparisonValueNumber) fields.rightComparisonValueNumber.value = this.state.right.comparisonValueNumber
+    if (fields.rightComparisonSource) fields.rightComparisonSource.value = this.state.right.comparisonSource
+    if (fields.rightComparisonSourceTotal) fields.rightComparisonSourceTotal.value = this.state.right.comparisonSourceTotal
 
     if (fields.unaryComparator) fields.unaryComparator.value = this.state.unary.comparator
-    if (fields.unaryComparisonValueSource) fields.unaryComparisonValueSource.value = this.state.unary.comparisonValueSource
-    if (fields.unaryComparisonValueNumber) fields.unaryComparisonValueNumber.value = this.state.unary.comparisonValueNumber
+    if (fields.unaryTarget) fields.unaryTarget.value = this.state.unary.target
+    if (fields.unaryTargetTotal) fields.unaryTargetTotal.value = this.state.unary.targetTotal
+    if (fields.unaryTargetFilter) fields.unaryTargetFilter.value = this.state.unary.targetFilter
+    if (fields.unaryTargetFilterMode) fields.unaryTargetFilterMode.checked = unaryTargetFilterModeAvailable && this.state.unary.targetFilterMode === 'exclude'
 
 
     if (fields.formulationPreview) {
       fields.formulationPreview.textContent = formatConditionPreview(this.buildPayload()).text
     }
-    fields.rightCardLabel.textContent = this.state.kind === 'relational' ? 'Target' : 'Comparison'
+    fields.rightCardLabel.textContent = 'Target'
     fields.rightRelationalFields.classList.toggle('hidden', this.state.kind !== 'relational')
     fields.unaryComparisonSection.classList.toggle('hidden', this.state.kind === 'relational')
     fields.leftComparisonBody.classList.toggle('hidden', !this.state.ui.leftComparisonOpen)
     fields.rightComparisonBody.classList.toggle('hidden', !this.state.ui.rightComparisonOpen || this.state.kind !== 'relational')
+    fields.leftComparisonSourceTotal?.classList.toggle('hidden', this.state.left.comparisonSource !== 'exact_number')
+    fields.rightComparisonSourceTotal?.classList.toggle('hidden', this.state.right.comparisonSource !== 'exact_number')
+    fields.unaryTargetTotal?.classList.toggle('hidden', this.state.unary.target !== 'exact_number')
+    fields.unaryTargetFilterRow?.classList.toggle('hidden', !unaryTargetFilterAvailable)
 
     fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
     fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
+    fields.leftFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !leftFilterModeAvailable)
+    fields.rightFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !rightFilterModeAvailable)
+    fields.unaryTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !unaryTargetFilterModeAvailable)
     fields.leftComparisonSection.classList.toggle('hidden', this.state.kind !== 'relational' || samePieceMode)
     fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
+    fields.unaryTargetSection?.classList.toggle('hidden', this.state.kind !== 'unary')
     this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
     this.setComparisonInputsDisabled('right', fields, !rightComparisonActive)
     this.setUnaryComparisonInputsDisabled(fields, !unaryComparisonActive)
@@ -271,7 +343,10 @@ class ConditionForm {
     fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText('right') : (this.state.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison')
     this.showAllOptions(fields.leftSubject)
     this.showAllOptions(fields.rightSubject)
+    this.showAllOptions(fields.unaryTarget)
     this.disableSubjectOptions(fields, samePieceMode)
+    this.disableRelationalComparisonSourceOptions(fields)
+    this.disableUnaryTargetOptions(fields)
   }
 
   showAllOptions(select) {
@@ -288,8 +363,8 @@ class ConditionForm {
     if (!this.state.ui.leftComparisonOpen && !this.state.left.comparisonMetric) {
       this.state.left.comparisonMetric = 'count'
       this.state.left.comparator = 'equal_to'
-      this.state.left.comparisonValueSource = 'exact_number'
-      this.state.left.comparisonValueNumber ||= 1
+      this.state.left.comparisonSource = 'exact_number'
+      this.state.left.comparisonSourceTotal ||= 1
     }
 
     this.state.ui.leftComparisonOpen = !this.state.ui.leftComparisonOpen
@@ -303,8 +378,8 @@ class ConditionForm {
     if (!this.state.ui.rightComparisonOpen && !this.state.right.comparisonMetric) {
       this.state.right.comparisonMetric = 'count'
       this.state.right.comparator = 'equal_to'
-      this.state.right.comparisonValueSource = 'exact_number'
-      this.state.right.comparisonValueNumber ||= 1
+      this.state.right.comparisonSource = 'exact_number'
+      this.state.right.comparisonSourceTotal ||= 1
     }
 
     this.state.ui.rightComparisonOpen = !this.state.ui.rightComparisonOpen
@@ -323,8 +398,8 @@ class ConditionForm {
       this.state.left.filter = fields.leftFilter?.value || 'any'
       this.state.left.comparisonMetric = fields.leftComparisonMetric?.value || ''
       this.state.left.comparator = fields.leftComparator?.value || 'equal_to'
-      this.state.left.comparisonValueSource = fields.leftComparisonValueSource?.value || 'exact_number'
-      this.state.left.comparisonValueNumber = Number(fields.leftComparisonValueNumber?.value || 1)
+      this.state.left.comparisonSource = fields.leftComparisonSource?.value || 'exact_number'
+      this.state.left.comparisonSourceTotal = Number(fields.leftComparisonSourceTotal?.value || 1)
 
       this.state.operator = fields.operator?.value || 'attack'
 
@@ -333,8 +408,8 @@ class ConditionForm {
       this.state.right.filter = fields.rightFilter?.value || 'any'
       this.state.right.comparisonMetric = fields.rightComparisonMetric?.value || ''
       this.state.right.comparator = fields.rightComparator?.value || 'equal_to'
-      this.state.right.comparisonValueSource = fields.rightComparisonValueSource?.value || 'exact_number'
-      this.state.right.comparisonValueNumber = Number(fields.rightComparisonValueNumber?.value || 1)
+      this.state.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
+      this.state.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
     } else {
       this.state.kind = 'unary'
       this.state.left.subject = fields.leftSubject?.value || 'allied'
@@ -342,8 +417,10 @@ class ConditionForm {
       this.state.left.filter = fields.leftFilter?.value || 'any'
       this.state.operator = fields.operator?.value || 'count'
       this.state.unary.comparator = fields.unaryComparator?.value || 'greater_than'
-      this.state.unary.comparisonValueSource = fields.unaryComparisonValueSource?.value || 'exact_number'
-      this.state.unary.comparisonValueNumber = Number(fields.unaryComparisonValueNumber?.value || 0)
+      this.state.unary.target = fields.unaryTarget?.value || 'exact_number'
+      this.state.unary.targetFilterMode = fields.unaryTargetFilterMode?.checked ? 'exclude' : 'include'
+      this.state.unary.targetFilter = fields.unaryTargetFilter?.value || 'any'
+      this.state.unary.targetTotal = Number(fields.unaryTargetTotal?.value || 0)
       this.state.ui.rightComparisonOpen = false
       this.state.ui.leftComparisonOpen = false
       this.applyUnaryCompatibilityRules(changedId)
@@ -351,25 +428,33 @@ class ConditionForm {
       return
     }
 
-    this.applyCompatibilityRules()
+    this.applyRelationalCompatibilityRules()
     this.render()
   }
 
   buildPayload() {
     if (this.state.kind === 'unary') {
-      return {
+      const payload = {
         version: 2,
         kind: 'unary',
         subject: this.state.left.subject,
         subjectFilter: this.state.left.filter,
         operator: this.state.operator,
         comparator: this.state.unary.comparator,
-        comparisonValue: this.comparisonValuePayload(
-          this.state.unary.comparisonValueSource,
-          this.state.unary.comparisonValueNumber
-        ),
+        target: this.state.unary.target,
         ...(this.state.left.filter !== 'any' ? { subjectFilterMode: this.state.left.filterMode } : {})
       }
+
+      if (this.state.unary.target === 'exact_number') {
+        payload.targetTotal = this.state.unary.targetTotal
+      } else if (this.unaryTargetUsesActor()) {
+        payload.targetFilter = this.state.unary.targetFilter
+        if (this.state.unary.targetFilter !== 'any') {
+          payload.targetFilterMode = this.state.unary.targetFilterMode
+        }
+      }
+
+      return payload
     } else {
       const payload = {
         version: 2,
@@ -392,30 +477,22 @@ class ConditionForm {
       if (this.state.ui.leftComparisonOpen && this.state.left.comparisonMetric) {
         payload.subjectComparisonMetric = this.state.left.comparisonMetric
         payload.subjectComparator = this.state.left.comparator
-        payload.subjectComparisonValue = this.comparisonValuePayload(
-          this.state.left.comparisonValueSource,
-          this.state.left.comparisonValueNumber
-        )
+        payload.subjectComparisonSource = this.state.left.comparisonSource
+        if (this.state.left.comparisonSource === 'exact_number') {
+          payload.subjectComparisonSourceTotal = this.state.left.comparisonSourceTotal
+        }
       }
 
       if (this.state.ui.rightComparisonOpen && this.state.right.comparisonMetric) {
         payload.targetComparisonMetric = this.state.right.comparisonMetric
         payload.targetComparator = this.state.right.comparator
-        payload.targetComparisonValue = this.comparisonValuePayload(
-          this.state.right.comparisonValueSource,
-          this.state.right.comparisonValueNumber
-        )
+        payload.targetComparisonSource = this.state.right.comparisonSource
+        if (this.state.right.comparisonSource === 'exact_number') {
+          payload.targetComparisonSourceTotal = this.state.right.comparisonSourceTotal
+        }
       }
 
       return payload
-    }
-  }
-
-  comparisonValuePayload(source, number) {
-    if (source === 'exact_number') {
-      return number
-    } else {
-      return source
     }
   }
 
@@ -429,22 +506,22 @@ class ConditionForm {
   clearComparator(side) {
     this.state[side].comparisonMetric = ''
     this.state[side].comparator = 'equal_to'
-    this.state[side].comparisonValueSource = 'exact_number'
-    this.state[side].comparisonValueNumber = 1
+    this.state[side].comparisonSource = 'exact_number'
+    this.state[side].comparisonSourceTotal = 1
   }
 
-  applyCompatibilityRules() {
+  applyRelationalCompatibilityRules() {
     if (this.state.kind !== 'relational') {
       return
     }
 
     if (this.usesSamePiece()) {
-      const allowedLeft = ['enemy_moved_piece', 'captured_piece']
+      const allowedLeft = Object.keys(this.grammarRules.samePieceTargets)
       if (!allowedLeft.includes(this.state.left.subject)) {
-        this.state.left.subject = 'enemy_moved_piece'
+        this.state.left.subject = allowedLeft[0]
       }
 
-      this.state.right.subject = this.state.left.subject === 'enemy_moved_piece' ? 'captured_piece' : 'enemy_moved_piece'
+      this.state.right.subject = this.samePieceTargetsFor(this.state.left.subject)[0]
 
       this.state.left.filter = 'any'
       this.state.left.filterMode = 'include'
@@ -467,7 +544,7 @@ class ConditionForm {
 
     const allowedRight = this.regularRelationalTargets()
     if (!allowedRight.includes(this.state.right.subject)) {
-      this.state.right.subject = 'enemy'
+      this.state.right.subject = allowedRight[0]
     }
 
     if (this.leftUsesPriorBoardState()) {
@@ -479,18 +556,30 @@ class ConditionForm {
       this.clearComparator('left')
       this.state.ui.leftComparisonOpen = false
     }
+
+    this.applyRelationalComparisonSourceCompatibility('left')
+    this.applyRelationalComparisonSourceCompatibility('right')
+    this.applyFilterModeCompatibilityRules()
+  }
+
+  applyRelationalComparisonSourceCompatibility(side) {
+    const allowedSources = this.allowedRelationalComparisonSourcesForMetric(this.state[side].comparisonMetric)
+    if (!allowedSources.includes(this.state[side].comparisonSource)) {
+      this.state[side].comparisonSource = 'exact_number'
+      this.state[side].comparisonSourceTotal ||= 1
+    }
   }
 
   leftUsesPriorBoardState() {
     return this.state.kind === 'relational' &&
       this.state.ui.leftComparisonOpen &&
-      this.state.left.comparisonValueSource === 'prior_board_state'
+      this.state.left.comparisonSource === 'prior_board_state'
   }
 
   rightUsesPriorBoardState() {
     return this.state.kind === 'relational' &&
       this.state.ui.rightComparisonOpen &&
-      this.state.right.comparisonValueSource === 'prior_board_state'
+      this.state.right.comparisonSource === 'prior_board_state'
   }
 
   comparisonLocked(side) {
@@ -515,11 +604,39 @@ class ConditionForm {
   }
 
   regularRelationalSubjects() {
-    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+    return this.grammarRules.regularRelationalSubjects
   }
 
   regularRelationalTargets() {
-    return ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+    const targetRule = this.grammarRules.relationalOperatorTargetRules[this.state.operator] || 'any_regular'
+    if (targetRule === 'opposing_team') {
+      return this.opposingTeamTargetsFor(this.state.left.subject)
+    } else if (targetRule === 'same_team') {
+      return this.sameTeamTargetsFor(this.state.left.subject)
+    } else {
+      return this.grammarRules.regularRelationalTargets
+    }
+  }
+
+  samePieceTargetsFor(subject) {
+    return this.grammarRules.samePieceTargets[subject] || []
+  }
+
+  sameTeamTargetsFor(subject) {
+    const team = this.teamGroupForSubject(subject)
+    return team ? this.grammarRules.teamSubjectGroups[team] : []
+  }
+
+  opposingTeamTargetsFor(subject) {
+    const team = this.teamGroupForSubject(subject)
+    const opposingTeam = this.grammarRules.opposingTeamGroups[team]
+    return opposingTeam ? this.grammarRules.teamSubjectGroups[opposingTeam] : []
+  }
+
+  teamGroupForSubject(subject) {
+    return Object.keys(this.grammarRules.teamSubjectGroups).find(team => {
+      return this.grammarRules.teamSubjectGroups[team].includes(subject)
+    })
   }
 
   allowedUnaryOperatorsForSubject(subject) {
@@ -532,14 +649,33 @@ class ConditionForm {
 
   applyUnaryCompatibilityRules(changedId) {
     const allowedUnaryOperators = this.allowedUnaryOperatorsForSubject(this.state.left.subject)
-    if (allowedUnaryOperators.includes(this.state.operator)) {
-      return
+    this.applyFilterModeCompatibilityRules()
+
+    if (!allowedUnaryOperators.includes(this.state.operator) && changedId === 'cond-operator') {
+      this.state.left.subject = 'allied'
+    } else if (!allowedUnaryOperators.includes(this.state.operator)) {
+      this.state.operator = allowedUnaryOperators[0]
     }
 
-    if (changedId === 'cond-operator') {
-      this.state.left.subject = 'allied'
-    } else {
-      this.state.operator = allowedUnaryOperators[0]
+    const allowedTargets = this.allowedUnaryTargetsForOperator(this.state.operator)
+    if (!allowedTargets.includes(this.state.unary.target)) {
+      this.state.unary.target = 'exact_number'
+      this.state.unary.targetFilter = 'any'
+      this.state.unary.targetFilterMode = 'include'
+    }
+  }
+
+  applyFilterModeCompatibilityRules() {
+    if (this.state.left.filter === 'any') {
+      this.state.left.filterMode = 'include'
+    }
+
+    if (this.state.right.filter === 'any') {
+      this.state.right.filterMode = 'include'
+    }
+
+    if (this.state.unary.targetFilter === 'any') {
+      this.state.unary.targetFilterMode = 'include'
     }
   }
   
@@ -563,22 +699,56 @@ class ConditionForm {
     }
   }
 
+  unaryTargetUsesActor() {
+    return !['exact_number', 'prior_board_state'].includes(this.state.unary.target)
+  }
+
+  allowedUnaryTargetsForOperator(operator) {
+    return [
+      'exact_number',
+      ...this.editorSubjects().filter(subject => this.allowedUnaryOperatorsForSubject(subject).includes(operator)),
+      'prior_board_state'
+    ]
+  }
+
   setComparisonInputsDisabled(side, fields, disabled) {
     const metricKey = side === 'left' ? 'leftComparisonMetric' : 'rightComparisonMetric'
     const comparatorKey = side === 'left' ? 'leftComparator' : 'rightComparator'
-    const valueSourceKey = side === 'left' ? 'leftComparisonValueSource' : 'rightComparisonValueSource'
-    const valueNumberKey = side === 'left' ? 'leftComparisonValueNumber' : 'rightComparisonValueNumber'
+    const sourceKey = side === 'left' ? 'leftComparisonSource' : 'rightComparisonSource'
+    const sourceTotalKey = side === 'left' ? 'leftComparisonSourceTotal' : 'rightComparisonSourceTotal'
 
     fields[metricKey].disabled = disabled
     fields[comparatorKey].disabled = disabled
-    fields[valueSourceKey].disabled = disabled
-    fields[valueNumberKey].disabled = disabled
+    fields[sourceKey].disabled = disabled
+    fields[sourceTotalKey].disabled = disabled
+  }
+
+  allowedRelationalComparisonSourcesForMetric(metric) {
+    if (metric === 'value') {
+      return ['exact_number', 'prior_board_state', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+    }
+    return ['exact_number', 'prior_board_state']
+  }
+
+  disableRelationalComparisonSourceOptions(fields) {
+    if (this.state.kind !== 'relational') { return }
+
+    this.disableRelationalComparisonSourceOptionsForSide('left', fields.leftComparisonSource)
+    this.disableRelationalComparisonSourceOptionsForSide('right', fields.rightComparisonSource)
+  }
+
+  disableRelationalComparisonSourceOptionsForSide(side, select) {
+    const allowedSources = this.allowedRelationalComparisonSourcesForMetric(this.state[side].comparisonMetric || 'count')
+    const allSources = Array.from(select.options).map(option => option.value)
+    this.disableOptions(select, allSources.filter(value => !allowedSources.includes(value)))
   }
 
   setUnaryComparisonInputsDisabled(fields, disabled) {
     fields.unaryComparator.disabled = disabled
-    fields.unaryComparisonValueSource.disabled = disabled
-    fields.unaryComparisonValueNumber.disabled = disabled
+    fields.unaryTarget.disabled = disabled
+    fields.unaryTargetTotal.disabled = disabled
+    fields.unaryTargetFilterMode.disabled = disabled
+    fields.unaryTargetFilter.disabled = disabled
   }
 
   disableSubjectOptions(fields, samePieceMode) {
@@ -596,8 +766,8 @@ class ConditionForm {
     }
 
     if (samePieceMode) {
-      const leftAllowed = ['enemy_moved_piece', 'captured_piece']
-      const rightAllowed = this.state.left.subject === 'enemy_moved_piece' ? ['captured_piece'] : ['enemy_moved_piece']
+      const leftAllowed = Object.keys(this.grammarRules.samePieceTargets)
+      const rightAllowed = this.samePieceTargetsFor(this.state.left.subject)
 
       this.disableOptions(fields.leftSubject, this.editorSubjects().filter(value => !leftAllowed.includes(value)))
       this.disableOptions(fields.rightSubject, this.editorSubjects().filter(value => !rightAllowed.includes(value)))
@@ -608,8 +778,16 @@ class ConditionForm {
     this.disableOptions(fields.rightSubject, this.editorSubjects().filter(value => !this.regularRelationalTargets().includes(value)))
   }
 
+  disableUnaryTargetOptions(fields) {
+    if (this.state.kind !== 'unary') { return }
+
+    const allowedTargets = this.allowedUnaryTargetsForOperator(this.state.operator)
+    const allTargets = Array.from(fields.unaryTarget.options).map(option => option.value)
+    this.disableOptions(fields.unaryTarget, allTargets.filter(value => !allowedTargets.includes(value)))
+  }
+
   editorSubjects() {
-    return ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+    return this.grammarRules.editorSubjects
   }
 
 }

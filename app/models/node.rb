@@ -12,12 +12,14 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
+  NODE_TYPES = %w[condition action root organizer].freeze
 
   belongs_to :bot
   has_many :outgoing_connections, class_name: 'Connection', foreign_key: 'source_node_id', dependent: :destroy
   has_many :incoming_connections, class_name: 'Connection', foreign_key: 'target_node_id', dependent: :destroy
 
   validates :node_type, presence: true
+  validates :node_type, inclusion: { in: NODE_TYPES }
   before_validation :normalize_node_data
 
   # Ensure only one root per bot (DB has unique index, this validates before save)

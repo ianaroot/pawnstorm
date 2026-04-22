@@ -33,7 +33,8 @@ describe('TemplatePicker template preview', () => {
             subjectFilter: 'any',
             operator: 'count',
             comparator: 'greater_than',
-            comparisonValue: 0
+            target: 'exact_number',
+            targetTotal: 0
           }
         },
         {

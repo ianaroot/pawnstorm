@@ -1,69 +1,79 @@
-<div class="match-setup-section">
+<div class="tournament-registration">
   <h2>Entries Open</h2>
-  <p>Entries are open. Submit a compiled bot before the tournament starts.</p>
 
   <% if @open_registration_entries.any? %>
-    <h3>Current Entries</h3>
-    <ul>
-      <% @open_registration_entries.each do |entry| %>
-        <li>
-          <strong><%= entry.display_name %></strong>
-          <% if entry.bot_owner %>
-            <span>by <%= entry.bot_owner.email %></span>
-          <% end %>
-
-          <% if tournament.status_open? && entry.bot_owner == current_user %>
-            <% entry_path = @invite_token.present? ? invite_tournament_entry_path(@invite_token, entry) : tournament_entry_path(tournament, entry) %>
-            <% replacement_bots = @eligible_bots.reject do |bot|
-              @open_registration_entries.any? { |other_entry| other_entry != entry && other_entry.bot_id == bot.id }
-            end %>
-
-            <% if replacement_bots.any? %>
-              <%= form_with url: entry_path, scope: :tournament_entry, method: :patch, local: true do |form| %>
-                <%= form.label :bot_id, 'Change Entry' %>
-                <%= form.select :bot_id, replacement_bots.map { |bot| [bot.name, bot.id] }, selected: entry.bot_id %>
-                <%= form.submit 'Change Entry' %>
+    <table class="tournament-entries-table">
+      <thead>
+        <tr>
+          <th>Bot</th>
+          <th>Owner</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @open_registration_entries.each do |entry| %>
+          <tr>
+            <td><strong><%= entry.display_name %></strong></td>
+            <td>
+              <% if entry.bot_owner %>
+                <span class="tournament-entries-table__owner"><%= entry.bot_owner.email %></span>
               <% end %>
-            <% end %>
+            </td>
+            <td class="tournament-entries-table__actions">
+              <% if tournament.status_open? && entry.bot_owner == current_user %>
+                <% entry_path = @invite_token.present? ? invite_tournament_entry_path(@invite_token, entry) : tournament_entry_path(tournament, entry) %>
+                <% replacement_bots = @eligible_bots.reject do |bot|
+                  @open_registration_entries.any? { |other_entry| other_entry != entry && other_entry.bot_id == bot.id }
+                end %>
 
-            <%= button_to 'Withdraw', entry_path, method: :delete %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+                <% if replacement_bots.any? %>
+                  <%= form_with url: entry_path, scope: :tournament_entry, method: :patch, local: true, class: "tournament-entry-change-form" do |form| %>
+                    <%= form.select :bot_id, replacement_bots.map { |bot| [bot.name, bot.id] }, selected: entry.bot_id %>
+                    <%= form.submit 'Change' %>
+                  <% end %>
+                <% end %>
+
+                <%= button_to 'Withdraw', entry_path, method: :delete, class: 'btn-danger' %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   <% else %>
-    <p>No entries yet.</p>
+    <p class="tournament-registration__empty">No entries yet.</p>
   <% end %>
 
-  <% if !user_signed_in? %>
-    <p><%= link_to 'Sign in', new_user_session_path %> or <%= link_to 'sign up', new_user_registration_path %> to enter.</p>
-  <% elsif current_user.guest? %>
-    <p><%= link_to 'Create an account', new_user_registration_path %> to enter this tournament.</p>
-  <% elsif @tournament_full && !(tournament.entries_per_user_one? && @current_user_entry) %>
-    <p>Tournament is full.</p>
-  <% else %>
-    <% entered_bot_ids = @open_registration_entries.map(&:bot_id).compact %>
-    <% available_bots = if tournament.entries_per_user_unlimited?
-      @eligible_bots.reject { |bot| entered_bot_ids.include?(bot.id) }
-    else
-      @eligible_bots
-    end %>
-
-    <% if tournament.entries_per_user_one? && @current_user_entry %>
-      <p>Submitting a different bot will replace your current entry.</p>
-    <% elsif tournament.entries_per_user_unlimited? %>
-      <p>You may submit multiple bots. Each bot can only be entered once.</p>
-    <% end %>
-
-    <% if available_bots.any? %>
-      <% entries_path = @invite_token.present? ? invite_tournament_entries_path(@invite_token) : tournament_entries_path(tournament) %>
-      <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true do |form| %>
-        <%= form.label :bot_id, 'Bot' %>
-        <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] } %>
-        <%= form.submit 'Submit Entry' %>
-      <% end %>
+  <div class="tournament-submit-section">
+    <% if !user_signed_in? %>
+      <p><%= link_to 'Sign in', new_user_session_path %> or <%= link_to 'sign up', new_user_registration_path %> to enter.</p>
+    <% elsif current_user.guest? %>
+      <p><%= link_to 'Create an account', new_user_registration_path %> to enter this tournament.</p>
+    <% elsif @tournament_full && !(tournament.entries_per_user_one? && @current_user_entry) %>
+      <p>Tournament is full.</p>
     <% else %>
-      <p>You do not have any eligible compiled bots available.</p>
+      <% entered_bot_ids = @open_registration_entries.map(&:bot_id).compact %>
+      <% available_bots = if tournament.entries_per_user_unlimited?
+        @eligible_bots.reject { |bot| entered_bot_ids.include?(bot.id) }
+      else
+        @eligible_bots
+      end %>
+
+      <% if tournament.entries_per_user_one? && @current_user_entry %>
+        <p class="tournament-submit-section__note">Submitting a different bot will replace your current entry.</p>
+      <% elsif tournament.entries_per_user_unlimited? %>
+        <p class="tournament-submit-section__note">You may submit multiple bots. Each bot can only be entered once.</p>
+      <% end %>
+
+      <% if available_bots.any? %>
+        <% entries_path = @invite_token.present? ? invite_tournament_entries_path(@invite_token) : tournament_entries_path(tournament) %>
+        <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true, class: "tournament-submit-form" do |form| %>
+          <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] } %>
+          <%= form.submit 'Submit Entry' %>
+        <% end %>
+      <% else %>
+        <p>You do not have any eligible compiled bots available.</p>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 </div>

@@ -14,7 +14,8 @@ FactoryBot.define do
           subjectFilterMode: "include",
           operator: "value",
           comparator: "greater_than",
-          comparisonValue: 0
+          target: "exact_number",
+          targetTotal: 0
         }
       when "action"
         {
@@ -43,7 +44,8 @@ FactoryBot.define do
           subjectFilterMode: "include",
           operator: "value",
           comparator: "greater_than",
-          comparisonValue: 0
+          target: "exact_number",
+          targetTotal: 0
         }
       end
     end
@@ -63,10 +65,12 @@ FactoryBot.define do
           targetFilterMode: "include",
           subjectComparisonMetric: nil,
           subjectComparator: nil,
-          subjectComparisonValue: nil,
+          subjectComparisonSource: nil,
+          subjectComparisonSourceTotal: nil,
           targetComparisonMetric: nil,
           targetComparator: nil,
-          targetComparisonValue: nil
+          targetComparisonSource: nil,
+          targetComparisonSourceTotal: nil
         }
       end
     end

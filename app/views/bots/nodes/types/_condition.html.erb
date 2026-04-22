@@ -15,7 +15,14 @@
           <% if (value = chunk[:filter_mode] || chunk['filter_mode']).present? %>data-condition-preview-filter-mode="<%= value %>"<% end %>
           <% if (value = chunk[:comparison_metric] || chunk['comparison_metric']).present? %>data-condition-preview-comparison-metric="<%= value %>"<% end %>
           <% if (value = chunk[:comparator] || chunk['comparator']).present? %>data-condition-preview-comparator="<%= value %>"<% end %>
-          <% if (value = chunk[:comparison_value] || chunk['comparison_value']).present? %>data-condition-preview-comparison-value="<%= value %>"<% end %>
+          <% if (value = chunk[:comparison_source] || chunk['comparison_source']).present? %>data-condition-preview-comparison-source="<%= value %>"<% end %>
+          <% value = chunk.key?(:comparison_source_total) ? chunk[:comparison_source_total] : chunk['comparison_source_total'] %>
+          <% unless value.nil? %>data-condition-preview-comparison-source-total="<%= value %>"<% end %>
+          <% if (value = chunk[:target] || chunk['target']).present? %>data-condition-preview-target="<%= value %>"<% end %>
+          <% if (value = chunk[:target_filter] || chunk['target_filter']).present? %>data-condition-preview-target-filter="<%= value %>"<% end %>
+          <% if (value = chunk[:target_filter_mode] || chunk['target_filter_mode']).present? %>data-condition-preview-target-filter-mode="<%= value %>"<% end %>
+          <% value = chunk.key?(:target_total) ? chunk[:target_total] : chunk['target_total'] %>
+          <% unless value.nil? %>data-condition-preview-target-total="<%= value %>"<% end %>
           <% if (value = chunk[:operator] || chunk['operator']).present? %>data-condition-preview-operator="<%= value %>"<% end %>
         ></div>
       <% end %>

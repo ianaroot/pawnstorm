@@ -275,7 +275,7 @@ describe('SyncManager', () => {
         previousValue: { foo: 'bar' }
       })
 
-      expect(mockApi.updateNode).toHaveBeenCalledWith('n1', { foo: 'bar' })
+      expect(mockApi.updateNode).toHaveBeenCalledWith('n1', { data: { foo: 'bar' } })
     })
 
     it('handles createConnection', async () => {
@@ -490,11 +490,12 @@ describe('SyncManager', () => {
       mockApi.updateNode.mockResolvedValue({})
     })
 
-    it('merges data with existing', async () => {
+    it('replaces data entirely', async () => {
       await syncManager.updateNodeData('n1', { baz: 'qux' })
 
-      expect(store.getNode('n1').data.foo).toBe('bar')
+      expect(store.getNode('n1').data.foo).toBeUndefined()
       expect(store.getNode('n1').data.baz).toBe('qux')
+      expect(mockApi.updateNode).toHaveBeenCalledWith('n1', { data: { baz: 'qux' } })
       expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
     })
 

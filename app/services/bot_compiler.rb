@@ -102,7 +102,10 @@ class BotCompiler
           subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
           operator: raw['operator'] || raw[:operator],
           comparator: raw['comparator'] || raw[:comparator],
-          comparisonValue: raw['comparisonValue'] || raw[:comparisonValue]
+          target: raw['target'] || raw[:target],
+          targetFilter: raw['targetFilter'] || raw[:targetFilter],
+          targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
+          targetTotal: hash_value(raw, 'targetTotal')
         }.compact
       when 'relational'
         {
@@ -113,14 +116,16 @@ class BotCompiler
           subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
           subjectComparisonMetric: raw['subjectComparisonMetric'] || raw[:subjectComparisonMetric],
           subjectComparator: raw['subjectComparator'] || raw[:subjectComparator],
-          subjectComparisonValue: raw['subjectComparisonValue'] || raw[:subjectComparisonValue],
+          subjectComparisonSource: raw['subjectComparisonSource'] || raw[:subjectComparisonSource],
+          subjectComparisonSourceTotal: hash_value(raw, 'subjectComparisonSourceTotal'),
           operator: raw['operator'] || raw[:operator],
           target: raw['target'] || raw[:target],
           targetFilter: raw['targetFilter'] || raw[:targetFilter],
           targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
           targetComparisonMetric: raw['targetComparisonMetric'] || raw[:targetComparisonMetric],
           targetComparator: raw['targetComparator'] || raw[:targetComparator],
-          targetComparisonValue: raw['targetComparisonValue'] || raw[:targetComparisonValue]
+          targetComparisonSource: raw['targetComparisonSource'] || raw[:targetComparisonSource],
+          targetComparisonSourceTotal: hash_value(raw, 'targetComparisonSourceTotal')
         }.compact
       else
         raw
@@ -133,8 +138,13 @@ class BotCompiler
     else
       # Organizers carry freeform user-authored text. We intentionally strip that
       # data out during compilation so annotation content never becomes part of the
-      # executable bot program.
-      {}
+      # executable bot program. The title is included as display metadata for trace rendering.
+      { title: raw['title'] || raw[:title] || '' }
     end
   end
+
+  def hash_value(hash, key)
+    hash.key?(key) ? hash[key] : hash[key.to_sym]
+  end
+
 end
