@@ -24,6 +24,11 @@
   margin-bottom: 0.25rem;
 }
 
+.auth-guest-warning a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .auth-links {
   margin-top: 1.25rem;
   display: flex;

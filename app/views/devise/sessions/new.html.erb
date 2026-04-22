@@ -1,4 +1,10 @@
 <div class="auth-page">
+  <% if current_user&.guest? %>
+    <div class="alert auth-guest-warning">
+      You're currently signed in as a guest. Signing in to an existing account will discard any bots or matches you've made this session. <strong><%= link_to 'Create an account instead', new_user_registration_path %></strong> to keep them.
+    </div>
+  <% end %>
+
   <div class="setup-form-section">
     <h1>Sign in</h1>
 

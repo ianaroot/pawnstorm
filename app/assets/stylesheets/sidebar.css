@@ -114,9 +114,7 @@
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
   color: #9CA3AF;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .sidebar__link--signout {
