@@ -134,6 +134,7 @@ class ConditionEvaluatorV2 {
     }
 
     compare({ comparator, leftTotal, rightTotal }) {
+      if (leftTotal === null || rightTotal === null) { return false }
       switch (comparator) {
         case "equal_to":
           return leftTotal === rightTotal

@@ -162,6 +162,28 @@ describe('CandidateMoveAnalysisV2', () => {
         })
       ).toBe(4)
     })
+
+    it('keeps king value as zero in aggregate value totals', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a1: 'wR',
+          h2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        analysis.unaryTotal({
+          actor: 'allied',
+          filter: 'any',
+          operator: 'value'
+        })
+      ).toBe(6)
+    })
   })
 
   describe('moved_piece', () => {
