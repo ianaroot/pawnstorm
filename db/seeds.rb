@@ -1,3 +1,6 @@
+load Rails.root.join('db/seeds/seed_bot.rb')
+puts "Dentist seeded"
+
 # load Rails.root.join('db/seeds/cyclops_dump.rb')
 # puts 'cyclops dump seeded'
 # load Rails.root.join('db/seeds/rogue_dump.rb')
@@ -26,6 +29,6 @@
 # puts 'temp dump seeded'
 # load Rails.root.join('db/seeds/magneto.rb')
 # puts "magneto seeded"
-
-load Rails.root.join('db/seeds/the_dentist.rb')
-puts "Dentist seeded"
+# 
+# load Rails.root.join('db/seeds/the_dentist.rb')
+# puts "Dentist seeded"
