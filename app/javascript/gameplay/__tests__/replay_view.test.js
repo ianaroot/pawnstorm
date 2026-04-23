@@ -213,4 +213,31 @@ describe('ReplayView', () => {
 
     expect(root.querySelector('[data-match-replay-target="result"]').textContent).toBe('white wins')
   })
+
+  it('rehydrates replay boards with history needed for trace scoring', () => {
+    const recentMoveContext = {
+      movingTeam: Board.BLACK,
+      movedPieceStartPosition: 48,
+      movedPieceEndPosition: 32,
+      movedPieceSpeciesBeforeMove: Board.PAWN,
+      movedPieceSpeciesAfterMove: Board.PAWN,
+      capturedPiecePosition: null,
+      capturedPieceSpecies: null,
+      moveObject: { startPosition: 48, endPosition: 32 }
+    }
+    const board = buildReplayBoard({
+      layout: Layout.default(),
+      capturedPieces: [],
+      allowedToMove: Board.WHITE,
+      movementNotation: ['1. e4', 'a5'],
+      recentMoveContext,
+      halfmoveClock: 12,
+      positionKeys: ['initial-position', 'after-e4']
+    })
+
+    expect(board.movementNotation).toEqual(['1. e4', 'a5'])
+    expect(board.recentMoveContext).toEqual(recentMoveContext)
+    expect(board.history.halfmoveClock).toBe(12)
+    expect(board.history.positionKeys).toEqual(['initial-position', 'after-e4'])
+  })
 })
