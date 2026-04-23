@@ -31,6 +31,12 @@ class Tournament < ApplicationRecord
   scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
   scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
   scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
+  scope :visible_to, ->(user) {
+    visible = visibility_public
+    return visible unless user&.persisted? && !user.guest?
+
+    visible.or(where(creator_id: user.id)).or(with_entry_from(user.id))
+  }
   scope :filtered, ->(name: nil, status: nil, owner: nil, entry_owner_id: nil) {
     scope = all
     scope = scope.with_name(name)                 if name.present?

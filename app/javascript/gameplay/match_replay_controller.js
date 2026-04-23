@@ -3,6 +3,7 @@ import Layout from "gameplay/layout"
 import NotationResolver from "gameplay/notation_resolver"
 import ReplayMoveInspector from "gameplay/replay_move_inspector"
 import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
+import { cloneRecentMoveContext } from "gameplay/recent_move_context"
 import Sound from "gameplay/sound"
 
 class MatchReplayController {
@@ -102,7 +103,11 @@ class MatchReplayController {
     return {
       layout: Board._deepCopy(board.layOut),
       capturedPieces: Board._deepCopy(board.capturedPieces),
-      allowedToMove: board.allowedToMove
+      allowedToMove: board.allowedToMove,
+      movementNotation: [...board.movementNotation],
+      recentMoveContext: cloneRecentMoveContext(board.recentMoveContext),
+      halfmoveClock: board.history.halfmoveClock,
+      positionKeys: [...board.history.positionKeys]
     }
   }
 
@@ -289,7 +294,11 @@ class MatchReplayController {
     return buildReplayBoard({
       layout: frame.layout,
       capturedPieces: frame.capturedPieces,
-      allowedToMove: frame.allowedToMove
+      allowedToMove: frame.allowedToMove,
+      movementNotation: frame.movementNotation,
+      recentMoveContext: frame.recentMoveContext,
+      halfmoveClock: frame.halfmoveClock,
+      positionKeys: frame.positionKeys
     })
   }
 

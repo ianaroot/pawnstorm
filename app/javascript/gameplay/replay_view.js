@@ -231,12 +231,23 @@ class ReplayView {
 
 }
 
-export function buildReplayBoard({ layout, capturedPieces, allowedToMove }) {
+export function buildReplayBoard({
+  layout,
+  capturedPieces,
+  allowedToMove,
+  movementNotation = [],
+  recentMoveContext = null,
+  halfmoveClock = 0,
+  positionKeys = []
+}) {
   return new Board({
     layOut: layout,
     capturedPieces,
     allowedToMove,
-    movementNotation: []
+    movementNotation,
+    recentMoveContext,
+    halfmoveClock,
+    positionKeys
   })
 }
 
