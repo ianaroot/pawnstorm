@@ -5,9 +5,15 @@ class TournamentsController < ApplicationController
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
 
   def index
-    @tournaments = Tournament.visibility_public.order(created_at: :desc)
+    @filter_params = params.permit(:name, :status, :owner, :my_entries)
+    @pagy, @tournaments = pagy(
+      Tournament.visibility_public
+                .includes(:creator, :tournament_entries)
+                .filtered(**index_filters)
+                .order(created_at: :desc),
+      limit: 10
+    )
   end
-
   def new
     creation = Tournaments::CreateTournament.new(user: current_user, params: setup_params)
     assign_form_state(creation)
@@ -147,6 +153,11 @@ class TournamentsController < ApplicationController
     return if @tournament.creator == current_user
 
     redirect_to tournament_path(@tournament), alert: 'Only the tournament creator can manage this tournament.'
+  end
+
+  def index_filters
+    entry_owner_id = current_user.id if @filter_params[:my_entries] == "1" && user_signed_in? && !current_user.guest?
+    @filter_params.slice(:name, :status, :owner).to_h.symbolize_keys.merge(entry_owner_id:).compact
   end
 
   def assign_form_state(creation)

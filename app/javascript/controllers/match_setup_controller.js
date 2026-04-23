@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["staleBotConfirmation"]
+  static targets = ["staleBotConfirmation", "form"]
 
   confirmStaleCompile(event) {
     if (this.staleBotConfirmationTarget.value === 'compile') { return }
@@ -13,7 +13,7 @@ export default class extends Controller {
       : `${staleOwnedBots.map(bot => bot.name).join(' and ')} each need to be recompiled before match generation. Compile both and continue?`
     if (!window.confirm(message)) { return }
     this.staleBotConfirmationTarget.value = 'compile'
-    this.element.submit()
+    this.formTarget.submit()
   }
 
   selectedStaleOwnedBots() {

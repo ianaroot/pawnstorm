@@ -73,6 +73,10 @@
   border-bottom: 1px solid #3d3a35;
 }
 
+.toolbar-section--push-right {
+  margin-left: auto;
+}
+
 .toolbar-section h3 {
   margin: 0 0 8px 0;
   font-size: 12px;
@@ -1200,6 +1204,29 @@
   display: grid;
   gap: 8px;
   grid-column: 1 / -1;
+}
+
+.condition-form-comparison-source-stack--inline-number {
+  grid-template-columns: minmax(0, 1fr) minmax(3.85rem, 4.25rem);
+  align-items: center;
+  gap: 6px;
+}
+
+.condition-form-comparison-source-stack--inline-number input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  margin: 0;
+  background: #2d2a25;
+  border: 1px solid #1a1815;
+  border-radius: 6px;
+  color: #E5E5E5;
+  font-size: 12px;
+  line-height: normal;
+  appearance: auto;
+  text-align: center;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 .condition-form-checkbox {

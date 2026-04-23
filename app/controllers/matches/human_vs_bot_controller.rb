@@ -1,9 +1,12 @@
 class Matches::HumanVsBotController < ApplicationController
-  before_action :authenticate_registered_or_guest_user!
+  before_action -> { current_user_or_create_guest! }, only: [:create]
+  before_action :authenticate_registered_or_guest_user!, only: [:play, :complete]
 
   def new
     creation = Matches::CreateHumanVsBot.new(user: current_user, params: setup_params)
     assign_form_state(creation)
+    paginate_bot_list
+    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
 
     render 'matches/new_play'
   end
@@ -15,6 +18,8 @@ class Matches::HumanVsBotController < ApplicationController
       redirect_to play_human_vs_bot_match_path(creation.match)
     else
       assign_form_state(creation)
+      paginate_bot_list
+      @user_has_no_own_bots = current_user.bots.empty?
       flash.now[:alert] = creation.error_message
       render 'matches/new_play', status: :unprocessable_entity
     end
@@ -52,6 +57,16 @@ class Matches::HumanVsBotController < ApplicationController
     @selected_color = creation.selected_color
   end
 
+  def paginate_bot_list
+    @play_bots_pagy, @play_bots = pagy(
+      @play_bots.with_name(params[:bot_name]),
+      limit: 8,
+      page_param: :bot_page,
+      page: params[:bot_page],
+      params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
+    )
+  end
+
   def interactive_play_match?(match)
     players = [match.white_player, match.black_player]
     players.count { |player| player == current_user } == 1 &&
@@ -59,11 +74,11 @@ class Matches::HumanVsBotController < ApplicationController
   end
 
   def setup_params
-    params.permit(:bot_id, :human_color)
+    params.permit(:bot_id, :human_color, :bot_name, :bot_page)
   end
 
   def match_params
-    params.fetch(:match, {}).permit(:bot_id, :human_color)
+    params.fetch(:match, {}).permit(:bot_id, :human_color, :stale_bot_confirmation)
   end
 
   def complete_params

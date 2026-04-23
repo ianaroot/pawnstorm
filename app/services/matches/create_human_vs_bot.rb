@@ -11,7 +11,13 @@ class Matches::CreateHumanVsBot
 
   def call
     bot = selected_bot
-    return fail_with('Please choose one of your compiled bots.') if bot.blank?
+    return fail_with('Please choose one of your bots.') if bot.blank?
+
+    if bot.compiled_program_stale?
+      return fail_with(stale_compile_message(bot)) unless compile_confirmation_requested?
+      return false unless compile_bot(bot)
+      bot.reload
+    end
 
     human_team = resolve_human_team(selected_color)
     white_player = human_team == 'W' ? @user : bot
@@ -37,16 +43,35 @@ class Matches::CreateHumanVsBot
   private
 
   def load_play_bot_options
-    @play_bots = @user.bots
-      .where(compiled_program_stale: false)
-      .where.not(compiled_program: nil)
-      .order(:name)
+    system_bot = Bot.system_bot
+    if @user
+      base = @user.bots
+      base = base.or(Bot.where(id: system_bot.id)) if system_bot && system_bot.user_id != @user.id
+      @play_bots = base.order(:name)
+    else
+      @play_bots = system_bot ? Bot.where(id: system_bot.id) : Bot.none
+    end
   end
 
   def selected_bot
     return nil if selected_bot_id.blank?
 
-    play_bots.find { |bot| bot.id == selected_bot_id.to_i }
+    play_bots.find_by(id: selected_bot_id)
+  end
+
+  def compile_confirmation_requested?
+    @params[:stale_bot_confirmation] == 'compile'
+  end
+
+  def compile_bot(bot)
+    bot.compile_program!
+    true
+  rescue StandardError => error
+    fail_with("Bot could not be compiled: #{error.message}")
+  end
+
+  def stale_compile_message(bot)
+    "#{bot.name} needs to be recompiled before you can play. Compile and continue?"
   end
 
   def resolve_human_team(color)

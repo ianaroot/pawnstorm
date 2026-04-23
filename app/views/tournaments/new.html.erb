@@ -1,45 +1,61 @@
-<div class="match-setup-page">
-  <h1>Set Up Tournament</h1>
-  <p>Create the tournament shell first. Users can submit entries while registration is open.</p>
+<div class="setup-form-page">
+  <h1>New Tournament</h1>
+  <p>Create the shell first — users can submit entries while registration is open.</p>
 
   <%= form_with url: tournaments_path, scope: :tournament, method: :post, local: true do |form| %>
-    <div class="match-setup-section">
-      <h2>Details</h2>
-      <%= form.label :name, 'Name' %>
-      <%= form.text_field :name, value: @name %>
+    <div class="setup-form-grid">
+      <div class="setup-form-col">
+        <div class="setup-form-section">
+          <h2>Details</h2>
+          <div class="form-field">
+            <%= form.label :name, 'Name' %>
+            <%= form.text_field :name, value: @name %>
+          </div>
+          <div class="form-field">
+            <%= form.label :description, 'Description' %>
+            <%= form.text_area :description, value: @description, rows: 6 %>
+          </div>
+        </div>
+        <%= form.submit 'Create Tournament', class: 'btn btn-primary' %>
+      </div>
 
-      <%= form.label :description, 'Description' %>
-      <%= form.text_area :description, value: @description %>
+      <div class="setup-form-col">
+        <div class="setup-form-section">
+          <h2>Access</h2>
+          <p>Public tournaments are listed. Link-only tournaments are accessible by invite link.</p>
+          <div class="form-field form-field-narrow">
+            <%= form.label :visibility, 'Visibility' %>
+            <%= form.select :visibility,
+              Tournament.visibilities.keys.map { |v| [v.humanize, v] },
+              selected: @visibility %>
+          </div>
+        </div>
+
+        <div class="setup-form-section">
+          <h2>Entries</h2>
+          <p>One-entry mode lets each user replace their entry before start. Unlimited allows multiple entries per user, one per bot.</p>
+          <div class="form-field form-field-narrow">
+            <%= form.label :entries_per_user, 'Entries Per User' %>
+            <%= form.select :entries_per_user,
+              Tournament.entries_per_users.keys.map { |e| [e.humanize, e] },
+              selected: @entries_per_user %>
+          </div>
+          <div class="form-field form-field-narrow">
+            <%= form.label :max_entries, 'Max Entries' %>
+            <%= form.number_field :max_entries, value: @max_entries, min: 2, step: 1, placeholder: 'Unlimited' %>
+          </div>
+        </div>
+
+        <div class="setup-form-section">
+          <h2>Format</h2>
+          <p>Default is 10 games per pairing. Maximum is <%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>.</p>
+          <div class="form-field form-field-narrow">
+            <%= form.label :games_per_pair, 'Games Per Pairing' %>
+            <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, max: Tournaments::CreateTournament::MAX_GAMES_PER_PAIR, step: 1 %>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="match-setup-section">
-      <h2>Access</h2>
-      <p>Public tournaments are listed. Link-only tournaments are accessible by invite link.</p>
-      <%= form.label :visibility, 'Visibility' %>
-      <%= form.select :visibility,
-        Tournament.visibilities.keys.map { |visibility| [visibility.humanize, visibility] },
-        selected: @visibility %>
-    </div>
-
-    <div class="match-setup-section">
-      <h2>Entries</h2>
-      <p>One-entry mode lets each user replace their entry before start. Unlimited mode allows multiple entries per user, one per bot.</p>
-      <%= form.label :entries_per_user, 'Entries Per User' %>
-      <%= form.select :entries_per_user,
-        Tournament.entries_per_users.keys.map { |entries_per_user| [entries_per_user.humanize, entries_per_user] },
-        selected: @entries_per_user %>
-
-      <%= form.label :max_entries, 'Max Entries' %>
-      <%= form.number_field :max_entries, value: @max_entries, min: 2, step: 1 %>
-    </div>
-
-    <div class="match-setup-section">
-      <h2>Format</h2>
-      <p>Default is 10 games per pairing. Maximum is <%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>.</p>
-      <%= form.label :games_per_pair, 'Games Per Pairing' %>
-      <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, max: Tournaments::CreateTournament::MAX_GAMES_PER_PAIR, step: 1 %>
-    </div>
-
-    <%= form.submit 'Create Tournament' %>
   <% end %>
 </div>

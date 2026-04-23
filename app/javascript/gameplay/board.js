@@ -722,7 +722,7 @@ class Board {
   // FUTURE EXTRACTION SOUND AND VIEW HELPERS
 
   getAlertsAndSounds(){
-    let lastNotation = this.movementNotation[this.movementNotation.length -1],
+    let lastNotation = this.movementNotation[this.movementNotation.length -1] || "",
       alert = "",
       sound = "move";
     if( /#/.exec(lastNotation) ){
@@ -740,6 +740,8 @@ class Board {
     } else if( this.gameOver === true ){
       alert = "stalemate"
       sound = "move"
+    } else if( /x/.exec(lastNotation) ){
+      sound = "capture"
     } else {
       sound = "move"
     }

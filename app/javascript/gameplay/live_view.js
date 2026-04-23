@@ -11,8 +11,6 @@ import {
 } from "gameplay/view_utils"
 
 const SHOW_CONTROL_PREVIEW =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
   window.DEBUG_CONTROL_PREVIEW === true
 
 class LiveView {

@@ -1,49 +1,6 @@
 <div class="tournament-registration">
   <h2>Entries Open</h2>
 
-  <% if @open_registration_entries.any? %>
-    <table class="tournament-entries-table">
-      <thead>
-        <tr>
-          <th>Bot</th>
-          <th>Owner</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @open_registration_entries.each do |entry| %>
-          <tr>
-            <td><strong><%= entry.display_name %></strong></td>
-            <td>
-              <% if entry.bot_owner %>
-                <span class="tournament-entries-table__owner"><%= entry.bot_owner.email %></span>
-              <% end %>
-            </td>
-            <td class="tournament-entries-table__actions">
-              <% if tournament.status_open? && entry.bot_owner == current_user %>
-                <% entry_path = @invite_token.present? ? invite_tournament_entry_path(@invite_token, entry) : tournament_entry_path(tournament, entry) %>
-                <% replacement_bots = @eligible_bots.reject do |bot|
-                  @open_registration_entries.any? { |other_entry| other_entry != entry && other_entry.bot_id == bot.id }
-                end %>
-
-                <% if replacement_bots.any? %>
-                  <%= form_with url: entry_path, scope: :tournament_entry, method: :patch, local: true, class: "tournament-entry-change-form" do |form| %>
-                    <%= form.select :bot_id, replacement_bots.map { |bot| [bot.name, bot.id] }, selected: entry.bot_id %>
-                    <%= form.submit 'Change' %>
-                  <% end %>
-                <% end %>
-
-                <%= button_to 'Withdraw', entry_path, method: :delete, class: 'btn-danger' %>
-              <% end %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <p class="tournament-registration__empty">No entries yet.</p>
-  <% end %>
-
   <div class="tournament-submit-section">
     <% if !user_signed_in? %>
       <p><%= link_to 'Sign in', new_user_session_path %> or <%= link_to 'sign up', new_user_registration_path %> to enter.</p>
@@ -76,4 +33,52 @@
       <% end %>
     <% end %>
   </div>
+
+  <% if @open_registration_entries.any? %>
+    <table class="tournament-entries-table">
+      <thead>
+        <tr>
+          <th>Bot</th>
+          <th>Owner</th>
+          <th>Compiled</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @open_registration_entries.each do |entry| %>
+          <tr>
+            <td><strong><%= entry.display_name %></strong></td>
+            <td>
+              <% if entry.bot_owner %>
+                <span class="tournament-entries-table__owner"><%= entry.bot_owner.email %></span>
+              <% end %>
+            </td>
+            <%# updated_at reliably reflects when the snapshot was taken since snapshot_entry is called on every create/update.
+                If other update paths are added to entries, this timestamp could become misleading. %>
+            <td class="index-table-secondary index-table-date"><%= entry.updated_at.to_date.to_fs(:long) %></td>
+            <td class="tournament-entries-table__actions">
+              <% if tournament.status_open? && entry.bot_owner == current_user %>
+                <% entry_path = @invite_token.present? ? invite_tournament_entry_path(@invite_token, entry) : tournament_entry_path(tournament, entry) %>
+                <% replacement_bots = @eligible_bots.reject do |bot|
+                  @open_registration_entries.any? { |other_entry| other_entry != entry && other_entry.bot_id == bot.id }
+                end %>
+
+                <% if replacement_bots.any? %>
+                  <%= form_with url: entry_path, scope: :tournament_entry, method: :patch, local: true, class: "tournament-entry-change-form" do |form| %>
+                    <%= form.select :bot_id, replacement_bots.map { |bot| [bot.name, bot.id] }, selected: entry.bot_id %>
+                    <%= form.submit 'Change' %>
+                  <% end %>
+                <% end %>
+
+                <%= button_to 'Withdraw', entry_path, method: :delete, class: 'btn-danger' %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="tournament-registration__empty">No entries yet.</p>
+  <% end %>
+
 </div>
