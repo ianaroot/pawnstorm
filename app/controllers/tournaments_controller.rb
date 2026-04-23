@@ -7,7 +7,7 @@ class TournamentsController < ApplicationController
   def index
     @filter_params = params.permit(:name, :status, :owner, :my_entries)
     @pagy, @tournaments = pagy(
-      Tournament.visibility_public
+      Tournament.visible_to(current_user)
                 .includes(:creator, :tournament_entries)
                 .filtered(**index_filters)
                 .order(created_at: :desc),
