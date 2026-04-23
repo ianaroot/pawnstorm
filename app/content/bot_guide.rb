@@ -176,8 +176,9 @@ class BotGuide
           'Target appears for relationship operators like attack or defend.',
           'Comparison appears for measurement operators like count, mobility, and value. It can compare against an integer, Prior Board State, or another subject using the same operator.',
           'For relationship operators, + comparison can restrict the matching subject or target by count or value.',
-          'King value is 0. For example, Allied any value = 39 can identify a full starting side because normal material totals 39 without adding king value.',
-          'Because king value is 0, aggregate value checks can include a king without changing the total. Enemy any value = 2 attacking an allied rook could mean two pawns attack it, or two pawns and the king attack it.',
+          'For consistency, any aggregate or relationship-set value total treats kings as 0. For example, Allied any value = 39 can identify a full starting side because normal material totals 39 without adding king value.',
+          'The same aggregate rule applies to smaller relationship sets, such as the pieces found by an attack or defend query. Enemy any value = 2 attacking an allied rook could mean two pawns attack it, or two pawns and the king attack it.',
+          'Individual king value comparisons are different. When the king is used as an individual comparison source, such as Moved Piece or Enemy Moved Piece, its value is non-comparable. This keeps an empty value total from counting as an even trade with a moved king.',
           'Count can check that a specific single-piece subject did not match, such as Moved Piece knight count = 0 after a queen move.',
           'Mobility and filtered value questions only apply when that specific piece exists. Captured pieces are off the board, so they do not have mobility or relationships.'
         ],

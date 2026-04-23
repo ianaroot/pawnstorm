@@ -79,23 +79,32 @@
           return mobility
         })
     }
+
+    individualComparableValue(species) {
+        // Kings count as 0 in aggregate material totals, but they are not
+        // comparable trade pieces. This prevents empty value totals from tying
+        // an individual moved king at 0.
+        if (species === Board.KING) { return null }
+        return materialValue(species)
+    }
+
     movedPieceValue(boardScope = AFTER_BOARD) {
-        return materialValue(this.resolvedMovedPiece(boardScope).species)
+        return this.individualComparableValue(this.resolvedMovedPiece(boardScope).species)
     }
 
     capturedPieceValue() {
       const resolved = this.resolvedCapturedPiece()
-      return resolved ? materialValue(resolved.species) : 0
+      return resolved ? this.individualComparableValue(resolved.species) : 0
     }
 
     enemyMovedPieceValue() {
         const recentMove = this.board.recentMoveContext
-        return recentMove ? materialValue(recentMove.movedPieceSpeciesAfterMove) : 0
+        return recentMove ? this.individualComparableValue(recentMove.movedPieceSpeciesAfterMove) : 0
     }
 
     enemyCapturedPieceValue() {
       const resolved = this.resolvedEnemyCapturedPiece()
-      return resolved ? materialValue(resolved.species) : 0
+      return resolved ? this.individualComparableValue(resolved.species) : 0
     }
 
     samePiece({ subject, target }) {
@@ -364,7 +373,7 @@
           case "count":
             return 1
           case "value":
-            return materialValue(resolved.species)
+            return this.individualComparableValue(resolved.species)
           case "mobility":
             return this.positionMobility(resolved.position, boardScope)
           default:
@@ -381,7 +390,7 @@
         case "count":
           return 1
         case "value":
-          return materialValue(resolved.species)
+          return this.individualComparableValue(resolved.species)
         default:
           throw new Error(`Unsupported V2 unary operator for captured_piece: ${operator}`)
       }
@@ -396,7 +405,7 @@
           case "count":
             return 1
           case "value":
-            return materialValue(resolved.species)
+            return this.individualComparableValue(resolved.species)
           case "mobility":
             if (!resolved.presentOnBoard) return 0
             return this.positionMobility(resolved.position, boardScope)
@@ -414,7 +423,7 @@
         case "count":
           return 1
         case "value":
-          return materialValue(resolved.species)
+          return this.individualComparableValue(resolved.species)
         default:
           throw new Error(`Unsupported V2 unary operator for enemy_captured_piece: ${operator}`)
       }

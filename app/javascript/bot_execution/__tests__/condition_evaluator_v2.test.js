@@ -75,6 +75,67 @@ describe('ConditionEvaluatorV2', () => {
     ).toBe(true)
   })
 
+  it('does not compare moved king value as an individual source', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e2: 'wP'
+      }
+    })
+
+    const moveObject = getMove('e1', 'f1', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'unary',
+          subject: 'moved_piece',
+          subjectFilter: 'king',
+          operator: 'value',
+          comparator: 'equal_to',
+          target: 'exact_number',
+          targetTotal: 0
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('does not let empty value totals tie an individual moved king comparison source', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        h2: 'wP',
+        a7: 'bP'
+      }
+    })
+
+    const moveObject = getMove('e1', 'f1', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'relational',
+          subject: 'moved_piece',
+          subjectFilter: 'any',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any',
+          targetComparisonMetric: 'value',
+          targetComparator: 'greater_than_or_equal_to',
+          targetComparisonSource: 'moved_piece'
+        },
+        board,
+        moveObject
+      )
+    ).toBe(false)
+  })
+
   it('fails enemy_moved_piece mobility against prior_board_state when the current move captures it', () => {
     const board = buildBoard({
       pieces: {
@@ -860,6 +921,40 @@ describe('ConditionEvaluatorV2', () => {
             operator: 'attack',
             target: 'enemy',
             targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('keeps king value as zero inside relation-side aggregate value totals', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wK',
+          h8: 'bK',
+          d4: 'wP',
+          h2: 'wP',
+          e5: 'bN'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 1,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'knight'
           },
           board,
           moveObject
