@@ -11,7 +11,7 @@
 #  description :text
 #
 class Bot < ApplicationRecord
-  SYSTEM_BOT_NAME = 'Clone newBot!'
+  SYSTEM_BOT_NAME = 'Seed Bot'
 
   def self.system_bot
     find_by(name: SYSTEM_BOT_NAME)
