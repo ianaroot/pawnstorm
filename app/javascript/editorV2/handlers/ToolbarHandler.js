@@ -114,7 +114,11 @@ class ToolbarHandler {
   }
 
   findPlacementPosition(type) {
-    const origin = this.store.getRecentPlacementAnchor() || this.viewport?.getVisibleCanvasCenter() || { x: 200, y: 200 }
+    const recentAnchor = this.store.getRecentPlacementAnchor()
+    const origin = this.viewport?.isGraphPointVisible?.(recentAnchor)
+      ? recentAnchor
+      : this.viewport?.getVisibleCanvasCenter() || recentAnchor || { x: 200, y: 200 }
+
     return findAnchoredNodePlacement(this.store, type, origin)
   }
 

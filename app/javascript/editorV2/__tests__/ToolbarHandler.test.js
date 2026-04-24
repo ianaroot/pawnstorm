@@ -5,7 +5,8 @@ import Node from '../models/Node.js'
 
 function buildViewport() {
   return {
-    getVisibleCanvasCenter: vi.fn(() => ({ x: 400, y: 300 }))
+    getVisibleCanvasCenter: vi.fn(() => ({ x: 400, y: 300 })),
+    isGraphPointVisible: vi.fn(() => true)
   }
 }
 
@@ -57,6 +58,13 @@ describe('ToolbarHandler', () => {
 
   it('falls back to the visible canvas center when no anchor exists', () => {
     expect(toolbarHandler.findPlacementPosition('action')).toEqual({ x: 346, y: 246 })
+  })
+
+  it('falls back to the visible canvas center when the recent anchor is outside the viewport', () => {
+    store.setRecentPlacementAnchor({ x: 900, y: 800 })
+    viewport.isGraphPointVisible.mockReturnValue(false)
+
+    expect(toolbarHandler.findPlacementPosition('condition')).toEqual({ x: 350, y: 236 })
   })
 
   it('searches around the recent anchor when the direct placement is blocked', () => {

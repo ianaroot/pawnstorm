@@ -344,6 +344,35 @@ class CanvasViewport {
     return this.sceneToGraphPoint(scenePoint.x, scenePoint.y)
   }
 
+  getVisibleGraphBounds() {
+    const zoom = this.getZoom()
+    const left = this.container.scrollLeft / zoom
+    const top = this.container.scrollTop / zoom
+    const right = (this.container.scrollLeft + this.container.clientWidth) / zoom
+    const bottom = (this.container.scrollTop + this.container.clientHeight) / zoom
+
+    return {
+      left: left + this.worldMinX,
+      top: top + this.worldMinY,
+      right: right + this.worldMinX,
+      bottom: bottom + this.worldMinY
+    }
+  }
+
+  isGraphPointVisible(point) {
+    if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+      return false
+    }
+
+    const bounds = this.getVisibleGraphBounds()
+    return (
+      point.x >= bounds.left &&
+      point.x <= bounds.right &&
+      point.y >= bounds.top &&
+      point.y <= bounds.bottom
+    )
+  }
+
   screenToGraphPoint(clientX, clientY) {
     const containerRect = this.container.getBoundingClientRect()
     const zoom = this.getZoom()
