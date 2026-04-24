@@ -532,13 +532,20 @@
 .condition-preview {
   display: flex;
   flex-direction: column;
+  font-family: "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  font-synthesis: none;
 }
 
 .condition-preview__chunk {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.22rem 0.38rem;
-  margin-bottom: 0.3rem;
+  display: block;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  margin-bottom: 0.26rem;
 }
 
 .condition-preview__chunk--subject {
@@ -554,18 +561,18 @@
 }
 
 .condition-preview__lead {
-  font-size: 12px;
-  font-weight: 500;
-  font-style: italic;
-  line-height: 1.15;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
 }
 
 .condition-preview__detail {
   color: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  font-style: italic;
-  line-height: 1.15;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
   opacity: 0.94;
 }
 
