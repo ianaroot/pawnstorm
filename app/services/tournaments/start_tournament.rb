@@ -18,7 +18,7 @@ module Tournaments
         tournament.update!(status: :running, started_at: Time.current)
       end
 
-      tournament.enqueue_next_match!
+      tournament.enqueue_available_matches!
       true
     rescue StandardError => e
       reopen_registration

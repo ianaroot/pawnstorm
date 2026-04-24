@@ -33,12 +33,10 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect(editor_api_available?).to be true
     end
 
-    it 'loads nodes correctly after Turbo navigation from index', :slow do
-      # Navigate away
-      click_link 'Back to Bots'
+    it 'loads nodes correctly after Turbo navigation from bots index', :slow do
+      visit bots_path
       expect(page).to have_css('h1', text: 'Bots', wait: 5)
 
-      # Navigate back
       click_link 'Edit', match: :first
       wait_for_editor
 

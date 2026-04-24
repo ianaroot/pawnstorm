@@ -69,6 +69,67 @@ RSpec.describe ComputeMatchJob, type: :job do
       expect(match.error_message).to be_nil
     end
 
+    it 'starts tournament matches from queued status' do
+      tournament = create(:tournament, creator: user, status: :running)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: white_bot, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: black_bot, seed_order: 1)
+      match = Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :queued,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      status = instance_double(Process::Status, success?: true)
+      payload = {
+        result: 'white_win',
+        lay_out: Array.new(64, 'ee'),
+        captured_pieces: ['BP'],
+        allowed_to_move: 'B',
+        movement_notation: ['1. e4', 'e5'],
+        previous_layouts: []
+      }
+
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:read_result_file).and_return(payload.to_json)
+
+      described_class.perform_now(match.id)
+
+      expect(match.reload).to be_completed
+    end
+
+    it 'does not start tournament matches that were never reserved' do
+      tournament = create(:tournament, creator: user, status: :running)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: white_bot, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: black_bot, seed_order: 1)
+      match = Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      expect_any_instance_of(ComputeMatchJob).not_to receive(:run_match_process)
+
+      described_class.perform_now(match.id)
+
+      expect(match.reload).to be_pending
+    end
+
     it 'marks the match failed and stores the error message on subprocess failure' do
       match = Match.create!(
         creator: user,

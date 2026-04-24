@@ -443,6 +443,26 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include('Rematch')
     end
 
+    it 'shows the loading state for queued matches' do
+      match = Match.create!(
+        creator: user,
+        white_player: create(:bot, :compiled, user: user),
+        black_player: create(:bot, :compiled),
+        status: :queued,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Match is generating.')
+      expect(response.body).to match(/<meta[^>]+http-equiv="refresh"[^>]+content="2"[^>]*>/)
+      expect(response.body).to include('Rematch')
+    end
+
     it 'shows failure details for failed matches' do
       match = Match.create!(
         creator: user,

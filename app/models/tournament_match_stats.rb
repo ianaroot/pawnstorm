@@ -8,7 +8,7 @@ class TournamentMatchStats
   end
 
   def running_count
-    count_for(:running)
+    count_for(:queued) + count_for(:running)
   end
 
   def completed_count

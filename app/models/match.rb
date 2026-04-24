@@ -29,7 +29,8 @@ class Match < ApplicationRecord
     pending: 0,
     running: 1,
     completed: 2,
-    failed: 3
+    failed: 3,
+    queued: 4
   }
 
   enum :result, {
@@ -50,6 +51,9 @@ class Match < ApplicationRecord
   belongs_to :black_tournament_entry, class_name: 'TournamentEntry', optional: true
 
   validate :completed_matches_require_replay_state
+
+  scope :active, -> { where(status: [statuses[:queued], statuses[:running]]) }
+  scope :unfinished, -> { where(status: [statuses[:pending], statuses[:queued], statuses[:running]]) }
 
   def compiled_program_snapshot_for(player)
     return tournament_compiled_program_snapshot_for(player) if tournament.present?
@@ -79,6 +83,10 @@ class Match < ApplicationRecord
     else
       player_display_name_for(:black)
     end
+  end
+
+  def awaiting_generation?
+    pending? || queued? || running?
   end
 
   private

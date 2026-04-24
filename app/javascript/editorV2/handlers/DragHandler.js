@@ -138,7 +138,11 @@ class DragHandler {
     this.endPointerTracking()
     this.activePointerId = event.pointerId
     this.pointerCaptureElement = captureElement
-    this.pointerCaptureElement?.setPointerCapture?.(event.pointerId)
+    try {
+      this.pointerCaptureElement?.setPointerCapture?.(event.pointerId)
+    } catch {
+      // Synthetic pointer events (e.g. in tests) may not have a capturable pointer ID.
+    }
     document.addEventListener('pointermove', this.boundHandlePointerMove)
     document.addEventListener('pointerup', this.boundHandlePointerUp)
     document.addEventListener('pointercancel', this.boundHandlePointerCancel)

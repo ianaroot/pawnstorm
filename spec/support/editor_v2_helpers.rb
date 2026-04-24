@@ -233,44 +233,47 @@ module EditorV2Helpers
     finish = graph_to_client_coordinates( new_x + MOUSE_CLICK_OFFSET, new_y + MOUSE_CLICK_OFFSET )
 
     
-    # Mouse down at current position (with small offset for realistic click)
     page.execute_script(<<~JS)
       (function() {
         const el = document.querySelector('[data-client-id="#{client_id}"]');
-        
-        el.dispatchEvent(new MouseEvent('mousedown', {
+        el.dispatchEvent(new PointerEvent('pointerdown', {
           clientX: #{start['x']},
           clientY: #{start['y']},
           button: 0,
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();
     JS
-    
-    # Mouse move to new position
+
     page.execute_script(<<~JS)
       (function() {
-        
-        document.dispatchEvent(new MouseEvent('mousemove', {
+        document.dispatchEvent(new PointerEvent('pointermove', {
           clientX: #{finish['x']},
           clientY: #{finish['y']},
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();
     JS
-    
-    # Mouse up at new position
+
     page.execute_script(<<~JS)
       (function() {
-        
-        document.dispatchEvent(new MouseEvent('mouseup', {
+        document.dispatchEvent(new PointerEvent('pointerup', {
           clientX: #{finish['x']},
           clientY: #{finish['y']},
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();
     JS
-    
+
     sleep ASYNC_WAIT
   end
 
@@ -294,40 +297,43 @@ module EditorV2Helpers
     start = graph_to_client_coordinates( current_x + MOUSE_CLICK_OFFSET, current_y + MOUSE_CLICK_OFFSET )
     finish = graph_to_client_coordinates( new_x + MOUSE_CLICK_OFFSET, new_y + MOUSE_CLICK_OFFSET )
     
-    # Mouse down with Shift key at current position
     page.execute_script(<<~JS)
       (function() {
         const el = document.querySelector('[data-client-id="#{client_id}"]');
-        
-        el.dispatchEvent(new MouseEvent('mousedown', {
+        el.dispatchEvent(new PointerEvent('pointerdown', {
           clientX: #{start['x']},
           clientY: #{start['y']},
           button: 0,
           shiftKey: true,
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();
     JS
-    
-    # Mouse move to new position
+
     page.execute_script(<<~JS)
       (function() {
-        
-        document.dispatchEvent(new MouseEvent('mousemove', {
+        document.dispatchEvent(new PointerEvent('pointermove', {
           clientX: #{finish['x']},
           clientY: #{finish['y']},
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();
     JS
-    
-    # Mouse up at new position
+
     page.execute_script(<<~JS)
       (function() {
-        
-        document.dispatchEvent(new MouseEvent('mouseup', {
+        document.dispatchEvent(new PointerEvent('pointerup', {
           clientX: #{finish['x']},
           clientY: #{finish['y']},
+          pointerId: 1,
+          isPrimary: true,
+          pointerType: 'mouse',
           bubbles: true
         }));
       })();

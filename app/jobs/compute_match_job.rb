@@ -6,7 +6,7 @@ class ComputeMatchJob < ApplicationJob
 
   def perform(match_id)
     match = Match.find(match_id)
-    match.update!(status: :running, error_message: nil, profile_data: nil)
+    return unless start_match!(match)
 
     Tempfile.create(['match-result', '.json']) do |result_file|
       stdout, stderr, status = run_match_process(match:, result_path: result_file.path)
@@ -55,15 +55,31 @@ class ComputeMatchJob < ApplicationJob
         profile_data: result_payload['profile']
       )
 
-      match.tournament&.enqueue_next_match!
+      match.tournament&.enqueue_available_matches!
     end
   rescue StandardError => error
     match&.update(status: :failed, result: :error, error_message: error.message)
-    match&.tournament&.enqueue_next_match!
+    match&.tournament&.enqueue_available_matches!
     raise
   end
 
   private
+
+  def start_match!(match)
+    expected_status = match.tournament.present? ? Match.statuses[:queued] : Match.statuses[:pending]
+
+    started = Match.where(id: match.id, status: expected_status).update_all(
+      status: Match.statuses[:running],
+      error_message: nil,
+      profile_data: nil,
+      updated_at: Time.current
+    )
+
+    return false if started.zero?
+
+    match.reload
+    true
+  end
 
   def match_payload(match)
     {

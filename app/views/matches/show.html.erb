@@ -1,9 +1,9 @@
 <div class="match-show-page">
-  <% if @match.pending? || @match.running? %>
+  <% if @match.awaiting_generation? %>
     <meta http-equiv="refresh" content="2">
   <% end %>
 
-  <% if @match.pending? || @match.running? %>
+  <% if @match.awaiting_generation? %>
     <div class="match-replay-page match-replay-layout">
       <div class="game-page">
         <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>

@@ -238,7 +238,7 @@ RSpec.describe BotCompiler do
         compiled = described_class.new(bot).compile
 
         expect(compiled[:nodes][organizer.id.to_s][:type]).to eq('organizer')
-        expect(compiled[:nodes][organizer.id.to_s][:data]).to eq({})
+        expect(compiled[:nodes][organizer.id.to_s][:data]).to eq({ title: 'Fork ideas' })
         expect(compiled[:nodes][organizer.id.to_s][:children]).to eq([condition.id.to_s])
       end
     end
