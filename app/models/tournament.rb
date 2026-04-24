@@ -3,6 +3,7 @@ require 'securerandom'
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
   PAUSED_CACHE_TTL = 7.days
+  INVITE_TOKEN_BYTES = 3
 
   enum :status, {
     open: 0,
@@ -91,7 +92,14 @@ class Tournament < ApplicationRecord
   private
 
   def generate_invite_token
-    self.invite_token ||= SecureRandom.hex(16)
+    self.invite_token ||= generate_unique_invite_token
+  end
+
+  def generate_unique_invite_token
+    loop do
+      token = SecureRandom.hex(INVITE_TOKEN_BYTES)
+      return token unless self.class.exists?(invite_token: token)
+    end
   end
 
   def paused_cache_key
