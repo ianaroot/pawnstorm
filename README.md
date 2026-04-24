@@ -1,5 +1,5 @@
 # README
-https://upcp.onrender.com/games/new
+https://upcp.onrender.com
 
 
 This README would normally document whatever steps are necessary to get the
