@@ -22,7 +22,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         .and change(Match, :count).by(0)
 
       entry = tournament.tournament_entries.last
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(entry).to have_attributes(
         bot: bot,
         bot_owner: user,
@@ -55,7 +55,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: stale_bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Choose a compiled bot that belongs to you.')
     end
 
@@ -67,7 +67,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: other_bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Choose a compiled bot that belongs to you.')
     end
 
@@ -79,7 +79,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Entries are closed.')
     end
 
@@ -91,7 +91,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Entries are closed.')
     end
 
@@ -105,7 +105,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Tournament is full.')
     end
 
@@ -118,7 +118,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         post tournament_entries_path(tournament), params: { tournament_entry: { bot_id: bot.id } }
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('That bot is already entered in this tournament.')
     end
 
@@ -153,9 +153,9 @@ RSpec.describe TournamentEntriesController, type: :request do
       tournament.update!(visibility: :link_only)
       sign_in user
 
-      post invite_tournament_entries_path(tournament.invite_token), params: { tournament_entry: { bot_id: bot.id } }
+      post invitation_tournament_entries_path(tournament.invite_token), params: { tournament_entry: { bot_id: bot.id } }
 
-      expect(response).to redirect_to(invite_tournament_path(tournament.invite_token))
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
     end
   end
 
@@ -171,7 +171,7 @@ RSpec.describe TournamentEntriesController, type: :request do
 
       patch tournament_entry_path(tournament, entry), params: { tournament_entry: { bot_id: replacement.id } }
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(entry.reload).to have_attributes(
         bot: replacement,
         display_name: 'Gamma',
@@ -186,7 +186,7 @@ RSpec.describe TournamentEntriesController, type: :request do
 
       patch tournament_entry_path(tournament, entry), params: { tournament_entry: { bot_id: replacement.id } }
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('You can only manage your own entries.')
       expect(entry.reload.bot).to eq(bot)
     end
@@ -198,7 +198,7 @@ RSpec.describe TournamentEntriesController, type: :request do
 
       patch tournament_entry_path(tournament, entry), params: { tournament_entry: { bot_id: replacement.id } }
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Entries are closed.')
       expect(entry.reload.bot).to eq(bot)
     end
@@ -208,9 +208,9 @@ RSpec.describe TournamentEntriesController, type: :request do
       replacement = create(:bot, :compiled, user: user)
       sign_in user
 
-      patch invite_tournament_entry_path(tournament.invite_token, entry), params: { tournament_entry: { bot_id: replacement.id } }
+      patch invitation_tournament_entry_path(tournament.invite_token, entry), params: { tournament_entry: { bot_id: replacement.id } }
 
-      expect(response).to redirect_to(invite_tournament_path(tournament.invite_token))
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
     end
   end
 
@@ -227,7 +227,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         delete tournament_entry_path(tournament, entry)
       end.to change(TournamentEntry, :count).by(-1)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
     end
 
     it 'does not let a non-owner destroy an entry' do
@@ -237,7 +237,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         delete tournament_entry_path(tournament, entry)
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('You can only manage your own entries.')
     end
 
@@ -249,7 +249,7 @@ RSpec.describe TournamentEntriesController, type: :request do
         delete tournament_entry_path(tournament, entry)
       end.not_to change(TournamentEntry, :count)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Entries are closed.')
     end
 
@@ -257,9 +257,9 @@ RSpec.describe TournamentEntriesController, type: :request do
       tournament.update!(visibility: :link_only)
       sign_in user
 
-      delete invite_tournament_entry_path(tournament.invite_token, entry)
+      delete invitation_tournament_entry_path(tournament.invite_token, entry)
 
-      expect(response).to redirect_to(invite_tournament_path(tournament.invite_token))
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
     end
   end
 end

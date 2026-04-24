@@ -64,16 +64,37 @@ function addConnection(store, { clientId, sourceId, targetId }) {
 
 const DEFAULT_VIEWPORT_BOUNDS = { left: 0, top: 0, right: 800, bottom: 600 }
 function buildViewport() {
+  const container = {
+    getBoundingClientRect: vi.fn(() => ({
+      ...DEFAULT_VIEWPORT_BOUNDS
+    })),
+    scrollLeft: 0,
+    scrollTop: 0,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }
+
   return {
     screenToGraphPoint: vi.fn((x, y) => ({ x, y })),
     beginInteraction: vi.fn(),
     endInteraction: vi.fn(),
-    container: {
-      getBoundingClientRect: vi.fn(() => ({
-        ...DEFAULT_VIEWPORT_BOUNDS
-      })),
-      scrollLeft: 0,
-      scrollTop: 0
+    container,
+    workspace: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
+    scene: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
+    nodesLayer: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      appendChild: vi.fn()
+    },
+    svgLayer: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
     }
   }
 }
@@ -139,6 +160,10 @@ describe('DragHandler', () => {
       expect(dragHandler.draggedClientId).toBe(null)
       expect(dragHandler.dragOffsets.size).toBe(0)
       expect(dragHandler.draggedClientIds).toEqual([])
+    })
+
+    it('attaches background pointer handlers to the visible canvas container', () => {
+      expect(viewport.container.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function))
     })
   })
 
@@ -390,7 +415,12 @@ describe('DragHandler', () => {
           expect.objectContaining({ clientId: 'parent', x: 150, y: 160 }),
           expect.objectContaining({ clientId: 'child', x: 250, y: 210 })
         ]),
-        expect.stringContaining('Move')
+        expect.stringContaining('Move'),
+        'parent',
+        {
+          parent: { x: 100, y: 100 },
+          child: { x: 200, y: 150 }
+        }
       )
       expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
     })
@@ -414,7 +444,12 @@ describe('DragHandler', () => {
           expect.objectContaining({ clientId: 'parent', x: 150, y: 160 }),
           expect.objectContaining({ clientId: 'child', x: 250, y: 210 })
         ]),
-        expect.stringContaining('Move')
+        expect.stringContaining('Move'),
+        'parent',
+        {
+          parent: { x: 100, y: 100 },
+          child: { x: 200, y: 150 }
+        }
       )
       expect(syncManager.updateNodePosition).not.toHaveBeenCalled()
     })
@@ -437,14 +472,13 @@ describe('DragHandler', () => {
       const endEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
       dragHandler.handlePointerUp(endEvent)
 
-      expect(syncManager.updateNodePosition).toHaveBeenCalledWith('parent', 150, 160)
+      expect(syncManager.updateNodePosition).toHaveBeenCalledWith('parent', 150, 160, { x: 100, y: 100 })
       expect(syncManager.batchUpdatePositions).not.toHaveBeenCalled()
       expect(store.getNode('child').position).toEqual({ x: 200, y: 150 })
     })
 
-    it('updates the recent placement anchor after a successful single-node drag', async () => {
+    it('persists a successful single-node drag through sync manager', async () => {
       addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
-      const anchorSpy = vi.spyOn(store, 'setRecentPlacementAnchor')
 
       const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
       const moveEvent = buildPointerEvent({ clientX: 150, clientY: 160 })
@@ -455,10 +489,68 @@ describe('DragHandler', () => {
       dragHandler.handlePointerUp(endEvent)
 
       await vi.waitFor(() => {
-        expect(anchorSpy).toHaveBeenCalledWith({ x: 150, y: 160 })
+        expect(syncManager.updateNodePosition).toHaveBeenCalledWith('node-1', 150, 160, { x: 100, y: 100 })
       })
     })
 
+  })
+
+  describe('background marquee selection', () => {
+    it('starts marquee selection from the canvas container background', () => {
+      const startEvent = buildPointerEvent({
+        clientX: 300,
+        clientY: 300,
+        currentTarget: viewport.container,
+        target: {
+          closest: vi.fn(() => null)
+        }
+      })
+      const moveEvent = buildPointerEvent({
+        clientX: 300 + DRAG_START_THRESHOLD + 2,
+        clientY: 300 + DRAG_START_THRESHOLD + 2
+      })
+
+      dragHandler.handleBackgroundPointerDown(startEvent)
+      dragHandler.handlePointerMove(moveEvent)
+
+      expect(store.getMarqueeState().isMarqueeSelecting).toBe(true)
+    })
+
+    it('anchors marquee selection to the selected node closest to mouse-up', () => {
+      addNode(store, { clientId: 'nearby', type: 'condition', x: 320, y: 320 })
+      addNode(store, { clientId: 'farther', type: 'condition', x: 420, y: 420 })
+
+      const anchorSpy = vi.spyOn(store, 'setRecentPlacementAnchor')
+
+      const startEvent = buildPointerEvent({
+        clientX: 300,
+        clientY: 300,
+        currentTarget: viewport.container,
+        target: {
+          closest: vi.fn(() => null)
+        }
+      })
+      const moveEvent = buildPointerEvent({
+        clientX: 480,
+        clientY: 480
+      })
+      const sizeMarqueeEvent = buildPointerEvent({
+        clientX: 482,
+        clientY: 482
+      })
+      const endEvent = buildPointerEvent({
+        clientX: 482,
+        clientY: 482
+      })
+
+      dragHandler.handleBackgroundPointerDown(startEvent)
+      dragHandler.handlePointerMove(moveEvent)
+      dragHandler.handlePointerMove(sizeMarqueeEvent)
+      dragHandler.handlePointerUp(endEvent)
+
+      expect(store.getSelectedNodeIds()).toEqual(['farther', 'nearby'])
+      expect(anchorSpy).toHaveBeenCalledWith({ x: 420, y: 420 })
+    })
   })
 
   describe('cancelDrag', () => {

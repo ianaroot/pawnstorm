@@ -3,6 +3,8 @@ require 'securerandom'
 class ApplicationController < ActionController::Base
   include Pagy::Method
 
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+
   GUEST_EMAIL_DOMAIN = 'guest.local'
   USER_ACTIVITY_THROTTLE = 12.hours
 
@@ -42,5 +44,9 @@ class ApplicationController < ActionController::Base
 
     sign_in guest_user
     guest_user
+  end
+
+  def render_not_found
+    head :not_found
   end
 end

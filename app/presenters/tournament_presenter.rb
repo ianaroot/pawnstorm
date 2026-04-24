@@ -1,6 +1,12 @@
 class TournamentPresenter
+  include Rails.application.routes.url_helpers
+
   def initialize(tournament)
     @tournament = tournament
+  end
+
+  def show_path
+    tournament.visibility_public? ? public_tournament_path(tournament) : invitation_tournament_path(tournament.invite_token)
   end
 
   def pending_matches_count

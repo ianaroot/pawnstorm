@@ -10,6 +10,18 @@ class ReplayTraceView {
 
   render(inspection) {
     if (!this.tracePanelElement || !this.traceSummaryElement || !this.traceBranchesElement) { return }
+    if (inspection?.unavailableMessage) {
+      this.tracePanelElement.hidden = false
+      this.traceSummaryElement.innerHTML = ""
+      this.traceBranchesElement.innerHTML = ""
+
+      const message = document.createElement("p")
+      message.className = "match-replay-trace-empty-state"
+      message.textContent = inspection.unavailableMessage
+      this.traceBranchesElement.appendChild(message)
+      return
+    }
+
     if (!inspection?.enabled || !inspection.result?.inspectedTrace) {
       this.tracePanelElement.hidden = true
       this.traceSummaryElement.innerHTML = ""

@@ -9,6 +9,7 @@ import DragHandler from 'editorV2/handlers/DragHandler'
 import ConnectionHandler from 'editorV2/handlers/ConnectionHandler'
 import ClickHandler from 'editorV2/handlers/ClickHandler'
 import KeyboardHandler from 'editorV2/handlers/KeyboardHandler'
+import HoverPreviewHandler from 'editorV2/handlers/HoverPreviewHandler'
 import { EVENTS, MAX_HISTORY } from 'editorV2/constants'
 import { showError } from 'editorV2/utils/errors'
 import ToolbarHandler from 'editorV2/handlers/ToolbarHandler'
@@ -45,11 +46,13 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
   const connectionHandler = new ConnectionHandler(store, syncManager, connectionRenderer, canvasViewport)
   const clickHandler = new ClickHandler(store, history, editorPanel)
+  const hoverPreviewHandler = new HoverPreviewHandler(canvasViewport)
   const toolbarHandler = new ToolbarHandler(store, history, syncManager, container, clickHandler, canvasViewport)
   function attachHandlersToNode(element, clientId) {
     dragHandler.attach(element, clientId)
     connectionHandler.attach(element, clientId)
     clickHandler.attach(element, clientId)
+    hoverPreviewHandler.attachNode(element)
   }
 
   // 4. Wire renderer callbacks
@@ -68,6 +71,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
+  hoverPreviewHandler.attach()
   toolbarHandler.attach()
   clickHandler.onNodeSelected = () => toolbarHandler.updateButtons()
   clickHandler.onNodeDeselected = () => toolbarHandler.updateButtons()
@@ -103,6 +107,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     clickHandler,
     keyboardHandler,
     toolbarHandler,
+    hoverPreviewHandler,
     
     // Convenience methods
     createNode: (type, position, data) => syncManager.createNode(type, position, data),
@@ -136,6 +141,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
       connectionHandler.destroy()
       clickHandler.destroy()
       keyboardHandler.destroy()
+      hoverPreviewHandler.destroy()
       unsubscribeToolbarSelection()
       store.destroy()
     }

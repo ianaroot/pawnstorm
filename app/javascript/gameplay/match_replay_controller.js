@@ -307,10 +307,34 @@ class MatchReplayController {
     const ownerId = team === Board.WHITE ? this.whiteBotOwnerId : this.blackBotOwnerId
     const compiledProgram = team === Board.WHITE ? this.whiteCompiledProgramSnapshot : this.blackCompiledProgramSnapshot
     if (this.atEnd()) {
-      return { enabled: false, team, compiledProgram: null, result: null, selectedStartSquare: null }
+      return {
+        enabled: false,
+        team,
+        compiledProgram: null,
+        result: null,
+        selectedStartSquare: null,
+        unavailableMessage: null
+      }
+    }
+    if (ownerId === null) {
+      return {
+        enabled: false,
+        team,
+        compiledProgram: null,
+        result: null,
+        selectedStartSquare: null,
+        unavailableMessage: 'condition trace unavailable for human players'
+      }
     }
     if (ownerId !== this.currentUserId || !compiledProgram) {
-      return { enabled: false, team, compiledProgram: null, result: null, selectedStartSquare: null }
+      return {
+        enabled: false,
+        team,
+        compiledProgram: null,
+        result: null,
+        selectedStartSquare: null,
+        unavailableMessage: "condition trace unavailable for other players' bots"
+      }
     }
     const inspector = new ReplayMoveInspector({ compiledProgram })
     const result = inspector.inspectPosition({

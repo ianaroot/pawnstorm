@@ -1,6 +1,6 @@
 class Matches::HumanVsBotController < ApplicationController
   before_action -> { current_user_or_create_guest! }, only: [:create]
-  before_action :authenticate_registered_or_guest_user!, only: [:play, :complete]
+  before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
   def new
     creation = Matches::CreateHumanVsBot.new(user: current_user, params: setup_params)
@@ -8,30 +8,30 @@ class Matches::HumanVsBotController < ApplicationController
     paginate_bot_list
     @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
 
-    render 'matches/new_play'
+    render 'matches/new_human_vs_bot'
   end
 
   def create
     creation = Matches::CreateHumanVsBot.new(user: current_user, params: match_params)
 
     if creation.call
-      redirect_to play_human_vs_bot_match_path(creation.match)
+      redirect_to live_human_vs_bot_match_path(creation.match)
     else
       assign_form_state(creation)
       paginate_bot_list
       @user_has_no_own_bots = current_user.bots.empty?
       flash.now[:alert] = creation.error_message
-      render 'matches/new_play', status: :unprocessable_entity
+      render 'matches/new_human_vs_bot', status: :unprocessable_entity
     end
   end
 
-  def play
+  def live
     @match = current_user.created_matches.find(params[:id])
     unless @match.running? && interactive_play_match?(@match)
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 
-    render 'matches/play'
+    render 'matches/live'
   end
 
   def complete

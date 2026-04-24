@@ -214,6 +214,35 @@ describe('ReplayView', () => {
     expect(root.querySelector('[data-match-replay-target="result"]').textContent).toBe('white wins')
   })
 
+  it('shows a trace-unavailable message instead of hiding the trace column', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+
+    view.renderFrame({
+      board: buildBoard(),
+      currentMoveIndex: 0,
+      isPlaying: false,
+      playDirection: 1,
+      speedMultiplier: 1,
+      movePairs: [['e4', 'e5']],
+      result: 'white_wins',
+      totalMoves: 2,
+      spoilerRevealed: true,
+      warning: null,
+      inspection: {
+        enabled: false,
+        result: null,
+        unavailableMessage: "condition trace unavailable for other players' bots"
+      },
+      muteTopMoveHighlights: false
+    })
+
+    expect(root.querySelector('[data-match-replay-target="trace-panel"]').hidden).toBe(false)
+    expect(root.querySelector('[data-match-replay-target="trace-summary"]').textContent).toBe('')
+    expect(root.querySelector('[data-match-replay-target="trace-branches"]').textContent)
+      .toContain("condition trace unavailable for other players' bots")
+  })
+
   it('rehydrates replay boards with history needed for trace scoring', () => {
     const recentMoveContext = {
       movingTeam: Board.BLACK,

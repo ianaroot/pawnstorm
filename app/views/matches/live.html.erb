@@ -1,0 +1,41 @@
+<% human_team = @match.white_player == current_user ? 'W' : 'B' %>
+<% bot_team = human_team == 'W' ? 'B' : 'W' %>
+<% bot_color = bot_team == 'W' ? :white : :black %>
+<% bot_snapshot = @match.compiled_program_snapshot_for(bot_color) %>
+
+<div
+  class="game-page"
+  data-game-controller-page="true"
+  data-game-mode="human-vs-bot"
+  data-match-id="<%= @match.id %>"
+  data-human-team="<%= human_team %>"
+  data-bot-team="<%= bot_team %>"
+  data-bot-name="<%= @match.player_display_name_for(bot_color) %>"
+  data-complete-url="<%= complete_human_vs_bot_match_path(@match) %>"
+  data-replay-url="<%= match_path(@match) %>"
+  data-bot-compiled-program="<%= json_escape(bot_snapshot.to_json) %>"
+>
+  <div class="match-live-layout">
+    <div class="match-show-meta match-live-sidebar">
+      <p class="match-show-title">Match <%= @match.id %></p>
+      <p class="match-show-meta-item"><strong>Human:</strong> <span data-human-side-label><%= human_team == 'W' ? 'White' : 'Black' %></span></p>
+      <p class="match-show-meta-item">
+        <strong>Bot:</strong>
+        <span data-bot-name-label><%= @match.player_display_name_for(bot_color) %></span>
+        (<span data-bot-side-label><%= bot_color == :white ? 'White' : 'Black' %></span>)
+      </p>
+      <p class="match-show-meta-item match-live-status-pill" data-play-status>Bot's turn.</p>
+    </div>
+
+    <div id="arena">
+      <div id="notifications"></div>
+      <div id="turn-marker"><span id="team-allowed-to-move">white</span>'s turn</div>
+      <div id="W-captures" class="captures"><br><br><br></div>
+      <%= render partial: 'shared/chess_board' %>
+      <div id="B-captures" class="captures"><br><br><br></div>
+    </div>
+  </div>
+
+  <button id="undo-button">undo</button>
+  <button id="pause-button">pause</button>
+</div>

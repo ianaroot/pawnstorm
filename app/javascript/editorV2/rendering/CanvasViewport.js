@@ -300,7 +300,7 @@ class CanvasViewport {
     const fitHeight = bounds.height + (FIT_PADDING * 2)
     const zoomX = viewportWidth / fitWidth
     const zoomY = viewportHeight / fitHeight
-    const targetZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(zoomX, zoomY)))
+    const targetZoom = Math.min(ZOOM_DEFAULT, ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(zoomX, zoomY)))
 
     this.setZoom(targetZoom)
     this.refresh()
@@ -344,11 +344,40 @@ class CanvasViewport {
     return this.sceneToGraphPoint(scenePoint.x, scenePoint.y)
   }
 
-  screenToGraphPoint(clientX, clientY) {
-    const workspaceRect = this.workspace.getBoundingClientRect()
+  getVisibleGraphBounds() {
     const zoom = this.getZoom()
-    const sceneX = (clientX - workspaceRect.left) / zoom
-    const sceneY = (clientY - workspaceRect.top) / zoom
+    const left = this.container.scrollLeft / zoom
+    const top = this.container.scrollTop / zoom
+    const right = (this.container.scrollLeft + this.container.clientWidth) / zoom
+    const bottom = (this.container.scrollTop + this.container.clientHeight) / zoom
+
+    return {
+      left: left + this.worldMinX,
+      top: top + this.worldMinY,
+      right: right + this.worldMinX,
+      bottom: bottom + this.worldMinY
+    }
+  }
+
+  isGraphPointVisible(point) {
+    if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+      return false
+    }
+
+    const bounds = this.getVisibleGraphBounds()
+    return (
+      point.x >= bounds.left &&
+      point.x <= bounds.right &&
+      point.y >= bounds.top &&
+      point.y <= bounds.bottom
+    )
+  }
+
+  screenToGraphPoint(clientX, clientY) {
+    const containerRect = this.container.getBoundingClientRect()
+    const zoom = this.getZoom()
+    const sceneX = (clientX - containerRect.left + this.container.scrollLeft) / zoom
+    const sceneY = (clientY - containerRect.top + this.container.scrollTop) / zoom
 
     return this.sceneToGraphPoint(sceneX, sceneY)
   }

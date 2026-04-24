@@ -1,7 +1,8 @@
 class TournamentsController < ApplicationController
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
-  before_action :set_tournament, only: [:show, :pairing, :abort, :pause, :resume, :start]
-  before_action :authorize_tournament_access!, only: [:show, :pairing]
+  before_action :set_public_tournament, only: [:show, :pairing]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start]
+  before_action :authorize_public_tournament_access!, only: [:show, :pairing]
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
 
   def index
@@ -23,7 +24,7 @@ class TournamentsController < ApplicationController
     creation = Tournaments::CreateTournament.new(user: current_user, params: tournament_params)
 
     if creation.call
-      redirect_to tournament_path(creation.tournament), notice: 'Tournament created.'
+      redirect_to tournament_show_path(creation.tournament), notice: 'Tournament created.'
     else
       assign_form_state(creation)
       flash.now[:alert] = creation.error_message
@@ -32,57 +33,62 @@ class TournamentsController < ApplicationController
   end
 
   def show
-    @tournament_poll_url = tournament_path(@tournament, format: :json)
+    @tournament_poll_url = public_tournament_path(@tournament, format: :json)
     @invite_token = nil
     assign_show_state
     render_show_response
   end
 
   def show_by_invite
-    @tournament = tournament_scope.find_by!(invite_token: params[:invite_token])
-    @tournament_poll_url = invite_tournament_path(@tournament.invite_token, format: :json)
+    @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    @tournament_poll_url = invitation_tournament_path(@tournament.invite_token, format: :json)
     @invite_token = @tournament.invite_token
     assign_show_state
     render_show_response
   end
 
   def pairing
-    @tournament_back_path = tournament_path(@tournament)
+    @tournament_back_path = public_tournament_path(@tournament)
     render :pairing if assign_pairing_state
   end
 
   def pairing_by_invite
-    @tournament = tournament_scope.find_by!(invite_token: params[:invite_token])
-    @tournament_back_path = invite_tournament_path(@tournament.invite_token)
+    @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    @tournament_back_path = invitation_tournament_path(@tournament.invite_token)
     render :pairing if assign_pairing_state
   end
 
   def abort
     @tournament.abort!
-    redirect_to tournament_path(@tournament), notice: 'Tournament aborted. Running matches may finish, but no new matches will be queued.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament aborted. Running matches may finish, but no new matches will be queued.'
   end
 
   def pause
     @tournament.pause!
-    redirect_to tournament_path(@tournament), notice: 'Tournament paused. Running matches may finish, but no new matches will be queued.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament paused. Running matches may finish, but no new matches will be queued.'
   end
 
   def resume
     @tournament.resume!
-    redirect_to tournament_path(@tournament), notice: 'Tournament resumed.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament resumed.'
   end
 
   def start
     start_tournament = Tournaments::StartTournament.new(user: current_user, tournament: @tournament)
 
     if start_tournament.call
-      redirect_to tournament_path(@tournament), notice: 'Tournament started.'
+      redirect_to tournament_show_path(@tournament), notice: 'Tournament started.'
     else
-      redirect_to tournament_path(@tournament), alert: start_tournament.error_message
+      redirect_to tournament_show_path(@tournament), alert: start_tournament.error_message
     end
   end
 
   private
+
+  helper_method :tournament_show_path
+  def tournament_show_path(tournament)
+    tournament.visibility_public? ? public_tournament_path(tournament) : invitation_tournament_path(tournament.invite_token)
+  end
 
   def assign_pairing_state
     @tournament_presenter = TournamentPresenter.new(@tournament)
@@ -96,12 +102,24 @@ class TournamentsController < ApplicationController
     true
   end
 
+  def set_public_tournament
+    @tournament = public_tournament_scope.find(params[:id])
+  end
+
   def set_tournament
     @tournament = tournament_scope.find(params[:id])
   end
 
+  def public_tournament_scope
+    Tournament.publicly_visible.includes(matches: [:white_tournament_entry, :black_tournament_entry])
+  end
+
   def tournament_scope
     Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry])
+  end
+
+  def invite_tournament_scope
+    tournament_scope
   end
 
   def assign_show_state
@@ -143,8 +161,8 @@ class TournamentsController < ApplicationController
     )
   end
 
-  def authorize_tournament_access!
-    return if @tournament.visibility_public? || @tournament.creator == current_user
+  def authorize_public_tournament_access!
+    return if @tournament.visibility_public?
 
     head :not_found
   end
@@ -152,7 +170,7 @@ class TournamentsController < ApplicationController
   def authorize_tournament_control!
     return if @tournament.creator == current_user
 
-    redirect_to tournament_path(@tournament), alert: 'Only the tournament creator can manage this tournament.'
+    redirect_to tournament_show_path(@tournament), alert: 'Only the tournament creator can manage this tournament.'
   end
 
   def index_filters

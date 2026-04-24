@@ -63,7 +63,7 @@ RSpec.describe TournamentsController, type: :request do
         .and change(Match, :count).by(0)
 
       tournament = Tournament.order(:created_at).last
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(tournament.creator).to eq(user)
       expect(tournament).to have_attributes(
         name: 'Spring Open',
@@ -148,7 +148,7 @@ RSpec.describe TournamentsController, type: :request do
         lay_out: Array.new(64, '')
       )
 
-      get tournament_path(tournament)
+      get public_tournament_path(tournament)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Standings')
@@ -197,14 +197,14 @@ RSpec.describe TournamentsController, type: :request do
       deleted_bot.destroy!
       deleted_entry.reload
 
-      get tournament_path(tournament)
+      get public_tournament_path(tournament)
 
       expect(deleted_entry.bot).to be_nil
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Deleted Phoenix')
       expect(response.body).to include('Surviving Storm')
 
-      get pairing_tournament_path(tournament, deleted_entry, surviving_entry)
+      get pairing_public_tournament_path(tournament, deleted_entry, surviving_entry)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Deleted Phoenix')
@@ -228,7 +228,7 @@ RSpec.describe TournamentsController, type: :request do
         previous_layouts: []
       )
 
-      get tournament_path(tournament)
+      get public_tournament_path(tournament)
 
       expect(response).to have_http_status(:success)
       expect(response.body).not_to include('Pause Tournament')
@@ -237,7 +237,7 @@ RSpec.describe TournamentsController, type: :request do
     end
 
     it 'shows tournament controls to the creator' do
-      tournament = create(:tournament, creator: user, status: :running)
+      tournament = create(:tournament, creator: user, visibility: :public, status: :running)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
       Match.create!(
@@ -254,7 +254,7 @@ RSpec.describe TournamentsController, type: :request do
       )
       sign_in user
 
-      get tournament_path(tournament)
+      get public_tournament_path(tournament)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Pause Tournament')
@@ -267,15 +267,15 @@ RSpec.describe TournamentsController, type: :request do
       bot_b = create(:bot, :compiled, name: 'Beta')
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
-      invite_pairing_path = invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+      invite_pairing_path = invitation_tournament_pairing_path(tournament.invite_token, entry_a, entry_b)
 
-      get invite_tournament_path(tournament.invite_token)
+      get invitation_tournament_path(tournament.invite_token)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(invite_pairing_path)
-      expect(response.body).not_to include(pairing_tournament_path(tournament, entry_a, entry_b))
+      expect(response.body).not_to include(pairing_public_tournament_path(tournament, entry_a, entry_b))
 
-      get invite_tournament_path(tournament.invite_token, format: :json)
+      get invitation_tournament_path(tournament.invite_token, format: :json)
 
       expect(response).to have_http_status(:success)
       expect(JSON.parse(response.body).fetch('matrix_html')).to include(invite_pairing_path)
@@ -294,7 +294,7 @@ RSpec.describe TournamentsController, type: :request do
       )
       sign_in user
 
-      get tournament_path(tournament)
+      get invitation_tournament_path(tournament.invite_token)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Registration Cup')
@@ -303,7 +303,7 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include('Unlimited')
       expect(response.body).to include('Max Entries')
       expect(response.body).to include('12')
-      expect(response.body).to include(invite_tournament_path(tournament.invite_token))
+      expect(response.body).to include(invitation_tournament_path(tournament.invite_token))
       # expect(response.body).to include('Entries are open. Submit a compiled bot before the tournament starts.')
       expect(response.body).not_to include('Matchup Matrix')
       expect(response.body).not_to include('Standings')
@@ -316,7 +316,7 @@ RSpec.describe TournamentsController, type: :request do
     it 'does not expose link-only tournaments through predictable id pairing routes' do
       tournament = create(:tournament, creator: user)
 
-      get pairing_tournament_path(tournament, 1, 2)
+      get pairing_public_tournament_path(tournament, 1, 2)
 
       expect(response).to have_http_status(:not_found)
     end
@@ -328,11 +328,11 @@ RSpec.describe TournamentsController, type: :request do
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, display_name: bot_a.name, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, display_name: bot_b.name, seed_order: 1)
 
-      get invite_pairing_tournament_path(tournament.invite_token, entry_a, entry_b)
+      get invitation_tournament_pairing_path(tournament.invite_token, entry_a, entry_b)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Alpha vs Beta')
-      expect(response.body).to include(invite_tournament_path(tournament.invite_token))
+      expect(response.body).to include(invitation_tournament_path(tournament.invite_token))
     end
   end
 
@@ -378,7 +378,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(pending_match.reload).to be_failed
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')
@@ -404,7 +404,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(pending_match.reload).to be_pending
     end
@@ -441,7 +441,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post pause_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(tournament.reload).to be_paused
       expect(pending_match.reload).to be_pending
     end
@@ -479,7 +479,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post resume_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(tournament.reload).not_to be_paused
       expect(ComputeMatchJob).to have_been_enqueued.with(pending_match.id)
     end
@@ -496,7 +496,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:notice]).to eq('Tournament started.')
       expect(tournament.reload).to be_status_running
       expect(tournament.started_at).to be_present
@@ -510,7 +510,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament_path(tournament))
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(tournament.reload).to be_status_open
     end

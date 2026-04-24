@@ -59,6 +59,74 @@ class SyncManager {
     this.setRecentPlacementAnchorFromNode(this.store.getNode(clientId))
   }
 
+  setRecentPlacementAnchorForSelection() {
+    const selectedId = this.store.getPrimarySelectedNode?.() || this.store.getSelectedNode?.()
+    if (selectedId) {
+      this.setRecentPlacementAnchorForClientId(selectedId)
+      return true
+    }
+    return false
+  }
+
+  setRecentPlacementAnchorForOperation(operation, direction) {
+    if (!operation) {
+      this.setRecentPlacementAnchorForSelection()
+      return
+    }
+
+    const point = this.resolveRecentPlacementAnchorPoint(operation, direction)
+    if (point) {
+      this.store.setRecentPlacementAnchor(point)
+      return
+    }
+
+    this.setRecentPlacementAnchorForSelection()
+  }
+
+  resolveRecentPlacementAnchorPoint(operation, direction) {
+    const positionFor = (value) => value && typeof value.x === 'number' && typeof value.y === 'number'
+      ? { x: value.x, y: value.y }
+      : null
+
+    switch (operation.type) {
+      case 'createNode':
+      case 'deleteNode':
+        return positionFor(operation.entity?.position)
+
+      case 'updateNodePosition':
+        return positionFor(direction === 'undo' ? operation.previousValue : operation.newValue)
+
+      case 'updateNodePositions':
+        if (operation.anchorClientId) {
+          const anchorPosition = (direction === 'undo'
+            ? operation.positions?.find(position => position.clientId === operation.anchorClientId)?.previousPosition
+            : operation.positions?.find(position => position.clientId === operation.anchorClientId)?.newPosition)
+          return positionFor(anchorPosition)
+        }
+        return positionFor((direction === 'undo' ? operation.positions?.[0]?.previousPosition : operation.positions?.[0]?.newPosition))
+
+      case 'updateNodeData': {
+        const node = this.store.getNode(operation.clientId)
+        return positionFor(node?.position)
+      }
+
+      case 'createConnection':
+      case 'deleteConnection': {
+        const node = this.store.getNode(operation.targetId)
+        return positionFor(node?.position)
+      }
+
+      case 'deleteNodes':
+        return positionFor(operation.nodes?.[0]?.position)
+
+      case 'insertTemplate':
+        return positionFor(operation.nodes?.[0]?.entity?.position)
+
+      default:
+        return null
+    }
+  }
+
   async updateBot(updates) {
     return this.api.updateBot(updates)
   }
@@ -150,6 +218,7 @@ class SyncManager {
     // If no operation metadata, just restore local state
     if (!operation) {
       this.history.undoLocal()
+      this.setRecentPlacementAnchorForSelection()
       this.setLoading(false)
       return { success: true }
     }
@@ -163,6 +232,7 @@ class SyncManager {
       
       // Restore client state
       this.history.undoLocal()
+      this.setRecentPlacementAnchorForOperation(operation, 'undo')
       
       this.setLoading(false)
       return { success: true }
@@ -204,6 +274,7 @@ class SyncManager {
     // If no operation metadata, just restore local state
     if (!operation) {
       this.history.redoLocal()
+      this.setRecentPlacementAnchorForSelection()
       this.setLoading(false)
       return { success: true }
     }
@@ -217,6 +288,7 @@ class SyncManager {
       
       // Advance history
       this.history.redoLocal()
+      this.setRecentPlacementAnchorForOperation(operation, 'redo')
       
       this.setLoading(false)
       return { success: true }
@@ -627,7 +699,7 @@ class SyncManager {
    * @param {number} y - Y position
    * @returns {Promise<void>}
    */
-  async updateNodePosition(clientId, x, y) {
+  async updateNodePosition(clientId, x, y, previousPositionOverride = null) {
     const existingNode = this.store.getNode(clientId)
     if (!existingNode) {
       console.warn(`Node ${clientId} not found, cannot update position`)
@@ -635,7 +707,9 @@ class SyncManager {
     }
     
     // Store original position for rollback and history
-    const previousPosition = { x: existingNode.position.x, y: existingNode.position.y }
+    const previousPosition = previousPositionOverride
+      ? { x: previousPositionOverride.x, y: previousPositionOverride.y }
+      : { x: existingNode.position.x, y: existingNode.position.y }
     const newPosition = { x, y }
     
     // 1. Optimistic update
@@ -703,8 +777,6 @@ class SyncManager {
         previousValue: previousData,
         newValue: newData
       })
-
-      this.store.setRecentPlacementAnchor(existingNode.position)
 
       this.notifyPersistedMutation()
       
@@ -900,7 +972,7 @@ class SyncManager {
    * @param {string} [description='Move nodes'] - Description for history
    * @returns {Promise<void>}
    */
-  async batchUpdatePositions(positions, description = 'Move nodes') {
+  async batchUpdatePositions(positions, description = 'Move nodes', anchorClientId = null, previousPositionsByClientId = null) {
     if (!positions || positions.length === 0) {
       return
     }
@@ -908,9 +980,12 @@ class SyncManager {
     // Store original positions for rollback and history
     const positionsWithPrevious = positions.map(({ clientId, x, y }) => {
       const node = this.store.getNode(clientId)
+      const previousPosition = previousPositionsByClientId?.[clientId]
       return {
         clientId,
-        previousPosition: node ? { x: node.position.x, y: node.position.y } : null,
+        previousPosition: previousPosition
+          ? { x: previousPosition.x, y: previousPosition.y }
+          : (node ? { x: node.position.x, y: node.position.y } : null),
         newPosition: { x, y }
       }
     }).filter(p => p.previousPosition !== null)
@@ -927,8 +1002,13 @@ class SyncManager {
       // 3. Push to history after success
       this.history.push(description, {
         type: 'updateNodePositions',
-        positions: positionsWithPrevious
+        positions: positionsWithPrevious,
+        anchorClientId
       })
+
+      if (anchorClientId) {
+        this.setRecentPlacementAnchorForClientId(anchorClientId)
+      }
 
       this.notifyPersistedMutation()
       

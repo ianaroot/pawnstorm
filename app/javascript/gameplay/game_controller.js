@@ -21,6 +21,7 @@ class GameController {
 		// this.view.setPauseClickListener(this)
 		this.api = new Api({board: this.board, gameController: this});
 		this.configurePlayBots()
+		this.updateLiveMatchStatus()
 		if(this._whiteBot && !this._paused){ this.queryNextBotMove()}
 	}
 
@@ -29,6 +30,7 @@ class GameController {
 		return {
 			humanTeam: this.rootElement.dataset.humanTeam,
 			botTeam: this.rootElement.dataset.botTeam,
+			botName: this.rootElement.dataset.botName,
 			completeUrl: this.rootElement.dataset.completeUrl,
 			replayUrl: this.rootElement.dataset.replayUrl,
 			botCompiledProgram: JSON.parse(this.rootElement.dataset.botCompiledProgram)
@@ -81,6 +83,7 @@ class GameController {
 		}
 
 		this.view.displayLayOut({board: board, alert: alert, startPosition: startPosition})
+		this.updateLiveMatchStatus()
 		Sound.playSound(sound)
 		this.submitCompletionIfGameOver()
 		if(this.movingTeamHasBot() && !this._paused ){
@@ -121,6 +124,7 @@ class GameController {
 		this.board._officiallyMovePiece(moveObject)
 		let alerts_and_sounds = this.getAlertsAndSounds()
 		this.view.displayLayOut({board: this.board, alert: alerts_and_sounds.alert, startPosition: moveObject.startPosition})
+		this.updateLiveMatchStatus()
 		Sound.playSound(alerts_and_sounds.sound)
 		this.submitCompletionIfGameOver()
 	}
@@ -137,7 +141,7 @@ class GameController {
 	submitCompletionIfGameOver(){
 		if (!this.playConfig || !this.board.gameOver || this._completionSubmitted) { return }
 		this._completionSubmitted = true
-		this.updatePlayStatus(`${this.resultMessage()} Redirecting to replay...`)
+		this.updatePlayStatus(`${this.resultMessage()} Redirecting to replay...`, 'over')
 		setTimeout(() => this.persistInteractiveMatch(this.completedPayload()), 1200)
 	}
 
@@ -174,7 +178,7 @@ class GameController {
 	failInteractiveMatch(error){
 		if (!this.playConfig || this._completionSubmitted) { throw error }
 		this._completionSubmitted = true
-		this.updatePlayStatus('Game failed. Redirecting to match details...')
+		this.updatePlayStatus('Game failed. Redirecting to match details...', 'error')
 		this.persistInteractiveMatch({
 			match: {
 				status: 'failed',
@@ -205,9 +209,58 @@ class GameController {
 			})
 	}
 
-	updatePlayStatus(message){
+	updatePlayStatus(message, tone = null){
 		const status = this.rootElement?.querySelector('[data-play-status]')
-		if (status) { status.textContent = message }
+		if (!status) { return }
+		status.textContent = message
+		status.classList.remove(
+			'match-live-status-pill--human',
+			'match-live-status-pill--bot',
+			'match-live-status-pill--over',
+			'match-live-status-pill--error'
+		)
+		if (tone) {
+			status.classList.add(`match-live-status-pill--${tone}`)
+		}
+	}
+
+	updateLiveMatchStatus(){
+		if (!this.playConfig) { return }
+		this.updateParticipantLabels()
+		this.updateTurnStatus()
+	}
+
+	updateParticipantLabels(){
+		const humanSide = this.rootElement?.querySelector('[data-human-side-label]')
+		const botName = this.rootElement?.querySelector('[data-bot-name-label]')
+		const botSide = this.rootElement?.querySelector('[data-bot-side-label]')
+		if (humanSide) {
+			humanSide.textContent = this.teamLabel(this.playConfig.humanTeam)
+		}
+		if (botName) {
+			botName.textContent = this.playConfig.botName || 'Bot'
+		}
+		if (botSide) {
+			botSide.textContent = this.teamLabel(this.playConfig.botTeam)
+		}
+	}
+
+	updateTurnStatus(){
+		if (this.board.gameOver) {
+			this.updatePlayStatus('Game over.', 'over')
+			return
+		}
+
+		if (this.canHumanMove()) {
+			this.updatePlayStatus('Your turn.', 'human')
+			return
+		}
+
+		this.updatePlayStatus("Bot's turn.", 'bot')
+	}
+
+	teamLabel(team){
+		return team === Board.WHITE ? 'White' : 'Black'
 	}
 }
 

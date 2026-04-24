@@ -3,6 +3,7 @@ require 'securerandom'
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
   PAUSED_CACHE_TTL = 7.days
+  INVITE_TOKEN_BYTES = 3
 
   enum :status, {
     open: 0,
@@ -31,6 +32,7 @@ class Tournament < ApplicationRecord
   scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
   scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
   scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
+  scope :publicly_visible, -> { visibility_public }
   scope :visible_to, ->(user) {
     visible = visibility_public
     return visible unless user&.persisted? && !user.guest?
@@ -91,7 +93,15 @@ class Tournament < ApplicationRecord
   private
 
   def generate_invite_token
-    self.invite_token ||= SecureRandom.hex(16)
+    self.invite_token ||= generate_unique_invite_token
+  end
+
+  def generate_unique_invite_token
+    10.times do
+      token = SecureRandom.hex(INVITE_TOKEN_BYTES)
+      return token unless self.class.exists?(invite_token: token)
+    end
+    raise "Could not generate a unique invite token after 10 attempts"
   end
 
   def paused_cache_key

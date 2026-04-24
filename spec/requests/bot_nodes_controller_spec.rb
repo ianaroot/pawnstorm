@@ -36,9 +36,8 @@ RSpec.describe BotNodesController, type: :request do
     it 'returns 404 for nodes from another users bot' do
       other_bot = create(:bot)
       other_node = create(:node, bot: other_bot)
-      expect {
-        get bot_node_path(bot, other_node)
-      }.to raise_error(ActiveRecord::RecordNotFound)
+      get bot_node_path(bot, other_node)
+      expect(response).to have_http_status(:not_found)
     end
   end
 
@@ -260,9 +259,8 @@ RSpec.describe BotNodesController, type: :request do
     it 'returns 404 when target node is not in the same bot' do
       other_bot = create(:bot)
       other_node = create(:node, bot: other_bot)
-      expect {
-        post connect_bot_node_path(bot, source_node), params: { target_id: other_node.id }
-      }.to raise_error(ActiveRecord::RecordNotFound)
+      post connect_bot_node_path(bot, source_node), params: { target_id: other_node.id }
+      expect(response).to have_http_status(:not_found)
     end
   end
 

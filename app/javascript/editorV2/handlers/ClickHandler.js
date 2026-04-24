@@ -140,6 +140,7 @@ class ClickHandler {
     if (additive) {
       this.store.toggleNodeSelection(clientId)
       if (this.store.isNodeSelected(clientId)) {
+        this.setRecentPlacementAnchorForClientId(clientId)
         if (this.onNodeSelected) {
           this.onNodeSelected(clientId)
         }
@@ -149,8 +150,16 @@ class ClickHandler {
       return
     }
     this.store.selectOnlyNode(clientId)
+    this.setRecentPlacementAnchorForClientId(clientId)
     if (this.onNodeSelected) {
       this.onNodeSelected(clientId)
+    }
+  }
+
+  setRecentPlacementAnchorForClientId(clientId) {
+    const node = this.store.getNode(clientId)
+    if (node?.position) {
+      this.store.setRecentPlacementAnchor(node.position)
     }
   }
 

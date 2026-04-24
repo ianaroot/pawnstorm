@@ -74,6 +74,28 @@
           class: "sidebar__link #{'sidebar__link--active' if current_page?(bot_help_path)}",
           data: { action: "click->sidebar#navigate" } %>
     </nav>
+
+    <% if controller_name == 'bots' && action_name == 'edit' %>
+      <section
+        class="sidebar__tips"
+        data-controller="tips-rail"
+        data-action="mouseenter->tips-rail#pause mouseleave->tips-rail#resume"
+        data-tips-rail-tips-value='<%= json_escape([
+          "Press I to toggle inspect mode for node hover previews.",
+          "Press I or Esc to exit inspect mode.",
+          "Hold Space, then click and drag to pan the canvas.",
+          "Click and drag empty canvas space to marquee-select nodes.",
+          "Shift-click to add nodes to selection.",
+          "Alt-drag moves only the grabbed node.",
+          "Drag from an output connector to create a connection.",
+          "Long press on touch to add or remove node selection.",
+          "Copy and paste selected node sets between bots.",
+          "Templates drop in reusable chess ideas fast."
+        ].to_json) %>'>
+        <p class="sidebar__tips-label">Tips</p>
+        <p class="sidebar__tips-line" data-tips-rail-target="line"></p>
+      </section>
+    <% end %>
     
     <div class="sidebar__auth">
       <% if current_user&.guest? %>

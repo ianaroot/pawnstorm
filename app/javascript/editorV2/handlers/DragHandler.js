@@ -68,6 +68,7 @@ class DragHandler {
 
   attachBackgroundHandlers() {
     ;[
+      this.viewport?.container,
       this.viewport?.nodesLayer,
       this.viewport?.svgLayer,
       this.viewport?.scene,
@@ -412,7 +413,6 @@ class DragHandler {
     // Sync with server if we moved
     if (this.hasMoved && this.draggedClientId && this.draggedNode) {
       const node = this.store.getNode(this.draggedClientId)
-      const anchorPoint = node ? { x: node.position.x, y: node.position.y } : null
       if (node) {
         if (this.draggedClientIds.length > 1) {
           // Multi-node drag: use batch update
@@ -420,16 +420,20 @@ class DragHandler {
             const draggedNode = this.store.getNode(id)
             return draggedNode ? { clientId: id, x: draggedNode.position.x, y: draggedNode.position.y } : null
           }).filter(Boolean)
+          const previousPositionsByClientId = Object.fromEntries(
+            this.draggedClientIds.map(id => {
+              if (id === this.draggedClientId) {
+                return [id, this.startPosition]
+              }
+              const offset = this.dragOffsets.get(id)
+              return [id, offset ? { x: offset.startX, y: offset.startY } : null]
+            }).filter(([, position]) => position)
+          )
 
           const additionalCount = this.draggedClientIds.length - 1
           const description = `Move ${this.draggedNode.type} node (+ ${additionalCount} selected)`
           
-          this.syncManager.batchUpdatePositions(positions, description)
-            .then(() => {
-              if (anchorPoint) {
-                this.store.setRecentPlacementAnchor(anchorPoint)
-              }
-            })
+          this.syncManager.batchUpdatePositions(positions, description, this.draggedClientId, previousPositionsByClientId)
             .catch(err => {
               console.error('Failed to sync drag positions:', err)
             })
@@ -438,12 +442,9 @@ class DragHandler {
           this.syncManager.updateNodePosition(
             this.draggedClientId,
             node.position.x,
-            node.position.y
-          ).then(() => {
-            if (anchorPoint) {
-              this.store.setRecentPlacementAnchor(anchorPoint)
-            }
-          }).catch(err => {
+            node.position.y,
+            this.startPosition
+          ).catch(err => {
             console.error('Failed to sync drag position:', err)
           })
         }
@@ -556,17 +557,22 @@ class DragHandler {
   }
 
   finishMarqueeSelection() {
-    const hitIds = this.getMarqueeHitNodeIds()
+    const { marqueeCurrent } = this.store.getMarqueeState()
+    const hitIds = this.getMarqueeHitNodeIds(marqueeCurrent)
     const nextSelectionIds = this.marqueeAdditive
-      ? [...new Set([...this.marqueeBaseSelectionIds, ...hitIds])]
+      ? [...new Set([...hitIds, ...this.marqueeBaseSelectionIds])]
       : hitIds
 
     this.store.setSelectedNodeIds(nextSelectionIds)
+    const anchorNode = marqueeCurrent ? this.findClosestNodeToPoint(nextSelectionIds, marqueeCurrent) : null
+    if (anchorNode?.position) {
+      this.store.setRecentPlacementAnchor(anchorNode.position)
+    }
     this.store.suppressClicksFor()
     this.clearMarquee()
   }
 
-  getMarqueeHitNodeIds() {
+  getMarqueeHitNodeIds(referencePoint = null) {
     const { marqueeStart, marqueeCurrent } = this.store.getMarqueeState()
     if (!marqueeStart || !marqueeCurrent) {
       return []
@@ -577,7 +583,7 @@ class DragHandler {
     const top = Math.min(marqueeStart.y, marqueeCurrent.y)
     const bottom = Math.max(marqueeStart.y, marqueeCurrent.y)
 
-    return this.store.getNodes().filter(node => {
+    const hitNodes = this.store.getNodes().filter(node => {
       const dims = NODE_DIMENSIONS[node.type] || NODE_DIMENSIONS.default
       const nodeLeft = node.position.x
       const nodeRight = node.position.x + dims.width
@@ -590,7 +596,29 @@ class DragHandler {
         nodeBottom >= top &&
         nodeTop <= bottom
       )
-    }).map(node => node.clientId)
+    })
+
+    const orderedNodes = referencePoint
+      ? [...hitNodes].sort((a, b) => this.distanceToNodeCenter(a, referencePoint) - this.distanceToNodeCenter(b, referencePoint))
+      : hitNodes
+
+    return orderedNodes.map(node => node.clientId)
+  }
+
+  findClosestNodeToPoint(clientIds, point) {
+    if (!point || !clientIds?.length) { return null }
+
+    return clientIds
+      .map(clientId => this.store.getNode(clientId))
+      .filter(Boolean)
+      .sort((a, b) => this.distanceToNodeCenter(a, point) - this.distanceToNodeCenter(b, point))[0] || null
+  }
+
+  distanceToNodeCenter(node, point) {
+    const dims = NODE_DIMENSIONS[node.type] || NODE_DIMENSIONS.default
+    const centerX = node.position.x + (dims.width / 2)
+    const centerY = node.position.y + (dims.height / 2)
+    return Math.hypot(centerX - point.x, centerY - point.y)
   }
 
   ensureMarqueeElement() {
@@ -810,6 +838,7 @@ class DragHandler {
     this.cancelDrag()
     this.clearMarquee()
     ;[
+      this.viewport?.container,
       this.viewport?.nodesLayer,
       this.viewport?.svgLayer,
       this.viewport?.scene,

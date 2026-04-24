@@ -101,9 +101,18 @@ describe('ClickHandler', () => {
     dispatchClick(conditionElement)
 
     expect(store.getSelectedNodeIds()).toEqual([conditionNode.clientId])
+    expect(store.getRecentPlacementAnchor()).toEqual(conditionNode.position)
     expect(store.getEditingNode()).toBe(conditionNode.clientId)
     expect(editorPanel.classList.contains('hidden')).toBe(false)
     expect(editorPanel.classList.contains('node-form-panel--condition')).toBe(true)
+  })
+
+  it('updates the recent placement anchor to the newly shift-clicked node', () => {
+    dispatchClick(conditionElement)
+    dispatchClick(actionElement, { shiftKey: true })
+
+    expect(store.getSelectedNodeIds()).toEqual([conditionNode.clientId, actionNode.clientId])
+    expect(store.getRecentPlacementAnchor()).toEqual(actionNode.position)
   })
 
   it('does not open the editor on a root node click', () => {

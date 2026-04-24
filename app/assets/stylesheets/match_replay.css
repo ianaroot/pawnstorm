@@ -251,6 +251,20 @@
   padding-right: 0.2rem;
 }
 
+.match-replay-page .match-replay-trace-empty-state {
+  margin: auto 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  padding: 0.75rem 0.9rem;
+  color: var(--match-replay-trace-heading-text);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .match-replay-page .match-replay-trace-pill {
   display: inline-flex;
   align-items: center;

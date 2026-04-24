@@ -9,10 +9,10 @@ RSpec.describe 'Matches', type: :request do
   end
 
   describe 'GET #new' do
-    it 'redirects to login when not authenticated' do
+    it 'shows the bot-vs-bot setup when not authenticated' do
       get new_bot_vs_bot_match_path
 
-      expect(response).to redirect_to(new_user_session_path)
+      expect(response).to have_http_status(:success)
     end
 
     it 'shows own bots and non-stale opponent bots' do
@@ -32,15 +32,17 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).not_to include(other_stale_bot.name)
     end
 
-    it 'preselects an owned bot from the query string' do
+    it 'preselects an owned bot from the human-vs-bot query string' do
       user = create(:user)
       own_bot = create(:bot, :compiled, user: user)
 
       sign_in user
-      get new_bot_vs_bot_match_path, params: { own_bot_id: own_bot.id }
+      get new_human_vs_bot_match_path, params: { bot_id: own_bot.id }
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include(%(value="#{own_bot.id}" checked="checked"))
+      expect(response.body).to include(%(name="match[bot_id]"))
+      expect(response.body).to include(%(value="#{own_bot.id}"))
+      expect(response.body).to match(/value="#{own_bot.id}"[^>]*checked/)
     end
   end
 
@@ -164,7 +166,7 @@ RSpec.describe 'Matches', type: :request do
     end
   end
 
-  describe 'human-vs-bot play' do
+  describe 'human-vs-bot live' do
     let(:user) { create(:user) }
     let!(:bot) { create(:bot, :compiled, user: user) }
 
@@ -172,7 +174,7 @@ RSpec.describe 'Matches', type: :request do
       sign_in user
     end
 
-    it 'shows only compiled non-stale bots owned by the current user' do
+    it 'shows only owned bots and excludes unowned bots' do
       stale_bot = create(:bot, user: user, compiled_program_stale: true)
       other_bot = create(:bot, :compiled)
 
@@ -180,7 +182,7 @@ RSpec.describe 'Matches', type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(bot.name)
-      expect(response.body).not_to include(stale_bot.name)
+      expect(response.body).to include(stale_bot.name)
       expect(response.body).not_to include(other_bot.name)
     end
 
@@ -195,7 +197,7 @@ RSpec.describe 'Matches', type: :request do
       end.to change(Match, :count).by(1)
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.creator).to eq(user)
       expect(match.white_player).to eq(user)
       expect(match.black_player).to eq(bot)
@@ -213,7 +215,7 @@ RSpec.describe 'Matches', type: :request do
       }
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.white_player).to eq(bot)
       expect(match.black_player).to eq(user)
       expect(match.white_compiled_program_snapshot).to eq(bot.compiled_program)
@@ -235,13 +237,13 @@ RSpec.describe 'Matches', type: :request do
       end.to change(Match, :count).by(1)
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.creator).to eq(guest)
       expect(match.white_player).to eq(guest)
       expect(match.black_player).to eq(guest_bot)
     end
 
-    it 'rejects stale or unowned bots' do
+    it 'prompts to compile stale owned bots and rejects unowned bots' do
       stale_bot = create(:bot, user: user, compiled_program_stale: true)
       unowned_bot = create(:bot, :compiled)
 
@@ -255,7 +257,7 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include('Please choose one of your compiled bots.')
+      expect(response.body).to include("#{stale_bot.name} needs to be recompiled before you can play. Compile and continue?")
 
       expect do
         post human_vs_bot_matches_path, params: {
@@ -267,10 +269,10 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include('Please choose one of your compiled bots.')
+      expect(response.body).to include('Please choose one of your bots.')
     end
 
-    it 'renders the persisted play page for the creator' do
+    it 'renders the persisted live page for the creator' do
       match = Match.create!(
         creator: user,
         white_player: user,
@@ -283,7 +285,7 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      get play_human_vs_bot_match_path(match)
+      get live_human_vs_bot_match_path(match)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(%(data-game-mode="human-vs-bot"))
@@ -291,7 +293,7 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include(%(data-bot-team="B"))
     end
 
-    it 'does not render another user play match' do
+    it 'does not render another user live match' do
       other_user = create(:user)
       match = Match.create!(
         creator: other_user,
@@ -304,12 +306,11 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      expect do
-        get play_human_vs_bot_match_path(match)
-      end.to raise_error(ActiveRecord::RecordNotFound)
+      get live_human_vs_bot_match_path(match)
+      expect(response).to have_http_status(:not_found)
     end
 
-    it 'does not render bot-vs-bot matches through the play route' do
+    it 'does not render bot-vs-bot matches through the live route' do
       match = Match.create!(
         creator: user,
         white_player: create(:bot, :compiled, user: user),
@@ -321,7 +322,7 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      get play_human_vs_bot_match_path(match)
+      get live_human_vs_bot_match_path(match)
 
       expect(response).to redirect_to(match_path(match))
     end
