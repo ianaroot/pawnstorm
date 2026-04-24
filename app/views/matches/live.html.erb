@@ -9,23 +9,30 @@
   data-match-id="<%= @match.id %>"
   data-human-team="<%= human_team %>"
   data-bot-team="<%= bot_team %>"
+  data-bot-name="<%= @match.player_display_name_for(bot_team == 'W' ? :white : :black) %>"
   data-complete-url="<%= complete_human_vs_bot_match_path(@match) %>"
   data-replay-url="<%= match_path(@match) %>"
   data-bot-compiled-program="<%= json_escape(bot_snapshot.to_json) %>"
 >
-  <div class="match-show-meta">
-    <h1 class="match-show-title">Play Match <%= @match.id %></h1>
-    <p class="match-show-meta-item"><strong>You:</strong> <%= human_team == 'W' ? 'White' : 'Black' %></p>
-    <p class="match-show-meta-item"><strong>Bot:</strong> <%= @match.player_display_name_for(bot_team == 'W' ? :white : :black) %></p>
-    <p class="match-show-meta-item" data-play-status>Game in progress.</p>
-  </div>
+  <div class="match-live-layout">
+    <div class="match-show-meta match-live-sidebar">
+      <p class="match-show-title">Match <%= @match.id %></p>
+      <p class="match-show-meta-item"><strong>Human:</strong> <span data-human-side-label><%= human_team == 'W' ? 'White' : 'Black' %></span></p>
+      <p class="match-show-meta-item">
+        <strong>Bot:</strong>
+        <span data-bot-name-label><%= @match.player_display_name_for(bot_team == 'W' ? :white : :black) %></span>
+        (<span data-bot-side-label><%= bot_team == 'W' ? 'White' : 'Black' %></span>)
+      </p>
+      <p class="match-show-meta-item match-live-status-pill" data-play-status>Bot's turn.</p>
+    </div>
 
-  <div id="arena">
-    <div id="notifications"></div>
-    <div id="turn-marker"><span id="team-allowed-to-move">white</span>'s turn</div>
-    <div id="W-captures" class="captures"><br><br><br></div>
-    <%= render partial: 'shared/chess_board' %>
-    <div id="B-captures" class="captures"><br><br><br></div>
+    <div id="arena">
+      <div id="notifications"></div>
+      <div id="turn-marker"><span id="team-allowed-to-move">white</span>'s turn</div>
+      <div id="W-captures" class="captures"><br><br><br></div>
+      <%= render partial: 'shared/chess_board' %>
+      <div id="B-captures" class="captures"><br><br><br></div>
+    </div>
   </div>
 
   <button id="undo-button">undo</button>
