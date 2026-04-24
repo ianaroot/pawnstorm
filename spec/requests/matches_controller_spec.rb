@@ -164,7 +164,7 @@ RSpec.describe 'Matches', type: :request do
     end
   end
 
-  describe 'human-vs-bot play' do
+  describe 'human-vs-bot live' do
     let(:user) { create(:user) }
     let!(:bot) { create(:bot, :compiled, user: user) }
 
@@ -195,7 +195,7 @@ RSpec.describe 'Matches', type: :request do
       end.to change(Match, :count).by(1)
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.creator).to eq(user)
       expect(match.white_player).to eq(user)
       expect(match.black_player).to eq(bot)
@@ -213,7 +213,7 @@ RSpec.describe 'Matches', type: :request do
       }
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.white_player).to eq(bot)
       expect(match.black_player).to eq(user)
       expect(match.white_compiled_program_snapshot).to eq(bot.compiled_program)
@@ -235,7 +235,7 @@ RSpec.describe 'Matches', type: :request do
       end.to change(Match, :count).by(1)
 
       match = Match.order(:created_at).last
-      expect(response).to redirect_to(play_human_vs_bot_match_path(match))
+      expect(response).to redirect_to(live_human_vs_bot_match_path(match))
       expect(match.creator).to eq(guest)
       expect(match.white_player).to eq(guest)
       expect(match.black_player).to eq(guest_bot)
@@ -270,7 +270,7 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include('Please choose one of your compiled bots.')
     end
 
-    it 'renders the persisted play page for the creator' do
+    it 'renders the persisted live page for the creator' do
       match = Match.create!(
         creator: user,
         white_player: user,
@@ -283,7 +283,7 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      get play_human_vs_bot_match_path(match)
+      get live_human_vs_bot_match_path(match)
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(%(data-game-mode="human-vs-bot"))
@@ -291,7 +291,7 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include(%(data-bot-team="B"))
     end
 
-    it 'does not render another user play match' do
+    it 'does not render another user live match' do
       other_user = create(:user)
       match = Match.create!(
         creator: other_user,
@@ -305,11 +305,11 @@ RSpec.describe 'Matches', type: :request do
       )
 
       expect do
-        get play_human_vs_bot_match_path(match)
+        get live_human_vs_bot_match_path(match)
       end.to raise_error(ActiveRecord::RecordNotFound)
     end
 
-    it 'does not render bot-vs-bot matches through the play route' do
+    it 'does not render bot-vs-bot matches through the live route' do
       match = Match.create!(
         creator: user,
         white_player: create(:bot, :compiled, user: user),
@@ -321,7 +321,7 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      get play_human_vs_bot_match_path(match)
+      get live_human_vs_bot_match_path(match)
 
       expect(response).to redirect_to(match_path(match))
     end
