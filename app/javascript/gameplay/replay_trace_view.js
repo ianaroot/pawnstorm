@@ -17,7 +17,7 @@ class ReplayTraceView {
 
       const message = document.createElement("p")
       message.className = "match-replay-trace-empty-state"
-      message.innerText = inspection.unavailableMessage
+      message.textContent = inspection.unavailableMessage
       this.traceBranchesElement.appendChild(message)
       return
     }

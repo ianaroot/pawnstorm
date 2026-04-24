@@ -114,6 +114,7 @@ describe('SyncManager', () => {
       const result = await syncManager.undo()
 
       expect(mockApi.deleteNodes).toHaveBeenCalledWith(['n1'])
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
       expect(result.success).toBe(true)
     })
 
@@ -208,6 +209,7 @@ describe('SyncManager', () => {
       const result = await syncManager.redo()
 
       expect(mockApi.createNode).toHaveBeenCalled()
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 100 })
       expect(result.success).toBe(true)
     })
   })
@@ -462,6 +464,38 @@ describe('SyncManager', () => {
       expect(history.canUndo()).toBe(true)
     })
 
+    it('anchors undo to the restored node position', async () => {
+      history.push('Initial')
+
+      await syncManager.updateNodePosition('n1', 100, 200)
+      await syncManager.undo()
+
+      expect(store.getNode('n1').position).toEqual({ x: 0, y: 0 })
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
+    })
+
+    it('anchors redo to the re-applied node position', async () => {
+      history.push('Initial')
+
+      await syncManager.updateNodePosition('n1', 100, 200)
+      await syncManager.undo()
+      await syncManager.redo()
+
+      expect(store.getNode('n1').position).toEqual({ x: 100, y: 200 })
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 100, y: 200 })
+    })
+
+    it('uses an explicit previous position override for drag-persisted moves', async () => {
+      history.push('Initial')
+      store.updateNode('n1', { position: { x: 100, y: 200 } })
+
+      await syncManager.updateNodePosition('n1', 100, 200, { x: 0, y: 0 })
+      await syncManager.undo()
+
+      expect(store.getNode('n1').position).toEqual({ x: 0, y: 0 })
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
+    })
+
     it('rolls back on failure', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockApi.updateNodePosition.mockRejectedValue(new Error('Network error'))
@@ -491,12 +525,13 @@ describe('SyncManager', () => {
     })
 
     it('replaces data entirely', async () => {
+      store.setRecentPlacementAnchor({ x: 420, y: 360 })
       await syncManager.updateNodeData('n1', { baz: 'qux' })
 
       expect(store.getNode('n1').data.foo).toBeUndefined()
       expect(store.getNode('n1').data.baz).toBe('qux')
       expect(mockApi.updateNode).toHaveBeenCalledWith('n1', { data: { baz: 'qux' } })
-      expect(store.getRecentPlacementAnchor()).toEqual({ x: 0, y: 0 })
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 420, y: 360 })
     })
 
     it('pushes to history after success', async () => {
@@ -768,6 +803,15 @@ describe('SyncManager', () => {
       expect(store.getNode('n1').position.y).toBe(50)
       expect(store.getNode('n2').position.x).toBe(150)
       expect(store.getNode('n2').position.y).toBe(150)
+    })
+
+    it('anchors batch moves to the provided dragged node', async () => {
+      await syncManager.batchUpdatePositions([
+        { clientId: 'n1', x: 50, y: 50 },
+        { clientId: 'n2', x: 150, y: 150 }
+      ], 'Move nodes', 'n2')
+
+      expect(store.getRecentPlacementAnchor()).toEqual({ x: 150, y: 150 })
     })
 
     it('pushes single history entry', async () => {
