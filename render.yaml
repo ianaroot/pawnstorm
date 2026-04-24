@@ -8,7 +8,7 @@ services:
   - type: web
     name: upcp
     runtime: ruby
-    plan: free
+    plan: starter
     buildCommand: "./bin/render-build.sh"
     # preDeployCommand: "bundle exec rails db:migrate" # preDeployCommand only available on paid instance types
     startCommand: "bundle exec rails server"
@@ -24,7 +24,7 @@ services:
   - type: worker
     name: upcp-jobs
     runtime: ruby
-    plan: free
+    plan: starter
     buildCommand: "./bin/render-build.sh"
     startCommand: "bundle exec good_job start"
     envVars:
