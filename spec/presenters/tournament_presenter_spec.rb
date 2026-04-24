@@ -1,6 +1,33 @@
 require 'rails_helper'
 
 RSpec.describe TournamentPresenter do
+  describe '#running_matches_count' do
+    it 'treats queued matches as active running work' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator, status: :running)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      Match.create!(
+        tournament: tournament,
+        creator: creator,
+        white_player: bot_a,
+        black_player: bot_b,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :queued
+      )
+
+      presenter = described_class.new(tournament)
+
+      expect(presenter.running_matches_count).to eq(1)
+      expect(presenter.active?).to be(true)
+      expect(presenter.overall_status).to eq('running')
+    end
+  end
+
   describe '#standings_rows' do
     it 'counts fifty_move_rule as a draw in standings' do
       creator = create(:user)
