@@ -55,11 +55,11 @@ class ComputeMatchJob < ApplicationJob
         profile_data: result_payload['profile']
       )
 
-      match.tournament&.enqueue_available_matches!
+      match.tournament&.enqueue_next_match!
     end
   rescue StandardError => error
     match&.update(status: :failed, result: :error, error_message: error.message)
-    match&.tournament&.enqueue_available_matches!
+    match&.tournament&.enqueue_next_match!
     raise
   end
 

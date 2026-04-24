@@ -67,11 +67,9 @@ Rails.application.configure do
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 
-  # Use GoodJob for Active Job in production so jobs are stored durably in Postgres
-  # and executed by a dedicated worker service.
-  config.active_job.queue_adapter = :good_job
-  config.good_job.execution_mode = :external
-  config.good_job.queues = '*'
+  # Use a real queuing backend for Active Job (and separate queues per environment).
+  # config.active_job.queue_adapter = :resque
+  # config.active_job.queue_name_prefix = "retitled_princess_carolyn_project_production"
 
   config.action_mailer.perform_caching = false
 

@@ -27,7 +27,7 @@ RSpec.describe Tournaments::StartTournament do
   end
 
   describe '#call' do
-    it 'starts an open tournament with existing entries and enqueues up to the running match limit' do
+    it 'starts an open tournament with existing entries and enqueues the first reserved match' do
       entry_a = create_entry(bot_a, seed_order: 8)
       entry_b = create_entry(bot_b, seed_order: 4)
       entry_c = create_entry(bot_c, seed_order: 2)
@@ -66,12 +66,10 @@ RSpec.describe Tournaments::StartTournament do
         end).to eq(1)
       end
 
-      expect(enqueued_jobs.size).to eq(Tournament::MAX_RUNNING_MATCHES)
-      expect(enqueued_jobs.map { |job| job[:args].first }).to match_array(
-        tournament.matches.order(:created_at).limit(Tournament::MAX_RUNNING_MATCHES).pluck(:id)
-      )
-      expect(tournament.matches.queued.count).to eq(Tournament::MAX_RUNNING_MATCHES)
-      expect(tournament.matches.pending.count).to eq(tournament.matches.count - Tournament::MAX_RUNNING_MATCHES)
+      expect(enqueued_jobs.size).to eq(1)
+      expect(enqueued_jobs.first[:args]).to eq([tournament.matches.order(:created_at).first.id])
+      expect(tournament.matches.queued.count).to eq(1)
+      expect(tournament.matches.pending.count).to eq(tournament.matches.count - 1)
     end
 
     it 'rejects non-creators' do

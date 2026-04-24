@@ -3,7 +3,6 @@ require 'securerandom'
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
   PAUSED_CACHE_TTL = 7.days
-  MAX_RUNNING_MATCHES = 5
 
   enum :status, {
     open: 0,
@@ -54,34 +53,18 @@ class Tournament < ApplicationRecord
   validates :max_entries, numericality: { only_integer: true, greater_than_or_equal_to: 2, allow_nil: true }
   validates :games_per_pair, numericality: { only_integer: true, greater_than: 0 }
 
-  def enqueue_available_matches!
-    match_ids = []
-    paused = false
+  def enqueue_next_match!
+    return if paused?
+    return if matches.where(status: [Match.statuses[:queued], Match.statuses[:running]]).exists?
 
-    ActiveRecord::Base.transaction do
-      lock!
-      paused = paused?
-      next if paused
-
-      running_count = matches.active.count
-      slots = MAX_RUNNING_MATCHES - running_count
-
-      if slots.positive?
-        reserved_matches = matches.pending.order(:created_at, :id).limit(slots).lock.to_a
-        reserved_matches.each do |match|
-          match.update!(status: :queued)
-        end
-        match_ids = reserved_matches.map(&:id)
-      end
-
-      update!(status: :completed) if status_running? && matches.unfinished.none?
+    next_match = matches.pending.order(:created_at, :id).first
+    if next_match.nil?
+      status_completed! if status_running?
+      return
     end
 
-    return if paused
-
-    match_ids.each do |match_id|
-      ComputeMatchJob.perform_later(match_id)
-    end
+    next_match.update!(status: :queued)
+    ComputeMatchJob.perform_later(next_match.id)
   end
 
   def abort!
@@ -98,7 +81,7 @@ class Tournament < ApplicationRecord
 
   def resume!
     Rails.cache.delete(paused_cache_key)
-    enqueue_available_matches!
+    enqueue_next_match!
   end
 
   def paused?
