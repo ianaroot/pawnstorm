@@ -345,10 +345,10 @@ class CanvasViewport {
   }
 
   screenToGraphPoint(clientX, clientY) {
-    const workspaceRect = this.workspace.getBoundingClientRect()
+    const containerRect = this.container.getBoundingClientRect()
     const zoom = this.getZoom()
-    const sceneX = (clientX - workspaceRect.left) / zoom
-    const sceneY = (clientY - workspaceRect.top) / zoom
+    const sceneX = (clientX - containerRect.left + this.container.scrollLeft) / zoom
+    const sceneY = (clientY - containerRect.top + this.container.scrollTop) / zoom
 
     return this.sceneToGraphPoint(sceneX, sceneY)
   }

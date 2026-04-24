@@ -68,6 +68,7 @@ class DragHandler {
 
   attachBackgroundHandlers() {
     ;[
+      this.viewport?.container,
       this.viewport?.nodesLayer,
       this.viewport?.svgLayer,
       this.viewport?.scene,
@@ -810,6 +811,7 @@ class DragHandler {
     this.cancelDrag()
     this.clearMarquee()
     ;[
+      this.viewport?.container,
       this.viewport?.nodesLayer,
       this.viewport?.svgLayer,
       this.viewport?.scene,

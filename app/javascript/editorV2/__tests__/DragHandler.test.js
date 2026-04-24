@@ -64,16 +64,37 @@ function addConnection(store, { clientId, sourceId, targetId }) {
 
 const DEFAULT_VIEWPORT_BOUNDS = { left: 0, top: 0, right: 800, bottom: 600 }
 function buildViewport() {
+  const container = {
+    getBoundingClientRect: vi.fn(() => ({
+      ...DEFAULT_VIEWPORT_BOUNDS
+    })),
+    scrollLeft: 0,
+    scrollTop: 0,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }
+
   return {
     screenToGraphPoint: vi.fn((x, y) => ({ x, y })),
     beginInteraction: vi.fn(),
     endInteraction: vi.fn(),
-    container: {
-      getBoundingClientRect: vi.fn(() => ({
-        ...DEFAULT_VIEWPORT_BOUNDS
-      })),
-      scrollLeft: 0,
-      scrollTop: 0
+    container,
+    workspace: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
+    scene: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
+    nodesLayer: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      appendChild: vi.fn()
+    },
+    svgLayer: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
     }
   }
 }
@@ -139,6 +160,10 @@ describe('DragHandler', () => {
       expect(dragHandler.draggedClientId).toBe(null)
       expect(dragHandler.dragOffsets.size).toBe(0)
       expect(dragHandler.draggedClientIds).toEqual([])
+    })
+
+    it('attaches background pointer handlers to the visible canvas container', () => {
+      expect(viewport.container.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function))
     })
   })
 
@@ -459,6 +484,28 @@ describe('DragHandler', () => {
       })
     })
 
+  })
+
+  describe('background marquee selection', () => {
+    it('starts marquee selection from the canvas container background', () => {
+      const startEvent = buildPointerEvent({
+        clientX: 300,
+        clientY: 300,
+        currentTarget: viewport.container,
+        target: {
+          closest: vi.fn(() => null)
+        }
+      })
+      const moveEvent = buildPointerEvent({
+        clientX: 300 + DRAG_START_THRESHOLD + 2,
+        clientY: 300 + DRAG_START_THRESHOLD + 2
+      })
+
+      dragHandler.handleBackgroundPointerDown(startEvent)
+      dragHandler.handlePointerMove(moveEvent)
+
+      expect(store.getMarqueeState().isMarqueeSelecting).toBe(true)
+    })
   })
 
   describe('cancelDrag', () => {
