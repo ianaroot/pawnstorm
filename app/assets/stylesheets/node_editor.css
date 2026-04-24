@@ -472,6 +472,14 @@
   pointer-events: auto;
 }
 
+.node::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+}
+
 .node.condition {
   height: 128px;
   min-height: 128px;
@@ -507,7 +515,7 @@
   font-size: 11px;
   color: #E5E5E5;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .node-title {
