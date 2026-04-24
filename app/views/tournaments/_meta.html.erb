@@ -11,7 +11,7 @@
   <% end %>
   <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= tournament.games_per_pair %></p>
   <% if current_user == tournament.creator || tournament.visibility_link_only? %>
-    <p class="match-show-meta-item"><strong>Invite Link:</strong> <%= link_to invite_tournament_path(tournament.invite_token), invite_tournament_path(tournament.invite_token) %></p>
+    <p class="match-show-meta-item"><strong>Invite Link:</strong> <%= link_to invitation_tournament_path(tournament.invite_token), invitation_tournament_path(tournament.invite_token) %></p>
   <% end %>
   <% if tournament.status_open? && current_user == tournament.creator %>
     <p class="match-show-meta-item">

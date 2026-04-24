@@ -32,6 +32,7 @@ class Tournament < ApplicationRecord
   scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
   scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
   scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
+  scope :publicly_visible, -> { visibility_public }
   scope :visible_to, ->(user) {
     visible = visibility_public
     return visible unless user&.persisted? && !user.guest?
@@ -89,6 +90,10 @@ class Tournament < ApplicationRecord
     Rails.cache.read(paused_cache_key) == true
   end
 
+  def show_path
+    visibility_public? ? public_show_path : invite_show_path
+  end
+
   private
 
   def generate_invite_token
@@ -104,5 +109,13 @@ class Tournament < ApplicationRecord
 
   def paused_cache_key
     "tournaments/#{id}/paused"
+  end
+
+  def public_show_path
+    Rails.application.routes.url_helpers.public_tournament_path(self)
+  end
+
+  def invite_show_path
+    Rails.application.routes.url_helpers.invitation_tournament_path(invite_token)
   end
 end

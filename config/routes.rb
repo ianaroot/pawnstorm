@@ -31,12 +31,9 @@ Rails.application.routes.draw do
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
   end
 
-  resources :tournaments, only: [:index, :new, :create]
-
-  resources :tournaments, path: 'public_tournaments', only: [:show], controller: 'tournaments' do
+  resources :tournaments, only: [:index, :new, :create], constraints: { id: /\d+/ } do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
-      get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
       post :start
       post :abort
       post :pause
@@ -44,13 +41,25 @@ Rails.application.routes.draw do
     end
   end
 
-  get 'tournaments/:invite_token', to: 'tournaments#show_by_invite', as: :invite_tournament
+  resources :public_tournaments, only: [:show], controller: 'tournaments' do
+    member do
+      get 'pairings/:entrant_a_id/:entrant_b_id', to: 'tournaments#pairing', as: :pairing
+    end
+  end
+
+  get 'tournaments/:invite_token', to: 'tournaments#show_by_invite', as: :invitation_tournament
   get 'tournaments/:invite_token/pairings/:entrant_a_id/:entrant_b_id',
     to: 'tournaments#pairing_by_invite',
-    as: :invite_pairing_tournament
-  post 'tournaments/:invite_token/entries', to: 'tournament_entries#create', as: :invite_tournament_entries
-  patch 'tournaments/:invite_token/entries/:id', to: 'tournament_entries#update', as: :invite_tournament_entry
-  delete 'tournaments/:invite_token/entries/:id', to: 'tournament_entries#destroy'
+    as: :invitation_tournament_pairing
+  post 'tournaments/:invite_token/entries', to: 'tournament_entries#create', as: :invitation_tournament_entries
+  match 'tournaments/:invite_token/entries/:id',
+    to: 'tournament_entries#update',
+    via: :patch,
+    as: :invitation_tournament_entry
+  match 'tournaments/:invite_token/entries/:id',
+    to: 'tournament_entries#destroy',
+    via: :delete,
+    as: nil
 
   get 'matches/bot-vs-bot/new', to: 'matches/bot_vs_bot#new', as: :new_bot_vs_bot_match
   post 'matches/bot-vs-bot', to: 'matches/bot_vs_bot#create', as: :bot_vs_bot_matches

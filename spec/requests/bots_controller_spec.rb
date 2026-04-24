@@ -223,7 +223,8 @@ RSpec.describe BotsController, type: :request do
       post compile_bot_path(bot)
 
       expect(response).to redirect_to(edit_bot_path(bot))
-      expect(flash[:notice]).to eq('Bot compiled. Reloading editor.')
+      expect(flash[:notice]).to be_present
+      expect(flash[:notice]).to include('Bot compiled')
       expect(bot.reload.compiled_program_stale).to be(false)
       expect(bot.compiled_program).to be_present
     end

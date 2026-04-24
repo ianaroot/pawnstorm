@@ -131,9 +131,9 @@ class TournamentEntriesController < ApplicationController
 
   def tournament_return_path
     if params[:invite_token].present?
-      invite_tournament_path(tournament.invite_token)
+      invitation_tournament_path(tournament.invite_token)
     else
-      tournament_path(tournament)
+      public_tournament_path(tournament)
     end
   end
 

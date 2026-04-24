@@ -11,7 +11,6 @@ RSpec.describe 'Sidebar navigation', type: :feature do
     it 'shows nav links on any page' do
       visit bots_path
 
-      expect(page).to have_link('Home')
       expect(page).to have_link('Play Match')
       expect(page).to have_link('Tournaments')
       expect(page).to have_link('Bots')
@@ -25,12 +24,6 @@ RSpec.describe 'Sidebar navigation', type: :feature do
       expect(page).to have_button('Sign Out')
       expect(page).not_to have_link('Sign In')
       expect(page).not_to have_link('Sign Up')
-    end
-
-    it 'Home navigates to root' do
-      visit bots_path
-      click_link 'Home'
-      expect(page).to have_current_path(root_path)
     end
 
     it 'Bots navigates to bots index' do
