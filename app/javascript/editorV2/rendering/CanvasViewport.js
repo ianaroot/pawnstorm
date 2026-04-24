@@ -300,7 +300,7 @@ class CanvasViewport {
     const fitHeight = bounds.height + (FIT_PADDING * 2)
     const zoomX = viewportWidth / fitWidth
     const zoomY = viewportHeight / fitHeight
-    const targetZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(zoomX, zoomY)))
+    const targetZoom = Math.min(ZOOM_DEFAULT, ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(zoomX, zoomY)))
 
     this.setZoom(targetZoom)
     this.refresh()
