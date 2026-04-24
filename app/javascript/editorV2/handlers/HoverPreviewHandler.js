@@ -84,10 +84,15 @@ class HoverPreviewHandler {
     const gap = 16
     const margin = 12
 
-    previewEl.innerHTML = `
-      <div class="node-hover-preview__label">${this.labelFor(nodeType)}</div>
-      <div class="node-hover-preview__content">${previewSource.innerHTML}</div>
-    `
+    const label = document.createElement('div')
+    label.className = 'node-hover-preview__label'
+    label.textContent = this.labelFor(nodeType)
+
+    const content = document.createElement('div')
+    content.className = 'node-hover-preview__content'
+    content.appendChild(previewSource.cloneNode(true))
+
+    previewEl.replaceChildren(label, content)
     previewEl.dataset.nodeType = nodeType || 'default'
 
     previewEl.classList.remove('hidden')

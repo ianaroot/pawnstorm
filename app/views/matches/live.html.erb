@@ -1,6 +1,7 @@
 <% human_team = @match.white_player == current_user ? 'W' : 'B' %>
 <% bot_team = human_team == 'W' ? 'B' : 'W' %>
-<% bot_snapshot = @match.compiled_program_snapshot_for(bot_team == 'W' ? :white : :black) %>
+<% bot_color = bot_team == 'W' ? :white : :black %>
+<% bot_snapshot = @match.compiled_program_snapshot_for(bot_color) %>
 
 <div
   class="game-page"
@@ -9,7 +10,7 @@
   data-match-id="<%= @match.id %>"
   data-human-team="<%= human_team %>"
   data-bot-team="<%= bot_team %>"
-  data-bot-name="<%= @match.player_display_name_for(bot_team == 'W' ? :white : :black) %>"
+  data-bot-name="<%= @match.player_display_name_for(bot_color) %>"
   data-complete-url="<%= complete_human_vs_bot_match_path(@match) %>"
   data-replay-url="<%= match_path(@match) %>"
   data-bot-compiled-program="<%= json_escape(bot_snapshot.to_json) %>"
@@ -20,8 +21,8 @@
       <p class="match-show-meta-item"><strong>Human:</strong> <span data-human-side-label><%= human_team == 'W' ? 'White' : 'Black' %></span></p>
       <p class="match-show-meta-item">
         <strong>Bot:</strong>
-        <span data-bot-name-label><%= @match.player_display_name_for(bot_team == 'W' ? :white : :black) %></span>
-        (<span data-bot-side-label><%= bot_team == 'W' ? 'White' : 'Black' %></span>)
+        <span data-bot-name-label><%= @match.player_display_name_for(bot_color) %></span>
+        (<span data-bot-side-label><%= bot_color == :white ? 'White' : 'Black' %></span>)
       </p>
       <p class="match-show-meta-item match-live-status-pill" data-play-status>Bot's turn.</p>
     </div>

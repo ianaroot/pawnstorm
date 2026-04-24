@@ -316,9 +316,9 @@ RSpec.describe TournamentsController, type: :request do
     it 'does not expose link-only tournaments through predictable id pairing routes' do
       tournament = create(:tournament, creator: user)
 
-      expect do
-        get pairing_public_tournament_path(tournament, 1, 2)
-      end.to raise_error(ActiveRecord::RecordNotFound)
+      get pairing_public_tournament_path(tournament, 1, 2)
+
+      expect(response).to have_http_status(:not_found)
     end
 
     it 'shows link-only pairings through invite-token routes' do
@@ -378,7 +378,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(pending_match.reload).to be_failed
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')
@@ -404,7 +404,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(pending_match.reload).to be_pending
     end
@@ -441,7 +441,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post pause_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(tournament.reload).to be_paused
       expect(pending_match.reload).to be_pending
     end
@@ -479,7 +479,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post resume_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(tournament.reload).not_to be_paused
       expect(ComputeMatchJob).to have_been_enqueued.with(pending_match.id)
     end
@@ -496,7 +496,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:notice]).to eq('Tournament started.')
       expect(tournament.reload).to be_status_running
       expect(tournament.started_at).to be_present
@@ -510,7 +510,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(tournament.show_path)
+      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(tournament.reload).to be_status_open
     end

@@ -24,7 +24,7 @@ class TournamentsController < ApplicationController
     creation = Tournaments::CreateTournament.new(user: current_user, params: tournament_params)
 
     if creation.call
-      redirect_to creation.tournament.show_path, notice: 'Tournament created.'
+      redirect_to tournament_show_path(creation.tournament), notice: 'Tournament created.'
     else
       assign_form_state(creation)
       flash.now[:alert] = creation.error_message
@@ -60,30 +60,35 @@ class TournamentsController < ApplicationController
 
   def abort
     @tournament.abort!
-    redirect_to @tournament.show_path, notice: 'Tournament aborted. Running matches may finish, but no new matches will be queued.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament aborted. Running matches may finish, but no new matches will be queued.'
   end
 
   def pause
     @tournament.pause!
-    redirect_to @tournament.show_path, notice: 'Tournament paused. Running matches may finish, but no new matches will be queued.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament paused. Running matches may finish, but no new matches will be queued.'
   end
 
   def resume
     @tournament.resume!
-    redirect_to @tournament.show_path, notice: 'Tournament resumed.'
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament resumed.'
   end
 
   def start
     start_tournament = Tournaments::StartTournament.new(user: current_user, tournament: @tournament)
 
     if start_tournament.call
-      redirect_to @tournament.show_path, notice: 'Tournament started.'
+      redirect_to tournament_show_path(@tournament), notice: 'Tournament started.'
     else
-      redirect_to @tournament.show_path, alert: start_tournament.error_message
+      redirect_to tournament_show_path(@tournament), alert: start_tournament.error_message
     end
   end
 
   private
+
+  helper_method :tournament_show_path
+  def tournament_show_path(tournament)
+    tournament.visibility_public? ? public_tournament_path(tournament) : invitation_tournament_path(tournament.invite_token)
+  end
 
   def assign_pairing_state
     @tournament_presenter = TournamentPresenter.new(@tournament)
@@ -165,7 +170,7 @@ class TournamentsController < ApplicationController
   def authorize_tournament_control!
     return if @tournament.creator == current_user
 
-    redirect_to @tournament.show_path, alert: 'Only the tournament creator can manage this tournament.'
+    redirect_to tournament_show_path(@tournament), alert: 'Only the tournament creator can manage this tournament.'
   end
 
   def index_filters

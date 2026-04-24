@@ -138,9 +138,8 @@ RSpec.describe BotsController, type: :request do
     it 'returns 404 for another users bot' do
       other_user = create(:user)
       sign_in other_user
-      expect {
-        get edit_bot_path(bot)
-      }.to raise_error(ActiveRecord::RecordNotFound)
+      get edit_bot_path(bot)
+      expect(response).to have_http_status(:not_found)
     end
   end
 
@@ -203,9 +202,8 @@ RSpec.describe BotsController, type: :request do
     it 'returns 404 for another users bot' do
       other_user = create(:user)
       sign_in other_user
-      expect {
-        delete bot_path(bot)
-      }.to raise_error(ActiveRecord::RecordNotFound)
+      delete bot_path(bot)
+      expect(response).to have_http_status(:not_found)
     end
   end
 

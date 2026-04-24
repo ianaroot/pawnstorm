@@ -137,22 +137,6 @@
   line-height: 1.4;
 }
 
-.sidebar__tips-line--animate {
-  animation: sidebar-tip-fade 420ms ease;
-}
-
-@keyframes sidebar-tip-fade {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .sidebar__user {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;

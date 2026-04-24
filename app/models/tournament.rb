@@ -90,10 +90,6 @@ class Tournament < ApplicationRecord
     Rails.cache.read(paused_cache_key) == true
   end
 
-  def show_path
-    visibility_public? ? public_show_path : invite_show_path
-  end
-
   private
 
   def generate_invite_token
@@ -101,21 +97,14 @@ class Tournament < ApplicationRecord
   end
 
   def generate_unique_invite_token
-    loop do
+    10.times do
       token = SecureRandom.hex(INVITE_TOKEN_BYTES)
       return token unless self.class.exists?(invite_token: token)
     end
+    raise "Could not generate a unique invite token after 10 attempts"
   end
 
   def paused_cache_key
     "tournaments/#{id}/paused"
-  end
-
-  def public_show_path
-    Rails.application.routes.url_helpers.public_tournament_path(self)
-  end
-
-  def invite_show_path
-    Rails.application.routes.url_helpers.invitation_tournament_path(invite_token)
   end
 end

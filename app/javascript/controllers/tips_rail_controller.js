@@ -53,9 +53,10 @@ export default class extends Controller {
   renderCurrentTip() {
     if (!this.hasLineTarget || this.tipsValue.length === 0) { return }
 
-    this.lineTarget.classList.remove('sidebar__tips-line--animate')
-    void this.lineTarget.offsetWidth
     this.lineTarget.textContent = this.tipsValue[this.currentIndex]
-    this.lineTarget.classList.add('sidebar__tips-line--animate')
+    this.lineTarget.animate(
+      [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
+      { duration: 420, easing: 'ease' }
+    )
   }
 }

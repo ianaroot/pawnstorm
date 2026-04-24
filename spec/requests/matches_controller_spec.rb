@@ -306,9 +306,8 @@ RSpec.describe 'Matches', type: :request do
         previous_layouts: []
       )
 
-      expect do
-        get live_human_vs_bot_match_path(match)
-      end.to raise_error(ActiveRecord::RecordNotFound)
+      get live_human_vs_bot_match_path(match)
+      expect(response).to have_http_status(:not_found)
     end
 
     it 'does not render bot-vs-bot matches through the live route' do
