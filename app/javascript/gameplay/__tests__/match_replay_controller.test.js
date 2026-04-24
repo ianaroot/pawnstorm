@@ -76,4 +76,36 @@ describe('MatchReplayController', () => {
     expect(board.history.halfmoveClock).toBe(finalBoard.history.halfmoveClock)
     expect(board.history.positionKeys).toEqual(finalBoard.history.positionKeys)
   })
+
+  it('distinguishes human players from other users\' bots when condition tracing is unavailable', () => {
+    const root = buildRoot({
+      finalLayout: Layout.default(),
+      movementNotation: []
+    })
+    document.body.appendChild(root)
+
+    const controller = new MatchReplayController({ rootElement: root })
+    controller.currentMoveIndex = 0
+    controller.totalPlayableMoves = 2
+
+    const humanBoard = new Board({
+      layOut: Layout.default(),
+      capturedPieces: [],
+      allowedToMove: Board.WHITE,
+      movementNotation: []
+    })
+    controller.whiteBotOwnerId = null
+    const humanInspection = controller.inspectionContextForBoard(humanBoard)
+    expect(humanInspection.unavailableMessage).toBe('condition trace unavailable for human players')
+
+    const botBoard = new Board({
+      layOut: Layout.default(),
+      capturedPieces: [],
+      allowedToMove: Board.BLACK,
+      movementNotation: []
+    })
+    controller.blackBotOwnerId = 2
+    const botInspection = controller.inspectionContextForBoard(botBoard)
+    expect(botInspection.unavailableMessage).toBe("condition trace unavailable for other players' bots")
+  })
 })

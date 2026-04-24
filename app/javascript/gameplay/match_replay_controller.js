@@ -316,6 +316,16 @@ class MatchReplayController {
         unavailableMessage: null
       }
     }
+    if (ownerId === null) {
+      return {
+        enabled: false,
+        team,
+        compiledProgram: null,
+        result: null,
+        selectedStartSquare: null,
+        unavailableMessage: 'condition trace unavailable for human players'
+      }
+    }
     if (ownerId !== this.currentUserId || !compiledProgram) {
       return {
         enabled: false,
