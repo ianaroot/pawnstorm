@@ -65,4 +65,127 @@ module ApplicationHelper
 
     formatted.html_safe
   end
+
+  def sidebar_tips_for_page
+    case [controller_name, action_name]
+    when ['bots', 'edit']
+      bot_editor_sidebar_tips
+    when ['matches', 'show']
+      match_replay_sidebar_tips
+    else
+      []
+    end
+  end
+
+  def bot_editor_sidebar_tips
+    [
+      {
+        eyebrow: 'Editor Tip',
+        title: 'Inspect node previews',
+        body: 'Press I to toggle node hover previews.',
+        accent: 'violet',
+        image: {
+          kind: :keyboard_hint,
+          data: {
+            label: 'Inspect mode',
+            keys: ['I']
+          }
+        }
+      },
+      {
+        eyebrow: 'Editor Tip',
+        title: 'Pan the canvas',
+        body: 'Hold Space and drag to pan the graph.',
+        accent: 'teal',
+        image: {
+          kind: :drag_gesture,
+          data: {
+            label: 'Pan view',
+            modifier: 'Space',
+            mode: 'pan'
+          }
+        }
+      },
+      {
+        eyebrow: 'Editor Tip',
+        title: 'Build a bigger selection',
+        body: 'Drag empty canvas to select, then Shift-click to add more.',
+        accent: 'gold',
+        image: {
+          kind: :drag_gesture,
+          data: {
+            label: 'Select nodes',
+            modifier: 'Shift',
+            mode: 'select'
+          }
+        }
+      },
+      {
+        eyebrow: 'Editor Tip',
+        title: 'Move one node precisely',
+        body: 'Alt-drag to move only the grabbed node.',
+        accent: 'blue',
+        image: {
+          kind: :drag_gesture,
+          data: {
+            label: 'Move one node',
+            modifier: 'Alt',
+            mode: 'isolate'
+          }
+        }
+      }
+    ]
+  end
+
+  def match_replay_sidebar_tips
+    [
+      {
+        eyebrow: 'Replay Tip',
+        title: 'Inspect moves',
+        body: "Pause replay, click a piece, then click a legal destination to see how the bot evaluated that move.",
+        accent: 'blue',
+        image: {
+          kind: :mini_board,
+          data: {
+            rows: [
+              %w[empty candidate empty empty],
+              ['candidate', 'selected:pawn', 'candidate', 'empty'],
+              %w[empty empty played empty],
+              %w[inspected empty empty empty]
+            ]
+          }
+        }
+      },
+      {
+        eyebrow: 'Replay Tip',
+        title: 'Jump by notation',
+        body: 'Click move notation to jump straight to that turn.',
+        accent: 'gold',
+        image: {
+          kind: :notation_list,
+          data: {
+            rows: ['1. e4 e5', '2. Nf3 Nc6', '3. Bb5 a6'],
+            active_index: 1
+          }
+        }
+      },
+      {
+        eyebrow: 'Replay Tip',
+        title: 'Read the highlights',
+        body: 'Purple is the played move. Blue is the inspected move.',
+        accent: 'teal',
+        image: {
+          kind: :mini_board,
+          data: {
+            rows: [
+              %w[empty empty empty empty],
+              ['empty', 'selected:pawn', 'empty', 'empty'],
+              %w[played empty empty empty],
+              %w[empty empty inspected empty]
+            ]
+          }
+        }
+      }
+    ]
+  end
 end
