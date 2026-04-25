@@ -106,7 +106,7 @@ function raySteps() {
     return QUEEN_RAY_STEPS
 }
 
-function nextPositionOnRay(position, step) {
+export function nextPositionOnRay(position, step) {
     const nextPosition = position + step
     if (!Board._inBounds(nextPosition)) { return null }
     const currentFile = position % 8

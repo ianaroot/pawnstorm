@@ -2,7 +2,14 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { adjacentPositions, controlledSquares, shieldedPositions } from 'gameplay/board_query_utils'
+import { adjacentPositions, controlledSquares, nextPositionOnRay, shieldedPositions } from 'gameplay/board_query_utils'
+import {
+  square, emptyLayout, pieceCode, pieceTeam, pieceSpecies,
+  rankForPosition, legalPlacementForSpecies,
+  unique, shuffled, pushUnique,
+  clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
+  occupiedCount
+} from 'editorV2/panels/condition_preview/board_utils'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -41,36 +48,6 @@ const FILTER_LABELS = Object.freeze({
 const COUNT_COMPARISON_METRIC = 'count'
 const EXACT_NUMBER_COMPARISON_SOURCE = 'exact_number'
 const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
-
-function square(value) {
-  return Board.gridCalculatorReverse(value)
-}
-
-function emptyLayout() {
-  return Array(64).fill(Board.EMPTY_SQUARE)
-}
-
-function pieceCode(team, species) {
-  return `${team}${species}`
-}
-
-function pieceTeam(piece) {
-  return piece ? piece[0] : null
-}
-
-function pieceSpecies(piece) {
-  return piece ? piece[1] : null
-}
-
-function rankForPosition(position) {
-  return Math.floor(position / 8)
-}
-
-function legalPlacementForSpecies(position, species) {
-  if (species !== Board.PAWN) { return true }
-  const rank = rankForPosition(position)
-  return rank !== 0 && rank !== 7
-}
 
 function teamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
@@ -222,15 +199,6 @@ function candidateSpecies(filter = 'any', filterMode = null) {
   return pool.filter(species => speciesMatchesFilter(species, filter, filterMode))
 }
 
-function nextPositionOnRay(position, step) {
-  const next = position + step
-  if (!Board._inBounds(next)) { return null }
-  const fileDelta = Math.abs((next % 8) - (position % 8))
-  if (Math.abs(step) === 1 && fileDelta !== 1) { return null }
-  if ((Math.abs(step) === 7 || Math.abs(step) === 9) && fileDelta !== 1) { return null }
-  return next
-}
-
 function adjacentNeighborPositions(position) {
   const neighbors = []
   RAY_STEPS.forEach(step => {
@@ -285,49 +253,6 @@ function originCandidatesForSpecies(endPosition, species) {
     default:
       return []
   }
-}
-
-function unique(values) {
-  return Array.from(new Set(values))
-}
-
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1))
-    const current = copy[index]
-    copy[index] = copy[swapIndex]
-    copy[swapIndex] = current
-  }
-  return copy
-}
-
-function pushUnique(queue, seenKeys, entry, key) {
-  if (seenKeys.has(key)) { return }
-  seenKeys.add(key)
-  queue.push(entry)
-}
-
-function clonePiecesMap(piecesMap) {
-  return new Map(piecesMap)
-}
-
-function buildBoardFromLayout(layout, recentMoveContext = null) {
-  return new Board({
-    layOut: layout,
-    capturedPieces: [],
-    allowedToMove: Board.WHITE,
-    movementNotation: [],
-    recentMoveContext
-  })
-}
-
-function layoutsMatch(left, right) {
-  if (left.length !== right.length) { return false }
-  for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) { return false }
-  }
-  return true
 }
 
 function relationSquareDistance(subjectPosition, targetPosition) {
@@ -409,10 +334,6 @@ function subjectTargetLabels(payload, moveObject, result) {
       movedEndPosition: endPosition
     }
   }
-}
-
-function occupiedCount(board) {
-  return board.layOut.filter(piece => piece !== Board.EMPTY_SQUARE).length
 }
 
 function varietySignature(example) {
@@ -512,18 +433,6 @@ function movedPieceOptionSets({ payload, skeleton, variant }) {
     })
   })
   return options
-}
-
-function squareIsOccupied(pieces, position) {
-  return pieces.has(position)
-}
-
-function buildLayoutFromPieces(pieces) {
-  const layout = emptyLayout()
-  pieces.forEach((piece, position) => {
-    layout[position] = piece
-  })
-  return layout
 }
 
 function selectKingPair(basePieces, random) {
