@@ -10,6 +10,9 @@ const MAX_BUILD_ATTEMPTS = 1200
 const MAX_REVERSE_MOVES_PER_OPTION = 4
 const MAX_EXAMPLES_PER_BUCKET = 8
 const MAX_EXAMPLES_PER_SKELETON = 3
+const ENRICHMENT_PROBABILITY = 0.5
+const MAX_ENRICHED_EXTRA_PIECES = 10
+const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
@@ -53,6 +56,16 @@ function pieceTeam(piece) {
 
 function pieceSpecies(piece) {
   return piece ? piece[1] : null
+}
+
+function rankForPosition(position) {
+  return Math.floor(position / 8)
+}
+
+function legalPlacementForSpecies(position, species) {
+  if (species !== Board.PAWN) { return true }
+  const rank = rankForPosition(position)
+  return rank !== 0 && rank !== 7
 }
 
 function teamForActor(actor) {
@@ -383,6 +396,10 @@ function subjectTargetLabels(payload, moveObject, result) {
   }
 }
 
+function occupiedCount(board) {
+  return board.layOut.filter(piece => piece !== Board.EMPTY_SQUARE).length
+}
+
 function varietySignature(example) {
   const subjectPieces = example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
   const targetPieces = example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
@@ -470,6 +487,7 @@ function movedPieceOptionSets({ payload, skeleton, variant }) {
   const options = []
   preferredExtraMovedSpecies(skeleton.subjectSpecies, skeleton.targetSpecies).forEach(species => {
     extraSquares.forEach(squarePosition => {
+      if (!legalPlacementForSpecies(squarePosition, species)) { return }
       options.push({
         square: squarePosition,
         species,
@@ -676,6 +694,7 @@ function buildAttackOrDefendContributionCandidates({ payload, side, anchorPositi
         const board = buildBoardFromLayout(buildLayoutFromPieces(new Map([
           [position, pieceCode(subjectTeam, species)]
         ])))
+        if (!legalPlacementForSpecies(position, species)) { continue }
         if (controlledSquares({ board, attackerPosition: position }).includes(anchorPosition)) {
           positions.push({
             side: 'subject',
@@ -693,12 +712,14 @@ function buildAttackOrDefendContributionCandidates({ payload, side, anchorPositi
   return shuffled(controlledSquares({ board, attackerPosition: anchorPosition }), random)
     .filter(position => !occupied.has(position))
     .flatMap(position => {
-      return shuffled(sideSpeciesPool(payload, 'target'), random).map(species => ({
-        side: 'target',
-        position,
-        species,
-        piece: pieceCode(teamForActor(payload.target), species)
-      }))
+      return shuffled(sideSpeciesPool(payload, 'target'), random)
+        .filter(species => legalPlacementForSpecies(position, species))
+        .map(species => ({
+          side: 'target',
+          position,
+          species,
+          piece: pieceCode(teamForActor(payload.target), species)
+        }))
     })
 }
 
@@ -708,12 +729,14 @@ function buildAdjacentContributionCandidates({ payload, side, anchorPosition, oc
   return shuffled(adjacentNeighborPositions(anchorPosition), random)
     .filter(position => !occupied.has(position) && position !== anchorPosition)
     .flatMap(position => {
-      return shuffled(speciesPool, random).map(species => ({
-        side,
-        position,
-        species,
-        piece: pieceCode(team, species)
-      }))
+      return shuffled(speciesPool, random)
+        .filter(species => legalPlacementForSpecies(position, species))
+        .map(species => ({
+          side,
+          position,
+          species,
+          piece: pieceCode(team, species)
+        }))
     })
 }
 
@@ -934,6 +957,12 @@ function compactPairCountPenalty(result) {
   )
 }
 
+function requiredRelationPairFloor(payload) {
+  const requirements = comparisonRequirements(payload)
+  if (!requirements.comparisonsPresent) { return 1 }
+  return Math.max(requirements.subject, requirements.target)
+}
+
 function buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies }) {
   switch (payload.operator) {
     case 'attack':
@@ -1070,23 +1099,22 @@ function candidateIdentity(example) {
   ].join(':')
 }
 
+function uniqueExamples(examples) {
+  const seen = new Set()
+  return examples.filter(example => {
+    const identity = candidateIdentity(example)
+    if (seen.has(identity)) { return false }
+    seen.add(identity)
+    return true
+  })
+}
+
 function bucketKeyForExample(example) {
   return [
     subjectSpeciesSignature(example),
     targetSpeciesSignature(example),
     example.variantType
   ].join('|')
-}
-
-function sortedByCompactness(candidates) {
-  return [...candidates].sort((left, right) => {
-    if (left.compactnessPenalty !== right.compactnessPenalty) {
-      return left.compactnessPenalty - right.compactnessPenalty
-    }
-
-    return relationSquareDistance(left.result.subjectPositions[0], left.result.targetPositions[0]) -
-      relationSquareDistance(right.result.subjectPositions[0], right.result.targetPositions[0])
-  })
 }
 
 function collectVerifiedExamples({ payload, skeleton, variant, random }) {
@@ -1160,7 +1188,7 @@ function collectVerifiedExamples({ payload, skeleton, variant, random }) {
 function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenIdentities }) {
   const queue = Array.from(candidatesByKey.entries()).map(([key, candidates]) => ({
     key,
-    candidates: sortedByCompactness(candidates)
+    candidates: [...candidates]
   }))
   let added = false
 
@@ -1188,7 +1216,7 @@ function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenIdentiti
 }
 
 function selectDiverseExamples(candidates, maxExamples) {
-  if (candidates.length <= maxExamples) { return sortedByCompactness(candidates) }
+  if (candidates.length <= maxExamples) { return [...candidates] }
 
   const selected = []
   const seenIdentities = new Set()
@@ -1223,12 +1251,189 @@ function selectDiverseExamples(candidates, maxExamples) {
     return selected.slice(0, maxExamples)
   }
 
-  const remaining = sortedByCompactness(candidates).filter(candidate => !seenIdentities.has(candidateIdentity(candidate)))
+  const remaining = candidates.filter(candidate => !seenIdentities.has(candidateIdentity(candidate)))
   for (let index = 0; index < remaining.length && selected.length < maxExamples; index += 1) {
     selected.push(remaining[index])
   }
 
   return selected
+}
+
+function movePathSquares(priorBoard, moveObject) {
+  const start = moveObject.startPosition
+  const end = moveObject.endPosition
+  const species = priorBoard.pieceTypeAt(start)
+  const squares = new Set([start, end])
+
+  if ([Board.ROOK, Board.BISHOP, Board.QUEEN].includes(species)) {
+    const fileDelta = (end % 8) - (start % 8)
+    const rankDelta = Math.floor(end / 8) - Math.floor(start / 8)
+    const stepFile = Math.sign(fileDelta)
+    const stepRank = Math.sign(rankDelta)
+    let file = (start % 8) + stepFile
+    let rank = Math.floor(start / 8) + stepRank
+
+    while (file !== (end % 8) || rank !== Math.floor(end / 8)) {
+      squares.add(rank * 8 + file)
+      file += stepFile
+      rank += stepRank
+    }
+  } else if (species === Board.PAWN && Math.abs(end - start) === 16) {
+    squares.add((start + end) / 2)
+  }
+
+  return squares
+}
+
+function forbiddenSquaresForEnrichment(example) {
+  const squares = new Set(movePathSquares(example.priorBoard, example.moveObject))
+
+  example.priorBoard.layOut.forEach((piece, position) => {
+    if (piece !== Board.EMPTY_SQUARE) {
+      squares.add(position)
+    }
+  })
+  example.afterBoard.layOut.forEach((piece, position) => {
+    if (piece !== Board.EMPTY_SQUARE) {
+      squares.add(position)
+    }
+  })
+
+  return squares
+}
+
+function weightedDecorationSpecies(random) {
+  const roll = random()
+  if (roll < 0.6) { return Board.PAWN }
+  if (roll < 0.7) { return Board.NIGHT }
+  if (roll < 0.8) { return Board.BISHOP }
+  if (roll < 0.9) { return Board.ROOK }
+  return Board.QUEEN
+}
+
+function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, suffix }) {
+  const evaluator = new ConditionEvaluatorV2()
+  const input = { board: priorBoard, moveObject }
+  if (!evaluator.evaluate(payload, input)) { return null }
+
+  const analysis = new CandidateMoveAnalysisV2(input)
+  const result = analysis.relationalResult(relationParams(payload))
+  const afterBoard = priorBoard.lightClone()
+  afterBoard._hypotheticallyMovePiece(moveObject)
+  const movedPieceInRelation = (
+    result.subjectPositions.includes(moveObject.endPosition) ||
+    result.targetPositions.includes(moveObject.endPosition)
+  )
+
+  return {
+    priorBoard,
+    afterBoard,
+    moveObject,
+    result,
+    highlights: subjectTargetLabels(payload, moveObject, result),
+    label: baseExample.label,
+    variantType: movedPieceInRelation ? 'involved' : 'separate',
+    geometryKey: `${baseExample.geometryKey}:${suffix}`,
+    compactnessPenalty: compactPairCountPenalty(result),
+    movedPieceInRelation
+  }
+}
+
+function exampleEligibleForEnrichment(example, payload) {
+  return example.result.pairs.length <= requiredRelationPairFloor(payload) + MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT
+}
+
+function buildEnrichmentPlacementPolicy(example, random) {
+  const forbidden = forbiddenSquaresForEnrichment(example)
+  const candidates = shuffled(
+    Array.from({ length: 64 }, (_unused, position) => position).filter(position => !forbidden.has(position)),
+    random
+  )
+
+  return {
+    nextPlacement() {
+      const position = candidates.shift()
+      if (position === undefined) { return null }
+      const species = weightedDecorationSpecies(random)
+      if (!legalPlacementForSpecies(position, species)) {
+        return this.nextPlacement()
+      }
+      return {
+        position,
+        team: random() < 0.5 ? Board.WHITE : Board.BLACK,
+        species
+      }
+    }
+  }
+}
+
+function enrichExample(example, payload, random) {
+  if (!exampleEligibleForEnrichment(example, payload)) { return null }
+
+  const policy = buildEnrichmentPlacementPolicy(example, random)
+  const basePriorBoard = example.priorBoard.lightClone()
+  let bestExample = example
+  let addedCount = 0
+
+  while (addedCount < MAX_ENRICHED_EXTRA_PIECES) {
+    const placement = policy.nextPlacement()
+    if (!placement) { break }
+
+    const trialPriorBoard = basePriorBoard.lightClone()
+    trialPriorBoard._placePiece({
+      position: placement.position,
+      pieceObject: pieceCode(placement.team, placement.species)
+    })
+    const derived = deriveVerifiedExample({
+      payload,
+      priorBoard: trialPriorBoard,
+      moveObject: example.moveObject,
+      baseExample: example,
+      suffix: `enriched:${addedCount + 1}:${placement.position}:${placement.team}${placement.species}`
+    })
+
+    if (!derived) { break }
+    if (!exampleEligibleForEnrichment(derived, payload)) { break }
+
+    bestExample = derived
+    basePriorBoard.layOut = Board._deepCopy(trialPriorBoard.layOut)
+    addedCount += 1
+  }
+
+  return addedCount > 0 ? bestExample : null
+}
+
+function finalizeExamples(baseExamples, payload, maxExamples, random) {
+  const enrichedCandidates = []
+
+  baseExamples.forEach(example => {
+    if (random() >= ENRICHMENT_PROBABILITY) { return }
+    const enriched = enrichExample(example, payload, random)
+    if (enriched) {
+      enrichedCandidates.push(enriched)
+    }
+  })
+
+  if (enrichedCandidates.length === 0) {
+    return selectDiverseExamples(baseExamples, maxExamples)
+  }
+
+  const desiredEnrichedCount = Math.min(
+    enrichedCandidates.length,
+    Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
+  )
+  const selectedEnriched = selectDiverseExamples(uniqueExamples(enrichedCandidates), desiredEnrichedCount)
+  const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
+  const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
+  const selectedBase = selectDiverseExamples(remainingBase, Math.max(0, maxExamples - selectedEnriched.length))
+  const combined = uniqueExamples([...selectedBase, ...selectedEnriched])
+
+  if (combined.length >= maxExamples) {
+    return selectDiverseExamples(combined, maxExamples)
+  }
+
+  const fallbackPool = uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates])
+  return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
 function buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }) {
@@ -1365,7 +1570,7 @@ export function generateConditionExamples(payload, options = {}) {
       return {
         status: 'ready',
         reason: null,
-        examples: selectDiverseExamples(zeroExamples, maxExamples)
+        examples: finalizeExamples(zeroExamples, payload, maxExamples, random)
       }
     }
   }
@@ -1381,7 +1586,7 @@ export function generateConditionExamples(payload, options = {}) {
   return {
     status: 'ready',
     reason: null,
-    examples: selectDiverseExamples(verified, maxExamples)
+    examples: finalizeExamples(verified, payload, maxExamples, random)
   }
 }
 

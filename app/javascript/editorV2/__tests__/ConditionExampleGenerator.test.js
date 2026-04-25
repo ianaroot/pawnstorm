@@ -260,4 +260,29 @@ describe('ConditionExampleGenerator', () => {
       expect(example.result.targetPositions).toHaveLength(0)
     })
   })
+
+  it('never places pawns on the first or eighth rank in generated examples', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(16), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    preview.examples.forEach(example => {
+      ;[example.priorBoard, example.afterBoard].forEach(board => {
+        board.layOut.forEach((piece, position) => {
+          if (piece[1] !== 'P') { return }
+          const rank = Math.floor(position / 8)
+          expect(rank).not.toBe(0)
+          expect(rank).not.toBe(7)
+        })
+      })
+    })
+  })
 })
