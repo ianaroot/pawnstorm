@@ -19,6 +19,10 @@ import {
   teamForActorWithContext, mergeRelationPieces,
   buildCandidateSkeletons, buildControlSkeletons, buildAdjacentSkeletons, buildShieldSkeletons
 } from 'editorV2/panels/condition_preview/skeleton_builders'
+import {
+  COUNT_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
+  comparisonDescriptors, comparisonRequirements, usesZeroRelationPath
+} from 'editorV2/panels/condition_preview/comparison_requirements'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -49,9 +53,6 @@ const FILTER_LABELS = Object.freeze({
   captured_piece: 'Captured piece',
   enemy_captured_piece: 'Enemy captured piece'
 })
-const COUNT_COMPARISON_METRIC = 'count'
-const EXACT_NUMBER_COMPARISON_SOURCE = 'exact_number'
-const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
 
 function teamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
@@ -78,25 +79,6 @@ function roleRequiresEnemyMovedPiece(actor) {
 
 function relationalActorRequiresPresence(actor) {
   return roleRequiresMovedPiece(actor) || roleRequiresEnemyMovedPiece(actor)
-}
-
-function comparisonDescriptors(payload) {
-  return [
-    {
-      side: 'subject',
-      metric: payload.subjectComparisonMetric,
-      comparator: payload.subjectComparator,
-      source: payload.subjectComparisonSource,
-      total: payload.subjectComparisonSourceTotal
-    },
-    {
-      side: 'target',
-      metric: payload.targetComparisonMetric,
-      comparator: payload.targetComparator,
-      source: payload.targetComparisonSource,
-      total: payload.targetComparisonSourceTotal
-    }
-  ].filter(descriptor => descriptor.metric && descriptor.comparator && (descriptor.source || descriptor.total !== undefined))
 }
 
 function supportStatus(payload) {
@@ -472,38 +454,6 @@ function evaluateCandidate({ payload, priorBoard, moveObject }) {
   return result
 }
 
-function desiredCountForComparison(descriptor) {
-  const total = Number(descriptor.total || 0)
-  switch (descriptor.comparator) {
-    case 'equal_to':
-      return total
-    case 'greater_than':
-      return total + 1
-    case 'greater_than_or_equal_to':
-      return Math.max(1, total)
-    case 'less_than':
-      return total > 0 ? total - 1 : 0
-    case 'less_than_or_equal_to':
-      return total > 0 ? 1 : 0
-    default:
-      return null
-  }
-}
-
-function comparisonRequirements(payload) {
-  const requirements = {
-    subject: 1,
-    target: 1,
-    comparisonsPresent: false
-  }
-
-  comparisonDescriptors(payload).forEach(descriptor => {
-    requirements.comparisonsPresent = true
-    requirements[descriptor.side] = desiredCountForComparison(descriptor)
-  })
-
-  return requirements
-}
 
 function sideSpeciesPool(payload, side) {
   const filter = side === 'subject' ? (payload.subjectFilter || 'any') : (payload.targetFilter || 'any')
@@ -695,12 +645,6 @@ function augmentExistingRelation({ payload, skeleton, requirements, random }) {
     pieces,
     geometryKey: `${skeleton.geometryKey}:count:${desiredSubjectCount}:${desiredTargetCount}`
   }]
-}
-
-function usesZeroRelationPath(requirements) {
-  const desiredSubjectCount = requirements.subject
-  const desiredTargetCount = requirements.target
-  return desiredSubjectCount === 0 || desiredTargetCount === 0
 }
 
 function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDATE_POOL }) {
