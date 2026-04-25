@@ -65,7 +65,7 @@
   border-color: #a855f7;
 }
 
-.bot-guide-node-card--action {
+.bot-guide-node-card--score {
   border-color: #06b6d4;
 }
 
@@ -134,7 +134,7 @@
   stroke: #a855f7;
 }
 
-.bot-guide-mini-graph__shape--action {
+.bot-guide-mini-graph__shape--score {
   stroke: #06b6d4;
 }
 

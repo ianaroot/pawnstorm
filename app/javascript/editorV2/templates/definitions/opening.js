@@ -187,7 +187,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110671",
-      type: "action",
+      type: "score",
       position: {
         x: -10.372618585035525,
         y: 983.7982075999153
@@ -347,7 +347,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110766",
-      type: "action",
+      type: "score",
       position: {
         x: 5.592381287402986,
         y: 980.7595386774447
@@ -498,7 +498,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110758",
-      type: "action",
+      type: "score",
       position: {
         x: -218.51500578220612,
         y: 379.0384788864885
@@ -637,7 +637,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110752",
-      type: "action",
+      type: "score",
       position: {
         x: 14.82761609744739,
         y: 828.0238368787527
@@ -649,7 +649,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110624",
-      type: "action",
+      type: "score",
       position: {
         x: 307.3829430594833,
         y: 961.0876577740723
@@ -881,7 +881,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110634",
-      type: "action",
+      type: "score",
       position: {
         x: 15.703125,
         y: 639.984375
@@ -893,7 +893,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110657",
-      type: "action",
+      type: "score",
       position: {
         x: 190.06960227272725,
         y: 678.462002840909
@@ -944,7 +944,7 @@ export const OPENING_TEMPLATES = [
     },
     {
       key: "action_110743",
-      type: "action",
+      type: "score",
       position: {
         x: 376.3948863636365,
         y: 1079.2368607954545

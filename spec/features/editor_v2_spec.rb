@@ -66,11 +66,11 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect_history_count(2)
     end
 
-    it 'creates an action node via toolbar button' do
-      click_button '+ Action'
+    it 'creates an score node via toolbar button' do
+      click_button '+ Score'
 
       expect_node_count(2)
-      expect(Node.where(bot: bot, node_type: 'action').count).to eq(1)
+      expect(Node.where(bot: bot, node_type: 'score').count).to eq(1)
       expect_history_count(2)
     end
 
@@ -135,7 +135,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'deletes connected connections when node is deleted' do
       # Create nodes and connection
-      action_node = create(:node, bot: bot, node_type: 'action')
+      action_node = create(:node, bot: bot, node_type: 'score')
       connect_nodes(condition_node, action_node)
 
       visit edit_bot_path(bot)
@@ -157,7 +157,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   describe 'connection creation' do
     let!(:node1) { create(:node, bot: bot, node_type: 'condition') }
-    let!(:node2) { create(:node, bot: bot, node_type: 'action') }
+    let!(:node2) { create(:node, bot: bot, node_type: 'score') }
 
     before { visit edit_bot_path(bot) }
 
@@ -199,7 +199,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   describe 'connection deletion' do
     let!(:node1) { create(:node, bot: bot, node_type: 'condition') }
-    let!(:node2) { create(:node, bot: bot, node_type: 'action') }
+    let!(:node2) { create(:node, bot: bot, node_type: 'score') }
     let!(:connection) { connect_nodes(node1, node2) }
 
     before { visit edit_bot_path(bot) }
@@ -314,7 +314,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   describe 'undo/redo - connection operations' do
     let!(:node1) { create(:node, bot: bot, node_type: 'condition') }
-    let!(:node2) { create(:node, bot: bot, node_type: 'action') }
+    let!(:node2) { create(:node, bot: bot, node_type: 'score') }
 
     before { visit edit_bot_path(bot) }
 
@@ -381,7 +381,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     it 'uses Ctrl+Z for undo' do
       wait_for_editor
 
-      click_button '+ Action'
+      click_button '+ Score'
       expect_node_count(3)
 
       find('body').send_keys([:control, 'z'])
@@ -392,7 +392,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     it 'uses Ctrl+Y for redo' do
       wait_for_editor
 
-      click_button '+ Action'
+      click_button '+ Score'
       click_undo
 
       find('body').send_keys([:control, 'y'])
@@ -609,12 +609,12 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       condition_node = Node.where(bot: bot, node_type: 'condition').first
 
-      # Operation 2: Create action node
-      click_button '+ Action'
+      # Operation 2: Create score node
+      click_button '+ Score'
       expect_node_count(3)
       expect_history_count(3)
 
-      action_node = Node.where(bot: bot, node_type: 'action').first
+      action_node = Node.where(bot: bot, node_type: 'score').first
 
       # Operation 3: Connect condition -> action
       create_connection(condition_node.id, action_node.id)
@@ -668,8 +668,8 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   describe 'node dragging with children', :slow do
     let!(:condition_node) { create(:node, bot: bot, node_type: 'condition', position_x: 100, position_y: 100) }
-    let!(:action_node1) { create(:node, bot: bot, node_type: 'action', position_x: 200, position_y: 100) }
-    let!(:action_node2) { create(:node, bot: bot, node_type: 'action', position_x: 200, position_y: 200) }
+    let!(:score_node1) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 100) }
+    let!(:score_node2) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 200) }
     let!(:conn1) { connect_nodes(condition_node, action_node1) }
     let!(:conn2) { connect_nodes(condition_node, action_node2) }
 
@@ -679,7 +679,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       wait_for_editor
       expect_node_count(4)  # root + condition + 2 actions
 
-      # Drag condition node (connected to 2 action nodes)
+      # Drag condition node (connected to 2 score nodes)
       # Original position: condition at (100, 100), action1 at (200, 100), action2 at (200, 200)
       # Move condition to (300, 300)
       drag_node(condition_node.id, 300, 300)
@@ -687,7 +687,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       # Condition should be at new position
       expect_node_position(condition_node.id, 300, 300)
       
-      # Action nodes should have moved with it (offset: +100 in x, +200 in y)
+      # Score nodes should have moved with it (offset: +100 in x, +200 in y)
       expect_node_position(action_node1.id, 400, 300)
       expect_node_position(action_node2.id, 400, 400)
     end
@@ -702,7 +702,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       # Condition should be at new position
       expect_node_position(condition_node.id, 300, 300)
       
-      # Action nodes should NOT have moved
+      # Score nodes should NOT have moved
       expect_node_position(action_node1.id, 200, 100)
       expect_node_position(action_node2.id, 200, 200)
     end

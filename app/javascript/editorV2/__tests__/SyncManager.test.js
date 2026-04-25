@@ -604,7 +604,7 @@ describe('SyncManager', () => {
     beforeEach(() => {
       const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
       const node1 = new Node({ clientId: 'n1', type: 'condition', position: { x: 100, y: 100 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 200, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 200, y: 100 } })
       const rootConnection = new Connection({ clientId: 'c-root', sourceId: 'root', targetId: 'n1' })
       const internalConnection = new Connection({ clientId: 'c-internal', sourceId: 'n1', targetId: 'n2' })
 
@@ -668,7 +668,7 @@ describe('SyncManager', () => {
         type: 'deleteNodes',
         nodes: [
           { clientId: 'n1', type: 'condition', position: { x: 100, y: 100 }, data: {} },
-          { clientId: 'n2', type: 'action', position: { x: 200, y: 100 }, data: {} }
+          { clientId: 'n2', type: 'score', position: { x: 200, y: 100 }, data: {} }
         ],
         connections: [
           { clientId: 'c-internal', sourceId: 'n1', targetId: 'n2' }
@@ -683,7 +683,7 @@ describe('SyncManager', () => {
         type: 'deleteNodes',
         nodes: [
           { clientId: 'n1', type: 'condition', position: { x: 100, y: 100 }, data: {} },
-          { clientId: 'n2', type: 'action', position: { x: 200, y: 100 }, data: {} }
+          { clientId: 'n2', type: 'score', position: { x: 200, y: 100 }, data: {} }
         ]
       })
 
@@ -694,7 +694,7 @@ describe('SyncManager', () => {
   describe('createConnection', () => {
     beforeEach(() => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       store.addNode(node1)
       store.addNode(node2)
       mockApi.createConnection.mockResolvedValue({ id: 123 })
@@ -750,7 +750,7 @@ describe('SyncManager', () => {
   describe('deleteConnection', () => {
     beforeEach(() => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
       store.addNode(node1)
       store.addNode(node2)
@@ -787,7 +787,7 @@ describe('SyncManager', () => {
   describe('batchUpdatePositions', () => {
     beforeEach(() => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       store.addNode(node1)
       store.addNode(node2)
       mockApi.batchUpdatePositions.mockResolvedValue({})

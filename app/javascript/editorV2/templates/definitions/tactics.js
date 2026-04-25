@@ -104,7 +104,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110717",
-      type: "action",
+      type: "score",
       position: {
         x: 129.57873997786191,
         y: 735.5296357903949
@@ -245,7 +245,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110779",
-      type: "action",
+      type: "score",
       position: {
         x: 156.42248997786191,
         y: 747.4827607903949
@@ -411,7 +411,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110792",
-      type: "action",
+      type: "score",
       position: {
         x: 22.163980232858194,
         y: 781.0355083729987
@@ -563,7 +563,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110807",
-      type: "action",
+      type: "score",
       position: {
         x: 32.111842875295224,
         y: 855.685549026387
@@ -703,7 +703,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110791",
-      type: "action",
+      type: "score",
       position: {
         x: 38.58790290557772,
         y: 813.04148202444
@@ -843,7 +843,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110777",
-      type: "action",
+      type: "score",
       position: {
         x: 40.14622415550184,
         y: 854.818501923588
@@ -966,7 +966,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110675",
-      type: "action",
+      type: "score",
       position: {
         x: 27.8125,
         y: 890.84375
@@ -1074,7 +1074,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110660",
-      type: "action",
+      type: "score",
       position: {
         x: -1.6875,
         y: 817.5
@@ -1146,7 +1146,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110700",
-      type: "action",
+      type: "score",
       position: {
         x: 16.125,
         y: 425.859375
@@ -1246,7 +1246,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110705",
-      type: "action",
+      type: "score",
       position: {
         x: 16.984375,
         y: 843.25
@@ -1318,7 +1318,7 @@ export const TACTIC_TEMPLATES = [
     },
     {
       key: "action_110698",
-      type: "action",
+      type: "score",
       position: {
         x: 13.40625,
         y: 404.921875

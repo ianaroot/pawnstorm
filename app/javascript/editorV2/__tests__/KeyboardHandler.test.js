@@ -85,11 +85,11 @@ describe('KeyboardHandler', () => {
     })
 
     it('copies multiple non-root nodes and their internal connections', () => {
-      const node2 = new Node({ clientId: 'action', type: 'action', position: { x: 500, y: 300 } })
+      const node2 = new Node({ clientId: 'score', type: 'score', position: { x: 500, y: 300 } })
       store.addNode(node2)
-      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'action' }))
+      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'score' }))
 
-      store.setSelectedNodeIds(['condition', 'action'])
+      store.setSelectedNodeIds(['condition', 'score'])
       expect(keyboardHandler.copySelectedNodes()).toBe(true)
 
       expect(keyboardHandler.clipboard.nodes).toHaveLength(2)
@@ -99,9 +99,9 @@ describe('KeyboardHandler', () => {
     })
 
     it('excludes connections to nodes outside the selection', () => {
-      const node2 = new Node({ clientId: 'action', type: 'action', position: { x: 500, y: 300 } })
+      const node2 = new Node({ clientId: 'score', type: 'score', position: { x: 500, y: 300 } })
       store.addNode(node2)
-      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'action' }))
+      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'score' }))
 
       store.selectOnlyNode('condition')
       expect(keyboardHandler.copySelectedNodes()).toBe(true)
@@ -111,10 +111,10 @@ describe('KeyboardHandler', () => {
     })
 
     it('stores relative positions from the anchor node', () => {
-      const node2 = new Node({ clientId: 'action', type: 'action', position: { x: 500, y: 350 } })
+      const node2 = new Node({ clientId: 'score', type: 'score', position: { x: 500, y: 350 } })
       store.addNode(node2)
 
-      store.setSelectedNodeIds(['condition', 'action'])
+      store.setSelectedNodeIds(['condition', 'score'])
       keyboardHandler.copySelectedNodes()
 
       const nodes = keyboardHandler.clipboard.nodes
@@ -165,11 +165,11 @@ describe('KeyboardHandler', () => {
     it('pastes multiple nodes with connections', async () => {
       syncManager.insertNodeSet.mockResolvedValue({ clientIds: ['pasted-1', 'pasted-2'] })
 
-      const node2 = new Node({ clientId: 'action', type: 'action', position: { x: 500, y: 350 } })
+      const node2 = new Node({ clientId: 'score', type: 'score', position: { x: 500, y: 350 } })
       store.addNode(node2)
-      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'action' }))
+      store.addConnection(new Connection({ clientId: 'conn-1', sourceId: 'condition', targetId: 'score' }))
 
-      store.setSelectedNodeIds(['condition', 'action'])
+      store.setSelectedNodeIds(['condition', 'score'])
       keyboardHandler.copySelectedNodes()
       store.setRecentPlacementAnchor({ x: 680, y: 540 })
 

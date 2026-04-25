@@ -49,7 +49,7 @@ class BotTemplateExport
   DEFAULT_CATEGORY = 'activity'
   NODE_TYPE_PREFIXES = {
     'condition' => 'condition',
-    'action' => 'action',
+    'score' => 'score',
     'organizer' => 'organizer'
   }.freeze
 

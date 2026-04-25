@@ -225,14 +225,14 @@ class ClickHandler {
     
     // Hide/show appropriate editor sections
     const conditionForm = this.editorPanel.querySelector('#condition-form')
-    const actionEditor = this.editorPanel.querySelector('#action-form')
+    const actionEditor = this.editorPanel.querySelector('#score-form')
     const organizerEditor = this.editorPanel.querySelector('#organizer-form')
     this.editorPanel.classList.toggle('node-form-panel--condition', node.type === 'condition')
     if (conditionForm) {
       conditionForm.classList.toggle('hidden', node.type !== 'condition')
     }
     if (actionEditor) {
-      actionEditor.classList.toggle('hidden', node.type !== 'action')
+      actionEditor.classList.toggle('hidden', node.type !== 'score')
     }
     if (organizerEditor) {
       organizerEditor.classList.toggle('hidden', node.type !== 'organizer')
@@ -245,7 +245,7 @@ class ClickHandler {
       case 'condition':
         this.populateConditionForm(node)
         break
-      case 'action':
+      case 'score':
         this.populateActionEditor(node)
         break
       case 'organizer':
@@ -300,7 +300,7 @@ class ClickHandler {
     switch (node.type) {
       case 'condition':
         return this.buildConditionDataPayload()
-      case 'action':
+      case 'score':
         return this.buildActionDataPayload()
       case 'organizer':
         return this.buildOrganizerDataPayload()

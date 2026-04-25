@@ -123,7 +123,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110606",
-      type: "action",
+      type: "score",
       position: {
         x: 55.67187499999977,
         y: 489.326171875
@@ -298,7 +298,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110848",
-      type: "action",
+      type: "score",
       position: {
         x: 145.07812499999977,
         y: 632.609375
@@ -310,7 +310,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110621",
-      type: "action",
+      type: "score",
       position: {
         x: 24.296874999999773,
         y: 643.953125
@@ -322,7 +322,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110643",
-      type: "action",
+      type: "score",
       position: {
         x: -179.46875000000023,
         y: 648.5
@@ -432,7 +432,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110898",
-      type: "action",
+      type: "score",
       position: {
         x: 29.784442484365172,
         y: 396.46665136532647
@@ -504,7 +504,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110703",
-      type: "action",
+      type: "score",
       position: {
         x: 25.1875,
         y: 382.59375
@@ -565,7 +565,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110729",
-      type: "action",
+      type: "score",
       position: {
         x: 23.866870683935304,
         y: 416.35140761454204
@@ -645,7 +645,7 @@ export const PAWN_PLAY_TEMPLATES = [
     },
     {
       key: "action_110631",
-      type: "action",
+      type: "score",
       position: {
         x: 8.859375,
         y: 623.171875

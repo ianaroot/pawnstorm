@@ -87,7 +87,7 @@ node_map[102411] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[102412] = create_action!(
+node_map[102412] = create_score!(
   bot: cyclops_dump,
   position_x: -180.0,
   position_y: -60.0,
@@ -125,7 +125,7 @@ node_map[102414] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102415] = create_action!(
+node_map[102415] = create_score!(
   bot: cyclops_dump,
   position_x: 80.0,
   position_y: -60.0,
@@ -376,7 +376,7 @@ node_map[102432] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102433] = create_action!(
+node_map[102433] = create_score!(
   bot: cyclops_dump,
   position_x: 3670.0,
   position_y: 2520.0,
@@ -427,7 +427,7 @@ node_map[102436] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102437] = create_action!(
+node_map[102437] = create_score!(
   bot: cyclops_dump,
   position_x: 4310.0,
   position_y: 2520.0,
@@ -679,7 +679,7 @@ node_map[102454] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102455] = create_action!(
+node_map[102455] = create_score!(
   bot: cyclops_dump,
   position_x: 4560.0,
   position_y: 2670.0,
@@ -717,7 +717,7 @@ node_map[102457] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102458] = create_action!(
+node_map[102458] = create_score!(
   bot: cyclops_dump,
   position_x: 4840.0,
   position_y: 2670.0,
@@ -751,7 +751,7 @@ node_map[102460] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102461] = create_action!(
+node_map[102461] = create_score!(
   bot: cyclops_dump,
   position_x: -1740.0,
   position_y: 330.0,
@@ -759,7 +759,7 @@ node_map[102461] = create_action!(
   value: 110
 )
 
-node_map[102462] = create_action!(
+node_map[102462] = create_score!(
   bot: cyclops_dump,
   position_x: -1200.0,
   position_y: 180.0,
@@ -795,7 +795,7 @@ node_map[102464] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[102465] = create_action!(
+node_map[102465] = create_score!(
   bot: cyclops_dump,
   position_x: -920.0,
   position_y: 340.0,
@@ -850,7 +850,7 @@ node_map[102468] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102469] = create_action!(
+node_map[102469] = create_score!(
   bot: cyclops_dump,
   position_x: -700.0,
   position_y: 910.0,
@@ -919,7 +919,7 @@ node_map[102473] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102474] = create_action!(
+node_map[102474] = create_score!(
   bot: cyclops_dump,
   position_x: -180.0,
   position_y: 640.0,
@@ -961,7 +961,7 @@ node_map[102476] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102477] = create_action!(
+node_map[102477] = create_score!(
   bot: cyclops_dump,
   position_x: 140.0,
   position_y: 720.0,
@@ -1016,7 +1016,7 @@ node_map[102480] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102481] = create_action!(
+node_map[102481] = create_score!(
   bot: cyclops_dump,
   position_x: -1800.0,
   position_y: 1240.0,
@@ -1068,7 +1068,7 @@ node_map[102484] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102485] = create_action!(
+node_map[102485] = create_score!(
   bot: cyclops_dump,
   position_x: -1730.0,
   position_y: 1910.0,
@@ -1121,7 +1121,7 @@ node_map[102488] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102489] = create_action!(
+node_map[102489] = create_score!(
   bot: cyclops_dump,
   position_x: -1010.0,
   position_y: 1390.0,
@@ -1142,7 +1142,7 @@ node_map[102490] = create_condition!(
    "comparisonValue"=>1}
 )
 
-node_map[102491] = create_action!(
+node_map[102491] = create_score!(
   bot: cyclops_dump,
   position_x: -1010.0,
   position_y: 1610.0,
@@ -1194,7 +1194,7 @@ node_map[102494] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102495] = create_action!(
+node_map[102495] = create_score!(
   bot: cyclops_dump,
   position_x: -600.0,
   position_y: 1520.0,
@@ -1246,7 +1246,7 @@ node_map[102498] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102499] = create_action!(
+node_map[102499] = create_score!(
   bot: cyclops_dump,
   position_x: -530.0,
   position_y: 2190.0,
@@ -1299,7 +1299,7 @@ node_map[102502] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102503] = create_action!(
+node_map[102503] = create_score!(
   bot: cyclops_dump,
   position_x: 190.0,
   position_y: 1670.0,
@@ -1320,7 +1320,7 @@ node_map[102504] = create_condition!(
    "comparisonValue"=>1}
 )
 
-node_map[102505] = create_action!(
+node_map[102505] = create_score!(
   bot: cyclops_dump,
   position_x: 190.0,
   position_y: 1890.0,
@@ -1383,7 +1383,7 @@ node_map[102509] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[102510] = create_action!(
+node_map[102510] = create_score!(
   bot: cyclops_dump,
   position_x: 570.0,
   position_y: 1570.0,
@@ -1408,7 +1408,7 @@ node_map[102511] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102512] = create_action!(
+node_map[102512] = create_score!(
   bot: cyclops_dump,
   position_x: 1090.0,
   position_y: 1570.0,
@@ -1474,7 +1474,7 @@ node_map[102516] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102517] = create_action!(
+node_map[102517] = create_score!(
   bot: cyclops_dump,
   position_x: 1460.0,
   position_y: 2500.0,
@@ -1512,7 +1512,7 @@ node_map[102519] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102520] = create_action!(
+node_map[102520] = create_score!(
   bot: cyclops_dump,
   position_x: 1820.0,
   position_y: 2500.0,
@@ -1567,7 +1567,7 @@ node_map[102523] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102524] = create_action!(
+node_map[102524] = create_score!(
   bot: cyclops_dump,
   position_x: 2120.0,
   position_y: 2440.0,
@@ -1619,7 +1619,7 @@ node_map[102527] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102528] = create_action!(
+node_map[102528] = create_score!(
   bot: cyclops_dump,
   position_x: 2870.0,
   position_y: 2590.0,
@@ -1671,7 +1671,7 @@ node_map[102531] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102532] = create_action!(
+node_map[102532] = create_score!(
   bot: cyclops_dump,
   position_x: 3100.0,
   position_y: 2740.0,
@@ -1723,7 +1723,7 @@ node_map[102535] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102536] = create_action!(
+node_map[102536] = create_score!(
   bot: cyclops_dump,
   position_x: 3850.0,
   position_y: 2890.0,
@@ -1787,7 +1787,7 @@ node_map[102540] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102541] = create_action!(
+node_map[102541] = create_score!(
   bot: cyclops_dump,
   position_x: -1190.0,
   position_y: 2730.0,
@@ -1812,7 +1812,7 @@ node_map[102542] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102543] = create_action!(
+node_map[102543] = create_score!(
   bot: cyclops_dump,
   position_x: -910.0,
   position_y: 2950.0,
@@ -1837,7 +1837,7 @@ node_map[102544] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102545] = create_action!(
+node_map[102545] = create_score!(
   bot: cyclops_dump,
   position_x: -630.0,
   position_y: 2730.0,
@@ -1909,7 +1909,7 @@ node_map[102549] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102550] = create_action!(
+node_map[102550] = create_score!(
   bot: cyclops_dump,
   position_x: -60.0,
   position_y: 2740.0,
@@ -1978,7 +1978,7 @@ node_map[102554] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102555] = create_action!(
+node_map[102555] = create_score!(
   bot: cyclops_dump,
   position_x: 300.0,
   position_y: 3060.0,
@@ -2016,7 +2016,7 @@ node_map[102557] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102558] = create_action!(
+node_map[102558] = create_score!(
   bot: cyclops_dump,
   position_x: 710.0,
   position_y: 2330.0,
@@ -2053,7 +2053,7 @@ node_map[102560] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102561] = create_action!(
+node_map[102561] = create_score!(
   bot: cyclops_dump,
   position_x: 1160.0,
   position_y: 2480.0,
@@ -2121,7 +2121,7 @@ node_map[102565] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[102566] = create_action!(
+node_map[102566] = create_score!(
   bot: cyclops_dump,
   position_x: 1170.0,
   position_y: 2970.0,
@@ -2143,7 +2143,7 @@ node_map[102567] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[102568] = create_action!(
+node_map[102568] = create_score!(
   bot: cyclops_dump,
   position_x: 1690.0,
   position_y: 2970.0,
@@ -2226,7 +2226,7 @@ node_map[102573] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102574] = create_action!(
+node_map[102574] = create_score!(
   bot: cyclops_dump,
   position_x: 1950.0,
   position_y: 2990.0,

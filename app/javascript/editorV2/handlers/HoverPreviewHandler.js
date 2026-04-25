@@ -125,8 +125,8 @@ class HoverPreviewHandler {
     switch (nodeType) {
     case 'condition':
       return 'Condition'
-    case 'action':
-      return 'Action'
+    case 'score':
+      return 'Score'
     case 'organizer':
       return 'Organizer'
     case 'root':

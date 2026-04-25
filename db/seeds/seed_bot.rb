@@ -30,7 +30,7 @@ node_map[110575] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110576] = create_action!(
+node_map[110576] = create_score!(
   bot: seed_bot,
   position_x: 3691.8610180994024,
   position_y: 3737.6205472629763,
@@ -114,7 +114,7 @@ node_map[110593] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[110594] = create_action!(
+node_map[110594] = create_score!(
   bot: seed_bot,
   position_x: 3206.3273115001616,
   position_y: 3985.0166310972577,
@@ -240,7 +240,7 @@ node_map[110605] = create_condition!(
    "targetFilterMode"=>"include"}
 )
 
-node_map[110606] = create_action!(
+node_map[110606] = create_score!(
   bot: seed_bot,
   position_x: -2043.1093750000002,
   position_y: 2380.228515625,
@@ -309,7 +309,7 @@ node_map[110611] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110612] = create_action!(
+node_map[110612] = create_score!(
   bot: seed_bot,
   position_x: 6249.03125,
   position_y: 3614.890625,
@@ -349,7 +349,7 @@ node_map[110614] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[110615] = create_action!(
+node_map[110615] = create_score!(
   bot: seed_bot,
   position_x: 5495.265625,
   position_y: 3722.875,
@@ -357,7 +357,7 @@ node_map[110615] = create_action!(
   value: 30
 )
 
-node_map[110616] = create_action!(
+node_map[110616] = create_score!(
   bot: seed_bot,
   position_x: -3472.873779708767,
   position_y: 920.57421875,
@@ -413,7 +413,7 @@ node_map[110620] = create_condition!(
    "targetTotal"=>0}
 )
 
-node_map[110621] = create_action!(
+node_map[110621] = create_score!(
   bot: seed_bot,
   position_x: -1324.7187500000005,
   position_y: 2391.90625,
@@ -456,7 +456,7 @@ node_map[110623] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110624] = create_action!(
+node_map[110624] = create_score!(
   bot: seed_bot,
   position_x: -2950.9375000000005,
   position_y: 2679.703125,
@@ -481,7 +481,7 @@ node_map[110625] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110626] = create_action!(
+node_map[110626] = create_score!(
   bot: seed_bot,
   position_x: 5009.515625,
   position_y: 3709.0625,
@@ -542,7 +542,7 @@ node_map[110630] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110631] = create_action!(
+node_map[110631] = create_score!(
   bot: seed_bot,
   position_x: 6475.484375,
   position_y: 3553.890625,
@@ -566,7 +566,7 @@ node_map[110633] = create_organizer!(
   notes: ""
 )
 
-node_map[110634] = create_action!(
+node_map[110634] = create_score!(
   bot: seed_bot,
   position_x: -543.796875,
   position_y: 826.57421875,
@@ -672,7 +672,7 @@ node_map[110641] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110642] = create_action!(
+node_map[110642] = create_score!(
   bot: seed_bot,
   position_x: 4253.09375,
   position_y: 821.5,
@@ -680,7 +680,7 @@ node_map[110642] = create_action!(
   value: 15
 )
 
-node_map[110643] = create_action!(
+node_map[110643] = create_score!(
   bot: seed_bot,
   position_x: -1528.4843750000005,
   position_y: 2396.453125,
@@ -705,7 +705,7 @@ node_map[110644] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110645] = create_action!(
+node_map[110645] = create_score!(
   bot: seed_bot,
   position_x: 4461.0,
   position_y: 3649.625,
@@ -857,7 +857,7 @@ node_map[110656] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110657] = create_action!(
+node_map[110657] = create_score!(
   bot: seed_bot,
   position_x: -369.43039772727275,
   position_y: 865.051846590909,
@@ -893,7 +893,7 @@ node_map[110659] = create_condition!(
    "subjectFilterMode"=>"exclude"}
 )
 
-node_map[110660] = create_action!(
+node_map[110660] = create_score!(
   bot: seed_bot,
   position_x: 4754.859375,
   position_y: 3804.171875,
@@ -977,7 +977,7 @@ node_map[110666] = create_organizer!(
   notes: ""
 )
 
-node_map[110667] = create_action!(
+node_map[110667] = create_score!(
   bot: seed_bot,
   position_x: 6980.546875,
   position_y: 3968.515625,
@@ -1029,7 +1029,7 @@ node_map[110670] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110671] = create_action!(
+node_map[110671] = create_score!(
   bot: seed_bot,
   position_x: -4125.4669793101475,
   position_y: 2431.912409589091,
@@ -1086,7 +1086,7 @@ node_map[110674] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110675] = create_action!(
+node_map[110675] = create_score!(
   bot: seed_bot,
   position_x: -785.2330731149591,
   position_y: 3548.5,
@@ -1284,7 +1284,7 @@ node_map[110690] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110691] = create_action!(
+node_map[110691] = create_score!(
   bot: seed_bot,
   position_x: 5893.109375,
   position_y: 3668.421875,
@@ -1314,7 +1314,7 @@ node_map[110693] = create_organizer!(
   notes: ""
 )
 
-node_map[110694] = create_action!(
+node_map[110694] = create_score!(
   bot: seed_bot,
   position_x: 6720.96875,
   position_y: 3402.84375,
@@ -1361,7 +1361,7 @@ node_map[110697] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110698] = create_action!(
+node_map[110698] = create_score!(
   bot: seed_bot,
   position_x: 1000.5950518850404,
   position_y: 3183.25,
@@ -1369,7 +1369,7 @@ node_map[110698] = create_action!(
   value: 8
 )
 
-node_map[110699] = create_action!(
+node_map[110699] = create_score!(
   bot: seed_bot,
   position_x: -3792.2220935178557,
   position_y: 1240.986328125,
@@ -1377,7 +1377,7 @@ node_map[110699] = create_action!(
   value: 1000
 )
 
-node_map[110700] = create_action!(
+node_map[110700] = create_score!(
   bot: seed_bot,
   position_x: -100.32099799069897,
   position_y: 3127.390625,
@@ -1385,7 +1385,7 @@ node_map[110700] = create_action!(
   value: 30
 )
 
-node_map[110701] = create_action!(
+node_map[110701] = create_score!(
   bot: seed_bot,
   position_x: 4053.296875,
   position_y: 404.453125,
@@ -1412,7 +1412,7 @@ node_map[110702] = create_condition!(
    "targetComparisonSourceTotal"=>1}
 )
 
-node_map[110703] = create_action!(
+node_map[110703] = create_score!(
   bot: seed_bot,
   position_x: 578.835252009301,
   position_y: 3147.0,
@@ -1434,7 +1434,7 @@ node_map[110704] = create_condition!(
    "subjectFilterMode"=>"include"}
 )
 
-node_map[110705] = create_action!(
+node_map[110705] = create_score!(
   bot: seed_bot,
   position_x: -552.4205731149591,
   position_y: 3518.171875,
@@ -1538,7 +1538,7 @@ node_map[110712] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110713] = create_action!(
+node_map[110713] = create_score!(
   bot: seed_bot,
   position_x: -1478.984375,
   position_y: 3058.359375,
@@ -1560,7 +1560,7 @@ node_map[110714] = create_condition!(
    "targetFilterMode"=>"include"}
 )
 
-node_map[110715] = create_action!(
+node_map[110715] = create_score!(
   bot: seed_bot,
   position_x: -4028.898532326948,
   position_y: 520.818359375,
@@ -1581,7 +1581,7 @@ node_map[110716] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[110717] = create_action!(
+node_map[110717] = create_score!(
   bot: seed_bot,
   position_x: -1034.1837217016237,
   position_y: 3404.311764450028,
@@ -1662,7 +1662,7 @@ node_map[110726] = create_organizer!(
   notes: ""
 )
 
-node_map[110728] = create_action!(
+node_map[110728] = create_score!(
   bot: seed_bot,
   position_x: 3833.9966466106634,
   position_y: 303.5901779308567,
@@ -1670,7 +1670,7 @@ node_map[110728] = create_action!(
   value: 3
 )
 
-node_map[110729] = create_action!(
+node_map[110729] = create_score!(
   bot: seed_bot,
   position_x: 6053.0494630274725,
   position_y: 3352.571145419119,
@@ -1678,7 +1678,7 @@ node_map[110729] = create_action!(
   value: 8
 )
 
-node_map[110730] = create_action!(
+node_map[110730] = create_score!(
   bot: seed_bot,
   position_x: 1450.966390022532,
   position_y: 3221.71522198286,
@@ -1727,7 +1727,7 @@ node_map[110733] = create_condition!(
    "targetFilterMode"=>"exclude"}
 )
 
-node_map[110734] = create_action!(
+node_map[110734] = create_score!(
   bot: seed_bot,
   position_x: 5368.03125,
   position_y: 3661.515625,
@@ -1809,7 +1809,7 @@ node_map[110739] = create_condition!(
    "targetFilterMode"=>"exclude"}
 )
 
-node_map[110740] = create_action!(
+node_map[110740] = create_score!(
   bot: seed_bot,
   position_x: 5638.03125,
   position_y: 3654.859375,
@@ -1844,7 +1844,7 @@ node_map[110742] = create_condition!(
    "targetFilterMode"=>"include"}
 )
 
-node_map[110743] = create_action!(
+node_map[110743] = create_score!(
   bot: seed_bot,
   position_x: -183.1051136363635,
   position_y: 1265.8267045454545,
@@ -1852,7 +1852,7 @@ node_map[110743] = create_action!(
   value: 60
 )
 
-node_map[110744] = create_action!(
+node_map[110744] = create_score!(
   bot: seed_bot,
   position_x: 5752.140625,
   position_y: 3539.3125,
@@ -1968,7 +1968,7 @@ node_map[110751] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110752] = create_action!(
+node_map[110752] = create_score!(
   bot: seed_bot,
   position_x: -3243.4928269620364,
   position_y: 2546.6393041046804,
@@ -2062,7 +2062,7 @@ node_map[110757] = create_condition!(
    "targetComparisonSourceTotal"=>0}
 )
 
-node_map[110758] = create_action!(
+node_map[110758] = create_score!(
   bot: seed_bot,
   position_x: -3476.83544884169,
   position_y: 2097.653946112416,
@@ -2078,7 +2078,7 @@ node_map[110759] = create_organizer!(
   notes: ""
 )
 
-node_map[110760] = create_action!(
+node_map[110760] = create_score!(
   bot: seed_bot,
   position_x: 5190.567927230999,
   position_y: 3461.6630746140045,
@@ -2146,7 +2146,7 @@ node_map[110765] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110766] = create_action!(
+node_map[110766] = create_score!(
   bot: seed_bot,
   position_x: -3755.778767197737,
   position_y: 2616.0736095743114,
@@ -2291,7 +2291,7 @@ node_map[110776] = create_organizer!(
   notes: ""
 )
 
-node_map[110777] = create_action!(
+node_map[110777] = create_score!(
   bot: seed_bot,
   position_x: 810.2104675704932,
   position_y: 3643.06946169549,
@@ -2316,7 +2316,7 @@ node_map[110778] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110779] = create_action!(
+node_map[110779] = create_score!(
   bot: seed_bot,
   position_x: 380.4161375573617,
   position_y: 3445.221078501553,
@@ -2500,7 +2500,7 @@ node_map[110790] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110791] = create_action!(
+node_map[110791] = create_score!(
   bot: seed_bot,
   position_x: 1246.2699190184985,
   position_y: 3586.0118455237234,
@@ -2508,7 +2508,7 @@ node_map[110791] = create_action!(
   value: 15
 )
 
-node_map[110792] = create_action!(
+node_map[110792] = create_score!(
   bot: seed_bot,
   position_x: 1999.4704702964027,
   position_y: 3546.7704271457,
@@ -2712,7 +2712,7 @@ node_map[110806] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110807] = create_action!(
+node_map[110807] = create_score!(
   bot: seed_bot,
   position_x: 2344.028212915033,
   position_y: 3633.763015154973,
@@ -2728,7 +2728,7 @@ node_map[110808] = create_organizer!(
   notes: ""
 )
 
-node_map[110809] = create_action!(
+node_map[110809] = create_score!(
   bot: seed_bot,
   position_x: 2767.223096574225,
   position_y: 3644.957499848163,
@@ -2825,7 +2825,7 @@ node_map[110847] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110848] = create_action!(
+node_map[110848] = create_score!(
   bot: seed_bot,
   position_x: -1203.9375000000005,
   position_y: 2380.5625,
@@ -2872,7 +2872,7 @@ node_map[110851] = create_condition!(
    "targetComparisonSource"=>"moved_piece"}
 )
 
-node_map[110852] = create_action!(
+node_map[110852] = create_score!(
   bot: seed_bot,
   position_x: 1751.078125,
   position_y: 4325.453125,
@@ -2925,7 +2925,7 @@ node_map[110862] = create_condition!(
    "subjectComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110880] = create_action!(
+node_map[110880] = create_score!(
   bot: seed_bot,
   position_x: 3585.4339177870324,
   position_y: 5034.02482824375,
@@ -3076,7 +3076,7 @@ node_map[110890] = create_condition!(
    "subjectComparisonSourceTotal"=>0}
 )
 
-node_map[110891] = create_action!(
+node_map[110891] = create_score!(
   bot: seed_bot,
   position_x: 4133.583646609129,
   position_y: 4862.505250538742,
@@ -3121,7 +3121,7 @@ node_map[110894] = create_organizer!(
   notes: ""
 )
 
-node_map[110895] = create_action!(
+node_map[110895] = create_score!(
   bot: seed_bot,
   position_x: 4501.40625,
   position_y: 4768.09375,
@@ -3151,7 +3151,7 @@ node_map[110897] = create_organizer!(
   notes: ""
 )
 
-node_map[110898] = create_action!(
+node_map[110898] = create_score!(
   bot: seed_bot,
   position_x: 4885.596942484365,
   position_y: 4522.4666513653265,
@@ -3304,7 +3304,7 @@ node_map[110908] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[110909] = create_action!(
+node_map[110909] = create_score!(
   bot: seed_bot,
   position_x: 677.28125,
   position_y: 2156.484375,
@@ -3312,7 +3312,7 @@ node_map[110909] = create_action!(
   value: 14
 )
 
-node_map[110910] = create_action!(
+node_map[110910] = create_score!(
   bot: seed_bot,
   position_x: 912.921875,
   position_y: 1979.015625,
@@ -3359,7 +3359,7 @@ node_map[110913] = create_condition!(
    "targetComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110914] = create_action!(
+node_map[110914] = create_score!(
   bot: seed_bot,
   position_x: 1788.375,
   position_y: 1504.15625,
@@ -3393,7 +3393,7 @@ node_map[110916] = create_condition!(
    "targetComparisonSource"=>"prior_board_state"}
 )
 
-node_map[110917] = create_action!(
+node_map[110917] = create_score!(
   bot: seed_bot,
   position_x: 1979.6875,
   position_y: 1483.265625,

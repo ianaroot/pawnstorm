@@ -128,7 +128,7 @@ function organizerLabelForNode(nodeId, compiledProgram, parentMap) {
 
 function actionBreakdown(trace, compiledProgram, parentMap) {
   return trace
-    .filter(entry => entry.nodeType === 'action')
+    .filter(entry => entry.nodeType === 'score')
     .map(entry => {
       const chain = ancestorIds(entry.nodeId, parentMap)
         .map(nodeId => compiledProgram.nodes[nodeId])

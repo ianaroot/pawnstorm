@@ -8,7 +8,7 @@ export const CONNECTOR_SIZE = 14
 export const NODE_DIMENSIONS = {
   root: { width: 100, height: 100 },
   condition: { width: 100, height: 128 },
-  action: { width: 108, height: 108 },
+  score: { width: 108, height: 108 },
   organizer: { width: 140, height: 112 },
   default: { width: NODE_WIDTH, height: NODE_HEIGHT }
 }
@@ -45,7 +45,7 @@ export const DRAG_START_THRESHOLD = 4
 export const NODE_COLORS = {
   root: '#FFD700',
   condition: '#e94560',
-  action: '#4CAF50',
+  score: '#4CAF50',
   organizer: '#3b82f6'
 }
 

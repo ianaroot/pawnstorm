@@ -21,7 +21,7 @@ export function conditionNode(key, x, y, data) {
 export function actionNode(key, x, y, data) {
   return {
     key,
-    type: 'action',
+    type: 'score',
     position: { x, y },
     data: { ...DEFAULT_ACTION_DATA, ...data }
   }

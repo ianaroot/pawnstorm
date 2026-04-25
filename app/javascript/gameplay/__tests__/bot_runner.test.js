@@ -32,13 +32,13 @@ describe('BotRunner', () => {
     const program = buildProgram({
       first: {
         id: 'first',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 2 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 3 },
         children: []
       }
@@ -59,7 +59,7 @@ describe('BotRunner', () => {
       },
       grandchild: {
         id: 'grandchild',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 4 },
         children: []
       },
@@ -71,7 +71,7 @@ describe('BotRunner', () => {
       },
       ignored: {
         id: 'ignored',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 100 },
         children: []
       }
@@ -95,13 +95,13 @@ describe('BotRunner', () => {
       },
       grandchild: {
         id: 'grandchild',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 7 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'subtract', value: 2 },
         children: []
       }
@@ -116,19 +116,19 @@ describe('BotRunner', () => {
     const program = buildProgram({
       first: {
         id: 'first',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 2 },
         children: ['ignored_child']
       },
       ignored_child: {
         id: 'ignored_child',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 100 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 3 },
         children: []
       }
@@ -143,13 +143,13 @@ describe('BotRunner', () => {
     const program = buildProgram({
       first: {
         id: 'first',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'return', value: 11 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 3 },
         children: []
       }
@@ -164,13 +164,13 @@ describe('BotRunner', () => {
     const program = buildProgram({
       first: {
         id: 'first',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 1 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 1 },
         children: []
       }
@@ -198,13 +198,13 @@ describe('BotRunner', () => {
       },
       grandchild: {
         id: 'grandchild',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 4 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'return', value: 9 },
         children: []
       }
@@ -227,7 +227,7 @@ describe('BotRunner', () => {
         },
         {
           nodeId: 'grandchild',
-          nodeType: 'action',
+          nodeType: 'score',
           actionType: 'add',
           value: 4,
           scoreBefore: 0,
@@ -236,7 +236,7 @@ describe('BotRunner', () => {
         },
         {
           nodeId: 'second',
-          nodeType: 'action',
+          nodeType: 'score',
           actionType: 'return',
           value: 9,
           scoreBefore: 4,
@@ -251,13 +251,13 @@ describe('BotRunner', () => {
     const program = buildProgram({
       first: {
         id: 'first',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 1 },
         children: []
       },
       second: {
         id: 'second',
-        type: 'action',
+        type: 'score',
         data: { actionType: 'add', value: 1 },
         children: []
       }

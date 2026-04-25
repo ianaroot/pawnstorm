@@ -93,7 +93,7 @@
       },
       {
         "key": "action_110667",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 18.890625,
           "y": 998.5
@@ -165,7 +165,7 @@
       },
       {
         "key": "action_110728",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 8,
           "y": 320
@@ -225,7 +225,7 @@
       },
       {
         "key": "action_110730",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 19.21242555184881,
           "y": 451.91598348438674
@@ -306,7 +306,7 @@
       },
       {
         "key": "action_110612",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 24.078125,
           "y": 689.75
@@ -405,7 +405,7 @@
       },
       {
         "key": "action_110642",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -5.1875,
           "y": 857.734375
@@ -513,7 +513,7 @@
       },
       {
         "key": "action_110895",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 18.03125,
           "y": 643.453125
@@ -622,7 +622,7 @@
       },
       {
         "key": "action_110910",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 138.265625,
           "y": 454.34375
@@ -634,7 +634,7 @@
       },
       {
         "key": "action_110909",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -97.375,
           "y": 631.8125
@@ -804,7 +804,7 @@
       },
       {
         "key": "action_110852",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 27.953125,
           "y": 443.703125
@@ -867,7 +867,7 @@
       },
       {
         "key": "action_110713",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 18.453125,
           "y": 421.625
@@ -930,7 +930,7 @@
       },
       {
         "key": "action_110701",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 10.640625,
           "y": 416.765625
@@ -1032,7 +1032,7 @@
       },
       {
         "key": "action_110626",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 18.359375,
           "y": 807.9375
@@ -1233,7 +1233,7 @@
       },
       {
         "key": "action_110744",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 110.5625,
           "y": 637.25
@@ -1245,7 +1245,7 @@
       },
       {
         "key": "action_110740",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -3.546875,
           "y": 752.796875
@@ -1257,7 +1257,7 @@
       },
       {
         "key": "action_110734",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -273.546875,
           "y": 759.453125
@@ -1269,7 +1269,7 @@
       },
       {
         "key": "action_110691",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 251.53125,
           "y": 766.359375
@@ -1281,7 +1281,7 @@
       },
       {
         "key": "action_110615",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -146.3125,
           "y": 820.8125
@@ -1385,7 +1385,7 @@
       },
       {
         "key": "action_110694",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 8.65625,
           "y": 468.34375
@@ -1471,7 +1471,7 @@
       },
       {
         "key": "action_110917",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 122.71875,
           "y": 388.34375
@@ -1483,7 +1483,7 @@
       },
       {
         "key": "action_110914",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -68.59375,
           "y": 409.234375
@@ -1641,7 +1641,7 @@
       },
       {
         "key": "action_110616",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 25.25,
           "y": 653.109375
@@ -1764,7 +1764,7 @@
       },
       {
         "key": "action_110699",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 4.453125,
           "y": 1068.5625
@@ -1854,7 +1854,7 @@
       },
       {
         "key": "action_110715",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 0,
           "y": 480
@@ -1978,7 +1978,7 @@
       },
       {
         "key": "action_110891",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 25.041191875351615,
           "y": 831.9588105531411
@@ -2133,7 +2133,7 @@
       },
       {
         "key": "action_110809",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 29.476133178335658,
           "y": 787.6592292783812
@@ -2302,7 +2302,7 @@
       },
       {
         "key": "action_110880",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 42.07454278703244,
           "y": 883.2592032437497
@@ -2530,7 +2530,7 @@
       },
       {
         "key": "action_110671",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -10.372618585035525,
           "y": 983.7982075999153
@@ -2690,7 +2690,7 @@
       },
       {
         "key": "action_110766",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 5.592381287402986,
           "y": 980.7595386774447
@@ -2841,7 +2841,7 @@
       },
       {
         "key": "action_110758",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -218.51500578220612,
           "y": 379.0384788864885
@@ -2980,7 +2980,7 @@
       },
       {
         "key": "action_110752",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 14.82761609744739,
           "y": 828.0238368787527
@@ -2992,7 +2992,7 @@
       },
       {
         "key": "action_110624",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 307.3829430594833,
           "y": 961.0876577740723
@@ -3224,7 +3224,7 @@
       },
       {
         "key": "action_110634",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 15.703125,
           "y": 639.984375
@@ -3236,7 +3236,7 @@
       },
       {
         "key": "action_110657",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 190.06960227272725,
           "y": 678.462002840909
@@ -3287,7 +3287,7 @@
       },
       {
         "key": "action_110743",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 376.3948863636365,
           "y": 1079.2368607954545
@@ -3475,7 +3475,7 @@
       },
       {
         "key": "action_110606",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 55.67187499999977,
           "y": 489.326171875
@@ -3650,7 +3650,7 @@
       },
       {
         "key": "action_110848",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 145.07812499999977,
           "y": 632.609375
@@ -3662,7 +3662,7 @@
       },
       {
         "key": "action_110621",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 24.296874999999773,
           "y": 643.953125
@@ -3674,7 +3674,7 @@
       },
       {
         "key": "action_110643",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -179.46875000000023,
           "y": 648.5
@@ -3784,7 +3784,7 @@
       },
       {
         "key": "action_110898",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 29.784442484365172,
           "y": 396.46665136532647
@@ -3856,7 +3856,7 @@
       },
       {
         "key": "action_110703",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 25.1875,
           "y": 382.59375
@@ -3917,7 +3917,7 @@
       },
       {
         "key": "action_110729",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 23.866870683935304,
           "y": 416.35140761454204
@@ -3997,7 +3997,7 @@
       },
       {
         "key": "action_110631",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 8.859375,
           "y": 623.171875
@@ -4126,7 +4126,7 @@
       },
       {
         "key": "action_110717",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 129.57873997786191,
           "y": 735.5296357903949
@@ -4267,7 +4267,7 @@
       },
       {
         "key": "action_110779",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 156.42248997786191,
           "y": 747.4827607903949
@@ -4433,7 +4433,7 @@
       },
       {
         "key": "action_110792",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 22.163980232858194,
           "y": 781.0355083729987
@@ -4585,7 +4585,7 @@
       },
       {
         "key": "action_110807",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 32.111842875295224,
           "y": 855.685549026387
@@ -4725,7 +4725,7 @@
       },
       {
         "key": "action_110791",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 38.58790290557772,
           "y": 813.04148202444
@@ -4865,7 +4865,7 @@
       },
       {
         "key": "action_110777",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 40.14622415550184,
           "y": 854.818501923588
@@ -4988,7 +4988,7 @@
       },
       {
         "key": "action_110675",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 27.8125,
           "y": 890.84375
@@ -5096,7 +5096,7 @@
       },
       {
         "key": "action_110660",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": -1.6875,
           "y": 817.5
@@ -5168,7 +5168,7 @@
       },
       {
         "key": "action_110700",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 16.125,
           "y": 425.859375
@@ -5268,7 +5268,7 @@
       },
       {
         "key": "action_110705",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 16.984375,
           "y": 843.25
@@ -5340,7 +5340,7 @@
       },
       {
         "key": "action_110698",
-        "type": "action",
+        "type": "score",
         "position": {
           "x": 13.40625,
           "y": 404.921875

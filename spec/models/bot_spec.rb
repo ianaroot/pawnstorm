@@ -242,7 +242,7 @@ RSpec.describe Bot, type: :model do
     it 'marks the bot stale when a connection is created or destroyed' do
       bot = create(:bot)
       source = create(:node, :condition, bot: bot)
-      target = create(:node, :action, bot: bot)
+      target = create(:node, :score, bot: bot)
       bot.compile_program!
 
       connection = Connection.create!(source_node: source, target_node: target)

@@ -321,7 +321,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
     it 'preserves non-normalized node type behavior' do
       action_data = { actionType: 'add', value: 1 }
 
-      expect(described_class.normalize(node_type: 'action', data: action_data)).to be(action_data)
+      expect(described_class.normalize(node_type: 'score', data: action_data)).to be(action_data)
       expect(described_class.normalize(node_type: 'root', data: nil)).to be_nil
     end
   end

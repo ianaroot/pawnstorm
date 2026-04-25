@@ -297,7 +297,7 @@
   border-color: var(--match-replay-pill-fail-border);
 }
 
-.match-replay-page .match-replay-trace-pill--action {
+.match-replay-page .match-replay-trace-pill--score {
   background: var(--match-replay-pill-action-bg);
   color: var(--match-replay-pill-action-text);
   border-color: var(--match-replay-pill-action-border);
@@ -446,29 +446,29 @@
   opacity: 0.6;
 }
 
-.match-replay-page .trace-tree-node.trace-tree-node--action {
+.match-replay-page .trace-tree-node.trace-tree-node--score {
   border-left: 2px solid #7c8fae;
 }
 
-.match-replay-page .trace-tree-node.trace-tree-node--action-applied {
+.match-replay-page .trace-tree-node.trace-tree-node--score-applied {
   border-left: 3px solid #fbbf24;
   background:
     linear-gradient(90deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.06) 60%, transparent 100%);
   outline: 1px solid rgba(251, 191, 36, 0.35);
 }
 
-.match-replay-page .trace-tree-node.trace-tree-node--action-applied .trace-tree-node__text {
+.match-replay-page .trace-tree-node.trace-tree-node--score-applied .trace-tree-node__text {
   color: #fde68a;
 }
 
-.match-replay-page .trace-tree-node.trace-tree-node--action-halted {
+.match-replay-page .trace-tree-node.trace-tree-node--score-halted {
   border-left: 3px solid #f97316;
   background:
     linear-gradient(90deg, rgba(249, 115, 22, 0.22) 0%, rgba(249, 115, 22, 0.07) 60%, transparent 100%);
   outline: 1px solid rgba(249, 115, 22, 0.4);
 }
 
-.match-replay-page .trace-tree-node.trace-tree-node--action-halted .trace-tree-node__text {
+.match-replay-page .trace-tree-node.trace-tree-node--score-halted .trace-tree-node__text {
   color: #fed7aa;
 }
 

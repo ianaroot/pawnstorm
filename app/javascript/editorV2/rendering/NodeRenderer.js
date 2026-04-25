@@ -109,8 +109,8 @@ class NodeRenderer {
     if (node.type !== 'root') {
       connectors += '<div class="node-connector input"></div>'
     }
-    // Action nodes have no output connector (they are terminal)
-    if (node.type !== 'action') {
+    // Score nodes have no output connector (they are terminal)
+    if (node.type !== 'score') {
       connectors += '<div class="node-connector output"></div>'
     }
     

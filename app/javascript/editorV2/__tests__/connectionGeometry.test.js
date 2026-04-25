@@ -48,7 +48,7 @@ describe('connectionGeometry', () => {
       })
       const targetNode = new Node({
         clientId: 'target',
-        type: 'action',
+        type: 'score',
         position: { x: 300, y: 400 }
       })
 
@@ -57,7 +57,7 @@ describe('connectionGeometry', () => {
       ).toEqual({
         startX: 100 + (NODE_DIMENSIONS.condition.width / 2),
         startY: 200 + 92 + CONNECTOR_RADIUS,
-        endX: 300 + (NODE_DIMENSIONS.action.width / 2),
+        endX: 300 + (NODE_DIMENSIONS.score.width / 2),
         endY: 400 - CONNECTOR_RADIUS
       })
     })

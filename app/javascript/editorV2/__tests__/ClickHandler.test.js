@@ -25,7 +25,7 @@ function buildEditorPanel() {
   panel.innerHTML = `
     <span id="edit-node-type"></span>
     <div id="condition-form" class="hidden"></div>
-    <div id="action-form" class="hidden"></div>
+    <div id="score-form" class="hidden"></div>
     <div id="organizer-form" class="hidden">
       <input id="organizer-title" type="text" value="Organizer">
       <textarea id="organizer-notes"></textarea>
@@ -65,7 +65,7 @@ describe('ClickHandler', () => {
 
     rootNode = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
     conditionNode = new Node({ clientId: 'condition', type: 'condition', position: { x: 100, y: 100 } })
-    actionNode = new Node({ clientId: 'action', type: 'action', position: { x: 200, y: 100 } })
+    actionNode = new Node({ clientId: 'score', type: 'score', position: { x: 200, y: 100 } })
     organizerNode = new Node({ clientId: 'organizer', type: 'organizer', position: { x: 300, y: 100 } })
     store.addNode(rootNode)
     store.addNode(conditionNode)

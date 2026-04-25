@@ -57,7 +57,7 @@ RSpec.describe BotCloner do
 
     context 'node copying' do
       let!(:condition) { create(:node, :condition, bot: source_bot) }
-      let!(:action) { create(:node, :action, bot: source_bot) }
+      let!(:score) { create(:node, :score, bot: source_bot) }
 
       it 'does not duplicate the root node' do
         clone = cloner.clone!
@@ -67,7 +67,7 @@ RSpec.describe BotCloner do
       it 'copies non-root nodes' do
         clone = cloner.clone!
         expect(clone.nodes.where(node_type: 'condition').count).to eq(1)
-        expect(clone.nodes.where(node_type: 'action').count).to eq(1)
+        expect(clone.nodes.where(node_type: 'score').count).to eq(1)
       end
 
       it 'assigns all nodes to the clone, not the source' do
@@ -99,7 +99,7 @@ RSpec.describe BotCloner do
 
     context 'connection copying' do
       let!(:condition) { create(:node, :condition, bot: source_bot) }
-      let!(:action) { create(:node, :action, bot: source_bot) }
+      let!(:score) { create(:node, :score, bot: source_bot) }
 
       before do
         Connection.create!(source_node_id: root.id, target_node_id: condition.id)
