@@ -1,7 +1,7 @@
 import fs from 'fs'
 
-import ReplayMoveInspector from 'gameplay/replay_move_inspector'
-import BotRunner from 'gameplay/bot_runner'
+import ReplayMoveInspector from 'replay/replay_move_inspector'
+import BotRunner from 'bot_execution/bot_runner'
 
 import { buildBoardFromNotationPrefix } from './match_analysis_common.mjs'
 

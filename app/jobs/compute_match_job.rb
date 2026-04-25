@@ -101,7 +101,7 @@ class ComputeMatchJob < ApplicationJob
       'node',
       '--loader',
       Rails.root.join('app/javascript/node_alias_loader.mjs').to_s,
-      Rails.root.join('app/javascript/gameplay/run_match_cli.js').to_s,
+      Rails.root.join('app/javascript/bot_match/run_match_cli.js').to_s,
       stdin_data: match_payload(match).to_json,
       chdir: Rails.root.to_s
     )

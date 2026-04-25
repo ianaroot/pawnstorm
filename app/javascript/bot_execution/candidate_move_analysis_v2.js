@@ -1,6 +1,6 @@
-  import Board from "gameplay/board"
-  import profileCollector from "gameplay/profile_collector"
-  import Rules from "gameplay/rules"
+  import Board from "chess_engine/board"
+  import profileCollector from "chess_engine/profile_collector"
+  import Rules from "chess_engine/rules"
   import {
     adjacentPositions,
     cachedControlledSquares,
@@ -8,7 +8,7 @@
     coveredPositions,
     materialValue,
     shieldedPositions
-  } from "gameplay/board_query_utils"
+  } from "chess_engine/board_query_utils"
   
   const AFTER_BOARD = "after"
   const PRIOR_BOARD = "prior"

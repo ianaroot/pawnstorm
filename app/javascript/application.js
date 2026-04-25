@@ -1,25 +1,25 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
 import "controllers"
-import Api from "gameplay/api"
-import Board from "gameplay/board"
-import BotClass from "gameplay/bot"
+import Api from "live_game/api"
+import Board from "chess_engine/board"
+import BotClass from "bot_execution/bot"
 // import NodeEditor from "editor/node_editor"
-import GameController from "gameplay/game_controller"
+import GameController from "live_game/game_controller"
 import {
   DEBUG_SCENARIOS,
   loadScenario,
   resetScenarioBoard,
   runScenarioMoves,
   scenarioNames
-} from "gameplay/debug_scenarios"
-import Layout from "gameplay/layout"
-import MoveObject from "gameplay/move_object"
-import MovementType from "gameplay/movement_type"
-import MovesCalculator from "gameplay/moves_calculator"
-import Rules from "gameplay/rules"
-import Sound from "gameplay/sound"
-import MatchReplayController from "gameplay/match_replay_controller"
+} from "chess_engine/debug_scenarios"
+import Layout from "chess_engine/layout"
+import MoveObject from "chess_engine/move_object"
+import MovementType from "chess_engine/movement_type"
+import MovesCalculator from "chess_engine/moves_calculator"
+import Rules from "chess_engine/rules"
+import Sound from "chess_engine/sound"
+import MatchReplayController from "replay/match_replay_controller"
 import {
   initializeMatchBotListScrollbars,
   refreshMatchBotListScrollbars

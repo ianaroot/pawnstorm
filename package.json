@@ -7,9 +7,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "bench:rules-hot-path": "vite-node --config vitest.config.js app/javascript/gameplay/benchmarks/rules_hot_path_benchmark.js",
-    "bench:relational-hot-path": "vite-node --config vitest.config.js app/javascript/gameplay/benchmarks/relational_hot_path_benchmark.js",
-    "bench:cma-workload": "vite-node --config vitest.config.js app/javascript/gameplay/benchmarks/cma_workload_benchmark.js"
+    "bench:rules-hot-path": "vite-node --config vitest.config.js app/javascript/bot_execution/benchmarks/rules_hot_path_benchmark.js",
+    "bench:relational-hot-path": "vite-node --config vitest.config.js app/javascript/bot_execution/benchmarks/relational_hot_path_benchmark.js",
+    "bench:cma-workload": "vite-node --config vitest.config.js app/javascript/bot_execution/benchmarks/cma_workload_benchmark.js"
   },
   "devDependencies": {
     "vitest": "^1.3.1",

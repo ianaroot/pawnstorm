@@ -1,5 +1,5 @@
 import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
-import profileCollector from "gameplay/profile_collector"
+import profileCollector from "chess_engine/profile_collector"
 
 class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {

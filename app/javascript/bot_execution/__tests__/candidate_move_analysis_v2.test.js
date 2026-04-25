@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import Board from 'gameplay/board'
+import Board from 'chess_engine/board'
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 
-import { buildBoard, getMove, playMoveSequence, position, square } from 'gameplay/__tests__/helpers'
+import { buildBoard, getMove, playMoveSequence, position, square } from 'chess_engine/__tests__/helpers'
 
 function buildEnemyKnightRecentMoveContext() {
   return {

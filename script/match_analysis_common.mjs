@@ -1,6 +1,6 @@
-import Board from 'gameplay/board'
-import Layout from 'gameplay/layout'
-import NotationResolver from 'gameplay/notation_resolver'
+import Board from 'chess_engine/board'
+import Layout from 'chess_engine/layout'
+import NotationResolver from 'chess_engine/notation_resolver'
 
 const notationResolver = new NotationResolver()
 

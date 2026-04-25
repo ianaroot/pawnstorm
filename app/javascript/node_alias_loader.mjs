@@ -1,4 +1,4 @@
-const PREFIXES = ['gameplay/', 'bot_execution/', 'editorV2/']
+const PREFIXES = ['chess_engine/', 'bot_execution/', 'bot_match/', 'replay/', 'live_game/', 'editorV2/']
 
 export async function resolve(specifier, context, nextResolve) {
   for (const prefix of PREFIXES) {

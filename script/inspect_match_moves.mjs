@@ -1,10 +1,10 @@
 import fs from 'fs'
 
-import Board from 'gameplay/board'
-import Layout from 'gameplay/layout'
-import NotationResolver from 'gameplay/notation_resolver'
-import ReplayMoveInspector from 'gameplay/replay_move_inspector'
-import BotRunner from 'gameplay/bot_runner'
+import Board from 'chess_engine/board'
+import Layout from 'chess_engine/layout'
+import NotationResolver from 'chess_engine/notation_resolver'
+import ReplayMoveInspector from 'replay/replay_move_inspector'
+import BotRunner from 'bot_execution/bot_runner'
 
 const payloadPath = process.argv[2]
 

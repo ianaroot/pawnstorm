@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import Board from 'gameplay/board'
-import CandidateMoveAnalysis from 'gameplay/candidate_move_analysis'
-import ConditionEvaluator from 'gameplay/condition_evaluator'
+import Board from 'chess_engine/board'
+import CandidateMoveAnalysis from 'bot_execution/candidate_move_analysis'
+import ConditionEvaluator from 'bot_execution/condition_evaluator'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 
-import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helpers'
+import { buildBoard, getMove, playMoveSequence } from 'chess_engine/__tests__/helpers'
 
 describe('ConditionEvaluatorV2', () => {
   function evaluate(conditionNode, board, moveObject) {
