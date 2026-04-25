@@ -1715,13 +1715,13 @@ function finalizeExamples(baseExamples, payload, maxExamples, random) {
   const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
   const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
   const selectedBase = selectDiverseExamples(remainingBase, Math.max(0, maxExamples - selectedEnriched.length))
-  const combined = uniqueExamples([...selectedBase, ...selectedEnriched])
+  const combined = shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random)
 
   if (combined.length >= maxExamples) {
     return selectDiverseExamples(combined, maxExamples)
   }
 
-  const fallbackPool = uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates])
+  const fallbackPool = shuffled(uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates]), random)
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
