@@ -302,22 +302,10 @@ function layoutsMatch(left, right) {
   return true
 }
 
-function boardHasSafeKings(board) {
-  const whiteKing = board._kingPosition(Board.WHITE)
-  const blackKing = board._kingPosition(Board.BLACK)
-  if (whiteKing === null || blackKing === null) { return false }
-
-  const fileDiff = Math.abs((whiteKing % 8) - (blackKing % 8))
-  const rankDiff = Math.abs(Math.floor(whiteKing / 8) - Math.floor(blackKing / 8))
-  if (Math.max(fileDiff, rankDiff) <= 1) { return false }
-
-  return (
-    !Rules.pieceIsAttacked({ board, defensePosition: whiteKing, defendingTeam: Board.WHITE }) &&
-    !Rules.pieceIsAttacked({ board, defensePosition: blackKing, defendingTeam: Board.BLACK })
-  )
-}
-
 function relationSquareDistance(subjectPosition, targetPosition) {
+  if (subjectPosition === undefined || targetPosition === undefined) {
+    return Number.POSITIVE_INFINITY
+  }
   const fileDiff = Math.abs((subjectPosition % 8) - (targetPosition % 8))
   const rankDiff = Math.abs(Math.floor(subjectPosition / 8) - Math.floor(targetPosition / 8))
   return fileDiff + rankDiff
@@ -934,7 +922,6 @@ function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
   if (requirements.subject === null || requirements.target === null) { return [] }
   if (requirements.subject < 0 || requirements.target < 0) { return [] }
   if (usesZeroRelationPath(requirements)) { return [] }
-  if (requirements.subject === 0 || requirements.target === 0) { return [] }
 
   return augmentExistingRelation({ payload, skeleton, requirements, random })
 }
@@ -990,22 +977,6 @@ function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies }) {
   const skeletons = []
   CENTRAL_POSITIONS.forEach(subjectPosition => {
     const pieces = new Map([[subjectPosition, pieceCode(teamForActor(payload.subject), subjectSpecies)]])
-    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
-    adjacentPositions({ board, targetPosition: subjectPosition, team: teamForActor(payload.target) })
-      .filter(position => position !== subjectPosition)
-      .forEach(targetPosition => {
-        const relationPieces = clonePiecesMap(pieces)
-        relationPieces.set(targetPosition, pieceCode(teamForActor(payload.target), targetSpecies))
-        skeletons.push({
-          pieces: relationPieces,
-          subjectPosition,
-          targetPosition,
-          subjectSpecies,
-          targetSpecies,
-          geometryKey: `adjacent:${subjectPosition}:${targetPosition}`
-        })
-      })
-
     RAY_STEPS.forEach(step => {
       const targetPosition = nextPositionOnRay(subjectPosition, step)
       if (targetPosition === null) { return }
