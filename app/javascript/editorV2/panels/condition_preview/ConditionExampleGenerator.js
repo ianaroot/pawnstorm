@@ -13,6 +13,7 @@ const MAX_EXAMPLES_PER_SKELETON = 3
 const ENRICHMENT_PROBABILITY = 0.5
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
+const ENRICHMENT_END_POSITION_WEIGHT = 4
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
@@ -1302,6 +1303,26 @@ function forbiddenSquaresForEnrichment(example) {
   return squares
 }
 
+function weightedEnrichmentCandidateSquares(example, random) {
+  const forbidden = forbiddenSquaresForEnrichment(example)
+  const candidates = Array.from({ length: 64 }, (_unused, position) => {
+    return position
+  }).filter(position => {
+    if (position === example.moveObject.endPosition) { return true }
+    return !forbidden.has(position)
+  })
+  const weighted = []
+
+  candidates.forEach(position => {
+    const weight = position === example.moveObject.endPosition ? ENRICHMENT_END_POSITION_WEIGHT : 1
+    for (let count = 0; count < weight; count += 1) {
+      weighted.push(position)
+    }
+  })
+
+  return shuffled(weighted, random)
+}
+
 function weightedDecorationSpecies(random) {
   const roll = random()
   if (roll < 0.6) { return Board.PAWN }
@@ -1312,25 +1333,35 @@ function weightedDecorationSpecies(random) {
 }
 
 function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, suffix }) {
+  let recomputedMoveObject
+  try {
+    recomputedMoveObject = Rules.getMoveObject(moveObject.startPosition, moveObject.endPosition, priorBoard)
+  } catch {
+    return null
+  }
+  if (recomputedMoveObject.illegal || recomputedMoveObject.additionalActions || recomputedMoveObject.promotionPiece) {
+    return null
+  }
+
   const evaluator = new ConditionEvaluatorV2()
-  const input = { board: priorBoard, moveObject }
+  const input = { board: priorBoard, moveObject: recomputedMoveObject }
   if (!evaluator.evaluate(payload, input)) { return null }
 
   const analysis = new CandidateMoveAnalysisV2(input)
   const result = analysis.relationalResult(relationParams(payload))
   const afterBoard = priorBoard.lightClone()
-  afterBoard._hypotheticallyMovePiece(moveObject)
+  afterBoard._hypotheticallyMovePiece(recomputedMoveObject)
   const movedPieceInRelation = (
-    result.subjectPositions.includes(moveObject.endPosition) ||
-    result.targetPositions.includes(moveObject.endPosition)
+    result.subjectPositions.includes(recomputedMoveObject.endPosition) ||
+    result.targetPositions.includes(recomputedMoveObject.endPosition)
   )
 
   return {
     priorBoard,
     afterBoard,
-    moveObject,
+    moveObject: recomputedMoveObject,
     result,
-    highlights: subjectTargetLabels(payload, moveObject, result),
+    highlights: subjectTargetLabels(payload, recomputedMoveObject, result),
     label: baseExample.label,
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
@@ -1344,23 +1375,30 @@ function exampleEligibleForEnrichment(example, payload) {
 }
 
 function buildEnrichmentPlacementPolicy(example, random) {
-  const forbidden = forbiddenSquaresForEnrichment(example)
-  const candidates = shuffled(
-    Array.from({ length: 64 }, (_unused, position) => position).filter(position => !forbidden.has(position)),
-    random
-  )
+  const candidates = weightedEnrichmentCandidateSquares(example, random)
+  const usedPositions = new Set()
 
   return {
     nextPlacement() {
-      const position = candidates.shift()
+      let position
+      while (candidates.length > 0) {
+        const candidate = candidates.shift()
+        if (usedPositions.has(candidate)) { continue }
+        usedPositions.add(candidate)
+        position = candidate
+        break
+      }
       if (position === undefined) { return null }
       const species = weightedDecorationSpecies(random)
       if (!legalPlacementForSpecies(position, species)) {
         return this.nextPlacement()
       }
+      const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
       return {
         position,
-        team: random() < 0.5 ? Board.WHITE : Board.BLACK,
+        team: position === example.moveObject.endPosition
+          ? Board.opposingTeam(movedPieceTeam)
+          : (random() < 0.5 ? Board.WHITE : Board.BLACK),
         species
       }
     }
