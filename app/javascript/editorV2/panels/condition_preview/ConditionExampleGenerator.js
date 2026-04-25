@@ -71,19 +71,6 @@ function roleRequiresEnemyMovedPiece(actor) {
   return actor === 'enemy_moved_piece'
 }
 
-function hasSideComparisons(payload) {
-  return Boolean(
-    payload.subjectComparisonMetric ||
-    payload.subjectComparator ||
-    payload.subjectComparisonSource ||
-    payload.subjectComparisonSourceTotal !== undefined ||
-    payload.targetComparisonMetric ||
-    payload.targetComparator ||
-    payload.targetComparisonSource ||
-    payload.targetComparisonSourceTotal !== undefined
-  )
-}
-
 function comparisonDescriptors(payload) {
   return [
     {
@@ -514,13 +501,6 @@ function buildLayoutFromPieces(pieces) {
   return layout
 }
 
-function piecesKey(pieces) {
-  return Array.from(pieces.entries())
-    .sort((left, right) => left[0] - right[0])
-    .map(([position, piece]) => `${position}:${piece}`)
-    .join('|')
-}
-
 function selectKingPair(basePieces, random) {
   const existingWhiteKings = []
   const existingBlackKings = []
@@ -623,10 +603,6 @@ function evaluateCandidate({ payload, priorBoard, moveObject }) {
   if (result.pairs.length === 0) { return null }
 
   return result
-}
-
-function metricForSide(result, side) {
-  return side === 'subject' ? result.subjectPositions.length : result.targetPositions.length
 }
 
 function desiredCountForComparison(descriptor) {
@@ -882,12 +858,15 @@ function buildZeroRelationExample({ payload, random }) {
 
       for (let moveIndex = 0; moveIndex < moveExamples.length; moveIndex += 1) {
         const moveExample = moveExamples[moveIndex]
-        const result = evaluateCandidate({
-          payload,
-          priorBoard: moveExample.priorBoard,
+        const evaluator = new ConditionEvaluatorV2()
+        const input = {
+          board: moveExample.priorBoard,
           moveObject: moveExample.moveObject
-        })
-        if (!result) { continue }
+        }
+        if (!evaluator.evaluate(payload, input)) { continue }
+
+        const analysis = new CandidateMoveAnalysisV2(input)
+        const result = analysis.relationalResult(relationParams(payload))
 
         return {
           priorBoard: moveExample.priorBoard,
