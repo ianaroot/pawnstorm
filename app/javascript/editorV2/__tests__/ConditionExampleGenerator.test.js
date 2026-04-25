@@ -35,6 +35,41 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples).toEqual([])
   })
 
+  it('marks value-based relational comparisons unsupported with a specific message', () => {
+    const preview = generateConditionExamples({
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 3
+    }, { random: seededRandom(11) })
+
+    expect(preview.status).toBe('unsupported')
+    expect(preview.reason).toBe('Value-based relational comparisons are not supported yet.')
+  })
+
+  it('marks prior-board relational comparisons unsupported with a specific message', () => {
+    const preview = generateConditionExamples({
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'any',
+      targetComparisonMetric: 'count',
+      targetComparator: 'greater_than',
+      targetComparisonSource: 'prior_board_state'
+    }, { random: seededRandom(12) })
+
+    expect(preview.status).toBe('unsupported')
+    expect(preview.reason).toBe('Prior-board relational comparisons are not supported yet.')
+  })
+
   it('builds multiple verified attack examples', () => {
     const payload = {
       kind: 'relational',
@@ -142,6 +177,35 @@ describe('ConditionExampleGenerator', () => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.priorBoard.recentMoveContext).toBeTruthy()
       expect(example.result.subjectPositions).toContain(example.priorBoard.recentMoveContext.movedPieceEndPosition)
+    })
+  })
+
+  it('supports exact-number count comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'greater_than_or_equal_to',
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 2,
+      targetComparisonMetric: 'count',
+      targetComparator: 'greater_than_or_equal_to',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 2
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(13) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.result.subjectPositions.length).toBeGreaterThanOrEqual(2)
+      expect(example.result.targetPositions.length).toBeGreaterThanOrEqual(2)
     })
   })
 })

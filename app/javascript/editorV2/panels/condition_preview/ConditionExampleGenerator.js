@@ -31,6 +31,9 @@ const FILTER_LABELS = Object.freeze({
   captured_piece: 'Captured piece',
   enemy_captured_piece: 'Enemy captured piece'
 })
+const COUNT_COMPARISON_METRIC = 'count'
+const EXACT_NUMBER_COMPARISON_SOURCE = 'exact_number'
+const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
 
 function square(value) {
   return Board.gridCalculatorReverse(value)
@@ -73,6 +76,25 @@ function hasSideComparisons(payload) {
   )
 }
 
+function comparisonDescriptors(payload) {
+  return [
+    {
+      side: 'subject',
+      metric: payload.subjectComparisonMetric,
+      comparator: payload.subjectComparator,
+      source: payload.subjectComparisonSource,
+      total: payload.subjectComparisonSourceTotal
+    },
+    {
+      side: 'target',
+      metric: payload.targetComparisonMetric,
+      comparator: payload.targetComparator,
+      source: payload.targetComparisonSource,
+      total: payload.targetComparisonSourceTotal
+    }
+  ].filter(descriptor => descriptor.metric && descriptor.comparator && (descriptor.source || descriptor.total !== undefined))
+}
+
 function supportStatus(payload) {
   if (!payload?.kind) {
     return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
@@ -98,15 +120,34 @@ function supportStatus(payload) {
     return { status: 'unsupported', reason: `${actorLabel(payload.target)} previews are not supported yet.` }
   }
 
-  if (hasSideComparisons(payload)) {
-    const usesPriorBoard =
-      payload.subjectComparisonSource === 'prior_board_state' ||
-      payload.targetComparisonSource === 'prior_board_state'
-    return {
-      status: 'unsupported',
-      reason: usesPriorBoard
-        ? 'Prior-board relational comparisons are not supported yet.'
-        : 'Relational side comparisons are not supported yet.'
+  const comparisons = comparisonDescriptors(payload)
+  if (comparisons.length > 0) {
+    for (let index = 0; index < comparisons.length; index += 1) {
+      const descriptor = comparisons[index]
+      if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE) {
+        return {
+          status: 'unsupported',
+          reason: 'Prior-board relational comparisons are not supported yet.'
+        }
+      }
+      if (descriptor.metric === 'value') {
+        return {
+          status: 'unsupported',
+          reason: 'Value-based relational comparisons are not supported yet.'
+        }
+      }
+      if (descriptor.metric !== COUNT_COMPARISON_METRIC) {
+        return {
+          status: 'unsupported',
+          reason: `${descriptor.metric} relational comparisons are not supported yet.`
+        }
+      }
+      if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) {
+        return {
+          status: 'unsupported',
+          reason: 'This relational comparison source is not supported yet.'
+        }
+      }
     }
   }
 
@@ -454,6 +495,13 @@ function buildLayoutFromPieces(pieces) {
   return layout
 }
 
+function piecesKey(pieces) {
+  return Array.from(pieces.entries())
+    .sort((left, right) => left[0] - right[0])
+    .map(([position, piece]) => `${position}:${piece}`)
+    .join('|')
+}
+
 function selectKingPair(basePieces) {
   for (let whiteIndex = 0; whiteIndex < KING_CANDIDATE_POSITIONS.length; whiteIndex += 1) {
     const whiteKing = KING_CANDIDATE_POSITIONS[whiteIndex]
@@ -529,6 +577,300 @@ function evaluateCandidate({ payload, priorBoard, moveObject }) {
   if (result.pairs.length === 0) { return null }
 
   return result
+}
+
+function metricForSide(result, side) {
+  return side === 'subject' ? result.subjectPositions.length : result.targetPositions.length
+}
+
+function desiredCountForComparison(descriptor) {
+  const total = Number(descriptor.total || 0)
+  switch (descriptor.comparator) {
+    case 'equal_to':
+      return total
+    case 'greater_than':
+      return total + 1
+    case 'greater_than_or_equal_to':
+      return Math.max(1, total)
+    case 'less_than':
+      return total > 0 ? total - 1 : 0
+    case 'less_than_or_equal_to':
+      return total > 0 ? 1 : 0
+    default:
+      return null
+  }
+}
+
+function comparisonRequirements(payload) {
+  const requirements = {
+    subject: 1,
+    target: 1,
+    comparisonsPresent: false
+  }
+
+  comparisonDescriptors(payload).forEach(descriptor => {
+    requirements.comparisonsPresent = true
+    requirements[descriptor.side] = desiredCountForComparison(descriptor)
+  })
+
+  return requirements
+}
+
+function sideSpeciesPool(payload, side) {
+  const filter = side === 'subject' ? (payload.subjectFilter || 'any') : (payload.targetFilter || 'any')
+  const filterMode = side === 'subject' ? (payload.subjectFilterMode || null) : (payload.targetFilterMode || null)
+  return candidateSpecies(filter, filterMode)
+}
+
+function buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
+  if (side === 'subject') {
+    const subjectTeam = teamForActor(payload.subject)
+    return shuffled(sideSpeciesPool(payload, 'subject'), random).flatMap(species => {
+      const positions = []
+      for (let position = 0; position < 64; position += 1) {
+        if (occupied.has(position) || position === anchorPosition) { continue }
+        const board = buildBoardFromLayout(buildLayoutFromPieces(new Map([
+          [position, pieceCode(subjectTeam, species)]
+        ])))
+        if (controlledSquares({ board, attackerPosition: position }).includes(anchorPosition)) {
+          positions.push({
+            side: 'subject',
+            position,
+            species,
+            piece: pieceCode(subjectTeam, species)
+          })
+        }
+      }
+      return shuffled(positions, random)
+    })
+  }
+
+  const board = buildBoardFromLayout(buildLayoutFromPieces(occupied))
+  return shuffled(controlledSquares({ board, attackerPosition: anchorPosition }), random)
+    .filter(position => !occupied.has(position))
+    .flatMap(position => {
+      return shuffled(sideSpeciesPool(payload, 'target'), random).map(species => ({
+        side: 'target',
+        position,
+        species,
+        piece: pieceCode(teamForActor(payload.target), species)
+      }))
+    })
+}
+
+function buildAdjacentContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
+  const team = side === 'subject' ? teamForActor(payload.subject) : teamForActor(payload.target)
+  const speciesPool = sideSpeciesPool(payload, side)
+  const board = buildBoardFromLayout(buildLayoutFromPieces(new Map([[anchorPosition, pieceCode(team, Board.PAWN)]])))
+  const adjacent = adjacentPositions({ board, targetPosition: anchorPosition, team })
+  return shuffled(adjacent, random)
+    .filter(position => !occupied.has(position) && position !== anchorPosition)
+    .flatMap(position => {
+      return shuffled(speciesPool, random).map(species => ({
+        side,
+        position,
+        species,
+        piece: pieceCode(team, species)
+      }))
+    })
+}
+
+function nextAvailableIndependentSkeletons({ payload, occupied, random }) {
+  const subjectSpeciesPool = shuffled(sideSpeciesPool(payload, 'subject'), random)
+  const targetSpeciesPool = shuffled(sideSpeciesPool(payload, 'target'), random)
+  const skeletons = []
+
+  subjectSpeciesPool.forEach(subjectSpecies => {
+    targetSpeciesPool.forEach(targetSpecies => {
+      buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies }).forEach(skeleton => {
+        const positions = Array.from(skeleton.pieces.keys())
+        if (positions.some(position => occupied.has(position))) { return }
+        skeletons.push(skeleton)
+      })
+    })
+  })
+
+  return shuffled(skeletons, random)
+}
+
+function addContributorsForSide({ payload, pieces, side, neededCount, anchorPosition, random }) {
+  if (neededCount <= 0) { return true }
+
+  const occupied = new Map(pieces)
+  const candidates = payload.operator === 'adjacent'
+    ? buildAdjacentContributionCandidates({ payload, side, anchorPosition, occupied, random })
+    : buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random })
+
+  let added = 0
+  for (let index = 0; index < candidates.length && added < neededCount; index += 1) {
+    const candidate = candidates[index]
+    if (pieces.has(candidate.position)) { continue }
+    pieces.set(candidate.position, candidate.piece)
+    added += 1
+  }
+
+  return added === neededCount
+}
+
+function augmentExistingRelation({ payload, skeleton, requirements, random }) {
+  const desiredSubjectCount = requirements.subject
+  const desiredTargetCount = requirements.target
+  const subjectIncrement = Math.max(0, desiredSubjectCount - 1)
+  const targetIncrement = Math.max(0, desiredTargetCount - 1)
+
+  if (payload.operator === 'shield' && desiredSubjectCount !== desiredTargetCount) {
+    return []
+  }
+
+  const pieces = clonePiecesMap(skeleton.pieces)
+
+  if (payload.operator === 'shield') {
+    const independentSkeletons = nextAvailableIndependentSkeletons({ payload, occupied: pieces, random })
+    let extraSubjectsNeeded = subjectIncrement
+    let extraTargetsNeeded = targetIncrement
+
+    for (let index = 0; index < independentSkeletons.length && (extraSubjectsNeeded > 0 || extraTargetsNeeded > 0); index += 1) {
+      const extraSkeleton = independentSkeletons[index]
+      extraSkeleton.pieces.forEach((piece, position) => {
+        pieces.set(position, piece)
+      })
+      extraSubjectsNeeded = Math.max(0, extraSubjectsNeeded - 1)
+      extraTargetsNeeded = Math.max(0, extraTargetsNeeded - 1)
+    }
+
+    if (extraSubjectsNeeded > 0 || extraTargetsNeeded > 0) { return [] }
+    return [{
+      ...skeleton,
+      pieces,
+      geometryKey: `${skeleton.geometryKey}:count:${desiredSubjectCount}:${desiredTargetCount}`
+    }]
+  }
+
+  const subjectOkay = addContributorsForSide({
+    payload,
+    pieces,
+    side: 'subject',
+    neededCount: subjectIncrement,
+    anchorPosition: skeleton.targetPosition,
+    random
+  })
+  if (!subjectOkay) { return [] }
+
+  const targetOkay = addContributorsForSide({
+    payload,
+    pieces,
+    side: 'target',
+    neededCount: targetIncrement,
+    anchorPosition: skeleton.subjectPosition,
+    random
+  })
+  if (!targetOkay) { return [] }
+
+  return [{
+    ...skeleton,
+    pieces,
+    geometryKey: `${skeleton.geometryKey}:count:${desiredSubjectCount}:${desiredTargetCount}`
+  }]
+}
+
+function zeroComparisonPossible(requirements) {
+  const desiredSubjectCount = requirements.subject
+  const desiredTargetCount = requirements.target
+  return desiredSubjectCount === 0 && desiredTargetCount === 0
+}
+
+function buildZeroRelationExample({ payload, random }) {
+  const subjectSpeciesPool = shuffled(sideSpeciesPool(payload, 'subject'), random)
+  const targetSpeciesPool = shuffled(sideSpeciesPool(payload, 'target'), random)
+  const movedSpeciesPool = shuffled(unique([
+    Board.NIGHT,
+    Board.BISHOP,
+    ...subjectSpeciesPool,
+    ...targetSpeciesPool
+  ]), random)
+  const subjectTeam = teamForActor(payload.subject)
+  const targetTeam = teamForActor(payload.target)
+  const subjectPositions = [square('a4'), square('b5'), square('c6'), square('d7')]
+  const targetPositions = [square('h4'), square('g5'), square('f6'), square('e7')]
+  const movedEndPositions = [square('e2'), square('d2'), square('f2'), square('c2')]
+
+  for (let movedIndex = 0; movedIndex < movedSpeciesPool.length; movedIndex += 1) {
+    for (let endIndex = 0; endIndex < movedEndPositions.length; endIndex += 1) {
+      const movedSpecies = movedSpeciesPool[movedIndex]
+      const movedPieceSquare = movedEndPositions[endIndex]
+      const pieces = new Map([[movedPieceSquare, pieceCode(Board.WHITE, movedSpecies)]])
+
+      if (payload.subject !== 'moved_piece') {
+        const subjectSpecies = subjectSpeciesPool[0]
+        if (!subjectSpecies) { continue }
+        pieces.set(subjectPositions[0], pieceCode(subjectTeam, subjectSpecies))
+      }
+
+      if (payload.target !== 'moved_piece') {
+        const targetSpecies = targetSpeciesPool[0]
+        if (!targetSpecies) { continue }
+        pieces.set(targetPositions[0], pieceCode(targetTeam, targetSpecies))
+      }
+
+      const recentMoveContext = roleRequiresEnemyMovedPiece(payload.subject)
+        ? buildEnemyRecentMoveContext(subjectPositions[1], subjectSpeciesPool[0] || Board.NIGHT)
+        : roleRequiresEnemyMovedPiece(payload.target)
+          ? buildEnemyRecentMoveContext(targetPositions[1], targetSpeciesPool[0] || Board.PAWN)
+          : null
+
+      if (roleRequiresEnemyMovedPiece(payload.subject)) {
+        pieces.set(subjectPositions[1], pieceCode(Board.BLACK, subjectSpeciesPool[0] || Board.NIGHT))
+      }
+      if (roleRequiresEnemyMovedPiece(payload.target)) {
+        pieces.set(targetPositions[1], pieceCode(Board.BLACK, targetSpeciesPool[0] || Board.PAWN))
+      }
+
+      const moveExamples = collectLegalReverseMoves({
+        afterPieces: pieces,
+        movedPieceSquare,
+        movedPieceSpecies: movedSpecies,
+        recentMoveContext,
+        random,
+        maxResults: 1
+      })
+
+      for (let moveIndex = 0; moveIndex < moveExamples.length; moveIndex += 1) {
+        const moveExample = moveExamples[moveIndex]
+        const result = evaluateCandidate({
+          payload,
+          priorBoard: moveExample.priorBoard,
+          moveObject: moveExample.moveObject
+        })
+        if (!result) { continue }
+
+        return {
+          priorBoard: moveExample.priorBoard,
+          afterBoard: moveExample.afterBoard,
+          moveObject: moveExample.moveObject,
+          result,
+          highlights: subjectTargetLabels(payload, moveExample.moveObject, result),
+          label: '',
+          variantType: 'required',
+          geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
+          compactnessPenalty: compactPairCountPenalty(result),
+          movedPieceInRelation: false
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
+  const requirements = comparisonRequirements(payload)
+  if (!requirements.comparisonsPresent) { return [skeleton] }
+  if (requirements.subject === null || requirements.target === null) { return [] }
+  if (requirements.subject < 0 || requirements.target < 0) { return [] }
+  if (zeroComparisonPossible(requirements)) { return [] }
+  if (requirements.subject === 0 || requirements.target === 0) { return [] }
+
+  return augmentExistingRelation({ payload, skeleton, requirements, random })
 }
 
 function compactPairCountPenalty(result) {
@@ -944,32 +1286,52 @@ export function generateConditionExamples(payload, options = {}) {
     if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
 
     const item = workQueue[index]
-    const examples = collectVerifiedExamples({
+    const augmentedSkeletons = augmentSkeletonsForComparisons({
       payload,
       skeleton: item.skeleton,
-      variant: item.variant,
       random
     })
 
-    for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
-      const example = examples[exampleIndex]
-      const signature = varietySignature(example)
-      if (seenSignatures.has(signature)) { continue }
+    for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
+      const examples = collectVerifiedExamples({
+        payload,
+        skeleton: augmentedSkeletons[skeletonIndex],
+        variant: item.variant,
+        random
+      })
 
-      const key = bucketKeyForExample(example)
-      const bucket = buckets.get(key) || []
-      if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+      for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
+        const example = examples[exampleIndex]
+        const signature = varietySignature(example)
+        if (seenSignatures.has(signature)) { continue }
 
-      seenSignatures.add(signature)
-      bucket.push(example)
-      buckets.set(key, bucket)
-      totalExamples += 1
+        const key = bucketKeyForExample(example)
+        const bucket = buckets.get(key) || []
+        if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+
+        seenSignatures.add(signature)
+        bucket.push(example)
+        buckets.set(key, bucket)
+        totalExamples += 1
+
+        if (totalExamples >= MAX_CANDIDATE_POOL) { break }
+      }
 
       if (totalExamples >= MAX_CANDIDATE_POOL) { break }
     }
   }
 
   const verified = Array.from(buckets.values()).flat()
+  if (verified.length === 0 && zeroComparisonPossible(comparisonRequirements(payload))) {
+    const zeroExample = buildZeroRelationExample({ payload, random })
+    if (zeroExample) {
+      return {
+        status: 'ready',
+        reason: null,
+        examples: [zeroExample]
+      }
+    }
+  }
 
   if (verified.length === 0) {
     return {
