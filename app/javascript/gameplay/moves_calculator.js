@@ -334,22 +334,22 @@ class MovesCalculator {
         endPosition = args["endPosition"]
     return {
       diagonalRight: function(){
-        return (endPosition) % 8 > (startPosition % 8) && Board._inBounds(endPosition)
+        return Board.fileIndex(endPosition) > Board.fileIndex(startPosition) && Board._inBounds(endPosition)
       },
       vertical: function(){
         return Board._inBounds(endPosition)
       },
       diagonalLeft: function(){
-        return (endPosition) % 8 < (startPosition % 8) && Board._inBounds(endPosition)
+        return Board.fileIndex(endPosition) < Board.fileIndex(startPosition) && Board._inBounds(endPosition)
       },
       nightVertical: function(){
-        return Math.abs( (endPosition) % 8 - startPosition % 8 ) === 1 && Board._inBounds(endPosition)
+        return Math.abs(Board.fileIndex(endPosition) - Board.fileIndex(startPosition)) === 1 && Board._inBounds(endPosition)
       },
       nightHorizontal: function(){
-        return Math.abs( (endPosition) % 8 - startPosition % 8 ) === 2 && Board._inBounds(endPosition)
+        return Math.abs(Board.fileIndex(endPosition) - Board.fileIndex(startPosition)) === 2 && Board._inBounds(endPosition)
       },
       horizontal: function(){
-        return Math.floor((endPosition) / 8) === Math.floor(startPosition / 8) && Board._inBounds(endPosition)
+        return Board.rankIndex(endPosition) === Board.rankIndex(startPosition) && Board._inBounds(endPosition)
       }
     }
   }

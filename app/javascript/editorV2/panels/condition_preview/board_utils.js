@@ -20,13 +20,9 @@ export function pieceSpecies(piece) {
   return piece ? Board.parseSpecies(piece) : null
 }
 
-export function rankForPosition(position) {
-  return Math.floor(position / 8)
-}
-
 export function legalPlacementForSpecies(position, species) {
   if (species !== Board.PAWN) { return true }
-  const rank = rankForPosition(position)
+  const rank = Board.rankIndex(position)
   return rank !== 0 && rank !== 7
 }
 

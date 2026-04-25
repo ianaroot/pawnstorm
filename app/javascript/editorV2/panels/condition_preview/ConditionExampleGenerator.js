@@ -5,11 +5,16 @@ import Rules from 'gameplay/rules'
 import { adjacentPositions, controlledSquares, nextPositionOnRay, shieldedPositions } from 'gameplay/board_query_utils'
 import {
   square, emptyLayout, pieceCode, pieceTeam, pieceSpecies,
-  rankForPosition, legalPlacementForSpecies,
+  legalPlacementForSpecies,
   unique, shuffled, pushUnique,
   clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   occupiedCount
 } from 'editorV2/panels/condition_preview/board_utils'
+import {
+  RAY_STEPS,
+  adjacentNeighborPositions, positionsForSliderOrigins, originCandidatesForSpecies,
+  shieldAttackerSpeciesForStep, relationSquareDistance, sortByDistanceFromRelation
+} from 'editorV2/panels/condition_preview/geometry_utils'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -35,8 +40,6 @@ const KING_CANDIDATE_POSITIONS = Object.freeze([
 const CENTRAL_POSITIONS = Object.freeze(
   ['c3', 'd3', 'e3', 'f3', 'c4', 'd4', 'e4', 'f4', 'c5', 'd5', 'e5', 'f5', 'c6', 'd6', 'e6', 'f6'].map(square)
 )
-const RAY_STEPS = Object.freeze([1, -1, 8, -8, 7, -7, 9, -9])
-
 const FILTER_LABELS = Object.freeze({
   allied: 'Allied',
   enemy: 'Enemy',
@@ -197,81 +200,6 @@ function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
 function candidateSpecies(filter = 'any', filterMode = null) {
   const pool = (filter === 'king' && filterMode !== 'exclude') ? [Board.KING] : [...DISPLAY_SPECIES]
   return pool.filter(species => speciesMatchesFilter(species, filter, filterMode))
-}
-
-function adjacentNeighborPositions(position) {
-  const neighbors = []
-  RAY_STEPS.forEach(step => {
-    const next = nextPositionOnRay(position, step)
-    if (next !== null) {
-      neighbors.push(next)
-    }
-  })
-  return neighbors
-}
-
-function positionsForSliderOrigins(endPosition, steps) {
-  const origins = []
-  steps.forEach(step => {
-    for (let current = nextPositionOnRay(endPosition, step); current !== null; current = nextPositionOnRay(current, step)) {
-      origins.push(current)
-    }
-  })
-  return origins
-}
-
-function originCandidatesForSpecies(endPosition, species) {
-  switch (species) {
-    case Board.PAWN:
-      return [endPosition - 8, endPosition - 16].filter(position => Board._inBounds(position))
-    case Board.NIGHT:
-      return [
-        endPosition + 17, endPosition + 15, endPosition + 10, endPosition + 6,
-        endPosition - 6, endPosition - 10, endPosition - 15, endPosition - 17
-      ].filter(position => {
-        if (!Board._inBounds(position)) { return false }
-        const fileDiff = Math.abs((position % 8) - (endPosition % 8))
-        const rankDiff = Math.abs(Math.floor(position / 8) - Math.floor(endPosition / 8))
-        return (fileDiff === 1 && rankDiff === 2) || (fileDiff === 2 && rankDiff === 1)
-      })
-    case Board.BISHOP:
-      return positionsForSliderOrigins(endPosition, [7, -7, 9, -9])
-    case Board.ROOK:
-      return positionsForSliderOrigins(endPosition, [1, -1, 8, -8])
-    case Board.QUEEN:
-      return positionsForSliderOrigins(endPosition, [1, -1, 8, -8, 7, -7, 9, -9])
-    case Board.KING:
-      return [
-        endPosition + 1, endPosition - 1, endPosition + 8, endPosition - 8,
-        endPosition + 7, endPosition - 7, endPosition + 9, endPosition - 9
-      ].filter(position => {
-        if (!Board._inBounds(position)) { return false }
-        const fileDiff = Math.abs((position % 8) - (endPosition % 8))
-        const rankDiff = Math.abs(Math.floor(position / 8) - Math.floor(endPosition / 8))
-        return Math.max(fileDiff, rankDiff) === 1
-      })
-    default:
-      return []
-  }
-}
-
-function relationSquareDistance(subjectPosition, targetPosition) {
-  if (subjectPosition === undefined || targetPosition === undefined) {
-    return Number.POSITIVE_INFINITY
-  }
-  const fileDiff = Math.abs((subjectPosition % 8) - (targetPosition % 8))
-  const rankDiff = Math.abs(Math.floor(subjectPosition / 8) - Math.floor(targetPosition / 8))
-  return fileDiff + rankDiff
-}
-
-function sortByDistanceFromRelation(positions, relationPositions) {
-  const distanceFor = (position) => relationPositions.reduce((best, relatedPosition) => {
-    const fileDiff = Math.abs((position % 8) - (relatedPosition % 8))
-    const rankDiff = Math.abs(Math.floor(position / 8) - Math.floor(relatedPosition / 8))
-    return Math.min(best, fileDiff + rankDiff)
-  }, Number.POSITIVE_INFINITY)
-
-  return [...positions].sort((left, right) => distanceFor(right) - distanceFor(left))
 }
 
 function preferredExtraMovedSpecies(subjectSpecies, targetSpecies) {
@@ -466,8 +394,8 @@ function selectKingPair(basePieces, random) {
       if (whiteKing === blackKing) { continue }
       if (existingBlackKings.length === 0 && squareIsOccupied(basePieces, blackKing)) { continue }
 
-      const fileDiff = Math.abs((whiteKing % 8) - (blackKing % 8))
-      const rankDiff = Math.abs(Math.floor(whiteKing / 8) - Math.floor(blackKing / 8))
+      const fileDiff = Math.abs(Board.fileIndex(whiteKing) - Board.fileIndex(blackKing))
+      const rankDiff = Math.abs(Board.rankIndex(whiteKing) - Board.rankIndex(blackKing))
       if (Math.max(fileDiff, rankDiff) <= 1) { continue }
 
       const pieces = clonePiecesMap(basePieces)
@@ -997,13 +925,6 @@ function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, moving
   return skeletons
 }
 
-function shieldAttackerSpeciesForStep(step) {
-  if (Math.abs(step) === 1 || Math.abs(step) === 8) {
-    return [Board.ROOK, Board.QUEEN]
-  }
-  return [Board.BISHOP, Board.QUEEN]
-}
-
 function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
   const attackerTeam = Board.opposingTeam(teamForActorWithContext(payload.target, movingTeam))
@@ -1425,14 +1346,14 @@ function movePathSquares(priorBoard, moveObject) {
   const squares = new Set([start, end])
 
   if ([Board.ROOK, Board.BISHOP, Board.QUEEN].includes(species)) {
-    const fileDelta = (end % 8) - (start % 8)
-    const rankDelta = Math.floor(end / 8) - Math.floor(start / 8)
+    const fileDelta = Board.fileIndex(end) - Board.fileIndex(start)
+    const rankDelta = Board.rankIndex(end) - Board.rankIndex(start)
     const stepFile = Math.sign(fileDelta)
     const stepRank = Math.sign(rankDelta)
-    let file = (start % 8) + stepFile
-    let rank = Math.floor(start / 8) + stepRank
+    let file = Board.fileIndex(start) + stepFile
+    let rank = Board.rankIndex(start) + stepRank
 
-    while (file !== (end % 8) || rank !== Math.floor(end / 8)) {
+    while (file !== Board.fileIndex(end) || rank !== Board.rankIndex(end)) {
       squares.add(rank * 8 + file)
       file += stepFile
       rank += stepRank

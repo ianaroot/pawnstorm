@@ -1,4 +1,5 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview/ConditionExampleGenerator'
+import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 
 const PRIOR_DWELL  = 1500
@@ -24,7 +25,7 @@ function buildMiniBoardEl() {
     for (let file = 0; file < 8; file++) {
       const index = rank * 8 + file
       const td = document.createElement('td')
-      td.className = `mini-board__tile mini-board__tile--${tileColor(index)}`
+      td.className = `mini-board__tile mini-board__tile--${Board.squareColor(index)}`
       td.dataset.index = index
       tr.appendChild(td)
     }
@@ -32,10 +33,6 @@ function buildMiniBoardEl() {
   }
   wrapper.appendChild(table)
   return wrapper
-}
-
-function tileColor(index) {
-  return (index % 8 + Math.floor(index / 8)) % 2 === 0 ? 'dark' : 'light'
 }
 
 function renderLayout(boardEl, layout, highlights) {

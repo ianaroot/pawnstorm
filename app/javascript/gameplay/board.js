@@ -129,35 +129,35 @@ class Board {
 
   static isSeventhRank(position){
     position = Board.convertPositionFromAlphaNumeric(position)
-    return Math.floor(position / 8) === 6
+    return Board.rankIndex(position) === 6
   }
 
   static isSecondRank(position){
     position = Board.convertPositionFromAlphaNumeric(position)
-    return Math.floor(position / 8) === 1
+    return Board.rankIndex(position) === 1
+  }
+
+  static rankIndex(position){
+    return Math.floor(position / 8)
+  }
+
+  static fileIndex(position){
+    return position % 8
   }
 
   static rank(position){
-    return Math.floor(position / 8) + 1
+    return Board.rankIndex(position) + 1
   }
 
   static file(position){
     let files = "abcdefgh";
-    return files[position % 8]
+    return files[Board.fileIndex(position)]
   }
 
   static squareColor(position){
     position = Board.convertPositionFromAlphaNumeric(position)
-    let div = Math.floor(position / 8),
-      mod   = position % 8,
-      sum   = div + mod,
-      squareColor = "";
-    if (sum % 2 === 0){
-      squareColor = Board.DARK
-    } else {
-      squareColor = Board.LIGHT
-    }
-    return squareColor;
+    const sum = Board.rankIndex(position) + Board.fileIndex(position)
+    return sum % 2 === 0 ? Board.DARK : Board.LIGHT
   }
 
   static opposingTeam(teamString){
@@ -169,8 +169,8 @@ class Board {
   }
 
   static gridCalculator(position){
-    let x = Math.floor(position % 8),
-        y = Math.floor(position / 8) + 1,
+    let x = Board.fileIndex(position),
+        y = Board.rankIndex(position) + 1,
       alphaNum = {
         0: "a",
         1: "b",
