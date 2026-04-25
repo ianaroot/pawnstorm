@@ -15,6 +15,10 @@ import {
   adjacentNeighborPositions, positionsForSliderOrigins, originCandidatesForSpecies,
   shieldAttackerSpeciesForStep, relationSquareDistance, sortByDistanceFromRelation
 } from 'editorV2/panels/condition_preview/geometry_utils'
+import {
+  teamForActorWithContext, mergeRelationPieces,
+  buildCandidateSkeletons, buildControlSkeletons, buildAdjacentSkeletons, buildShieldSkeletons
+} from 'editorV2/panels/condition_preview/skeleton_builders'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -37,9 +41,6 @@ const KING_CANDIDATE_POSITIONS = Object.freeze([
   square('b1'), square('g1'), square('a1'), square('h1'), square('c1'), square('f1'),
   square('b8'), square('g8'), square('a8'), square('h8'), square('c8'), square('f8')
 ])
-const CENTRAL_POSITIONS = Object.freeze(
-  ['c3', 'd3', 'e3', 'f3', 'c4', 'd4', 'e4', 'f4', 'c5', 'd5', 'e5', 'f5', 'c6', 'd6', 'e6', 'f6'].map(square)
-)
 const FILTER_LABELS = Object.freeze({
   allied: 'Allied',
   enemy: 'Enemy',
@@ -54,10 +55,6 @@ const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
 
 function teamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
-}
-
-function teamForActorWithContext(actor, movingTeam = Board.WHITE) {
-  return actor === 'allied' || actor === 'moved_piece' ? movingTeam : Board.opposingTeam(movingTeam)
 }
 
 function generationContext(options = {}) {
@@ -823,158 +820,6 @@ function requiredRelationPairFloor(payload) {
   const requirements = comparisonRequirements(payload)
   if (!requirements.comparisonsPresent) { return 1 }
   return Math.max(requirements.subject, requirements.target)
-}
-
-function mergeRelationPieces({ basePieces = new Map(), relationPieces, reservedSquares = new Set() }) {
-  const pieces = clonePiecesMap(basePieces)
-  for (const [position, piece] of relationPieces.entries()) {
-    const existingPiece = pieces.get(position)
-    if (existingPiece && existingPiece !== piece) { return null }
-    if (!existingPiece && reservedSquares.has(position)) { return null }
-    pieces.set(position, piece)
-  }
-  return pieces
-}
-
-function buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
-  switch (payload.operator) {
-    case 'attack':
-    case 'defend':
-      return buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
-    case 'adjacent':
-      return buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
-    case 'shield':
-      return buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
-    default:
-      return []
-  }
-}
-
-function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
-  const skeletons = []
-  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
-
-  subjectPlacements.forEach(subjectPlacement => {
-    const subjectPosition = subjectPlacement.position
-    const pieces = mergeRelationPieces({
-      basePieces: fixedPieces,
-      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
-      reservedSquares
-    })
-    if (!pieces) { return }
-    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
-    const controlled = controlledSquares({ board, attackerPosition: subjectPosition })
-    const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : controlled
-
-    targetPositions.forEach(targetPosition => {
-      if (subjectPosition === targetPosition) { return }
-      const targetPiece = pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)
-      if (!controlled.includes(targetPosition)) { return }
-      if (!fixedTargetPlacement && pieces.has(targetPosition)) { return }
-
-      const relationPieces = mergeRelationPieces({
-        basePieces: pieces,
-        relationPieces: new Map([[targetPosition, targetPiece]]),
-        reservedSquares
-      })
-      if (!relationPieces) { return }
-      skeletons.push({
-        pieces: relationPieces,
-        subjectPosition,
-        targetPosition,
-        subjectSpecies,
-        targetSpecies,
-        geometryKey: `control:${subjectPosition}:${targetPosition}`
-      })
-    })
-  })
-  return skeletons
-}
-
-function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
-  const skeletons = []
-  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
-
-  subjectPlacements.forEach(subjectPlacement => {
-    const subjectPosition = subjectPlacement.position
-    const pieces = mergeRelationPieces({
-      basePieces: fixedPieces,
-      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
-      reservedSquares
-    })
-    if (!pieces) { return }
-    const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : adjacentNeighborPositions(subjectPosition)
-    targetPositions.forEach(targetPosition => {
-      if (targetPosition === null) { return }
-      const relationPieces = mergeRelationPieces({
-        basePieces: pieces,
-        relationPieces: new Map([[targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)]]),
-        reservedSquares
-      })
-      if (!relationPieces) { return }
-      skeletons.push({
-        pieces: relationPieces,
-        subjectPosition,
-        targetPosition,
-        subjectSpecies,
-        targetSpecies,
-        geometryKey: `adjacent:${subjectPosition}:${targetPosition}`
-      })
-    })
-  })
-  return skeletons
-}
-
-function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
-  const skeletons = []
-  const attackerTeam = Board.opposingTeam(teamForActorWithContext(payload.target, movingTeam))
-  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
-
-  subjectPlacements.forEach(subjectPlacement => {
-    const subjectPosition = subjectPlacement.position
-    RAY_STEPS.forEach(step => {
-      const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : [nextPositionOnRay(subjectPosition, step)].filter(Boolean)
-
-      targetPositions.forEach(targetPosition => {
-        if (targetPosition === null) { return }
-
-        for (let distance = 1; distance <= 3; distance += 1) {
-          let attackerPosition = subjectPosition
-          for (let count = 0; count < distance; count += 1) {
-            attackerPosition = nextPositionOnRay(attackerPosition, -step)
-            if (attackerPosition === null) { break }
-          }
-          if (attackerPosition === null) { continue }
-
-          shieldAttackerSpeciesForStep(step).forEach(attackerSpecies => {
-            const relationPieces = mergeRelationPieces({
-              basePieces: fixedPieces,
-              relationPieces: new Map([
-                [subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)],
-                [targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)],
-                [attackerPosition, pieceCode(attackerTeam, attackerSpecies)]
-              ]),
-              reservedSquares
-            })
-            if (!relationPieces) { return }
-            const board = buildBoardFromLayout(buildLayoutFromPieces(relationPieces))
-            const shielded = shieldedPositions({ board, sourcePosition: subjectPosition, team: teamForActorWithContext(payload.target, movingTeam) })
-            if (!shielded.includes(targetPosition)) { return }
-
-            skeletons.push({
-              pieces: relationPieces,
-              subjectPosition,
-              targetPosition,
-              subjectSpecies,
-              targetSpecies,
-              geometryKey: `shield:${subjectPosition}:${targetPosition}:${attackerPosition}:${attackerSpecies}`
-            })
-          })
-        }
-      })
-    })
-  })
-  return skeletons
 }
 
 function candidateLabel(variant, payload) {
