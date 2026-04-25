@@ -71,6 +71,10 @@ function roleRequiresEnemyMovedPiece(actor) {
   return actor === 'enemy_moved_piece'
 }
 
+function relationalActorRequiresPresence(actor) {
+  return roleRequiresMovedPiece(actor) || roleRequiresEnemyMovedPiece(actor)
+}
+
 function comparisonDescriptors(payload) {
   return [
     {
@@ -644,6 +648,36 @@ function sideSpeciesPool(payload, side) {
   return candidateSpecies(filter, filterMode)
 }
 
+function requiredZeroRelationPlacements({ payload }) {
+  const placements = []
+
+  if (roleRequiresEnemyMovedPiece(payload.subject)) {
+    const subjectSpecies = sideSpeciesPool(payload, 'subject')[0] || Board.NIGHT
+    placements.push({
+      side: 'subject',
+      actor: payload.subject,
+      position: square('b6'),
+      species: subjectSpecies,
+      team: Board.BLACK,
+      recentMoveContext: buildEnemyRecentMoveContext(square('b6'), subjectSpecies)
+    })
+  }
+
+  if (roleRequiresEnemyMovedPiece(payload.target)) {
+    const targetSpecies = sideSpeciesPool(payload, 'target')[0] || Board.PAWN
+    placements.push({
+      side: 'target',
+      actor: payload.target,
+      position: square('g6'),
+      species: targetSpecies,
+      team: Board.BLACK,
+      recentMoveContext: buildEnemyRecentMoveContext(square('g6'), targetSpecies)
+    })
+  }
+
+  return placements
+}
+
 function buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
   if (side === 'subject') {
     const subjectTeam = teamForActor(payload.subject)
@@ -795,13 +829,13 @@ function augmentExistingRelation({ payload, skeleton, requirements, random }) {
   }]
 }
 
-function zeroComparisonPossible(requirements) {
+function usesZeroRelationPath(requirements) {
   const desiredSubjectCount = requirements.subject
   const desiredTargetCount = requirements.target
-  return desiredSubjectCount === 0 && desiredTargetCount === 0
+  return desiredSubjectCount === 0 || desiredTargetCount === 0
 }
 
-function buildZeroRelationExample({ payload, random }) {
+function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDATE_POOL }) {
   const subjectSpeciesPool = shuffled(sideSpeciesPool(payload, 'subject'), random)
   const targetSpeciesPool = shuffled(sideSpeciesPool(payload, 'target'), random)
   const movedSpeciesPool = shuffled(unique([
@@ -815,37 +849,37 @@ function buildZeroRelationExample({ payload, random }) {
   const subjectPositions = [square('a4'), square('b5'), square('c6'), square('d7')]
   const targetPositions = [square('h4'), square('g5'), square('f6'), square('e7')]
   const movedEndPositions = [square('e2'), square('d2'), square('f2'), square('c2')]
+  const requiredPlacements = requiredZeroRelationPlacements({ payload })
+  const examples = []
+  const seenCandidates = new Set()
 
   for (let movedIndex = 0; movedIndex < movedSpeciesPool.length; movedIndex += 1) {
     for (let endIndex = 0; endIndex < movedEndPositions.length; endIndex += 1) {
       const movedSpecies = movedSpeciesPool[movedIndex]
       const movedPieceSquare = movedEndPositions[endIndex]
       const pieces = new Map([[movedPieceSquare, pieceCode(Board.WHITE, movedSpecies)]])
+      let recentMoveContext = null
 
-      if (payload.subject !== 'moved_piece') {
+      if (!relationalActorRequiresPresence(payload.subject)) {
+        // General actors may be absent in a zero-count relation.
+      } else if (payload.subject !== 'moved_piece') {
         const subjectSpecies = subjectSpeciesPool[0]
         if (!subjectSpecies) { continue }
         pieces.set(subjectPositions[0], pieceCode(subjectTeam, subjectSpecies))
       }
 
-      if (payload.target !== 'moved_piece') {
+      if (!relationalActorRequiresPresence(payload.target)) {
+        // General actors may be absent in a zero-count relation.
+      } else if (payload.target !== 'moved_piece') {
         const targetSpecies = targetSpeciesPool[0]
         if (!targetSpecies) { continue }
         pieces.set(targetPositions[0], pieceCode(targetTeam, targetSpecies))
       }
 
-      const recentMoveContext = roleRequiresEnemyMovedPiece(payload.subject)
-        ? buildEnemyRecentMoveContext(subjectPositions[1], subjectSpeciesPool[0] || Board.NIGHT)
-        : roleRequiresEnemyMovedPiece(payload.target)
-          ? buildEnemyRecentMoveContext(targetPositions[1], targetSpeciesPool[0] || Board.PAWN)
-          : null
-
-      if (roleRequiresEnemyMovedPiece(payload.subject)) {
-        pieces.set(subjectPositions[1], pieceCode(Board.BLACK, subjectSpeciesPool[0] || Board.NIGHT))
-      }
-      if (roleRequiresEnemyMovedPiece(payload.target)) {
-        pieces.set(targetPositions[1], pieceCode(Board.BLACK, targetSpeciesPool[0] || Board.PAWN))
-      }
+      requiredPlacements.forEach(placement => {
+        pieces.set(placement.position, pieceCode(placement.team, placement.species))
+        recentMoveContext ||= placement.recentMoveContext
+      })
 
       const moveExamples = collectLegalReverseMoves({
         afterPieces: pieces,
@@ -867,8 +901,7 @@ function buildZeroRelationExample({ payload, random }) {
 
         const analysis = new CandidateMoveAnalysisV2(input)
         const result = analysis.relationalResult(relationParams(payload))
-
-        return {
+        const example = {
           priorBoard: moveExample.priorBoard,
           afterBoard: moveExample.afterBoard,
           moveObject: moveExample.moveObject,
@@ -880,11 +913,19 @@ function buildZeroRelationExample({ payload, random }) {
           compactnessPenalty: compactPairCountPenalty(result),
           movedPieceInRelation: false
         }
+        const identity = candidateIdentity(example)
+        if (seenCandidates.has(identity)) { continue }
+
+        seenCandidates.add(identity)
+        examples.push(example)
+        if (examples.length >= maxExamples) {
+          return examples
+        }
       }
     }
   }
 
-  return null
+  return examples
 }
 
 function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
@@ -892,7 +933,7 @@ function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
   if (!requirements.comparisonsPresent) { return [skeleton] }
   if (requirements.subject === null || requirements.target === null) { return [] }
   if (requirements.subject < 0 || requirements.target < 0) { return [] }
-  if (zeroComparisonPossible(requirements)) { return [] }
+  if (usesZeroRelationPath(requirements)) { return [] }
   if (requirements.subject === 0 || requirements.target === 0) { return [] }
 
   return augmentExistingRelation({ payload, skeleton, requirements, random })
@@ -1347,13 +1388,13 @@ export function generateConditionExamples(payload, options = {}) {
   }
 
   const verified = Array.from(buckets.values()).flat()
-  if (verified.length === 0 && zeroComparisonPossible(comparisonRequirements(payload))) {
-    const zeroExample = buildZeroRelationExample({ payload, random })
-    if (zeroExample) {
+  if (verified.length === 0 && usesZeroRelationPath(comparisonRequirements(payload))) {
+    const zeroExamples = buildZeroRelationExamples({ payload, random, maxExamples: MAX_CANDIDATE_POOL })
+    if (zeroExamples.length > 0) {
       return {
         status: 'ready',
         reason: null,
-        examples: [zeroExample]
+        examples: selectDiverseExamples(zeroExamples, maxExamples)
       }
     }
   }

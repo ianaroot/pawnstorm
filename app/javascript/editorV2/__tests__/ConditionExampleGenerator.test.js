@@ -208,4 +208,56 @@ describe('ConditionExampleGenerator', () => {
       expect(example.result.targetPositions.length).toBeGreaterThanOrEqual(2)
     })
   })
+
+  it('supports zero-count comparisons while still resolving singular actors', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'moved_piece',
+      subjectFilter: 'queen',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'pawn',
+      targetFilterMode: 'exclude',
+      targetComparisonMetric: 'count',
+      targetComparator: 'equal_to',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 0
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(14) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.endPosition).toBe(example.result.subjectPositions[0] || example.moveObject.endPosition)
+      expect(example.afterBoard.pieceTypeAt(example.moveObject.endPosition)).toBe('Q')
+      expect(example.result.targetPositions.length).toBe(0)
+    })
+  })
+
+  it('supports zero-count comparisons without forcing general actors onto the board', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'rook',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'pawn',
+      targetComparisonMetric: 'count',
+      targetComparator: 'equal_to',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 0
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(15) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.result.pairs).toHaveLength(0)
+      expect(example.result.targetPositions).toHaveLength(0)
+    })
+  })
 })
