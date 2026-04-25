@@ -13,7 +13,7 @@ const MAX_EXAMPLES_PER_SKELETON = 3
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
-const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
+const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const KING_CANDIDATE_POSITIONS = Object.freeze([
   square('b1'), square('g1'), square('a1'), square('h1'), square('c1'), square('f1'),
   square('b8'), square('g8'), square('a8'), square('h8'), square('c8'), square('f8')
@@ -45,6 +45,14 @@ function emptyLayout() {
 
 function pieceCode(team, species) {
   return `${team}${species}`
+}
+
+function pieceTeam(piece) {
+  return piece ? piece[0] : null
+}
+
+function pieceSpecies(piece) {
+  return piece ? piece[1] : null
 }
 
 function teamForActor(actor) {
@@ -191,7 +199,7 @@ function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
 }
 
 function candidateSpecies(filter = 'any', filterMode = null) {
-  const pool = filter === 'king' ? [Board.KING] : [...DISPLAY_SPECIES]
+  const pool = (filter === 'king' && filterMode !== 'exclude') ? [Board.KING] : [...DISPLAY_SPECIES]
   return pool.filter(species => speciesMatchesFilter(species, filter, filterMode))
 }
 
@@ -513,20 +521,50 @@ function piecesKey(pieces) {
     .join('|')
 }
 
-function selectKingPair(basePieces) {
-  for (let whiteIndex = 0; whiteIndex < KING_CANDIDATE_POSITIONS.length; whiteIndex += 1) {
-    const whiteKing = KING_CANDIDATE_POSITIONS[whiteIndex]
-    if (squareIsOccupied(basePieces, whiteKing)) { continue }
+function selectKingPair(basePieces, random) {
+  const existingWhiteKings = []
+  const existingBlackKings = []
 
-    for (let blackIndex = 0; blackIndex < KING_CANDIDATE_POSITIONS.length; blackIndex += 1) {
-      const blackKing = KING_CANDIDATE_POSITIONS[blackIndex]
-      if (whiteKing === blackKing || squareIsOccupied(basePieces, blackKing)) { continue }
+  basePieces.forEach((piece, position) => {
+    if (pieceSpecies(piece) !== Board.KING) { return }
+    if (pieceTeam(piece) === Board.WHITE) {
+      existingWhiteKings.push(position)
+    } else if (pieceTeam(piece) === Board.BLACK) {
+      existingBlackKings.push(position)
+    }
+  })
+
+  if (existingWhiteKings.length > 1 || existingBlackKings.length > 1) { return null }
+
+  const whiteCandidates = existingWhiteKings.length > 0
+    ? existingWhiteKings
+    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
+  const blackCandidates = existingBlackKings.length > 0
+    ? existingBlackKings
+    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
+
+  for (let whiteIndex = 0; whiteIndex < whiteCandidates.length; whiteIndex += 1) {
+    const whiteKing = whiteCandidates[whiteIndex]
+    if (existingWhiteKings.length === 0 && squareIsOccupied(basePieces, whiteKing)) { continue }
+
+    for (let blackIndex = 0; blackIndex < blackCandidates.length; blackIndex += 1) {
+      const blackKing = blackCandidates[blackIndex]
+      if (whiteKing === blackKing) { continue }
+      if (existingBlackKings.length === 0 && squareIsOccupied(basePieces, blackKing)) { continue }
+
+      const fileDiff = Math.abs((whiteKing % 8) - (blackKing % 8))
+      const rankDiff = Math.abs(Math.floor(whiteKing / 8) - Math.floor(blackKing / 8))
+      if (Math.max(fileDiff, rankDiff) <= 1) { continue }
 
       const pieces = clonePiecesMap(basePieces)
-      pieces.set(whiteKing, pieceCode(Board.WHITE, Board.KING))
-      pieces.set(blackKing, pieceCode(Board.BLACK, Board.KING))
-      const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
-      if (boardHasSafeKings(board)) { return pieces }
+      if (existingWhiteKings.length === 0) {
+        pieces.set(whiteKing, pieceCode(Board.WHITE, Board.KING))
+      }
+      if (existingBlackKings.length === 0) {
+        pieces.set(blackKing, pieceCode(Board.BLACK, Board.KING))
+      }
+
+      return pieces
     }
   }
 
@@ -534,12 +572,11 @@ function selectKingPair(basePieces) {
 }
 
 function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpecies, recentMoveContext, random, maxResults }) {
-  const piecesWithKings = selectKingPair(afterPieces)
+  const piecesWithKings = selectKingPair(afterPieces, random)
   if (!piecesWithKings) { return [] }
 
   const afterLayout = buildLayoutFromPieces(piecesWithKings)
   const afterBoard = buildBoardFromLayout(afterLayout, recentMoveContext)
-  if (!boardHasSafeKings(afterBoard)) { return [] }
 
   const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies), random)
   const moves = []
@@ -552,7 +589,6 @@ function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpe
     priorPieces.set(originPosition, pieceCode(Board.WHITE, movedPieceSpecies))
     const priorLayout = buildLayoutFromPieces(priorPieces)
     const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext)
-    if (!boardHasSafeKings(priorBoard)) { continue }
 
     let moveObject
     try {
@@ -565,7 +601,6 @@ function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpe
     const rebuiltAfter = priorBoard.lightClone()
     rebuiltAfter._hypotheticallyMovePiece(moveObject)
     if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
-    if (!boardHasSafeKings(rebuiltAfter)) { continue }
 
     moves.push({
       priorBoard,
