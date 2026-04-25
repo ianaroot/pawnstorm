@@ -604,6 +604,14 @@ function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpe
   return moves
 }
 
+function soundForMove(priorBoard, afterBoard, moveObject) {
+  const movedTeam = priorBoard.teamAt(moveObject.startPosition)
+  const opposingTeam = Board.opposingTeam(movedTeam)
+  if (Rules.checkQuery({ board: afterBoard, teamString: opposingTeam })) { return 'check' }
+  if (priorBoard.layOut[moveObject.endPosition] !== Board.EMPTY_SQUARE) { return 'capture' }
+  return 'move'
+}
+
 function evaluateCandidate({ payload, priorBoard, moveObject }) {
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject }
@@ -923,7 +931,8 @@ function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDAT
           variantType: 'required',
           geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
           compactnessPenalty: compactPairCountPenalty(result),
-          movedPieceInRelation: false
+          movedPieceInRelation: false,
+          sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
         }
         const identity = candidateIdentity(example)
         if (seenCandidates.has(identity)) { continue }
@@ -1170,7 +1179,8 @@ function collectVerifiedExamples({ payload, skeleton, variant, random }) {
         variantType: movedPieceInRelation ? 'involved' : 'separate',
         geometryKey: skeleton.geometryKey,
         compactnessPenalty: compactPairCountPenalty(result),
-        movedPieceInRelation
+        movedPieceInRelation,
+        sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
       }
       const identity = candidateIdentity(example)
       if (seenCandidates.has(identity)) { continue }
@@ -1366,7 +1376,8 @@ function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, s
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
     compactnessPenalty: compactPairCountPenalty(result),
-    movedPieceInRelation
+    movedPieceInRelation,
+    sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
   }
 }
 

@@ -382,16 +382,7 @@ class MatchReplayController {
   }
 
   playReplaySound(notation) {
-    if (!notation) { return }
-    if (notation.includes('+') || notation.includes('#')) {
-      Sound.playSound('check')
-      return
-    }
-    if (notation.includes('x')) {
-      Sound.playSound('capture')
-      return
-    }
-    Sound.playSound('move')
+    Sound.playSoundForNotation(notation)
   }
 }
 

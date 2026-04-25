@@ -1,4 +1,11 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview/ConditionExampleGenerator'
+import Sound from 'gameplay/sound'
+
+const PRIOR_DWELL  = 1500
+const PIECE_FADE   = 220
+const AFTER_DWELL  = 2400
+const BOARD_FADE   = 250
+const HALF_BEAT    = 400
 
 const PIECE_GLYPHS = {
   WK: '♔', WQ: '♕', WR: '♖', WB: '♗', WN: '♘', WP: '♙',
@@ -32,25 +39,40 @@ function tileColor(index) {
 }
 
 function renderLayout(boardEl, layout, highlights) {
-  const subjectPositions = new Set(highlights.subjectPositions || [])
-  const targetPositions = new Set(highlights.targetPositions || [])
+  const subjectPositions  = new Set(highlights.subjectPositions || [])
+  const targetPositions   = new Set(highlights.targetPositions || [])
   const movedStartPosition = highlights.movedStartPosition
-  const movedEndPosition = highlights.movedEndPosition
+  const movedEndPosition   = highlights.movedEndPosition
 
   boardEl.querySelectorAll('[data-index]').forEach(tile => {
     const i = parseInt(tile.dataset.index, 10)
     const piece = layout[i]
     tile.innerHTML = ''
-    tile.classList.toggle('mini-board__tile--subject', subjectPositions.has(i))
-    tile.classList.toggle('mini-board__tile--target', targetPositions.has(i))
+    tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
+    tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
     tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
-    tile.classList.toggle('mini-board__tile--moved-end', movedEndPosition === i)
+    tile.classList.toggle('mini-board__tile--moved-end',   movedEndPosition === i)
     if (piece && PIECE_GLYPHS[piece]) {
       const span = document.createElement('span')
       span.className = `mini-piece mini-piece--${piece[0]}`
       span.textContent = PIECE_GLYPHS[piece]
       tile.appendChild(span)
     }
+  })
+}
+
+function applyHighlights(boardEl, highlights) {
+  const subjectPositions   = new Set(highlights.subjectPositions || [])
+  const targetPositions    = new Set(highlights.targetPositions || [])
+  const movedStartPosition = highlights.movedStartPosition
+  const movedEndPosition   = highlights.movedEndPosition
+
+  boardEl.querySelectorAll('[data-index]').forEach(tile => {
+    const i = parseInt(tile.dataset.index, 10)
+    tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
+    tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
+    tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
+    tile.classList.toggle('mini-board__tile--moved-end',   movedEndPosition === i)
   })
 }
 
@@ -63,15 +85,25 @@ function debounce(fn, delay) {
 
 class BoardStatePreview {
   constructor(wrap) {
-    this.wrap    = wrap
-    this.content = wrap.querySelector('.board-state-preview__content')
-    this.toggleBtn = wrap.querySelector('.board-state-preview__toggle')
-    this.isEnabled = true
+    this.wrap       = wrap
+    this.content    = wrap.querySelector('.board-state-preview__content')
+    this.headerEl   = wrap.querySelector('.board-state-preview__header')
+    this.toggleBtn  = wrap.querySelector('.board-state-preview__toggle')
+    this.isEnabled  = true
     this.conditionForm = null
-    this.examples = []
-    this.currentIndex = 0
-    this.status = 'idle'
-    this.reason = ''
+    this.examples      = []
+    this.currentIndex  = 0
+    this.status        = 'idle'
+    this.reason        = ''
+    this.isPlaying     = true
+    this.isMuted       = false
+    this._phase        = 'prior'
+    this._stopped      = true
+    this._phaseTimer   = null
+    this._boardEl      = null
+    this._phaseLabel   = null
+    this._playPauseBtn = null
+    this._muteBtn      = null
     this._debouncedUpdate = debounce((payload) => this._update(payload), 250)
 
     this.toggleBtn?.addEventListener('click', (e) => {
@@ -93,6 +125,8 @@ class BoardStatePreview {
   }
 
   deactivate() {
+    this._stopCycle()
+    this._returnToggleToHeader()
     if (this.conditionForm) { this.conditionForm.onStateChange = null }
     this.conditionForm = null
     this.wrap.classList.add('hidden')
@@ -100,65 +134,96 @@ class BoardStatePreview {
 
   _toggle() {
     this.isEnabled = !this.isEnabled
-    if (this.toggleBtn) {
-      this.toggleBtn.textContent = this.isEnabled ? 'Hide' : 'Show examples'
-    }
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
       if (this.conditionForm) { this._update(this.conditionForm.buildPayload()) }
     } else {
+      this._stopCycle()
+      this._returnToggleToHeader()
+      if (this.toggleBtn) { this.toggleBtn.textContent = 'Show examples' }
       this.content.classList.add('hidden')
     }
   }
 
   _update(payload) {
+    this._stopCycle()
     const preview = generateConditionExamples(payload)
     this.status = preview.status
     this.reason = preview.reason || ''
     this.examples = preview.examples || []
     this.currentIndex = 0
+    this._phase = 'prior'
     this._render()
+    if (this.status === 'ready' && this.isPlaying) { this._startCycle() }
   }
 
   _render() {
+    this._returnToggleToHeader()
     this.content.innerHTML = ''
-    const example = this.status === 'ready' ? this.examples[this.currentIndex] : null
-
-    const meta = document.createElement('div')
-    meta.className = 'mini-board__meta'
-
-    if (example?.label) {
-      const title = document.createElement('div')
-      title.className = 'mini-board__phase mini-board__phase--after'
-      title.textContent = example.label
-      meta.appendChild(title)
-    }
-
-    const pair = document.createElement('div')
-    pair.className = 'mini-board__pair'
-    pair.appendChild(this.buildBoardPanel({
-      title: 'Before move',
-      board: example?.priorBoard || this.blankBoard(),
-      highlights: example?.highlights?.prior || {}
-    }))
-    pair.appendChild(this.buildBoardPanel({
-      title: 'After move',
-      board: example?.afterBoard || this.blankBoard(),
-      highlights: example?.highlights?.after || {}
-    }))
-
-    this.content.appendChild(meta)
-    this.content.appendChild(pair)
+    this._boardEl      = null
+    this._phaseLabel   = null
+    this._playPauseBtn = null
+    this._muteBtn      = null
 
     if (this.status !== 'ready') {
       this.content.appendChild(this.buildMessage())
       return
     }
 
-    if (this.examples.length > 1) {
-      const nav = document.createElement('div')
-      nav.className = 'mini-board__nav'
+    const example = this.examples[this.currentIndex]
 
+    if (example?.label) {
+      const meta = document.createElement('div')
+      meta.className = 'mini-board__meta'
+      const title = document.createElement('div')
+      title.className = 'mini-board__phase mini-board__phase--after'
+      title.textContent = example.label
+      meta.appendChild(title)
+      this.content.appendChild(meta)
+    }
+
+    const body = document.createElement('div')
+    body.className = 'board-state-preview__body'
+
+    // Left: board + phase label
+    const left = document.createElement('div')
+
+    const boardEl = buildMiniBoardEl()
+    boardEl.style.transition = `opacity ${BOARD_FADE}ms ease`
+    renderLayout(boardEl, example.priorBoard.layOut, example.highlights?.prior || {})
+    this._boardEl = boardEl
+    left.appendChild(boardEl)
+
+    // Right: stacked buttons
+    const side = document.createElement('div')
+    side.className = 'board-state-preview__side'
+
+    const playPauseBtn = document.createElement('button')
+    playPauseBtn.type = 'button'
+    playPauseBtn.className = 'mini-board__nav-btn'
+    playPauseBtn.textContent = this.isPlaying ? 'Pause' : 'Play'
+    playPauseBtn.addEventListener('click', (e) => { e.stopPropagation(); this._togglePlay() })
+    this._playPauseBtn = playPauseBtn
+
+    const muteBtn = document.createElement('button')
+    muteBtn.type = 'button'
+    muteBtn.className = 'mini-board__nav-btn'
+    muteBtn.textContent = this.isMuted ? 'Unmute' : 'Mute'
+    muteBtn.addEventListener('click', (e) => { e.stopPropagation(); this._toggleMute() })
+    this._muteBtn = muteBtn
+
+    if (this.toggleBtn) { side.appendChild(this.toggleBtn) }
+
+    const controlsRow = document.createElement('div')
+    controlsRow.className = 'board-state-preview__side-row board-state-preview__side-row--centered'
+    controlsRow.appendChild(playPauseBtn)
+    controlsRow.appendChild(muteBtn)
+    side.appendChild(controlsRow)
+
+    const bottom = document.createElement('div')
+    bottom.className = 'board-state-preview__side-bottom'
+
+    if (this.examples.length > 1) {
       const prevBtn = document.createElement('button')
       prevBtn.type = 'button'
       prevBtn.className = 'mini-board__nav-btn'
@@ -175,27 +240,160 @@ class BoardStatePreview {
       nextBtn.textContent = 'Next →'
       nextBtn.addEventListener('click', (e) => { e.stopPropagation(); this._navigate(1) })
 
-      nav.appendChild(prevBtn)
-      nav.appendChild(indicator)
-      nav.appendChild(nextBtn)
-      this.content.appendChild(nav)
+      const navRow = document.createElement('div')
+      navRow.className = 'board-state-preview__side-row'
+      navRow.appendChild(prevBtn)
+      navRow.appendChild(indicator)
+      navRow.appendChild(nextBtn)
+      bottom.appendChild(navRow)
+    }
+
+    const phaseLabel = document.createElement('div')
+    phaseLabel.className = 'mini-board__phase mini-board__phase--prior'
+    phaseLabel.textContent = 'Before move'
+    this._phaseLabel = phaseLabel
+    bottom.appendChild(phaseLabel)
+
+    side.appendChild(bottom)
+
+    body.appendChild(left)
+    body.appendChild(side)
+    this.content.appendChild(body)
+  }
+
+  // ── Animation cycle ────────────────────────────────────────────────────────
+
+  _startCycle() {
+    this._stopCycle()
+    if (this.status !== 'ready') { return }
+    this._stopped = false
+    this._runCycle()
+  }
+
+  _stopCycle() {
+    this._stopped = true
+    clearTimeout(this._phaseTimer)
+    this._phaseTimer = null
+  }
+
+  _runCycle() {
+    if (this._stopped || !this._boardEl) { return }
+    this._phaseTimer = setTimeout(() => { this._doMove() }, PRIOR_DWELL)
+  }
+
+  _doMove() {
+    if (this._stopped || !this._boardEl) { return }
+    const example = this.examples[this.currentIndex]
+    if (!example) { return }
+
+    const startPos  = example.moveObject.startPosition
+    const endPos    = example.moveObject.endPosition
+    const startTile = this._boardEl.querySelector(`[data-index="${startPos}"]`)
+    const endTile   = this._boardEl.querySelector(`[data-index="${endPos}"]`)
+
+    // Fade out the moving piece at its origin
+    const startSpan = startTile?.querySelector('.mini-piece')
+    if (startSpan) {
+      startSpan.style.transition = `opacity ${PIECE_FADE}ms ease`
+      startSpan.style.opacity = '0'
+    }
+    // Fade out any captured piece at the destination
+    const capturedSpan = endTile?.querySelector('.mini-piece')
+    if (capturedSpan) {
+      capturedSpan.style.transition = `opacity ${PIECE_FADE}ms ease`
+      capturedSpan.style.opacity = '0'
+    }
+
+    this._phaseTimer = setTimeout(() => {
+      if (this._stopped || !this._boardEl) { return }
+
+      // Clear origin tile
+      if (startTile) { startTile.innerHTML = '' }
+
+      // Place moved piece at destination, fading in
+      if (endTile) {
+        endTile.innerHTML = ''
+        const piece = example.afterBoard.layOut[endPos]
+        if (piece && PIECE_GLYPHS[piece]) {
+          const span = document.createElement('span')
+          span.className = `mini-piece mini-piece--${piece[0]}`
+          span.textContent = PIECE_GLYPHS[piece]
+          span.style.opacity = '0'
+          span.style.transition = `opacity ${PIECE_FADE}ms ease`
+          endTile.appendChild(span)
+          requestAnimationFrame(() => { span.style.opacity = '1' })
+        }
+      }
+
+      // Update all tile highlight classes for the after-board state
+      applyHighlights(this._boardEl, example.highlights?.after || {})
+
+      this._phase = 'after'
+      if (this._phaseLabel) {
+        this._phaseLabel.textContent = 'After move'
+        this._phaseLabel.className = 'mini-board__phase mini-board__phase--after'
+      }
+
+      if (!this.isMuted && example.sound) { Sound.playSound(example.sound) }
+
+      this._phaseTimer = setTimeout(() => { this._resetBoard() }, AFTER_DWELL)
+    }, PIECE_FADE)
+  }
+
+  _resetBoard() {
+    if (this._stopped || !this._boardEl) { return }
+    const example = this.examples[this.currentIndex]
+    if (!example) { return }
+
+    // Fade out the whole board
+    this._boardEl.style.opacity = '0'
+
+    this._phaseTimer = setTimeout(() => {
+      if (this._stopped || !this._boardEl) { return }
+
+      renderLayout(this._boardEl, example.priorBoard.layOut, example.highlights?.prior || {})
+      this._boardEl.style.opacity = '1'
+      this._phase = 'prior'
+
+      if (this._phaseLabel) {
+        this._phaseLabel.textContent = 'Before move'
+        this._phaseLabel.className = 'mini-board__phase mini-board__phase--prior'
+      }
+
+      this._phaseTimer = setTimeout(() => { this._runCycle() }, HALF_BEAT)
+    }, BOARD_FADE)
+  }
+
+  // ── Controls ───────────────────────────────────────────────────────────────
+
+  _togglePlay() {
+    this.isPlaying = !this.isPlaying
+    if (this._playPauseBtn) { this._playPauseBtn.textContent = this.isPlaying ? 'Pause' : 'Play' }
+    if (this.isPlaying) {
+      this._startCycle()
+    } else {
+      this._stopCycle()
     }
   }
 
-  buildBoardPanel({ title, board, highlights }) {
-    const panel = document.createElement('div')
-    panel.className = 'mini-board__panel'
+  _toggleMute() {
+    this.isMuted = !this.isMuted
+    if (this._muteBtn) { this._muteBtn.textContent = this.isMuted ? 'Unmute' : 'Mute' }
+  }
 
-    const heading = document.createElement('div')
-    heading.className = `mini-board__phase ${title === 'Before move' ? 'mini-board__phase--prior' : 'mini-board__phase--after'}`
-    heading.textContent = title
+  _navigate(delta) {
+    this._stopCycle()
+    this.currentIndex = (this.currentIndex + delta + this.examples.length) % this.examples.length
+    this._phase = 'prior'
+    this._render()
+    if (this.isPlaying) { this._startCycle() }
+  }
 
-    const boardEl = buildMiniBoardEl()
-    renderLayout(boardEl, board.layOut, highlights)
-
-    panel.appendChild(heading)
-    panel.appendChild(boardEl)
-    return panel
+  _returnToggleToHeader() {
+    if (this.toggleBtn && this.headerEl && !this.headerEl.contains(this.toggleBtn)) {
+      this.toggleBtn.textContent = 'Hide'
+      this.headerEl.appendChild(this.toggleBtn)
+    }
   }
 
   buildMessage() {
@@ -205,16 +403,8 @@ class BoardStatePreview {
     return message
   }
 
-  blankBoard() {
-    return { layOut: Array(64).fill('ee') }
-  }
-
-  _navigate(delta) {
-    this.currentIndex = (this.currentIndex + delta + this.examples.length) % this.examples.length
-    this._render()
-  }
-
   destroy() {
+    this._stopCycle()
     this.deactivate()
   }
 }
