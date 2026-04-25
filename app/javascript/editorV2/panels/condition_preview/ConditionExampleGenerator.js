@@ -204,6 +204,17 @@ function nextPositionOnRay(position, step) {
   return next
 }
 
+function adjacentNeighborPositions(position) {
+  const neighbors = []
+  RAY_STEPS.forEach(step => {
+    const next = nextPositionOnRay(position, step)
+    if (next !== null) {
+      neighbors.push(next)
+    }
+  })
+  return neighbors
+}
+
 function positionsForSliderOrigins(endPosition, steps) {
   const origins = []
   steps.forEach(step => {
@@ -661,9 +672,7 @@ function buildAttackOrDefendContributionCandidates({ payload, side, anchorPositi
 function buildAdjacentContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
   const team = side === 'subject' ? teamForActor(payload.subject) : teamForActor(payload.target)
   const speciesPool = sideSpeciesPool(payload, side)
-  const board = buildBoardFromLayout(buildLayoutFromPieces(new Map([[anchorPosition, pieceCode(team, Board.PAWN)]])))
-  const adjacent = adjacentPositions({ board, targetPosition: anchorPosition, team })
-  return shuffled(adjacent, random)
+  return shuffled(adjacentNeighborPositions(anchorPosition), random)
     .filter(position => !occupied.has(position) && position !== anchorPosition)
     .flatMap(position => {
       return shuffled(speciesPool, random).map(species => ({
@@ -725,12 +734,14 @@ function augmentExistingRelation({ payload, skeleton, requirements, random }) {
   const pieces = clonePiecesMap(skeleton.pieces)
 
   if (payload.operator === 'shield') {
-    const independentSkeletons = nextAvailableIndependentSkeletons({ payload, occupied: pieces, random })
     let extraSubjectsNeeded = subjectIncrement
     let extraTargetsNeeded = targetIncrement
 
-    for (let index = 0; index < independentSkeletons.length && (extraSubjectsNeeded > 0 || extraTargetsNeeded > 0); index += 1) {
-      const extraSkeleton = independentSkeletons[index]
+    while (extraSubjectsNeeded > 0 || extraTargetsNeeded > 0) {
+      const independentSkeletons = nextAvailableIndependentSkeletons({ payload, occupied: pieces, random })
+      const extraSkeleton = independentSkeletons[0]
+      if (!extraSkeleton) { break }
+
       extraSkeleton.pieces.forEach((piece, position) => {
         pieces.set(position, piece)
       })
