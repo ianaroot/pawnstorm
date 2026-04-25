@@ -61,6 +61,28 @@ function renderLayout(boardEl, layout, highlights) {
   })
 }
 
+function renderPieceIntoTile(tile, piece) {
+  tile.innerHTML = ''
+  if (piece && PIECE_GLYPHS[piece]) {
+    const span = document.createElement('span')
+    span.className = `mini-piece mini-piece--${piece[0]}`
+    span.textContent = PIECE_GLYPHS[piece]
+    tile.appendChild(span)
+  }
+}
+
+function syncBoardToLayout(boardEl, layout) {
+  boardEl.querySelectorAll('[data-index]').forEach(tile => {
+    const index = parseInt(tile.dataset.index, 10)
+    const expectedPiece = layout[index]
+    const currentPiece = tile.querySelector('.mini-piece')?.textContent || null
+    const expectedGlyph = PIECE_GLYPHS[expectedPiece] || null
+
+    if (currentPiece === expectedGlyph) { return }
+    renderPieceIntoTile(tile, expectedPiece)
+  })
+}
+
 function applyHighlights(boardEl, highlights) {
   const subjectPositions   = new Set(highlights.subjectPositions || [])
   const targetPositions    = new Set(highlights.targetPositions || [])
@@ -308,12 +330,12 @@ class BoardStatePreview {
       if (this._stopped || !this._boardEl) { return }
 
       // Clear origin tile
-      if (startTile) { startTile.innerHTML = '' }
+      if (startTile) { renderPieceIntoTile(startTile, null) }
 
       // Place moved piece at destination, fading in
       if (endTile) {
-        endTile.innerHTML = ''
         const piece = example.afterBoard.layOut[endPos]
+        renderPieceIntoTile(endTile, null)
         if (piece && PIECE_GLYPHS[piece]) {
           const span = document.createElement('span')
           span.className = `mini-piece mini-piece--${piece[0]}`
@@ -324,6 +346,9 @@ class BoardStatePreview {
           requestAnimationFrame(() => { span.style.opacity = '1' })
         }
       }
+
+      // Reconcile any additional side effects, like castling rook movement.
+      syncBoardToLayout(this._boardEl, example.afterBoard.layOut)
 
       // Update all tile highlight classes for the after-board state
       applyHighlights(this._boardEl, example.highlights?.after || {})

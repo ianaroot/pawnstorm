@@ -84,7 +84,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(1)
-    expect(preview.examples.length).toBeLessThanOrEqual(6)
+    expect(preview.examples.length).toBeLessThanOrEqual(30)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
     })
@@ -103,7 +103,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(3) })
 
     expect(preview.status).toBe('ready')
-    expect(preview.examples.length).toBe(6)
+    expect(preview.examples.length).toBe(30)
 
     const speciesPairs = new Set(
       preview.examples.map(example => {
@@ -283,6 +283,30 @@ describe('ConditionExampleGenerator', () => {
           expect(rank).not.toBe(7)
         })
       })
+    })
+  })
+
+  it('can generate castle examples through the dedicated move-kind path', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'moved_piece',
+      subjectFilter: 'king',
+      operator: 'adjacent',
+      target: 'allied',
+      targetFilter: 'rook'
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(17),
+      moveKinds: ['castle']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.additionalActions).toBeTruthy()
+      expect(example.moveObject.pieceNotation).toMatch(/^O-O/)
     })
   })
 })

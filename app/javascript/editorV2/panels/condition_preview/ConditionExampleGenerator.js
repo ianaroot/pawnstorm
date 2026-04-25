@@ -4,9 +4,10 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { adjacentPositions, controlledSquares, shieldedPositions } from 'gameplay/board_query_utils'
 
-const MAX_DEFAULT_EXAMPLES = 6
+const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
 const MAX_BUILD_ATTEMPTS = 1200
+const MAX_CASTLE_BUILD_ATTEMPTS = 300
 const MAX_REVERSE_MOVES_PER_OPTION = 4
 const MAX_EXAMPLES_PER_BUCKET = 8
 const MAX_EXAMPLES_PER_SKELETON = 3
@@ -14,6 +15,8 @@ const ENRICHMENT_PROBABILITY = 0.5
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 const ENRICHMENT_END_POSITION_WEIGHT = 4
+const MOVE_KIND_STANDARD = 'standard'
+const MOVE_KIND_CASTLE = 'castle'
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
@@ -71,6 +74,17 @@ function legalPlacementForSpecies(position, species) {
 
 function teamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
+}
+
+function teamForActorWithContext(actor, movingTeam = Board.WHITE) {
+  return actor === 'allied' || actor === 'moved_piece' ? movingTeam : Board.opposingTeam(movingTeam)
+}
+
+function generationContext(options = {}) {
+  return {
+    movingTeam: options.movingTeam || Board.WHITE,
+    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE]
+  }
 }
 
 function actorLabel(actor) {
@@ -932,6 +946,7 @@ function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDAT
           geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
           compactnessPenalty: compactPairCountPenalty(result),
           movedPieceInRelation: false,
+          moveKind: moveKindForMoveObject(moveExample.moveObject),
           sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
         }
         const identity = candidateIdentity(example)
@@ -973,32 +988,59 @@ function requiredRelationPairFloor(payload) {
   return Math.max(requirements.subject, requirements.target)
 }
 
-function buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies }) {
+function mergeRelationPieces({ basePieces = new Map(), relationPieces, reservedSquares = new Set() }) {
+  const pieces = clonePiecesMap(basePieces)
+  for (const [position, piece] of relationPieces.entries()) {
+    const existingPiece = pieces.get(position)
+    if (existingPiece && existingPiece !== piece) { return null }
+    if (!existingPiece && reservedSquares.has(position)) { return null }
+    pieces.set(position, piece)
+  }
+  return pieces
+}
+
+function buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   switch (payload.operator) {
     case 'attack':
     case 'defend':
-      return buildControlSkeletons({ payload, subjectSpecies, targetSpecies })
+      return buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     case 'adjacent':
-      return buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies })
+      return buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     case 'shield':
-      return buildShieldSkeletons({ payload, subjectSpecies, targetSpecies })
+      return buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     default:
       return []
   }
 }
 
-function buildControlSkeletons({ payload, subjectSpecies, targetSpecies }) {
+function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
-  CENTRAL_POSITIONS.forEach(subjectPosition => {
-    const pieces = new Map([[subjectPosition, pieceCode(teamForActor(payload.subject), subjectSpecies)]])
-    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
-    controlledSquares({ board, attackerPosition: subjectPosition }).forEach(targetPosition => {
-      if (subjectPosition === targetPosition) { return }
-      const targetPiece = pieceCode(teamForActor(payload.target), targetSpecies)
-      if (pieces.has(targetPosition)) { return }
+  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
 
-      const relationPieces = clonePiecesMap(pieces)
-      relationPieces.set(targetPosition, targetPiece)
+  subjectPlacements.forEach(subjectPlacement => {
+    const subjectPosition = subjectPlacement.position
+    const pieces = mergeRelationPieces({
+      basePieces: fixedPieces,
+      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
+      reservedSquares
+    })
+    if (!pieces) { return }
+    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+    const controlled = controlledSquares({ board, attackerPosition: subjectPosition })
+    const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : controlled
+
+    targetPositions.forEach(targetPosition => {
+      if (subjectPosition === targetPosition) { return }
+      const targetPiece = pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)
+      if (!controlled.includes(targetPosition)) { return }
+      if (!fixedTargetPlacement && pieces.has(targetPosition)) { return }
+
+      const relationPieces = mergeRelationPieces({
+        basePieces: pieces,
+        relationPieces: new Map([[targetPosition, targetPiece]]),
+        reservedSquares
+      })
+      if (!relationPieces) { return }
       skeletons.push({
         pieces: relationPieces,
         subjectPosition,
@@ -1012,15 +1054,27 @@ function buildControlSkeletons({ payload, subjectSpecies, targetSpecies }) {
   return skeletons
 }
 
-function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies }) {
+function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
-  CENTRAL_POSITIONS.forEach(subjectPosition => {
-    const pieces = new Map([[subjectPosition, pieceCode(teamForActor(payload.subject), subjectSpecies)]])
-    RAY_STEPS.forEach(step => {
-      const targetPosition = nextPositionOnRay(subjectPosition, step)
+  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
+
+  subjectPlacements.forEach(subjectPlacement => {
+    const subjectPosition = subjectPlacement.position
+    const pieces = mergeRelationPieces({
+      basePieces: fixedPieces,
+      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
+      reservedSquares
+    })
+    if (!pieces) { return }
+    const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : adjacentNeighborPositions(subjectPosition)
+    targetPositions.forEach(targetPosition => {
       if (targetPosition === null) { return }
-      const relationPieces = clonePiecesMap(pieces)
-      relationPieces.set(targetPosition, pieceCode(teamForActor(payload.target), targetSpecies))
+      const relationPieces = mergeRelationPieces({
+        basePieces: pieces,
+        relationPieces: new Map([[targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)]]),
+        reservedSquares
+      })
+      if (!relationPieces) { return }
       skeletons.push({
         pieces: relationPieces,
         subjectPosition,
@@ -1041,42 +1095,53 @@ function shieldAttackerSpeciesForStep(step) {
   return [Board.BISHOP, Board.QUEEN]
 }
 
-function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies }) {
+function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
-  const attackerTeam = Board.opposingTeam(teamForActor(payload.target))
-  CENTRAL_POSITIONS.forEach(subjectPosition => {
+  const attackerTeam = Board.opposingTeam(teamForActorWithContext(payload.target, movingTeam))
+  const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : CENTRAL_POSITIONS.map(position => ({ position, species: subjectSpecies }))
+
+  subjectPlacements.forEach(subjectPlacement => {
+    const subjectPosition = subjectPlacement.position
     RAY_STEPS.forEach(step => {
-      const targetPosition = nextPositionOnRay(subjectPosition, step)
-      if (targetPosition === null) { return }
+      const targetPositions = fixedTargetPlacement ? [fixedTargetPlacement.position] : [nextPositionOnRay(subjectPosition, step)].filter(Boolean)
 
-      for (let distance = 1; distance <= 3; distance += 1) {
-        let attackerPosition = subjectPosition
-        for (let count = 0; count < distance; count += 1) {
-          attackerPosition = nextPositionOnRay(attackerPosition, -step)
-          if (attackerPosition === null) { break }
-        }
-        if (attackerPosition === null) { continue }
+      targetPositions.forEach(targetPosition => {
+        if (targetPosition === null) { return }
 
-        shieldAttackerSpeciesForStep(step).forEach(attackerSpecies => {
-          const relationPieces = new Map([
-            [subjectPosition, pieceCode(teamForActor(payload.subject), subjectSpecies)],
-            [targetPosition, pieceCode(teamForActor(payload.target), targetSpecies)],
-            [attackerPosition, pieceCode(attackerTeam, attackerSpecies)]
-          ])
-          const board = buildBoardFromLayout(buildLayoutFromPieces(relationPieces))
-          const shielded = shieldedPositions({ board, sourcePosition: subjectPosition, team: teamForActor(payload.target) })
-          if (!shielded.includes(targetPosition)) { return }
+        for (let distance = 1; distance <= 3; distance += 1) {
+          let attackerPosition = subjectPosition
+          for (let count = 0; count < distance; count += 1) {
+            attackerPosition = nextPositionOnRay(attackerPosition, -step)
+            if (attackerPosition === null) { break }
+          }
+          if (attackerPosition === null) { continue }
 
-          skeletons.push({
-            pieces: relationPieces,
-            subjectPosition,
-            targetPosition,
-            subjectSpecies,
-            targetSpecies,
-            geometryKey: `shield:${subjectPosition}:${targetPosition}:${attackerPosition}:${attackerSpecies}`
+          shieldAttackerSpeciesForStep(step).forEach(attackerSpecies => {
+            const relationPieces = mergeRelationPieces({
+              basePieces: fixedPieces,
+              relationPieces: new Map([
+                [subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)],
+                [targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), fixedTargetPlacement?.species || targetSpecies)],
+                [attackerPosition, pieceCode(attackerTeam, attackerSpecies)]
+              ]),
+              reservedSquares
+            })
+            if (!relationPieces) { return }
+            const board = buildBoardFromLayout(buildLayoutFromPieces(relationPieces))
+            const shielded = shieldedPositions({ board, sourcePosition: subjectPosition, team: teamForActorWithContext(payload.target, movingTeam) })
+            if (!shielded.includes(targetPosition)) { return }
+
+            skeletons.push({
+              pieces: relationPieces,
+              subjectPosition,
+              targetPosition,
+              subjectSpecies,
+              targetSpecies,
+              geometryKey: `shield:${subjectPosition}:${targetPosition}:${attackerPosition}:${attackerSpecies}`
+            })
           })
-        })
-      }
+        }
+      })
     })
   })
   return skeletons
@@ -1100,6 +1165,7 @@ function workItemKey(item) {
 
 function candidateIdentity(example) {
   return [
+    example.moveKind || MOVE_KIND_STANDARD,
     example.moveObject.startPosition,
     example.moveObject.endPosition,
     example.geometryKey,
@@ -1107,6 +1173,11 @@ function candidateIdentity(example) {
     targetSpeciesSignature(example),
     example.variantType
   ].join(':')
+}
+
+function moveKindForMoveObject(moveObject) {
+  if (/^O-O/.test(moveObject.pieceNotation || '')) { return MOVE_KIND_CASTLE }
+  return MOVE_KIND_STANDARD
 }
 
 function uniqueExamples(examples) {
@@ -1180,6 +1251,7 @@ function collectVerifiedExamples({ payload, skeleton, variant, random }) {
         geometryKey: skeleton.geometryKey,
         compactnessPenalty: compactPairCountPenalty(result),
         movedPieceInRelation,
+        moveKind: moveKindForMoveObject(moveExample.moveObject),
         sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
       }
       const identity = candidateIdentity(example)
@@ -1192,6 +1264,173 @@ function collectVerifiedExamples({ payload, skeleton, variant, random }) {
       }
     }
   }
+
+  return examples
+}
+
+function castlePresetForTeam(team) {
+  if (team !== Board.WHITE) { return [] }
+
+  return [
+    {
+      name: 'castle-kingside',
+      movingTeam: team,
+      moveStart: square('e1'),
+      moveEnd: square('g1'),
+      rookStart: square('h1'),
+      rookEnd: square('f1'),
+      fixedPieces: new Map([
+        [square('g1'), pieceCode(team, Board.KING)],
+        [square('f1'), pieceCode(team, Board.ROOK)]
+      ]),
+      reservedSquares: new Set([square('e1'), square('h1')])
+    },
+    {
+      name: 'castle-queenside',
+      movingTeam: team,
+      moveStart: square('e1'),
+      moveEnd: square('c1'),
+      rookStart: square('a1'),
+      rookEnd: square('d1'),
+      fixedPieces: new Map([
+        [square('c1'), pieceCode(team, Board.KING)],
+        [square('d1'), pieceCode(team, Board.ROOK)]
+      ]),
+      reservedSquares: new Set([square('a1'), square('b1'), square('e1')])
+    }
+  ]
+}
+
+function castleAnchorPlacementsForActor({ actor, filter = 'any', filterMode = null, preset, movingTeam = Board.WHITE }) {
+  const alliedAnchors = [
+    { position: preset.moveEnd, species: Board.KING },
+    { position: preset.rookEnd, species: Board.ROOK }
+  ]
+
+  if (actor === 'moved_piece') {
+    return speciesMatchesFilter(Board.KING, filter, filterMode) ? [alliedAnchors[0]] : []
+  }
+  if (actor !== 'allied') { return [] }
+
+  return alliedAnchors.filter(anchor => speciesMatchesFilter(anchor.species, filter, filterMode))
+}
+
+function collectLegalCastleMoveExamples({ afterPieces, preset, random }) {
+  const piecesWithKings = selectKingPair(afterPieces, random)
+  if (!piecesWithKings) { return [] }
+  if (piecesWithKings.get(preset.moveEnd) !== pieceCode(preset.movingTeam, Board.KING)) { return [] }
+  if (piecesWithKings.get(preset.rookEnd) !== pieceCode(preset.movingTeam, Board.ROOK)) { return [] }
+
+  const afterLayout = buildLayoutFromPieces(piecesWithKings)
+  const priorPieces = clonePiecesMap(piecesWithKings)
+  priorPieces.delete(preset.moveEnd)
+  priorPieces.delete(preset.rookEnd)
+  if (priorPieces.has(preset.moveStart) || priorPieces.has(preset.rookStart)) { return [] }
+  priorPieces.set(preset.moveStart, pieceCode(preset.movingTeam, Board.KING))
+  priorPieces.set(preset.rookStart, pieceCode(preset.movingTeam, Board.ROOK))
+
+  const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces))
+  let moveObject
+  try {
+    moveObject = Rules.getMoveObject(preset.moveStart, preset.moveEnd, priorBoard)
+  } catch {
+    return []
+  }
+  if (moveObject.illegal || !moveObject.additionalActions || !/^O-O/.test(moveObject.pieceNotation || '')) { return [] }
+
+  const rebuiltAfter = priorBoard.lightClone()
+  rebuiltAfter._hypotheticallyMovePiece(moveObject)
+  if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { return [] }
+
+  return [{ priorBoard, moveObject, afterBoard: rebuiltAfter }]
+}
+
+function collectCastleExamples({ payload, random, movingTeam = Board.WHITE, maxExamples = MAX_CANDIDATE_POOL }) {
+  const variants = buildExampleVariantPlan(payload)
+  const subjectSpeciesPool = shuffled(candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null), random)
+  const targetSpeciesPool = shuffled(candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null), random)
+  const examples = []
+  const seen = new Set()
+  let attempts = 0
+
+  castlePresetForTeam(movingTeam).forEach(preset => {
+    subjectSpeciesPool.forEach(subjectSpecies => {
+      targetSpeciesPool.forEach(targetSpecies => {
+        const subjectAnchors = [null, ...castleAnchorPlacementsForActor({
+          actor: payload.subject,
+          filter: payload.subjectFilter || 'any',
+          filterMode: payload.subjectFilterMode || null,
+          preset,
+          movingTeam
+        })]
+        const targetAnchors = [null, ...castleAnchorPlacementsForActor({
+          actor: payload.target,
+          filter: payload.targetFilter || 'any',
+          filterMode: payload.targetFilterMode || null,
+          preset,
+          movingTeam
+        })]
+
+        subjectAnchors.forEach(fixedSubjectPlacement => {
+          targetAnchors.forEach(fixedTargetPlacement => {
+            if (attempts >= MAX_CASTLE_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
+            const skeletons = buildCandidateSkeletons({
+              payload,
+              subjectSpecies,
+              targetSpecies,
+              movingTeam,
+              fixedPieces: preset.fixedPieces,
+              fixedSubjectPlacement,
+              fixedTargetPlacement,
+              reservedSquares: preset.reservedSquares
+            })
+
+            skeletons.forEach(skeleton => {
+              variants.forEach(variant => {
+                attempts += 1
+                if (attempts > MAX_CASTLE_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
+                if (examples.length >= maxExamples) { return }
+                collectLegalCastleMoveExamples({ afterPieces: skeleton.pieces, preset, random }).forEach(moveExample => {
+                  const result = evaluateCandidate({
+                    payload,
+                    priorBoard: moveExample.priorBoard,
+                    moveObject: moveExample.moveObject
+                  })
+                  if (!result) { return }
+
+                  const movedPieceInRelation = (
+                    result.subjectPositions.includes(moveExample.moveObject.endPosition) ||
+                    result.targetPositions.includes(moveExample.moveObject.endPosition)
+                  )
+                  if (variant.type === 'involved' && !movedPieceInRelation) { return }
+                  if (variant.type === 'separate' && movedPieceInRelation) { return }
+
+                  const example = {
+                    priorBoard: moveExample.priorBoard,
+                    afterBoard: moveExample.afterBoard,
+                    moveObject: moveExample.moveObject,
+                    result,
+                    highlights: subjectTargetLabels(payload, moveExample.moveObject, result),
+                    label: candidateLabel(variant, payload),
+                    variantType: movedPieceInRelation ? 'involved' : 'separate',
+                    geometryKey: `${preset.name}:${skeleton.geometryKey}`,
+                    compactnessPenalty: compactPairCountPenalty(result),
+                    movedPieceInRelation,
+                    moveKind: MOVE_KIND_CASTLE,
+                    sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
+                  }
+                  const identity = candidateIdentity(example)
+                  if (seen.has(identity)) { return }
+                  seen.add(identity)
+                  examples.push(example)
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  })
 
   return examples
 }
@@ -1377,6 +1616,7 @@ function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, s
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
     compactnessPenalty: compactPairCountPenalty(result),
     movedPieceInRelation,
+    moveKind: moveKindForMoveObject(recomputedMoveObject),
     sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
   }
 }
@@ -1485,6 +1725,18 @@ function finalizeExamples(baseExamples, payload, maxExamples, random) {
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
+function mergeMoveKindExamples({ standardExamples, castleExamples, payload, maxExamples, random }) {
+  if (castleExamples.length === 0) {
+    return finalizeExamples(standardExamples, payload, maxExamples, random)
+  }
+
+  const selectedCastle = selectDiverseExamples(castleExamples, 1)
+  const selectedCastleIds = new Set(selectedCastle.map(candidateIdentity))
+  const remainingStandard = standardExamples.filter(example => !selectedCastleIds.has(candidateIdentity(example)))
+  const selectedStandard = finalizeExamples(remainingStandard, payload, Math.max(0, maxExamples - selectedCastle.length), random)
+  return selectDiverseExamples(uniqueExamples([...selectedCastle, ...selectedStandard]), maxExamples)
+}
+
 function buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }) {
   const items = []
 
@@ -1551,6 +1803,7 @@ function scheduleWorkItems(items, random) {
 export function generateConditionExamples(payload, options = {}) {
   const maxExamples = options.maxExamples || MAX_DEFAULT_EXAMPLES
   const random = options.random || Math.random
+  const context = generationContext(options)
   const support = supportStatus(payload)
   if (support.status !== 'supported') {
     return {
@@ -1560,59 +1813,65 @@ export function generateConditionExamples(payload, options = {}) {
     }
   }
 
-  const variants = buildExampleVariantPlan(payload)
-  const subjectSpeciesPool = shuffled(candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null), random)
-  const targetSpeciesPool = shuffled(candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null), random)
-  const workQueue = scheduleWorkItems(
-    buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }),
-    random
-  )
-  const buckets = new Map()
-  const seenSignatures = new Set()
-  let totalExamples = 0
-  let attempts = 0
-
-  for (let index = 0; index < workQueue.length; index += 1) {
-    attempts += 1
-    if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
-
-    const item = workQueue[index]
-    const augmentedSkeletons = augmentSkeletonsForComparisons({
-      payload,
-      skeleton: item.skeleton,
+  let verified = []
+  if (context.moveKinds.includes(MOVE_KIND_STANDARD)) {
+    const variants = buildExampleVariantPlan(payload)
+    const subjectSpeciesPool = shuffled(candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null), random)
+    const targetSpeciesPool = shuffled(candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null), random)
+    const workQueue = scheduleWorkItems(
+      buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }),
       random
-    })
+    )
+    const buckets = new Map()
+    const seenSignatures = new Set()
+    let totalExamples = 0
+    let attempts = 0
 
-    for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
-      const examples = collectVerifiedExamples({
+    for (let index = 0; index < workQueue.length; index += 1) {
+      attempts += 1
+      if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
+
+      const item = workQueue[index]
+      const augmentedSkeletons = augmentSkeletonsForComparisons({
         payload,
-        skeleton: augmentedSkeletons[skeletonIndex],
-        variant: item.variant,
+        skeleton: item.skeleton,
         random
       })
 
-      for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
-        const example = examples[exampleIndex]
-        const signature = varietySignature(example)
-        if (seenSignatures.has(signature)) { continue }
+      for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
+        const examples = collectVerifiedExamples({
+          payload,
+          skeleton: augmentedSkeletons[skeletonIndex],
+          variant: item.variant,
+          random
+        })
 
-        const key = bucketKeyForExample(example)
-        const bucket = buckets.get(key) || []
-        if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+        for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
+          const example = examples[exampleIndex]
+          const signature = varietySignature(example)
+          if (seenSignatures.has(signature)) { continue }
 
-        seenSignatures.add(signature)
-        bucket.push(example)
-        buckets.set(key, bucket)
-        totalExamples += 1
+          const key = bucketKeyForExample(example)
+          const bucket = buckets.get(key) || []
+          if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+
+          seenSignatures.add(signature)
+          bucket.push(example)
+          buckets.set(key, bucket)
+          totalExamples += 1
+
+          if (totalExamples >= MAX_CANDIDATE_POOL) { break }
+        }
 
         if (totalExamples >= MAX_CANDIDATE_POOL) { break }
       }
-
-      if (totalExamples >= MAX_CANDIDATE_POOL) { break }
     }
-  }
 
-  const verified = Array.from(buckets.values()).flat()
+    verified = Array.from(buckets.values()).flat()
+  }
+  const castleExamples = context.moveKinds.includes(MOVE_KIND_CASTLE)
+    ? collectCastleExamples({ payload, random, movingTeam: context.movingTeam, maxExamples: MAX_CANDIDATE_POOL })
+    : []
   if (verified.length === 0 && usesZeroRelationPath(comparisonRequirements(payload))) {
     const zeroExamples = buildZeroRelationExamples({ payload, random, maxExamples: MAX_CANDIDATE_POOL })
     if (zeroExamples.length > 0) {
@@ -1624,7 +1883,7 @@ export function generateConditionExamples(payload, options = {}) {
     }
   }
 
-  if (verified.length === 0) {
+  if (verified.length === 0 && castleExamples.length === 0) {
     return {
       status: 'no_examples',
       reason: "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work.",
@@ -1635,7 +1894,13 @@ export function generateConditionExamples(payload, options = {}) {
   return {
     status: 'ready',
     reason: null,
-    examples: finalizeExamples(verified, payload, maxExamples, random)
+    examples: mergeMoveKindExamples({
+      standardExamples: verified,
+      castleExamples,
+      payload,
+      maxExamples,
+      random
+    })
   }
 }
 
