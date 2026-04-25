@@ -778,7 +778,6 @@ function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDAT
           label: '',
           variantType: 'required',
           geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
-          compactnessPenalty: compactPairCountPenalty(result),
           movedPieceInRelation: false,
           moveKind: moveKindForMoveObject(moveExample.moveObject),
           sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
@@ -806,14 +805,6 @@ function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
   if (usesZeroRelationPath(requirements)) { return [] }
 
   return augmentExistingRelation({ payload, skeleton, requirements, random })
-}
-
-function compactPairCountPenalty(result) {
-  return (
-    Math.max(0, result.pairs.length - 1) +
-    Math.max(0, result.subjectPositions.length - 1) +
-    Math.max(0, result.targetPositions.length - 1)
-  )
 }
 
 function requiredRelationPairFloor(payload) {
@@ -924,7 +915,6 @@ function collectVerifiedExamples({ payload, skeleton, variant, random }) {
         label: candidateLabel(variant, payload),
         variantType: movedPieceInRelation ? 'involved' : 'separate',
         geometryKey: skeleton.geometryKey,
-        compactnessPenalty: compactPairCountPenalty(result),
         movedPieceInRelation,
         moveKind: moveKindForMoveObject(moveExample.moveObject),
         sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
@@ -1089,8 +1079,7 @@ function collectCastleExamples({ payload, random, movingTeam = Board.WHITE, maxE
                     label: candidateLabel(variant, payload),
                     variantType: movedPieceInRelation ? 'involved' : 'separate',
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
-                    compactnessPenalty: compactPairCountPenalty(result),
-                    movedPieceInRelation,
+                              movedPieceInRelation,
                     moveKind: MOVE_KIND_CASTLE,
                     sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
                   }
@@ -1289,7 +1278,6 @@ function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, s
     label: baseExample.label,
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
-    compactnessPenalty: compactPairCountPenalty(result),
     movedPieceInRelation,
     moveKind: moveKindForMoveObject(recomputedMoveObject),
     sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
