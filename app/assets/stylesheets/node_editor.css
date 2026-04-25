@@ -1178,6 +1178,8 @@
 
 .node-form-panel.node-form-panel--condition {
   width: min(34rem, calc(100vw - 3rem));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
 }
 
 
@@ -2061,6 +2063,184 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* ============================================
+   BOARD STATE PREVIEW (condition node editor)
+   ============================================ */
+
+.board-state-preview-wrap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #3d3a35;
+}
+
+.board-state-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.board-state-preview__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+}
+
+.board-state-preview__toggle {
+  padding: 2px 8px;
+  background: #1a1815;
+  border: 1px solid #5a5650;
+  border-radius: 4px;
+  color: #9CA3AF;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.board-state-preview__toggle:hover {
+  background: #252220;
+  color: #E5E5E5;
+}
+
+.mini-board__phase {
+  min-height: 16px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+}
+
+.mini-board__phase--prior {
+  color: #6B7280;
+}
+
+.mini-board__phase--after {
+  color: #A855F7;
+}
+
+.mini-board {
+  display: inline-block;
+}
+
+.mini-board__table {
+  border-collapse: collapse;
+  border: 2px solid #3d3a35;
+}
+
+.mini-board__table tr {
+  height: 28px;
+}
+
+.mini-board__table td {
+  padding: 0;
+}
+
+.mini-board__tile {
+  width: 28px;
+  height: 28px;
+  text-align: center;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.mini-board__tile--light {
+  background-color: #f0d9b5;
+}
+
+.mini-board__tile--dark {
+  background-color: #b58863;
+}
+
+.mini-board__tile--subject {
+  outline: 2px solid #A855F7;
+  outline-offset: -2px;
+}
+
+.mini-board__tile--target {
+  outline: 2px solid #22c55e;
+  outline-offset: -2px;
+}
+
+.mini-board__tile--moved-start {
+  box-shadow: inset 0 0 0 2px #f59e0b;
+}
+
+.mini-board__tile--moved-end {
+  box-shadow: inset 0 0 0 2px #f59e0b, inset 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+/* Piece glyphs — explicit team colors with contrasting shadow */
+.mini-piece {
+  display: block;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.mini-piece--W {
+  color: #f5f0e8;
+  text-shadow: 0 0 2px #1a1410, 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.mini-piece--B {
+  color: #1a1410;
+  text-shadow: 0 0 2px #f0d9b5, 0 1px 3px rgba(255, 255, 255, 0.35);
+}
+
+.mini-board__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mini-board__nav-btn {
+  padding: 4px 10px;
+  background: #1a1815;
+  border: 1px solid #5a5650;
+  border-radius: 4px;
+  color: #E5E5E5;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mini-board__nav-btn:hover {
+  background: #252220;
+  border-color: #7a7670;
+}
+
+.mini-board__nav-indicator {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.mini-board__meta {
+  margin-bottom: 8px;
+}
+
+.mini-board__pair {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.mini-board__panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.board-state-preview__message {
+  padding: 10px 12px;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  background: #171411;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 /* Loading state for undo/redo buttons */

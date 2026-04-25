@@ -209,6 +209,11 @@ class ClickHandler {
     if (this.editorPanel) {
       this.editorPanel.classList.add('hidden')
     }
+    this.boardStatePreview?.deactivate()
+  }
+
+  setBoardStatePreview(preview) {
+    this.boardStatePreview = preview
   }
 
   // ===== Editor Panel Population =====
@@ -258,6 +263,9 @@ class ClickHandler {
 
   populateConditionForm(node) {
     this.conditionForm?.populate(node.data)
+    if (this.boardStatePreview && this.conditionForm) {
+      this.boardStatePreview.activate(this.conditionForm)
+    }
   }
 
 
