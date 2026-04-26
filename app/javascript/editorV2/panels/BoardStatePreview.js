@@ -115,7 +115,7 @@ class BoardStatePreview {
     this.status        = 'idle'
     this.reason        = ''
     this.isPlaying     = true
-    this.isMuted       = false
+    this.isMuted       = true
     this._phase        = 'prior'
     this._stopped      = true
     this._phaseTimer   = null
