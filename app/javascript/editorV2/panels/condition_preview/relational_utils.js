@@ -55,7 +55,7 @@ export function subjectTargetLabels(plan, moveObject, result) {
 
 export function buildExampleVariantPlan(payload) {
   if (roleRequiresMovedPiece(payload.subject) || roleRequiresMovedPiece(payload.target)) {
-    return [{ type: 'required', label: 'Moved Piece Required' }]
+    return [{ type: 'required' }]
   }
 
   const alliedRoles = [
@@ -64,18 +64,13 @@ export function buildExampleVariantPlan(payload) {
   ].filter(Boolean)
 
   if (alliedRoles.length === 0) {
-    return [{ type: 'separate', label: 'Moved Piece Separate' }]
+    return [{ type: 'separate' }]
   }
 
   return [
-    { type: 'involved', label: 'Moved Piece Involved' },
-    { type: 'separate', label: 'Moved Piece Not Involved' }
+    { type: 'involved' },
+    { type: 'separate' }
   ]
-}
-
-export function candidateLabel(variant) {
-  if (variant.type === 'required') { return '' }
-  return variant.label
 }
 
 export function sideSpeciesPool(payload, side) {

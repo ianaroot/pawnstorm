@@ -114,7 +114,6 @@ export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExampl
     moveObject: recomputedMoveObject,
     result,
     highlights: subjectTargetLabels(plan, recomputedMoveObject, result),
-    label: baseExample.label,
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
     movedPieceInRelation,

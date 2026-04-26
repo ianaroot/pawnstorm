@@ -9,7 +9,7 @@ import {
 import { selectKingPair, collectLegalReverseMoves, moveKindForMoveObject, soundForMove, candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
 import {
   roleRequiresEnemyMovedPiece, relationalActorRequiresPresence,
-  subjectTargetLabels, candidateLabel, evaluateCandidate
+  subjectTargetLabels, evaluateCandidate
 } from 'editorV2/panels/condition_preview/relational_utils'
 
 const MAX_REVERSE_MOVES_PER_OPTION = 4
@@ -175,7 +175,6 @@ export function collectVerifiedExamples({ plan, skeleton, variant, random }) {
         moveObject: moveExample.moveObject,
         result,
         highlights: subjectTargetLabels(plan, moveExample.moveObject, result),
-        label: candidateLabel(variant),
         variantType: movedPieceInRelation ? 'involved' : 'separate',
         geometryKey: skeleton.geometryKey,
         movedPieceInRelation,
@@ -263,7 +262,6 @@ export function buildZeroRelationExamples({ plan, random, maxExamples }) {
           moveObject: moveExample.moveObject,
           result,
           highlights: subjectTargetLabels(plan, moveExample.moveObject, result),
-          label: '',
           variantType: 'required',
           geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
           movedPieceInRelation: false,

@@ -9,7 +9,7 @@ import {
   MOVE_KIND_CASTLE, soundForMove
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  subjectTargetLabels, candidateLabel, evaluateCandidate
+  subjectTargetLabels, evaluateCandidate
 } from 'editorV2/panels/condition_preview/relational_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
 
@@ -156,7 +156,6 @@ export function collectCastleExamples({ plan, random, maxExamples }) {
                     moveObject: moveExample.moveObject,
                     result,
                     highlights: subjectTargetLabels(plan, moveExample.moveObject, result),
-                    label: candidateLabel(variant),
                     variantType: movedPieceInRelation ? 'involved' : 'separate',
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
                     movedPieceInRelation,

@@ -1,4 +1,5 @@
 export const COUNT_COMPARISON_METRIC = 'count'
+export const VALUE_COMPARISON_METRIC = 'value'
 export const EXACT_NUMBER_COMPARISON_SOURCE = 'exact_number'
 export const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
 
@@ -43,11 +44,14 @@ export function comparisonRequirements(payload) {
   const requirements = {
     subject: 1,
     target: 1,
-    comparisonsPresent: false
+    comparisonsPresent: false,
+    countComparisonsPresent: false
   }
 
   comparisonDescriptors(payload).forEach(descriptor => {
     requirements.comparisonsPresent = true
+    if (descriptor.metric !== COUNT_COMPARISON_METRIC) { return }
+    requirements.countComparisonsPresent = true
     requirements[descriptor.side] = desiredCountForComparison(descriptor)
   })
 
@@ -55,5 +59,5 @@ export function comparisonRequirements(payload) {
 }
 
 export function usesZeroRelationPath(requirements) {
-  return requirements.subject === 0 || requirements.target === 0
+  return requirements.countComparisonsPresent && (requirements.subject === 0 || requirements.target === 0)
 }

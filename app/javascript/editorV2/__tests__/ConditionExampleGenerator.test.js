@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
@@ -27,6 +28,15 @@ function expectLegalPriorTurnState(example) {
   expect(Rules.checkQuery({ board: example.priorBoard, teamString: opposingTeam })).toBe(false)
 }
 
+function relationalValueForSide(example, side) {
+  const analysis = new CandidateMoveAnalysisV2({
+    board: example.priorBoard,
+    moveObject: example.moveObject
+  })
+  const positions = side === 'subject' ? example.result.subjectPositions : example.result.targetPositions
+  return analysis.metricForPositions({ metric: 'value', positions })
+}
+
 describe('ConditionExampleGenerator', () => {
   it('marks cover previews unsupported with a specific message', () => {
     const preview = generateConditionExamples({
@@ -43,7 +53,7 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples).toEqual([])
   })
 
-  it('marks value-based relational comparisons unsupported with a specific message', () => {
+  it('marks non-literal value-based relational comparisons unsupported with a specific message', () => {
     const preview = generateConditionExamples({
       kind: 'relational',
       subject: 'allied',
@@ -53,12 +63,11 @@ describe('ConditionExampleGenerator', () => {
       targetFilter: 'any',
       subjectComparisonMetric: 'value',
       subjectComparator: 'greater_than',
-      subjectComparisonSource: 'exact_number',
-      subjectComparisonSourceTotal: 3
+      subjectComparisonSource: 'moved_piece'
     }, { random: seededRandom(11) })
 
     expect(preview.status).toBe('unsupported')
-    expect(preview.reason).toBe('Value-based relational comparisons are not supported yet.')
+    expect(preview.reason).toBe('This relational comparison source is not supported yet.')
   })
 
   it('marks prior-board relational comparisons unsupported with a specific message', () => {
@@ -235,6 +244,36 @@ describe('ConditionExampleGenerator', () => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.result.subjectPositions.length).toBeGreaterThanOrEqual(2)
       expect(example.result.targetPositions.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  it('supports exact-number value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'pawn',
+      targetComparisonMetric: 'value',
+      targetComparator: 'equal_to',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 1,
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 8
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(19) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(relationalValueForSide(example, 'subject')).toBe(8)
+      expect(relationalValueForSide(example, 'target')).toBe(1)
+      expectLegalPriorTurnState(example)
     })
   })
 

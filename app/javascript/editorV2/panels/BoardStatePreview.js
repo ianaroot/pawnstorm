@@ -191,15 +191,6 @@ class BoardStatePreview {
 
     const example = this.examples[this.currentIndex]
 
-    if (example?.label) {
-      const meta = document.createElement('div')
-      meta.className = 'mini-board__meta'
-      const title = document.createElement('div')
-      title.className = 'mini-board__phase mini-board__phase--after'
-      title.textContent = example.label
-      meta.appendChild(title)
-      this.content.appendChild(meta)
-    }
 
     const body = document.createElement('div')
     body.className = 'board-state-preview__body'

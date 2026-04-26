@@ -4,7 +4,7 @@ import {
   teamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/relational_utils'
 import {
-  COUNT_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
+  COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements
 } from 'editorV2/panels/condition_preview/comparison_requirements'
 
@@ -49,10 +49,7 @@ export function buildRelationalPlan(payload, options = {}) {
     if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE) {
       return { status: 'unsupported', reason: 'Prior-board relational comparisons are not supported yet.' }
     }
-    if (descriptor.metric === 'value') {
-      return { status: 'unsupported', reason: 'Value-based relational comparisons are not supported yet.' }
-    }
-    if (descriptor.metric !== COUNT_COMPARISON_METRIC) {
+    if (![COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC].includes(descriptor.metric)) {
       return { status: 'unsupported', reason: `${descriptor.metric} relational comparisons are not supported yet.` }
     }
     if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) {
@@ -72,6 +69,7 @@ export function buildRelationalPlan(payload, options = {}) {
     targetFilter: payload.targetFilter || 'any',
     subjectFilterMode: payload.subjectFilterMode || null,
     targetFilterMode: payload.targetFilterMode || null,
+    comparisonDescriptors: comparisons,
     requirements: comparisonRequirements(payload),
     variants: buildExampleVariantPlan(payload),
     subjectSpeciesPool: sideSpeciesPool(payload, 'subject'),

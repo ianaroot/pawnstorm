@@ -59,10 +59,9 @@ Key exports: `speciesMatchesFilter`, `candidateSpecies`, `selectKingPair`, `coll
 
 ### `relational_utils.js`
 Relational-condition-specific helpers. Unary conditions will not use this file.  
-Key exports: `teamForActor`, `roleRequiresMovedPiece`, `roleRequiresEnemyMovedPiece`, `relationalActorRequiresPresence`, `relationParams`, `subjectTargetLabels`, `buildExampleVariantPlan`, `candidateLabel`, `sideSpeciesPool`, `evaluateCandidate`.  
+Key exports: `teamForActor`, `roleRequiresMovedPiece`, `roleRequiresEnemyMovedPiece`, `relationalActorRequiresPresence`, `relationParams`, `subjectTargetLabels`, `buildExampleVariantPlan`, `sideSpeciesPool`, `evaluateCandidate`.  
 `evaluateCandidate({ plan, priorBoard, moveObject })` — uses `plan.evaluationPayload` and `plan.relationParams`; gates on `result.pairs.length === 0`. Callers needing zero-pair results must inline evaluation instead.  
 `subjectTargetLabels(plan, moveObject, result)` — uses `plan.subject`/`plan.target`.  
-`candidateLabel(variant)` — payload-free; variant.type drives the label.
 
 ### `generation_plan.js`
 Validates payload and constructs the typed plan struct consumed by all pipeline modules. Absorbs the support-check logic that would otherwise live in the generator.  
