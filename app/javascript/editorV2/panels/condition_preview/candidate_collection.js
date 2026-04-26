@@ -250,9 +250,9 @@ export function buildZeroRelationExamples({ plan, random, maxExamples }) {
     ...subjectSpeciesPool,
     ...targetSpeciesPool
   ]), random)
-  const subjectPositions = [square('a4'), square('b5'), square('c6'), square('d7')]
-  const targetPositions = [square('h4'), square('g5'), square('f6'), square('e7')]
-  const movedEndPositions = [square('e2'), square('d2'), square('f2'), square('c2')]
+  const subjectPositions = shuffled(Array.from({ length: 64 }, (_unused, index) => index), random)
+  const targetPositions = shuffled(Array.from({ length: 64 }, (_unused, index) => index), random)
+  const movedEndPositions = shuffled(Array.from({ length: 64 }, (_unused, index) => index), random)
   const requiredPlacements = requiredZeroRelationPlacements({ plan, random })
   const examples = []
   const seenCandidates = new Set()
