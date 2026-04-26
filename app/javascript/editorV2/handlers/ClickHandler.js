@@ -21,8 +21,8 @@ class ClickHandler {
     
     // Currently editing node
     this.editingNodeId = null
-    this.selectionPreviewEnabled = false
-    
+    this._chainPreviewTimer = null
+
     // Callbacks
     this.onNodeSelected = null
     this.onNodeDeselected = null
@@ -39,14 +39,12 @@ class ClickHandler {
       if (e.target.classList.contains('node-connector')) { return }
       if (this.store.shouldSuppressClicks()) { return }
       this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
-      if (this.selectionPreviewEnabled) { return }
       if (this.isPlainClick(e)) { this.openEditor(clientId) }
     })
-    
+
     element.addEventListener('dblclick', (e) => {
-      if (this.selectionPreviewEnabled) { return }
-      if (e.target.classList.contains('node-connector')) {  return  }
-      this.openEditor(clientId)  
+      if (e.target.classList.contains('node-connector')) { return }
+      this.openEditor(clientId)
     })
   }
   
@@ -76,11 +74,11 @@ class ClickHandler {
   handleStoreUpdate(event) {
     this.syncSelectionClasses()
     if (event !== EVENTS.SELECTION_CHANGE) { return }
-    if (this.editingNodeId && this.store.getSelectedNodeIds().length > 1) {
-      this.closeEditor()
-    }
-    if (this.selectionPreviewEnabled) {
-      this.renderSelectionPreview()
+    if (this.store.getSelectedNodeIds().length > 1) {
+      if (this.editingNodeId) { this._hideEditorPanel() }
+      if (this.boardStatePreview?.mode !== 'idle' && this.boardStatePreview?.isEnabled) {
+        this.renderSelectionPreview()
+      }
     }
   }
 
@@ -125,7 +123,14 @@ class ClickHandler {
       if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
       if (this.isEditableTarget(event.target)) { return }
       event.preventDefault()
-      this.toggleSelectionPreview()
+      if (this.boardStatePreview?.isEnabled) {
+        this.boardStatePreview.toggle()
+      } else if (this.store.getSelectedNodeIds().length > 1) {
+        this.boardStatePreview.isEnabled = true
+        this.renderSelectionPreview()
+      } else if (this.editingNodeId && this.conditionForm) {
+        this.boardStatePreview?.activate(this.conditionForm)
+      }
       return
     }
 
@@ -204,7 +209,6 @@ class ClickHandler {
 
 
   openEditor(clientId) {
-    if (this.selectionPreviewEnabled) { return }
     const node = this.store.getNode(clientId)
     if (!node) {
       console.warn(`Node ${clientId} not found`)
@@ -229,13 +233,18 @@ class ClickHandler {
     }
   }
   
-  closeEditor() {
-    this.selectionPreviewEnabled = false
+  _hideEditorPanel() {
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = null
     this.editingNodeId = null
     this.store.setEditingNode(null)
     if (this.editorPanel) {
       this.editorPanel.classList.add('hidden')
     }
+  }
+
+  closeEditor() {
+    this._hideEditorPanel()
     this.boardStatePreview?.deactivate()
   }
 
@@ -262,54 +271,21 @@ class ClickHandler {
   }
 
   showSelectionPreviewPanel(preview) {
-    if (!this.editorPanel) { return }
-    this.editorPanel.classList.remove('hidden')
-
-    const typeSpan = this.editorPanel.querySelector('#edit-node-type')
-    if (typeSpan) { typeSpan.textContent = 'condition chain' }
-
-    this.editorPanel.classList.add('node-form-panel--condition')
-    this.setConditionPreviewOnlyMode(true)
-    this.editorPanel.querySelector('#score-form')?.classList.add('hidden')
-    this.editorPanel.querySelector('#organizer-form')?.classList.add('hidden')
     this.boardStatePreview?.showSelectionPreview(preview)
   }
 
   renderSelectionPreview() {
     const chain = this.buildSelectionPreview()
     if (chain.status !== 'ready') {
-      this.showSelectionPreviewPanel({
-        status: chain.status,
-        reason: chain.reason,
-        examples: []
-      })
+      this.showSelectionPreviewPanel({ status: chain.status, reason: chain.reason, examples: [] })
       return
     }
 
-    this.showSelectionPreviewPanel(generateConditionChainExamples(chain.payloads))
-  }
-
-  toggleSelectionPreview() {
-    this.selectionPreviewEnabled = !this.selectionPreviewEnabled
-
-    if (this.selectionPreviewEnabled) {
-      this.renderSelectionPreview()
-      return
-    }
-
-    this.boardStatePreview?.deactivate()
-    if (!this.editorPanel) { return }
-
-    if (this.editingNodeId) {
-      const node = this.store.getNode(this.editingNodeId)
-      if (node) {
-        this.editorPanel.classList.remove('hidden')
-        this.populateEditorPanel(node)
-        return
-      }
-    }
-
-    this.editorPanel.classList.add('hidden')
+    this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = setTimeout(() => {
+      this.showSelectionPreviewPanel(generateConditionChainExamples(chain.payloads))
+    }, 0)
   }
 
   // ===== Editor Panel Population =====
@@ -494,6 +470,7 @@ class ClickHandler {
     document.removeEventListener('keydown', this.boundHandleKeyDown)
     this.conditionForm?.detach()
     this.unsubscribeStore?.()
+    clearTimeout(this._chainPreviewTimer)
     this.attachedElements = new WeakMap()
     this.editingNodeId = null
   }

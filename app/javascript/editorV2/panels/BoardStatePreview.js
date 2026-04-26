@@ -119,6 +119,7 @@ class BoardStatePreview {
     this._phase        = 'prior'
     this._stopped      = true
     this._phaseTimer   = null
+    this._generationTimer = null
     this._boardEl      = null
     this._phaseLabel   = null
     this._playPauseBtn = null
@@ -127,13 +128,15 @@ class BoardStatePreview {
 
     this.toggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation()
-      this._toggle()
+      this.toggle()
     })
     this.mode = 'idle'
     this.selectionPreview = null
   }
 
   activate(conditionForm) {
+    this._stopCycle()
+    this.isEnabled = true
     this.mode = 'form'
     this.selectionPreview = null
     this.conditionForm = conditionForm
@@ -170,10 +173,11 @@ class BoardStatePreview {
     this.conditionForm = null
     this.mode = 'idle'
     this.selectionPreview = null
+    this._renderEmptyBoard()
     this.wrap.classList.add('hidden')
   }
 
-  _toggle() {
+  toggle() {
     this.isEnabled = !this.isEnabled
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
@@ -186,13 +190,18 @@ class BoardStatePreview {
       this._stopCycle()
       this._returnToggleToHeader()
       if (this.toggleBtn) { this.toggleBtn.textContent = 'Show examples' }
+      this._renderEmptyBoard()
       this.content.classList.add('hidden')
     }
   }
 
   _update(payload) {
+    if (!this.isEnabled) { return }
     this._stopCycle()
-    this._applyPreview(generateConditionExamples(payload))
+    this._applyPreview({ status: 'loading', reason: 'Computing preview…', examples: [] })
+    this._generationTimer = setTimeout(() => {
+      this._applyPreview(generateConditionExamples(payload))
+    }, 0)
   }
 
   _applyPreview(preview) {
@@ -205,6 +214,15 @@ class BoardStatePreview {
     if (this.status === 'ready' && this.isPlaying) { this._startCycle() }
   }
 
+  _renderEmptyBoard() {
+    this.content.innerHTML = ''
+    this._boardEl      = null
+    this._phaseLabel   = null
+    this._playPauseBtn = null
+    this._muteBtn      = null
+    this.content.appendChild(buildMiniBoardEl())
+  }
+
   _render() {
     this._returnToggleToHeader()
     this.content.innerHTML = ''
@@ -212,6 +230,19 @@ class BoardStatePreview {
     this._phaseLabel   = null
     this._playPauseBtn = null
     this._muteBtn      = null
+
+    if (this.status === 'loading') {
+      const boardEl = buildMiniBoardEl()
+      boardEl.classList.add('mini-board--loading')
+      const overlay = document.createElement('div')
+      overlay.className = 'mini-board__loading-overlay'
+      const spinner = document.createElement('div')
+      spinner.className = 'mini-board__spinner'
+      overlay.appendChild(spinner)
+      boardEl.appendChild(overlay)
+      this.content.appendChild(boardEl)
+      return
+    }
 
     if (this.status !== 'ready') {
       this.content.appendChild(this.buildMessage())
@@ -313,6 +344,8 @@ class BoardStatePreview {
     this._stopped = true
     clearTimeout(this._phaseTimer)
     this._phaseTimer = null
+    clearTimeout(this._generationTimer)
+    this._generationTimer = null
   }
 
   _runCycle() {
@@ -432,8 +465,9 @@ class BoardStatePreview {
   }
 
   _returnToggleToHeader() {
-    if (this.toggleBtn && this.headerEl && !this.headerEl.contains(this.toggleBtn)) {
-      this.toggleBtn.textContent = 'Hide'
+    if (!this.toggleBtn || !this.headerEl) { return }
+    this.toggleBtn.textContent = 'Hide'
+    if (!this.headerEl.contains(this.toggleBtn)) {
       this.headerEl.appendChild(this.toggleBtn)
     }
   }
