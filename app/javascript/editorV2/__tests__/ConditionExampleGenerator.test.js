@@ -53,7 +53,7 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples).toEqual([])
   })
 
-  it('marks non-literal value-based relational comparisons unsupported with a specific message', () => {
+  it('marks unsupported relational value comparison sources with a specific message', () => {
     const preview = generateConditionExamples({
       kind: 'relational',
       subject: 'allied',
@@ -63,7 +63,7 @@ describe('ConditionExampleGenerator', () => {
       targetFilter: 'any',
       subjectComparisonMetric: 'value',
       subjectComparator: 'greater_than',
-      subjectComparisonSource: 'moved_piece'
+      subjectComparisonSource: 'enemy'
     }, { random: seededRandom(11) })
 
     expect(preview.status).toBe('unsupported')
@@ -275,6 +275,80 @@ describe('ConditionExampleGenerator', () => {
       expect(relationalValueForSide(example, 'target')).toBe(1)
       expectLegalPriorTurnState(example)
     })
+  })
+
+  it('supports moved_piece value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'moved_piece'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(20) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.priorBoard.pieceTypeAt(example.moveObject.startPosition)).not.toBe('K')
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('supports captured_piece value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'captured_piece'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(21) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+    expect(preview.examples.some(example => example.moveObject.captureNotation)).toBe(true)
+  })
+
+  it('supports enemy_captured_piece value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'adjacent',
+      target: 'enemy',
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'enemy_captured_piece'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(22) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+    const capturedContextExample = preview.examples.find(example => example.priorBoard.recentMoveContext?.capturedPieceSpecies)
+    expect(capturedContextExample).toBeTruthy()
+    expect(capturedContextExample.priorBoard.recentMoveContext.capturedPieceSpecies).not.toBe('K')
   })
 
   it('supports zero-count comparisons while still resolving singular actors', () => {

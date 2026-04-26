@@ -106,7 +106,10 @@ export function selectKingPair(basePieces, random) {
   return null
 }
 
-export function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpecies, recentMoveContext, random, maxResults }) {
+export function collectLegalReverseMoves({
+  afterPieces, movedPieceSquare, movedPieceSpecies, recentMoveContext, random, maxResults,
+  capturedPieceSpeciesPool = null
+}) {
   const piecesWithKings = selectKingPair(afterPieces, random)
   if (!piecesWithKings) { return [] }
 
@@ -118,27 +121,41 @@ export function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedP
   for (let index = 0; index < originCandidates.length; index += 1) {
     const originPosition = originCandidates[index]
     if (piecesWithKings.has(originPosition)) { continue }
+    const captureSpeciesOptions = capturedPieceSpeciesPool === null
+      ? [null]
+      : (capturedPieceSpeciesPool.length === 0 ? [null] : capturedPieceSpeciesPool)
 
-    const priorPieces = clonePiecesMap(piecesWithKings)
-    priorPieces.delete(movedPieceSquare)
-    priorPieces.set(originPosition, pieceCode(Board.WHITE, movedPieceSpecies))
-    const priorLayout = buildLayoutFromPieces(priorPieces)
-    const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext)
+    for (let captureIndex = 0; captureIndex < captureSpeciesOptions.length; captureIndex += 1) {
+      const capturedSpecies = captureSpeciesOptions[captureIndex]
+      const priorPieces = clonePiecesMap(piecesWithKings)
+      priorPieces.delete(movedPieceSquare)
+      priorPieces.set(originPosition, pieceCode(Board.WHITE, movedPieceSpecies))
+      if (capturedSpecies) {
+        priorPieces.set(movedPieceSquare, pieceCode(Board.BLACK, capturedSpecies))
+      }
+      const priorLayout = buildLayoutFromPieces(priorPieces)
+      const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext)
 
-    let moveObject
-    try {
-      moveObject = Rules.getMoveObject(originPosition, movedPieceSquare, priorBoard)
-    } catch {
-      continue
+      let moveObject
+      try {
+        moveObject = Rules.getMoveObject(originPosition, movedPieceSquare, priorBoard)
+      } catch {
+        continue
+      }
+      const captureRequired = capturedPieceSpeciesPool !== null && capturedPieceSpeciesPool.length > 0
+      const captureForbidden = capturedPieceSpeciesPool !== null && capturedPieceSpeciesPool.length === 0
+      if (moveObject.illegal || moveObject.additionalActions || moveObject.promotionPiece) { continue }
+      if ((captureRequired && !moveObject.captureNotation) || (captureForbidden && moveObject.captureNotation)) { continue }
+      if (capturedPieceSpeciesPool === null && moveObject.captureNotation) { continue }
+      if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
+
+      const rebuiltAfter = priorBoard.lightClone()
+      rebuiltAfter._hypotheticallyMovePiece(moveObject)
+      if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
+
+      moves.push({ priorBoard, moveObject, afterBoard })
+      if (moves.length >= maxResults) { break }
     }
-    if (moveObject.illegal || moveObject.additionalActions || moveObject.promotionPiece || moveObject.captureNotation) { continue }
-    if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
-
-    const rebuiltAfter = priorBoard.lightClone()
-    rebuiltAfter._hypotheticallyMovePiece(moveObject)
-    if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
-
-    moves.push({ priorBoard, moveObject, afterBoard })
     if (moves.length >= maxResults) { break }
   }
 

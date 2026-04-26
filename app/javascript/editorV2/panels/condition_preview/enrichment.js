@@ -2,7 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, pieceCode, shuffled } from 'editorV2/panels/condition_preview/board_utils'
+import { legalPlacementForSpecies, pieceCode, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
 import { moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
 import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
@@ -74,15 +74,6 @@ export function weightedEnrichmentCandidateSquares(example, random) {
   return shuffled(weighted, random)
 }
 
-export function weightedDecorationSpecies(random) {
-  const roll = random()
-  if (roll < 0.6) { return Board.PAWN }
-  if (roll < 0.7) { return Board.NIGHT }
-  if (roll < 0.8) { return Board.BISHOP }
-  if (roll < 0.9) { return Board.ROOK }
-  return Board.QUEEN
-}
-
 export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExample, suffix }) {
   let recomputedMoveObject
   try {
@@ -141,7 +132,7 @@ export function buildEnrichmentPlacementPolicy(example, random) {
         break
       }
       if (position === undefined) { return null }
-      const species = weightedDecorationSpecies(random)
+      const species = weightedRandomSpecies(random)
       if (!legalPlacementForSpecies(position, species)) {
         return this.nextPlacement()
       }

@@ -30,6 +30,16 @@ export function unique(values) {
   return Array.from(new Set(values))
 }
 
+const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
+  Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
+  Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
+  Board.ROOK, Board.ROOK,
+  Board.NIGHT, Board.NIGHT,
+  Board.BISHOP, Board.BISHOP,
+  Board.QUEEN,
+  Board.KING
+])
+
 export function shuffled(values, random) {
   const copy = [...values]
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -39,6 +49,21 @@ export function shuffled(values, random) {
     copy[swapIndex] = current
   }
   return copy
+}
+
+export function weightedSpeciesCandidates({ includeKing = true, allowedSpecies = null } = {}) {
+  const allowed = allowedSpecies ? new Set(allowedSpecies) : null
+  return WEIGHTED_SPECIES_DISTRIBUTION.filter(species => {
+    if (!includeKing && species === Board.KING) { return false }
+    if (allowed && !allowed.has(species)) { return false }
+    return true
+  })
+}
+
+export function weightedRandomSpecies(random, options = {}) {
+  const candidates = weightedSpeciesCandidates(options)
+  if (candidates.length === 0) { return null }
+  return candidates[Math.floor(random() * candidates.length)]
 }
 
 export function pushUnique(queue, seenKeys, entry, key) {

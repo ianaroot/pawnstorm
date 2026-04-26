@@ -41,6 +41,10 @@ export function desiredCountForComparison(descriptor) {
 }
 
 export function comparisonRequirements(payload) {
+  return comparisonRequirementsFromDescriptors(comparisonDescriptors(payload))
+}
+
+export function comparisonRequirementsFromDescriptors(descriptors) {
   const requirements = {
     subject: 1,
     target: 1,
@@ -48,7 +52,7 @@ export function comparisonRequirements(payload) {
     countComparisonsPresent: false
   }
 
-  comparisonDescriptors(payload).forEach(descriptor => {
+  descriptors.forEach(descriptor => {
     requirements.comparisonsPresent = true
     if (descriptor.metric !== COUNT_COMPARISON_METRIC) { return }
     requirements.countComparisonsPresent = true

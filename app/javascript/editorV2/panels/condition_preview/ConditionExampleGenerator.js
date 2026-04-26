@@ -7,7 +7,7 @@ import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/pan
 import { varietySignature, bucketKeyForExample } from 'editorV2/panels/condition_preview/diversity_selection'
 import { finalizeExamples, mergeMoveKindExamples } from 'editorV2/panels/condition_preview/enrichment'
 import { collectCastleExamples } from 'editorV2/panels/condition_preview/special_move_examples'
-import { buildRelationalPlan } from 'editorV2/panels/condition_preview/generation_plan'
+import { buildRelationalPlan, expandRelationalPlanSources } from 'editorV2/panels/condition_preview/generation_plan'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -95,57 +95,65 @@ export function generateConditionExamples(payload, options = {}) {
     return { status: plan.status, reason: plan.reason, examples: [] }
   }
 
+  const plans = expandRelationalPlanSources(plan)
+
   let verified = []
-  if (plan.moveKinds.includes(MOVE_KIND_STANDARD)) {
-    const workQueue = scheduleWorkItems(buildWorkItems({ plan, random }), random)
-    const buckets = new Map()
-    const seenSignatures = new Set()
-    let totalExamples = 0
-    let attempts = 0
+  let castleExamples = []
+  let zeroExamples = []
 
-    for (let index = 0; index < workQueue.length; index += 1) {
-      attempts += 1
-      if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
+  plans.forEach(activePlan => {
+    if (activePlan.moveKinds.includes(MOVE_KIND_STANDARD)) {
+      const workQueue = scheduleWorkItems(buildWorkItems({ plan: activePlan, random }), random)
+      const buckets = new Map()
+      const seenSignatures = new Set()
+      let totalExamples = 0
+      let attempts = 0
 
-      const item = workQueue[index]
-      const augmentedSkeletons = augmentSkeletonsForComparisons({ plan, skeleton: item.skeleton, random })
+      for (let index = 0; index < workQueue.length; index += 1) {
+        attempts += 1
+        if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
 
-      for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
-        const examples = collectVerifiedExamples({ plan, skeleton: augmentedSkeletons[skeletonIndex], variant: item.variant, random })
+        const item = workQueue[index]
+        const augmentedSkeletons = augmentSkeletonsForComparisons({ plan: activePlan, skeleton: item.skeleton, random })
 
-        for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
-          const example = examples[exampleIndex]
-          const signature = varietySignature(example)
-          if (seenSignatures.has(signature)) { continue }
+        for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
+          const examples = collectVerifiedExamples({ plan: activePlan, skeleton: augmentedSkeletons[skeletonIndex], variant: item.variant, random })
 
-          const key = bucketKeyForExample(example)
-          const bucket = buckets.get(key) || []
-          if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+          for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
+            const example = examples[exampleIndex]
+            const signature = varietySignature(example)
+            if (seenSignatures.has(signature)) { continue }
 
-          seenSignatures.add(signature)
-          bucket.push(example)
-          buckets.set(key, bucket)
-          totalExamples += 1
+            const key = bucketKeyForExample(example)
+            const bucket = buckets.get(key) || []
+            if (bucket.length >= MAX_EXAMPLES_PER_BUCKET) { continue }
+
+            seenSignatures.add(signature)
+            bucket.push(example)
+            buckets.set(key, bucket)
+            totalExamples += 1
+
+            if (totalExamples >= MAX_CANDIDATE_POOL) { break }
+          }
 
           if (totalExamples >= MAX_CANDIDATE_POOL) { break }
         }
-
-        if (totalExamples >= MAX_CANDIDATE_POOL) { break }
       }
+
+      verified = [...verified, ...Array.from(buckets.values()).flat()]
     }
 
-    verified = Array.from(buckets.values()).flat()
-  }
-
-  const castleExamples = plan.moveKinds.includes(MOVE_KIND_CASTLE)
-    ? collectCastleExamples({ plan, random, maxExamples: MAX_CANDIDATE_POOL })
-    : []
-
-  if (verified.length === 0 && usesZeroRelationPath(plan.requirements)) {
-    const zeroExamples = buildZeroRelationExamples({ plan, random, maxExamples: MAX_CANDIDATE_POOL })
-    if (zeroExamples.length > 0) {
-      return { status: 'ready', reason: null, examples: finalizeExamples(zeroExamples, plan, maxExamples, random) }
+    if (activePlan.moveKinds.includes(MOVE_KIND_CASTLE)) {
+      castleExamples = [...castleExamples, ...collectCastleExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
     }
+
+    if (usesZeroRelationPath(activePlan.requirements)) {
+      zeroExamples = [...zeroExamples, ...buildZeroRelationExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
+    }
+  })
+
+  if (verified.length === 0 && zeroExamples.length > 0) {
+    return { status: 'ready', reason: null, examples: finalizeExamples(zeroExamples, plans[0], maxExamples, random) }
   }
 
   if (verified.length === 0 && castleExamples.length === 0) {
@@ -159,7 +167,7 @@ export function generateConditionExamples(payload, options = {}) {
   return {
     status: 'ready',
     reason: null,
-    examples: mergeMoveKindExamples({ standardExamples: verified, castleExamples, plan, maxExamples, random })
+    examples: mergeMoveKindExamples({ standardExamples: verified, castleExamples, plan: plans[0], maxExamples, random })
   }
 }
 

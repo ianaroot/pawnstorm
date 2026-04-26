@@ -72,7 +72,7 @@ function descriptorForSide(plan, side) {
 function valueBoundsForDescriptor(descriptor) {
   if (!descriptor || descriptor.metric !== 'value') { return null }
 
-  const total = Number(descriptor.total || 0)
+  const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
   switch (descriptor.comparator) {
     case 'equal_to':
       return { min: total, max: total }
