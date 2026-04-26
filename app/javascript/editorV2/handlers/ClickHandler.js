@@ -75,7 +75,11 @@ class ClickHandler {
 
   handleStoreUpdate(event) {
     this.syncSelectionClasses()
-    if (event === EVENTS.SELECTION_CHANGE && this.selectionPreviewEnabled) {
+    if (event !== EVENTS.SELECTION_CHANGE) { return }
+    if (this.editingNodeId && this.store.getSelectedNodeIds().length > 1) {
+      this.closeEditor()
+    }
+    if (this.selectionPreviewEnabled) {
       this.renderSelectionPreview()
     }
   }
