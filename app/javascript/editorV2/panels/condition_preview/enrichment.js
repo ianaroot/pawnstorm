@@ -3,7 +3,7 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { legalPlacementForSpecies, pieceCode, shuffled } from 'editorV2/panels/condition_preview/board_utils'
-import { moveKindForMoveObject, soundForMove, candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
+import { moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
 import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
 
@@ -93,6 +93,7 @@ export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExampl
   if (recomputedMoveObject.illegal || recomputedMoveObject.additionalActions || recomputedMoveObject.promotionPiece) {
     return null
   }
+  if (!legalPriorTurnState(priorBoard, recomputedMoveObject)) { return null }
 
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject: recomputedMoveObject }

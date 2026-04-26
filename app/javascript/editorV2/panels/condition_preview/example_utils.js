@@ -132,6 +132,7 @@ export function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedP
       continue
     }
     if (moveObject.illegal || moveObject.additionalActions || moveObject.promotionPiece || moveObject.captureNotation) { continue }
+    if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
 
     const rebuiltAfter = priorBoard.lightClone()
     rebuiltAfter._hypotheticallyMovePiece(moveObject)
@@ -142,6 +143,14 @@ export function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedP
   }
 
   return moves
+}
+
+export function legalPriorTurnState(priorBoard, moveObject) {
+  const movedTeam = priorBoard.teamAt(moveObject.startPosition)
+  if (!movedTeam) { return false }
+
+  const opposingTeam = Board.opposingTeam(movedTeam)
+  return !Rules.checkQuery({ board: priorBoard, teamString: opposingTeam })
 }
 
 export function moveKindForMoveObject(moveObject) {

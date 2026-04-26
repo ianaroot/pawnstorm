@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import Board from 'gameplay/board'
+import Rules from 'gameplay/rules'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import generateConditionExamples from '../panels/condition_preview/ConditionExampleGenerator'
 
@@ -17,6 +19,12 @@ function evaluateExample(payload, example) {
     board: example.priorBoard,
     moveObject: example.moveObject
   })
+}
+
+function expectLegalPriorTurnState(example) {
+  const movedTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
+  const opposingTeam = Board.opposingTeam(movedTeam)
+  expect(Rules.checkQuery({ board: example.priorBoard, teamString: opposingTeam })).toBe(false)
 }
 
 describe('ConditionExampleGenerator', () => {
@@ -156,6 +164,27 @@ describe('ConditionExampleGenerator', () => {
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.result.subjectPositions).toContain(example.moveObject.endPosition)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('never returns a prior board where the opponent is already in check before the move', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'moved_piece',
+      targetFilter: 'any'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(18) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
     })
   })
 
@@ -307,6 +336,7 @@ describe('ConditionExampleGenerator', () => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.moveObject.additionalActions).toBeTruthy()
       expect(example.moveObject.pieceNotation).toMatch(/^O-O/)
+      expectLegalPriorTurnState(example)
     })
   })
 })

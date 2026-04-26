@@ -5,7 +5,7 @@ import {
   layoutsMatch, shuffled
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
-  speciesMatchesFilter, selectKingPair, candidateIdentity,
+  speciesMatchesFilter, selectKingPair, candidateIdentity, legalPriorTurnState,
   MOVE_KIND_CASTLE, soundForMove
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
@@ -84,6 +84,7 @@ export function collectLegalCastleMoveExamples({ afterPieces, preset, random }) 
     return []
   }
   if (moveObject.illegal || !moveObject.additionalActions || !/^O-O/.test(moveObject.pieceNotation || '')) { return [] }
+  if (!legalPriorTurnState(priorBoard, moveObject)) { return [] }
 
   const rebuiltAfter = priorBoard.lightClone()
   rebuiltAfter._hypotheticallyMovePiece(moveObject)
