@@ -23,28 +23,30 @@ import {
   COUNT_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements, usesZeroRelationPath
 } from 'editorV2/panels/condition_preview/comparison_requirements'
+import {
+  MOVE_KIND_STANDARD, MOVE_KIND_CASTLE,
+  speciesMatchesFilter, candidateSpecies, selectKingPair, collectLegalReverseMoves,
+  moveKindForMoveObject, soundForMove, candidateIdentity
+} from 'editorV2/panels/condition_preview/example_utils'
+import {
+  teamForActor, sideSpeciesPool, roleRequiresMovedPiece, roleRequiresEnemyMovedPiece,
+  relationalActorRequiresPresence, relationParams, subjectTargetLabels,
+  buildExampleVariantPlan, candidateLabel, evaluateCandidate
+} from 'editorV2/panels/condition_preview/relational_utils'
+import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/panels/condition_preview/candidate_collection'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
 const MAX_BUILD_ATTEMPTS = 1200
 const MAX_CASTLE_BUILD_ATTEMPTS = 300
-const MAX_REVERSE_MOVES_PER_OPTION = 4
 const MAX_EXAMPLES_PER_BUCKET = 8
-const MAX_EXAMPLES_PER_SKELETON = 3
 const ENRICHMENT_PROBABILITY = 0.5
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 const ENRICHMENT_END_POSITION_WEIGHT = 4
-const MOVE_KIND_STANDARD = 'standard'
-const MOVE_KIND_CASTLE = 'castle'
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
-const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
-const KING_CANDIDATE_POSITIONS = Object.freeze([
-  square('b1'), square('g1'), square('a1'), square('h1'), square('c1'), square('f1'),
-  square('b8'), square('g8'), square('a8'), square('h8'), square('c8'), square('f8')
-])
 const FILTER_LABELS = Object.freeze({
   allied: 'Allied',
   enemy: 'Enemy',
@@ -53,10 +55,6 @@ const FILTER_LABELS = Object.freeze({
   captured_piece: 'Captured piece',
   enemy_captured_piece: 'Enemy captured piece'
 })
-
-function teamForActor(actor) {
-  return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
-}
 
 function generationContext(options = {}) {
   return {
@@ -67,18 +65,6 @@ function generationContext(options = {}) {
 
 function actorLabel(actor) {
   return FILTER_LABELS[actor] || actor
-}
-
-function roleRequiresMovedPiece(actor) {
-  return actor === 'moved_piece'
-}
-
-function roleRequiresEnemyMovedPiece(actor) {
-  return actor === 'enemy_moved_piece'
-}
-
-function relationalActorRequiresPresence(actor) {
-  return roleRequiresMovedPiece(actor) || roleRequiresEnemyMovedPiece(actor)
 }
 
 function supportStatus(payload) {
@@ -140,109 +126,6 @@ function supportStatus(payload) {
   return { status: 'supported', reason: null }
 }
 
-function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
-  if (filter === 'any') { return true }
-
-  let matches
-  switch (filter) {
-    case 'king':
-      matches = species === Board.KING
-      break
-    case 'queen':
-      matches = species === Board.QUEEN
-      break
-    case 'rook':
-      matches = species === Board.ROOK
-      break
-    case 'bishop':
-      matches = species === Board.BISHOP
-      break
-    case 'knight':
-      matches = species === Board.NIGHT
-      break
-    case 'pawn':
-      matches = species === Board.PAWN
-      break
-    case 'major':
-      matches = species === Board.ROOK || species === Board.QUEEN
-      break
-    case 'minor':
-      matches = species === Board.NIGHT || species === Board.BISHOP
-      break
-    default:
-      matches = false
-  }
-
-  return filterMode === 'exclude' ? !matches : matches
-}
-
-function candidateSpecies(filter = 'any', filterMode = null) {
-  const pool = (filter === 'king' && filterMode !== 'exclude') ? [Board.KING] : [...DISPLAY_SPECIES]
-  return pool.filter(species => speciesMatchesFilter(species, filter, filterMode))
-}
-
-function preferredExtraMovedSpecies(subjectSpecies, targetSpecies) {
-  return unique([
-    Board.NIGHT,
-    Board.BISHOP,
-    Board.ROOK,
-    Board.QUEEN,
-    Board.PAWN,
-    subjectSpecies,
-    targetSpecies
-  ])
-}
-
-function buildEnemyRecentMoveContext(endPosition, species) {
-  const candidates = originCandidatesForSpecies(endPosition, species).filter(position => position !== endPosition)
-  const startPosition = candidates[0] || endPosition
-  return {
-    moveObject: { startPosition, endPosition },
-    movingTeam: Board.BLACK,
-    movedPieceStartPosition: startPosition,
-    movedPieceEndPosition: endPosition,
-    movedPieceSpeciesBeforeMove: species,
-    movedPieceSpeciesAfterMove: species,
-    capturedPiecePosition: null,
-    capturedPieceTeam: null,
-    capturedPieceSpecies: null
-  }
-}
-
-function relationParams(payload) {
-  return {
-    subject: payload.subject,
-    subjectFilter: payload.subjectFilter || 'any',
-    subjectFilterMode: payload.subjectFilterMode || null,
-    operator: payload.operator,
-    target: payload.target,
-    targetFilter: payload.targetFilter || 'any',
-    targetFilterMode: payload.targetFilterMode || null
-  }
-}
-
-function subjectTargetLabels(payload, moveObject, result) {
-  const startPosition = moveObject.startPosition
-  const endPosition = moveObject.endPosition
-  const priorSubjectPositions = payload.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
-  const priorTargetPositions = payload.target === 'moved_piece' ? [startPosition] : result.targetPositions
-
-  return {
-    prior: {
-      subjectPositions: priorSubjectPositions,
-      targetPositions: priorTargetPositions,
-      movedStartPosition: startPosition,
-      movedEndPosition: null
-    },
-    after: {
-      subjectPositions: result.subjectPositions,
-      targetPositions: result.targetPositions,
-      movedStartPosition: null,
-      movedEndPosition: endPosition
-    }
-  }
-}
-
 function varietySignature(example) {
   const subjectPieces = example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
   const targetPieces = example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
@@ -266,229 +149,6 @@ function subjectSpeciesSignature(example) {
 
 function targetSpeciesSignature(example) {
   return example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-}
-
-function buildExampleVariantPlan(payload) {
-  if (roleRequiresMovedPiece(payload.subject) || roleRequiresMovedPiece(payload.target)) {
-    return [{ type: 'required', label: 'Moved Piece Required' }]
-  }
-
-  const alliedRoles = [
-    payload.subject === 'allied' ? 'subject' : null,
-    payload.target === 'allied' ? 'target' : null
-  ].filter(Boolean)
-
-  if (alliedRoles.length === 0) {
-    return [{ type: 'separate', label: 'Moved Piece Separate' }]
-  }
-
-  return [
-    { type: 'involved', label: 'Moved Piece Involved' },
-    { type: 'separate', label: 'Moved Piece Not Involved' }
-  ]
-}
-
-function roleSquaresForMovedPiece(payload, skeleton) {
-  const options = []
-  if (payload.subject === 'moved_piece') {
-    options.push({ square: skeleton.subjectPosition, species: skeleton.subjectSpecies, reason: 'required' })
-  } else if (payload.target === 'moved_piece') {
-    options.push({ square: skeleton.targetPosition, species: skeleton.targetSpecies, reason: 'required' })
-  } else {
-    if (payload.subject === 'allied') {
-      options.push({ square: skeleton.subjectPosition, species: skeleton.subjectSpecies, reason: 'subject' })
-    }
-    if (payload.target === 'allied') {
-      options.push({ square: skeleton.targetPosition, species: skeleton.targetSpecies, reason: 'target' })
-    }
-  }
-  return options
-}
-
-function movedPieceOptionSets({ payload, skeleton, variant }) {
-  if (variant.type === 'required') {
-    return roleSquaresForMovedPiece(payload, skeleton).map(option => ({
-      ...option,
-      variantType: 'required'
-    }))
-  }
-
-  if (variant.type === 'involved') {
-    return roleSquaresForMovedPiece(payload, skeleton).map(option => ({
-      ...option,
-      variantType: 'involved'
-    }))
-  }
-
-  const occupied = new Set(skeleton.pieces.keys())
-  const relationPositions = [skeleton.subjectPosition, skeleton.targetPosition]
-  const extraSquares = sortByDistanceFromRelation(
-    Array.from({ length: 64 }, (_unused, index) => index).filter(index => !occupied.has(index)),
-    relationPositions
-  )
-
-  const options = []
-  preferredExtraMovedSpecies(skeleton.subjectSpecies, skeleton.targetSpecies).forEach(species => {
-    extraSquares.forEach(squarePosition => {
-      if (!legalPlacementForSpecies(squarePosition, species)) { return }
-      options.push({
-        square: squarePosition,
-        species,
-        reason: 'separate',
-        variantType: 'separate'
-      })
-    })
-  })
-  return options
-}
-
-function selectKingPair(basePieces, random) {
-  const existingWhiteKings = []
-  const existingBlackKings = []
-
-  basePieces.forEach((piece, position) => {
-    if (pieceSpecies(piece) !== Board.KING) { return }
-    if (pieceTeam(piece) === Board.WHITE) {
-      existingWhiteKings.push(position)
-    } else if (pieceTeam(piece) === Board.BLACK) {
-      existingBlackKings.push(position)
-    }
-  })
-
-  if (existingWhiteKings.length > 1 || existingBlackKings.length > 1) { return null }
-
-  const whiteCandidates = existingWhiteKings.length > 0
-    ? existingWhiteKings
-    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
-  const blackCandidates = existingBlackKings.length > 0
-    ? existingBlackKings
-    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
-
-  for (let whiteIndex = 0; whiteIndex < whiteCandidates.length; whiteIndex += 1) {
-    const whiteKing = whiteCandidates[whiteIndex]
-    if (existingWhiteKings.length === 0 && squareIsOccupied(basePieces, whiteKing)) { continue }
-
-    for (let blackIndex = 0; blackIndex < blackCandidates.length; blackIndex += 1) {
-      const blackKing = blackCandidates[blackIndex]
-      if (whiteKing === blackKing) { continue }
-      if (existingBlackKings.length === 0 && squareIsOccupied(basePieces, blackKing)) { continue }
-
-      const fileDiff = Math.abs(Board.fileIndex(whiteKing) - Board.fileIndex(blackKing))
-      const rankDiff = Math.abs(Board.rankIndex(whiteKing) - Board.rankIndex(blackKing))
-      if (Math.max(fileDiff, rankDiff) <= 1) { continue }
-
-      const pieces = clonePiecesMap(basePieces)
-      if (existingWhiteKings.length === 0) {
-        pieces.set(whiteKing, pieceCode(Board.WHITE, Board.KING))
-      }
-      if (existingBlackKings.length === 0) {
-        pieces.set(blackKing, pieceCode(Board.BLACK, Board.KING))
-      }
-
-      return pieces
-    }
-  }
-
-  return null
-}
-
-function collectLegalReverseMoves({ afterPieces, movedPieceSquare, movedPieceSpecies, recentMoveContext, random, maxResults }) {
-  const piecesWithKings = selectKingPair(afterPieces, random)
-  if (!piecesWithKings) { return [] }
-
-  const afterLayout = buildLayoutFromPieces(piecesWithKings)
-  const afterBoard = buildBoardFromLayout(afterLayout, recentMoveContext)
-
-  const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies), random)
-  const moves = []
-  for (let index = 0; index < originCandidates.length; index += 1) {
-    const originPosition = originCandidates[index]
-    if (piecesWithKings.has(originPosition)) { continue }
-
-    const priorPieces = clonePiecesMap(piecesWithKings)
-    priorPieces.delete(movedPieceSquare)
-    priorPieces.set(originPosition, pieceCode(Board.WHITE, movedPieceSpecies))
-    const priorLayout = buildLayoutFromPieces(priorPieces)
-    const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext)
-
-    let moveObject
-    try {
-      moveObject = Rules.getMoveObject(originPosition, movedPieceSquare, priorBoard)
-    } catch {
-      continue
-    }
-    if (moveObject.illegal || moveObject.additionalActions || moveObject.promotionPiece || moveObject.captureNotation) { continue }
-
-    const rebuiltAfter = priorBoard.lightClone()
-    rebuiltAfter._hypotheticallyMovePiece(moveObject)
-    if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
-
-    moves.push({
-      priorBoard,
-      moveObject,
-      afterBoard
-    })
-    if (moves.length >= maxResults) { break }
-  }
-
-  return moves
-}
-
-function soundForMove(priorBoard, afterBoard, moveObject) {
-  const movedTeam = priorBoard.teamAt(moveObject.startPosition)
-  const opposingTeam = Board.opposingTeam(movedTeam)
-  if (Rules.checkQuery({ board: afterBoard, teamString: opposingTeam })) { return 'check' }
-  if (priorBoard.layOut[moveObject.endPosition] !== Board.EMPTY_SQUARE) { return 'capture' }
-  return 'move'
-}
-
-function evaluateCandidate({ payload, priorBoard, moveObject }) {
-  const evaluator = new ConditionEvaluatorV2()
-  const input = { board: priorBoard, moveObject }
-  if (!evaluator.evaluate(payload, input)) { return null }
-
-  const analysis = new CandidateMoveAnalysisV2({ board: priorBoard, moveObject })
-  const result = analysis.relationalResult(relationParams(payload))
-  if (result.pairs.length === 0) { return null }
-
-  return result
-}
-
-
-function sideSpeciesPool(payload, side) {
-  const filter = side === 'subject' ? (payload.subjectFilter || 'any') : (payload.targetFilter || 'any')
-  const filterMode = side === 'subject' ? (payload.subjectFilterMode || null) : (payload.targetFilterMode || null)
-  return candidateSpecies(filter, filterMode)
-}
-
-function requiredZeroRelationPlacements({ payload }) {
-  const placements = []
-
-  if (roleRequiresEnemyMovedPiece(payload.subject)) {
-    const subjectSpecies = sideSpeciesPool(payload, 'subject')[0] || Board.NIGHT
-    placements.push({
-      side: 'subject',
-      actor: payload.subject,
-      position: square('b6'),
-      species: subjectSpecies,
-      team: Board.BLACK,
-      recentMoveContext: buildEnemyRecentMoveContext(square('b6'), subjectSpecies)
-    })
-  }
-
-  if (roleRequiresEnemyMovedPiece(payload.target)) {
-    const targetSpecies = sideSpeciesPool(payload, 'target')[0] || Board.PAWN
-    placements.push({
-      side: 'target',
-      actor: payload.target,
-      position: square('g6'),
-      species: targetSpecies,
-      team: Board.BLACK,
-      recentMoveContext: buildEnemyRecentMoveContext(square('g6'), targetSpecies)
-    })
-  }
-
-  return placements
 }
 
 function buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
@@ -647,100 +307,6 @@ function augmentExistingRelation({ payload, skeleton, requirements, random }) {
   }]
 }
 
-function buildZeroRelationExamples({ payload, random, maxExamples = MAX_CANDIDATE_POOL }) {
-  const subjectSpeciesPool = shuffled(sideSpeciesPool(payload, 'subject'), random)
-  const targetSpeciesPool = shuffled(sideSpeciesPool(payload, 'target'), random)
-  const movedSpeciesPool = shuffled(unique([
-    Board.NIGHT,
-    Board.BISHOP,
-    ...subjectSpeciesPool,
-    ...targetSpeciesPool
-  ]), random)
-  const subjectTeam = teamForActor(payload.subject)
-  const targetTeam = teamForActor(payload.target)
-  const subjectPositions = [square('a4'), square('b5'), square('c6'), square('d7')]
-  const targetPositions = [square('h4'), square('g5'), square('f6'), square('e7')]
-  const movedEndPositions = [square('e2'), square('d2'), square('f2'), square('c2')]
-  const requiredPlacements = requiredZeroRelationPlacements({ payload })
-  const examples = []
-  const seenCandidates = new Set()
-
-  for (let movedIndex = 0; movedIndex < movedSpeciesPool.length; movedIndex += 1) {
-    for (let endIndex = 0; endIndex < movedEndPositions.length; endIndex += 1) {
-      const movedSpecies = movedSpeciesPool[movedIndex]
-      const movedPieceSquare = movedEndPositions[endIndex]
-      const pieces = new Map([[movedPieceSquare, pieceCode(Board.WHITE, movedSpecies)]])
-      let recentMoveContext = null
-
-      if (!relationalActorRequiresPresence(payload.subject)) {
-        // General actors may be absent in a zero-count relation.
-      } else if (payload.subject !== 'moved_piece') {
-        const subjectSpecies = subjectSpeciesPool[0]
-        if (!subjectSpecies) { continue }
-        pieces.set(subjectPositions[0], pieceCode(subjectTeam, subjectSpecies))
-      }
-
-      if (!relationalActorRequiresPresence(payload.target)) {
-        // General actors may be absent in a zero-count relation.
-      } else if (payload.target !== 'moved_piece') {
-        const targetSpecies = targetSpeciesPool[0]
-        if (!targetSpecies) { continue }
-        pieces.set(targetPositions[0], pieceCode(targetTeam, targetSpecies))
-      }
-
-      requiredPlacements.forEach(placement => {
-        pieces.set(placement.position, pieceCode(placement.team, placement.species))
-        recentMoveContext ||= placement.recentMoveContext
-      })
-
-      const moveExamples = collectLegalReverseMoves({
-        afterPieces: pieces,
-        movedPieceSquare,
-        movedPieceSpecies: movedSpecies,
-        recentMoveContext,
-        random,
-        maxResults: 1
-      })
-
-      for (let moveIndex = 0; moveIndex < moveExamples.length; moveIndex += 1) {
-        const moveExample = moveExamples[moveIndex]
-        const evaluator = new ConditionEvaluatorV2()
-        const input = {
-          board: moveExample.priorBoard,
-          moveObject: moveExample.moveObject
-        }
-        if (!evaluator.evaluate(payload, input)) { continue }
-
-        const analysis = new CandidateMoveAnalysisV2(input)
-        const result = analysis.relationalResult(relationParams(payload))
-        const example = {
-          priorBoard: moveExample.priorBoard,
-          afterBoard: moveExample.afterBoard,
-          moveObject: moveExample.moveObject,
-          result,
-          highlights: subjectTargetLabels(payload, moveExample.moveObject, result),
-          label: '',
-          variantType: 'required',
-          geometryKey: `zero:${movedPieceSquare}:${movedSpecies}`,
-          movedPieceInRelation: false,
-          moveKind: moveKindForMoveObject(moveExample.moveObject),
-          sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
-        }
-        const identity = candidateIdentity(example)
-        if (seenCandidates.has(identity)) { continue }
-
-        seenCandidates.add(identity)
-        examples.push(example)
-        if (examples.length >= maxExamples) {
-          return examples
-        }
-      }
-    }
-  }
-
-  return examples
-}
-
 function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
   const requirements = comparisonRequirements(payload)
   if (!requirements.comparisonsPresent) { return [skeleton] }
@@ -757,13 +323,6 @@ function requiredRelationPairFloor(payload) {
   return Math.max(requirements.subject, requirements.target)
 }
 
-function candidateLabel(variant, payload) {
-  if (variant.type === 'required') {
-    return ''
-  }
-  return variant.label
-}
-
 function workItemKey(item) {
   return [
     item.subjectSpecies,
@@ -771,23 +330,6 @@ function workItemKey(item) {
     item.variant.type,
     item.skeleton.geometryKey
   ].join('|')
-}
-
-function candidateIdentity(example) {
-  return [
-    example.moveKind || MOVE_KIND_STANDARD,
-    example.moveObject.startPosition,
-    example.moveObject.endPosition,
-    example.geometryKey,
-    subjectSpeciesSignature(example),
-    targetSpeciesSignature(example),
-    example.variantType
-  ].join(':')
-}
-
-function moveKindForMoveObject(moveObject) {
-  if (/^O-O/.test(moveObject.pieceNotation || '')) { return MOVE_KIND_CASTLE }
-  return MOVE_KIND_STANDARD
 }
 
 function uniqueExamples(examples) {
@@ -806,75 +348,6 @@ function bucketKeyForExample(example) {
     targetSpeciesSignature(example),
     example.variantType
   ].join('|')
-}
-
-function collectVerifiedExamples({ payload, skeleton, variant, random }) {
-  const recentMoveContext = roleRequiresEnemyMovedPiece(payload.subject)
-    ? buildEnemyRecentMoveContext(skeleton.subjectPosition, skeleton.subjectSpecies)
-    : roleRequiresEnemyMovedPiece(payload.target)
-      ? buildEnemyRecentMoveContext(skeleton.targetPosition, skeleton.targetSpecies)
-      : null
-
-  const movedOptions = shuffled(movedPieceOptionSets({ payload, skeleton, variant }), random)
-  const examples = []
-  const seenCandidates = new Set()
-
-  for (let index = 0; index < movedOptions.length; index += 1) {
-    const movedOption = movedOptions[index]
-    const afterPieces = clonePiecesMap(skeleton.pieces)
-    afterPieces.set(movedOption.square, pieceCode(Board.WHITE, movedOption.species))
-
-    const moveExamples = collectLegalReverseMoves({
-      afterPieces,
-      movedPieceSquare: movedOption.square,
-      movedPieceSpecies: movedOption.species,
-      recentMoveContext,
-      random,
-      maxResults: MAX_REVERSE_MOVES_PER_OPTION
-    })
-
-    for (let moveIndex = 0; moveIndex < moveExamples.length; moveIndex += 1) {
-      const moveExample = moveExamples[moveIndex]
-      const result = evaluateCandidate({
-        payload,
-        priorBoard: moveExample.priorBoard,
-        moveObject: moveExample.moveObject
-      })
-      if (!result) { continue }
-
-      const movedPieceInRelation = (
-        result.subjectPositions.includes(moveExample.moveObject.endPosition) ||
-        result.targetPositions.includes(moveExample.moveObject.endPosition)
-      )
-
-      if (variant.type === 'involved' && !movedPieceInRelation) { continue }
-      if (variant.type === 'separate' && movedPieceInRelation) { continue }
-
-      const example = {
-        priorBoard: moveExample.priorBoard,
-        afterBoard: moveExample.afterBoard,
-        moveObject: moveExample.moveObject,
-        result,
-        highlights: subjectTargetLabels(payload, moveExample.moveObject, result),
-        label: candidateLabel(variant, payload),
-        variantType: movedPieceInRelation ? 'involved' : 'separate',
-        geometryKey: skeleton.geometryKey,
-        movedPieceInRelation,
-        moveKind: moveKindForMoveObject(moveExample.moveObject),
-        sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
-      }
-      const identity = candidateIdentity(example)
-      if (seenCandidates.has(identity)) { continue }
-
-      seenCandidates.add(identity)
-      examples.push(example)
-      if (examples.length >= MAX_EXAMPLES_PER_SKELETON) {
-        return examples
-      }
-    }
-  }
-
-  return examples
 }
 
 function castlePresetForTeam(team) {
