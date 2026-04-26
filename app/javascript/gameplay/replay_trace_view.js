@@ -116,12 +116,12 @@ class ReplayTraceView {
           : null
         return this.renderCondition(node, entry, isShared, executionIndex, compiledProgram, queues, sharedNodeIds, totalHits)
       }
-      case 'action': {
+      case 'score': {
         const entry = queues[nodeId]?.shift() ?? null
         const executionIndex = entry !== null
           ? (totalHits[nodeId] || 0) - (queues[nodeId]?.length ?? 0)
           : null
-        return this.renderAction(node, entry, isShared, executionIndex)
+        return this.renderScore(node, entry, isShared, executionIndex)
       }
       default:
         return null
@@ -204,22 +204,22 @@ class ReplayTraceView {
     return details
   }
 
-  renderAction(node, entry, isShared, executionIndex) {
+  renderScore(node, entry, isShared, executionIndex) {
     const executed = entry !== null
     const halted = executed && entry.halted
 
     const wrapper = document.createElement('div')
     wrapper.className = [
       'trace-tree-node',
-      'trace-tree-node--action',
-      executed ? (halted ? 'trace-tree-node--action-halted' : 'trace-tree-node--action-applied') : 'trace-tree-node--not-reached',
+      'trace-tree-node--score',
+      executed ? (halted ? 'trace-tree-node--score-halted' : 'trace-tree-node--score-applied') : 'trace-tree-node--not-reached',
       'replay-stack'
     ].join(' ')
 
     const header = document.createElement('div')
     header.className = 'trace-tree-node__header'
 
-    if (executed) header.appendChild(this.pill('action', halted ? 'halt' : 'applied'))
+    if (executed) header.appendChild(this.pill('score', halted ? 'halt' : 'applied'))
 
     const text = document.createElement('span')
     text.className = 'trace-tree-node__text'

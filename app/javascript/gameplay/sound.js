@@ -9,6 +9,17 @@ class Sound {
         }
     }
 
+    static playSoundForNotation(notation){
+        if( !notation ){ return }
+        if( notation.includes('+') || notation.includes('#') ){
+            this.playSound('check')
+        } else if( notation.includes('x') ){
+            this.playSound('capture')
+        } else {
+            this.playSound('move')
+        }
+    }
+
     static getSoundUrl(sound){
         var url = ""
         switch(sound) {

@@ -42,7 +42,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110713",
-      type: "action",
+      type: "score",
       position: {
         x: 18.453125,
         y: 421.625
@@ -105,7 +105,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110701",
-      type: "action",
+      type: "score",
       position: {
         x: 10.640625,
         y: 416.765625
@@ -207,7 +207,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110626",
-      type: "action",
+      type: "score",
       position: {
         x: 18.359375,
         y: 807.9375
@@ -408,7 +408,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110744",
-      type: "action",
+      type: "score",
       position: {
         x: 110.5625,
         y: 637.25
@@ -420,7 +420,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110740",
-      type: "action",
+      type: "score",
       position: {
         x: -3.546875,
         y: 752.796875
@@ -432,7 +432,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110734",
-      type: "action",
+      type: "score",
       position: {
         x: -273.546875,
         y: 759.453125
@@ -444,7 +444,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110691",
-      type: "action",
+      type: "score",
       position: {
         x: 251.53125,
         y: 766.359375
@@ -456,7 +456,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110615",
-      type: "action",
+      type: "score",
       position: {
         x: -146.3125,
         y: 820.8125
@@ -560,7 +560,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110694",
-      type: "action",
+      type: "score",
       position: {
         x: 8.65625,
         y: 468.34375
@@ -646,7 +646,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110917",
-      type: "action",
+      type: "score",
       position: {
         x: 122.71875,
         y: 388.34375
@@ -658,7 +658,7 @@ export const DEFENSE_TEMPLATES = [
     },
     {
       key: "action_110914",
-      type: "action",
+      type: "score",
       position: {
         x: -68.59375,
         y: 409.234375

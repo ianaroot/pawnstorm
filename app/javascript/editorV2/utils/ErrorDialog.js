@@ -5,7 +5,7 @@ let activeDialog = null
 
 /**
  * Display an error dialog for undo/redo sync failures
- * @param {string} description - Operation description (e.g., "Undo: Create action node")
+ * @param {string} description - Operation description (e.g., "Undo: Create score node")
  * @param {Error} error - The error that occurred
  * @returns {Promise<string>} Resolves with 'retry' or 'cancel'
  */

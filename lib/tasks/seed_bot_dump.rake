@@ -95,9 +95,9 @@ module SeedBotDump
         '  data: ' + indent(serialized_hash(node.data), 2).lstrip,
         ')'
       ]
-    when 'action'
+    when 'score'
       [
-        "node_map[#{node.id}] = create_action!(",
+        "node_map[#{node.id}] = create_score!(",
         "  bot: #{variable_name},",
         "  position_x: #{node.position_x.inspect},",
         "  position_y: #{node.position_y.inspect},",

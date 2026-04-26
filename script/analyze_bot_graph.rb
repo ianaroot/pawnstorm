@@ -34,7 +34,7 @@ def node_signature(node)
   case node.node_type
   when "condition"
     "condition:#{condition_signature(node)}"
-  when "action"
+  when "score"
     "action:#{action_signature(node)}"
   when "organizer"
     "organizer:#{node.data["title"]}"
@@ -47,7 +47,7 @@ def node_label(node)
   case node.node_type
   when "condition"
     condition_signature(node)
-  when "action"
+  when "score"
     action_signature(node)
   when "organizer"
     node.data["title"]

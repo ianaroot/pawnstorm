@@ -132,7 +132,7 @@
       },
       "53818": {
         "id": "53818",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 100
@@ -175,7 +175,7 @@
       },
       "53821": {
         "id": "53821",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": -100
@@ -473,7 +473,7 @@
       },
       "53839": {
         "id": "53839",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 14
@@ -771,7 +771,7 @@
       },
       "53857": {
         "id": "53857",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 13
@@ -1069,7 +1069,7 @@
       },
       "53875": {
         "id": "53875",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 9
@@ -1367,7 +1367,7 @@
       },
       "53893": {
         "id": "53893",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 8
@@ -1410,7 +1410,7 @@
       },
       "53896": {
         "id": "53896",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 110
@@ -1436,7 +1436,7 @@
       },
       "53898": {
         "id": "53898",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 100
@@ -1479,7 +1479,7 @@
       },
       "53901": {
         "id": "53901",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 90
@@ -1539,7 +1539,7 @@
       },
       "53905": {
         "id": "53905",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 58
@@ -1616,7 +1616,7 @@
       },
       "53910": {
         "id": "53910",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 48
@@ -1659,7 +1659,7 @@
       },
       "53913": {
         "id": "53913",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 44
@@ -1719,7 +1719,7 @@
       },
       "53917": {
         "id": "53917",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 34
@@ -1796,7 +1796,7 @@
       },
       "53922": {
         "id": "53922",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 24
@@ -1873,7 +1873,7 @@
       },
       "53927": {
         "id": "53927",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 22
@@ -1916,7 +1916,7 @@
       },
       "53930": {
         "id": "53930",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 16
@@ -1976,7 +1976,7 @@
       },
       "53934": {
         "id": "53934",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 34
@@ -2053,7 +2053,7 @@
       },
       "53939": {
         "id": "53939",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 24
@@ -2130,7 +2130,7 @@
       },
       "53944": {
         "id": "53944",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 22
@@ -2173,7 +2173,7 @@
       },
       "53947": {
         "id": "53947",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 16
@@ -2250,7 +2250,7 @@
       },
       "53952": {
         "id": "53952",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "subtract",
           "value": 14
@@ -2327,7 +2327,7 @@
       },
       "53957": {
         "id": "53957",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "subtract",
           "value": 14
@@ -2404,7 +2404,7 @@
       },
       "53962": {
         "id": "53962",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 88
@@ -2481,7 +2481,7 @@
       },
       "53967": {
         "id": "53967",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 24
@@ -2575,7 +2575,7 @@
       },
       "53973": {
         "id": "53973",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 34
@@ -2686,7 +2686,7 @@
       },
       "53980": {
         "id": "53980",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 36
@@ -2780,7 +2780,7 @@
       },
       "53986": {
         "id": "53986",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 34
@@ -2891,7 +2891,7 @@
       },
       "53993": {
         "id": "53993",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 36
@@ -2968,7 +2968,7 @@
       },
       "53998": {
         "id": "53998",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 7
@@ -3045,7 +3045,7 @@
       },
       "54003": {
         "id": "54003",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 7
@@ -3122,7 +3122,7 @@
       },
       "54008": {
         "id": "54008",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "add",
           "value": 7
@@ -3199,7 +3199,7 @@
       },
       "54013": {
         "id": "54013",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 26
@@ -3276,7 +3276,7 @@
       },
       "54018": {
         "id": "54018",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": 18
@@ -3319,7 +3319,7 @@
       },
       "54021": {
         "id": "54021",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": -120
@@ -3379,7 +3379,7 @@
       },
       "54025": {
         "id": "54025",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "return",
           "value": -120
@@ -3456,7 +3456,7 @@
       },
       "54030": {
         "id": "54030",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "subtract",
           "value": 8
@@ -3533,7 +3533,7 @@
       },
       "54035": {
         "id": "54035",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "subtract",
           "value": 8
@@ -3627,7 +3627,7 @@
       },
       "54041": {
         "id": "54041",
-        "type": "action",
+        "type": "score",
         "data": {
           "actionType": "subtract",
           "value": 10

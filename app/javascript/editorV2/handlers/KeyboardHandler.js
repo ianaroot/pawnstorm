@@ -5,7 +5,7 @@ import Connection from 'editorV2/models/Connection'
 
 const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
 const CLIPBOARD_STORAGE_VERSION = 1
-const PASTEABLE_NODE_TYPES = new Set(['condition', 'action', 'organizer'])
+const PASTEABLE_NODE_TYPES = new Set(['condition', 'score', 'organizer'])
 
 class KeyboardHandler {
   constructor(store, history, syncManager, clickHandler = null) {

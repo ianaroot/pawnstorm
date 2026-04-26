@@ -4,19 +4,19 @@ import profileCollector from "gameplay/profile_collector"
 
 // -------------------  INTERNAL HELPERS ----------------------------------- // 
 
-const ROOK_RAY_STEPS = [1, -1, 8, -8]
-const BISHOP_RAY_STEPS = [7, -7, 9, -9]
-const QUEEN_RAY_STEPS = [...ROOK_RAY_STEPS, ...BISHOP_RAY_STEPS]
+export const ROOK_RAY_STEPS = Object.freeze([1, -1, 8, -8])
+export const BISHOP_RAY_STEPS = Object.freeze([7, -7, 9, -9])
+export const QUEEN_RAY_STEPS = Object.freeze([...ROOK_RAY_STEPS, ...BISHOP_RAY_STEPS])
 
 function knightControlsSquare(attackerPosition, targetPosition) {
-    const fileDiff = Math.abs((targetPosition % 8) - (attackerPosition % 8))
-    const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8))
+    const fileDiff = Math.abs(Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition))
+    const rankDiff = Math.abs(Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition))
     return (fileDiff === 1 && rankDiff === 2) || (fileDiff === 2 && rankDiff === 1)
 }
 
 function kingControlsSquare(attackerPosition, targetPosition) {
-    const fileDiff = Math.abs((targetPosition % 8) - (attackerPosition % 8))
-    const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8))
+    const fileDiff = Math.abs(Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition))
+    const rankDiff = Math.abs(Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition))
     return Math.max(fileDiff, rankDiff) === 1
 }
 
@@ -27,10 +27,10 @@ function pawnControlsSquare({ board, attackerPosition, targetPosition }) {
 
 function rookControlsSquare({ board, attackerPosition, targetPosition }) {
     if (attackerPosition === targetPosition) return false
-    const attackerFile = attackerPosition % 8
-    const targetFile = targetPosition % 8
-    const attackerRank = Math.floor(attackerPosition / 8)
-    const targetRank = Math.floor(targetPosition / 8)
+    const attackerFile = Board.fileIndex(attackerPosition)
+    const targetFile = Board.fileIndex(targetPosition)
+    const attackerRank = Board.rankIndex(attackerPosition)
+    const targetRank = Board.rankIndex(targetPosition)
     if (attackerFile !== targetFile && attackerRank !== targetRank) { return false }
     let step
     if (attackerFile === targetFile) {
@@ -52,8 +52,8 @@ function squaresBetweenClear({ board, attackerPosition, targetPosition, step }) 
 
 function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
     if (attackerPosition === targetPosition) return false
-    const fileDiff = (targetPosition % 8) - (attackerPosition % 8)
-    const rankDiff = Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8)
+    const fileDiff = Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition)
+    const rankDiff = Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition)
     if (Math.abs(fileDiff) !== Math.abs(rankDiff)) {
         return false
     }
@@ -66,8 +66,8 @@ function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
 }
 
 function sliderStep(attackerPosition, targetPosition) {
-    const fileDiff = (targetPosition % 8) - (attackerPosition % 8)
-    const rankDiff = Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8)
+    const fileDiff = Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition)
+    const rankDiff = Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition)
     if (fileDiff === 0 && rankDiff !== 0) { return rankDiff > 0 ? 8 : -8 }
     if (rankDiff === 0 && fileDiff !== 0) { return fileDiff > 0 ? 1 : -1 }
     if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
@@ -106,11 +106,11 @@ function raySteps() {
     return QUEEN_RAY_STEPS
 }
 
-function nextPositionOnRay(position, step) {
+export function nextPositionOnRay(position, step) {
     const nextPosition = position + step
     if (!Board._inBounds(nextPosition)) { return null }
-    const currentFile = position % 8
-    const nextFile = nextPosition % 8
+    const currentFile = Board.fileIndex(position)
+    const nextFile = Board.fileIndex(nextPosition)
     if (Math.abs(step) === 1 && Math.abs(nextFile - currentFile) !== 1) { return null }
     if ((Math.abs(step) === 7 || Math.abs(step) === 9) && Math.abs(nextFile - currentFile) !== 1) {
         return null
@@ -267,10 +267,10 @@ function hasPotentialSliderPressureBeyondCover({ board, blockerPosition, team, s
 
 function sliderCouldReachSquareForCover({ board, sliderPosition, targetSquare }) {
     const pieceType = board.pieceTypeAt(sliderPosition)
-    const sliderFile = sliderPosition % 8
-    const targetFile = targetSquare % 8
-    const sliderRank = Math.floor(sliderPosition / 8)
-    const targetRank = Math.floor(targetSquare / 8)
+    const sliderFile = Board.fileIndex(sliderPosition)
+    const targetFile = Board.fileIndex(targetSquare)
+    const sliderRank = Board.rankIndex(sliderPosition)
+    const targetRank = Board.rankIndex(targetSquare)
     const sameFile = sliderFile === targetFile
     const sameRank = sliderRank === targetRank
     const fileDiff = Math.abs(sliderFile - targetFile)
@@ -305,7 +305,7 @@ function pieceValue(species) {
     }
 }
 
-function knightControlledSquares(attackerPosition) {
+export function knightControlledSquares(attackerPosition) {
     const candidates = [
         attackerPosition + 17,
         attackerPosition + 15,
@@ -317,14 +317,14 @@ function knightControlledSquares(attackerPosition) {
         attackerPosition - 17
     ]
     return candidates.filter((targetPosition) => {
-        if ( !Board._inBounds(targetPosition) ) { return false }
-        const fileDiff = Math.abs((targetPosition % 8) - (attackerPosition % 8))
-        const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(attackerPosition / 8))
-        return ( fileDiff === 1 && rankDiff === 2 ) || ( fileDiff === 2 && rankDiff === 1 )
+        if (!Board._inBounds(targetPosition)) { return false }
+        const fileDiff = Math.abs(Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition))
+        const rankDiff = Math.abs(Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition))
+        return (fileDiff === 1 && rankDiff === 2) || (fileDiff === 2 && rankDiff === 1)
     })
 }
 
-function kingControlledSquares(attackerPosition) {
+export function kingControlledSquares(attackerPosition) {
     const candidates = [
         attackerPosition + 1,
         attackerPosition - 1,
@@ -335,11 +335,11 @@ function kingControlledSquares(attackerPosition) {
         attackerPosition + 9,
         attackerPosition - 9
     ]
-    return candidates.filter(( targetPosition ) => {
-        if ( !Board._inBounds( targetPosition ) ) { return false }
-        const fileDiff = Math.abs(( targetPosition % 8 ) - ( attackerPosition % 8 ))
-        const rankDiff = Math.abs( Math.floor(targetPosition / 8 ) - Math.floor( attackerPosition / 8 ))
-        return Math.max( fileDiff, rankDiff ) === 1
+    return candidates.filter((targetPosition) => {
+        if (!Board._inBounds(targetPosition)) { return false }
+        const fileDiff = Math.abs(Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition))
+        const rankDiff = Math.abs(Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition))
+        return Math.max(fileDiff, rankDiff) === 1
     })
 }
 
@@ -475,8 +475,8 @@ export function adjacentPositions({ board, targetPosition, team, species = null 
     return profileCollector.measure('board_query.adjacent_positions', () => {
         return board._positionsOccupiedByTeam(team).filter(position => {
             if (position === targetPosition) { return false }
-            const fileDiff = Math.abs((targetPosition % 8) - (position % 8))
-            const rankDiff = Math.abs(Math.floor(targetPosition / 8) - Math.floor(position / 8))
+            const fileDiff = Math.abs(Board.fileIndex(targetPosition) - Board.fileIndex(position))
+            const rankDiff = Math.abs(Board.rankIndex(targetPosition) - Board.rankIndex(position))
             if (Math.max(fileDiff, rankDiff) !== 1) { return false }
             if (species !== null && board.pieceTypeAt(position) !== species) { return false }
             return true
@@ -573,7 +573,7 @@ export function squareClassification({ board, position, movingTeam }) {
 export function validDiagonal(startPosition, candidatePosition) {
     return (
         Board._inBounds(candidatePosition) &&
-        Math.abs((candidatePosition % 8) - (startPosition % 8)) === 1
+        Math.abs(Board.fileIndex(candidatePosition) - Board.fileIndex(startPosition)) === 1
     )
 }
 

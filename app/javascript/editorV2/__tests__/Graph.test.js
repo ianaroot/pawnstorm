@@ -100,7 +100,7 @@ describe('Graph', () => {
         const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
         const cond1 = new Node({ clientId: 'cond1', type: 'condition', position: { x: 100, y: 100 } })
         const cond2 = new Node({ clientId: 'cond2', type: 'condition', position: { x: 200, y: 200 } })
-        const action = new Node({ clientId: 'action1', type: 'action', position: { x: 300, y: 300 } })
+        const action = new Node({ clientId: 'action1', type: 'score', position: { x: 300, y: 300 } })
         graph = new Graph([root, cond1, cond2, action])
       })
 
@@ -194,7 +194,7 @@ describe('Graph', () => {
 
       it('cascade deletes connections when node removed', () => {
         const source = new Node({ clientId: 's1', type: 'root', position: { x: 0, y: 0 } })
-        const target = new Node({ clientId: 't1', type: 'action', position: { x: 100, y: 100 } })
+        const target = new Node({ clientId: 't1', type: 'score', position: { x: 100, y: 100 } })
         const conn = new Connection({ clientId: 'c1', sourceId: 's1', targetId: 't1' })
         graph = new Graph([source, target], [conn])
 
@@ -217,7 +217,7 @@ describe('Graph', () => {
   describe('connection operations', () => {
     beforeEach(() => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       graph = new Graph([node1, node2])
     })
 
@@ -254,7 +254,7 @@ describe('Graph', () => {
 
       it('returns array of all connections', () => {
         const conn1 = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
-        const node3 = new Node({ clientId: 'n3', type: 'action', position: { x: 200, y: 200 } })
+        const node3 = new Node({ clientId: 'n3', type: 'score', position: { x: 200, y: 200 } })
         graph = new Graph([...graph.getNodes(), node3], [conn1])
         const conn2 = new Connection({ clientId: 'c2', sourceId: 'n1', targetId: 'n3' })
         graph = new Graph(graph.getNodes(), [conn1, conn2])
@@ -287,7 +287,7 @@ describe('Graph', () => {
 
     describe('getConnectionsFor', () => {
       it('returns outgoing and incoming connections', () => {
-        const node3 = new Node({ clientId: 'n3', type: 'action', position: { x: 200, y: 200 } })
+        const node3 = new Node({ clientId: 'n3', type: 'score', position: { x: 200, y: 200 } })
         graph = new Graph([...graph.getNodes(), node3])
         const conn1 = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
         const conn2 = new Connection({ clientId: 'c2', sourceId: 'n2', targetId: 'n3' })
@@ -336,8 +336,8 @@ describe('Graph', () => {
       beforeEach(() => {
         const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
         const cond = new Node({ clientId: 'cond', type: 'condition', position: { x: 100, y: 100 } })
-        const action1 = new Node({ clientId: 'action1', type: 'action', position: { x: 200, y: 100 } })
-        const action2 = new Node({ clientId: 'action2', type: 'action', position: { x: 200, y: 200 } })
+        const action1 = new Node({ clientId: 'action1', type: 'score', position: { x: 200, y: 100 } })
+        const action2 = new Node({ clientId: 'action2', type: 'score', position: { x: 200, y: 200 } })
         graph = new Graph([root, cond, action1, action2])
       })
 
@@ -420,7 +420,7 @@ describe('Graph', () => {
 
       it('warns when target node does not exist', () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+        const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
         graph = new Graph([node2])
         const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
 
@@ -530,7 +530,7 @@ describe('Graph', () => {
   describe('utility methods', () => {
     it('getSize returns node and connection counts', () => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
       graph = new Graph([node1, node2], [conn])
 
@@ -575,7 +575,7 @@ describe('Graph', () => {
 
     it('addConnection returns new Graph instance', () => {
       const node1 = new Node({ clientId: 'n1', type: 'root', position: { x: 0, y: 0 } })
-      const node2 = new Node({ clientId: 'n2', type: 'action', position: { x: 100, y: 100 } })
+      const node2 = new Node({ clientId: 'n2', type: 'score', position: { x: 100, y: 100 } })
       const conn = new Connection({ clientId: 'c1', sourceId: 'n1', targetId: 'n2' })
       graph = new Graph([node1, node2])
 

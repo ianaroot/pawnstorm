@@ -39,14 +39,14 @@
 #       click_button '+ Condition'
 #       expect(page).to have_css('.node', minimum: 1, wait: 5)
       
-#       click_button '+ Action'
+#       click_button '+ Score'
 #       expect(page).to have_css('.node', minimum: 2, wait: 5)
 #     end
 #   end
 
 #   describe 'connecting nodes', :slow do
 #     let!(:node1) { create(:node, bot: bot, node_type: 'condition', position_x: 150, position_y: 150) }
-#     let!(:node2) { create(:node, bot: bot, node_type: 'action', position_x: 400, position_y: 150) }
+#     let!(:node2) { create(:node, bot: bot, node_type: 'score', position_x: 400, position_y: 150) }
 
 #     it 'connects two nodes by dragging from output to input' do
 #       visit edit_bot_path(bot)
@@ -144,7 +144,7 @@
 
 #   describe 'deleting connections', :slow do
 #     let!(:node1) { create(:node, bot: bot, node_type: 'condition') }
-#     let!(:node2) { create(:node, bot: bot, node_type: 'action') }
+#     let!(:node2) { create(:node, bot: bot, node_type: 'score') }
 #     let!(:connection) { create(:node_connection, source_node: node1, target_node: node2) }
 
 #     it 'deletes a connection between nodes' do

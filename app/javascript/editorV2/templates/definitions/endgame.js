@@ -129,7 +129,7 @@ export const ENDGAME_TEMPLATES = [
     },
     {
       key: "action_110616",
-      type: "action",
+      type: "score",
       position: {
         x: 25.25,
         y: 653.109375
@@ -252,7 +252,7 @@ export const ENDGAME_TEMPLATES = [
     },
     {
       key: "action_110699",
-      type: "action",
+      type: "score",
       position: {
         x: 4.453125,
         y: 1068.5625

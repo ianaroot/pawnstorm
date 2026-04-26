@@ -534,7 +534,7 @@ class SyncManager {
   
   /**
    * Create a new node
-   * @param {string} type - Node type (root, condition, action, organizer)
+   * @param {string} type - Node type (root, condition, score, organizer)
    * @param {Object} position - Position { x, y }
    * @param {Object} [data={}] - Node data
    * @returns {Promise<string>} Client ID of created node

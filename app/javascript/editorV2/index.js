@@ -13,6 +13,7 @@ import HoverPreviewHandler from 'editorV2/handlers/HoverPreviewHandler'
 import { EVENTS, MAX_HISTORY } from 'editorV2/constants'
 import { showError } from 'editorV2/utils/errors'
 import ToolbarHandler from 'editorV2/handlers/ToolbarHandler'
+import BoardStatePreview from 'editorV2/panels/BoardStatePreview'
 
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
   if (!container) { throw new Error('Container element is required') }
@@ -67,6 +68,11 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   await syncManager.loadBot()
   
   // 6. Attach Global UI handlers
+  const boardStatePreviewWrap = document.getElementById('board-state-preview-wrap')
+  if (boardStatePreviewWrap) {
+    const boardStatePreview = new BoardStatePreview(boardStatePreviewWrap)
+    clickHandler.setBoardStatePreview(boardStatePreview)
+  }
   clickHandler.setSyncManager(syncManager)
   const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
   clickHandler.setupGlobalHandlers()

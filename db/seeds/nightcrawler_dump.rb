@@ -79,7 +79,7 @@ node_map[102216] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[102217] = create_action!(
+node_map[102217] = create_score!(
   bot: nightcrawler_dump,
   position_x: 80.0,
   position_y: 580.0,
@@ -117,7 +117,7 @@ node_map[102219] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102220] = create_action!(
+node_map[102220] = create_score!(
   bot: nightcrawler_dump,
   position_x: 340.0,
   position_y: 580.0,
@@ -368,7 +368,7 @@ node_map[102237] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102238] = create_action!(
+node_map[102238] = create_score!(
   bot: nightcrawler_dump,
   position_x: 830.0,
   position_y: 2830.0,
@@ -419,7 +419,7 @@ node_map[102241] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102242] = create_action!(
+node_map[102242] = create_score!(
   bot: nightcrawler_dump,
   position_x: 1090.0,
   position_y: 2830.0,
@@ -471,7 +471,7 @@ node_map[102245] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102246] = create_action!(
+node_map[102246] = create_score!(
   bot: nightcrawler_dump,
   position_x: 1350.0,
   position_y: 2830.0,
@@ -505,7 +505,7 @@ node_map[102248] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102249] = create_action!(
+node_map[102249] = create_score!(
   bot: nightcrawler_dump,
   position_x: 1680.0,
   position_y: 580.0,
@@ -513,7 +513,7 @@ node_map[102249] = create_action!(
   value: 112
 )
 
-node_map[102250] = create_action!(
+node_map[102250] = create_score!(
   bot: nightcrawler_dump,
   position_x: 2000.0,
   position_y: 430.0,
@@ -535,7 +535,7 @@ node_map[102251] = create_condition!(
    "comparisonValue"=>1}
 )
 
-node_map[102252] = create_action!(
+node_map[102252] = create_score!(
   bot: nightcrawler_dump,
   position_x: 2260.0,
   position_y: 430.0,
@@ -590,7 +590,7 @@ node_map[102255] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102256] = create_action!(
+node_map[102256] = create_score!(
   bot: nightcrawler_dump,
   position_x: 2520.0,
   position_y: 730.0,
@@ -643,7 +643,7 @@ node_map[102259] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[102260] = create_action!(
+node_map[102260] = create_score!(
   bot: nightcrawler_dump,
   position_x: 2780.0,
   position_y: 730.0,
@@ -699,7 +699,7 @@ node_map[102263] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102264] = create_action!(
+node_map[102264] = create_score!(
   bot: nightcrawler_dump,
   position_x: 3040.0,
   position_y: 730.0,
@@ -751,7 +751,7 @@ node_map[102267] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102268] = create_action!(
+node_map[102268] = create_score!(
   bot: nightcrawler_dump,
   position_x: 3300.0,
   position_y: 730.0,
@@ -806,7 +806,7 @@ node_map[102271] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102272] = create_action!(
+node_map[102272] = create_score!(
   bot: nightcrawler_dump,
   position_x: 3210.0,
   position_y: 730.0,
@@ -827,7 +827,7 @@ node_map[102273] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102274] = create_action!(
+node_map[102274] = create_score!(
   bot: nightcrawler_dump,
   position_x: 3530.0,
   position_y: 730.0,
@@ -864,7 +864,7 @@ node_map[102276] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102277] = create_action!(
+node_map[102277] = create_score!(
   bot: nightcrawler_dump,
   position_x: 4120.0,
   position_y: 580.0,
@@ -885,7 +885,7 @@ node_map[102278] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102279] = create_action!(
+node_map[102279] = create_score!(
   bot: nightcrawler_dump,
   position_x: 4440.0,
   position_y: 580.0,
@@ -949,7 +949,7 @@ node_map[102283] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102284] = create_action!(
+node_map[102284] = create_score!(
   bot: nightcrawler_dump,
   position_x: 4620.0,
   position_y: 880.0,
@@ -987,7 +987,7 @@ node_map[102286] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[102287] = create_action!(
+node_map[102287] = create_score!(
   bot: nightcrawler_dump,
   position_x: 4880.0,
   position_y: 580.0,
@@ -1024,7 +1024,7 @@ node_map[102289] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[102290] = create_action!(
+node_map[102290] = create_score!(
   bot: nightcrawler_dump,
   position_x: 5210.0,
   position_y: 730.0,
@@ -1096,7 +1096,7 @@ node_map[102294] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[102295] = create_action!(
+node_map[102295] = create_score!(
   bot: nightcrawler_dump,
   position_x: 5400.0,
   position_y: 880.0,

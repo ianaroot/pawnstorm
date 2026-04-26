@@ -151,7 +151,7 @@ RSpec.describe BotNodesController, type: :request do
     end
 
     it 'does not allow node type updates' do
-      patch bot_node_path(bot, node), params: { node: { node_type: 'action' } }
+      patch bot_node_path(bot, node), params: { node: { node_type: 'score' } }
 
       expect(response).to have_http_status(:success)
       expect(node.reload.node_type).to eq('condition')

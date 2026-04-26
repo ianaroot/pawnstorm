@@ -22,8 +22,8 @@ RSpec.describe BotCompiler do
           targetTotal: 0
         })
       end
-      let!(:action) do
-        create(:node, :action, bot: bot, position_x: 100, position_y: 220, data: {
+      let!(:score) do
+        create(:node, :score, bot: bot, position_x: 100, position_y: 220, data: {
           actionType: 'subtract',
           value: 5
         })
@@ -201,7 +201,7 @@ RSpec.describe BotCompiler do
       let!(:root) { bot.root_node }
       let!(:node_a) { create(:node, :condition, bot: bot, position_x: 200, position_y: 200) }
       let!(:node_b) { create(:node, :condition, bot: bot, position_x: 600, position_y: 200) }
-      let!(:shared) { create(:node, :action, bot: bot, position_x: 400, position_y: 400, data: { actionType: 'add', value: 3 }) }
+      let!(:shared) { create(:node, :score, bot: bot, position_x: 400, position_y: 400, data: { actionType: 'add', value: 3 }) }
 
       before do
         connect_nodes(root, node_a)

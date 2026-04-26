@@ -252,7 +252,7 @@ describe('DragHandler', () => {
 
     it('selects an unselected node and prepares a drag including descendants by default', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
       const event = buildPointerEvent()
@@ -270,7 +270,7 @@ describe('DragHandler', () => {
 
     it('shift-drag adds an unselected node to the current drag selection', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       store.selectOnlyNode('child')
 
       const event = buildPointerEvent({ shiftKey: true })
@@ -288,7 +288,7 @@ describe('DragHandler', () => {
 
     it('option-drag moves only the grabbed node', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
       const event = buildPointerEvent({ altKey: true })
@@ -398,7 +398,7 @@ describe('DragHandler', () => {
 
     it('calls batchUpdatePositions when dragging multiple selected nodes', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
       const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
@@ -427,7 +427,7 @@ describe('DragHandler', () => {
 
     it('calls batchUpdatePositions when dragging a singly selected node with descendants', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       addConnection(store, { clientId: 'conn', sourceId: 'parent', targetId: 'child' })
 
       const startEvent = buildPointerEvent({ clientX: 100, clientY: 100 })
@@ -456,7 +456,7 @@ describe('DragHandler', () => {
 
     it('calls updateNodePosition when option-dragging a node out of a selected group', () => {
       addNode(store, { clientId: 'parent', type: 'condition', x: 100, y: 100 })
-      addNode(store, { clientId: 'child', type: 'action', x: 200, y: 150 })
+      addNode(store, { clientId: 'child', type: 'score', x: 200, y: 150 })
       store.setSelectedNodeIds(['parent', 'child'])
 
       const startEvent = buildPointerEvent({

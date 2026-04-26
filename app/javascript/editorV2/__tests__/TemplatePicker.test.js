@@ -38,15 +38,15 @@ describe('TemplatePicker template preview', () => {
           }
         },
         {
-          key: 'action',
-          type: 'action',
+          key: 'score',
+          type: 'score',
           position: { x: 0, y: 320 },
           data: { actionType: 'return', value: 1 }
         }
       ],
       connections: [
         { source: 'organizer', target: 'condition' },
-        { source: 'condition', target: 'action' }
+        { source: 'condition', target: 'score' }
       ]
     })
 

@@ -12,7 +12,7 @@
 #  updated_at  :datetime         not null
 #
 class Node < ApplicationRecord
-  NODE_TYPES = %w[condition action root organizer].freeze
+  NODE_TYPES = %w[condition score root organizer].freeze
 
   belongs_to :bot
   has_many :outgoing_connections, class_name: 'Connection', foreign_key: 'source_node_id', dependent: :destroy
@@ -33,8 +33,8 @@ class Node < ApplicationRecord
     node_type == 'root'
   end
   
-  def action?
-    node_type == 'action'
+  def score?
+    node_type == 'score'
   end
 
   def condition?

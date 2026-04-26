@@ -39,7 +39,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110728",
-      type: "action",
+      type: "score",
       position: {
         x: 8.0,
         y: 320.0
@@ -99,7 +99,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110730",
-      type: "action",
+      type: "score",
       position: {
         x: 19.21242555184881,
         y: 451.91598348438674
@@ -180,7 +180,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110612",
-      type: "action",
+      type: "score",
       position: {
         x: 24.078125,
         y: 689.75
@@ -279,7 +279,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110642",
-      type: "action",
+      type: "score",
       position: {
         x: -5.1875,
         y: 857.734375
@@ -387,7 +387,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110895",
-      type: "action",
+      type: "score",
       position: {
         x: 18.03125,
         y: 643.453125
@@ -496,7 +496,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110910",
-      type: "action",
+      type: "score",
       position: {
         x: 138.265625,
         y: 454.34375
@@ -508,7 +508,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110909",
-      type: "action",
+      type: "score",
       position: {
         x: -97.375,
         y: 631.8125
@@ -678,7 +678,7 @@ export const CAPTURE_TEMPLATES = [
     },
     {
       key: "action_110852",
-      type: "action",
+      type: "score",
       position: {
         x: 27.953125,
         y: 443.703125

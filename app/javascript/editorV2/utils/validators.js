@@ -3,12 +3,12 @@
 
 import { NODE_COLORS } from 'editorV2/constants'
 
-const VALID_NODE_TYPES = ['root', 'condition', 'action', 'organizer']
+const VALID_NODE_TYPES = ['root', 'condition', 'score', 'organizer']
 
 /**
  * Validate node data before creation or update
  * @param {Object} params - Node parameters
- * @param {string} params.type - Node type (root, condition, action, organizer)
+ * @param {string} params.type - Node type (root, condition, score, organizer)
  * @param {Object} params.position - Position { x, y }
  * @param {Object} [params.data] - Optional node data
  * @returns {{ valid: boolean, errors: string[] }}

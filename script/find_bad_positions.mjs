@@ -21,7 +21,7 @@ function suspiciousness({ actual, tiedTopCount, trace }) {
   let score = 0
   if (actual?.score === 0) score += 3
   if (tiedTopCount >= payload.tie_threshold) score += 3
-  if ((trace?.trace || []).filter(entry => entry.nodeType === 'action').length === 0) score += 2
+  if ((trace?.trace || []).filter(entry => entry.nodeType === 'score').length === 0) score += 2
   if (tiedTopCount > 1) score += 1
   return score
 }
@@ -30,7 +30,7 @@ function reasonList({ actual, tiedTopCount, trace }) {
   const reasons = []
   if (actual?.score === 0) reasons.push('actual score 0')
   if (tiedTopCount >= payload.tie_threshold) reasons.push(`large top tie (${tiedTopCount})`)
-  if ((trace?.trace || []).filter(entry => entry.nodeType === 'action').length === 0) reasons.push('no actions fired')
+  if ((trace?.trace || []).filter(entry => entry.nodeType === 'score').length === 0) reasons.push('no actions fired')
   if (tiedTopCount > 1 && tiedTopCount < payload.tie_threshold) reasons.push(`top tie (${tiedTopCount})`)
   return reasons
 }

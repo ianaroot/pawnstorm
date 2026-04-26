@@ -3,17 +3,14 @@ import { Controller } from "@hotwired/stimulus"
 const ROTATION_INTERVAL_MS = 6500
 
 export default class extends Controller {
-  static targets = ["line"]
-  static values = {
-    tips: Array
-  }
+  static targets = ["card", "dot"]
 
   connect() {
     this.currentIndex = 0
     this.intervalId = null
     this.isPaused = false
 
-    this.renderCurrentTip()
+    this.show(this.currentIndex)
     this.startRotation()
   }
 
@@ -31,7 +28,7 @@ export default class extends Controller {
 
   startRotation() {
     this.stopRotation()
-    if (!this.hasLineTarget || this.tipsValue.length <= 1) { return }
+    if (this.cardTargets.length <= 1) { return }
 
     this.intervalId = window.setInterval(() => {
       if (this.isPaused) { return }
@@ -46,15 +43,41 @@ export default class extends Controller {
   }
 
   advance() {
-    this.currentIndex = (this.currentIndex + 1) % this.tipsValue.length
-    this.renderCurrentTip()
+    const nextIndex = (this.currentIndex + 1) % this.cardTargets.length
+    this.show(nextIndex)
   }
 
-  renderCurrentTip() {
-    if (!this.hasLineTarget || this.tipsValue.length === 0) { return }
+  goTo(event) {
+    const index = Number(event.currentTarget.dataset.index)
+    if (Number.isNaN(index)) { return }
 
-    this.lineTarget.textContent = this.tipsValue[this.currentIndex]
-    this.lineTarget.animate(
+    this.show(index)
+    this.startRotation()
+  }
+
+  show(index) {
+    if (this.cardTargets.length === 0) { return }
+
+    this.cardTargets.forEach((card, cardIndex) => {
+      const active = cardIndex === index
+      card.hidden = !active
+      card.classList.toggle('is-active', active)
+    })
+
+    this.dotTargets.forEach((dot, dotIndex) => {
+      const active = dotIndex === index
+      dot.classList.toggle('is-active', active)
+      dot.setAttribute('aria-pressed', active ? 'true' : 'false')
+    })
+
+    this.animateCard(this.cardTargets[index])
+    this.currentIndex = index
+  }
+
+  animateCard(card) {
+    if (!card || typeof card.animate !== 'function') { return }
+
+    card.animate(
       [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
       { duration: 420, easing: 'ease' }
     )

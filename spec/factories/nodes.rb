@@ -17,7 +17,7 @@ FactoryBot.define do
           target: "exact_number",
           targetTotal: 0
         }
-      when "action"
+      when "score"
         {
           actionType: "add",
           value: 1
@@ -75,8 +75,8 @@ FactoryBot.define do
       end
     end
 
-    trait :action do
-      node_type { "action" }
+    trait :score do
+      node_type { "score" }
       data { { actionType: "add", value: 1 } }
     end
 

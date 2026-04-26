@@ -92,7 +92,7 @@ describe('History', () => {
       expect(history.canRedo()).toBe(true)
 
       // New push should truncate redo history
-      const node3 = new Node({ clientId: 'n3', type: 'action', position: { x: 200, y: 200 } })
+      const node3 = new Node({ clientId: 'n3', type: 'score', position: { x: 200, y: 200 } })
       store.addNode(node3)
       history.push('State 3')
 
@@ -125,7 +125,7 @@ describe('History', () => {
 
       // Manually set restoring flag to test
       history.isRestoring = true
-      const node3 = new Node({ clientId: 'n3', type: 'action', position: { x: 200, y: 200 } })
+      const node3 = new Node({ clientId: 'n3', type: 'score', position: { x: 200, y: 200 } })
       store.addNode(node3)
       history.push('State 3')
       history.isRestoring = false
@@ -274,7 +274,7 @@ describe('History', () => {
       store.addNode(n1)
       history.push('Add n1') // Won't be pushed
 
-      const n2 = new Node({ clientId: 'n2', type: 'action', position: { x: 200, y: 200 } })
+      const n2 = new Node({ clientId: 'n2', type: 'score', position: { x: 200, y: 200 } })
       store.addNode(n2)
       history.push('Add n2') // Won't be pushed
 

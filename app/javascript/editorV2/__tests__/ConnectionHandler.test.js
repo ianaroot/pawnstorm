@@ -65,7 +65,7 @@ describe('ConnectionHandler', () => {
     }
 
     addNode(store, { clientId: 'source', type: 'condition' })
-    addNode(store, { clientId: 'target', type: 'action' })
+    addNode(store, { clientId: 'target', type: 'score' })
 
     source = buildNodeElement('source', 'output')
     target = buildNodeElement('target', 'input')

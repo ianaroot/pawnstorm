@@ -20,8 +20,8 @@ module Nodes
       case record.node_type
       when 'condition'
         validate_condition_data
-      when 'action'
-        validate_action_data
+      when 'score'
+        validate_score_data
       when 'organizer'
         validate_organizer_data
       end
@@ -142,7 +142,7 @@ module Nodes
       end
     end
 
-    def validate_action_data
+    def validate_score_data
       return record.errors.add(:data, 'must be a hash') unless record.data.is_a?(Hash)
       keys = record.data.keys.map(&:to_s)
       extra_keys = keys - ACTION_KEYS

@@ -135,6 +135,16 @@ RSpec.describe BotsController, type: :request do
       expect(response).to have_http_status(:success)
     end
 
+    it 'renders the editor tips rail' do
+      sign_in bot.user
+
+      get edit_bot_path(bot)
+
+      expect(response.body).to include('Inspect node previews')
+      expect(response.body).to include('Build a bigger selection')
+      expect(response.body).to include('data-controller="tips-rail"')
+    end
+
     it 'returns 404 for another users bot' do
       other_user = create(:user)
       sign_in other_user

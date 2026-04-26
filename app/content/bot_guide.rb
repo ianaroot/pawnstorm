@@ -36,7 +36,7 @@ class BotGuide
         bullets: [
           'The root node is the starting point for every move your bot considers.',
           'Condition nodes ask yes/no questions about the move being tested.',
-          'Action nodes add, subtract, set, or return a score for that move.',
+          'Score nodes add, subtract, set, or return a score for that move.',
           'Organizer nodes are labels and notes for you. They help structure a graph but do not affect scoring.',
           'After every legal move has been scored, Pawnstorm chooses randomly from the highest-scoring moves.'
         ],
@@ -75,7 +75,7 @@ class BotGuide
         examples: [
           {
             title: 'A useful first loop',
-            explanation: 'For a first bot, keep the feedback cycle small. Insert a simple template, run a match, inspect one move in replay, then edit one condition or action.',
+            explanation: 'For a first bot, keep the feedback cycle small. Insert a simple template, run a match, inspect one move in replay, then edit one condition or score node.',
             snippets: [
               {
                 label: 'First Build Pass',
@@ -133,11 +133,11 @@ class BotGuide
       {
         id: 'node-types',
         title: 'Node Types',
-        intro: 'A bot graph is built from a few node types. The root starts evaluation, conditions decide whether a branch continues, actions change the score, and organizers keep the canvas understandable.',
+        intro: 'A bot graph is built from a few node types. The root starts evaluation, conditions decide whether a branch continues, score nodes change the score, and organizers keep the canvas understandable.',
         visual: {
           kind: 'node_pair',
           title: 'What These Nodes Look Like',
-          caption: 'A condition reads like a small sentence. An action changes the score for the move currently being tested.',
+          caption: 'A condition reads like a small sentence. A score node changes the score for the move currently being tested.',
           cards: [
             {
               type: 'condition',
@@ -146,8 +146,8 @@ class BotGuide
               note: 'A yes/no question about the move being tested'
             },
             {
-              type: 'action',
-              title: 'Action node',
+              type: 'score',
+              title: 'Score node',
               preview: "Return\n100",
               note: 'Changes or finalizes the score for that move'
             }
@@ -156,7 +156,7 @@ class BotGuide
         bullets: [
           'Root is where every candidate move starts.',
           'Condition lets the branch continue only when its question is true.',
-          'Action changes the current move score.',
+          'Score changes the current move score.',
           'Organizer gives a branch a title or notes. It does not compile into scoring behavior.'
         ]
       }
@@ -492,7 +492,7 @@ class BotGuide
       {
         id: 'how-scoring-works',
         title: 'How Scoring Works',
-        intro: 'Action nodes change the score of the move currently being tested. A condition decides whether the branch reaches the action; the action decides how much the move score changes.',
+        intro: 'Score nodes change the score of the move currently being tested. A condition decides whether the branch reaches the score node; the score node decides how much the move score changes.',
         bullets: [
           'Add increases the current score.',
           'Subtract decreases the current score.',
@@ -504,7 +504,7 @@ class BotGuide
         examples: [
           {
             title: 'A simple scoring branch',
-            explanation: 'Pair a condition with an action when you can describe the idea as "if this is true, change the score."',
+            explanation: 'Pair a condition with a score node when you can describe the idea as "if this is true, change the score."',
             snippets: [
               {
                 label: 'Plain English',
@@ -514,9 +514,9 @@ class BotGuide
                 TEXT
               },
               {
-                label: 'Action Node',
+                label: 'Score Node',
                 body: <<~TEXT.strip
-                  Action: Add
+                  Score: Add
                   Value: 3
                 TEXT
               }
@@ -555,7 +555,7 @@ class BotGuide
           'Click a destination square to inspect that move in more detail.',
           'Highlighted squares show the move your bot selected, and sometimes other moves that were tied for the best score.',
           'If several moves were tied for best, the final move was chosen randomly from those top-scoring options.',
-          'The trace shows which condition nodes passed and which action nodes changed the score.'
+          'The trace shows which condition nodes passed and which score nodes changed the score.'
         ],
         examples: [
           {

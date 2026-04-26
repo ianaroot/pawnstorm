@@ -16,7 +16,7 @@ describe('ReplayMoveInspector', () => {
       scoreMove: ({ moveObject, withTrace }) => ({
         score: moveObject === moveB ? 9 : 7,
         halted: false,
-        trace: withTrace ? [{ nodeId: 'selected', nodeType: 'action' }] : null
+        trace: withTrace ? [{ nodeId: 'selected', nodeType: 'score' }] : null
       })
     }
     const notationResolver = {
@@ -47,7 +47,7 @@ describe('ReplayMoveInspector', () => {
     expect(result.inspectedTrace).toEqual({
       score: 9,
       halted: false,
-      trace: [{ nodeId: 'selected', nodeType: 'action' }]
+      trace: [{ nodeId: 'selected', nodeType: 'score' }]
     })
     expect(result.actualMoveWasTopScored).toBe(true)
   })

@@ -4,7 +4,7 @@
   "nodes": {
     "103039": {
       "id": "103039",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 100
@@ -48,7 +48,7 @@
     },
     "103042": {
       "id": "103042",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": -100
@@ -105,7 +105,7 @@
     },
     "103084": {
       "id": "103084",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 110
@@ -132,7 +132,7 @@
     },
     "103085": {
       "id": "103085",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 100
@@ -160,7 +160,7 @@
     },
     "103184": {
       "id": "103184",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -190,7 +190,7 @@
     },
     "103188": {
       "id": "103188",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -253,7 +253,7 @@
     },
     "103190": {
       "id": "103190",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -281,7 +281,7 @@
     },
     "103193": {
       "id": "103193",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -326,7 +326,7 @@
     },
     "103196": {
       "id": "103196",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -371,7 +371,7 @@
     },
     "103199": {
       "id": "103199",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -416,7 +416,7 @@
     },
     "103202": {
       "id": "103202",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 28
@@ -488,7 +488,7 @@
     },
     "103205": {
       "id": "103205",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -518,7 +518,7 @@
     },
     "103209": {
       "id": "103209",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -581,7 +581,7 @@
     },
     "103211": {
       "id": "103211",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -609,7 +609,7 @@
     },
     "103214": {
       "id": "103214",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -654,7 +654,7 @@
     },
     "103217": {
       "id": "103217",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -699,7 +699,7 @@
     },
     "103220": {
       "id": "103220",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -744,7 +744,7 @@
     },
     "103223": {
       "id": "103223",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -816,7 +816,7 @@
     },
     "103226": {
       "id": "103226",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -846,7 +846,7 @@
     },
     "103230": {
       "id": "103230",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -909,7 +909,7 @@
     },
     "103232": {
       "id": "103232",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -937,7 +937,7 @@
     },
     "103235": {
       "id": "103235",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -982,7 +982,7 @@
     },
     "103238": {
       "id": "103238",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -1027,7 +1027,7 @@
     },
     "103241": {
       "id": "103241",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -1072,7 +1072,7 @@
     },
     "103244": {
       "id": "103244",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -1144,7 +1144,7 @@
     },
     "103088": {
       "id": "103088",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 92
@@ -1189,7 +1189,7 @@
     },
     "103092": {
       "id": "103092",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 55
@@ -1216,7 +1216,7 @@
     },
     "103094": {
       "id": "103094",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 55
@@ -1284,7 +1284,7 @@
     },
     "103099": {
       "id": "103099",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 46
@@ -1368,7 +1368,7 @@
     },
     "103102": {
       "id": "103102",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1398,7 +1398,7 @@
     },
     "103106": {
       "id": "103106",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1461,7 +1461,7 @@
     },
     "103108": {
       "id": "103108",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1489,7 +1489,7 @@
     },
     "103111": {
       "id": "103111",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1534,7 +1534,7 @@
     },
     "103114": {
       "id": "103114",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1579,7 +1579,7 @@
     },
     "103117": {
       "id": "103117",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1624,7 +1624,7 @@
     },
     "103120": {
       "id": "103120",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 48
@@ -1696,7 +1696,7 @@
     },
     "103123": {
       "id": "103123",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1726,7 +1726,7 @@
     },
     "103127": {
       "id": "103127",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1789,7 +1789,7 @@
     },
     "103129": {
       "id": "103129",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1817,7 +1817,7 @@
     },
     "103132": {
       "id": "103132",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1862,7 +1862,7 @@
     },
     "103135": {
       "id": "103135",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1907,7 +1907,7 @@
     },
     "103138": {
       "id": "103138",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -1952,7 +1952,7 @@
     },
     "103141": {
       "id": "103141",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 40
@@ -2024,7 +2024,7 @@
     },
     "103446": {
       "id": "103446",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2054,7 +2054,7 @@
     },
     "103147": {
       "id": "103147",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2117,7 +2117,7 @@
     },
     "103149": {
       "id": "103149",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2145,7 +2145,7 @@
     },
     "103152": {
       "id": "103152",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2190,7 +2190,7 @@
     },
     "103155": {
       "id": "103155",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2235,7 +2235,7 @@
     },
     "103158": {
       "id": "103158",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2280,7 +2280,7 @@
     },
     "103161": {
       "id": "103161",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2352,7 +2352,7 @@
     },
     "103445": {
       "id": "103445",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2382,7 +2382,7 @@
     },
     "103167": {
       "id": "103167",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2445,7 +2445,7 @@
     },
     "103169": {
       "id": "103169",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2473,7 +2473,7 @@
     },
     "103172": {
       "id": "103172",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2518,7 +2518,7 @@
     },
     "103175": {
       "id": "103175",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2563,7 +2563,7 @@
     },
     "103178": {
       "id": "103178",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2608,7 +2608,7 @@
     },
     "103181": {
       "id": "103181",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2699,7 +2699,7 @@
     },
     "103275": {
       "id": "103275",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -2730,7 +2730,7 @@
     },
     "103276": {
       "id": "103276",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 12
@@ -2759,7 +2759,7 @@
     },
     "103278": {
       "id": "103278",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 16
@@ -2803,7 +2803,7 @@
     },
     "103292": {
       "id": "103292",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -2833,7 +2833,7 @@
     },
     "103298": {
       "id": "103298",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -2896,7 +2896,7 @@
     },
     "103304": {
       "id": "103304",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -2924,7 +2924,7 @@
     },
     "103309": {
       "id": "103309",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -2969,7 +2969,7 @@
     },
     "103315": {
       "id": "103315",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3014,7 +3014,7 @@
     },
     "103321": {
       "id": "103321",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3059,7 +3059,7 @@
     },
     "103327": {
       "id": "103327",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3146,7 +3146,7 @@
     },
     "103294": {
       "id": "103294",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3176,7 +3176,7 @@
     },
     "103302": {
       "id": "103302",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3239,7 +3239,7 @@
     },
     "103306": {
       "id": "103306",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3267,7 +3267,7 @@
     },
     "103312": {
       "id": "103312",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3312,7 +3312,7 @@
     },
     "103318": {
       "id": "103318",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3357,7 +3357,7 @@
     },
     "103324": {
       "id": "103324",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3402,7 +3402,7 @@
     },
     "103330": {
       "id": "103330",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -3510,7 +3510,7 @@
     },
     "103282": {
       "id": "103282",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 34
@@ -3541,7 +3541,7 @@
     },
     "103283": {
       "id": "103283",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 12
@@ -3570,7 +3570,7 @@
     },
     "103285": {
       "id": "103285",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 16
@@ -3628,7 +3628,7 @@
     },
     "103365": {
       "id": "103365",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 7
@@ -3659,7 +3659,7 @@
     },
     "103367": {
       "id": "103367",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 7
@@ -3690,7 +3690,7 @@
     },
     "103370": {
       "id": "103370",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 7
@@ -3772,7 +3772,7 @@
     },
     "103373": {
       "id": "103373",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 5
@@ -3852,7 +3852,7 @@
     },
     "103378": {
       "id": "103378",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 26
@@ -3939,7 +3939,7 @@
     },
     "103383": {
       "id": "103383",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 18
@@ -4006,7 +4006,7 @@
     },
     "103387": {
       "id": "103387",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 18
@@ -4094,7 +4094,7 @@
     },
     "103391": {
       "id": "103391",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -4124,7 +4124,7 @@
     },
     "103393": {
       "id": "103393",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -4169,7 +4169,7 @@
     },
     "103396": {
       "id": "103396",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -4199,7 +4199,7 @@
     },
     "103398": {
       "id": "103398",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -4265,7 +4265,7 @@
     },
     "103402": {
       "id": "103402",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 6
@@ -4295,7 +4295,7 @@
     },
     "103404": {
       "id": "103404",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 6
@@ -4340,7 +4340,7 @@
     },
     "103407": {
       "id": "103407",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 6
@@ -4370,7 +4370,7 @@
     },
     "103409": {
       "id": "103409",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 6
@@ -4435,7 +4435,7 @@
     },
     "103418": {
       "id": "103418",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 6
@@ -4446,7 +4446,7 @@
     },
     "103420": {
       "id": "103420",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -4476,7 +4476,7 @@
     },
     "103422": {
       "id": "103422",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -4561,7 +4561,7 @@
     },
     "103414": {
       "id": "103414",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 10
@@ -4649,7 +4649,7 @@
     },
     "103426": {
       "id": "103426",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 6
@@ -4660,7 +4660,7 @@
     },
     "103428": {
       "id": "103428",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -4690,7 +4690,7 @@
     },
     "103430": {
       "id": "103430",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -4775,7 +4775,7 @@
     },
     "103432": {
       "id": "103432",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 18
@@ -4807,7 +4807,7 @@
     },
     "103434": {
       "id": "103434",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 14
@@ -4839,7 +4839,7 @@
     },
     "103436": {
       "id": "103436",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 10
@@ -4871,7 +4871,7 @@
     },
     "103438": {
       "id": "103438",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 12
@@ -4903,7 +4903,7 @@
     },
     "103440": {
       "id": "103440",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 12
@@ -4935,7 +4935,7 @@
     },
     "103442": {
       "id": "103442",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -4967,7 +4967,7 @@
     },
     "103444": {
       "id": "103444",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 8
@@ -5022,7 +5022,7 @@
     },
     "103335": {
       "id": "103335",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 88
@@ -5049,7 +5049,7 @@
     },
     "103337": {
       "id": "103337",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 88
@@ -5097,7 +5097,7 @@
     },
     "103340": {
       "id": "103340",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 22
@@ -5127,7 +5127,7 @@
     },
     "103342": {
       "id": "103342",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 22
@@ -5175,7 +5175,7 @@
     },
     "103345": {
       "id": "103345",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 14
@@ -5205,7 +5205,7 @@
     },
     "103347": {
       "id": "103347",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 14
@@ -5253,7 +5253,7 @@
     },
     "103351": {
       "id": "103351",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -5280,7 +5280,7 @@
     },
     "103353": {
       "id": "103353",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 32
@@ -5348,7 +5348,7 @@
     },
     "103357": {
       "id": "103357",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -5378,7 +5378,7 @@
     },
     "103359": {
       "id": "103359",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -5488,7 +5488,7 @@
     },
     "103248": {
       "id": "103248",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 80
@@ -5518,7 +5518,7 @@
     },
     "103250": {
       "id": "103250",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": 80
@@ -5565,7 +5565,7 @@
     },
     "103254": {
       "id": "103254",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 14
@@ -5593,7 +5593,7 @@
     },
     "103256": {
       "id": "103256",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 14
@@ -5624,7 +5624,7 @@
     },
     "103258": {
       "id": "103258",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -5655,7 +5655,7 @@
     },
     "103260": {
       "id": "103260",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -5686,7 +5686,7 @@
     },
     "103262": {
       "id": "103262",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -5759,7 +5759,7 @@
     },
     "103264": {
       "id": "103264",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": -120
@@ -5789,7 +5789,7 @@
     },
     "103267": {
       "id": "103267",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "return",
         "value": -120
@@ -5835,7 +5835,7 @@
     },
     "103271": {
       "id": "103271",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "subtract",
         "value": 12
@@ -5926,7 +5926,7 @@
     },
     "103061": {
       "id": "103061",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 12
@@ -5956,7 +5956,7 @@
     },
     "103063": {
       "id": "103063",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 12
@@ -6037,7 +6037,7 @@
     },
     "103068": {
       "id": "103068",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 11
@@ -6067,7 +6067,7 @@
     },
     "103070": {
       "id": "103070",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 11
@@ -6148,7 +6148,7 @@
     },
     "103074": {
       "id": "103074",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -6178,7 +6178,7 @@
     },
     "103076": {
       "id": "103076",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -6223,7 +6223,7 @@
     },
     "103079": {
       "id": "103079",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8
@@ -6253,7 +6253,7 @@
     },
     "103081": {
       "id": "103081",
-      "type": "action",
+      "type": "score",
       "data": {
         "actionType": "add",
         "value": 8

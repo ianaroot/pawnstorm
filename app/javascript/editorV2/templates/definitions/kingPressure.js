@@ -57,7 +57,7 @@ export const KING_PRESSURE_TEMPLATES = [
     },
     {
       key: "action_110715",
-      type: "action",
+      type: "score",
       position: {
         x: 0.0,
         y: 480.0
@@ -181,7 +181,7 @@ export const KING_PRESSURE_TEMPLATES = [
     },
     {
       key: "action_110891",
-      type: "action",
+      type: "score",
       position: {
         x: 25.041191875351615,
         y: 831.9588105531411
@@ -336,7 +336,7 @@ export const KING_PRESSURE_TEMPLATES = [
     },
     {
       key: "action_110809",
-      type: "action",
+      type: "score",
       position: {
         x: 29.476133178335658,
         y: 787.6592292783812
@@ -505,7 +505,7 @@ export const KING_PRESSURE_TEMPLATES = [
     },
     {
       key: "action_110880",
-      type: "action",
+      type: "score",
       position: {
         x: 42.07454278703244,
         y: 883.2592032437497

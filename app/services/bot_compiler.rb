@@ -130,7 +130,7 @@ class BotCompiler
       else
         raw
       end
-    when 'action'
+    when 'score'
       {
         actionType: raw['actionType'] || raw[:actionType],
         value: raw['value'] || raw[:value]

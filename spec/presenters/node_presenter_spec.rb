@@ -94,23 +94,23 @@ RSpec.describe NodePresenter do
 
   describe '#action_type' do
     it 'prefers actionType, then action_type, then add' do
-      node = build(:node, :action, data: { actionType: 'multiply', action_type: 'subtract', value: 1 })
+      node = build(:node, :score, data: { actionType: 'multiply', action_type: 'subtract', value: 1 })
       expect(described_class.new(node).action_type).to eq('multiply')
 
-      node = build(:node, :action, data: { action_type: 'subtract', value: 1 })
+      node = build(:node, :score, data: { action_type: 'subtract', value: 1 })
       expect(described_class.new(node).action_type).to eq('subtract')
 
-      node = build(:node, :action, data: { value: 1 })
+      node = build(:node, :score, data: { value: 1 })
       expect(described_class.new(node).action_type).to eq('add')
     end
   end
 
   describe '#action_value' do
     it 'defaults to 1 when the value is nil and preserves zero' do
-      node = build(:node, :action, data: { actionType: 'add', value: nil })
+      node = build(:node, :score, data: { actionType: 'add', value: nil })
       expect(described_class.new(node).action_value).to eq(1)
 
-      node = build(:node, :action, data: { actionType: 'add', value: 0 })
+      node = build(:node, :score, data: { actionType: 'add', value: 0 })
       expect(described_class.new(node).action_value).to eq(0)
     end
   end

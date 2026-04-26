@@ -95,7 +95,7 @@ export const ACTIVITY_TEMPLATES = [
     },
     {
       key: "action_110667",
-      type: "action",
+      type: "score",
       position: {
         x: 18.890625,
         y: 998.5

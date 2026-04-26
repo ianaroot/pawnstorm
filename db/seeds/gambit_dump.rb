@@ -87,7 +87,7 @@ node_map[104107] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[104108] = create_action!(
+node_map[104108] = create_score!(
   bot: gambit_dump,
   position_x: 80.0,
   position_y: 580.0,
@@ -125,7 +125,7 @@ node_map[104110] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104111] = create_action!(
+node_map[104111] = create_score!(
   bot: gambit_dump,
   position_x: 300.0,
   position_y: 580.0,
@@ -390,7 +390,7 @@ node_map[104129] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104130] = create_action!(
+node_map[104130] = create_score!(
   bot: gambit_dump,
   position_x: 660.0,
   position_y: 2980.0,
@@ -414,7 +414,7 @@ node_map[104131] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104132] = create_action!(
+node_map[104132] = create_score!(
   bot: gambit_dump,
   position_x: 920.0,
   position_y: 2980.0,
@@ -479,7 +479,7 @@ node_map[104136] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104137] = create_action!(
+node_map[104137] = create_score!(
   bot: gambit_dump,
   position_x: 1180.0,
   position_y: 2980.0,
@@ -503,7 +503,7 @@ node_map[104138] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104139] = create_action!(
+node_map[104139] = create_score!(
   bot: gambit_dump,
   position_x: 1440.0,
   position_y: 2980.0,
@@ -604,7 +604,7 @@ node_map[104145] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104146] = create_action!(
+node_map[104146] = create_score!(
   bot: gambit_dump,
   position_x: 1780.0,
   position_y: 3280.0,
@@ -629,7 +629,7 @@ node_map[104147] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104148] = create_action!(
+node_map[104148] = create_score!(
   bot: gambit_dump,
   position_x: 2020.0,
   position_y: 3280.0,
@@ -671,7 +671,7 @@ node_map[104150] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104151] = create_action!(
+node_map[104151] = create_score!(
   bot: gambit_dump,
   position_x: 2260.0,
   position_y: 3280.0,
@@ -696,7 +696,7 @@ node_map[104152] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104153] = create_action!(
+node_map[104153] = create_score!(
   bot: gambit_dump,
   position_x: 2500.0,
   position_y: 3280.0,
@@ -738,7 +738,7 @@ node_map[104155] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104156] = create_action!(
+node_map[104156] = create_score!(
   bot: gambit_dump,
   position_x: 2740.0,
   position_y: 3130.0,
@@ -763,7 +763,7 @@ node_map[104157] = create_condition!(
    "targetComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104158] = create_action!(
+node_map[104158] = create_score!(
   bot: gambit_dump,
   position_x: 3000.0,
   position_y: 3130.0,
@@ -797,7 +797,7 @@ node_map[104160] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104161] = create_action!(
+node_map[104161] = create_score!(
   bot: gambit_dump,
   position_x: 420.0,
   position_y: 2280.0,
@@ -805,7 +805,7 @@ node_map[104161] = create_action!(
   value: 110
 )
 
-node_map[104162] = create_action!(
+node_map[104162] = create_score!(
   bot: gambit_dump,
   position_x: 740.0,
   position_y: 2130.0,
@@ -857,7 +857,7 @@ node_map[104165] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104166] = create_action!(
+node_map[104166] = create_score!(
   bot: gambit_dump,
   position_x: 1000.0,
   position_y: 2430.0,
@@ -881,7 +881,7 @@ node_map[104167] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104168] = create_action!(
+node_map[104168] = create_score!(
   bot: gambit_dump,
   position_x: 1240.0,
   position_y: 2430.0,
@@ -950,7 +950,7 @@ node_map[104172] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104173] = create_action!(
+node_map[104173] = create_score!(
   bot: gambit_dump,
   position_x: 1440.0,
   position_y: 2580.0,
@@ -1020,7 +1020,7 @@ node_map[104177] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104178] = create_action!(
+node_map[104178] = create_score!(
   bot: gambit_dump,
   position_x: 1700.0,
   position_y: 2580.0,
@@ -1045,7 +1045,7 @@ node_map[104179] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104180] = create_action!(
+node_map[104180] = create_score!(
   bot: gambit_dump,
   position_x: 1960.0,
   position_y: 2580.0,
@@ -1115,7 +1115,7 @@ node_map[104184] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104185] = create_action!(
+node_map[104185] = create_score!(
   bot: gambit_dump,
   position_x: 2220.0,
   position_y: 2580.0,
@@ -1140,7 +1140,7 @@ node_map[104186] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104187] = create_action!(
+node_map[104187] = create_score!(
   bot: gambit_dump,
   position_x: 2480.0,
   position_y: 2580.0,
@@ -1192,7 +1192,7 @@ node_map[104190] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104191] = create_action!(
+node_map[104191] = create_score!(
   bot: gambit_dump,
   position_x: 1990.0,
   position_y: 1790.0,
@@ -1247,7 +1247,7 @@ node_map[104194] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104195] = create_action!(
+node_map[104195] = create_score!(
   bot: gambit_dump,
   position_x: 1990.0,
   position_y: 2360.0,
@@ -1302,7 +1302,7 @@ node_map[104198] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104199] = create_action!(
+node_map[104199] = create_score!(
   bot: gambit_dump,
   position_x: 2250.0,
   position_y: 1790.0,
@@ -1360,7 +1360,7 @@ node_map[104202] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104203] = create_action!(
+node_map[104203] = create_score!(
   bot: gambit_dump,
   position_x: 2250.0,
   position_y: 2360.0,
@@ -1423,7 +1423,7 @@ node_map[104207] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104208] = create_action!(
+node_map[104208] = create_score!(
   bot: gambit_dump,
   position_x: 2900.0,
   position_y: 1640.0,
@@ -1447,7 +1447,7 @@ node_map[104209] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104210] = create_action!(
+node_map[104210] = create_score!(
   bot: gambit_dump,
   position_x: 3160.0,
   position_y: 1640.0,
@@ -1485,7 +1485,7 @@ node_map[104212] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104213] = create_action!(
+node_map[104213] = create_score!(
   bot: gambit_dump,
   position_x: 3420.0,
   position_y: 1640.0,
@@ -1509,7 +1509,7 @@ node_map[104214] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104215] = create_action!(
+node_map[104215] = create_score!(
   bot: gambit_dump,
   position_x: 3680.0,
   position_y: 1640.0,
@@ -1534,7 +1534,7 @@ node_map[104216] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104217] = create_action!(
+node_map[104217] = create_score!(
   bot: gambit_dump,
   position_x: 4010.0,
   position_y: 1490.0,
@@ -1612,7 +1612,7 @@ node_map[104222] = create_condition!(
    "targetFilterMode"=>"exclude"}
 )
 
-node_map[104223] = create_action!(
+node_map[104223] = create_score!(
   bot: gambit_dump,
   position_x: 4010.0,
   position_y: 2270.0,
@@ -1634,7 +1634,7 @@ node_map[104224] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[104225] = create_action!(
+node_map[104225] = create_score!(
   bot: gambit_dump,
   position_x: 4290.0,
   position_y: 2270.0,
@@ -1684,7 +1684,7 @@ node_map[104228] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104229] = create_action!(
+node_map[104229] = create_score!(
   bot: gambit_dump,
   position_x: 4570.0,
   position_y: 2270.0,
@@ -1708,7 +1708,7 @@ node_map[104230] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104231] = create_action!(
+node_map[104231] = create_score!(
   bot: gambit_dump,
   position_x: 4850.0,
   position_y: 1970.0,
@@ -1745,7 +1745,7 @@ node_map[104233] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104234] = create_action!(
+node_map[104234] = create_score!(
   bot: gambit_dump,
   position_x: 5040.0,
   position_y: 2120.0,
@@ -1786,7 +1786,7 @@ node_map[104236] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104237] = create_action!(
+node_map[104237] = create_score!(
   bot: gambit_dump,
   position_x: 5370.0,
   position_y: 2120.0,
@@ -1807,7 +1807,7 @@ node_map[104238] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104239] = create_action!(
+node_map[104239] = create_score!(
   bot: gambit_dump,
   position_x: 5630.0,
   position_y: 2120.0,
@@ -1848,7 +1848,7 @@ node_map[104241] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104242] = create_action!(
+node_map[104242] = create_score!(
   bot: gambit_dump,
   position_x: 5890.0,
   position_y: 2120.0,
@@ -1869,7 +1869,7 @@ node_map[104243] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104244] = create_action!(
+node_map[104244] = create_score!(
   bot: gambit_dump,
   position_x: 6150.0,
   position_y: 2120.0,
@@ -1924,7 +1924,7 @@ node_map[104247] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104248] = create_action!(
+node_map[104248] = create_score!(
   bot: gambit_dump,
   position_x: 6340.0,
   position_y: 1970.0,
@@ -1945,7 +1945,7 @@ node_map[104249] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104250] = create_action!(
+node_map[104250] = create_score!(
   bot: gambit_dump,
   position_x: 6860.0,
   position_y: 1970.0,
@@ -1986,7 +1986,7 @@ node_map[104252] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104253] = create_action!(
+node_map[104253] = create_score!(
   bot: gambit_dump,
   position_x: 6860.0,
   position_y: 1970.0,
@@ -2007,7 +2007,7 @@ node_map[104254] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104255] = create_action!(
+node_map[104255] = create_score!(
   bot: gambit_dump,
   position_x: 7380.0,
   position_y: 1970.0,
@@ -2045,7 +2045,7 @@ node_map[104257] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[104258] = create_action!(
+node_map[104258] = create_score!(
   bot: gambit_dump,
   position_x: 7380.0,
   position_y: 1820.0,
@@ -2107,7 +2107,7 @@ node_map[104262] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[104263] = create_action!(
+node_map[104263] = create_score!(
   bot: gambit_dump,
   position_x: 7640.0,
   position_y: 2120.0,
@@ -2169,7 +2169,7 @@ node_map[104267] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[104268] = create_action!(
+node_map[104268] = create_score!(
   bot: gambit_dump,
   position_x: 7900.0,
   position_y: 2120.0,

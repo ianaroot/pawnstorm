@@ -381,15 +381,15 @@
 #       }
 #       condition_initial_data = {}  # condition starts with default/empty data
       
-#       # Operation 2: Create action node
-#       click_button '+ Action'
+#       # Operation 2: Create score node
+#       click_button '+ Score'
 #       sleep 0.5
-#       action_node = find(".node[data-type='action']", wait: 5)
+#       action_node = find(".node[data-type='score']", wait: 5)
 #       action_id = action_node['data-id'].to_i
 #       expect(page).to have_css('.node', count: 3, wait: 5)
 #       expect_history_count(3)
       
-#       # Operation 2b: Edit action node to have specific data
+#       # Operation 2b: Edit score node to have specific data
 #       action_node.click
 #       sleep 0.5
 #       expect(page).to have_css('#node-editor-panel:not(.hidden)', wait: 5)
@@ -400,7 +400,7 @@
 #       click_button 'Save'
 #       sleep 0.5
       
-#       # Capture action node properties for later property-based lookups
+#       # Capture score node properties for later property-based lookups
 #       action_node_db = Node.find(action_id)
 #       action_node_data = {
 #         'action_type' => 'move',
@@ -475,7 +475,7 @@
 #       expect(NodeConnection.where(source_node_id: condition_id, target_node_id: action_id).count).to eq(0)
 #       expect_history_count(8)
       
-#       # Capture action node properties at time of deletion (includes drag from operation 4)
+#       # Capture score node properties at time of deletion (includes drag from operation 4)
 #       action_node_db = Node.find(action_id)
 #       original_action_data = {
 #         position_x: action_node_db.position_x,
@@ -484,35 +484,35 @@
 #         data: action_node_data
 #       }
       
-#       # Operation 7: Delete action node
+#       # Operation 7: Delete score node
 #       click_button 'Delete'
 #       page.accept_confirm do
 #         find(".node[data-id='#{action_id}']").click
 #       end
 #       sleep 0.5
       
-#       # Verify action node removed from DOM and DB
+#       # Verify score node removed from DOM and DB
 #       expect(page).to have_css('.node', count: 2, wait: 5)
 #       expect(Node.find_by(id: action_id)).to be_nil
 #       expect_history_count(9)
       
 #       # Now undo all 7 operations one by one
       
-#       # Undo 7: Restore deleted action node
+#       # Undo 7: Restore deleted score node
 #       find('.btn-undo').click
 #       sleep 0.5
 #       expect(page).to have_css('.node', count: 3, wait: 5)
       
-#       # Find restored action node by properties (ID may be different)
+#       # Find restored score node by properties (ID may be different)
 #       restored_action = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: original_action_data[:position_x],
 #         position_y: original_action_data[:position_y],
 #         data: original_action_data[:data]
 #       )
 #       expect(restored_action).to be_present
-#       expect(restored_action.node_type).to eq('action')
+#       expect(restored_action.node_type).to eq('score')
 #       expect(restored_action.data).to eq(original_action_data[:data])
       
 #       # Undo 6: Restore connection
@@ -529,10 +529,10 @@
 #       )
 #       expect(condition_before_undo5).to be_present
       
-#       # Find action node by properties (ID may have changed again during full state restore)
+#       # Find score node by properties (ID may have changed again during full state restore)
 #       target_node = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: original_action_data[:position_x],
 #         position_y: original_action_data[:position_y],
 #         data: original_action_data[:data]
@@ -577,7 +577,7 @@
 #       }
       
 #       # Capture action position after drag undo (position reverted to original)
-#       action_after_drag_undo = Node.find_by(bot: bot, node_type: 'action')
+#       action_after_drag_undo = Node.find_by(bot: bot, node_type: 'score')
 #       action_position_before_drag_undo = {
 #         x: action_after_drag_undo.position_x,
 #         y: action_after_drag_undo.position_y
@@ -607,10 +607,10 @@
 #       )
 #       expect(current_condition).to be_present
       
-#       # Find action node by properties for connection check
+#       # Find score node by properties for connection check
 #       target_node = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: action_position_before_drag_undo[:x],
 #         position_y: action_position_before_drag_undo[:y],
 #         data: original_action_data[:data]
@@ -619,16 +619,16 @@
 #       expect(NodeConnection.where(source_node_id: current_condition.id, target_node_id: target_node.id).count).to eq(0)
 #       expect(page).to have_css('line[data-source-id]', visible: :all, count: 0, wait: 5)
       
-#       # Undo 2b: Revert action node data
+#       # Undo 2b: Revert score node data
 #       find('.btn-undo').click
 #       sleep 0.5
 #       expect(page).to have_css('.node', count: 3, wait: 5)
       
-#       # Undo 2: Remove action node
+#       # Undo 2: Remove score node
 #       find('.btn-undo').click
 #       sleep 0.5
 #       expect(page).to have_css('.node', count: 2, wait: 5)
-#       expect(Node.where(bot: bot, node_type: 'action').count).to eq(0)
+#       expect(Node.where(bot: bot, node_type: 'score').count).to eq(0)
       
 #       # Undo 1: Remove condition node
 #       find('.btn-undo').click
@@ -665,27 +665,27 @@
 #       }
 #       condition_current_data = {}
       
-#       # Redo 2: Restore action node (will have new ID)
+#       # Redo 2: Restore score node (will have new ID)
 #       find('.btn-redo').click
 #       sleep 0.5
 #       expect(page).to have_css('.node', count: 3, wait: 5)
-#       expect(Node.where(bot: bot, node_type: 'action').count).to eq(1)
+#       expect(Node.where(bot: bot, node_type: 'score').count).to eq(1)
       
 #       # Capture action position before drag is re-applied (at original position)
-#       action_before_drag_redo = Node.find_by(bot: bot, node_type: 'action')
+#       action_before_drag_redo = Node.find_by(bot: bot, node_type: 'score')
 #       action_position_before_drag_redo = {
 #         x: action_before_drag_redo.position_x,
 #         y: action_before_drag_redo.position_y
 #       }
       
-#       # Redo 2b: Restore action node data
+#       # Redo 2b: Restore score node data
 #       find('.btn-redo').click
 #       sleep 0.5
       
-#       # Find the action node by properties for subsequent redo steps
+#       # Find the score node by properties for subsequent redo steps
 #       redo_action = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: action_position_before_drag_redo[:x],
 #         position_y: action_position_before_drag_redo[:y],
 #         data: original_action_data[:data]
@@ -694,7 +694,7 @@
 #       expect(redo_action.data['direction']).to eq('forward')
 #       expect(redo_action.data['distance']).to eq('2')
       
-#       # Redo 3: Restore connection (to the restored action node)
+#       # Redo 3: Restore connection (to the restored score node)
 #       find('.btn-redo').click
 #       sleep 0.5
       
@@ -710,7 +710,7 @@
       
 #       redo_action = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: action_position_before_drag_redo[:x],
 #         position_y: action_position_before_drag_redo[:y],
 #         data: original_action_data[:data]
@@ -742,7 +742,7 @@
 #       expect(current_condition.position_y).to eq(condition_moved_y)
       
 #       # Capture action position after drag is re-applied (at dragged position)
-#       action_after_drag_redo = Node.find_by(bot: bot, node_type: 'action')
+#       action_after_drag_redo = Node.find_by(bot: bot, node_type: 'score')
 #       action_position_after_drag_redo = {
 #         x: action_after_drag_redo.position_x,
 #         y: action_after_drag_redo.position_y
@@ -782,7 +782,7 @@
       
 #       redo_action = find_node_by_properties(
 #         bot: bot,
-#         node_type: 'action',
+#         node_type: 'score',
 #         position_x: action_position_after_drag_redo[:x],
 #         position_y: action_position_after_drag_redo[:y],
 #         data: original_action_data[:data]
@@ -790,16 +790,16 @@
 #       expect(redo_action).to be_present
 #       expect(NodeConnection.where(source_node_id: current_condition.id, target_node_id: redo_action.id).count).to eq(0)
       
-#       # Redo 7: Delete action node
+#       # Redo 7: Delete score node
 #       find('.btn-redo').click
 #       sleep 0.5
 #       expect(page).to have_css('.node', count: 2, wait: 5)
-#       expect(Node.where(bot: bot, node_type: 'action').count).to eq(0)
+#       expect(Node.where(bot: bot, node_type: 'score').count).to eq(0)
       
 #       # Final state should match after all operations
 #       expect(page).to have_css('.node', count: 2, wait: 5) # Root + condition
 #       expect(Node.where(bot: bot, node_type: 'condition').count).to eq(1)
-#       expect(Node.where(bot: bot, node_type: 'action').count).to eq(0)
+#       expect(Node.where(bot: bot, node_type: 'score').count).to eq(0)
       
 #       # Verify condition node has edited data and dragged position
 #       final_condition = find_node_by_properties(

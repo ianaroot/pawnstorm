@@ -151,7 +151,7 @@ describe('Store', () => {
 
       it('cascade deletes connections', () => {
         const source = new Node({ clientId: 's1', type: 'root', position: { x: 0, y: 0 } })
-        const target = new Node({ clientId: 't1', type: 'action', position: { x: 100, y: 100 } })
+        const target = new Node({ clientId: 't1', type: 'score', position: { x: 100, y: 100 } })
         const conn = new Connection({ clientId: 'c1', sourceId: 's1', targetId: 't1' })
 
         store.addNode(source)
@@ -170,7 +170,7 @@ describe('Store', () => {
         store.subscribe(callback)
 
         const source = new Node({ clientId: 's1', type: 'root', position: { x: 0, y: 0 } })
-        const target = new Node({ clientId: 't1', type: 'action', position: { x: 100, y: 100 } })
+        const target = new Node({ clientId: 't1', type: 'score', position: { x: 100, y: 100 } })
         const conn = new Connection({ clientId: 'c1', sourceId: 's1', targetId: 't1' })
 
         store.addNode(source)
@@ -218,7 +218,7 @@ describe('Store', () => {
     beforeEach(() => {
       // Add required nodes for connections (Graph validates that nodes exist)
       const source = new Node({ clientId: 's1', type: 'root', position: { x: 0, y: 0 } })
-      const target = new Node({ clientId: 't1', type: 'action', position: { x: 100, y: 100 } })
+      const target = new Node({ clientId: 't1', type: 'score', position: { x: 100, y: 100 } })
       store.addNode(source)
       store.addNode(target)
     })
@@ -294,7 +294,7 @@ describe('Store', () => {
         // Use different IDs than beforeEach to avoid conflicts
         const source = new Node({ clientId: 'src', type: 'root', position: { x: 0, y: 0 } })
         const mid = new Node({ clientId: 'mid', type: 'condition', position: { x: 100, y: 100 } })
-        const target = new Node({ clientId: 'tgt', type: 'action', position: { x: 200, y: 200 } })
+        const target = new Node({ clientId: 'tgt', type: 'score', position: { x: 200, y: 200 } })
         const conn1 = new Connection({ clientId: 'c1', sourceId: 'src', targetId: 'mid' })
         const conn2 = new Connection({ clientId: 'c2', sourceId: 'mid', targetId: 'tgt' })
 
@@ -339,7 +339,7 @@ describe('Store', () => {
 
       unsubscribe()
 
-      const node2 = new Node({ clientId: 'test-2', type: 'action', position: { x: 200, y: 200 } })
+      const node2 = new Node({ clientId: 'test-2', type: 'score', position: { x: 200, y: 200 } })
       store.addNode(node2)
       expect(callback).toHaveBeenCalledTimes(1) // Still 1, not called again
     })
@@ -349,11 +349,11 @@ describe('Store', () => {
 
       // Recursive emit would cause infinite loop
       store.subscribe(() => {
-        const node = new Node({ clientId: 'recursive', type: 'action', position: { x: 0, y: 0 } })
+        const node = new Node({ clientId: 'recursive', type: 'score', position: { x: 0, y: 0 } })
         store.addNode(node)
       })
 
-      const node = new Node({ clientId: 'initial', type: 'action', position: { x: 0, y: 0 } })
+      const node = new Node({ clientId: 'initial', type: 'score', position: { x: 0, y: 0 } })
       store.addNode(node)
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Recursive emit prevented'))
@@ -588,8 +588,8 @@ describe('getDescendantIds', () => {
     //               \-> action2
     const root = new Node({ clientId: 'root', type: 'root', position: { x: 0, y: 0 } })
     const cond = new Node({ clientId: 'cond', type: 'condition', position: { x: 100, y: 100 } })
-    const action1 = new Node({ clientId: 'action1', type: 'action', position: { x: 200, y: 100 } })
-    const action2 = new Node({ clientId: 'action2', type: 'action', position: { x: 200, y: 200 } })
+    const action1 = new Node({ clientId: 'action1', type: 'score', position: { x: 200, y: 100 } })
+    const action2 = new Node({ clientId: 'action2', type: 'score', position: { x: 200, y: 200 } })
     
     store.addNode(root)
     store.addNode(cond)

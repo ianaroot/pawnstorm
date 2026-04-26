@@ -226,19 +226,19 @@ RSpec.describe Node, type: :model do
     end
 
     it 'is valid with prototype action data' do
-      node = build(:node, :action)
+      node = build(:node, :score)
       expect(node).to be_valid
     end
 
     it 'rejects action data with invalid keys' do
-      node = build(:node, :action, data: { actionType: 'add', value: 1, bonus: 4 })
+      node = build(:node, :score, data: { actionType: 'add', value: 1, bonus: 4 })
 
       expect(node).not_to be_valid
       expect(node.errors[:data]).to include('contains invalid keys: bonus')
     end
 
     it 'rejects action data with invalid actionType' do
-      node = build(:node, :action, data: { actionType: 'move', value: 1 })
+      node = build(:node, :score, data: { actionType: 'move', value: 1 })
 
       expect(node).not_to be_valid
       expect(node.errors[:data]).to include('has invalid actionType')
@@ -288,9 +288,9 @@ RSpec.describe Node, type: :model do
       expect(node).to be_valid
     end
 
-    it 'can be an action node' do
-      node = build(:node, :action)
-      expect(node.node_type).to eq('action')
+    it 'can be an score node' do
+      node = build(:node, :score)
+      expect(node.node_type).to eq('score')
       expect(node).to be_valid
     end
 
@@ -313,8 +313,8 @@ RSpec.describe Node, type: :model do
         expect(node.root?).to be false
       end
 
-      it 'returns false for action nodes' do
-        node = build(:node, :action)
+      it 'returns false for score nodes' do
+        node = build(:node, :score)
         expect(node.root?).to be false
       end
     end

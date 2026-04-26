@@ -28,9 +28,9 @@ def create_condition!(bot:, position_x:, position_y:, data:)
   )
 end
 
-def create_action!(bot:, position_x:, position_y:, action_type:, value:)
+def create_score!(bot:, position_x:, position_y:, action_type:, value:)
   bot.nodes.create!(
-    node_type: 'action',
+    node_type: 'score',
     position_x: position_x,
     position_y: position_y,
     data: {
@@ -85,7 +85,7 @@ def create_template_instance!(
     if template_node.fetch('type') == 'organizer'
       data['title'] = title if title
       data['notes'] = notes if notes
-    elsif template_node.fetch('type') == 'action'
+    elsif template_node.fetch('type') == 'score'
       action_key = template_node.fetch('key')
       data['value'] = action_value_overrides.fetch(action_key, scaled_action_value(data.fetch('value'), action_value_multiplier))
     end
@@ -149,7 +149,7 @@ def create_path!(bot:, start_node:, x:, y:, conditions:, action_type:, value:, s
       x + ((conditions.length % 2 == 1) ? zigzag_offset : 0)
     end
 
-  action_node = create_action!(
+  action_node = create_score!(
     bot: bot,
     position_x: action_x,
     position_y: y + (conditions.length * step_y),
@@ -235,11 +235,11 @@ def create_shared_split_paths!(bot:, start_node:, x:, y:, shared_conditions:, va
         variant_start_x + ((total_depth % 2 == 1) ? zigzag_offset : 0)
       end
 
-    action_node = create_action!(
+    action_node = create_score!(
       bot: bot,
       position_x: action_x,
       position_y: y + ((shared_depth + variant.fetch(:conditions).length) * step_y),
-      action_type: variant.fetch(:action_type),
+      action_type: variant.fetch(:score_type),
       value: variant.fetch(:value)
     )
     connect!(variant_previous_node, action_node)

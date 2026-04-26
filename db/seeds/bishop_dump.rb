@@ -87,7 +87,7 @@ node_map[103976] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103977] = create_action!(
+node_map[103977] = create_score!(
   bot: bishop_dump,
   position_x: 80.0,
   position_y: 580.0,
@@ -125,7 +125,7 @@ node_map[103979] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103980] = create_action!(
+node_map[103980] = create_score!(
   bot: bishop_dump,
   position_x: 300.0,
   position_y: 580.0,
@@ -390,7 +390,7 @@ node_map[103998] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103999] = create_action!(
+node_map[103999] = create_score!(
   bot: bishop_dump,
   position_x: 660.0,
   position_y: 2980.0,
@@ -414,7 +414,7 @@ node_map[104000] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104001] = create_action!(
+node_map[104001] = create_score!(
   bot: bishop_dump,
   position_x: 920.0,
   position_y: 2980.0,
@@ -479,7 +479,7 @@ node_map[104005] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104006] = create_action!(
+node_map[104006] = create_score!(
   bot: bishop_dump,
   position_x: 1180.0,
   position_y: 2980.0,
@@ -503,7 +503,7 @@ node_map[104007] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104008] = create_action!(
+node_map[104008] = create_score!(
   bot: bishop_dump,
   position_x: 1440.0,
   position_y: 2980.0,
@@ -558,7 +558,7 @@ node_map[104011] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104012] = create_action!(
+node_map[104012] = create_score!(
   bot: bishop_dump,
   position_x: 1700.0,
   position_y: 2830.0,
@@ -579,7 +579,7 @@ node_map[104013] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104014] = create_action!(
+node_map[104014] = create_score!(
   bot: bishop_dump,
   position_x: 2220.0,
   position_y: 2830.0,
@@ -620,7 +620,7 @@ node_map[104016] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104017] = create_action!(
+node_map[104017] = create_score!(
   bot: bishop_dump,
   position_x: 2220.0,
   position_y: 2830.0,
@@ -641,7 +641,7 @@ node_map[104018] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104019] = create_action!(
+node_map[104019] = create_score!(
   bot: bishop_dump,
   position_x: 2740.0,
   position_y: 2830.0,
@@ -675,7 +675,7 @@ node_map[104021] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104022] = create_action!(
+node_map[104022] = create_score!(
   bot: bishop_dump,
   position_x: 360.0,
   position_y: 2190.0,
@@ -683,7 +683,7 @@ node_map[104022] = create_action!(
   value: 110
 )
 
-node_map[104023] = create_action!(
+node_map[104023] = create_score!(
   bot: bishop_dump,
   position_x: 680.0,
   position_y: 2040.0,
@@ -735,7 +735,7 @@ node_map[104026] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104027] = create_action!(
+node_map[104027] = create_score!(
   bot: bishop_dump,
   position_x: 960.0,
   position_y: 2340.0,
@@ -759,7 +759,7 @@ node_map[104028] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104029] = create_action!(
+node_map[104029] = create_score!(
   bot: bishop_dump,
   position_x: 1240.0,
   position_y: 2340.0,
@@ -814,7 +814,7 @@ node_map[104032] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104033] = create_action!(
+node_map[104033] = create_score!(
   bot: bishop_dump,
   position_x: 1810.0,
   position_y: 1590.0,
@@ -872,7 +872,7 @@ node_map[104036] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104037] = create_action!(
+node_map[104037] = create_score!(
   bot: bishop_dump,
   position_x: 1810.0,
   position_y: 2160.0,
@@ -909,7 +909,7 @@ node_map[104039] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104040] = create_action!(
+node_map[104040] = create_score!(
   bot: bishop_dump,
   position_x: 1740.0,
   position_y: 2580.0,
@@ -961,7 +961,7 @@ node_map[104043] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104044] = create_action!(
+node_map[104044] = create_score!(
   bot: bishop_dump,
   position_x: 2040.0,
   position_y: 1590.0,
@@ -1016,7 +1016,7 @@ node_map[104047] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104048] = create_action!(
+node_map[104048] = create_score!(
   bot: bishop_dump,
   position_x: 2040.0,
   position_y: 2160.0,
@@ -1050,7 +1050,7 @@ node_map[104050] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104051] = create_action!(
+node_map[104051] = create_score!(
   bot: bishop_dump,
   position_x: 1970.0,
   position_y: 2580.0,
@@ -1113,7 +1113,7 @@ node_map[104055] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104056] = create_action!(
+node_map[104056] = create_score!(
   bot: bishop_dump,
   position_x: 2720.0,
   position_y: 1520.0,
@@ -1137,7 +1137,7 @@ node_map[104057] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104058] = create_action!(
+node_map[104058] = create_score!(
   bot: bishop_dump,
   position_x: 2980.0,
   position_y: 1520.0,
@@ -1175,7 +1175,7 @@ node_map[104060] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104061] = create_action!(
+node_map[104061] = create_score!(
   bot: bishop_dump,
   position_x: 3240.0,
   position_y: 1520.0,
@@ -1199,7 +1199,7 @@ node_map[104062] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104063] = create_action!(
+node_map[104063] = create_score!(
   bot: bishop_dump,
   position_x: 3500.0,
   position_y: 1520.0,
@@ -1224,7 +1224,7 @@ node_map[104064] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104065] = create_action!(
+node_map[104065] = create_score!(
   bot: bishop_dump,
   position_x: 3830.0,
   position_y: 1370.0,
@@ -1279,7 +1279,7 @@ node_map[104068] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[104069] = create_action!(
+node_map[104069] = create_score!(
   bot: bishop_dump,
   position_x: 3990.0,
   position_y: 1670.0,
@@ -1300,7 +1300,7 @@ node_map[104070] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104071] = create_action!(
+node_map[104071] = create_score!(
   bot: bishop_dump,
   position_x: 4220.0,
   position_y: 1670.0,
@@ -1378,7 +1378,7 @@ node_map[104076] = create_condition!(
    "targetFilterMode"=>"exclude"}
 )
 
-node_map[104077] = create_action!(
+node_map[104077] = create_score!(
   bot: bishop_dump,
   position_x: 3930.0,
   position_y: 2170.0,
@@ -1400,7 +1400,7 @@ node_map[104078] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[104079] = create_action!(
+node_map[104079] = create_score!(
   bot: bishop_dump,
   position_x: 4190.0,
   position_y: 2170.0,
@@ -1450,7 +1450,7 @@ node_map[104082] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[104083] = create_action!(
+node_map[104083] = create_score!(
   bot: bishop_dump,
   position_x: 4450.0,
   position_y: 1870.0,
@@ -1475,7 +1475,7 @@ node_map[104084] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[104085] = create_action!(
+node_map[104085] = create_score!(
   bot: bishop_dump,
   position_x: 4710.0,
   position_y: 1570.0,
@@ -1513,7 +1513,7 @@ node_map[104087] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[104088] = create_action!(
+node_map[104088] = create_score!(
   bot: bishop_dump,
   position_x: 4900.0,
   position_y: 1720.0,
@@ -1575,7 +1575,7 @@ node_map[104092] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[104093] = create_action!(
+node_map[104093] = create_score!(
   bot: bishop_dump,
   position_x: 5160.0,
   position_y: 2020.0,
@@ -1637,7 +1637,7 @@ node_map[104097] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[104098] = create_action!(
+node_map[104098] = create_score!(
   bot: bishop_dump,
   position_x: 5420.0,
   position_y: 2020.0,

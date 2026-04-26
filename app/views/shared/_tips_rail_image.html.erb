@@ -1,0 +1,8 @@
+<% if image.present? %>
+  <% kind = image.fetch(:kind).to_sym %>
+  <% data = image.fetch(:data, {}) %>
+
+  <div class="tips-rail-image tips-rail-image--<%= kind.to_s.dasherize %>">
+    <%= render "shared/tips_rail_images/#{kind}", data: data %>
+  </div>
+<% end %>

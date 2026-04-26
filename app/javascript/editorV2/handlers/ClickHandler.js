@@ -1,4 +1,7 @@
 import ConditionForm from 'editorV2/panels/ConditionForm'
+import { EVENTS } from 'editorV2/constants'
+import generateConditionChainExamples from 'editorV2/panels/condition_preview/ConditionChainExampleGenerator'
+import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
     this.store = store
@@ -18,7 +21,8 @@ class ClickHandler {
     
     // Currently editing node
     this.editingNodeId = null
-    
+    this._chainPreviewTimer = null
+
     // Callbacks
     this.onNodeSelected = null
     this.onNodeDeselected = null
@@ -37,10 +41,10 @@ class ClickHandler {
       this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
       if (this.isPlainClick(e)) { this.openEditor(clientId) }
     })
-    
+
     element.addEventListener('dblclick', (e) => {
-      if (e.target.classList.contains('node-connector')) {  return  }
-      this.openEditor(clientId)  
+      if (e.target.classList.contains('node-connector')) { return }
+      this.openEditor(clientId)
     })
   }
   
@@ -67,8 +71,15 @@ class ClickHandler {
     this.conditionForm?.attach()
   }
 
-  handleStoreUpdate() {
+  handleStoreUpdate(event) {
     this.syncSelectionClasses()
+    if (event !== EVENTS.SELECTION_CHANGE) { return }
+    if (this.store.getSelectedNodeIds().length > 1) {
+      if (this.editingNodeId) { this._hideEditorPanel() }
+      if (this.boardStatePreview?.mode !== 'idle' && this.boardStatePreview?.isEnabled) {
+        this.renderSelectionPreview()
+      }
+    }
   }
 
   syncSelectionClasses() {
@@ -91,7 +102,8 @@ class ClickHandler {
     if (this.store.shouldSuppressClicks()) { return }
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
-    if (!clickedOnNode && !clickedOnEditor) {
+    const clickedOnPreview = this.boardStatePreview?.wrap?.contains(event.target)
+    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview) {
       this.deselectAll()
       this.closeEditor()
     }
@@ -108,6 +120,21 @@ class ClickHandler {
   }
 
   handleKeyDown(event) {
+    if (event.key.toLowerCase() === 'p') {
+      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
+      if (this.isEditableTarget(event.target)) { return }
+      event.preventDefault()
+      if (this.boardStatePreview?.isEnabled) {
+        this.boardStatePreview.toggle()
+      } else if (this.store.getSelectedNodeIds().length > 1) {
+        this.boardStatePreview.isEnabled = true
+        this.renderSelectionPreview()
+      } else if (this.editingNodeId && this.conditionForm) {
+        this.boardStatePreview?.activate(this.conditionForm)
+      }
+      return
+    }
+
     if (event.key === 'Enter') {
       if (this.isTextareaTarget(event.target) && event.shiftKey) { return }
       if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
@@ -134,6 +161,10 @@ class ClickHandler {
 
   isTextareaTarget(target) {
     return target?.tagName === 'TEXTAREA'
+  }
+
+  isEditableTarget(target) {
+    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable
   }
 
   selectNode(clientId, element, { additive = false } = {}) {
@@ -203,7 +234,9 @@ class ClickHandler {
     }
   }
   
-  closeEditor() {
+  _hideEditorPanel() {
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = null
     this.editingNodeId = null
     this.store.setEditingNode(null)
     if (this.editorPanel) {
@@ -211,11 +244,57 @@ class ClickHandler {
     }
   }
 
+  closeEditor() {
+    this._hideEditorPanel()
+    this.boardStatePreview?.deactivate()
+  }
+
+  setBoardStatePreview(preview) {
+    this.boardStatePreview = preview
+  }
+
+  setConditionPreviewOnlyMode(isPreviewOnly) {
+    const conditionForm = this.editorPanel?.querySelector('#condition-form')
+    const conditionLayout = this.editorPanel?.querySelector('.condition-form-layout')
+    const conditionFormulation = this.editorPanel?.querySelector('.condition-form-formulation')
+
+    conditionForm?.classList.toggle('hidden', !isPreviewOnly && this.store.getNode(this.editingNodeId)?.type !== 'condition')
+    conditionLayout?.classList.toggle('hidden', isPreviewOnly)
+    conditionFormulation?.classList.toggle('hidden', isPreviewOnly)
+  }
+
+  buildSelectionPreview() {
+    return buildSelectedConditionChain({
+      selectedNodeIds: this.store.getSelectedNodeIds(),
+      getNode: (clientId) => this.store.getNode(clientId),
+      internalConnections: this.store.getInternalConnections(this.store.getSelectedNodeIds())
+    })
+  }
+
+  showSelectionPreviewPanel(preview) {
+    this.boardStatePreview?.showSelectionPreview(preview)
+  }
+
+  renderSelectionPreview() {
+    const chain = this.buildSelectionPreview()
+    if (chain.status !== 'ready') {
+      this.showSelectionPreviewPanel({ status: chain.status, reason: chain.reason, examples: [] })
+      return
+    }
+
+    this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = setTimeout(() => {
+      this.showSelectionPreviewPanel(generateConditionChainExamples(chain.payloads))
+    }, 0)
+  }
+
   // ===== Editor Panel Population =====
   populateEditorPanel(node) {
     if (!this.editorPanel) {
       return
     }
+    this.setConditionPreviewOnlyMode(false)
     
     // Update type display
     const typeSpan = this.editorPanel.querySelector('#edit-node-type')
@@ -225,14 +304,14 @@ class ClickHandler {
     
     // Hide/show appropriate editor sections
     const conditionForm = this.editorPanel.querySelector('#condition-form')
-    const actionEditor = this.editorPanel.querySelector('#action-form')
+    const actionEditor = this.editorPanel.querySelector('#score-form')
     const organizerEditor = this.editorPanel.querySelector('#organizer-form')
     this.editorPanel.classList.toggle('node-form-panel--condition', node.type === 'condition')
     if (conditionForm) {
       conditionForm.classList.toggle('hidden', node.type !== 'condition')
     }
     if (actionEditor) {
-      actionEditor.classList.toggle('hidden', node.type !== 'action')
+      actionEditor.classList.toggle('hidden', node.type !== 'score')
     }
     if (organizerEditor) {
       organizerEditor.classList.toggle('hidden', node.type !== 'organizer')
@@ -245,7 +324,7 @@ class ClickHandler {
       case 'condition':
         this.populateConditionForm(node)
         break
-      case 'action':
+      case 'score':
         this.populateActionEditor(node)
         break
       case 'organizer':
@@ -258,6 +337,9 @@ class ClickHandler {
 
   populateConditionForm(node) {
     this.conditionForm?.populate(node.data)
+    if (this.boardStatePreview && this.conditionForm) {
+      this.boardStatePreview.activate(this.conditionForm)
+    }
   }
 
 
@@ -300,7 +382,7 @@ class ClickHandler {
     switch (node.type) {
       case 'condition':
         return this.buildConditionDataPayload()
-      case 'action':
+      case 'score':
         return this.buildActionDataPayload()
       case 'organizer':
         return this.buildOrganizerDataPayload()
@@ -389,6 +471,7 @@ class ClickHandler {
     document.removeEventListener('keydown', this.boundHandleKeyDown)
     this.conditionForm?.detach()
     this.unsubscribeStore?.()
+    clearTimeout(this._chainPreviewTimer)
     this.attachedElements = new WeakMap()
     this.editingNodeId = null
   }

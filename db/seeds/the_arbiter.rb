@@ -175,7 +175,7 @@ cr_enemy_safe = create_condition!(
 )
 connect!(cr_gate, cr_enemy_safe)
 
-cr_reward = create_action!(
+cr_reward = create_score!(
   bot: arbiter, position_x: 2600, position_y: 5560,
   action_type: 'add', value: 22
 )
@@ -226,7 +226,7 @@ ko_enemy_safe = create_condition!(
 )
 connect!(ko_gate, ko_enemy_safe)
 
-ko_reward = create_action!(
+ko_reward = create_score!(
   bot: arbiter, position_x: 3600, position_y: 5410,
   action_type: 'add', value: 16
 )
@@ -291,7 +291,7 @@ cf_enemy_safe = create_condition!(
 )
 connect!(cf_gate, cf_enemy_safe)
 
-cf_reward = create_action!(
+cf_reward = create_score!(
   bot: arbiter, position_x: 4600, position_y: 5560,
   action_type: 'add', value: 18
 )

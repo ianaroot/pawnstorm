@@ -4,7 +4,7 @@ import {
 } from 'editorV2/utils/nodeDefaults'
 import { TEMPLATE_CATEGORY_ORDER } from 'editorV2/templates/TemplateCategories'
 
-const ALLOWED_NODE_TYPES = Object.freeze(['organizer', 'condition', 'action'])
+const ALLOWED_NODE_TYPES = Object.freeze(['organizer', 'condition', 'score'])
 const CONDITION_UNARY_REQUIRED_KEYS = Object.freeze([
   'version',
   'kind',
@@ -63,10 +63,10 @@ function validateDataShape(template, node) {
     case 'condition':
       validateConditionDataShape(template, node, keys)
       break
-    case 'action':
+    case 'score':
       assert(
         JSON.stringify(keys) === JSON.stringify([...ACTION_DATA_KEYS].sort()),
-        `Template "${template.id}" action node "${node.key}" must define actionType and value`
+        `Template "${template.id}" score node "${node.key}" must define actionType and value`
       )
       break
     default:

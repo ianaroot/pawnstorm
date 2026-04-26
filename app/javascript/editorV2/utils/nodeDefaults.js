@@ -48,7 +48,7 @@ export function defaultNodeData(type) {
   switch (type) {
     case 'condition':
       return { ...DEFAULT_CONDITION_DATA }
-    case 'action':
+    case 'score':
       return { ...DEFAULT_ACTION_DATA }
     case 'organizer':
       return { ...DEFAULT_ORGANIZER_DATA }
@@ -68,7 +68,7 @@ export function normalizeNodeData(type, data = {}) {
         return { ...data }
       }
       return { ...DEFAULT_CONDITION_DATA, ...data }
-    case 'action':
+    case 'score':
       return { ...DEFAULT_ACTION_DATA, ...data }
     case 'organizer':
       return { ...DEFAULT_ORGANIZER_DATA, ...data }

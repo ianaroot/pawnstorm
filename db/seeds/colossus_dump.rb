@@ -87,7 +87,7 @@ node_map[103641] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103642] = create_action!(
+node_map[103642] = create_score!(
   bot: colossus_dump,
   position_x: -180.0,
   position_y: -60.0,
@@ -125,7 +125,7 @@ node_map[103644] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103645] = create_action!(
+node_map[103645] = create_score!(
   bot: colossus_dump,
   position_x: 80.0,
   position_y: -60.0,
@@ -376,7 +376,7 @@ node_map[103662] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103663] = create_action!(
+node_map[103663] = create_score!(
   bot: colossus_dump,
   position_x: 3670.0,
   position_y: 2520.0,
@@ -427,7 +427,7 @@ node_map[103666] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103667] = create_action!(
+node_map[103667] = create_score!(
   bot: colossus_dump,
   position_x: 4310.0,
   position_y: 2520.0,
@@ -679,7 +679,7 @@ node_map[103684] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103685] = create_action!(
+node_map[103685] = create_score!(
   bot: colossus_dump,
   position_x: 4560.0,
   position_y: 2670.0,
@@ -717,7 +717,7 @@ node_map[103687] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103688] = create_action!(
+node_map[103688] = create_score!(
   bot: colossus_dump,
   position_x: 4840.0,
   position_y: 2670.0,
@@ -751,7 +751,7 @@ node_map[103690] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103691] = create_action!(
+node_map[103691] = create_score!(
   bot: colossus_dump,
   position_x: -1740.0,
   position_y: 330.0,
@@ -759,7 +759,7 @@ node_map[103691] = create_action!(
   value: 110
 )
 
-node_map[103692] = create_action!(
+node_map[103692] = create_score!(
   bot: colossus_dump,
   position_x: -1200.0,
   position_y: 180.0,
@@ -795,7 +795,7 @@ node_map[103694] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[103695] = create_action!(
+node_map[103695] = create_score!(
   bot: colossus_dump,
   position_x: -920.0,
   position_y: 340.0,
@@ -850,7 +850,7 @@ node_map[103698] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103699] = create_action!(
+node_map[103699] = create_score!(
   bot: colossus_dump,
   position_x: -700.0,
   position_y: 910.0,
@@ -919,7 +919,7 @@ node_map[103703] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103704] = create_action!(
+node_map[103704] = create_score!(
   bot: colossus_dump,
   position_x: -180.0,
   position_y: 640.0,
@@ -961,7 +961,7 @@ node_map[103706] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103707] = create_action!(
+node_map[103707] = create_score!(
   bot: colossus_dump,
   position_x: 140.0,
   position_y: 720.0,
@@ -1016,7 +1016,7 @@ node_map[103710] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103711] = create_action!(
+node_map[103711] = create_score!(
   bot: colossus_dump,
   position_x: -1800.0,
   position_y: 1240.0,
@@ -1068,7 +1068,7 @@ node_map[103714] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103715] = create_action!(
+node_map[103715] = create_score!(
   bot: colossus_dump,
   position_x: -1730.0,
   position_y: 1910.0,
@@ -1121,7 +1121,7 @@ node_map[103718] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103719] = create_action!(
+node_map[103719] = create_score!(
   bot: colossus_dump,
   position_x: -1010.0,
   position_y: 1390.0,
@@ -1142,7 +1142,7 @@ node_map[103720] = create_condition!(
    "comparisonValue"=>1}
 )
 
-node_map[103721] = create_action!(
+node_map[103721] = create_score!(
   bot: colossus_dump,
   position_x: -1010.0,
   position_y: 1610.0,
@@ -1194,7 +1194,7 @@ node_map[103724] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103725] = create_action!(
+node_map[103725] = create_score!(
   bot: colossus_dump,
   position_x: -600.0,
   position_y: 1520.0,
@@ -1246,7 +1246,7 @@ node_map[103728] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103729] = create_action!(
+node_map[103729] = create_score!(
   bot: colossus_dump,
   position_x: -530.0,
   position_y: 2190.0,
@@ -1299,7 +1299,7 @@ node_map[103732] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103733] = create_action!(
+node_map[103733] = create_score!(
   bot: colossus_dump,
   position_x: 190.0,
   position_y: 1670.0,
@@ -1320,7 +1320,7 @@ node_map[103734] = create_condition!(
    "comparisonValue"=>1}
 )
 
-node_map[103735] = create_action!(
+node_map[103735] = create_score!(
   bot: colossus_dump,
   position_x: 190.0,
   position_y: 1890.0,
@@ -1383,7 +1383,7 @@ node_map[103739] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[103740] = create_action!(
+node_map[103740] = create_score!(
   bot: colossus_dump,
   position_x: 570.0,
   position_y: 1570.0,
@@ -1408,7 +1408,7 @@ node_map[103741] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103742] = create_action!(
+node_map[103742] = create_score!(
   bot: colossus_dump,
   position_x: 1090.0,
   position_y: 1570.0,
@@ -1474,7 +1474,7 @@ node_map[103746] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103747] = create_action!(
+node_map[103747] = create_score!(
   bot: colossus_dump,
   position_x: 1460.0,
   position_y: 2500.0,
@@ -1512,7 +1512,7 @@ node_map[103749] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103750] = create_action!(
+node_map[103750] = create_score!(
   bot: colossus_dump,
   position_x: 1820.0,
   position_y: 2500.0,
@@ -1567,7 +1567,7 @@ node_map[103753] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103754] = create_action!(
+node_map[103754] = create_score!(
   bot: colossus_dump,
   position_x: 2120.0,
   position_y: 2440.0,
@@ -1619,7 +1619,7 @@ node_map[103757] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103758] = create_action!(
+node_map[103758] = create_score!(
   bot: colossus_dump,
   position_x: 2870.0,
   position_y: 2590.0,
@@ -1671,7 +1671,7 @@ node_map[103761] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103762] = create_action!(
+node_map[103762] = create_score!(
   bot: colossus_dump,
   position_x: 3100.0,
   position_y: 2740.0,
@@ -1723,7 +1723,7 @@ node_map[103765] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103766] = create_action!(
+node_map[103766] = create_score!(
   bot: colossus_dump,
   position_x: 3850.0,
   position_y: 2890.0,
@@ -1787,7 +1787,7 @@ node_map[103770] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103771] = create_action!(
+node_map[103771] = create_score!(
   bot: colossus_dump,
   position_x: -1190.0,
   position_y: 2730.0,
@@ -1812,7 +1812,7 @@ node_map[103772] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103773] = create_action!(
+node_map[103773] = create_score!(
   bot: colossus_dump,
   position_x: -910.0,
   position_y: 2950.0,
@@ -1837,7 +1837,7 @@ node_map[103774] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103775] = create_action!(
+node_map[103775] = create_score!(
   bot: colossus_dump,
   position_x: -630.0,
   position_y: 2730.0,
@@ -1909,7 +1909,7 @@ node_map[103779] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103780] = create_action!(
+node_map[103780] = create_score!(
   bot: colossus_dump,
   position_x: -60.0,
   position_y: 2740.0,
@@ -1978,7 +1978,7 @@ node_map[103784] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103785] = create_action!(
+node_map[103785] = create_score!(
   bot: colossus_dump,
   position_x: 300.0,
   position_y: 3060.0,
@@ -2016,7 +2016,7 @@ node_map[103787] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103788] = create_action!(
+node_map[103788] = create_score!(
   bot: colossus_dump,
   position_x: 710.0,
   position_y: 2330.0,
@@ -2053,7 +2053,7 @@ node_map[103790] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103791] = create_action!(
+node_map[103791] = create_score!(
   bot: colossus_dump,
   position_x: 1160.0,
   position_y: 2480.0,
@@ -2121,7 +2121,7 @@ node_map[103795] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103796] = create_action!(
+node_map[103796] = create_score!(
   bot: colossus_dump,
   position_x: 1170.0,
   position_y: 2970.0,
@@ -2143,7 +2143,7 @@ node_map[103797] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103798] = create_action!(
+node_map[103798] = create_score!(
   bot: colossus_dump,
   position_x: 1690.0,
   position_y: 2970.0,
@@ -2226,7 +2226,7 @@ node_map[103803] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103804] = create_action!(
+node_map[103804] = create_score!(
   bot: colossus_dump,
   position_x: 1950.0,
   position_y: 2990.0,
@@ -2311,7 +2311,7 @@ node_map[103810] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103811] = create_action!(
+node_map[103811] = create_score!(
   bot: colossus_dump,
   position_x: 10920.0,
   position_y: 4800.0,
@@ -2332,7 +2332,7 @@ node_map[103812] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103813] = create_action!(
+node_map[103813] = create_score!(
   bot: colossus_dump,
   position_x: 11240.0,
   position_y: 4800.0,
@@ -2372,7 +2372,7 @@ node_map[103815] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103816] = create_action!(
+node_map[103816] = create_score!(
   bot: colossus_dump,
   position_x: 11580.0,
   position_y: 4800.0,
@@ -2393,7 +2393,7 @@ node_map[103817] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103818] = create_action!(
+node_map[103818] = create_score!(
   bot: colossus_dump,
   position_x: 11900.0,
   position_y: 4800.0,
@@ -2490,7 +2490,7 @@ node_map[103824] = create_condition!(
    "subjectComparisonValue"=>0}
 )
 
-node_map[103825] = create_action!(
+node_map[103825] = create_score!(
   bot: colossus_dump,
   position_x: 12310.0,
   position_y: 5100.0,
@@ -2511,7 +2511,7 @@ node_map[103826] = create_condition!(
    "targetFilter"=>"any"}
 )
 
-node_map[103827] = create_action!(
+node_map[103827] = create_score!(
   bot: colossus_dump,
   position_x: 12630.0,
   position_y: 5100.0,
@@ -2591,7 +2591,7 @@ node_map[103832] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103833] = create_action!(
+node_map[103833] = create_score!(
   bot: colossus_dump,
   position_x: 11570.0,
   position_y: 4950.0,
@@ -2613,7 +2613,7 @@ node_map[103834] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103835] = create_action!(
+node_map[103835] = create_score!(
   bot: colossus_dump,
   position_x: 11830.0,
   position_y: 4950.0,
@@ -2635,7 +2635,7 @@ node_map[103836] = create_condition!(
    "comparisonValue"=>0}
 )
 
-node_map[103837] = create_action!(
+node_map[103837] = create_score!(
   bot: colossus_dump,
   position_x: 12090.0,
   position_y: 4950.0,
@@ -2697,7 +2697,7 @@ node_map[103841] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[103842] = create_action!(
+node_map[103842] = create_score!(
   bot: colossus_dump,
   position_x: 12280.0,
   position_y: 4800.0,
@@ -2732,7 +2732,7 @@ node_map[103844] = create_condition!(
    "comparisonValue"=>"prior_board_state"}
 )
 
-node_map[103845] = create_action!(
+node_map[103845] = create_score!(
   bot: colossus_dump,
   position_x: 12540.0,
   position_y: 4800.0,
@@ -2815,7 +2815,7 @@ node_map[103850] = create_condition!(
    "subjectComparisonValue"=>"prior_board_state"}
 )
 
-node_map[103851] = create_action!(
+node_map[103851] = create_score!(
   bot: colossus_dump,
   position_x: 12870.0,
   position_y: 4950.0,

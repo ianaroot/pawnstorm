@@ -82,7 +82,7 @@ class BotRunner {
           if (passed) { this.runChildren(node.children || [], analysis, state) }
         }
         break
-      case 'action':
+      case 'score':
         profileCollector.increment('bot.action_node_count')
         this.applyAction(nodeId, node.data, state)
         break
@@ -121,7 +121,7 @@ class BotRunner {
 
       this.recordTrace(state, {
         nodeId,
-        nodeType: 'action',
+        nodeType: 'score',
         actionType: actionNode.actionType,
         value: actionNode.value,
         scoreBefore,

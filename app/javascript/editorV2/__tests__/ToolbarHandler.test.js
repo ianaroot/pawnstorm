@@ -57,7 +57,7 @@ describe('ToolbarHandler', () => {
   })
 
   it('falls back to the visible canvas center when no anchor exists', () => {
-    expect(toolbarHandler.findPlacementPosition('action')).toEqual({ x: 346, y: 246 })
+    expect(toolbarHandler.findPlacementPosition('score')).toEqual({ x: 346, y: 246 })
   })
 
   it('falls back to the visible canvas center when the recent anchor is outside the viewport', () => {

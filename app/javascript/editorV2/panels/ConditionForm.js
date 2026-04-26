@@ -355,6 +355,8 @@ class ConditionForm {
     this.disableSubjectOptions(fields, samePieceMode)
     this.disableRelationalComparisonSourceOptions(fields)
     this.disableUnaryTargetOptions(fields)
+
+    if (this.onStateChange) { this.onStateChange(this.buildPayload()) }
   }
 
   showAllOptions(select) {
