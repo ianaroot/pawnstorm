@@ -54,13 +54,16 @@ export function buildRelationalPlan(payload, options = {}) {
   const comparisons = comparisonDescriptors(payload)
   for (let index = 0; index < comparisons.length; index += 1) {
     const descriptor = comparisons[index]
-    if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE) {
+    if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE && descriptor.metric !== COUNT_COMPARISON_METRIC) {
       return { status: 'unsupported', reason: 'Prior-board relational comparisons are not supported yet.' }
     }
     if (![COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC].includes(descriptor.metric)) {
       return { status: 'unsupported', reason: `${descriptor.metric} relational comparisons are not supported yet.` }
     }
-    if (descriptor.metric === COUNT_COMPARISON_METRIC && descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) {
+    if (descriptor.metric === COUNT_COMPARISON_METRIC && ![
+      EXACT_NUMBER_COMPARISON_SOURCE,
+      PRIOR_BOARD_COMPARISON_SOURCE
+    ].includes(descriptor.source)) {
       return { status: 'unsupported', reason: 'This relational comparison source is not supported yet.' }
     }
     if (descriptor.metric === VALUE_COMPARISON_METRIC && ![

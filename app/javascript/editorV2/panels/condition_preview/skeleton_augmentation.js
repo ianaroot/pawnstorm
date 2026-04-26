@@ -374,6 +374,7 @@ export function augmentSkeletonsForComparisons({ plan, skeleton, random }) {
   if (plan.comparisonDescriptors.some(descriptor => descriptor.metric === 'value')) {
     return augmentSkeletonsForValueComparisons({ plan, skeleton, random })
   }
+  if (!requirements.exactCountComparisonsPresent) { return [skeleton] }
   if (requirements.subject === null || requirements.target === null) { return [] }
   if (requirements.subject < 0 || requirements.target < 0) { return [] }
   if (usesZeroRelationPath(requirements)) { return [] }

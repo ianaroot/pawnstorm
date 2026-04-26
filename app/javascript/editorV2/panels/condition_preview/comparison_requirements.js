@@ -49,13 +49,16 @@ export function comparisonRequirementsFromDescriptors(descriptors) {
     subject: 1,
     target: 1,
     comparisonsPresent: false,
-    countComparisonsPresent: false
+    countComparisonsPresent: false,
+    exactCountComparisonsPresent: false
   }
 
   descriptors.forEach(descriptor => {
     requirements.comparisonsPresent = true
     if (descriptor.metric !== COUNT_COMPARISON_METRIC) { return }
+    if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) { return }
     requirements.countComparisonsPresent = true
+    requirements.exactCountComparisonsPresent = true
     requirements[descriptor.side] = desiredCountForComparison(descriptor)
   })
 
