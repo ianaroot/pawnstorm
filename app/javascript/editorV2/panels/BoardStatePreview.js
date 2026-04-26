@@ -129,9 +129,13 @@ class BoardStatePreview {
       e.stopPropagation()
       this._toggle()
     })
+    this.mode = 'idle'
+    this.selectionPreview = null
   }
 
   activate(conditionForm) {
+    this.mode = 'form'
+    this.selectionPreview = null
     this.conditionForm = conditionForm
     this.wrap.classList.remove('hidden')
     conditionForm.onStateChange = (payload) => this._debouncedUpdate(payload)
@@ -143,11 +147,29 @@ class BoardStatePreview {
     }
   }
 
+  showSelectionPreview(preview) {
+    this._stopCycle()
+    if (this.conditionForm) { this.conditionForm.onStateChange = null }
+    this.conditionForm = null
+    this.mode = 'selection'
+    this.selectionPreview = preview
+    this.wrap.classList.remove('hidden')
+
+    if (this.isEnabled) {
+      this.content.classList.remove('hidden')
+      this._applyPreview(preview)
+    } else {
+      this.content.classList.add('hidden')
+    }
+  }
+
   deactivate() {
     this._stopCycle()
     this._returnToggleToHeader()
     if (this.conditionForm) { this.conditionForm.onStateChange = null }
     this.conditionForm = null
+    this.mode = 'idle'
+    this.selectionPreview = null
     this.wrap.classList.add('hidden')
   }
 
@@ -155,7 +177,11 @@ class BoardStatePreview {
     this.isEnabled = !this.isEnabled
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
-      if (this.conditionForm) { this._update(this.conditionForm.buildPayload()) }
+      if (this.mode === 'form' && this.conditionForm) {
+        this._update(this.conditionForm.buildPayload())
+      } else if (this.mode === 'selection' && this.selectionPreview) {
+        this._applyPreview(this.selectionPreview)
+      }
     } else {
       this._stopCycle()
       this._returnToggleToHeader()
@@ -166,7 +192,10 @@ class BoardStatePreview {
 
   _update(payload) {
     this._stopCycle()
-    const preview = generateConditionExamples(payload)
+    this._applyPreview(generateConditionExamples(payload))
+  }
+
+  _applyPreview(preview) {
     this.status = preview.status
     this.reason = preview.reason || ''
     this.examples = preview.examples || []

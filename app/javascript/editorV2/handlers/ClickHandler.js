@@ -1,4 +1,7 @@
 import ConditionForm from 'editorV2/panels/ConditionForm'
+import { EVENTS } from 'editorV2/constants'
+import generateConditionChainExamples from 'editorV2/panels/condition_preview/ConditionChainExampleGenerator'
+import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
     this.store = store
@@ -18,6 +21,7 @@ class ClickHandler {
     
     // Currently editing node
     this.editingNodeId = null
+    this.selectionPreviewEnabled = false
     
     // Callbacks
     this.onNodeSelected = null
@@ -35,10 +39,12 @@ class ClickHandler {
       if (e.target.classList.contains('node-connector')) { return }
       if (this.store.shouldSuppressClicks()) { return }
       this.selectNode(clientId, element, { additive: this.isShiftSelection(e) })
+      if (this.selectionPreviewEnabled) { return }
       if (this.isPlainClick(e)) { this.openEditor(clientId) }
     })
     
     element.addEventListener('dblclick', (e) => {
+      if (this.selectionPreviewEnabled) { return }
       if (e.target.classList.contains('node-connector')) {  return  }
       this.openEditor(clientId)  
     })
@@ -67,8 +73,11 @@ class ClickHandler {
     this.conditionForm?.attach()
   }
 
-  handleStoreUpdate() {
+  handleStoreUpdate(event) {
     this.syncSelectionClasses()
+    if (event === EVENTS.SELECTION_CHANGE && this.selectionPreviewEnabled) {
+      this.renderSelectionPreview()
+    }
   }
 
   syncSelectionClasses() {
@@ -108,6 +117,14 @@ class ClickHandler {
   }
 
   handleKeyDown(event) {
+    if (event.key.toLowerCase() === 'p') {
+      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
+      if (this.isEditableTarget(event.target)) { return }
+      event.preventDefault()
+      this.toggleSelectionPreview()
+      return
+    }
+
     if (event.key === 'Enter') {
       if (this.isTextareaTarget(event.target) && event.shiftKey) { return }
       if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
@@ -134,6 +151,10 @@ class ClickHandler {
 
   isTextareaTarget(target) {
     return target?.tagName === 'TEXTAREA'
+  }
+
+  isEditableTarget(target) {
+    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable
   }
 
   selectNode(clientId, element, { additive = false } = {}) {
@@ -179,6 +200,7 @@ class ClickHandler {
 
 
   openEditor(clientId) {
+    if (this.selectionPreviewEnabled) { return }
     const node = this.store.getNode(clientId)
     if (!node) {
       console.warn(`Node ${clientId} not found`)
@@ -204,6 +226,7 @@ class ClickHandler {
   }
   
   closeEditor() {
+    this.selectionPreviewEnabled = false
     this.editingNodeId = null
     this.store.setEditingNode(null)
     if (this.editorPanel) {
@@ -216,11 +239,81 @@ class ClickHandler {
     this.boardStatePreview = preview
   }
 
+  setConditionPreviewOnlyMode(isPreviewOnly) {
+    const conditionForm = this.editorPanel?.querySelector('#condition-form')
+    const conditionLayout = this.editorPanel?.querySelector('.condition-form-layout')
+    const conditionFormulation = this.editorPanel?.querySelector('.condition-form-formulation')
+
+    conditionForm?.classList.toggle('hidden', !isPreviewOnly && this.store.getNode(this.editingNodeId)?.type !== 'condition')
+    conditionLayout?.classList.toggle('hidden', isPreviewOnly)
+    conditionFormulation?.classList.toggle('hidden', isPreviewOnly)
+  }
+
+  buildSelectionPreview() {
+    return buildSelectedConditionChain({
+      selectedNodeIds: this.store.getSelectedNodeIds(),
+      getNode: (clientId) => this.store.getNode(clientId),
+      internalConnections: this.store.getInternalConnections(this.store.getSelectedNodeIds())
+    })
+  }
+
+  showSelectionPreviewPanel(preview) {
+    if (!this.editorPanel) { return }
+    this.editorPanel.classList.remove('hidden')
+
+    const typeSpan = this.editorPanel.querySelector('#edit-node-type')
+    if (typeSpan) { typeSpan.textContent = 'condition chain' }
+
+    this.editorPanel.classList.add('node-form-panel--condition')
+    this.setConditionPreviewOnlyMode(true)
+    this.editorPanel.querySelector('#score-form')?.classList.add('hidden')
+    this.editorPanel.querySelector('#organizer-form')?.classList.add('hidden')
+    this.boardStatePreview?.showSelectionPreview(preview)
+  }
+
+  renderSelectionPreview() {
+    const chain = this.buildSelectionPreview()
+    if (chain.status !== 'ready') {
+      this.showSelectionPreviewPanel({
+        status: chain.status,
+        reason: chain.reason,
+        examples: []
+      })
+      return
+    }
+
+    this.showSelectionPreviewPanel(generateConditionChainExamples(chain.payloads))
+  }
+
+  toggleSelectionPreview() {
+    this.selectionPreviewEnabled = !this.selectionPreviewEnabled
+
+    if (this.selectionPreviewEnabled) {
+      this.renderSelectionPreview()
+      return
+    }
+
+    this.boardStatePreview?.deactivate()
+    if (!this.editorPanel) { return }
+
+    if (this.editingNodeId) {
+      const node = this.store.getNode(this.editingNodeId)
+      if (node) {
+        this.editorPanel.classList.remove('hidden')
+        this.populateEditorPanel(node)
+        return
+      }
+    }
+
+    this.editorPanel.classList.add('hidden')
+  }
+
   // ===== Editor Panel Population =====
   populateEditorPanel(node) {
     if (!this.editorPanel) {
       return
     }
+    this.setConditionPreviewOnlyMode(false)
     
     // Update type display
     const typeSpan = this.editorPanel.querySelector('#edit-node-type')
