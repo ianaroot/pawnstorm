@@ -98,9 +98,10 @@ export function generateConditionChainExamples(payloads, options = {}) {
     plans.push(plan)
   }
 
+  const msPerPayload = Math.floor((options.maxMs ?? 500) / payloads.length)
   const candidateExamples = []
   payloads.forEach(payload => {
-    const preview = generateConditionExamples(payload, { ...options, maxExamples })
+    const preview = generateConditionExamples(payload, { ...options, maxExamples, maxMs: msPerPayload })
     if (preview.status === 'ready') {
       candidateExamples.push(...preview.examples)
     }

@@ -141,7 +141,7 @@ class BoardStatePreview {
     conditionForm.onStateChange = (payload) => this._debouncedUpdate(payload)
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
-      this._update(conditionForm.buildPayload())
+      this._debouncedUpdate(conditionForm.buildPayload())
     } else {
       this.content.classList.add('hidden')
     }

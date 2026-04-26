@@ -89,6 +89,7 @@ function scheduleWorkItems(items, random) {
 export function generateConditionExamples(payload, options = {}) {
   const maxExamples = options.maxExamples || MAX_DEFAULT_EXAMPLES
   const random = options.random || Math.random
+  const deadline = Date.now() + (options.maxMs ?? 500)
 
   const plan = buildRelationalPlan(payload, options)
   if (plan.status !== 'supported') {
@@ -111,7 +112,7 @@ export function generateConditionExamples(payload, options = {}) {
 
       for (let index = 0; index < workQueue.length; index += 1) {
         attempts += 1
-        if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
+        if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL || Date.now() > deadline) { break }
 
         const item = workQueue[index]
         const augmentedSkeletons = augmentSkeletonsForComparisons({ plan: activePlan, skeleton: item.skeleton, random })
