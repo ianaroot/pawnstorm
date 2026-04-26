@@ -102,7 +102,8 @@ class ClickHandler {
     if (this.store.shouldSuppressClicks()) { return }
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
-    if (!clickedOnNode && !clickedOnEditor) {
+    const clickedOnPreview = this.boardStatePreview?.wrap?.contains(event.target)
+    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview) {
       this.deselectAll()
       this.closeEditor()
     }
