@@ -21,6 +21,10 @@ export function varietySignature(example) {
   ].join(':')
 }
 
+export function movedPieceSignature(example) {
+  return example.afterBoard.pieceTypeAt(example.moveObject.endPosition)
+}
+
 export function bucketKeyForExample(example) {
   return [
     subjectSpeciesSignature(example),
@@ -78,24 +82,29 @@ export function selectDiverseExamples(candidates, maxExamples) {
   const targetBuckets = new Map()
   const pairBuckets = new Map()
   const variantBuckets = new Map()
+  const movedPieceBuckets = new Map()
 
   candidates.forEach(candidate => {
     const subjectKey = subjectSpeciesSignature(candidate)
     const targetKey = targetSpeciesSignature(candidate)
     const pairKey = speciesPairSignature(candidate)
     const variantKey = candidate.variantType
+    const movedKey = movedPieceSignature(candidate)
 
     if (!subjectBuckets.has(subjectKey)) { subjectBuckets.set(subjectKey, []) }
     if (!targetBuckets.has(targetKey)) { targetBuckets.set(targetKey, []) }
     if (!pairBuckets.has(pairKey)) { pairBuckets.set(pairKey, []) }
     if (!variantBuckets.has(variantKey)) { variantBuckets.set(variantKey, []) }
+    if (!movedPieceBuckets.has(movedKey)) { movedPieceBuckets.set(movedKey, []) }
 
     subjectBuckets.get(subjectKey).push(candidate)
     targetBuckets.get(targetKey).push(candidate)
     pairBuckets.get(pairKey).push(candidate)
     variantBuckets.get(variantKey).push(candidate)
+    movedPieceBuckets.get(movedKey).push(candidate)
   })
 
+  roundRobinAppend({ selected, candidatesByKey: movedPieceBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: subjectBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: targetBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: pairBuckets, maxExamples, seenIdentities })
