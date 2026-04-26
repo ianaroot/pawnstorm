@@ -282,16 +282,44 @@ class BoardStatePreview {
     muteBtn.addEventListener('click', (e) => { e.stopPropagation(); this._toggleMute() })
     this._muteBtn = muteBtn
 
-    if (this.toggleBtn) { side.appendChild(this.toggleBtn) }
+    if (this.toggleBtn) {
+      this.toggleBtn.style.gridRow = '1'
+      side.appendChild(this.toggleBtn)
+    }
 
     const controlsRow = document.createElement('div')
     controlsRow.className = 'board-state-preview__side-row board-state-preview__side-row--centered'
+    controlsRow.style.gridRow = '2'
     controlsRow.appendChild(playPauseBtn)
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
+    const legendEntries = [
+      { swatchClass: 'mini-board__tile--subject', label: 'Subject' },
+      { swatchClass: 'mini-board__tile--target', label: 'Target' },
+      { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
+    ]
+
+    const legend = document.createElement('div')
+    legend.className = 'board-state-preview__legend'
+    legend.style.gridRow = '3'
+    legendEntries.forEach(({ swatchClass, label }) => {
+      const item = document.createElement('div')
+      item.className = 'board-state-preview__legend-item'
+      const swatch = document.createElement('span')
+      swatch.className = `board-state-preview__legend-swatch ${swatchClass}`
+      const labelText = document.createElement('span')
+      labelText.className = 'board-state-preview__legend-label'
+      labelText.textContent = label
+      item.appendChild(swatch)
+      item.appendChild(labelText)
+      legend.appendChild(item)
+    })
+    side.appendChild(legend)
+
     const bottom = document.createElement('div')
     bottom.className = 'board-state-preview__side-bottom'
+    bottom.style.gridRow = '4'
 
     if (this.examples.length > 1) {
       const prevBtn = document.createElement('button')
