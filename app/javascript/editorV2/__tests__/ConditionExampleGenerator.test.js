@@ -37,6 +37,25 @@ function relationalValueForSide(example, side) {
   return analysis.metricForPositions({ metric: 'value', positions })
 }
 
+function relationalValueForSideScoped(payload, example, side, boardScope = 'after') {
+  const analysis = new CandidateMoveAnalysisV2({
+    board: example.priorBoard,
+    moveObject: example.moveObject
+  })
+  const result = analysis.relationalResult({
+    subject: payload.subject,
+    subjectFilter: payload.subjectFilter || 'any',
+    subjectFilterMode: payload.subjectFilterMode || null,
+    operator: payload.operator,
+    target: payload.target,
+    targetFilter: payload.targetFilter || 'any',
+    targetFilterMode: payload.targetFilterMode || null,
+    boardScope
+  })
+  const positions = side === 'subject' ? result.subjectPositions : result.targetPositions
+  return analysis.metricForPositions({ metric: 'value', positions, boardScope })
+}
+
 function relationalCountForSide(payload, example, side, boardScope = 'after') {
   const analysis = new CandidateMoveAnalysisV2({
     board: example.priorBoard,
@@ -88,21 +107,79 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.reason).toBe('This relational comparison source is not supported yet.')
   })
 
-  it('marks prior-board value relational comparisons unsupported with a specific message', () => {
-    const preview = generateConditionExamples({
+  it('supports greater-than prior-board value comparisons on relational conditions', () => {
+    const payload = {
       kind: 'relational',
       subject: 'allied',
       subjectFilter: 'any',
       operator: 'defend',
       target: 'allied',
-      targetFilter: 'any',
-      targetComparisonMetric: 'value',
-      targetComparator: 'greater_than',
-      targetComparisonSource: 'prior_board_state'
-    }, { random: seededRandom(12) })
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
 
-    expect(preview.status).toBe('unsupported')
-    expect(preview.reason).toBe('Prior-board relational comparisons are not supported yet.')
+    const preview = generateConditionExamples(payload, { random: seededRandom(12) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(relationalValueForSideScoped(payload, example, 'subject', 'after'))
+        .toBeGreaterThan(relationalValueForSideScoped(payload, example, 'subject', 'prior'))
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('supports less-than prior-board value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'less_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(26) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(relationalValueForSideScoped(payload, example, 'subject', 'after'))
+        .toBeLessThan(relationalValueForSideScoped(payload, example, 'subject', 'prior'))
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('supports equal-to prior-board value comparisons on relational conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'allied',
+      targetFilter: 'pawn',
+      subjectComparisonMetric: 'value',
+      subjectComparator: 'equal_to',
+      subjectComparisonSource: 'prior_board_state'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(27) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(relationalValueForSideScoped(payload, example, 'subject', 'after'))
+        .toBe(relationalValueForSideScoped(payload, example, 'subject', 'prior'))
+      expectLegalPriorTurnState(example)
+    })
   })
 
   it('supports greater-than prior-board count comparisons on relational conditions', () => {

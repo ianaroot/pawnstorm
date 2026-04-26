@@ -371,7 +371,9 @@ export function augmentExistingRelation({ plan, skeleton, requirements, random }
 export function augmentSkeletonsForComparisons({ plan, skeleton, random }) {
   const requirements = plan.requirements
   if (!requirements.comparisonsPresent) { return [skeleton] }
-  if (plan.comparisonDescriptors.some(descriptor => descriptor.metric === 'value')) {
+  if (plan.comparisonDescriptors.some(descriptor => (
+    descriptor.metric === 'value' && descriptor.source !== 'prior_board_state'
+  ))) {
     return augmentSkeletonsForValueComparisons({ plan, skeleton, random })
   }
   if (!requirements.exactCountComparisonsPresent) { return [skeleton] }
