@@ -34,6 +34,9 @@ import {
   buildExampleVariantPlan, candidateLabel, evaluateCandidate
 } from 'editorV2/panels/condition_preview/relational_utils'
 import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/panels/condition_preview/candidate_collection'
+import {
+  varietySignature, bucketKeyForExample, uniqueExamples, selectDiverseExamples
+} from 'editorV2/panels/condition_preview/diversity_selection'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -124,31 +127,6 @@ function supportStatus(payload) {
   }
 
   return { status: 'supported', reason: null }
-}
-
-function varietySignature(example) {
-  const subjectPieces = example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-  const targetPieces = example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-  return [
-    example.variantType,
-    subjectPieces,
-    targetPieces,
-    example.geometryKey
-  ].join(':')
-}
-
-function speciesPairSignature(example) {
-  const subjectPieces = example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-  const targetPieces = example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-  return `${subjectPieces}=>${targetPieces}`
-}
-
-function subjectSpeciesSignature(example) {
-  return example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-}
-
-function targetSpeciesSignature(example) {
-  return example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
 }
 
 function buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
@@ -332,24 +310,6 @@ function workItemKey(item) {
   ].join('|')
 }
 
-function uniqueExamples(examples) {
-  const seen = new Set()
-  return examples.filter(example => {
-    const identity = candidateIdentity(example)
-    if (seen.has(identity)) { return false }
-    seen.add(identity)
-    return true
-  })
-}
-
-function bucketKeyForExample(example) {
-  return [
-    subjectSpeciesSignature(example),
-    targetSpeciesSignature(example),
-    example.variantType
-  ].join('|')
-}
-
 function castlePresetForTeam(team) {
   if (team !== Board.WHITE) { return [] }
 
@@ -514,80 +474,6 @@ function collectCastleExamples({ payload, random, movingTeam = Board.WHITE, maxE
   })
 
   return examples
-}
-
-function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenIdentities }) {
-  const queue = Array.from(candidatesByKey.entries()).map(([key, candidates]) => ({
-    key,
-    candidates: [...candidates]
-  }))
-  let added = false
-
-  while (selected.length < maxExamples) {
-    let progressed = false
-
-    for (let index = 0; index < queue.length && selected.length < maxExamples; index += 1) {
-      const bucket = queue[index]
-      while (bucket.candidates.length > 0 && seenIdentities.has(candidateIdentity(bucket.candidates[0]))) {
-        bucket.candidates.shift()
-      }
-      if (bucket.candidates.length === 0) { continue }
-
-      const next = bucket.candidates.shift()
-      selected.push(next)
-      seenIdentities.add(candidateIdentity(next))
-      progressed = true
-      added = true
-    }
-
-    if (!progressed) { break }
-  }
-
-  return added
-}
-
-function selectDiverseExamples(candidates, maxExamples) {
-  if (candidates.length <= maxExamples) { return [...candidates] }
-
-  const selected = []
-  const seenIdentities = new Set()
-  const subjectBuckets = new Map()
-  const targetBuckets = new Map()
-  const pairBuckets = new Map()
-  const variantBuckets = new Map()
-
-  candidates.forEach(candidate => {
-    const subjectKey = subjectSpeciesSignature(candidate)
-    const targetKey = targetSpeciesSignature(candidate)
-    const pairKey = speciesPairSignature(candidate)
-    const variantKey = candidate.variantType
-
-    if (!subjectBuckets.has(subjectKey)) { subjectBuckets.set(subjectKey, []) }
-    if (!targetBuckets.has(targetKey)) { targetBuckets.set(targetKey, []) }
-    if (!pairBuckets.has(pairKey)) { pairBuckets.set(pairKey, []) }
-    if (!variantBuckets.has(variantKey)) { variantBuckets.set(variantKey, []) }
-
-    subjectBuckets.get(subjectKey).push(candidate)
-    targetBuckets.get(targetKey).push(candidate)
-    pairBuckets.get(pairKey).push(candidate)
-    variantBuckets.get(variantKey).push(candidate)
-  })
-
-  roundRobinAppend({ selected, candidatesByKey: subjectBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: targetBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: pairBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: variantBuckets, maxExamples, seenIdentities })
-
-  if (selected.length >= maxExamples) {
-    return selected.slice(0, maxExamples)
-  }
-
-  const remaining = candidates.filter(candidate => !seenIdentities.has(candidateIdentity(candidate)))
-  for (let index = 0; index < remaining.length && selected.length < maxExamples; index += 1) {
-    selected.push(remaining[index])
-  }
-
-  return selected
 }
 
 function movePathSquares(priorBoard, moveObject) {
