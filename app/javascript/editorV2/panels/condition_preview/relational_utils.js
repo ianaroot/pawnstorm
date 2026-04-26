@@ -31,11 +31,11 @@ export function relationParams(payload) {
   }
 }
 
-export function subjectTargetLabels(payload, moveObject, result) {
+export function subjectTargetLabels(plan, moveObject, result) {
   const startPosition = moveObject.startPosition
   const endPosition = moveObject.endPosition
-  const priorSubjectPositions = payload.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
-  const priorTargetPositions = payload.target === 'moved_piece' ? [startPosition] : result.targetPositions
+  const priorSubjectPositions = plan.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
+  const priorTargetPositions = plan.target === 'moved_piece' ? [startPosition] : result.targetPositions
 
   return {
     prior: {
@@ -73,7 +73,7 @@ export function buildExampleVariantPlan(payload) {
   ]
 }
 
-export function candidateLabel(variant, payload) {
+export function candidateLabel(variant) {
   if (variant.type === 'required') { return '' }
   return variant.label
 }
@@ -84,13 +84,13 @@ export function sideSpeciesPool(payload, side) {
   return candidateSpecies(filter, filterMode)
 }
 
-export function evaluateCandidate({ payload, priorBoard, moveObject }) {
+export function evaluateCandidate({ plan, priorBoard, moveObject }) {
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject }
-  if (!evaluator.evaluate(payload, input)) { return null }
+  if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }
 
   const analysis = new CandidateMoveAnalysisV2(input)
-  const result = analysis.relationalResult(relationParams(payload))
+  const result = analysis.relationalResult(plan.relationParams)
   if (result.pairs.length === 0) { return null }
 
   return result

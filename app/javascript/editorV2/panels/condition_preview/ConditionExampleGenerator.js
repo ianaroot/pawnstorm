@@ -1,103 +1,18 @@
-import Board from 'gameplay/board'
 import { shuffled, pushUnique } from 'editorV2/panels/condition_preview/board_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import {
-  COUNT_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
-  comparisonDescriptors, comparisonRequirements, usesZeroRelationPath
-} from 'editorV2/panels/condition_preview/comparison_requirements'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
-import { buildExampleVariantPlan } from 'editorV2/panels/condition_preview/relational_utils'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/example_utils'
 import { augmentSkeletonsForComparisons } from 'editorV2/panels/condition_preview/skeleton_augmentation'
 import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/panels/condition_preview/candidate_collection'
 import { varietySignature, bucketKeyForExample } from 'editorV2/panels/condition_preview/diversity_selection'
 import { finalizeExamples, mergeMoveKindExamples } from 'editorV2/panels/condition_preview/enrichment'
 import { collectCastleExamples } from 'editorV2/panels/condition_preview/special_move_examples'
+import { buildRelationalPlan } from 'editorV2/panels/condition_preview/generation_plan'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
 const MAX_BUILD_ATTEMPTS = 1200
 const MAX_EXAMPLES_PER_BUCKET = 8
-
-const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
-const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
-const FILTER_LABELS = Object.freeze({
-  allied: 'Allied',
-  enemy: 'Enemy',
-  moved_piece: 'Moved piece',
-  enemy_moved_piece: 'Enemy moved piece',
-  captured_piece: 'Captured piece',
-  enemy_captured_piece: 'Enemy captured piece'
-})
-
-function generationContext(options = {}) {
-  return {
-    movingTeam: options.movingTeam || Board.WHITE,
-    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE]
-  }
-}
-
-function actorLabel(actor) {
-  return FILTER_LABELS[actor] || actor
-}
-
-function supportStatus(payload) {
-  if (!payload?.kind) {
-    return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
-  }
-
-  if (payload.kind !== 'relational') {
-    return { status: 'unsupported', reason: 'Unary previews are not supported yet.' }
-  }
-
-  if (payload.operator === 'cover') {
-    return { status: 'unsupported', reason: 'Cover previews are not supported yet.' }
-  }
-
-  if (!SUPPORTED_RELATIONAL_OPERATORS.has(payload.operator)) {
-    return { status: 'unsupported', reason: `${payload.operator} previews are not supported yet.` }
-  }
-
-  if (!SUPPORTED_RELATIONAL_ACTORS.has(payload.subject)) {
-    return { status: 'unsupported', reason: `${actorLabel(payload.subject)} previews are not supported yet.` }
-  }
-
-  if (!SUPPORTED_RELATIONAL_ACTORS.has(payload.target)) {
-    return { status: 'unsupported', reason: `${actorLabel(payload.target)} previews are not supported yet.` }
-  }
-
-  const comparisons = comparisonDescriptors(payload)
-  if (comparisons.length > 0) {
-    for (let index = 0; index < comparisons.length; index += 1) {
-      const descriptor = comparisons[index]
-      if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE) {
-        return {
-          status: 'unsupported',
-          reason: 'Prior-board relational comparisons are not supported yet.'
-        }
-      }
-      if (descriptor.metric === 'value') {
-        return {
-          status: 'unsupported',
-          reason: 'Value-based relational comparisons are not supported yet.'
-        }
-      }
-      if (descriptor.metric !== COUNT_COMPARISON_METRIC) {
-        return {
-          status: 'unsupported',
-          reason: `${descriptor.metric} relational comparisons are not supported yet.`
-        }
-      }
-      if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) {
-        return {
-          status: 'unsupported',
-          reason: 'This relational comparison source is not supported yet.'
-        }
-      }
-    }
-  }
-
-  return { status: 'supported', reason: null }
-}
 
 function workItemKey(item) {
   return [
@@ -108,14 +23,14 @@ function workItemKey(item) {
   ].join('|')
 }
 
-function buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }) {
+function buildWorkItems({ plan, random }) {
   const items = []
 
-  subjectSpeciesPool.forEach(subjectSpecies => {
-    targetSpeciesPool.forEach(targetSpecies => {
-      const skeletons = shuffled(buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies }), random)
+  shuffled([...plan.subjectSpeciesPool], random).forEach(subjectSpecies => {
+    shuffled([...plan.targetSpeciesPool], random).forEach(targetSpecies => {
+      const skeletons = shuffled(buildCandidateSkeletons({ plan, subjectSpecies, targetSpecies }), random)
       skeletons.forEach(skeleton => {
-        variants.forEach(variant => {
+        plan.variants.forEach(variant => {
           items.push({ subjectSpecies, targetSpecies, skeleton, variant })
         })
       })
@@ -174,25 +89,15 @@ function scheduleWorkItems(items, random) {
 export function generateConditionExamples(payload, options = {}) {
   const maxExamples = options.maxExamples || MAX_DEFAULT_EXAMPLES
   const random = options.random || Math.random
-  const context = generationContext(options)
-  const support = supportStatus(payload)
-  if (support.status !== 'supported') {
-    return {
-      status: support.status,
-      reason: support.reason,
-      examples: []
-    }
+
+  const plan = buildRelationalPlan(payload, options)
+  if (plan.status !== 'supported') {
+    return { status: plan.status, reason: plan.reason, examples: [] }
   }
 
   let verified = []
-  if (context.moveKinds.includes(MOVE_KIND_STANDARD)) {
-    const variants = buildExampleVariantPlan(payload)
-    const subjectSpeciesPool = shuffled(candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null), random)
-    const targetSpeciesPool = shuffled(candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null), random)
-    const workQueue = scheduleWorkItems(
-      buildWorkItems({ payload, subjectSpeciesPool, targetSpeciesPool, variants, random }),
-      random
-    )
+  if (plan.moveKinds.includes(MOVE_KIND_STANDARD)) {
+    const workQueue = scheduleWorkItems(buildWorkItems({ plan, random }), random)
     const buckets = new Map()
     const seenSignatures = new Set()
     let totalExamples = 0
@@ -203,19 +108,10 @@ export function generateConditionExamples(payload, options = {}) {
       if (attempts > MAX_BUILD_ATTEMPTS || totalExamples >= MAX_CANDIDATE_POOL) { break }
 
       const item = workQueue[index]
-      const augmentedSkeletons = augmentSkeletonsForComparisons({
-        payload,
-        skeleton: item.skeleton,
-        random
-      })
+      const augmentedSkeletons = augmentSkeletonsForComparisons({ plan, skeleton: item.skeleton, random })
 
       for (let skeletonIndex = 0; skeletonIndex < augmentedSkeletons.length; skeletonIndex += 1) {
-        const examples = collectVerifiedExamples({
-          payload,
-          skeleton: augmentedSkeletons[skeletonIndex],
-          variant: item.variant,
-          random
-        })
+        const examples = collectVerifiedExamples({ plan, skeleton: augmentedSkeletons[skeletonIndex], variant: item.variant, random })
 
         for (let exampleIndex = 0; exampleIndex < examples.length; exampleIndex += 1) {
           const example = examples[exampleIndex]
@@ -240,17 +136,15 @@ export function generateConditionExamples(payload, options = {}) {
 
     verified = Array.from(buckets.values()).flat()
   }
-  const castleExamples = context.moveKinds.includes(MOVE_KIND_CASTLE)
-    ? collectCastleExamples({ payload, random, movingTeam: context.movingTeam, maxExamples: MAX_CANDIDATE_POOL })
+
+  const castleExamples = plan.moveKinds.includes(MOVE_KIND_CASTLE)
+    ? collectCastleExamples({ plan, random, maxExamples: MAX_CANDIDATE_POOL })
     : []
-  if (verified.length === 0 && usesZeroRelationPath(comparisonRequirements(payload))) {
-    const zeroExamples = buildZeroRelationExamples({ payload, random, maxExamples: MAX_CANDIDATE_POOL })
+
+  if (verified.length === 0 && usesZeroRelationPath(plan.requirements)) {
+    const zeroExamples = buildZeroRelationExamples({ plan, random, maxExamples: MAX_CANDIDATE_POOL })
     if (zeroExamples.length > 0) {
-      return {
-        status: 'ready',
-        reason: null,
-        examples: finalizeExamples(zeroExamples, payload, maxExamples, random)
-      }
+      return { status: 'ready', reason: null, examples: finalizeExamples(zeroExamples, plan, maxExamples, random) }
     }
   }
 
@@ -265,13 +159,7 @@ export function generateConditionExamples(payload, options = {}) {
   return {
     status: 'ready',
     reason: null,
-    examples: mergeMoveKindExamples({
-      standardExamples: verified,
-      castleExamples,
-      payload,
-      maxExamples,
-      random
-    })
+    examples: mergeMoveKindExamples({ standardExamples: verified, castleExamples, plan, maxExamples, random })
   }
 }
 

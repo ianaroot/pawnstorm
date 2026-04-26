@@ -1,23 +1,20 @@
-import Board from 'gameplay/board'
 import { controlledSquares } from 'gameplay/board_query_utils'
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/geometry_utils'
-import { teamForActor, sideSpeciesPool } from 'editorV2/panels/condition_preview/relational_utils'
 import {
   shuffled, legalPlacementForSpecies, pieceCode, clonePiecesMap,
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/board_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import { comparisonRequirements, usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
 
-export function buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
+export function buildAttackOrDefendContributionCandidates({ plan, side, anchorPosition, occupied, random }) {
   if (side === 'subject') {
-    const subjectTeam = teamForActor(payload.subject)
-    return shuffled(sideSpeciesPool(payload, 'subject'), random).flatMap(species => {
+    return shuffled([...plan.subjectSpeciesPool], random).flatMap(species => {
       const positions = []
       for (let position = 0; position < 64; position += 1) {
         if (occupied.has(position) || position === anchorPosition) { continue }
         const board = buildBoardFromLayout(buildLayoutFromPieces(new Map([
-          [position, pieceCode(subjectTeam, species)]
+          [position, pieceCode(plan.subjectTeam, species)]
         ])))
         if (!legalPlacementForSpecies(position, species)) { continue }
         if (controlledSquares({ board, attackerPosition: position }).includes(anchorPosition)) {
@@ -25,7 +22,7 @@ export function buildAttackOrDefendContributionCandidates({ payload, side, ancho
             side: 'subject',
             position,
             species,
-            piece: pieceCode(subjectTeam, species)
+            piece: pieceCode(plan.subjectTeam, species)
           })
         }
       }
@@ -37,24 +34,24 @@ export function buildAttackOrDefendContributionCandidates({ payload, side, ancho
   return shuffled(controlledSquares({ board, attackerPosition: anchorPosition }), random)
     .filter(position => !occupied.has(position))
     .flatMap(position => {
-      return shuffled(sideSpeciesPool(payload, 'target'), random)
+      return shuffled([...plan.targetSpeciesPool], random)
         .filter(species => legalPlacementForSpecies(position, species))
         .map(species => ({
           side: 'target',
           position,
           species,
-          piece: pieceCode(teamForActor(payload.target), species)
+          piece: pieceCode(plan.targetTeam, species)
         }))
     })
 }
 
-export function buildAdjacentContributionCandidates({ payload, side, anchorPosition, occupied, random }) {
-  const team = side === 'subject' ? teamForActor(payload.subject) : teamForActor(payload.target)
-  const speciesPool = sideSpeciesPool(payload, side)
+export function buildAdjacentContributionCandidates({ plan, side, anchorPosition, occupied, random }) {
+  const team = side === 'subject' ? plan.subjectTeam : plan.targetTeam
+  const speciesPool = side === 'subject' ? plan.subjectSpeciesPool : plan.targetSpeciesPool
   return shuffled(adjacentNeighborPositions(anchorPosition), random)
     .filter(position => !occupied.has(position) && position !== anchorPosition)
     .flatMap(position => {
-      return shuffled(speciesPool, random)
+      return shuffled([...speciesPool], random)
         .filter(species => legalPlacementForSpecies(position, species))
         .map(species => ({
           side,
@@ -65,14 +62,14 @@ export function buildAdjacentContributionCandidates({ payload, side, anchorPosit
     })
 }
 
-export function nextAvailableIndependentSkeletons({ payload, occupied, random }) {
-  const subjectSpeciesPool = shuffled(sideSpeciesPool(payload, 'subject'), random)
-  const targetSpeciesPool = shuffled(sideSpeciesPool(payload, 'target'), random)
+export function nextAvailableIndependentSkeletons({ plan, occupied, random }) {
+  const subjectSpeciesPool = shuffled([...plan.subjectSpeciesPool], random)
+  const targetSpeciesPool = shuffled([...plan.targetSpeciesPool], random)
   const skeletons = []
 
   subjectSpeciesPool.forEach(subjectSpecies => {
     targetSpeciesPool.forEach(targetSpecies => {
-      buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies }).forEach(skeleton => {
+      buildCandidateSkeletons({ plan, subjectSpecies, targetSpecies }).forEach(skeleton => {
         const positions = Array.from(skeleton.pieces.keys())
         if (positions.some(position => occupied.has(position))) { return }
         skeletons.push(skeleton)
@@ -83,13 +80,13 @@ export function nextAvailableIndependentSkeletons({ payload, occupied, random })
   return shuffled(skeletons, random)
 }
 
-export function addContributorsForSide({ payload, pieces, side, neededCount, anchorPosition, random }) {
+export function addContributorsForSide({ plan, pieces, side, neededCount, anchorPosition, random }) {
   if (neededCount <= 0) { return true }
 
   const occupied = new Map(pieces)
-  const candidates = payload.operator === 'adjacent'
-    ? buildAdjacentContributionCandidates({ payload, side, anchorPosition, occupied, random })
-    : buildAttackOrDefendContributionCandidates({ payload, side, anchorPosition, occupied, random })
+  const candidates = plan.operator === 'adjacent'
+    ? buildAdjacentContributionCandidates({ plan, side, anchorPosition, occupied, random })
+    : buildAttackOrDefendContributionCandidates({ plan, side, anchorPosition, occupied, random })
 
   let added = 0
   for (let index = 0; index < candidates.length && added < neededCount; index += 1) {
@@ -102,24 +99,24 @@ export function addContributorsForSide({ payload, pieces, side, neededCount, anc
   return added === neededCount
 }
 
-export function augmentExistingRelation({ payload, skeleton, requirements, random }) {
+export function augmentExistingRelation({ plan, skeleton, requirements, random }) {
   const desiredSubjectCount = requirements.subject
   const desiredTargetCount = requirements.target
   const subjectIncrement = Math.max(0, desiredSubjectCount - 1)
   const targetIncrement = Math.max(0, desiredTargetCount - 1)
 
-  if (payload.operator === 'shield' && desiredSubjectCount !== desiredTargetCount) {
+  if (plan.operator === 'shield' && desiredSubjectCount !== desiredTargetCount) {
     return []
   }
 
   const pieces = clonePiecesMap(skeleton.pieces)
 
-  if (payload.operator === 'shield') {
+  if (plan.operator === 'shield') {
     let extraSubjectsNeeded = subjectIncrement
     let extraTargetsNeeded = targetIncrement
 
     while (extraSubjectsNeeded > 0 || extraTargetsNeeded > 0) {
-      const independentSkeletons = nextAvailableIndependentSkeletons({ payload, occupied: pieces, random })
+      const independentSkeletons = nextAvailableIndependentSkeletons({ plan, occupied: pieces, random })
       const extraSkeleton = independentSkeletons[0]
       if (!extraSkeleton) { break }
 
@@ -139,7 +136,7 @@ export function augmentExistingRelation({ payload, skeleton, requirements, rando
   }
 
   const subjectOkay = addContributorsForSide({
-    payload,
+    plan,
     pieces,
     side: 'subject',
     neededCount: subjectIncrement,
@@ -149,7 +146,7 @@ export function augmentExistingRelation({ payload, skeleton, requirements, rando
   if (!subjectOkay) { return [] }
 
   const targetOkay = addContributorsForSide({
-    payload,
+    plan,
     pieces,
     side: 'target',
     neededCount: targetIncrement,
@@ -165,12 +162,12 @@ export function augmentExistingRelation({ payload, skeleton, requirements, rando
   }]
 }
 
-export function augmentSkeletonsForComparisons({ payload, skeleton, random }) {
-  const requirements = comparisonRequirements(payload)
+export function augmentSkeletonsForComparisons({ plan, skeleton, random }) {
+  const requirements = plan.requirements
   if (!requirements.comparisonsPresent) { return [skeleton] }
   if (requirements.subject === null || requirements.target === null) { return [] }
   if (requirements.subject < 0 || requirements.target < 0) { return [] }
   if (usesZeroRelationPath(requirements)) { return [] }
 
-  return augmentExistingRelation({ payload, skeleton, requirements, random })
+  return augmentExistingRelation({ plan, skeleton, requirements, random })
 }

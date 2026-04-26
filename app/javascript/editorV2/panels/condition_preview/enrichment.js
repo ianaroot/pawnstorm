@@ -3,9 +3,8 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { legalPlacementForSpecies, pieceCode, shuffled } from 'editorV2/panels/condition_preview/board_utils'
-import { comparisonRequirements } from 'editorV2/panels/condition_preview/comparison_requirements'
 import { moveKindForMoveObject, soundForMove, candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
-import { relationParams, subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
 
 const ENRICHMENT_PROBABILITY = 0.5
@@ -13,10 +12,9 @@ const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 const ENRICHMENT_END_POSITION_WEIGHT = 4
 
-export function requiredRelationPairFloor(payload) {
-  const requirements = comparisonRequirements(payload)
-  if (!requirements.comparisonsPresent) { return 1 }
-  return Math.max(requirements.subject, requirements.target)
+export function requiredRelationPairFloor(plan) {
+  if (!plan.requirements.comparisonsPresent) { return 1 }
+  return Math.max(plan.requirements.subject, plan.requirements.target)
 }
 
 export function movePathSquares(priorBoard, moveObject) {
@@ -85,7 +83,7 @@ export function weightedDecorationSpecies(random) {
   return Board.QUEEN
 }
 
-export function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExample, suffix }) {
+export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExample, suffix }) {
   let recomputedMoveObject
   try {
     recomputedMoveObject = Rules.getMoveObject(moveObject.startPosition, moveObject.endPosition, priorBoard)
@@ -98,10 +96,10 @@ export function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExa
 
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject: recomputedMoveObject }
-  if (!evaluator.evaluate(payload, input)) { return null }
+  if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }
 
   const analysis = new CandidateMoveAnalysisV2(input)
-  const result = analysis.relationalResult(relationParams(payload))
+  const result = analysis.relationalResult(plan.relationParams)
   const afterBoard = priorBoard.lightClone()
   afterBoard._hypotheticallyMovePiece(recomputedMoveObject)
   const movedPieceInRelation = (
@@ -114,7 +112,7 @@ export function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExa
     afterBoard,
     moveObject: recomputedMoveObject,
     result,
-    highlights: subjectTargetLabels(payload, recomputedMoveObject, result),
+    highlights: subjectTargetLabels(plan, recomputedMoveObject, result),
     label: baseExample.label,
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
@@ -124,8 +122,8 @@ export function deriveVerifiedExample({ payload, priorBoard, moveObject, baseExa
   }
 }
 
-export function exampleEligibleForEnrichment(example, payload) {
-  return example.result.pairs.length <= requiredRelationPairFloor(payload) + MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT
+export function exampleEligibleForEnrichment(example, plan) {
+  return example.result.pairs.length <= requiredRelationPairFloor(plan) + MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT
 }
 
 export function buildEnrichmentPlacementPolicy(example, random) {
@@ -159,8 +157,8 @@ export function buildEnrichmentPlacementPolicy(example, random) {
   }
 }
 
-export function enrichExample(example, payload, random) {
-  if (!exampleEligibleForEnrichment(example, payload)) { return null }
+export function enrichExample(example, plan, random) {
+  if (!exampleEligibleForEnrichment(example, plan)) { return null }
 
   const policy = buildEnrichmentPlacementPolicy(example, random)
   const basePriorBoard = example.priorBoard.lightClone()
@@ -177,7 +175,7 @@ export function enrichExample(example, payload, random) {
       pieceObject: pieceCode(placement.team, placement.species)
     })
     const derived = deriveVerifiedExample({
-      payload,
+      plan,
       priorBoard: trialPriorBoard,
       moveObject: example.moveObject,
       baseExample: example,
@@ -185,7 +183,7 @@ export function enrichExample(example, payload, random) {
     })
 
     if (!derived) { break }
-    if (!exampleEligibleForEnrichment(derived, payload)) { break }
+    if (!exampleEligibleForEnrichment(derived, plan)) { break }
 
     bestExample = derived
     basePriorBoard.layOut = Board._deepCopy(trialPriorBoard.layOut)
@@ -195,12 +193,12 @@ export function enrichExample(example, payload, random) {
   return addedCount > 0 ? bestExample : null
 }
 
-export function finalizeExamples(baseExamples, payload, maxExamples, random) {
+export function finalizeExamples(baseExamples, plan, maxExamples, random) {
   const enrichedCandidates = []
 
   baseExamples.forEach(example => {
     if (random() >= ENRICHMENT_PROBABILITY) { return }
-    const enriched = enrichExample(example, payload, random)
+    const enriched = enrichExample(example, plan, random)
     if (enriched) { enrichedCandidates.push(enriched) }
   })
 
@@ -226,14 +224,14 @@ export function finalizeExamples(baseExamples, payload, maxExamples, random) {
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
-export function mergeMoveKindExamples({ standardExamples, castleExamples, payload, maxExamples, random }) {
+export function mergeMoveKindExamples({ standardExamples, castleExamples, plan, maxExamples, random }) {
   if (castleExamples.length === 0) {
-    return finalizeExamples(standardExamples, payload, maxExamples, random)
+    return finalizeExamples(standardExamples, plan, maxExamples, random)
   }
 
   const selectedCastle = selectDiverseExamples(castleExamples, 1)
   const selectedCastleIds = new Set(selectedCastle.map(candidateIdentity))
   const remainingStandard = standardExamples.filter(example => !selectedCastleIds.has(candidateIdentity(example)))
-  const selectedStandard = finalizeExamples(remainingStandard, payload, Math.max(0, maxExamples - selectedCastle.length), random)
+  const selectedStandard = finalizeExamples(remainingStandard, plan, Math.max(0, maxExamples - selectedCastle.length), random)
   return selectDiverseExamples(uniqueExamples([...selectedCastle, ...selectedStandard]), maxExamples)
 }

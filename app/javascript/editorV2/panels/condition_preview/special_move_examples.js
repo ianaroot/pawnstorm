@@ -5,11 +5,11 @@ import {
   layoutsMatch, shuffled
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
-  speciesMatchesFilter, candidateSpecies, selectKingPair, candidateIdentity,
+  speciesMatchesFilter, selectKingPair, candidateIdentity,
   MOVE_KIND_CASTLE, soundForMove
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  buildExampleVariantPlan, subjectTargetLabels, candidateLabel, evaluateCandidate
+  subjectTargetLabels, candidateLabel, evaluateCandidate
 } from 'editorV2/panels/condition_preview/relational_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
 
@@ -92,40 +92,38 @@ export function collectLegalCastleMoveExamples({ afterPieces, preset, random }) 
   return [{ priorBoard, moveObject, afterBoard: rebuiltAfter }]
 }
 
-export function collectCastleExamples({ payload, random, movingTeam = Board.WHITE, maxExamples }) {
-  const variants = buildExampleVariantPlan(payload)
-  const subjectSpeciesPool = shuffled(candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null), random)
-  const targetSpeciesPool = shuffled(candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null), random)
+export function collectCastleExamples({ plan, random, maxExamples }) {
+  const subjectSpeciesPool = shuffled([...plan.subjectSpeciesPool], random)
+  const targetSpeciesPool = shuffled([...plan.targetSpeciesPool], random)
   const examples = []
   const seen = new Set()
   let attempts = 0
 
-  castlePresetForTeam(movingTeam).forEach(preset => {
+  castlePresetForTeam(plan.movingTeam).forEach(preset => {
     subjectSpeciesPool.forEach(subjectSpecies => {
       targetSpeciesPool.forEach(targetSpecies => {
         const subjectAnchors = [null, ...castleAnchorPlacementsForActor({
-          actor: payload.subject,
-          filter: payload.subjectFilter || 'any',
-          filterMode: payload.subjectFilterMode || null,
+          actor: plan.subject,
+          filter: plan.subjectFilter,
+          filterMode: plan.subjectFilterMode,
           preset,
-          movingTeam
+          movingTeam: plan.movingTeam
         })]
         const targetAnchors = [null, ...castleAnchorPlacementsForActor({
-          actor: payload.target,
-          filter: payload.targetFilter || 'any',
-          filterMode: payload.targetFilterMode || null,
+          actor: plan.target,
+          filter: plan.targetFilter,
+          filterMode: plan.targetFilterMode,
           preset,
-          movingTeam
+          movingTeam: plan.movingTeam
         })]
 
         subjectAnchors.forEach(fixedSubjectPlacement => {
           targetAnchors.forEach(fixedTargetPlacement => {
             if (attempts >= MAX_CASTLE_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
             const skeletons = buildCandidateSkeletons({
-              payload,
+              plan,
               subjectSpecies,
               targetSpecies,
-              movingTeam,
               fixedPieces: preset.fixedPieces,
               fixedSubjectPlacement,
               fixedTargetPlacement,
@@ -133,13 +131,12 @@ export function collectCastleExamples({ payload, random, movingTeam = Board.WHIT
             })
 
             skeletons.forEach(skeleton => {
-              variants.forEach(variant => {
+              plan.variants.forEach(variant => {
                 attempts += 1
                 if (attempts > MAX_CASTLE_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
-                if (examples.length >= maxExamples) { return }
                 collectLegalCastleMoveExamples({ afterPieces: skeleton.pieces, preset, random }).forEach(moveExample => {
                   const result = evaluateCandidate({
-                    payload,
+                    plan,
                     priorBoard: moveExample.priorBoard,
                     moveObject: moveExample.moveObject
                   })
@@ -157,8 +154,8 @@ export function collectCastleExamples({ payload, random, movingTeam = Board.WHIT
                     afterBoard: moveExample.afterBoard,
                     moveObject: moveExample.moveObject,
                     result,
-                    highlights: subjectTargetLabels(payload, moveExample.moveObject, result),
-                    label: candidateLabel(variant, payload),
+                    highlights: subjectTargetLabels(plan, moveExample.moveObject, result),
+                    label: candidateLabel(variant),
                     variantType: movedPieceInRelation ? 'involved' : 'separate',
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
                     movedPieceInRelation,

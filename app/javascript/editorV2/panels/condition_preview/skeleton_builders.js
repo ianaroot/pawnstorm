@@ -26,21 +26,21 @@ export function mergeRelationPieces({ basePieces = new Map(), relationPieces, re
   return pieces
 }
 
-export function buildCandidateSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
-  switch (payload.operator) {
+export function buildCandidateSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
+  switch (plan.operator) {
     case 'attack':
     case 'defend':
-      return buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
+      return buildControlSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     case 'adjacent':
-      return buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
+      return buildAdjacentSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     case 'shield':
-      return buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
+      return buildShieldSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares })
     default:
       return []
   }
 }
 
-export function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
+export function buildControlSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
   const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : legalSubjectPlacements(subjectSpecies)
 
@@ -48,7 +48,7 @@ export function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, 
     const subjectPosition = subjectPlacement.position
     const pieces = mergeRelationPieces({
       basePieces: fixedPieces,
-      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
+      relationPieces: new Map([[subjectPosition, pieceCode(plan.subjectTeam, subjectPlacement.species)]]),
       reservedSquares
     })
     if (!pieces) { return }
@@ -60,7 +60,7 @@ export function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, 
       if (subjectPosition === targetPosition) { return }
       const effectiveTargetSpecies = fixedTargetPlacement?.species || targetSpecies
       if (!legalPlacementForSpecies(targetPosition, effectiveTargetSpecies)) { return }
-      const targetPiece = pieceCode(teamForActorWithContext(payload.target, movingTeam), effectiveTargetSpecies)
+      const targetPiece = pieceCode(plan.targetTeam, effectiveTargetSpecies)
       if (!controlled.includes(targetPosition)) { return }
       if (!fixedTargetPlacement && pieces.has(targetPosition)) { return }
 
@@ -83,7 +83,7 @@ export function buildControlSkeletons({ payload, subjectSpecies, targetSpecies, 
   return skeletons
 }
 
-export function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
+export function buildAdjacentSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
   const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : legalSubjectPlacements(subjectSpecies)
 
@@ -91,7 +91,7 @@ export function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies,
     const subjectPosition = subjectPlacement.position
     const pieces = mergeRelationPieces({
       basePieces: fixedPieces,
-      relationPieces: new Map([[subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)]]),
+      relationPieces: new Map([[subjectPosition, pieceCode(plan.subjectTeam, subjectPlacement.species)]]),
       reservedSquares
     })
     if (!pieces) { return }
@@ -102,7 +102,7 @@ export function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies,
       if (!legalPlacementForSpecies(targetPosition, effectiveTargetSpecies)) { return }
       const relationPieces = mergeRelationPieces({
         basePieces: pieces,
-        relationPieces: new Map([[targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), effectiveTargetSpecies)]]),
+        relationPieces: new Map([[targetPosition, pieceCode(plan.targetTeam, effectiveTargetSpecies)]]),
         reservedSquares
       })
       if (!relationPieces) { return }
@@ -119,9 +119,9 @@ export function buildAdjacentSkeletons({ payload, subjectSpecies, targetSpecies,
   return skeletons
 }
 
-export function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, movingTeam = Board.WHITE, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
+export function buildShieldSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces = new Map(), fixedSubjectPlacement = null, fixedTargetPlacement = null, reservedSquares = new Set() }) {
   const skeletons = []
-  const attackerTeam = Board.opposingTeam(teamForActorWithContext(payload.target, movingTeam))
+  const attackerTeam = Board.opposingTeam(plan.targetTeam)
   const subjectPlacements = fixedSubjectPlacement ? [fixedSubjectPlacement] : legalSubjectPlacements(subjectSpecies)
 
   subjectPlacements.forEach(subjectPlacement => {
@@ -146,15 +146,15 @@ export function buildShieldSkeletons({ payload, subjectSpecies, targetSpecies, m
             const relationPieces = mergeRelationPieces({
               basePieces: fixedPieces,
               relationPieces: new Map([
-                [subjectPosition, pieceCode(teamForActorWithContext(payload.subject, movingTeam), subjectPlacement.species)],
-                [targetPosition, pieceCode(teamForActorWithContext(payload.target, movingTeam), effectiveTargetSpecies)],
+                [subjectPosition, pieceCode(plan.subjectTeam, subjectPlacement.species)],
+                [targetPosition, pieceCode(plan.targetTeam, effectiveTargetSpecies)],
                 [attackerPosition, pieceCode(attackerTeam, attackerSpecies)]
               ]),
               reservedSquares
             })
             if (!relationPieces) { return }
             const board = buildBoardFromLayout(buildLayoutFromPieces(relationPieces))
-            const shielded = shieldedPositions({ board, sourcePosition: subjectPosition, team: teamForActorWithContext(payload.target, movingTeam) })
+            const shielded = shieldedPositions({ board, sourcePosition: subjectPosition, team: plan.targetTeam })
             if (!shielded.includes(targetPosition)) { return }
 
             skeletons.push({
