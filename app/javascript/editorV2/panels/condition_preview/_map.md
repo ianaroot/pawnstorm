@@ -41,7 +41,8 @@ No module in layers 1–5 imports from the generator. No circular deps.
 
 ### `board_utils.js`
 Low-level board plumbing. No local imports.  
-Key exports: `square`, `pieceCode`, `pieceTeam`, `pieceSpecies`, `emptyLayout`, `buildLayoutFromPieces`, `buildBoardFromLayout`, `layoutsMatch`, `clonePiecesMap`, `legalPlacementForSpecies`, `shuffled`, `pushUnique`, `unique`, `occupiedCount`, `squareIsOccupied`.
+Key exports: `square`, `pieceCode`, `pieceTeam`, `pieceSpecies`, `emptyLayout`, `buildLayoutFromPieces`, `buildBoardFromLayout`, `layoutsMatch`, `clonePiecesMap`, `legalPlacementForSpecies`, `shuffled`, `pushUnique`, `unique`, `occupiedCount`, `squareIsOccupied`, `weightedSpeciesCandidates`, `weightedRandomSpecies`.  
+`weightedRandomSpecies` is now the canonical species sampler for preview decoration and source-resolution helpers. Distribution matches starting material counts: pawn `8/16`, rook `2/16`, knight `2/16`, bishop `2/16`, queen `1/16`, king `1/16`.
 
 ### `geometry_utils.js`
 Geometric calculations over board positions. No local imports.  
@@ -49,12 +50,13 @@ Key exports: `RAY_STEPS`, `adjacentNeighborPositions`, `positionsForSliderOrigin
 
 ### `comparison_requirements.js`
 Pure analysis of comparison sub-conditions in a payload. No imports at all — works on plain objects.  
-Key exports: `comparisonDescriptors`, `comparisonRequirements`, `usesZeroRelationPath`, `COUNT_COMPARISON_METRIC`, `EXACT_NUMBER_COMPARISON_SOURCE`, `PRIOR_BOARD_COMPARISON_SOURCE`.  
-`comparisonRequirements` returns `{ comparisonsPresent, subject, target }` where subject/target are the required pair counts (null if unconstrained).
+Key exports: `comparisonDescriptors`, `comparisonRequirements`, `comparisonRequirementsFromDescriptors`, `usesZeroRelationPath`, `COUNT_COMPARISON_METRIC`, `VALUE_COMPARISON_METRIC`, `EXACT_NUMBER_COMPARISON_SOURCE`, `PRIOR_BOARD_COMPARISON_SOURCE`.  
+`comparisonRequirements` / `comparisonRequirementsFromDescriptors` return count-oriented pair requirements only. Value comparisons still register as `comparisonsPresent`, but they do not force subject/target pair counts the way `count` does. `usesZeroRelationPath` now only applies to count comparisons.
 
 ### `example_utils.js`
 Condition-type-agnostic helpers. Reusable by both relational and future unary example generation.  
-Key exports: `speciesMatchesFilter`, `candidateSpecies`, `selectKingPair`, `collectLegalReverseMoves`, `moveKindForMoveObject`, `soundForMove`, `candidateIdentity`, `MOVE_KIND_STANDARD`, `MOVE_KIND_CASTLE`.  
+Key exports: `speciesMatchesFilter`, `candidateSpecies`, `selectKingPair`, `collectLegalReverseMoves`, `legalPriorTurnState`, `moveKindForMoveObject`, `soundForMove`, `candidateIdentity`, `MOVE_KIND_STANDARD`, `MOVE_KIND_CASTLE`.  
+`collectLegalReverseMoves` can now optionally synthesize legal captures when given a `capturedPieceSpeciesPool`; otherwise it stays on the quiet-move path. `legalPriorTurnState` is the shared guard that rejects prior boards where the opponent is already in check before the move.  
 `candidateIdentity` currently references relational result fields — will be generalized when unary arrives.
 
 ### `relational_utils.js`
@@ -65,16 +67,29 @@ Key exports: `teamForActor`, `roleRequiresMovedPiece`, `roleRequiresEnemyMovedPi
 
 ### `generation_plan.js`
 Validates payload and constructs the typed plan struct consumed by all pipeline modules. Absorbs the support-check logic that would otherwise live in the generator.  
-Key exports: `buildRelationalPlan(payload, options)` — returns either `{ status: 'unsupported', reason }` or a full supported plan.  
+Key exports: `buildRelationalPlan(payload, options)`, `expandRelationalPlanSources(plan)` — returns either `{ status: 'unsupported', reason }` or a full supported plan; `expandRelationalPlanSources` fans one supported plan out into multiple source-constrained variants when a relational value comparison uses a dynamic source.  
 Plan shape:
 - `evaluationPayload` — raw payload, for passing to the evaluator only; not for field access
 - `operator`, `subject`, `target`, `subjectFilter`, `targetFilter`, `subjectFilterMode`, `targetFilterMode` — actor/operator fields still needed by geometry and collection logic
-- `requirements` — pre-computed from `comparisonRequirements`
+- `comparisonDescriptors` — first-class comparison data carried through the pipeline
+- `requirements` — count-oriented requirements pre-computed from `comparisonRequirements`
+- `sourceConstraints` — source-specific species constraints resolved during `expandRelationalPlanSources` for dynamic value sources (`moved_piece`, `captured_piece`, `enemy_moved_piece`, `enemy_captured_piece`)
 - `variants` — pre-computed from `buildExampleVariantPlan`
 - `subjectSpeciesPool`, `targetSpeciesPool` — pre-computed from `candidateSpecies`
 - `subjectTeam`, `targetTeam` — pre-computed from `teamForActor`
 - `movingTeam`, `moveKinds` — from options
 - `relationParams` — pre-computed from `relationParams`
+Supported relational comparison sources now include:
+- `count + exact_number`
+- `value + exact_number`
+- `value + moved_piece`
+- `value + captured_piece`
+- `value + enemy_moved_piece`
+- `value + enemy_captured_piece`
+
+Still unsupported:
+- any relational `prior_board_state` comparison
+- any relational comparison source outside the list above
 
 ### `skeleton_builders.js`
 Builds "skeletons" — minimal piece layouts satisfying a relational condition geometry. Receives `plan` for team and operator; does not import generation_plan.  
@@ -83,7 +98,11 @@ Key exports: `buildCandidateSkeletons`, `buildControlSkeletons`, `buildAdjacentS
 
 ### `candidate_collection.js`
 Takes skeletons and collects verified example boards by working backwards from legal moves.  
-Key exports: `collectVerifiedExamples`, `buildZeroRelationExamples`, `preferredExtraMovedSpecies`, `buildEnemyRecentMoveContext`, `roleSquaresForMovedPiece`, `movedPieceOptionSets`, `requiredZeroRelationPlacements`.  
+Key exports: `collectVerifiedExamples`, `buildZeroRelationExamples`, `preferredExtraMovedSpecies`, `buildEnemyRecentMoveContext`, `buildEnemyRecentMoveContextWithCapture`, `roleSquaresForMovedPiece`, `movedPieceOptionSets`, `requiredZeroRelationPlacements`.  
+This module now also applies source constraints coming from the plan:
+- constrains moved-piece species when a relational value comparison references `moved_piece`
+- requests legal capture reverse moves when a relational value comparison references `captured_piece`
+- seeds `recentMoveContext` for `enemy_moved_piece` / `enemy_captured_piece` value comparisons
 `buildZeroRelationExamples` inlines condition evaluation (does not use `evaluateCandidate`) because zero-count conditions intentionally produce zero pairs and `evaluateCandidate` would reject them. Uses `plan.evaluationPayload` directly.
 
 ### `diversity_selection.js`
@@ -93,12 +112,16 @@ Key exports: `selectDiverseExamples`, `uniqueExamples`, `roundRobinAppend`, `sub
 ### `enrichment.js`
 Decorates examples with extra pieces to make positions richer, then finalizes and merges example sets.  
 Key exports: `enrichExample`, `finalizeExamples`, `mergeMoveKindExamples`, `requiredRelationPairFloor`, `movePathSquares`, `forbiddenSquaresForEnrichment`, `weightedEnrichmentCandidateSquares`, `deriveVerifiedExample`, `exampleEligibleForEnrichment`, `buildEnrichmentPlacementPolicy`.  
-`requiredRelationPairFloor(plan)` reads `plan.requirements` directly — no longer calls `comparisonRequirements`.
+`requiredRelationPairFloor(plan)` reads `plan.requirements` directly — no longer calls `comparisonRequirements`. Enrichment now uses the shared weighted species sampler from `board_utils`, and `deriveVerifiedExample` reuses the shared prior-turn legality guard from `example_utils`.
 
 ### `skeleton_augmentation.js`
-Augments skeletons to add extra relation pairs when count comparisons require more than one subject or target.  
-Key exports: `augmentSkeletonsForComparisons`, `augmentExistingRelation`, `addContributorsForSide`, `nextAvailableIndependentSkeletons`, `buildAttackOrDefendContributionCandidates`, `buildAdjacentContributionCandidates`.  
-Reads `plan.requirements`, `plan.operator`, `plan.subjectTeam`, `plan.targetTeam`, `plan.subjectSpeciesPool`, `plan.targetSpeciesPool` — no longer imports relational_utils or comparison_requirements (except `usesZeroRelationPath`).
+Augments skeletons to satisfy relational comparisons before reverse-move search.  
+Key exports: `augmentSkeletonsForComparisons`, `augmentExistingRelation`, `augmentSkeletonsForValueComparisons`, `addContributorsForSide`, `nextAvailableIndependentSkeletons`, `buildAttackOrDefendContributionCandidates`, `buildAdjacentContributionCandidates`.  
+Current split:
+- `count` comparisons: add extra relation participants to hit required subject/target counts
+- `value` comparisons: use the already-chosen core relation species/geometry, then add value-contributing relation pieces until the resolved bounds are satisfied
+
+For `value`, kings contribute `0`, matching `CandidateMoveAnalysisV2.metricForPositions('value', ...)`.
 
 ### `special_move_examples.js`
 Generates examples for special move kinds. Currently handles castle; en passant and promotion are planned (add here first, extract if needed).  
@@ -106,7 +129,7 @@ Key exports: `collectCastleExamples`, `castlePresetForTeam`, `castleAnchorPlacem
 Castle is currently White-only (`castlePresetForTeam` returns `[]` for Black). Will generalize with the moving-team refactor.
 
 ### `ConditionExampleGenerator.js`
-Orchestrator and public API. Calls `buildRelationalPlan` then routes to the appropriate pipeline modules.  
+Orchestrator and public API. Calls `buildRelationalPlan`, expands any dynamic value-source variants via `expandRelationalPlanSources`, then routes each plan through the pipeline modules.  
 Public exports: `generateConditionExamples` (named + default).  
 Key constants: `MAX_DEFAULT_EXAMPLES = 30`, `MAX_CANDIDATE_POOL = 120`, `MAX_BUILD_ATTEMPTS = 1200`, `MAX_EXAMPLES_PER_BUCKET = 8`.
 
@@ -114,7 +137,9 @@ Key constants: `MAX_DEFAULT_EXAMPLES = 30`, `MAX_CANDIDATE_POOL = 120`, `MAX_BUI
 
 ## Key architectural decisions
 
-**Plan-based pipeline**: `generation_plan.js` validates payload and pre-computes all derived values (requirements, species pools, teams, variants, relationParams) once. Downstream modules receive the plan as a parameter — `payload` does not travel past `buildRelationalPlan`. `plan.evaluationPayload` is the only sanctioned route to the raw payload, used exclusively when calling `ConditionEvaluatorV2`.
+**Plan-based pipeline**: `generation_plan.js` validates payload and pre-computes all derived values (comparison descriptors, requirements, species pools, teams, variants, relationParams) once. Downstream modules receive the plan as a parameter — `payload` does not travel past `buildRelationalPlan`. `plan.evaluationPayload` is the only sanctioned route to the raw payload, used exclusively when calling `ConditionEvaluatorV2`.
+
+**Dynamic value-source expansion**: relational value comparisons against dynamic sources (`moved_piece`, `captured_piece`, `enemy_moved_piece`, `enemy_captured_piece`) are implemented by expanding one supported plan into multiple source-constrained plan variants. Each variant resolves a concrete comparison total and any required source species constraints up front, then runs through the same skeleton / reverse-move / evaluator pipeline.
 
 **Relational vs unary split**: `example_utils` is condition-type-agnostic; `relational_utils` is relational-only. When unary support arrives, it gets its own `unary_utils`, its own plan builder, and shares `example_utils`. `generation_plan.js` will return a discriminated plan by `kind`.
 
@@ -123,5 +148,7 @@ Key constants: `MAX_DEFAULT_EXAMPLES = 30`, `MAX_CANDIDATE_POOL = 120`, `MAX_BUI
 **Zero-relation path**: When a comparison requires zero matching pairs, `buildZeroRelationExamples` handles generation separately. The standard pipeline always produces at least one pair, so these two paths never mix.
 
 **Enrichment probability**: `ENRICHMENT_PROBABILITY = 0.5` in enrichment.js — roughly half of output examples get extra decoration pieces.
+
+**Canonical species weighting**: All preview-only random species selection should go through `board_utils.weightedRandomSpecies(...)`, not local ad hoc heuristics.
 
 **Special move kinds**: Castle, en passant, and promotion each need bespoke generation logic. All live in `special_move_examples.js` until extraction is justified.
