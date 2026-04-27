@@ -325,9 +325,11 @@ class ClickHandler {
         this.populateConditionForm(node)
         break
       case 'score':
+        this.boardStatePreview?.deactivate()
         this.populateActionEditor(node)
         break
       case 'organizer':
+        this.boardStatePreview?.deactivate()
         this.populateOrganizerEditor(node)
         break
       default:
