@@ -274,6 +274,7 @@ class ClickHandler {
   }
 
   showSelectionPreviewPanel(preview) {
+    this.editorPanel?.classList.remove('hidden')
     this.boardStatePreview?.showSelectionPreview(preview)
   }
 

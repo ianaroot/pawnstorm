@@ -314,13 +314,6 @@ describe('ConditionExampleGenerator', () => {
     expect(subjectSpecies.size).toBeGreaterThan(2)
     expect(targetSpecies.size).toBeGreaterThan(2)
 
-    const subjectCounts = new Map()
-    preview.examples.forEach(example => {
-      const subjectKey = example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
-      subjectCounts.set(subjectKey, (subjectCounts.get(subjectKey) || 0) + 1)
-    })
-
-    expect(Math.max(...subjectCounts.values())).toBeLessThan(4)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
     })

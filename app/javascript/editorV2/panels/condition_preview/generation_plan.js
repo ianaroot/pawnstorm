@@ -14,17 +14,16 @@ function valueFilteredSpeciesPool(pool, descriptors, side) {
   if (!descriptor || descriptor.metric !== VALUE_COMPARISON_METRIC) { return pool }
   if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) { return pool }
   const total = Number(descriptor.total || 0)
-  return pool.filter(species => {
-    const value = materialValue(species)
-    switch (descriptor.comparator) {
-      case 'equal_to':              return value === total
-      case 'greater_than':          return value > total
-      case 'greater_than_or_equal_to': return value >= total
-      case 'less_than':             return value < total
-      case 'less_than_or_equal_to': return value <= total
-      default:                      return true
-    }
-  })
+  switch (descriptor.comparator) {
+    case 'equal_to':
+      return pool.filter(species => materialValue(species) <= total)
+    case 'less_than':
+      return pool.filter(species => materialValue(species) < total)
+    case 'less_than_or_equal_to':
+      return pool.filter(species => materialValue(species) <= total)
+    default:
+      return pool
+  }
 }
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
