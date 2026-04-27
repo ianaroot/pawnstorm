@@ -668,8 +668,8 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   describe 'node dragging with children', :slow do
     let!(:condition_node) { create(:node, bot: bot, node_type: 'condition', position_x: 100, position_y: 100) }
-    let!(:score_node1) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 100) }
-    let!(:score_node2) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 200) }
+    let!(:action_node1) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 100) }
+    let!(:action_node2) { create(:node, bot: bot, node_type: 'score', position_x: 200, position_y: 200) }
     let!(:conn1) { connect_nodes(condition_node, action_node1) }
     let!(:conn2) { connect_nodes(condition_node, action_node2) }
 
