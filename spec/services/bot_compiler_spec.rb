@@ -22,7 +22,7 @@ RSpec.describe BotCompiler do
           targetTotal: 0
         })
       end
-      let!(:score) do
+      let!(:action) do
         create(:node, :score, bot: bot, position_x: 100, position_y: 220, data: {
           actionType: 'subtract',
           value: 5
