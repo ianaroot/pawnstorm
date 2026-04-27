@@ -1186,8 +1186,9 @@
   width: 20rem;
 }
 
+.node-form-panel.condition-form-panel,
 .node-form-panel.node-form-panel--condition {
-  width: min(34rem, calc(100vw - 3rem));
+  width: min(46rem, calc(100vw - 0.5rem));
   max-height: calc(100vh - 28px);
   overflow: hidden;
   display: flex;
@@ -1201,7 +1202,7 @@
 
 .condition-form-layout {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) 7.5rem minmax(0, 12rem);
+  grid-template-columns: 1fr 7.5rem 1fr;
   gap: 14px;
   align-items: start;
   justify-content: center;
@@ -1209,6 +1210,7 @@
 
 .condition-form-side,
 .condition-form-operator {
+  min-width: 0;
   background: #14120f;
   border: 1px solid #3d3a35;
   border-radius: 10px;
@@ -1302,8 +1304,46 @@
 }
 
 .condition-form-comparison-grid--relational {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.condition-form-comparison-grid--relational select {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 3px 4px;
+  font-size: 11px;
+  background: #2d2a25;
+  border: 1px solid #1a1815;
+  border-radius: 6px;
+  color: #E5E5E5;
+}
+
+.condition-form-comparison-grid--relational .condition-form-comparison-source-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 10rem;
+}
+
+.condition-form-comparison-grid--relational .condition-form-comparison-source-stack select {
+  width: 100%;
+}
+
+.condition-form-comparison-grid--relational .condition-form-comparison-source-stack input[type="number"] {
+  width: 2.5rem;
+  padding: 3px 4px;
+  background: #2d2a25;
+  border: 1px solid #1a1815;
+  border-radius: 6px;
+  color: #E5E5E5;
+  font-size: 11px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .condition-form-comparison-grid--unary {
@@ -2116,6 +2156,7 @@
    ============================================ */
 
 .board-state-preview-wrap {
+  width: min(34rem, calc(100vw - 0.5rem));
   margin-top: 8px;
   padding: 8px 15px 6px;
   background: #252220;
