@@ -81,9 +81,11 @@
         <section class="condition-form-operator">
           <label>Operator</label>
           <select id="cond-relational-operator">
-            <% NodeForm.condition_form_relational_operator_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
-            <% end %>
+            <option value="targets">Targets</option>
+            <option value="shield">Shield</option>
+            <option value="adjacent">Adjacent</option>
+            <option disabled>────────</option>
+            <option value="same_piece">Same-Piece</option>
           </select>
           <select id="cond-measure-operator" class="hidden">
             <% NodeForm.condition_form_measure_operator_options.each do |label, value| %>
