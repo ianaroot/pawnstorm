@@ -124,7 +124,7 @@ class ClickHandler {
       if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
       if (this.isEditableTarget(event.target)) { return }
       event.preventDefault()
-      if (this.boardStatePreview?.isEnabled) {
+      if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
         this.boardStatePreview.toggle()
       } else if (this.store.getSelectedNodeIds().length > 1) {
         this.boardStatePreview.isEnabled = true
