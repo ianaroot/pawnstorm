@@ -212,6 +212,7 @@ class BoardStatePreview {
     this.status = preview.status
     this.reason = preview.reason || ''
     this.examples = preview.examples || []
+    this.conditionLabels = preview.conditionLabels || []
     this.currentIndex = 0
     this._phase = 'prior'
     this._render()
@@ -367,6 +368,18 @@ class BoardStatePreview {
     body.appendChild(left)
     body.appendChild(side)
     this.content.appendChild(body)
+
+    if (this.conditionLabels?.length >= 2) {
+      const chain = document.createElement('ol')
+      chain.className = 'board-state-preview__chain'
+      this.conditionLabels.forEach(label => {
+        const item = document.createElement('li')
+        item.className = 'board-state-preview__chain-item'
+        item.textContent = label
+        chain.appendChild(item)
+      })
+      this.content.appendChild(chain)
+    }
   }
 
   // ── Animation cycle ────────────────────────────────────────────────────────

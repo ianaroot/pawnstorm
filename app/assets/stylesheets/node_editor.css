@@ -2393,6 +2393,20 @@
   overflow-wrap: break-word;
 }
 
+.board-state-preview__chain {
+  margin: 8px 0 0;
+  padding: 6px 10px 6px 28px;
+  border-top: 1px solid #2d2a25;
+  list-style: decimal;
+  color: #c9c0b4;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.board-state-preview__chain-item {
+  padding-left: 2px;
+}
+
 /* Loading state for board preview */
 .mini-board--loading {
   position: relative;
