@@ -26,29 +26,25 @@ function unionPositions(set, positions = []) {
 }
 
 function aggregateHighlights(plans, moveObject, results) {
-  const priorSubjectPositions = new Set()
-  const priorTargetPositions = new Set()
-  const afterSubjectPositions = new Set()
-  const afterTargetPositions = new Set()
+  const priorRelationPositions = new Set()
+  const afterRelationPositions = new Set()
 
   results.forEach((result, index) => {
     const labels = subjectTargetLabels(plans[index], moveObject, result)
-    unionPositions(priorSubjectPositions, labels.prior.subjectPositions)
-    unionPositions(priorTargetPositions, labels.prior.targetPositions)
-    unionPositions(afterSubjectPositions, labels.after.subjectPositions)
-    unionPositions(afterTargetPositions, labels.after.targetPositions)
+    unionPositions(priorRelationPositions, labels.prior.subjectPositions)
+    unionPositions(priorRelationPositions, labels.prior.targetPositions)
+    unionPositions(afterRelationPositions, labels.after.subjectPositions)
+    unionPositions(afterRelationPositions, labels.after.targetPositions)
   })
 
   return {
     prior: {
-      subjectPositions: [...priorSubjectPositions],
-      targetPositions: [...priorTargetPositions],
+      relationPositions: [...priorRelationPositions],
       movedStartPosition: moveObject.startPosition,
       movedEndPosition: null
     },
     after: {
-      subjectPositions: [...afterSubjectPositions],
-      targetPositions: [...afterTargetPositions],
+      relationPositions: [...afterRelationPositions],
       movedStartPosition: null,
       movedEndPosition: moveObject.endPosition
     }

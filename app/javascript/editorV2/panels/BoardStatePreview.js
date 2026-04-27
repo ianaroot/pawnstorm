@@ -36,8 +36,9 @@ function buildMiniBoardEl() {
 }
 
 function renderLayout(boardEl, layout, highlights) {
-  const subjectPositions  = new Set(highlights.subjectPositions || [])
-  const targetPositions   = new Set(highlights.targetPositions || [])
+  const relationPositions = new Set(highlights.relationPositions || [])
+  const subjectPositions  = relationPositions.size ? new Set() : new Set(highlights.subjectPositions || [])
+  const targetPositions   = relationPositions.size ? new Set() : new Set(highlights.targetPositions || [])
   const movedStartPosition = highlights.movedStartPosition
   const movedEndPosition   = highlights.movedEndPosition
 
@@ -45,6 +46,7 @@ function renderLayout(boardEl, layout, highlights) {
     const i = parseInt(tile.dataset.index, 10)
     const piece = layout[i]
     tile.innerHTML = ''
+    tile.classList.toggle('mini-board__tile--relation',   relationPositions.has(i))
     tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
     tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
     tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
@@ -81,13 +83,15 @@ function syncBoardToLayout(boardEl, layout) {
 }
 
 function applyHighlights(boardEl, highlights) {
-  const subjectPositions   = new Set(highlights.subjectPositions || [])
-  const targetPositions    = new Set(highlights.targetPositions || [])
+  const relationPositions  = new Set(highlights.relationPositions || [])
+  const subjectPositions   = relationPositions.size ? new Set() : new Set(highlights.subjectPositions || [])
+  const targetPositions    = relationPositions.size ? new Set() : new Set(highlights.targetPositions || [])
   const movedStartPosition = highlights.movedStartPosition
   const movedEndPosition   = highlights.movedEndPosition
 
   boardEl.querySelectorAll('[data-index]').forEach(tile => {
     const i = parseInt(tile.dataset.index, 10)
+    tile.classList.toggle('mini-board__tile--relation',   relationPositions.has(i))
     tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
     tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
     tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
@@ -294,11 +298,16 @@ class BoardStatePreview {
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
-    const legendEntries = [
-      { swatchClass: 'mini-board__tile--subject', label: 'Subject' },
-      { swatchClass: 'mini-board__tile--target', label: 'Target' },
-      { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
-    ]
+    const legendEntries = this.mode === 'selection'
+      ? [
+          { swatchClass: 'mini-board__tile--relation', label: 'Relation piece' },
+          { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
+        ]
+      : [
+          { swatchClass: 'mini-board__tile--subject', label: 'Subject' },
+          { swatchClass: 'mini-board__tile--target', label: 'Target' },
+          { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
+        ]
 
     const legend = document.createElement('div')
     legend.className = 'board-state-preview__legend'
