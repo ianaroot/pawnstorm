@@ -1,6 +1,6 @@
 import { shuffled, pushUnique } from 'editorV2/panels/condition_preview/board_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
+import { usesZeroRelationPath, valueComparisonAllowsEmpty } from 'editorV2/panels/condition_preview/comparison_requirements'
 import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/example_utils'
 import { augmentSkeletonsForComparisons } from 'editorV2/panels/condition_preview/skeleton_augmentation'
 import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/panels/condition_preview/candidate_collection'
@@ -150,12 +150,17 @@ export function generateConditionExamples(payload, options = {}) {
       castleExamples = [...castleExamples, ...collectCastleExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
     }
 
-    if (usesZeroRelationPath(activePlan.requirements)) {
+    if (usesZeroRelationPath(activePlan.requirements) || valueComparisonAllowsEmpty(activePlan.comparisonDescriptors)) {
       zeroExamples = [...zeroExamples, ...buildZeroRelationExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
     }
   })
 
-  if (verified.length === 0 && zeroExamples.length > 0) {
+  if (verified.length > 0 && zeroExamples.length > 0) {
+    const cappedZero = zeroExamples.length > verified.length
+      ? shuffled([...zeroExamples], random).slice(0, verified.length)
+      : zeroExamples
+    verified = shuffled([...verified, ...cappedZero], random)
+  } else if (verified.length === 0 && zeroExamples.length > 0) {
     return { status: 'ready', reason: null, examples: finalizeExamples(zeroExamples, plans[0], maxExamples, random) }
   }
 

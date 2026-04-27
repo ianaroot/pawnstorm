@@ -68,3 +68,20 @@ export function comparisonRequirementsFromDescriptors(descriptors) {
 export function usesZeroRelationPath(requirements) {
   return requirements.countComparisonsPresent && (requirements.subject === 0 || requirements.target === 0)
 }
+
+function descriptorAllowsZeroValue(descriptor) {
+  if (descriptor.metric !== VALUE_COMPARISON_METRIC) { return false }
+  const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
+  switch (descriptor.comparator) {
+    case 'equal_to': return total === 0
+    case 'greater_than': return false
+    case 'greater_than_or_equal_to': return total === 0
+    case 'less_than': return total > 0
+    case 'less_than_or_equal_to': return true
+    default: return false
+  }
+}
+
+export function valueComparisonAllowsEmpty(descriptors) {
+  return descriptors.some(descriptorAllowsZeroValue)
+}
