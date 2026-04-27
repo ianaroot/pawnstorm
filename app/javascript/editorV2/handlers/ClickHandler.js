@@ -3,6 +3,7 @@ import { EVENTS } from 'editorV2/constants'
 import generateConditionChainExamples from 'editorV2/panels/condition_preview/ConditionChainExampleGenerator'
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
     this.store = store

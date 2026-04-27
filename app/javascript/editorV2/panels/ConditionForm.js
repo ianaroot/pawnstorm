@@ -267,7 +267,8 @@ class ConditionForm {
   }
 
   uiOperatorFromPayload(operator) {
-    if (operator === 'attack' || operator === 'defend' || operator === 'cover') { return 'targets' }
+    if (operator === 'attack' || operator === 'defend') { return 'targets' }
+    if (operator === 'cover') { return 'shield' }
     return operator || 'targets'
   }
 
@@ -721,17 +722,20 @@ class ConditionForm {
   }
 
   applyFilterModeCompatibilityRules() {
-    if (this.state.relational.left.filter === 'any') {
-      this.state.relational.left.filterMode = 'include'
-    }
-    if (this.state.relational.right.filter === 'any') {
-      this.state.relational.right.filterMode = 'include'
-    }
-    if (this.state.measure.left.filter === 'any') {
-      this.state.measure.left.filterMode = 'include'
-    }
-    if (this.state.measure.unary.targetFilter === 'any') {
-      this.state.measure.unary.targetFilterMode = 'include'
+    if (this.state.mode === 'relational') {
+      if (this.state.relational.left.filter === 'any') {
+        this.state.relational.left.filterMode = 'include'
+      }
+      if (this.state.relational.right.filter === 'any') {
+        this.state.relational.right.filterMode = 'include'
+      }
+    } else {
+      if (this.state.measure.left.filter === 'any') {
+        this.state.measure.left.filterMode = 'include'
+      }
+      if (this.state.measure.unary.targetFilter === 'any') {
+        this.state.measure.unary.targetFilterMode = 'include'
+      }
     }
   }
 
