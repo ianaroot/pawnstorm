@@ -9,7 +9,10 @@ function option(value, label = value) {
 const subjectOptions = ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
-const operatorOptions = ['attack', 'defend', 'cover', 'shield', 'adjacent', 'same_piece', 'count', 'mobility', 'value']
+const relationalOperatorOptions = ['targets', 'shield', 'adjacent', 'same_piece']
+  .map(value => option(value))
+  .join('')
+const measureOperatorOptions = ['count', 'mobility', 'value']
   .map(value => option(value))
   .join('')
 
@@ -17,12 +20,16 @@ function buildPanel() {
   const panel = document.createElement('div')
   panel.id = 'node-form-panel'
   panel.innerHTML = `
+    <button type="button" id="cond-mode-relational" class="active">Relational</button>
+    <button type="button" id="cond-mode-measure">Measure</button>
+
     <select id="cond-left-subject">${subjectOptions}</select>
     <label class="condition-form-checkbox">
       <input id="cond-left-filter-mode" type="checkbox">
       <span>Non-</span>
     </label>
     <select id="cond-left-filter">${option('any')}${option('pawn')}${option('rook')}</select>
+    <p id="cond-measure-subject-note" class="hidden"></p>
     <select id="cond-left-comparison-metric">${option('count')}</select>
     <select id="cond-left-comparator">${option('equal_to', '=')}</select>
     <div id="cond-left-comparison-section" class="condition-form-comparison">
@@ -37,7 +44,8 @@ function buildPanel() {
       <input id="cond-left-comparison-source-total" type="number">
     </div>
 
-    <select id="cond-operator">${operatorOptions}</select>
+    <select id="cond-relational-operator">${relationalOperatorOptions}</select>
+    <select id="cond-measure-operator" class="hidden">${measureOperatorOptions}</select>
 
     <select id="cond-right-subject">${subjectOptions}</select>
     <label class="condition-form-checkbox">
@@ -45,6 +53,7 @@ function buildPanel() {
       <span>Non-</span>
     </label>
     <select id="cond-right-filter">${option('any')}${option('pawn')}${option('rook')}</select>
+    <p id="cond-relational-target-note" class="hidden"></p>
     <select id="cond-right-comparison-metric">${option('count')}</select>
     <select id="cond-right-comparator">${option('equal_to', '=')}</select>
     <div id="cond-right-comparison-section" class="condition-form-comparison">
@@ -230,7 +239,7 @@ describe('ConditionForm', () => {
     expect(form.buildPayload()).not.toHaveProperty('targetFilterMode')
   })
 
-  it('limits attack targets to the opposing team from the selected subject', () => {
+  it('allows any regular target for the targets operator regardless of team', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -241,19 +250,43 @@ describe('ConditionForm', () => {
       subject: 'allied',
       subjectFilter: 'any',
       operator: 'attack',
-      target: 'allied',
+      target: 'enemy',
       targetFilter: 'any'
     })
 
     const rightSubject = panel.querySelector('#cond-right-subject')
-    expect(form.buildPayload().target).toBe('enemy')
+    expect(form.buildPayload().operator).toBe('attack')
     expect(rightSubject.querySelector('option[value="enemy"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
-    expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(true)
-    expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(true)
+    expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(false)
+    expect(rightSubject.querySelector('option[value="captured_piece"]').disabled).toBe(true)
   })
 
-  it('limits defend cover and shield targets to the same team as the selected subject', () => {
+  it('translates targets operator to defend when subject and target are same team', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'defend',
+      target: 'moved_piece',
+      targetFilter: 'any'
+    })
+
+    expect(form.buildPayload().operator).toBe('defend')
+
+    const rightSubject = panel.querySelector('#cond-right-subject')
+    rightSubject.value = 'enemy'
+    rightSubject.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(form.buildPayload().operator).toBe('attack')
+  })
+
+  it('limits shield targets to the same team as the selected subject', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -263,7 +296,7 @@ describe('ConditionForm', () => {
       kind: 'relational',
       subject: 'enemy',
       subjectFilter: 'any',
-      operator: 'defend',
+      operator: 'shield',
       target: 'allied',
       targetFilter: 'any'
     })
@@ -274,15 +307,6 @@ describe('ConditionForm', () => {
     expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(true)
     expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(true)
-
-    const operator = panel.querySelector('#cond-operator')
-    operator.value = 'cover'
-    operator.dispatchEvent(new Event('change', { bubbles: true }))
-    expect(form.buildPayload().target).toBe('enemy')
-
-    operator.value = 'shield'
-    operator.dispatchEvent(new Event('change', { bubbles: true }))
-    expect(form.buildPayload().target).toBe('enemy')
   })
 
   it('keeps adjacent targets unrestricted among regular relational targets', () => {
@@ -309,7 +333,7 @@ describe('ConditionForm', () => {
     expect(rightSubject.querySelector('option[value="captured_piece"]').disabled).toBe(true)
   })
 
-  it('uses rendered grammar config for relational target scoping', () => {
+  it('uses rendered grammar config for shield target scoping', () => {
     const rules = document.createElement('script')
     rules.type = 'application/json'
     rules.id = 'node-grammar-rules'
@@ -317,7 +341,7 @@ describe('ConditionForm', () => {
       editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
       regularRelationalSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
       regularRelationalTargets: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
-      relationalOperatorTargetRules: { attack: 'same_team' },
+      relationalOperatorTargetRules: { shield: 'opposing_team' },
       samePieceTargets: { enemy_moved_piece: ['captured_piece'], captured_piece: ['enemy_moved_piece'] },
       teamSubjectGroups: { allied: ['allied', 'moved_piece'], enemy: ['enemy', 'enemy_moved_piece'] },
       opposingTeamGroups: { allied: 'enemy', enemy: 'allied' }
@@ -333,12 +357,12 @@ describe('ConditionForm', () => {
       kind: 'relational',
       subject: 'allied',
       subjectFilter: 'any',
-      operator: 'attack',
-      target: 'enemy',
+      operator: 'shield',
+      target: 'moved_piece',
       targetFilter: 'any'
     })
 
-    expect(form.buildPayload().target).toBe('allied')
+    expect(form.buildPayload().target).toBe('enemy')
   })
 
   it('builds unary actor-target payloads with target filters', () => {
@@ -425,5 +449,57 @@ describe('ConditionForm', () => {
     expect(targetSource.querySelector('option[value="captured_piece"]').disabled).toBe(true)
     expect(targetSource.querySelector('option[value="enemy_captured_piece"]').disabled).toBe(true)
     expect(targetSource.querySelector('option[value="enemy"]').disabled).toBe(false)
+  })
+
+  it('preserves relational state when switching to measure mode and back', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'pawn',
+      operator: 'shield',
+      target: 'moved_piece',
+      targetFilter: 'any'
+    })
+
+    panel.querySelector('#cond-mode-measure').dispatchEvent(new Event('click'))
+    panel.querySelector('#cond-mode-relational').dispatchEvent(new Event('click'))
+
+    const payload = form.buildPayload()
+    expect(payload.kind).toBe('relational')
+    expect(payload.subject).toBe('allied')
+    expect(payload.subjectFilter).toBe('pawn')
+    expect(payload.operator).toBe('shield')
+    expect(payload.target).toBe('moved_piece')
+  })
+
+  it('preserves measure state when switching to relational mode and back', () => {
+    const panel = buildPanel()
+    const form = new ConditionForm(panel)
+    form.attach()
+
+    form.populate({
+      version: 2,
+      kind: 'unary',
+      subject: 'enemy',
+      subjectFilter: 'any',
+      operator: 'count',
+      comparator: 'greater_than',
+      target: 'exact_number',
+      targetTotal: 3
+    })
+
+    panel.querySelector('#cond-mode-relational').dispatchEvent(new Event('click'))
+    panel.querySelector('#cond-mode-measure').dispatchEvent(new Event('click'))
+
+    const payload = form.buildPayload()
+    expect(payload.kind).toBe('unary')
+    expect(payload.subject).toBe('enemy')
+    expect(payload.operator).toBe('count')
+    expect(payload.targetTotal).toBe(3)
   })
 })

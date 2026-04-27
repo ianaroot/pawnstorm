@@ -6,6 +6,11 @@
 
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
+      <div class="condition-form-mode-picker">
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Relational</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-measure">Measure</button>
+      </div>
+
       <div class="condition-form-layout">
         <section class="condition-form-side">
           <div class="condition-form-side__header">
@@ -34,6 +39,8 @@
               </select>
             </div>
           </div>
+
+          <p class="condition-form-note hidden" id="cond-measure-subject-note">Mobility is unavailable for Captured Piece and Enemy Captured Piece.</p>
 
           <div class="condition-form-comparison" id="cond-left-comparison-section">
             <button type="button" class="condition-form-comparison__toggle" id="cond-left-comparison-toggle"></button>
@@ -73,16 +80,13 @@
 
         <section class="condition-form-operator">
           <label>Operator</label>
-          <select id="cond-operator">
-            <% NodeForm.relational_operator_options.each do |label, value| %>
+          <select id="cond-relational-operator">
+            <% NodeForm.condition_form_relational_operator_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
             <% end %>
-            <option disabled>────────</option>
-            <% NodeForm.special_targeted_operator_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
-            <% end %>
-            <option disabled>────────</option>
-            <% NodeForm.unary_operator_options.each do |label, value| %>
+          </select>
+          <select id="cond-measure-operator" class="hidden">
+            <% NodeForm.condition_form_measure_operator_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
@@ -128,6 +132,8 @@
                 </select>
               </div>
             </div>
+
+            <p class="condition-form-note hidden" id="cond-relational-target-note">Shield requires a same-team target.</p>
 
             <div class="condition-form-comparison">
               <button type="button" class="condition-form-comparison__toggle" id="cond-right-comparison-toggle"></button>
