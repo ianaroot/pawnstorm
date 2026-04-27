@@ -155,7 +155,7 @@ export function collectCastleExamples({ plan, random, maxExamples }) {
                     afterBoard: moveExample.afterBoard,
                     moveObject: moveExample.moveObject,
                     result,
-                    highlights: subjectTargetLabels(plan, moveExample.moveObject, result),
+                    highlights: subjectTargetLabels(plan, moveExample.moveObject, result, moveExample.priorBoard),
                     variantType: movedPieceInRelation ? 'involved' : 'separate',
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
                     movedPieceInRelation,

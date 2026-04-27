@@ -1,7 +1,38 @@
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
+import { nextPositionOnRay } from 'gameplay/board_query_utils'
 import { candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
+
+function rayStepBetween(fromPosition, toPosition) {
+  const fileDiff = Board.fileIndex(toPosition) - Board.fileIndex(fromPosition)
+  const rankDiff = Board.rankIndex(toPosition) - Board.rankIndex(fromPosition)
+  if (fileDiff === 0 && rankDiff !== 0) { return rankDiff > 0 ? 8 : -8 }
+  if (rankDiff === 0 && fileDiff !== 0) { return fileDiff > 0 ? 1 : -1 }
+  if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
+    if (fileDiff > 0 && rankDiff > 0) { return 9 }
+    if (fileDiff < 0 && rankDiff > 0) { return 7 }
+    if (fileDiff > 0 && rankDiff < 0) { return -7 }
+    if (fileDiff < 0 && rankDiff < 0) { return -9 }
+  }
+  return null
+}
+
+function shieldAttackerPositions(pairs, board) {
+  const attackers = new Set()
+  pairs.forEach(({ subjectPosition, targetPosition }) => {
+    const stepToTarget = rayStepBetween(subjectPosition, targetPosition)
+    if (stepToTarget === null) { return }
+    const stepToAttacker = -stepToTarget
+    for (let pos = nextPositionOnRay(subjectPosition, stepToAttacker); pos !== null; pos = nextPositionOnRay(pos, stepToAttacker)) {
+      if (!board.positionEmpty(pos)) {
+        attackers.add(pos)
+        break
+      }
+    }
+  })
+  return [...attackers]
+}
 
 export function teamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
@@ -31,21 +62,25 @@ export function relationParams(payload) {
   }
 }
 
-export function subjectTargetLabels(plan, moveObject, result) {
+export function subjectTargetLabels(plan, moveObject, result, board = null) {
   const startPosition = moveObject.startPosition
   const endPosition = moveObject.endPosition
   const priorSubjectPositions = plan.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
   const priorTargetPositions = plan.target === 'moved_piece' ? [startPosition] : result.targetPositions
 
+  const attackers = (plan.operator === 'shield' && board && result.pairs?.length > 0)
+    ? shieldAttackerPositions(result.pairs, board)
+    : []
+
   return {
     prior: {
-      subjectPositions: priorSubjectPositions,
+      subjectPositions: [...(priorSubjectPositions || []), ...attackers],
       targetPositions: priorTargetPositions,
       movedStartPosition: startPosition,
       movedEndPosition: null
     },
     after: {
-      subjectPositions: result.subjectPositions,
+      subjectPositions: [...(result.subjectPositions || []), ...attackers],
       targetPositions: result.targetPositions,
       movedStartPosition: null,
       movedEndPosition: endPosition
