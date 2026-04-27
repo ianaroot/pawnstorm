@@ -748,7 +748,7 @@
 .editor-side-panel-stack {
   position: absolute;
   right: 20px;
-  top: 12px;
+  top: 4px;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -760,7 +760,7 @@
   background: #252220;
   border: 1px solid #3d3a35;
   border-radius: 8px;
-  padding: 15px;
+  padding: 15px 15px 8px;
 }
 
 .node-form-panel.hidden {
@@ -954,13 +954,14 @@
 
 .panel-actions {
   display: flex;
+  justify-content: space-evenly;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .btn-save, .btn-cancel {
-  flex: 1;
-  padding: 8px;
+  flex: 0 0 auto;
+  padding: 5px 32px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -1211,11 +1212,11 @@
   background: #14120f;
   border: 1px solid #3d3a35;
   border-radius: 10px;
-  padding: 14px;
+  padding: 2px 14px 14px;
 }
 
 .condition-form-side__header {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .condition-form-side__label {
@@ -1258,9 +1259,9 @@
 }
 
 .condition-form-field + .condition-form-field,
-.condition-form-field + .condition-form-comparison,
+.condition-form-field ~ .condition-form-comparison,
 .condition-form-comparison + .condition-form-field {
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .condition-form-side select,
@@ -1360,7 +1361,7 @@
 
 .condition-form-comparison__toggle {
   width: 100%;
-  padding: 8px 10px;
+  padding: 5px 8px;
   background: #1d1916;
   border: 1px dashed #5a5650;
   border-radius: 8px;
@@ -2116,7 +2117,7 @@
 
 .board-state-preview-wrap {
   margin-top: 8px;
-  padding: 15px;
+  padding: 8px 15px 6px;
   background: #252220;
   border: 1px solid #3d3a35;
   border-radius: 8px;

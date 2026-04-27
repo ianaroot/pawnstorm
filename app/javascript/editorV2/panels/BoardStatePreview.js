@@ -289,6 +289,7 @@ class BoardStatePreview {
     if (this.toggleBtn) {
       this.toggleBtn.style.gridRow = '1'
       side.appendChild(this.toggleBtn)
+      this.headerEl?.classList.add('hidden')
     }
 
     const controlsRow = document.createElement('div')
@@ -507,6 +508,7 @@ class BoardStatePreview {
     if (!this.headerEl.contains(this.toggleBtn)) {
       this.headerEl.appendChild(this.toggleBtn)
     }
+    this.headerEl.classList.remove('hidden')
   }
 
   buildMessage() {
