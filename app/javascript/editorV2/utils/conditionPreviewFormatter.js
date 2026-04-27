@@ -66,6 +66,8 @@ function subjectPreview(subject, filter, filterMode) {
 
 function operatorLabel(operator) {
   switch (operator) {
+    case 'targets':
+      return 'targets'
     case 'attack':
       return 'attack'
     case 'defend':

@@ -21,6 +21,7 @@ class NodeForm
   }.freeze
 
   OPERATOR_LABELS = {
+    'targets' => 'Targets',
     'attack' => 'Attack',
     'defend' => 'Defend',
     'cover' => 'Cover',
@@ -79,6 +80,14 @@ class NodeForm
 
     def unary_operator_options
       NodeGrammarV2::UNARY_OPERATORS.map { |value| [operator_label(value), value] }
+    end
+
+    def condition_form_relational_operator_options
+      [['Targets', 'targets'], ['Shield', 'shield'], ['Adjacent', 'adjacent'], ['Same-Piece', 'same_piece']]
+    end
+
+    def condition_form_measure_operator_options
+      unary_operator_options
     end
 
     def comparison_metric_options

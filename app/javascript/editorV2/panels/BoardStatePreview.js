@@ -212,6 +212,7 @@ class BoardStatePreview {
     this.status = preview.status
     this.reason = preview.reason || ''
     this.examples = preview.examples || []
+    this.conditionLabels = preview.conditionLabels || []
     this.currentIndex = 0
     this._phase = 'prior'
     this._render()
@@ -289,6 +290,7 @@ class BoardStatePreview {
     if (this.toggleBtn) {
       this.toggleBtn.style.gridRow = '1'
       side.appendChild(this.toggleBtn)
+      this.headerEl?.classList.add('hidden')
     }
 
     const controlsRow = document.createElement('div')
@@ -366,6 +368,18 @@ class BoardStatePreview {
     body.appendChild(left)
     body.appendChild(side)
     this.content.appendChild(body)
+
+    if (this.conditionLabels?.length >= 2) {
+      const chain = document.createElement('ol')
+      chain.className = 'board-state-preview__chain'
+      this.conditionLabels.forEach(label => {
+        const item = document.createElement('li')
+        item.className = 'board-state-preview__chain-item'
+        item.textContent = label
+        chain.appendChild(item)
+      })
+      this.content.appendChild(chain)
+    }
   }
 
   // ── Animation cycle ────────────────────────────────────────────────────────
@@ -507,6 +521,7 @@ class BoardStatePreview {
     if (!this.headerEl.contains(this.toggleBtn)) {
       this.headerEl.appendChild(this.toggleBtn)
     }
+    this.headerEl.classList.remove('hidden')
   }
 
   buildMessage() {

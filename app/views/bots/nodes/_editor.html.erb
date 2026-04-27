@@ -6,6 +6,11 @@
 
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
+      <div class="condition-form-mode-picker">
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Relational</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-measure">Measure</button>
+      </div>
+
       <div class="condition-form-layout">
         <section class="condition-form-side">
           <div class="condition-form-side__header">
@@ -13,7 +18,6 @@
           </div>
 
           <div class="condition-form-field">
-            <label>Subject</label>
             <select id="cond-left-subject">
               <% NodeForm.editor_subject_options.each do |label, value| %>
                 <option value="<%= value %>"><%= label %></option>
@@ -35,36 +39,35 @@
             </div>
           </div>
 
+          <p class="condition-form-note hidden" id="cond-measure-subject-note">Mobility is unavailable for Captured Piece and Enemy Captured Piece.</p>
+
           <div class="condition-form-comparison" id="cond-left-comparison-section">
             <button type="button" class="condition-form-comparison__toggle" id="cond-left-comparison-toggle"></button>
 
             <div class="condition-form-comparison__body hidden" id="cond-left-comparison-body">
-              <div class="condition-form-field">
-                <label>Comparison</label>
-                <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
-                  <select id="cond-left-comparison-metric">
-                    <% NodeForm.comparison_metric_options.each do |label, value| %>
+              <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
+                <select id="cond-left-comparison-metric">
+                  <% NodeForm.comparison_metric_options.each do |label, value| %>
+                    <option value="<%= value %>"><%= label %></option>
+                  <% end %>
+                </select>
+
+                <select id="cond-left-comparator">
+                  <option value="equal_to">=</option>
+                  <option value="greater_than">></option>
+                  <option value="less_than"><</option>
+                  <option value="greater_than_or_equal_to">≥</option>
+                  <option value="less_than_or_equal_to">≤</option>
+                </select>
+
+                <div class="condition-form-comparison-source-stack" id="cond-left-comparison-source-stack">
+                  <select id="cond-left-comparison-source">
+                    <option value="exact_number">Integer</option>
+                    <% NodeForm.comparison_source_options.each do |label, value| %>
                       <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
-
-                  <select id="cond-left-comparator">
-                    <option value="equal_to">=</option>
-                    <option value="greater_than">></option>
-                    <option value="less_than"><</option>
-                    <option value="greater_than_or_equal_to">≥</option>
-                    <option value="less_than_or_equal_to">≤</option>
-                  </select>
-
-                  <div class="condition-form-comparison-source-stack" id="cond-left-comparison-source-stack">
-                    <select id="cond-left-comparison-source">
-                      <option value="exact_number">Integer</option>
-                      <% NodeForm.comparison_source_options.each do |label, value| %>
-                        <option value="<%= value %>"><%= label %></option>
-                      <% end %>
-                    </select>
-                    <input id="cond-left-comparison-source-total" type="number" min="0" step="1">
-                  </div>
+                  <input id="cond-left-comparison-source-total" type="number" min="0" step="1">
                 </div>
               </div>
             </div>
@@ -73,16 +76,15 @@
 
         <section class="condition-form-operator">
           <label>Operator</label>
-          <select id="cond-operator">
-            <% NodeForm.relational_operator_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
-            <% end %>
+          <select id="cond-relational-operator">
+            <option value="targets">Targets</option>
+            <option value="shield">Shield</option>
+            <option value="adjacent">Adjacent</option>
             <option disabled>────────</option>
-            <% NodeForm.special_targeted_operator_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
-            <% end %>
-            <option disabled>────────</option>
-            <% NodeForm.unary_operator_options.each do |label, value| %>
+            <option value="same_piece">Same-Piece</option>
+          </select>
+          <select id="cond-measure-operator" class="hidden">
+            <% NodeForm.condition_form_measure_operator_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
             <% end %>
           </select>
@@ -107,7 +109,6 @@
 
           <div id="cond-right-relational-fields">
             <div class="condition-form-field">
-              <label>Subject</label>
               <select id="cond-right-subject">
                 <% NodeForm.editor_subject_options.each do |label, value| %>
                   <option value="<%= value %>"><%= label %></option>
@@ -129,36 +130,35 @@
               </div>
             </div>
 
+            <p class="condition-form-note hidden" id="cond-relational-target-note">Shield requires a same-team target.</p>
+
             <div class="condition-form-comparison">
               <button type="button" class="condition-form-comparison__toggle" id="cond-right-comparison-toggle"></button>
 
               <div class="condition-form-comparison__body hidden" id="cond-right-comparison-body">
-                <div class="condition-form-field">
-                  <label>Comparison</label>
-                  <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
-                    <select id="cond-right-comparison-metric">
-                      <% NodeForm.comparison_metric_options.each do |label, value| %>
+                <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
+                  <select id="cond-right-comparison-metric">
+                    <% NodeForm.comparison_metric_options.each do |label, value| %>
+                      <option value="<%= value %>"><%= label %></option>
+                    <% end %>
+                  </select>
+
+                  <select id="cond-right-comparator">
+                    <option value="equal_to">=</option>
+                    <option value="greater_than">></option>
+                    <option value="less_than"><</option>
+                    <option value="greater_than_or_equal_to">≥</option>
+                    <option value="less_than_or_equal_to">≤</option>
+                  </select>
+
+                  <div class="condition-form-comparison-source-stack" id="cond-right-comparison-source-stack">
+                    <select id="cond-right-comparison-source">
+                      <option value="exact_number">Integer</option>
+                      <% NodeForm.comparison_source_options.each do |label, value| %>
                         <option value="<%= value %>"><%= label %></option>
                       <% end %>
                     </select>
-
-                    <select id="cond-right-comparator">
-                      <option value="equal_to">=</option>
-                      <option value="greater_than">></option>
-                      <option value="less_than"><</option>
-                      <option value="greater_than_or_equal_to">≥</option>
-                      <option value="less_than_or_equal_to">≤</option>
-                    </select>
-
-                    <div class="condition-form-comparison-source-stack" id="cond-right-comparison-source-stack">
-                      <select id="cond-right-comparison-source">
-                        <option value="exact_number">Integer</option>
-                        <% NodeForm.comparison_source_options.each do |label, value| %>
-                          <option value="<%= value %>"><%= label %></option>
-                        <% end %>
-                      </select>
-                      <input id="cond-right-comparison-source-total" type="number" min="0" step="1">
-                    </div>
+                    <input id="cond-right-comparison-source-total" type="number" min="0" step="1">
                   </div>
                 </div>
               </div>
@@ -195,7 +195,7 @@
       </div>
 
       <div class="condition-form-formulation">
-        <label>Current Condition</label>
+        <p></p>
         <div class="condition-form-formulation__text" id="cond-formulation-preview"></div>
       </div>
 

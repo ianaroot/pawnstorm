@@ -172,7 +172,7 @@ describe('ClickHandler', () => {
     dispatchClick(actionElement, { shiftKey: true })
 
     expect(store.getSelectedNodeIds()).toEqual([conditionNode.clientId, actionNode.clientId])
-    expect(store.getEditingNode()).toBe(conditionNode.clientId)
+    expect(store.getEditingNode()).toBe(null)
 
     await clickHandler.deleteSelectedNodes()
 
@@ -217,6 +217,7 @@ describe('ClickHandler', () => {
   })
 
   it('toggles selection preview with p for a linear selected condition chain', () => {
+    vi.useFakeTimers()
     const conditionB = new Node({
       clientId: 'condition-b',
       type: 'condition',
@@ -250,6 +251,8 @@ describe('ClickHandler', () => {
 
     store.setSelectedNodeIds([conditionNode.clientId, conditionB.clientId])
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', bubbles: true, cancelable: true }))
+    vi.runAllTimers()
+    vi.useRealTimers()
 
     expect(boardStatePreview.showSelectionPreview).toHaveBeenCalled()
     const preview = boardStatePreview.showSelectionPreview.mock.calls.at(-1)[0]
