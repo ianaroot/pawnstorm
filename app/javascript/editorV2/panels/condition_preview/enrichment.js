@@ -132,7 +132,7 @@ export function buildEnrichmentPlacementPolicy(example, random) {
         break
       }
       if (position === undefined) { return null }
-      const species = weightedRandomSpecies(random)
+      const species = weightedRandomSpecies(random, { includeKing: false })
       if (!legalPlacementForSpecies(position, species)) {
         return this.nextPlacement()
       }

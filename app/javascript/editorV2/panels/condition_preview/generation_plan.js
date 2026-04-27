@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import { materialValue } from 'gameplay/board_query_utils'
 import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/example_utils'
 import {
   teamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
@@ -7,6 +8,24 @@ import {
   COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements, comparisonRequirementsFromDescriptors
 } from 'editorV2/panels/condition_preview/comparison_requirements'
+
+function valueFilteredSpeciesPool(pool, descriptors, side) {
+  const descriptor = descriptors.find(d => d.side === side)
+  if (!descriptor || descriptor.metric !== VALUE_COMPARISON_METRIC) { return pool }
+  if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) { return pool }
+  const total = Number(descriptor.total || 0)
+  return pool.filter(species => {
+    const value = materialValue(species)
+    switch (descriptor.comparator) {
+      case 'equal_to':              return value === total
+      case 'greater_than':          return value > total
+      case 'greater_than_or_equal_to': return value >= total
+      case 'less_than':             return value < total
+      case 'less_than_or_equal_to': return value <= total
+      default:                      return true
+    }
+  })
+}
 
 const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
 const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
@@ -97,8 +116,8 @@ export function buildRelationalPlan(payload, options = {}) {
     requirements: comparisonRequirements(payload),
     sourceConstraints: {},
     variants: buildExampleVariantPlan(payload),
-    subjectSpeciesPool: sideSpeciesPool(payload, 'subject'),
-    targetSpeciesPool: sideSpeciesPool(payload, 'target'),
+    subjectSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'subject'), comparisons, 'subject'),
+    targetSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'target'), comparisons, 'target'),
     subjectTeam: teamForActor(payload.subject),
     targetTeam: teamForActor(payload.target),
     movingTeam: options.movingTeam || Board.WHITE,
