@@ -7,7 +7,7 @@ import {
 } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
 import { unaryTotal } from "bot_execution/unary_analysis"
-import { relationalActorPositions } from "bot_execution/actor_positions"
+import { relationalActorPositions as baseRelationalActorPositions } from "bot_execution/actor_positions"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -84,7 +84,7 @@ export function relationalActorPositions(analysis, { actor, filter = "any", filt
   }
 
   return profileCollector.measure('cma.v2.relational_actor_positions', () => {
-    const positions = relationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
+    const positions = baseRelationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
     analysis._relationalActorPositionsCache.set(cacheKey, positions)
     return positions
   })

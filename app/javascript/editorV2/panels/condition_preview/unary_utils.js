@@ -74,24 +74,77 @@ function valueCombinationsForTotal(target, speciesPool) {
   return results
 }
 
+function satisfiesComparator(comparator, sv, t) {
+  switch (comparator) {
+    case 'equal_to':                 return sv === t
+    case 'greater_than':             return sv > t
+    case 'greater_than_or_equal_to': return sv >= t
+    case 'less_than':                return sv < t
+    case 'less_than_or_equal_to':    return sv <= t
+    default:                         return sv === t
+  }
+}
+
 // ===== Work item builders =====
+
+const SINGULAR_CROSS_ACTOR_TARGETS = new Set(['captured_piece', 'enemy_captured_piece', 'enemy_moved_piece'])
+
+function singularCrossActorTargetItems({ target, subjectValue, comparator, targetSpeciesPool, operator, random }) {
+  if (operator === 'count') {
+    const validTargets = range(1, 15).filter(t => satisfiesComparator(comparator, 1, t))
+    return shuffled(validTargets, random).slice(0, 4).map(targetCount => ({ targetCount }))
+  }
+
+  // For singular targets (captured_piece, enemy_captured_piece, enemy_moved_piece), enumerate individual species
+  if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+    const validSpecies = targetSpeciesPool.filter(s => s !== Board.KING && satisfiesComparator(comparator, subjectValue, materialValue(s)))
+    return shuffled(validSpecies, random).slice(0, 4).map(targetSingularSpecies => ({ targetSingularSpecies }))
+  }
+
+  // Group targets (allied, enemy): use value combinations
+  const targetItems = []
+  range(1, 15).forEach(t => {
+    if (!satisfiesComparator(comparator, subjectValue, t)) { return }
+    valueCombinationsForTotal(t, targetSpeciesPool).forEach(targetValueCombination => {
+      targetItems.push({ targetValueCombination })
+    })
+  })
+  return shuffled(targetItems, random).slice(0, 4)
+}
 
 export function buildUnaryWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = plan
   const items = []
+  const isCrossActor = target !== EXACT_NUMBER_TARGET
 
   if (subject === 'moved_piece') {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
-      subjectSpeciesPool.forEach(movedSpecies => items.push({ movedSpecies }))
+      subjectSpeciesPool.forEach(movedSpecies => {
+        if (isCrossActor) {
+          const sv = operator === 'value' ? materialValue(movedSpecies) : 1
+          singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+            .forEach(targetItem => items.push({ movedSpecies, ...targetItem }))
+        } else {
+          items.push({ movedSpecies })
+        }
+      })
     }
     return shuffled(items, random)
   }
 
   if (subject === 'captured_piece') {
-    const movers = candidateSpecies('any', null).filter(s => s !== Board.KING)
+    const movers = candidateSpecies('any', null)
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(movers, random).slice(0, 4).forEach(movedSpecies => {
-        subjectSpeciesPool.forEach(capturedSpecies => items.push({ movedSpecies, capturedSpecies }))
+        subjectSpeciesPool.forEach(capturedSpecies => {
+          if (isCrossActor) {
+            const sv = operator === 'value' ? materialValue(capturedSpecies) : 1
+            singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+              .forEach(targetItem => items.push({ movedSpecies, capturedSpecies, ...targetItem }))
+          } else {
+            items.push({ movedSpecies, capturedSpecies })
+          }
+        })
       })
     }
     return shuffled(items, random)
@@ -99,16 +152,32 @@ export function buildUnaryWorkItems(plan, random) {
 
   if (subject === 'enemy_moved_piece') {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
-      subjectSpeciesPool.forEach(enemyMovedSpecies => items.push({ enemyMovedSpecies }))
+      subjectSpeciesPool.forEach(enemyMovedSpecies => {
+        if (isCrossActor) {
+          const sv = operator === 'value' ? materialValue(enemyMovedSpecies) : 1
+          singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+            .forEach(targetItem => items.push({ enemyMovedSpecies, ...targetItem }))
+        } else {
+          items.push({ enemyMovedSpecies })
+        }
+      })
     }
     return shuffled(items, random)
   }
 
   if (subject === 'enemy_captured_piece') {
-    const enemyMovers = candidateSpecies('any', null).filter(s => s !== Board.KING)
+    const enemyMovers = candidateSpecies('any', null)
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(enemyMovers, random).slice(0, 4).forEach(enemyMoverSpecies => {
-        subjectSpeciesPool.forEach(enemyCapturedSpecies => items.push({ enemyMoverSpecies, enemyCapturedSpecies }))
+        subjectSpeciesPool.forEach(enemyCapturedSpecies => {
+          if (isCrossActor) {
+            const sv = operator === 'value' ? materialValue(enemyCapturedSpecies) : 1
+            singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+              .forEach(targetItem => items.push({ enemyMoverSpecies, enemyCapturedSpecies, ...targetItem }))
+          } else {
+            items.push({ enemyMoverSpecies, enemyCapturedSpecies })
+          }
+        })
       })
     }
     return shuffled(items, random)
@@ -131,20 +200,9 @@ export function buildUnaryWorkItems(plan, random) {
     // cross-actor: enumerate subject combos as outer loop so every distinct subject gets equal representation
     const paired = []
 
-    function satisfies(sv, t) {
-      switch (comparator) {
-        case 'equal_to':                 return sv === t
-        case 'greater_than':             return sv > t
-        case 'greater_than_or_equal_to': return sv >= t
-        case 'less_than':                return sv < t
-        case 'less_than_or_equal_to':    return sv <= t
-        default:                         return sv === t
-      }
-    }
-
     if (operator === 'count') {
       range(1, 15).forEach(sc => {
-        const validTargets = range(1, 15).filter(t => satisfies(sc, t))
+        const validTargets = range(1, 15).filter(t => satisfiesComparator(comparator, sc, t))
         shuffled(validTargets, random).slice(0, 4).forEach(targetCount => {
           paired.push({ count: sc, targetCount })
         })
@@ -159,7 +217,7 @@ export function buildUnaryWorkItems(plan, random) {
       })
       subjectComboMap.forEach(({ total: sv, targetItems }) => {
         range(1, 15).forEach(t => {
-          if (!satisfies(sv, t)) { return }
+          if (!satisfiesComparator(comparator, sv, t)) { return }
           valueCombinationsForTotal(t, targetSpeciesPool).forEach(targetValueCombination => {
             targetItems.push(targetValueCombination)
           })
@@ -194,41 +252,101 @@ function placeNextPiece({ pieces, species, team, random }) {
 function buildAfterPiecesForItem({ plan, item, random }) {
   const { subject, subjectTeam, targetTeam, target, subjectSpeciesPool, targetSpeciesPool, movingTeam } = plan
 
+  function applyCrossActorTarget(pieces, pawnCount, baseRecentMoveContext, baseCapturedPool) {
+    // Singular targets: captured_piece → capturedPieceSpeciesPool, enemy_captured_piece/enemy_moved_piece → recentMoveContext
+    if (item.targetSingularSpecies !== undefined) {
+      if (target === 'captured_piece') {
+        return { pieces, recentMoveContext: baseRecentMoveContext, capturedPieceSpeciesPool: [item.targetSingularSpecies] }
+      }
+      if (target === 'enemy_captured_piece') {
+        const ctx = buildEnemyRecentMoveContextWithCapture(
+          baseRecentMoveContext?.movedPieceEndPosition || pieces.keys().next().value,
+          baseRecentMoveContext?.movedPieceSpeciesAfterMove || Board.PAWN,
+          item.targetSingularSpecies
+        )
+        return { pieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
+      }
+      if (target === 'enemy_moved_piece') {
+        const ctx = buildEnemyRecentMoveContextWithCapture(
+          baseRecentMoveContext?.movedPieceEndPosition || pieces.keys().next().value,
+          item.targetSingularSpecies,
+          null
+        )
+        return { pieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
+      }
+    }
+
+    // Group targets (allied, enemy): place on board
+    if (!item.targetValueCombination && !item.targetCount) {
+      return { pieces, recentMoveContext: baseRecentMoveContext, capturedPieceSpeciesPool: baseCapturedPool }
+    }
+    const slots = item.targetValueCombination
+      ? item.targetValueCombination.map(v => {
+          const pool = targetSpeciesPool.filter(s => materialValue(s) === v && (s !== Board.PAWN || pawnCount[targetTeam] < MAX_PAWNS_PER_TEAM))
+          if (pool.length === 0) { return null }
+          return pool[Math.floor(random() * pool.length)]
+        }).filter(Boolean)
+      : Array.from({ length: item.targetCount }, () => {
+          const pool = targetSpeciesPool.filter(s => s !== Board.PAWN || pawnCount[targetTeam] < MAX_PAWNS_PER_TEAM)
+          if (pool.length === 0) { return null }
+          return pool[Math.floor(random() * pool.length)]
+        }).filter(Boolean)
+    let current = pieces
+    for (const species of slots) {
+      const r = placeNextPiece({ pieces: current, species, team: targetTeam, random })
+      if (r) {
+        current = r.pieces
+        if (species === Board.PAWN) { pawnCount[targetTeam]++ }
+      }
+    }
+    return { pieces: current, recentMoveContext: baseRecentMoveContext, capturedPieceSpeciesPool: baseCapturedPool }
+  }
+
+  function initPawnCount(primaryTeam, primarySpecies) {
+    const counts = { [primaryTeam]: primarySpecies === Board.PAWN ? 1 : 0 }
+    if (targetTeam && targetTeam !== primaryTeam) { counts[targetTeam] = 0 }
+    return counts
+  }
+
   if (subject === 'moved_piece') {
     const species = item.movedSpecies
     const result = placeNextPiece({ pieces: new Map(), species, team: subjectTeam, random })
     if (!result) { return null }
-    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: species, capturedPieceSpeciesPool: null, recentMoveContext: null }
+    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, species), null, null)
+    return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: species, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
   if (subject === 'captured_piece') {
     const result = placeNextPiece({ pieces: new Map(), species: item.movedSpecies, team: subjectTeam, random })
     if (!result) { return null }
-    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: item.movedSpecies, capturedPieceSpeciesPool: [item.capturedSpecies], recentMoveContext: null }
+    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, item.movedSpecies), null, [item.capturedSpecies])
+    return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: item.movedSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
   if (subject === 'enemy_moved_piece') {
     const enemyTeam = Board.opposingTeam(movingTeam)
     const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMovedSpecies, team: enemyTeam, random })
     if (!enemyResult) { return null }
-    const recentMoveContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMovedSpecies, null)
+    const baseContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMovedSpecies, null)
     const allSpecies = candidateSpecies('any', null)
     const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
-    return { afterPieces: moverResult.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: null, recentMoveContext }
+    const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
+    return { afterPieces: applied.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
   if (subject === 'enemy_captured_piece') {
     const enemyTeam = Board.opposingTeam(movingTeam)
     const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMoverSpecies, team: enemyTeam, random })
     if (!enemyResult) { return null }
-    const recentMoveContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMoverSpecies, item.enemyCapturedSpecies)
+    const baseContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMoverSpecies, item.enemyCapturedSpecies)
     const allSpecies = candidateSpecies('any', null)
     const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
-    return { afterPieces: moverResult.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: null, recentMoveContext }
+    const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
+    return { afterPieces: applied.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
   // allied or enemy: build subject pieces
