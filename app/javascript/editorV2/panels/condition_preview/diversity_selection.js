@@ -1,11 +1,11 @@
 import { candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
 
 export function subjectSpeciesSignature(example) {
-  return example.result.subjectPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
+  return example.result?.subjectPositions?.map(position => example.afterBoard.pieceTypeAt(position)).join(',') ?? ''
 }
 
 export function targetSpeciesSignature(example) {
-  return example.result.targetPositions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
+  return example.result?.targetPositions?.map(position => example.afterBoard.pieceTypeAt(position)).join(',') ?? ''
 }
 
 export function speciesPairSignature(example) {

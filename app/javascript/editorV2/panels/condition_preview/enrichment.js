@@ -4,7 +4,8 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { legalPlacementForSpecies, pieceCode, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
 import { moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
-import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { unaryActorLabels } from 'editorV2/panels/condition_preview/unary_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
 
 const ENRICHMENT_PROBABILITY = 0.5
@@ -104,7 +105,7 @@ export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExampl
     afterBoard,
     moveObject: recomputedMoveObject,
     result,
-    highlights: subjectTargetLabels(plan, recomputedMoveObject, result, priorBoard),
+    highlights: relationalActorLabels(plan, recomputedMoveObject, result, priorBoard),
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
     movedPieceInRelation,
@@ -182,6 +183,83 @@ export function enrichExample(example, plan, random) {
   }
 
   return addedCount > 0 ? bestExample : null
+}
+
+function deriveUnaryVerifiedExample({ plan, priorBoard, moveObject, baseExample }) {
+  let recomputedMoveObject
+  try {
+    recomputedMoveObject = Rules.getMoveObject(moveObject.startPosition, moveObject.endPosition, priorBoard)
+  } catch {
+    return null
+  }
+  if (recomputedMoveObject.illegal || recomputedMoveObject.additionalActions || recomputedMoveObject.promotionPiece) { return null }
+  if (!legalPriorTurnState(priorBoard, recomputedMoveObject)) { return null }
+
+  const evaluator = new ConditionEvaluatorV2()
+  const input = { board: priorBoard, moveObject: recomputedMoveObject }
+  if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }
+
+  const analysis = new CandidateMoveAnalysisV2(input)
+  const afterBoard = priorBoard.lightClone()
+  afterBoard._hypotheticallyMovePiece(recomputedMoveObject)
+
+  return {
+    priorBoard,
+    afterBoard,
+    moveObject: recomputedMoveObject,
+    kind: 'unary',
+    result: null,
+    highlights: unaryActorLabels(plan, recomputedMoveObject, analysis),
+    moveKind: moveKindForMoveObject(recomputedMoveObject),
+    sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
+  }
+}
+
+function enrichUnaryExample(example, plan, random) {
+  const policy = buildEnrichmentPlacementPolicy(example, random)
+  const basePriorBoard = example.priorBoard.lightClone()
+  let bestExample = example
+  let addedCount = 0
+
+  while (addedCount < MAX_ENRICHED_EXTRA_PIECES) {
+    const placement = policy.nextPlacement()
+    if (!placement) { break }
+
+    const trialPriorBoard = basePriorBoard.lightClone()
+    trialPriorBoard._placePiece({ position: placement.position, pieceObject: pieceCode(placement.team, placement.species) })
+    const derived = deriveUnaryVerifiedExample({ plan, priorBoard: trialPriorBoard, moveObject: example.moveObject, baseExample: example })
+    if (!derived) { break }
+
+    bestExample = derived
+    basePriorBoard.layOut = Board._deepCopy(trialPriorBoard.layOut)
+    addedCount += 1
+  }
+
+  return addedCount > 0 ? bestExample : null
+}
+
+export function finalizeUnaryExamples(baseExamples, plan, maxExamples, random) {
+  const enrichedCandidates = []
+
+  baseExamples.forEach(example => {
+    if (random() >= ENRICHMENT_PROBABILITY) { return }
+    const enriched = enrichUnaryExample(example, plan, random)
+    if (enriched) { enrichedCandidates.push(enriched) }
+  })
+
+  if (enrichedCandidates.length === 0) {
+    return selectDiverseExamples(shuffled(baseExamples, random), maxExamples)
+  }
+
+  const desiredEnrichedCount = Math.min(
+    enrichedCandidates.length,
+    Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
+  )
+  const selectedEnriched = selectDiverseExamples(uniqueExamples(enrichedCandidates), desiredEnrichedCount)
+  const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
+  const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
+  const selectedBase = selectDiverseExamples(remainingBase, Math.max(0, maxExamples - selectedEnriched.length))
+  return selectDiverseExamples(shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random), maxExamples)
 }
 
 export function finalizeExamples(baseExamples, plan, maxExamples, random) {

@@ -9,7 +9,7 @@ import {
   MOVE_KIND_CASTLE, soundForMove
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  subjectTargetLabels, evaluateCandidate
+  relationalActorLabels, evaluateRelationalCandidate
 } from 'editorV2/panels/condition_preview/relational_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
 
@@ -136,7 +136,7 @@ export function collectCastleExamples({ plan, random, maxExamples }) {
                 attempts += 1
                 if (attempts > MAX_CASTLE_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
                 collectLegalCastleMoveExamples({ afterPieces: skeleton.pieces, preset, random }).forEach(moveExample => {
-                  const result = evaluateCandidate({
+                  const result = evaluateRelationalCandidate({
                     plan,
                     priorBoard: moveExample.priorBoard,
                     moveObject: moveExample.moveObject
@@ -155,7 +155,7 @@ export function collectCastleExamples({ plan, random, maxExamples }) {
                     afterBoard: moveExample.afterBoard,
                     moveObject: moveExample.moveObject,
                     result,
-                    highlights: subjectTargetLabels(plan, moveExample.moveObject, result, moveExample.priorBoard),
+                    highlights: relationalActorLabels(plan, moveExample.moveObject, result, moveExample.priorBoard),
                     variantType: movedPieceInRelation ? 'involved' : 'separate',
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
                     movedPieceInRelation,

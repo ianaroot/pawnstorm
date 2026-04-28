@@ -184,15 +184,23 @@ export function soundForMove(priorBoard, afterBoard, moveObject) {
 }
 
 export function candidateIdentity(example) {
-  const subjectSig = example.result.subjectPositions.map(p => example.afterBoard.pieceTypeAt(p)).join(',')
-  const targetSig = example.result.targetPositions.map(p => example.afterBoard.pieceTypeAt(p)).join(',')
+  if (example.result === null) {
+    return [
+      example.moveKind || MOVE_KIND_STANDARD,
+      example.moveObject.startPosition,
+      example.moveObject.endPosition,
+      example.afterBoard.layOut.join('')
+    ].join(':')
+  }
+  const subjectSig = example.result.subjectPositions?.map(p => example.afterBoard.pieceTypeAt(p)).join(',') ?? ''
+  const targetSig = example.result.targetPositions?.map(p => example.afterBoard.pieceTypeAt(p)).join(',') ?? ''
   return [
     example.moveKind || MOVE_KIND_STANDARD,
     example.moveObject.startPosition,
     example.moveObject.endPosition,
-    example.geometryKey,
+    example.geometryKey ?? '',
     subjectSig,
     targetSig,
-    example.variantType
+    example.variantType ?? ''
   ].join(':')
 }
