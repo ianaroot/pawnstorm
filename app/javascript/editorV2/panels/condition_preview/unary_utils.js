@@ -105,26 +105,28 @@ export function buildUnaryWorkItems(plan, random) {
   }
 
   if (target !== EXACT_NUMBER_TARGET) {
-    // cross-actor: duplicate items with target counts/combinations paired in
-    const targetItems = []
+    // cross-actor: iterate T from 1-15 as target value/count, derive subject items satisfying comparator against T
+    const paired = []
     if (operator === 'count') {
-      targetCountsForComparator(comparator, targetTotal).forEach(count => {
-        if (count > 0) { targetItems.push({ targetCount: count }) }
+      range(1, 15).forEach(t => {
+        const subjectCounts = targetCountsForComparator(comparator, t)
+        subjectCounts.forEach(count => {
+          if (count > 0) { paired.push({ count, targetCount: t }) }
+        })
       })
     } else if (operator === 'value') {
-      targetValuesForComparator(comparator, targetTotal).forEach(v => {
-        valueCombinationsForTotal(v, targetSpeciesPool).forEach(valueCombination => {
-          targetItems.push({ targetValueCombination: valueCombination })
+      range(1, 15).forEach(t => {
+        const subjectValues = targetValuesForComparator(comparator, t)
+        subjectValues.forEach(sv => {
+          valueCombinationsForTotal(sv, subjectSpeciesPool).forEach(valueCombination => {
+            valueCombinationsForTotal(t, targetSpeciesPool).forEach(targetValueCombination => {
+              paired.push({ valueCombination, targetValueCombination })
+            })
+          })
         })
       })
     }
-    const paired = []
-    items.forEach(item => {
-      shuffled(targetItems, random).slice(0, 3).forEach(targetItem => {
-        paired.push({ ...item, ...targetItem })
-      })
-    })
-    return shuffled([...items, ...paired], random)
+    return shuffled(paired, random)
   }
 
   return shuffled(items, random)
@@ -144,7 +146,7 @@ function placeNextPiece({ pieces, species, team, random }) {
 }
 
 function buildAfterPiecesForItem({ plan, item, random }) {
-  const { subject, subjectTeam, targetTeam, target, subjectSpeciesPool, targetSpeciesPool } = plan
+  const { subject, subjectTeam, targetTeam, target, subjectSpeciesPool, targetSpeciesPool, movingTeam } = plan
 
   if (subject === 'moved_piece') {
     const species = item.movedSpecies
@@ -161,8 +163,8 @@ function buildAfterPiecesForItem({ plan, item, random }) {
 
   // allied or enemy: build subject pieces
   let pieces = new Map()
-  let movedPieceSquare = null
-  let movedPieceSpecies = null
+  const subjectMovedSquares = []
+  const targetMovedSquares = []
   const pawnCount = { [subjectTeam]: 0, [targetTeam]: 0 }
 
   function pickSpecies(pool, team) {
@@ -180,7 +182,7 @@ function buildAfterPiecesForItem({ plan, item, random }) {
     if (!result) { return null }
     pieces = result.pieces
     if (subjectSlots[i] === Board.PAWN) { pawnCount[subjectTeam]++ }
-    if (i === 0) { movedPieceSquare = result.square; movedPieceSpecies = subjectSlots[i] }
+    subjectMovedSquares.push({ square: result.square, species: subjectSlots[i] })
   }
 
   // place target pieces if cross-actor
@@ -196,9 +198,33 @@ function buildAfterPiecesForItem({ plan, item, random }) {
       if (result) {
         pieces = result.pieces
         if (species === Board.PAWN) { pawnCount[targetTeam]++ }
+        targetMovedSquares.push({ square: result.square, species })
       }
     }
   }
+
+  // determine moved piece from movingTeam so collectLegalReverseMoves (which hardcodes WHITE mover) works
+  let movedPieceSquare = null
+  let movedPieceSpecies = null
+
+  if (subjectTeam === movingTeam && subjectMovedSquares.length > 0) {
+    movedPieceSquare = subjectMovedSquares[0].square
+    movedPieceSpecies = subjectMovedSquares[0].species
+  } else if (targetTeam === movingTeam && targetMovedSquares.length > 0) {
+    movedPieceSquare = targetMovedSquares[0].square
+    movedPieceSpecies = targetMovedSquares[0].species
+  } else {
+    // neither actor pool is the moving team — add a separate mover piece
+    const moverSpecies = pickSpecies(candidateSpecies('any', null).filter(s => s !== Board.KING), movingTeam)
+    if (!moverSpecies) { return null }
+    const result = placeNextPiece({ pieces, species: moverSpecies, team: movingTeam, random })
+    if (!result) { return null }
+    pieces = result.pieces
+    movedPieceSquare = result.square
+    movedPieceSpecies = moverSpecies
+  }
+
+  if (!movedPieceSquare) { return null }
 
   return { afterPieces: pieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool: null }
 }
