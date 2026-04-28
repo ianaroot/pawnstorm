@@ -105,27 +105,50 @@ export function buildUnaryWorkItems(plan, random) {
   }
 
   if (target !== EXACT_NUMBER_TARGET) {
-    // cross-actor: iterate T from 1-15 as target value/count, derive subject items satisfying comparator against T
+    // cross-actor: enumerate subject combos as outer loop so every distinct subject gets equal representation
     const paired = []
+
+    function satisfies(sv, t) {
+      switch (comparator) {
+        case 'equal_to':                 return sv === t
+        case 'greater_than':             return sv > t
+        case 'greater_than_or_equal_to': return sv >= t
+        case 'less_than':                return sv < t
+        case 'less_than_or_equal_to':    return sv <= t
+        default:                         return sv === t
+      }
+    }
+
     if (operator === 'count') {
-      range(1, 15).forEach(t => {
-        const subjectCounts = targetCountsForComparator(comparator, t)
-        subjectCounts.forEach(count => {
-          if (count > 0) { paired.push({ count, targetCount: t }) }
+      range(1, 15).forEach(sc => {
+        const validTargets = range(1, 15).filter(t => satisfies(sc, t))
+        shuffled(validTargets, random).slice(0, 4).forEach(targetCount => {
+          paired.push({ count: sc, targetCount })
         })
       })
     } else if (operator === 'value') {
-      range(1, 15).forEach(t => {
-        const subjectValues = targetValuesForComparator(comparator, t)
-        subjectValues.forEach(sv => {
-          valueCombinationsForTotal(sv, subjectSpeciesPool).forEach(valueCombination => {
-            valueCombinationsForTotal(t, targetSpeciesPool).forEach(targetValueCombination => {
-              paired.push({ valueCombination, targetValueCombination })
-            })
+      const subjectComboMap = new Map()
+      range(1, 15).forEach(sv => {
+        valueCombinationsForTotal(sv, subjectSpeciesPool).forEach(valueCombination => {
+          const key = valueCombination.join(',')
+          if (!subjectComboMap.has(key)) { subjectComboMap.set(key, { valueCombination, total: sv, targetItems: [] }) }
+        })
+      })
+      subjectComboMap.forEach(({ total: sv, targetItems }) => {
+        range(1, 15).forEach(t => {
+          if (!satisfies(sv, t)) { return }
+          valueCombinationsForTotal(t, targetSpeciesPool).forEach(targetValueCombination => {
+            targetItems.push(targetValueCombination)
           })
         })
       })
+      shuffled(Array.from(subjectComboMap.values()), random).forEach(({ valueCombination, targetItems }) => {
+        shuffled(targetItems, random).slice(0, 4).forEach(targetValueCombination => {
+          paired.push({ valueCombination, targetValueCombination })
+        })
+      })
     }
+
     return shuffled(paired, random)
   }
 
