@@ -101,6 +101,13 @@ function singularCrossActorTargetItems({ target, subjectValue, comparator, targe
     return shuffled(validTargets, random).slice(0, 4).map(targetCount => ({ targetCount }))
   }
 
+  if (operator === 'mobility') {
+    if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+      return shuffled([...targetSpeciesPool], random).slice(0, 4).map(targetSingularSpecies => ({ targetSingularSpecies }))
+    }
+    return range(1, 4).map(targetCount => ({ targetCount }))
+  }
+
   // For singular targets (captured_piece, enemy_captured_piece, enemy_moved_piece), enumerate individual species
   if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
     const validSpecies = targetSpeciesPool.filter(s => s !== Board.KING && satisfiesComparator(comparator, subjectValue, materialValue(s)))
@@ -228,6 +235,18 @@ export function buildUnaryWorkItems(plan, random) {
           paired.push({ count: sc, targetCount })
         })
       })
+    } else if (operator === 'mobility') {
+      for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
+        range(1, 6).forEach(sc => {
+          if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+            shuffled([...targetSpeciesPool], random).slice(0, 2).forEach(targetSingularSpecies => {
+              paired.push({ count: sc, targetSingularSpecies })
+            })
+          } else {
+            range(1, 6).forEach(tc => { paired.push({ count: sc, targetCount: tc }) })
+          }
+        })
+      }
     } else if (operator === 'value') {
       const subjectComboMap = new Map()
       range(1, 15).forEach(sv => {
@@ -295,12 +314,12 @@ function buildAfterPiecesForItem({ plan, item, random }) {
         return { pieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
       }
       if (target === 'enemy_moved_piece') {
-        const ctx = buildEnemyRecentMoveContextWithCapture(
-          baseRecentMoveContext?.movedPieceEndPosition || pieces.keys().next().value,
-          item.targetSingularSpecies,
-          null
-        )
-        return { pieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
+        const enemyTeam = Board.opposingTeam(movingTeam)
+        const enemyResult = placeNextPiece({ pieces, species: item.targetSingularSpecies, team: enemyTeam, random })
+        const endPos = enemyResult ? enemyResult.square : (baseRecentMoveContext?.movedPieceEndPosition || pieces.keys().next().value)
+        const placedPieces = enemyResult ? enemyResult.pieces : pieces
+        const ctx = buildEnemyRecentMoveContextWithCapture(endPos, item.targetSingularSpecies, null)
+        return { pieces: placedPieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
       }
     }
 
@@ -538,30 +557,44 @@ export function collectUnaryExamples({ plan, item, random, maxResults = 3 }) {
 const POSITIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
 
 export function unaryActorLabels(plan, moveObject, analysis) {
-  const isPositional = POSITIONAL_ACTORS.has(plan.subject)
-  const afterPositions = isPositional ? relationalActorPositions(analysis, {
+  const isSubjectPositional = POSITIONAL_ACTORS.has(plan.subject)
+  const isTargetPositional = plan.target && POSITIONAL_ACTORS.has(plan.target)
+
+  const afterSubjectPositions = isSubjectPositional ? relationalActorPositions(analysis, {
     actor: plan.subject,
     filter: plan.subjectFilter,
     filterMode: plan.subjectFilterMode,
     boardScope: 'after'
   }) : []
-  const priorPositions = isPositional ? relationalActorPositions(analysis, {
+  const priorSubjectPositions = isSubjectPositional ? relationalActorPositions(analysis, {
     actor: plan.subject,
     filter: plan.subjectFilter,
     filterMode: plan.subjectFilterMode,
     boardScope: 'prior'
   }) : []
+  const afterTargetPositions = isTargetPositional ? relationalActorPositions(analysis, {
+    actor: plan.target,
+    filter: plan.targetFilter,
+    filterMode: plan.targetFilterMode,
+    boardScope: 'after'
+  }) : []
+  const priorTargetPositions = isTargetPositional ? relationalActorPositions(analysis, {
+    actor: plan.target,
+    filter: plan.targetFilter,
+    filterMode: plan.targetFilterMode,
+    boardScope: 'prior'
+  }) : []
 
   return {
     prior: {
-      subjectPositions: priorPositions,
-      targetPositions: [],
+      subjectPositions: priorSubjectPositions,
+      targetPositions: priorTargetPositions,
       movedStartPosition: moveObject.startPosition,
       movedEndPosition: null
     },
     after: {
-      subjectPositions: afterPositions,
-      targetPositions: [],
+      subjectPositions: afterSubjectPositions,
+      targetPositions: afterTargetPositions,
       movedStartPosition: null,
       movedEndPosition: moveObject.endPosition
     }
