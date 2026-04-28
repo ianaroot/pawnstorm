@@ -997,6 +997,38 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(false)
     })
 
+    it('fails a subject-side value comparison against captured_piece when the moved piece attacks no enemies', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wR',
+          d5: 'bP'
+        }
+      })
+
+      const moveObject = getMove('d4', 'd5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'value',
+            subjectComparator: 'less_than',
+            subjectComparisonSource: 'captured_piece',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
     it('lets a subject-only zero comparison pass on an empty relation', () => {
       const board = buildBoard({
         pieces: {
