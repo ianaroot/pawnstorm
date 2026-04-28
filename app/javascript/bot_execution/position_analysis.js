@@ -1,6 +1,7 @@
 import Board from "gameplay/board"
 import { materialValue, relativeRank, relativeToAbsolutePosition } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
+import { actorPositions } from "bot_execution/actor_positions"
 
 const AFTER_BOARD = "after"
 
@@ -8,7 +9,7 @@ export function positionFilteredPositions(analysis, { actor, filter = "any", fil
   return profileCollector.measure('cma.v2.position_filtered_positions', () => {
     const board = analysis.boardForScope(boardScope)
     const team = analysis.movedPieceTeam()
-    const candidates = positionActorPositions(analysis, { actor, filter, filterMode, boardScope })
+    const candidates = actorPositions(analysis, { actor, filter, filterMode, boardScope })
     return candidates.filter(position => positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }))
   })
 }
@@ -29,31 +30,6 @@ export function positionMetricTotal(analysis, { positions, operator, boardScope 
   })
 }
 
-function positionActorPositions(analysis, { actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
-  const board = analysis.boardForScope(boardScope)
-  switch (actor) {
-    case "allied":
-    case "enemy": {
-      const team = actor === "allied" ? analysis.movedPieceTeam() : analysis.enemyTeam()
-      return board._positionsOccupiedByTeam(team).filter(p =>
-        analysis.matchesFilter({ species: board.pieceTypeAt(p), filter, filterMode })
-      )
-    }
-    case "moved_piece": {
-      const resolved = analysis.resolvedMovedPiece(boardScope)
-      if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return [] }
-      return [resolved.position]
-    }
-    case "enemy_moved_piece": {
-      const resolved = analysis.resolvedEnemyMovedPiece(boardScope)
-      if (!resolved || !resolved.presentOnBoard) { return [] }
-      if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return [] }
-      return [resolved.position]
-    }
-    default:
-      throw new Error(`Unsupported position actor: ${actor}`)
-  }
-}
 
 function positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }) {
   switch (positionAxis) {
