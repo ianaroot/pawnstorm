@@ -1276,6 +1276,17 @@
   border-radius: 6px;
   color: #E5E5E5;
   font-size: 12px;
+  box-sizing: border-box;
+}
+
+.condition-form-side input[type="number"] {
+  padding: 7px 8px;
+  background: #2d2a25;
+  border: 1px solid #1a1815;
+  border-radius: 6px;
+  color: #E5E5E5;
+  font-size: 12px;
+  box-sizing: border-box;
 }
 
 .condition-form-operator select {
@@ -1297,6 +1308,11 @@
 .condition-form-inline-pair {
   grid-template-columns: 4.1rem minmax(0, 1fr);
   gap: 0.08rem;
+}
+
+#cond-position-square-inputs {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .condition-form-inline-triple {
@@ -1495,6 +1511,26 @@
   color: #BFDBFE;
   font-size: 12px;
   margin-top: 10px;
+}
+
+.condition-form-position-layout__note {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.condition-form-comparison-grid--position {
+  display: grid;
+  grid-template-columns: 1fr 3rem auto;
+  gap: 6px;
+  align-items: center;
+}
+
+#cond-position-target-total {
+  width: 3rem;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px 4px;
+  text-align: center;
 }
 
 .condition-form-formulation label {
