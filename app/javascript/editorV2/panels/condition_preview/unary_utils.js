@@ -1,6 +1,6 @@
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import { actorPositions } from 'bot_execution/actor_positions'
+import { relationalActorPositions } from 'bot_execution/actor_positions'
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
 import {
@@ -9,11 +9,13 @@ import {
 import {
   collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD
 } from 'editorV2/panels/condition_preview/example_utils'
+import { buildEnemyRecentMoveContextWithCapture } from 'editorV2/panels/condition_preview/candidate_collection'
 
 const ALL_POSITIONS = Array.from({ length: 64 }, (_, i) => i)
 const EXACT_NUMBER_TARGET = 'exact_number'
 const VALUE_CAP_OVER_MINIMUM = 12
 const MAX_PAWNS_PER_TEAM = 8
+const SINGULAR_BOARD_ATTEMPTS = 50
 
 // ===== Target range helpers =====
 
@@ -79,15 +81,36 @@ export function buildUnaryWorkItems(plan, random) {
   const items = []
 
   if (subject === 'moved_piece') {
-    subjectSpeciesPool.forEach(movedSpecies => items.push({ movedSpecies }))
+    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+      subjectSpeciesPool.forEach(movedSpecies => items.push({ movedSpecies }))
+    }
     return shuffled(items, random)
   }
 
   if (subject === 'captured_piece') {
     const movers = candidateSpecies('any', null).filter(s => s !== Board.KING)
-    shuffled(movers, random).slice(0, 4).forEach(movedSpecies => {
-      subjectSpeciesPool.forEach(capturedSpecies => items.push({ movedSpecies, capturedSpecies }))
-    })
+    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+      shuffled(movers, random).slice(0, 4).forEach(movedSpecies => {
+        subjectSpeciesPool.forEach(capturedSpecies => items.push({ movedSpecies, capturedSpecies }))
+      })
+    }
+    return shuffled(items, random)
+  }
+
+  if (subject === 'enemy_moved_piece') {
+    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+      subjectSpeciesPool.forEach(enemyMovedSpecies => items.push({ enemyMovedSpecies }))
+    }
+    return shuffled(items, random)
+  }
+
+  if (subject === 'enemy_captured_piece') {
+    const enemyMovers = candidateSpecies('any', null).filter(s => s !== Board.KING)
+    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+      shuffled(enemyMovers, random).slice(0, 4).forEach(enemyMoverSpecies => {
+        subjectSpeciesPool.forEach(enemyCapturedSpecies => items.push({ enemyMoverSpecies, enemyCapturedSpecies }))
+      })
+    }
     return shuffled(items, random)
   }
 
@@ -175,13 +198,37 @@ function buildAfterPiecesForItem({ plan, item, random }) {
     const species = item.movedSpecies
     const result = placeNextPiece({ pieces: new Map(), species, team: subjectTeam, random })
     if (!result) { return null }
-    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: species, capturedPieceSpeciesPool: null }
+    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: species, capturedPieceSpeciesPool: null, recentMoveContext: null }
   }
 
   if (subject === 'captured_piece') {
     const result = placeNextPiece({ pieces: new Map(), species: item.movedSpecies, team: subjectTeam, random })
     if (!result) { return null }
-    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: item.movedSpecies, capturedPieceSpeciesPool: [item.capturedSpecies] }
+    return { afterPieces: result.pieces, movedPieceSquare: result.square, movedPieceSpecies: item.movedSpecies, capturedPieceSpeciesPool: [item.capturedSpecies], recentMoveContext: null }
+  }
+
+  if (subject === 'enemy_moved_piece') {
+    const enemyTeam = Board.opposingTeam(movingTeam)
+    const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMovedSpecies, team: enemyTeam, random })
+    if (!enemyResult) { return null }
+    const recentMoveContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMovedSpecies, null)
+    const allSpecies = candidateSpecies('any', null)
+    const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
+    const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
+    if (!moverResult) { return null }
+    return { afterPieces: moverResult.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: null, recentMoveContext }
+  }
+
+  if (subject === 'enemy_captured_piece') {
+    const enemyTeam = Board.opposingTeam(movingTeam)
+    const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMoverSpecies, team: enemyTeam, random })
+    if (!enemyResult) { return null }
+    const recentMoveContext = buildEnemyRecentMoveContextWithCapture(enemyResult.square, item.enemyMoverSpecies, item.enemyCapturedSpecies)
+    const allSpecies = candidateSpecies('any', null)
+    const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
+    const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
+    if (!moverResult) { return null }
+    return { afterPieces: moverResult.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: null, recentMoveContext }
   }
 
   // allied or enemy: build subject pieces
@@ -249,7 +296,7 @@ function buildAfterPiecesForItem({ plan, item, random }) {
 
   if (!movedPieceSquare) { return null }
 
-  return { afterPieces: pieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool: null }
+  return { afterPieces: pieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool: null, recentMoveContext: null }
 }
 
 // ===== Example collection =====
@@ -258,12 +305,12 @@ export function collectUnaryExamples({ plan, item, random, maxResults = 3 }) {
   const setup = buildAfterPiecesForItem({ plan, item, random })
   if (!setup) { return [] }
 
-  const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool } = setup
+  const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
   const moves = collectLegalReverseMoves({
     afterPieces,
     movedPieceSquare,
     movedPieceSpecies,
-    recentMoveContext: null,
+    recentMoveContext,
     random,
     maxResults,
     capturedPieceSpeciesPool
@@ -293,19 +340,22 @@ export function collectUnaryExamples({ plan, item, random, maxResults = 3 }) {
 
 // ===== Highlight labels =====
 
+const POSITIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
+
 export function unaryActorLabels(plan, moveObject, analysis) {
-  const afterPositions = actorPositions(analysis, {
+  const isPositional = POSITIONAL_ACTORS.has(plan.subject)
+  const afterPositions = isPositional ? relationalActorPositions(analysis, {
     actor: plan.subject,
     filter: plan.subjectFilter,
     filterMode: plan.subjectFilterMode,
     boardScope: 'after'
-  })
-  const priorPositions = actorPositions(analysis, {
+  }) : []
+  const priorPositions = isPositional ? relationalActorPositions(analysis, {
     actor: plan.subject,
     filter: plan.subjectFilter,
     filterMode: plan.subjectFilterMode,
     boardScope: 'prior'
-  })
+  }) : []
 
   return {
     prior: {

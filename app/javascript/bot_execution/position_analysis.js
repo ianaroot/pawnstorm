@@ -1,7 +1,7 @@
 import Board from "gameplay/board"
 import { materialValue, relativeRank, relativeToAbsolutePosition } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
-import { actorPositions } from "bot_execution/actor_positions"
+import { relationalActorPositions } from "bot_execution/actor_positions"
 
 const AFTER_BOARD = "after"
 
@@ -9,7 +9,7 @@ export function positionFilteredPositions(analysis, { actor, filter = "any", fil
   return profileCollector.measure('cma.v2.position_filtered_positions', () => {
     const board = analysis.boardForScope(boardScope)
     const team = analysis.movedPieceTeam()
-    const candidates = actorPositions(analysis, { actor, filter, filterMode, boardScope })
+    const candidates = relationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
     return candidates.filter(position => positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }))
   })
 }

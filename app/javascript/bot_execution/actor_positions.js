@@ -1,6 +1,6 @@
 const AFTER_BOARD = "after"
 
-export function actorPositions(analysis, { actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
+export function relationalActorPositions(analysis, { actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
   const board = analysis.boardForScope(boardScope)
   switch (actor) {
     case "allied":

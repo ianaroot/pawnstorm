@@ -260,6 +260,17 @@ export function expandRelationalPlanSources(plan) {
   }))
 }
 
+function singularActorValuePool(pool, comparator, total) {
+  switch (comparator) {
+    case 'equal_to':                 return pool.filter(s => materialValue(s) === total)
+    case 'less_than':                return pool.filter(s => materialValue(s) < total)
+    case 'less_than_or_equal_to':    return pool.filter(s => materialValue(s) <= total)
+    case 'greater_than':             return pool.filter(s => materialValue(s) > total)
+    case 'greater_than_or_equal_to': return pool.filter(s => materialValue(s) >= total)
+    default:                         return pool
+  }
+}
+
 export function buildUnaryPlan(payload, options = {}) {
   if (!SUPPORTED_UNARY_ACTORS.has(payload.subject)) {
     return { status: 'unsupported', reason: `${payload.subject} unary previews are not supported yet.` }
@@ -279,6 +290,12 @@ export function buildUnaryPlan(payload, options = {}) {
   const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE
   const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
 
+  const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+  const baseSubjectPool = candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null)
+  const subjectSpeciesPool = (SINGULAR_ACTORS.has(payload.subject) && payload.operator === 'value' && payload.target === EXACT_NUMBER_COMPARISON_SOURCE)
+    ? singularActorValuePool(baseSubjectPool, payload.comparator, payload.targetTotal ?? 0)
+    : baseSubjectPool
+
   return {
     status: 'supported',
     reason: null,
@@ -293,7 +310,7 @@ export function buildUnaryPlan(payload, options = {}) {
     targetTotal: payload.target === EXACT_NUMBER_COMPARISON_SOURCE ? (payload.targetTotal ?? 0) : null,
     targetFilter: payload.targetFilter || 'any',
     targetFilterMode: payload.targetFilterMode || null,
-    subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
+    subjectSpeciesPool,
     targetSpeciesPool: targetIsActor ? candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null) : [],
     subjectTeam,
     targetTeam,
