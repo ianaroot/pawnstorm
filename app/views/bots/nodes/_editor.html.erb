@@ -9,6 +9,7 @@
       <div class="condition-form-mode-picker">
         <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Relational</button>
         <button type="button" class="condition-form-mode-picker__option" id="cond-mode-measure">Measure</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-position">Position</button>
       </div>
 
       <div class="condition-form-layout">
@@ -192,6 +193,132 @@
             </div>
           </div>
         </section>
+      </div>
+
+      <div class="condition-form-layout condition-form-position-layout hidden" id="cond-position-layout">
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Subject</span>
+          </div>
+
+          <div class="condition-form-field">
+            <select id="cond-position-subject">
+              <% NodeGrammarV2::POSITION_SUBJECTS.each do |value| %>
+                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="condition-form-field" id="cond-position-filter-row">
+            <div class="condition-form-inline-pair">
+              <label class="condition-form-checkbox">
+                <input id="cond-position-filter-mode" type="checkbox">
+                <span>Non-</span>
+              </label>
+              <select id="cond-position-filter">
+                <% NodeForm.filter_options.each do |label, value| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+
+          <div class="condition-form-comparison" id="cond-position-comparison">
+            <button type="button" class="condition-form-comparison__toggle" id="cond-position-comparison-toggle"></button>
+
+            <div class="condition-form-comparison__body hidden" id="cond-position-comparison-body">
+              <div class="condition-form-comparison-grid condition-form-comparison-grid--position">
+                <select id="cond-position-operator">
+                  <% NodeForm.condition_form_position_operator_options.each do |label, value| %>
+                    <option value="<%= value %>"><%= label %></option>
+                  <% end %>
+                </select>
+
+                <select id="cond-position-metric-comparator">
+                  <option value="equal_to">=</option>
+                  <option value="greater_than">></option>
+                  <option value="less_than"><</option>
+                  <option value="greater_than_or_equal_to">≥</option>
+                  <option value="less_than_or_equal_to">≤</option>
+                </select>
+
+                <input id="cond-position-target-total" type="number" min="0" step="1" value="0">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="condition-form-operator">
+          <label>Position</label>
+          <select id="cond-position-axis">
+            <option value="rank">Rank</option>
+            <option value="file">File</option>
+            <option value="square">Square</option>
+          </select>
+
+          <select id="cond-position-comparator">
+            <option value="equal_to">=</option>
+            <option value="greater_than">></option>
+            <option value="less_than"><</option>
+            <option value="greater_than_or_equal_to">≥</option>
+            <option value="less_than_or_equal_to">≤</option>
+          </select>
+        </section>
+
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Target</span>
+          </div>
+
+          <div class="condition-form-field">
+            <select id="cond-position-rank-input">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
+
+            <select id="cond-position-file-input" class="hidden">
+              <option value="1">a</option>
+              <option value="2">b</option>
+              <option value="3">c</option>
+              <option value="4">d</option>
+              <option value="5">e</option>
+              <option value="6">f</option>
+              <option value="7">g</option>
+              <option value="8">h</option>
+            </select>
+
+            <div id="cond-position-square-inputs" class="condition-form-inline-pair hidden">
+              <select id="cond-position-square-file">
+                <option value="1">a</option>
+                <option value="2">b</option>
+                <option value="3">c</option>
+                <option value="4">d</option>
+                <option value="5">e</option>
+                <option value="6">f</option>
+                <option value="7">g</option>
+                <option value="8">h</option>
+              </select>
+              <select id="cond-position-square-rank">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <p class="condition-form-note condition-form-position-layout__note">Rank is relative to your side (rank 1 = your back rank).</p>
       </div>
 
       <div class="condition-form-formulation">

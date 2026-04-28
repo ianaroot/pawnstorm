@@ -53,6 +53,9 @@ export function buildRelationalPlan(payload, options = {}) {
   if (!payload?.kind) {
     return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
   }
+  if (payload.kind === 'position') {
+    return { status: 'unsupported', reason: 'Position previews are not supported yet.' }
+  }
   if (payload.kind !== 'relational') {
     return { status: 'unsupported', reason: 'Unary previews are not supported yet.' }
   }
