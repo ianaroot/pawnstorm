@@ -9,6 +9,7 @@ import { finalizeExamples, finalizeUnaryExamples, mergeMoveKindExamples } from '
 import { collectCastleExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 import { buildPlan, expandRelationalPlanSources } from 'editorV2/panels/condition_preview/generation_plan'
 import { buildUnaryWorkItems, collectUnaryExamples } from 'editorV2/panels/condition_preview/unary_utils'
+import { buildPositionWorkItems, collectPositionExamples } from 'editorV2/panels/condition_preview/position_utils'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -123,6 +124,42 @@ function generateUnaryExamples(plan, options = {}) {
   }
 }
 
+function generatePositionExamples(plan, options = {}) {
+  const maxExamples = options.maxExamples || MAX_DEFAULT_EXAMPLES
+  const random = options.random || Math.random
+  const deadline = Date.now() + (options.maxMs ?? 500)
+
+  const workItems = buildPositionWorkItems(plan, random)
+  const examples = []
+  const seen = new Set()
+
+  for (let i = 0; i < workItems.length; i++) {
+    if (examples.length >= MAX_CANDIDATE_POOL || Date.now() > deadline) { break }
+    const newExamples = collectPositionExamples({ plan, item: workItems[i], random })
+    for (const example of newExamples) {
+      const id = candidateIdentity(example)
+      if (seen.has(id)) { continue }
+      seen.add(id)
+      examples.push(example)
+      if (examples.length >= MAX_CANDIDATE_POOL) { break }
+    }
+  }
+
+  if (examples.length === 0) {
+    return {
+      status: 'no_examples',
+      reason: "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work.",
+      examples: []
+    }
+  }
+
+  return {
+    status: 'ready',
+    reason: null,
+    examples: finalizeUnaryExamples(examples, plan, maxExamples, random)
+  }
+}
+
 export function generateConditionExamples(payload, options = {}) {
   const maxExamples = options.maxExamples || MAX_DEFAULT_EXAMPLES
   const random = options.random || Math.random
@@ -135,6 +172,10 @@ export function generateConditionExamples(payload, options = {}) {
 
   if (plan.kind === 'unary') {
     return generateUnaryExamples(plan, options)
+  if (plan.kind === 'position') {
+    return generatePositionExamples(plan, options)
+  }
+
   }
 
   const plans = expandRelationalPlanSources(plan)
