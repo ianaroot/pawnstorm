@@ -176,6 +176,7 @@ export function metricForPositions(analysis, { metric, positions, boardScope = A
 }
 
 function valueOfPositions(analysis, positions, boardScope = AFTER_BOARD) {
+  if (positions.length === 0) { return null }
   const board = analysis.boardForScope(boardScope)
   return positions.reduce((sum, position) => {
     return sum + materialValue(board.pieceTypeAt(position))
