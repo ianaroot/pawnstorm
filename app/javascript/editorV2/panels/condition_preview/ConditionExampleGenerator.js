@@ -1,14 +1,14 @@
 import { shuffled, pushUnique } from 'editorV2/panels/condition_preview/board_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
 import { usesZeroRelationPath, valueComparisonAllowsEmpty } from 'editorV2/panels/condition_preview/comparison_requirements'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
 import { augmentSkeletonsForComparisons } from 'editorV2/panels/condition_preview/skeleton_augmentation'
 import { collectVerifiedExamples, buildZeroRelationExamples } from 'editorV2/panels/condition_preview/candidate_collection'
 import { varietySignature, bucketKeyForExample } from 'editorV2/panels/condition_preview/diversity_selection'
 import { finalizeExamples, finalizeUnaryExamples, mergeMoveKindExamples } from 'editorV2/panels/condition_preview/enrichment'
-import { collectCastleExamples } from 'editorV2/panels/condition_preview/special_move_examples'
+import { collectCastleExamples, collectRelationalPromotionExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 import { buildPlan, expandRelationalPlanSources } from 'editorV2/panels/condition_preview/generation_plan'
-import { buildUnaryWorkItems, collectUnaryExamples } from 'editorV2/panels/condition_preview/unary_utils'
+import { buildUnaryWorkItems, collectUnaryExamples, collectUnaryPromotionExamples } from 'editorV2/panels/condition_preview/unary_utils'
 import { buildPositionWorkItems, collectPositionExamples } from 'editorV2/panels/condition_preview/position_utils'
 
 const MAX_DEFAULT_EXAMPLES = 30
@@ -109,6 +109,16 @@ function generateUnaryExamples(plan, options = {}) {
     }
   }
 
+  if (plan.moveKinds.includes(MOVE_KIND_PROMOTION)) {
+    const promotionExamples = collectUnaryPromotionExamples({ plan, random, maxExamples: MAX_CANDIDATE_POOL })
+    for (const example of promotionExamples) {
+      const id = candidateIdentity(example)
+      if (seen.has(id)) { continue }
+      seen.add(id)
+      examples.push(example)
+    }
+  }
+
   if (examples.length === 0) {
     return {
       status: 'no_examples',
@@ -172,10 +182,10 @@ export function generateConditionExamples(payload, options = {}) {
 
   if (plan.kind === 'unary') {
     return generateUnaryExamples(plan, options)
-  if (plan.kind === 'position') {
-    return generatePositionExamples(plan, options)
   }
 
+  if (plan.kind === 'position') {
+    return generatePositionExamples(plan, options)
   }
 
   const plans = expandRelationalPlanSources(plan)
@@ -183,6 +193,7 @@ export function generateConditionExamples(payload, options = {}) {
 
   let verified = []
   let castleExamples = []
+  let promotionExamples = []
   let zeroExamples = []
 
   plans.forEach(activePlan => {
@@ -232,6 +243,10 @@ export function generateConditionExamples(payload, options = {}) {
       castleExamples = [...castleExamples, ...collectCastleExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
     }
 
+    if (activePlan.moveKinds.includes(MOVE_KIND_PROMOTION)) {
+      promotionExamples = [...promotionExamples, ...collectRelationalPromotionExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
+    }
+
     if (usesZeroRelationPath(activePlan.requirements) || valueComparisonAllowsEmpty(activePlan.comparisonDescriptors)) {
       zeroExamples = [...zeroExamples, ...buildZeroRelationExamples({ plan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })]
     }
@@ -246,7 +261,7 @@ export function generateConditionExamples(payload, options = {}) {
     return { status: 'ready', reason: null, examples: finalizeExamples(zeroExamples, plans[0], maxExamples, random) }
   }
 
-  if (verified.length === 0 && castleExamples.length === 0) {
+  if (verified.length === 0 && castleExamples.length === 0 && promotionExamples.length === 0) {
     return {
       status: 'no_examples',
       reason: "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work.",
@@ -257,7 +272,7 @@ export function generateConditionExamples(payload, options = {}) {
   return {
     status: 'ready',
     reason: null,
-    examples: mergeMoveKindExamples({ standardExamples: verified, castleExamples, plan: plans[0], maxExamples, random })
+    examples: mergeMoveKindExamples({ standardExamples: verified, castleExamples, promotionExamples, plan: plans[0], maxExamples, random })
   }
 }
 

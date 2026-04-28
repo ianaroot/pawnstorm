@@ -6,7 +6,7 @@ import {
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
   speciesMatchesFilter, selectKingPair, candidateIdentity, legalPriorTurnState,
-  MOVE_KIND_CASTLE, soundForMove
+  MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, soundForMove
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
   relationalActorLabels, evaluateRelationalCandidate
@@ -14,6 +14,7 @@ import {
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
 
 const MAX_CASTLE_BUILD_ATTEMPTS = 300
+const MAX_PROMOTION_BUILD_ATTEMPTS = 300
 
 export function castlePresetForTeam(team) {
   if (team !== Board.WHITE) { return [] }
@@ -76,7 +77,7 @@ export function collectLegalCastleMoveExamples({ afterPieces, preset, random }) 
   priorPieces.set(preset.moveStart, pieceCode(preset.movingTeam, Board.KING))
   priorPieces.set(preset.rookStart, pieceCode(preset.movingTeam, Board.ROOK))
 
-  const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces))
+  const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), null, preset.movingTeam)
   let moveObject
   try {
     moveObject = Rules.getMoveObject(preset.moveStart, preset.moveEnd, priorBoard)
@@ -160,6 +161,187 @@ export function collectCastleExamples({ plan, random, maxExamples }) {
                     geometryKey: `${preset.name}:${skeleton.geometryKey}`,
                     movedPieceInRelation,
                     moveKind: MOVE_KIND_CASTLE,
+                    sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
+                  }
+                  const identity = candidateIdentity(example)
+                  if (seen.has(identity)) { return }
+                  seen.add(identity)
+                  examples.push(example)
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+
+  return examples
+}
+
+export function promotionPresetsForTeam(team) {
+  const [startRank, endRank] = team === Board.WHITE ? [6, 7] : [1, 0]
+  const promotedSpecies = [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT]
+  const presets = []
+
+  promotedSpecies.forEach(species => {
+    for (let file = 0; file < 8; file++) {
+      presets.push({
+        promotedSpecies: species,
+        moveStart: startRank * 8 + file,
+        moveEnd: endRank * 8 + file,
+        isCapture: false,
+        movingTeam: team,
+        fixedPieces: new Map([[endRank * 8 + file, pieceCode(team, species)]]),
+        reservedSquares: new Set([startRank * 8 + file, endRank * 8 + file])
+      })
+    }
+
+    for (let file = 1; file < 8; file++) {
+      presets.push({
+        promotedSpecies: species,
+        moveStart: startRank * 8 + file,
+        moveEnd: endRank * 8 + (file - 1),
+        isCapture: true,
+        movingTeam: team,
+        fixedPieces: new Map([[endRank * 8 + (file - 1), pieceCode(team, species)]]),
+        reservedSquares: new Set([startRank * 8 + file, endRank * 8 + (file - 1)])
+      })
+    }
+
+    for (let file = 0; file < 7; file++) {
+      presets.push({
+        promotedSpecies: species,
+        moveStart: startRank * 8 + file,
+        moveEnd: endRank * 8 + (file + 1),
+        isCapture: true,
+        movingTeam: team,
+        fixedPieces: new Map([[endRank * 8 + (file + 1), pieceCode(team, species)]]),
+        reservedSquares: new Set([startRank * 8 + file, endRank * 8 + (file + 1)])
+      })
+    }
+  })
+
+  return presets
+}
+
+export function promotionAnchorPlacementsForActor({ actor, filter = 'any', filterMode = null, preset }) {
+  if (actor === 'moved_piece' || actor === 'allied') {
+    return speciesMatchesFilter(preset.promotedSpecies, filter, filterMode)
+      ? [{ position: preset.moveEnd, species: preset.promotedSpecies }]
+      : []
+  }
+  return []
+}
+
+export function collectLegalPromotionMoveExamples({ afterPieces, preset, random }) {
+  if (afterPieces.get(preset.moveEnd) !== pieceCode(preset.movingTeam, preset.promotedSpecies)) { return [] }
+
+  const piecesWithKings = selectKingPair(afterPieces, random)
+  if (!piecesWithKings) { return [] }
+  if (piecesWithKings.get(preset.moveEnd) !== pieceCode(preset.movingTeam, preset.promotedSpecies)) { return [] }
+
+  const afterLayout = buildLayoutFromPieces(piecesWithKings)
+  const enemyTeam = Board.opposingTeam(preset.movingTeam)
+  const capturedSpeciesOptions = preset.isCapture
+    ? [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
+    : [null]
+
+  const results = []
+
+  for (const capturedSpecies of capturedSpeciesOptions) {
+    const priorPieces = clonePiecesMap(piecesWithKings)
+    priorPieces.delete(preset.moveEnd)
+    if (priorPieces.has(preset.moveStart)) { continue }
+    if (capturedSpecies !== null) { priorPieces.set(preset.moveEnd, pieceCode(enemyTeam, capturedSpecies)) }
+    priorPieces.set(preset.moveStart, pieceCode(preset.movingTeam, Board.PAWN))
+
+    const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), null, preset.movingTeam)
+    let moveObject
+    try {
+      moveObject = Rules.getMoveObject(preset.moveStart, preset.moveEnd, priorBoard, preset.promotedSpecies)
+    } catch {
+      continue
+    }
+    if (moveObject.illegal || !moveObject.promotionPiece) { continue }
+    if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
+
+    const rebuiltAfter = priorBoard.lightClone()
+    rebuiltAfter._hypotheticallyMovePiece(moveObject)
+    if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
+
+    results.push({ priorBoard, moveObject, afterBoard: rebuiltAfter })
+  }
+
+  return results
+}
+
+export function collectRelationalPromotionExamples({ plan, random, maxExamples }) {
+  const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
+  const subjectSpeciesPool = shuffled([...plan.subjectSpeciesPool], random)
+  const targetSpeciesPool = shuffled([...plan.targetSpeciesPool], random)
+  const examples = []
+  const seen = new Set()
+  let attempts = 0
+
+  presets.forEach(preset => {
+    subjectSpeciesPool.forEach(subjectSpecies => {
+      targetSpeciesPool.forEach(targetSpecies => {
+        const subjectAnchors = [null, ...promotionAnchorPlacementsForActor({
+          actor: plan.subject,
+          filter: plan.subjectFilter,
+          filterMode: plan.subjectFilterMode,
+          preset
+        })]
+        const targetAnchors = [null, ...promotionAnchorPlacementsForActor({
+          actor: plan.target,
+          filter: plan.targetFilter,
+          filterMode: plan.targetFilterMode,
+          preset
+        })]
+
+        subjectAnchors.forEach(fixedSubjectPlacement => {
+          targetAnchors.forEach(fixedTargetPlacement => {
+            if (attempts >= MAX_PROMOTION_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
+            const skeletons = buildCandidateSkeletons({
+              plan,
+              subjectSpecies,
+              targetSpecies,
+              fixedPieces: preset.fixedPieces,
+              fixedSubjectPlacement,
+              fixedTargetPlacement,
+              reservedSquares: preset.reservedSquares
+            })
+
+            skeletons.forEach(skeleton => {
+              plan.variants.forEach(variant => {
+                attempts += 1
+                if (attempts > MAX_PROMOTION_BUILD_ATTEMPTS || examples.length >= maxExamples) { return }
+                collectLegalPromotionMoveExamples({ afterPieces: skeleton.pieces, preset, random }).forEach(moveExample => {
+                  const result = evaluateRelationalCandidate({
+                    plan,
+                    priorBoard: moveExample.priorBoard,
+                    moveObject: moveExample.moveObject
+                  })
+                  if (!result) { return }
+
+                  const movedPieceInRelation = (
+                    result.subjectPositions.includes(moveExample.moveObject.endPosition) ||
+                    result.targetPositions.includes(moveExample.moveObject.endPosition)
+                  )
+                  if (variant.type === 'involved' && !movedPieceInRelation) { return }
+                  if (variant.type === 'separate' && movedPieceInRelation) { return }
+
+                  const example = {
+                    priorBoard: moveExample.priorBoard,
+                    afterBoard: moveExample.afterBoard,
+                    moveObject: moveExample.moveObject,
+                    result,
+                    highlights: relationalActorLabels(plan, moveExample.moveObject, result, moveExample.priorBoard),
+                    variantType: movedPieceInRelation ? 'involved' : 'separate',
+                    geometryKey: `promotion:${preset.promotedSpecies}:${preset.moveEnd}:${skeleton.geometryKey}`,
+                    movedPieceInRelation,
+                    moveKind: MOVE_KIND_PROMOTION,
                     sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
                   }
                   const identity = candidateIdentity(example)

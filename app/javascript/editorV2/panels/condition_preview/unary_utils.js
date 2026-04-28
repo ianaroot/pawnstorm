@@ -7,12 +7,15 @@ import {
   clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies, MAX_PAWNS_PER_TEAM
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
-  collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD
+  collectLegalReverseMoves, soundForMove, candidateSpecies, candidateIdentity,
+  MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION
 } from 'editorV2/panels/condition_preview/example_utils'
 import { buildEnemyRecentMoveContextWithCapture } from 'editorV2/panels/condition_preview/candidate_collection'
+import { promotionPresetsForTeam, collectLegalPromotionMoveExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 
 const ALL_POSITIONS = Array.from({ length: 64 }, (_, i) => i)
 const EXACT_NUMBER_TARGET = 'exact_number'
+const PRIOR_BOARD_TARGET = 'prior_board_state'
 const VALUE_CAP_OVER_MINIMUM = 12
 const SINGULAR_BOARD_ATTEMPTS = 50
 const MOBILITY_BOARD_ATTEMPTS = 100
@@ -128,7 +131,7 @@ function singularCrossActorTargetItems({ target, subjectValue, comparator, targe
 export function buildUnaryWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = plan
   const items = []
-  const isCrossActor = target !== EXACT_NUMBER_TARGET
+  const isCrossActor = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
 
   if (subject === 'moved_piece') {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
@@ -197,34 +200,38 @@ export function buildUnaryWorkItems(plan, random) {
   }
 
   // allied or enemy
+  const effectiveCounts = targetTotal !== null ? targetCountsForComparator(comparator, targetTotal) : range(1, 10)
+  const effectiveValues = targetTotal !== null ? targetValuesForComparator(comparator, targetTotal) : range(1, 15)
+  const effectiveMobilities = targetTotal !== null ? targetMobilitiesForComparator(comparator, targetTotal) : range(0, MAX_PIECE_MOBILITY)
+
   if (operator === 'count') {
-    targetCountsForComparator(comparator, targetTotal).forEach(count => {
+    effectiveCounts.forEach(count => {
       if (count > 0) { items.push({ count }) }
     })
   } else if (operator === 'mobility') {
     for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
       // Tier 1: single subject piece with random pieces placed to restrict mobility
-      targetMobilitiesForComparator(comparator, targetTotal).forEach(targetMobility => {
+      effectiveMobilities.forEach(targetMobility => {
         subjectSpeciesPool.forEach(species => { items.push({ species, targetMobility }) })
       })
       // Tier 2: multi-piece aggregate, random placement
-      targetCountsForComparator(comparator, targetTotal).forEach(count => {
+      effectiveCounts.forEach(count => {
         if (count > 0) { items.push({ count }) }
       })
       // Tier 3: fixed-species homogeneous groups (exposes e.g. "8 pawns with 1 mobility each")
-      targetCountsForComparator(comparator, targetTotal).forEach(count => {
+      effectiveCounts.forEach(count => {
         if (count > 1) { subjectSpeciesPool.forEach(species => { items.push({ count, species }) }) }
       })
     }
   } else if (operator === 'value') {
-    targetValuesForComparator(comparator, targetTotal).forEach(v => {
+    effectiveValues.forEach(v => {
       valueCombinationsForTotal(v, subjectSpeciesPool).forEach(valueCombination => {
         items.push({ valueCombination })
       })
     })
   }
 
-  if (target !== EXACT_NUMBER_TARGET) {
+  if (target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET) {
     // cross-actor: enumerate subject combos as outer loop so every distinct subject gets equal representation
     const paired = []
 
@@ -470,7 +477,7 @@ function buildAfterPiecesForItem({ plan, item, random }) {
   }
 
   // place target pieces if cross-actor
-  if (target !== EXACT_NUMBER_TARGET) {
+  if (target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET) {
     const targetSlots = item.targetValueCombination
       ? item.targetValueCombination.map(v => pickSpecies(targetSpeciesPool.filter(s => materialValue(s) === v), targetTeam)).filter(Boolean)
       : item.targetCount
@@ -520,6 +527,9 @@ export function collectUnaryExamples({ plan, item, random, maxResults = 3 }) {
   if (!setup) { return [] }
 
   const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
+  const effectiveCapturedPool = (plan.target === PRIOR_BOARD_TARGET && capturedPieceSpeciesPool === null)
+    ? [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
+    : capturedPieceSpeciesPool
   const moves = collectLegalReverseMoves({
     afterPieces,
     movedPieceSquare,
@@ -527,7 +537,7 @@ export function collectUnaryExamples({ plan, item, random, maxResults = 3 }) {
     recentMoveContext,
     random,
     maxResults,
-    capturedPieceSpeciesPool
+    capturedPieceSpeciesPool: effectiveCapturedPool
   })
 
   const evaluator = new ConditionEvaluatorV2()
@@ -599,4 +609,45 @@ export function unaryActorLabels(plan, moveObject, analysis) {
       movedEndPosition: moveObject.endPosition
     }
   }
+}
+
+// ===== Promotion example collection =====
+
+export function collectUnaryPromotionExamples({ plan, random, maxExamples }) {
+  const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
+  const examples = []
+  const seen = new Set()
+  const evaluator = new ConditionEvaluatorV2()
+
+  for (const preset of presets) {
+    if (examples.length >= maxExamples) { break }
+
+    const afterPieces = new Map([[preset.moveEnd, pieceCode(preset.movingTeam, preset.promotedSpecies)]])
+    const moveExamples = collectLegalPromotionMoveExamples({ afterPieces, preset, random })
+
+    for (const { priorBoard, moveObject, afterBoard } of moveExamples) {
+      if (examples.length >= maxExamples) { break }
+      const input = { board: priorBoard, moveObject }
+      if (!evaluator.evaluate(plan.evaluationPayload, input)) { continue }
+
+      const analysis = new CandidateMoveAnalysisV2(input)
+      const example = {
+        priorBoard,
+        afterBoard,
+        moveObject,
+        moveKind: MOVE_KIND_PROMOTION,
+        kind: 'unary',
+        result: null,
+        highlights: unaryActorLabels(plan, moveObject, analysis),
+        sound: soundForMove(priorBoard, afterBoard, moveObject)
+      }
+
+      const id = candidateIdentity(example)
+      if (seen.has(id)) { continue }
+      seen.add(id)
+      examples.push(example)
+    }
+  }
+
+  return examples
 }

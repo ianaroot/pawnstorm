@@ -212,17 +212,18 @@ function buildAfterPiecesForPositionItem({ plan, item, validSquares, random }) {
 
   // Group actors: allied / enemy — place pieces at qualifying squares
   const targetSquares = shuffled([...validSquares], random)
+  const placeablePool = subjectSpeciesPool.filter(s => targetSquares.some(sq => legalPlacementForSpecies(sq, s)))
 
   const slots = item.valueCombination
     ? item.valueCombination.map(v => {
-        const pool = subjectSpeciesPool.filter(s => materialValue(s) === v)
+        const pool = placeablePool.filter(s => materialValue(s) === v)
         if (pool.length === 0) { return null }
         return pool[Math.floor(random() * pool.length)]
       }).filter(Boolean)
     : Array.from({ length: item.count || 1 }, () => {
         const pool = item.species
-          ? subjectSpeciesPool.filter(s => s === item.species)
-          : subjectSpeciesPool.filter(s => s !== Board.KING)
+          ? placeablePool.filter(s => s === item.species)
+          : placeablePool.filter(s => s !== Board.KING)
         if (pool.length === 0) { return null }
         return pool[Math.floor(random() * pool.length)]
       }).filter(Boolean)

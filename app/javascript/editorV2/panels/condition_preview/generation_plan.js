@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
 import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/relational_utils'
@@ -11,7 +11,7 @@ import {
 
 const SUPPORTED_UNARY_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
 const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value', 'mobility'])
-const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece', 'prior_board_state'])
 
 function unaryTeamForActor(actor, movingTeam) {
   const enemyTeam = movingTeam === Board.WHITE ? Board.BLACK : Board.WHITE
@@ -140,7 +140,7 @@ export function buildRelationalPlan(payload, options = {}) {
     subjectTeam: relationalTeamForActor(payload.subject),
     targetTeam: relationalTeamForActor(payload.target),
     movingTeam: options.movingTeam || Board.WHITE,
-    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE],
+    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION],
     relationParams: relationParams(payload)
   }
 }
@@ -275,16 +275,13 @@ export function buildUnaryPlan(payload, options = {}) {
   if (!SUPPORTED_UNARY_OPERATORS.has(payload.operator)) {
     return { status: 'unsupported', reason: `${payload.operator} unary previews are not supported yet.` }
   }
-  if (payload.target === PRIOR_BOARD_COMPARISON_SOURCE) {
-    return { status: 'unsupported', reason: 'Prior board state unary previews are not supported yet.' }
-  }
   if (!SUPPORTED_UNARY_TARGETS.has(payload.target)) {
     return { status: 'unsupported', reason: `${payload.target} unary target previews are not supported yet.` }
   }
 
   const movingTeam = options.movingTeam || Board.WHITE
   const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
-  const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE
+  const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE && payload.target !== PRIOR_BOARD_COMPARISON_SOURCE
   const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
 
   const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
@@ -312,7 +309,7 @@ export function buildUnaryPlan(payload, options = {}) {
     subjectTeam,
     targetTeam,
     movingTeam,
-    moveKinds: [MOVE_KIND_STANDARD]
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION]
   }
 }
 
@@ -354,7 +351,6 @@ export function buildPositionPlan(payload, options = {}) {
     moveKinds: [MOVE_KIND_STANDARD]
   }
 }
-
 
 export function buildPlan(payload, options = {}) {
   if (!payload?.kind) {

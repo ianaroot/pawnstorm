@@ -753,4 +753,27 @@ describe('ConditionExampleGenerator', () => {
       expectLegalPriorTurnState(example)
     })
   })
+
+  it('generates verified examples for an enemy position count condition on square (a1)', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'enemy',
+      subjectFilter: 'any',
+      positionAxis: 'square',
+      positionComparator: 'equal_to',
+      positionTarget: 0,
+      operator: 'count',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(26), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
 })

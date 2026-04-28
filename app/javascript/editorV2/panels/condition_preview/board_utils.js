@@ -90,11 +90,11 @@ export function buildLayoutFromPieces(pieces) {
   return layout
 }
 
-export function buildBoardFromLayout(layout, recentMoveContext = null) {
+export function buildBoardFromLayout(layout, recentMoveContext = null, allowedToMove = Board.WHITE) {
   return new Board({
     layOut: layout,
     capturedPieces: [],
-    allowedToMove: Board.WHITE,
+    allowedToMove,
     movementNotation: [],
     recentMoveContext
   })

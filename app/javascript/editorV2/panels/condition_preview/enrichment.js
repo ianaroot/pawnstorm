@@ -9,6 +9,7 @@ import { unaryActorLabels } from 'editorV2/panels/condition_preview/unary_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
 
 const ENRICHMENT_PROBABILITY = 0.5
+const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 1
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 const ENRICHMENT_END_POSITION_WEIGHT = 4
@@ -301,14 +302,25 @@ export function finalizeExamples(baseExamples, plan, maxExamples, random) {
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
-export function mergeMoveKindExamples({ standardExamples, castleExamples, plan, maxExamples, random }) {
-  if (castleExamples.length === 0) {
+export function mergeMoveKindExamples({ standardExamples, castleExamples, promotionExamples = [], plan, maxExamples, random }) {
+  const hasSpecial = castleExamples.length > 0 || promotionExamples.length > 0
+  if (!hasSpecial) {
     return finalizeExamples(standardExamples, plan, maxExamples, random)
   }
 
-  const selectedCastle = selectDiverseExamples(castleExamples, 1)
-  const selectedCastleIds = new Set(selectedCastle.map(candidateIdentity))
-  const remainingStandard = standardExamples.filter(example => !selectedCastleIds.has(candidateIdentity(example)))
-  const selectedStandard = finalizeExamples(remainingStandard, plan, Math.max(0, maxExamples - selectedCastle.length), random)
-  return selectDiverseExamples(uniqueExamples([...selectedCastle, ...selectedStandard]), maxExamples)
+  const guaranteedExamples = []
+  if (castleExamples.length > 0) {
+    guaranteedExamples.push(...selectDiverseExamples(castleExamples, GUARANTEED_SPECIAL_MOVE_EXAMPLES))
+  }
+  if (promotionExamples.length > 0) {
+    guaranteedExamples.push(...selectDiverseExamples(promotionExamples, GUARANTEED_SPECIAL_MOVE_EXAMPLES))
+  }
+
+  const guaranteedIds = new Set(guaranteedExamples.map(candidateIdentity))
+  const remainingStandard = standardExamples.filter(e => !guaranteedIds.has(candidateIdentity(e)))
+  const selectedStandard = finalizeExamples(remainingStandard, plan, Math.max(0, maxExamples - guaranteedExamples.length), random)
+
+  const allSpecial = uniqueExamples([...castleExamples, ...promotionExamples])
+  const remainingSpecial = allSpecial.filter(e => !guaranteedIds.has(candidateIdentity(e)))
+  return selectDiverseExamples(uniqueExamples([...guaranteedExamples, ...selectedStandard, ...remainingSpecial]), maxExamples)
 }
