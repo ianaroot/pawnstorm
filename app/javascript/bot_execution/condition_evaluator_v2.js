@@ -9,6 +9,8 @@ class ConditionEvaluatorV2 {
           return this.evaluateUnary(conditionNode, v2Analysis)
         case "relational":
           return this.evaluateRelational(conditionNode, v2Analysis)
+        case "position":
+          return this.evaluatePosition(conditionNode, v2Analysis)
         default:
           throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
       }
@@ -197,6 +199,31 @@ class ConditionEvaluatorV2 {
           operator
         })
       }
+    }
+
+    evaluatePosition(conditionNode, analysis) {
+      return profileCollector.measure('condition.v2.position', () => {
+        if (conditionNode.subject === "enemy_moved_piece") {
+          const resolved = analysis.resolvedEnemyMovedPiece()
+          if (!resolved || !resolved.presentOnBoard) { return false }
+        }
+
+        const positions = analysis.positionFilteredPositions({
+          actor: conditionNode.subject,
+          filter: conditionNode.subjectFilter || "any",
+          filterMode: conditionNode.subjectFilterMode || null,
+          positionAxis: conditionNode.positionAxis,
+          positionComparator: conditionNode.positionComparator,
+          positionTarget: conditionNode.positionTarget
+        })
+
+        const metricTotal = analysis.positionMetricTotal({
+          positions,
+          operator: conditionNode.operator
+        })
+
+        return this.compare({ comparator: conditionNode.comparator, leftTotal: metricTotal, rightTotal: conditionNode.targetTotal })
+      })
     }
 
     relationalComparisonPresent(conditionNode, side) {

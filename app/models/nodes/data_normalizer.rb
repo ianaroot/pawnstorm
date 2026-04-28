@@ -64,6 +64,21 @@ module Nodes
         normalized.delete('targetComparisonSource')
         normalized.delete('targetComparisonSourceTotal')
         normalize_unary_target!(normalized)
+      elsif kind == 'position'
+        normalized.delete('target')
+        normalized.delete('targetFilter')
+        normalized.delete('targetFilterMode')
+        normalized.delete('subjectComparisonMetric')
+        normalized.delete('subjectComparator')
+        normalized.delete('subjectComparisonSource')
+        normalized.delete('subjectComparisonSourceTotal')
+        normalized.delete('targetComparisonMetric')
+        normalized.delete('targetComparator')
+        normalized.delete('targetComparisonSource')
+        normalized.delete('targetComparisonSourceTotal')
+        if normalized['positionAxis'] == 'square'
+          normalized['positionComparator'] = 'equal_to'
+        end
       elsif kind == 'relational'
         normalized.delete('comparator')
         normalized.delete('targetTotal')

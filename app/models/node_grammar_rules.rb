@@ -45,6 +45,13 @@ class NodeGrammarRules
     'enemy' => 'allied'
   }.freeze
 
+  POSITION_OPERATORS_BY_SUBJECT = {
+    'allied' => NodeGrammarV2::POSITION_OPERATORS,
+    'enemy' => NodeGrammarV2::POSITION_OPERATORS,
+    'moved_piece' => NodeGrammarV2::POSITION_OPERATORS,
+    'enemy_moved_piece' => NodeGrammarV2::POSITION_OPERATORS
+  }.freeze
+
   COMPARISON_SOURCES_BY_METRIC = {
     'count' => %w[exact_number prior_board_state],
     'value' => NodeGrammarV2::COMPARISON_SOURCES
@@ -102,6 +109,10 @@ class NodeGrammarRules
       end
     end
 
+    def valid_position_operator_for_subject?(subject, operator)
+      POSITION_OPERATORS_BY_SUBJECT.fetch(subject, []).include?(operator)
+    end
+
     def editor_config
       {
         'editorSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
@@ -110,7 +121,8 @@ class NodeGrammarRules
         'relationalOperatorTargetRules' => RELATIONAL_OPERATOR_TARGET_RULES,
         'samePieceTargets' => SAME_PIECE_TARGETS,
         'teamSubjectGroups' => TEAM_SUBJECT_GROUPS,
-        'opposingTeamGroups' => OPPOSING_TEAM_GROUPS
+        'opposingTeamGroups' => OPPOSING_TEAM_GROUPS,
+        'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS
       }
     end
 

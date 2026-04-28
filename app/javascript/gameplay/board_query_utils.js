@@ -673,3 +673,14 @@ export function cachedControlledSquares({ board, attackerPosition, cache = null,
         compute: () => controlledSquares({ board, attackerPosition })
     })
 }
+
+export function relativeRank(position, team) {
+    return team === Board.WHITE ? Board.rank(position) : 9 - Board.rank(position)
+}
+
+export function relativeToAbsolutePosition(relativeIndex, team) {
+    if (team === Board.WHITE) { return relativeIndex }
+    const relativeRankIndex = Math.floor(relativeIndex / 8)
+    const fileIndex = relativeIndex % 8
+    return (7 - relativeRankIndex) * 8 + fileIndex
+}
