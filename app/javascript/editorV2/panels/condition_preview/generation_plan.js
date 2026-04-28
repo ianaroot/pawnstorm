@@ -10,7 +10,7 @@ import {
 } from 'editorV2/panels/condition_preview/comparison_requirements'
 
 const SUPPORTED_UNARY_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
-const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value'])
+const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value', 'mobility'])
 const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
 
 function unaryTeamForActor(actor, movingTeam) {

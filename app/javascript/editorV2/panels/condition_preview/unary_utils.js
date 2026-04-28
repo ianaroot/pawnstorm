@@ -4,7 +4,7 @@ import { relationalActorPositions } from 'bot_execution/actor_positions'
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
 import {
-  clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies
+  clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies, MAX_PAWNS_PER_TEAM
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
   collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD
@@ -14,8 +14,10 @@ import { buildEnemyRecentMoveContextWithCapture } from 'editorV2/panels/conditio
 const ALL_POSITIONS = Array.from({ length: 64 }, (_, i) => i)
 const EXACT_NUMBER_TARGET = 'exact_number'
 const VALUE_CAP_OVER_MINIMUM = 12
-const MAX_PAWNS_PER_TEAM = 8
 const SINGULAR_BOARD_ATTEMPTS = 50
+const MOBILITY_BOARD_ATTEMPTS = 100
+const BLOCKER_SPECIES_POOL = [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN]
+const MAX_PIECE_MOBILITY = 27
 
 // ===== Target range helpers =====
 
@@ -23,6 +25,10 @@ function range(from, to) {
   const result = []
   for (let i = from; i <= to; i++) { result.push(i) }
   return result
+}
+
+function targetMobilitiesForComparator(comparator, total) {
+  return range(0, MAX_PIECE_MOBILITY).filter(m => satisfiesComparator(comparator, m, total))
 }
 
 function targetCountsForComparator(comparator, targetTotal) {
@@ -188,6 +194,21 @@ export function buildUnaryWorkItems(plan, random) {
     targetCountsForComparator(comparator, targetTotal).forEach(count => {
       if (count > 0) { items.push({ count }) }
     })
+  } else if (operator === 'mobility') {
+    for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
+      // Tier 1: single subject piece with random pieces placed to restrict mobility
+      targetMobilitiesForComparator(comparator, targetTotal).forEach(targetMobility => {
+        subjectSpeciesPool.forEach(species => { items.push({ species, targetMobility }) })
+      })
+      // Tier 2: multi-piece aggregate, random placement
+      targetCountsForComparator(comparator, targetTotal).forEach(count => {
+        if (count > 0) { items.push({ count }) }
+      })
+      // Tier 3: fixed-species homogeneous groups (exposes e.g. "8 pawns with 1 mobility each")
+      targetCountsForComparator(comparator, targetTotal).forEach(count => {
+        if (count > 1) { subjectSpeciesPool.forEach(species => { items.push({ count, species }) }) }
+      })
+    }
   } else if (operator === 'value') {
     targetValuesForComparator(comparator, targetTotal).forEach(v => {
       valueCombinationsForTotal(v, subjectSpeciesPool).forEach(valueCombination => {
@@ -237,6 +258,13 @@ export function buildUnaryWorkItems(plan, random) {
 }
 
 // ===== Board building =====
+
+function placeAtSquare({ pieces, species, team, square }) {
+  if (squareIsOccupied(pieces, square) || !legalPlacementForSpecies(square, species)) { return null }
+  const result = clonePiecesMap(pieces)
+  result.set(square, pieceCode(team, species))
+  return result
+}
 
 function placeNextPiece({ pieces, species, team, random }) {
   const candidates = shuffled(
@@ -349,6 +377,52 @@ function buildAfterPiecesForItem({ plan, item, random }) {
     return { afterPieces: applied.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
+  // allied/enemy mobility: single subject piece + kings + random nearby pieces, evaluator filters
+  if (item.targetMobility !== undefined) {
+    let currentPieces = new Map()
+
+    const subjectResult = placeNextPiece({ pieces: currentPieces, species: item.species, team: subjectTeam, random })
+    if (!subjectResult) { return null }
+    currentPieces = subjectResult.pieces
+
+    // Place subject-team king unless subject IS the king
+    if (item.species !== Board.KING) {
+      const kingResult = placeNextPiece({ pieces: currentPieces, species: Board.KING, team: subjectTeam, random })
+      if (!kingResult) { return null }
+      currentPieces = kingResult.pieces
+    }
+
+    const opposingTeam = Board.opposingTeam(subjectTeam)
+    const opposingKingResult = placeNextPiece({ pieces: currentPieces, species: Board.KING, team: opposingTeam, random })
+    if (!opposingKingResult) { return null }
+    currentPieces = opposingKingResult.pieces
+
+    // Add random pieces to constrain mobility; more pieces for lower target mobility
+    const extraCount = Math.min(10, Math.max(3, Math.floor((MAX_PIECE_MOBILITY - item.targetMobility) / 3)))
+    const extraPositions = shuffled(ALL_POSITIONS.filter(p => !squareIsOccupied(currentPieces, p)), random).slice(0, extraCount)
+    for (const sq of extraPositions) {
+      const team = random() < 0.5 ? subjectTeam : opposingTeam
+      const validSpecies = BLOCKER_SPECIES_POOL.filter(s => legalPlacementForSpecies(sq, s))
+      if (validSpecies.length === 0) { continue }
+      const species = validSpecies[Math.floor(random() * validSpecies.length)]
+      const next = placeAtSquare({ pieces: currentPieces, species, team, square: sq })
+      if (next) { currentPieces = next }
+    }
+
+    let movedPieceSquare = subjectResult.square
+    let movedPieceSpecies = item.species
+    if (subjectTeam !== movingTeam) {
+      const allSpecies = candidateSpecies('any', null).filter(s => s !== Board.KING)
+      const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
+      const moverResult = placeNextPiece({ pieces: currentPieces, species: moverSpecies, team: movingTeam, random })
+      if (!moverResult) { return null }
+      currentPieces = moverResult.pieces
+      movedPieceSquare = moverResult.square
+      movedPieceSpecies = moverSpecies
+    }
+    return { afterPieces: currentPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool: null, recentMoveContext: null }
+  }
+
   // allied or enemy: build subject pieces
   let pieces = new Map()
   const subjectMovedSquares = []
@@ -363,7 +437,10 @@ function buildAfterPiecesForItem({ plan, item, random }) {
 
   const subjectSlots = item.valueCombination
     ? item.valueCombination.map(v => pickSpecies(subjectSpeciesPool.filter(s => materialValue(s) === v), subjectTeam)).filter(Boolean)
-    : Array.from({ length: item.count }, () => pickSpecies(subjectSpeciesPool, subjectTeam)).filter(Boolean)
+    : Array.from({ length: item.count }, () => {
+        const pool = item.species ? subjectSpeciesPool.filter(s => s === item.species) : subjectSpeciesPool
+        return pickSpecies(pool, subjectTeam)
+      }).filter(Boolean)
 
   for (let i = 0; i < subjectSlots.length; i++) {
     const result = placeNextPiece({ pieces, species: subjectSlots[i], team: subjectTeam, random })

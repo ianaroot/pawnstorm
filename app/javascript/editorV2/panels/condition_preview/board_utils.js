@@ -1,5 +1,7 @@
 import Board from 'gameplay/board'
 
+export const MAX_PAWNS_PER_TEAM = 8
+
 export function square(value) {
   return Board.gridCalculatorReverse(value)
 }

@@ -2,7 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, pieceCode, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
+import { legalPlacementForSpecies, MAX_PAWNS_PER_TEAM, pieceCode, pieceSpecies, pieceTeam, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
 import { moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
 import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
 import { unaryActorLabels } from 'editorV2/panels/condition_preview/unary_utils'
@@ -121,6 +121,14 @@ export function exampleEligibleForEnrichment(example, plan) {
 export function buildEnrichmentPlacementPolicy(example, random) {
   const candidates = weightedEnrichmentCandidateSquares(example, random)
   const usedPositions = new Set()
+  const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
+
+  const pawnCounts = { [Board.WHITE]: 0, [Board.BLACK]: 0 }
+  example.priorBoard.layOut.forEach(piece => {
+    if (piece !== Board.EMPTY_SQUARE && pieceSpecies(piece) === Board.PAWN) {
+      pawnCounts[pieceTeam(piece)]++
+    }
+  })
 
   return {
     nextPlacement() {
@@ -133,18 +141,18 @@ export function buildEnrichmentPlacementPolicy(example, random) {
         break
       }
       if (position === undefined) { return null }
-      const species = weightedRandomSpecies(random, { includeKing: false })
+      const team = position === example.moveObject.endPosition
+        ? Board.opposingTeam(movedPieceTeam)
+        : (random() < 0.5 ? Board.WHITE : Board.BLACK)
+      const allowedSpecies = pawnCounts[team] >= MAX_PAWNS_PER_TEAM
+        ? [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
+        : null
+      const species = weightedRandomSpecies(random, { includeKing: false, allowedSpecies })
       if (!legalPlacementForSpecies(position, species)) {
         return this.nextPlacement()
       }
-      const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
-      return {
-        position,
-        team: position === example.moveObject.endPosition
-          ? Board.opposingTeam(movedPieceTeam)
-          : (random() < 0.5 ? Board.WHITE : Board.BLACK),
-        species
-      }
+      if (species === Board.PAWN) { pawnCounts[team]++ }
+      return { position, team, species }
     }
   }
 }
