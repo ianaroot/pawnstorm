@@ -1199,6 +1199,47 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
+    it('returns true when enemy pawns only attack allied pieces with value >= 9 and count=0 is on the subject side with a value<9 comparison on the target', () => {
+      // "enemy pawn count=0 attacks allied value<9"
+      // Only enemy pawn attacks the allied queen (value=9), which is excluded by value<9.
+      // Under joint-filter semantics: 0 (enemy pawn, allied value<9) pairs → count==0 → true.
+      const board = buildBoard({
+        pieces: {
+          g1: 'wK',
+          g8: 'bK',
+          e5: 'bP',
+          d4: 'wQ',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
+            operator: 'attack',
+            target: 'allied',
+            targetFilter: 'any',
+            targetComparisonMetric: 'value',
+            targetComparator: 'less_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
     it('lets a target-only zero comparison fail on an empty relation when the comparator demands more', () => {
       const board = buildBoard({
         pieces: {
