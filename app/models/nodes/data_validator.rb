@@ -122,6 +122,9 @@ module Nodes
         source_key: 'targetComparisonSource',
         source_total_key: 'targetComparisonSourceTotal'
       )
+      if record.data['subjectComparisonMetric'] == 'aggregate_value' && record.data['targetComparisonMetric'] == 'aggregate_value'
+        record.errors.add(:data, 'aggregate_value cannot be used on both sides simultaneously')
+      end
       if record.data['subjectComparisonSource'] == 'prior_board_state' && side_condition_present?('target')
         record.errors.add(:data, 'cannot use target-side comparison when subjectComparisonSource is prior_board_state')
       end
