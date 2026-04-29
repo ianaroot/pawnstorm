@@ -96,6 +96,7 @@ export function collectVerifiedMoves({
 
   for (const originPosition of originCandidates) {
     if (piecesWithKings.has(originPosition)) { continue }
+    if (attemptKind === MOVE_KIND_EN_PASSANT && recentMoveContext && originPosition === recentMoveContext.movedPieceEndPosition) { continue }
 
     const captureOptions = capturedPieceSpeciesPool === null
       ? [null]
@@ -152,7 +153,7 @@ export function collectVerifiedMoves({
 
 // ===== buildAggregatedResult =====
 
-function buildAggregatedResult(combinedPlan, analysis) {
+export function buildAggregatedResult(combinedPlan, analysis) {
   let subjectPositions = []
   let targetPositions = []
   let pairs = []
@@ -193,7 +194,7 @@ function buildAggregatedResult(combinedPlan, analysis) {
 
 // ===== buildAggregatedHighlights =====
 
-function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard) {
+export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
 
   const priorSubject = new Set()

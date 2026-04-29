@@ -12,11 +12,12 @@ const IDENTITY_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_p
 
 // ===== Castle presets (both teams, after-board positions) =====
 
-function castlePresetsForTeam(team) {
+export function castlePresetsForTeam(team) {
   const offset = (team === Board.WHITE ? 0 : 7) * 8
   return [
     {
       name: `castle-kingside-${team}`,
+      kingStart: offset + 4, kingEnd: offset + 6, rookStart: offset + 7, rookEnd: offset + 5,
       fixedPieces: new Map([
         [offset + 6, `${team}${Board.KING}`],
         [offset + 5, `${team}${Board.ROOK}`]
@@ -25,6 +26,7 @@ function castlePresetsForTeam(team) {
     },
     {
       name: `castle-queenside-${team}`,
+      kingStart: offset + 4, kingEnd: offset + 2, rookStart: offset + 0, rookEnd: offset + 3,
       fixedPieces: new Map([
         [offset + 2, `${team}${Board.KING}`],
         [offset + 3, `${team}${Board.ROOK}`]
@@ -36,7 +38,7 @@ function castlePresetsForTeam(team) {
 
 // ===== Promotion presets (both teams, after-board positions) =====
 
-function promotionPresetsForTeam(team) {
+export function promotionPresetsForTeam(team) {
   const [pawnRank, promoteRank] = team === Board.WHITE ? [6, 7] : [1, 0]
   const promotedSpecies = [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT]
   const presets = []
@@ -45,6 +47,8 @@ function promotionPresetsForTeam(team) {
     for (let file = 0; file < 8; file++) {
       presets.push({
         name: `promotion-${species}-${file}-straight`,
+        promotedSpecies: species, moveStart: pawnRank * 8 + file, moveEnd: promoteRank * 8 + file,
+        isCapture: false, captureDirection: 'straight',
         fixedPieces: new Map([[promoteRank * 8 + file, `${team}${species}`]]),
         reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + file])
       })
@@ -52,6 +56,8 @@ function promotionPresetsForTeam(team) {
     for (let file = 1; file < 8; file++) {
       presets.push({
         name: `promotion-${species}-${file}-capture-left`,
+        promotedSpecies: species, moveStart: pawnRank * 8 + file, moveEnd: promoteRank * 8 + (file - 1),
+        isCapture: true, captureDirection: 'capture-left',
         fixedPieces: new Map([[promoteRank * 8 + (file - 1), `${team}${species}`]]),
         reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + (file - 1)])
       })
@@ -59,6 +65,8 @@ function promotionPresetsForTeam(team) {
     for (let file = 0; file < 7; file++) {
       presets.push({
         name: `promotion-${species}-${file}-capture-right`,
+        promotedSpecies: species, moveStart: pawnRank * 8 + file, moveEnd: promoteRank * 8 + (file + 1),
+        isCapture: true, captureDirection: 'capture-right',
         fixedPieces: new Map([[promoteRank * 8 + (file + 1), `${team}${species}`]]),
         reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + (file + 1)])
       })
@@ -70,7 +78,7 @@ function promotionPresetsForTeam(team) {
 
 // ===== En passant presets (both teams, after-board positions) =====
 
-function enPassantPresetsForTeam(team) {
+export function enPassantPresetsForTeam(team) {
   const enemyTeam = Board.opposingTeam(team)
   // destRank: where the capturing pawn lands
   // capturedRank: where the captured pawn was (now empty in after-board)
@@ -119,29 +127,15 @@ function buildRequiredPieces(requiredPositions, random) {
   return pieces
 }
 
-// ===== buildSeed =====
+// ===== buildSeedFromPreset =====
 
-export function buildSeed(combinedPlan, attemptKind, random) {
+export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, random) {
   const requiredPieces = buildRequiredPieces(combinedPlan.requiredPositions, random)
   if (!requiredPieces) { return null }
 
-  // Pick a special move preset and build the base fixed pieces
-  let specialPreset = null
-  let recentMoveContext = null
-
-  if (attemptKind === MOVE_KIND_CASTLE) {
-    const presets = shuffled(castlePresetsForTeam(combinedPlan.movingTeam), random)
-    specialPreset = presets[0] ?? null
-  } else if (attemptKind === MOVE_KIND_PROMOTION) {
-    const presets = shuffled(promotionPresetsForTeam(combinedPlan.movingTeam), random)
-    specialPreset = presets[0] ?? null
-  } else if (attemptKind === MOVE_KIND_EN_PASSANT) {
-    const presets = shuffled(enPassantPresetsForTeam(combinedPlan.movingTeam), random)
-    specialPreset = presets[0] ?? null
-    if (specialPreset) { recentMoveContext = specialPreset.recentMoveContext }
-  }
-
-  if (attemptKind !== MOVE_KIND_STANDARD && specialPreset === null) { return null }
+  const recentMoveContext = (attemptKind === MOVE_KIND_EN_PASSANT && specialPreset)
+    ? (specialPreset.recentMoveContext ?? null)
+    : null
 
   const fixedPieces = specialPreset
     ? mergeRelationPieces({ basePieces: requiredPieces, relationPieces: specialPreset.fixedPieces, reservedSquares: new Set() })
@@ -161,7 +155,7 @@ export function buildSeed(combinedPlan, attemptKind, random) {
     return { pieces: fixedPieces, reservedSquares, recentMoveContext, attemptKind, geometryKey, relationalPositions: [] }
   }
 
-  const placedActors = new Map() // actor name -> { position, species }
+  const placedActors = new Map()
 
   let currentPieces = fixedPieces
   const geometryKeys = specialPreset ? [specialPreset.name] : []
@@ -212,4 +206,24 @@ export function buildSeed(combinedPlan, attemptKind, random) {
   }
 
   return { pieces: currentPieces, reservedSquares, recentMoveContext, attemptKind, geometryKey: geometryKeys.join(':'), relationalPositions }
+}
+
+// ===== buildSeed =====
+
+export function buildSeed(combinedPlan, attemptKind, random) {
+  let specialPreset = null
+
+  if (attemptKind === MOVE_KIND_CASTLE) {
+    const presets = shuffled(castlePresetsForTeam(combinedPlan.movingTeam), random)
+    specialPreset = presets[0] ?? null
+  } else if (attemptKind === MOVE_KIND_PROMOTION) {
+    const presets = shuffled(promotionPresetsForTeam(combinedPlan.movingTeam), random)
+    specialPreset = presets[0] ?? null
+  } else if (attemptKind === MOVE_KIND_EN_PASSANT) {
+    const presets = shuffled(enPassantPresetsForTeam(combinedPlan.movingTeam), random)
+    specialPreset = presets[0] ?? null
+  }
+
+  if (attemptKind !== MOVE_KIND_STANDARD && specialPreset === null) { return null }
+  return buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, random)
 }
