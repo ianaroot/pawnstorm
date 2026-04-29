@@ -64,13 +64,32 @@ class ConditionEvaluatorV2 {
         })
         const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
         const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
-        if (!subjectComparisonPresent && !targetComparisonPresent) { 
-          return result.pairs.length > 0 
-        } else { 
-          const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
-          const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
-          return subjectPasses && targetPasses
+        if (!subjectComparisonPresent && !targetComparisonPresent) {
+          return result.pairs.length > 0
         }
+        const subjectMetric = conditionNode.subjectComparisonMetric
+        const targetMetric = conditionNode.targetComparisonMetric
+        if (subjectMetric === "individual_value" || subjectMetric === "aggregate_value" ||
+            targetMetric === "individual_value" || targetMetric === "aggregate_value") {
+          const subjectReferenceTotal = subjectComparisonPresent
+            ? this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
+            : null
+          const targetReferenceTotal = targetComparisonPresent
+            ? this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
+            : null
+          return analysis.evaluateRelationalValueMetrics({
+            pairs: result.pairs,
+            subjectMetric: subjectComparisonPresent ? subjectMetric : null,
+            subjectComparator: conditionNode.subjectComparator,
+            subjectReferenceTotal,
+            targetMetric: targetComparisonPresent ? targetMetric : null,
+            targetComparator: conditionNode.targetComparator,
+            targetReferenceTotal
+          })
+        }
+        const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
+        const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
+        return subjectPasses && targetPasses
       })
     }
 
@@ -153,30 +172,14 @@ class ConditionEvaluatorV2 {
       }
     }    
     
-    relationalValuePositions(conditionNode, analysis, result, side) {
-      const actor = side === "subject" ? conditionNode.subject : conditionNode.target
-      if (!analysis.singularActor(actor)) {
-        return side === "subject" ? result.subjectPositions : result.targetPositions
-      }
-      const filter = side === "subject" ? (conditionNode.subjectFilter || "any") : (conditionNode.targetFilter || "any")
-      const filterMode = side === "subject" ? (conditionNode.subjectFilterMode || null) : (conditionNode.targetFilterMode || null)
-      return analysis.relationalActorPositions({ actor, filter, filterMode })
-    }
-
     evaluateRelationalSubjectComparison(conditionNode, analysis, result) {
-      const positions = conditionNode.subjectComparisonMetric === "value"
-        ? this.relationalValuePositions(conditionNode, analysis, result, "subject")
-        : result.subjectPositions
-      const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions })
+      const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions: result.subjectPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
       return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal })
     }
 
     evaluateRelationalTargetComparison(conditionNode, analysis, result) {
-      const positions = conditionNode.targetComparisonMetric === "value"
-        ? this.relationalValuePositions(conditionNode, analysis, result, "target")
-        : result.targetPositions
-      const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions })
+      const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions: result.targetPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
       return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal })
     }

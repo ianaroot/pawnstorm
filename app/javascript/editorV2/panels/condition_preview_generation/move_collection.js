@@ -130,14 +130,7 @@ export function collectVerifiedMoves({
         priorPieces.set(recentMoveContext.movedPieceEndPosition, `${Board.opposingTeam(movingTeam)}${Board.PAWN}`)
       }
 
-      const opposingTeam = Board.opposingTeam(movingTeam)
-      if (!teamHasKing(priorPieces, movingTeam) || !teamHasKing(priorPieces, opposingTeam)) {
-        console.warn('[king-missing]', {
-          missingMoving: !teamHasKing(priorPieces, movingTeam),
-          missingOpposing: !teamHasKing(priorPieces, opposingTeam),
-          movedPieceSquare, originPosition, movedPieceSpecies,
-          pieces: Object.fromEntries(priorPieces)
-        })
+      if (!teamHasKing(priorPieces, movingTeam) || !teamHasKing(priorPieces, Board.opposingTeam(movingTeam))) {
         continue
       }
 

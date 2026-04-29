@@ -167,7 +167,8 @@ export function metricForPositions(analysis, { metric, positions, boardScope = A
     switch (metric) {
       case "count":
         return positions.length
-      case "value":
+      case "individual_value":
+      case "aggregate_value":
         return valueOfPositions(analysis, positions, boardScope)
       default:
         throw new Error(`Unsupported V2 relational metric: ${metric}`)
