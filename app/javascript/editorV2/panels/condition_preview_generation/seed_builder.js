@@ -6,6 +6,7 @@ import {
   candidateSpecies,
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
 import { clonePiecesMap, shuffled } from './board_utils'
 
 const IDENTITY_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
@@ -171,6 +172,11 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
     const targetPool = fixedTargetPlacement
       ? [fixedTargetPlacement.species]
       : shuffled([...plan.targetSpeciesPool], random)
+
+    if (usesZeroRelationPath(plan.requirements)) {
+      relationalPositions.push(null)
+      continue
+    }
 
     let found = false
     outer: for (const subjectSpecies of subjectPool) {

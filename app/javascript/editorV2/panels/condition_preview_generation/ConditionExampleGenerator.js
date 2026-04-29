@@ -7,6 +7,7 @@ import { mergeMoveKindExamples } from './enrichment'
 import {
   candidateIdentity, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -29,6 +30,7 @@ function effectiveVariants(combinedPlan) {
   if (relationalPlans.length === 0) { return [] }
 
   const hasRequired = relationalPlans.some(p =>
+    !usesZeroRelationPath(p.requirements) &&
     p.variants?.some(v => v.type === 'required')
   )
   if (hasRequired) { return [{ type: 'required' }] }

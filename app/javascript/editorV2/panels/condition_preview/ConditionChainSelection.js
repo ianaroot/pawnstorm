@@ -54,13 +54,6 @@ export function buildSelectedConditionChain({ selectedNodeIds, getNode, internal
     }
   }
 
-  if (nodes.some(node => node.data?.kind === 'unary')) {
-    return {
-      status: 'unsupported',
-      reason: 'Unary condition previews are not supported yet.'
-    }
-  }
-
   const { incoming, outgoing } = buildConnectionMaps(selectedNodeIds, internalConnections)
   const hasBranching = selectedNodeIds.some(nodeId => {
     return (incoming.get(nodeId) || []).length > 1 || (outgoing.get(nodeId) || []).length > 1
