@@ -9,6 +9,7 @@ import {
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'
 export const MOVE_KIND_PROMOTION = 'promotion'
+export const MOVE_KIND_EN_PASSANT = 'en_passant'
 
 const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
@@ -171,6 +172,7 @@ export function legalPriorTurnState(priorBoard, moveObject) {
 export function moveKindForMoveObject(moveObject) {
   if (/^O-O/.test(moveObject.pieceNotation || '')) { return MOVE_KIND_CASTLE }
   if (moveObject.promotionPiece) { return MOVE_KIND_PROMOTION }
+  if (moveObject.additionalActions) { return MOVE_KIND_EN_PASSANT }
   return MOVE_KIND_STANDARD
 }
 

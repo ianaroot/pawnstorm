@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
 import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/relational_utils'
@@ -140,7 +140,7 @@ export function buildRelationalPlan(payload, options = {}) {
     subjectTeam: relationalTeamForActor(payload.subject),
     targetTeam: relationalTeamForActor(payload.target),
     movingTeam: options.movingTeam || Board.WHITE,
-    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION],
+    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT],
     relationParams: relationParams(payload)
   }
 }
@@ -309,7 +309,7 @@ export function buildUnaryPlan(payload, options = {}) {
     subjectTeam,
     targetTeam,
     movingTeam,
-    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION]
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
   }
 }
 
@@ -348,7 +348,7 @@ export function buildPositionPlan(payload, options = {}) {
     subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
     subjectTeam,
     movingTeam,
-    moveKinds: [MOVE_KIND_STANDARD]
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
   }
 }
 
