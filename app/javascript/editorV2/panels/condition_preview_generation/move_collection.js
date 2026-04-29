@@ -131,7 +131,15 @@ export function collectVerifiedMoves({
       }
 
       const opposingTeam = Board.opposingTeam(movingTeam)
-      if (!teamHasKing(priorPieces, movingTeam) || !teamHasKing(priorPieces, opposingTeam)) { continue }
+      if (!teamHasKing(priorPieces, movingTeam) || !teamHasKing(priorPieces, opposingTeam)) {
+        console.warn('[king-missing]', {
+          missingMoving: !teamHasKing(priorPieces, movingTeam),
+          missingOpposing: !teamHasKing(priorPieces, opposingTeam),
+          movedPieceSquare, originPosition, movedPieceSpecies,
+          pieces: Object.fromEntries(priorPieces)
+        })
+        continue
+      }
 
       const priorLayout = buildLayoutFromPieces(priorPieces)
       const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext, movingTeam)
