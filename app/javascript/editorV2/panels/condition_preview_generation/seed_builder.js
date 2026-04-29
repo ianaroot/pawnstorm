@@ -54,24 +54,6 @@ export function promotionPresetsForTeam(team) {
         reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + file])
       })
     }
-    for (let file = 1; file < 8; file++) {
-      presets.push({
-        name: `promotion-${species}-${file}-capture-left`,
-        promotedSpecies: species, moveStart: pawnRank * 8 + file, moveEnd: promoteRank * 8 + (file - 1),
-        isCapture: true, captureDirection: 'capture-left',
-        fixedPieces: new Map([[promoteRank * 8 + (file - 1), `${team}${species}`]]),
-        reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + (file - 1)])
-      })
-    }
-    for (let file = 0; file < 7; file++) {
-      presets.push({
-        name: `promotion-${species}-${file}-capture-right`,
-        promotedSpecies: species, moveStart: pawnRank * 8 + file, moveEnd: promoteRank * 8 + (file + 1),
-        isCapture: true, captureDirection: 'capture-right',
-        fixedPieces: new Map([[promoteRank * 8 + (file + 1), `${team}${species}`]]),
-        reservedSquares: new Set([pawnRank * 8 + file, promoteRank * 8 + (file + 1)])
-      })
-    }
   }
 
   return presets
