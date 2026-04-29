@@ -289,6 +289,16 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
         }
       }
     })
+    if (options.length > 0 || relationalPlans.length > 0) { return options }
+
+    // No relational plans (e.g. unary/position-only combined plan with en passant seed):
+    // use moving-team pieces already seeded as moved piece candidates.
+    seed.pieces.forEach((piece, square) => {
+      if (!piece.startsWith(combinedPlan.movingTeam)) { return }
+      const species = piece.slice(combinedPlan.movingTeam.length)
+      if (movedPieceSpeciesConstraint && !movedPieceSpeciesConstraint.includes(species)) { return }
+      options.push({ square, species })
+    })
     return options
   }
 

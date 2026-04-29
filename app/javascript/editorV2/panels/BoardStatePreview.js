@@ -1,4 +1,4 @@
-import generateConditionExamples from 'editorV2/panels/condition_preview_generation/index'
+import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 

@@ -1,6 +1,6 @@
 import ConditionForm from 'editorV2/panels/ConditionForm'
 import { EVENTS } from 'editorV2/constants'
-import generateConditionExamples from 'editorV2/panels/condition_preview_generation/index'
+import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 
