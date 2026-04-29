@@ -292,9 +292,14 @@ class ClickHandler {
     this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
     clearTimeout(this._chainPreviewTimer)
     this._chainPreviewTimer = setTimeout(() => {
-      const preview = generateConditionExamples(chain.payloads)
-      preview.conditionLabels = conditionLabels
-      this.showSelectionPreviewPanel(preview)
+      try {
+        const preview = generateConditionExamples(chain.payloads)
+        preview.conditionLabels = conditionLabels
+        this.showSelectionPreviewPanel(preview)
+      } catch (e) {
+        console.error('generateConditionExamples threw:', e)
+        this.showSelectionPreviewPanel({ status: 'no_examples', reason: "An error occurred generating the preview.", examples: [], payloadCount: chain.payloads.length })
+      }
     }, 0)
   }
 

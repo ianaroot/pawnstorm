@@ -304,7 +304,7 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
 
   // 'separate' variant
   const occupied = new Set(seed.pieces.keys())
-  const relationalPositionsList = seed.relationalPositions.flatMap(rp => [rp.subjectPosition, rp.targetPosition])
+  const relationalPositionsList = seed.relationalPositions.filter(rp => rp !== null).flatMap(rp => [rp.subjectPosition, rp.targetPosition])
   const relationalPositionSet = new Set(relationalPositionsList)
   const extraSquares = sortByDistanceFromRelation(
     Array.from({ length: 64 }, (_, i) => i).filter(i => !occupied.has(i) && !relationalPositionSet.has(i)),

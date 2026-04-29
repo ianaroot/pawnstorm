@@ -6,8 +6,8 @@ import {
   candidateSpecies,
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
-import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
-import { clonePiecesMap, shuffled } from './board_utils'
+import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
+import { clonePiecesMap, shuffled, legalPlacementForSpecies } from './board_utils'
 
 const IDENTITY_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
 
@@ -144,16 +144,28 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
   const geometryKeys = specialPreset ? [specialPreset.name] : []
   const relationalPositions = []
 
+  const movedPiecePool = combinedPlan.movedPieceSpeciesPool
+
   for (const plan of relationalPlans) {
     const fixedSubjectPlacement = IDENTITY_ACTORS.has(plan.subject) ? (placedActors.get(plan.subject) ?? null) : null
     const fixedTargetPlacement = IDENTITY_ACTORS.has(plan.target) ? (placedActors.get(plan.target) ?? null) : null
 
     const subjectPool = fixedSubjectPlacement
       ? [fixedSubjectPlacement.species]
-      : shuffled([...plan.subjectSpeciesPool], random)
+      : shuffled(
+          plan.subject === 'moved_piece' && movedPiecePool
+            ? plan.subjectSpeciesPool.filter(s => movedPiecePool.includes(s))
+            : [...plan.subjectSpeciesPool],
+          random
+        )
     const targetPool = fixedTargetPlacement
       ? [fixedTargetPlacement.species]
-      : shuffled([...plan.targetSpeciesPool], random)
+      : shuffled(
+          plan.target === 'moved_piece' && movedPiecePool
+            ? plan.targetSpeciesPool.filter(s => movedPiecePool.includes(s))
+            : [...plan.targetSpeciesPool],
+          random
+        )
 
     if (usesZeroRelationPath(plan.requirements)) {
       relationalPositions.push(null)
@@ -191,6 +203,22 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
     }
 
     if (!found) { return null }
+
+    const isPbsDecreasing = plan.comparisonDescriptors?.some(d =>
+      d.source === PRIOR_BOARD_COMPARISON_SOURCE &&
+      (d.comparator === 'less_than' || d.comparator === 'less_than_or_equal_to')
+    )
+    if (isPbsDecreasing && plan.targetTeam) {
+      const extraPool = plan.targetSpeciesPool.filter(s => s !== Board.KING)
+      for (let j = 0; j < 2 && extraPool.length > 0; j++) {
+        const species = extraPool[Math.floor(random() * extraPool.length)]
+        const free = Array.from({ length: 64 }, (_, k) => k)
+          .filter(sq => !currentPieces.has(sq) && !reservedSquares.has(sq) && legalPlacementForSpecies(sq, species))
+        if (free.length === 0) { break }
+        currentPieces = new Map(currentPieces)
+        currentPieces.set(free[Math.floor(random() * free.length)], `${plan.targetTeam}${species}`)
+      }
+    }
   }
 
   return { pieces: currentPieces, reservedSquares, recentMoveContext, attemptKind, geometryKey: geometryKeys.join(':'), relationalPositions }
