@@ -1000,7 +1000,7 @@ class ConditionForm {
   }
 
   allowedRelationalComparisonSourcesForMetric(metric) {
-    if (metric === 'value') {
+    if (metric === 'individual_value' || metric === 'aggregate_value') {
       return ['exact_number', 'prior_board_state', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
     }
     return ['exact_number', 'prior_board_state']

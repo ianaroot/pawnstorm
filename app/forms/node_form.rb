@@ -30,12 +30,13 @@ class NodeForm
     'same_piece' => 'Same-Piece',
     'count' => 'Count',
     'mobility' => 'Mobility',
-    'value' => 'Value'
+    'value' => 'Aggregate Value'
   }.freeze
 
   COMPARISON_METRIC_LABELS = {
     'count' => 'Count',
-    'value' => 'Value'
+    'individual_value' => 'Individual Value',
+    'aggregate_value' => 'Aggregate Value'
   }.freeze
 
   COMPARATOR_SYMBOLS = {
