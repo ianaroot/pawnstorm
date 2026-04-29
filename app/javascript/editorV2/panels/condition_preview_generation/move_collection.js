@@ -8,10 +8,25 @@ import {
   MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
 import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   shuffled, placeKingsIfAbsent, legalPlacementForSpecies
 } from './board_utils'
+
+function descriptorAllowsZeroPairs(descriptor) {
+  const { comparator, source } = descriptor
+  if (source === PRIOR_BOARD_COMPARISON_SOURCE) {
+    return comparator === 'less_than' || comparator === 'less_than_or_equal_to'
+  }
+  const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
+  switch (comparator) {
+    case 'equal_to': return total === 0
+    case 'less_than': return total > 0
+    case 'less_than_or_equal_to': return total >= 0
+    default: return false
+  }
+}
 
 const MAX_REVERSE_MOVES_PER_OPTION = 4
 const MAX_EXAMPLES_PER_SEED = 3
@@ -161,7 +176,7 @@ export function buildAggregatedResult(combinedPlan, analysis) {
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
       const result = analysis.relationalResult(plan.relationParams)
-      if (result.pairs.length === 0) { return null }
+      if (result.pairs.length === 0 && !plan.comparisonDescriptors?.some(descriptorAllowsZeroPairs)) { return null }
       subjectPositions = [...subjectPositions, ...result.subjectPositions]
       targetPositions = [...targetPositions, ...result.targetPositions]
       pairs = [...pairs, ...result.pairs]
