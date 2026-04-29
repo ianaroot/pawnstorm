@@ -1228,11 +1228,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'allied',
-            targetFilter: 'any',
-            targetComparisonMetric: 'value',
-            targetComparator: 'less_than',
-            targetComparisonSource: 'exact_number',
-            targetComparisonSourceTotal: 9
+            targetFilter: 'queen'
           },
           board,
           moveObject

@@ -11,7 +11,7 @@ import { relationalActorLabels } from 'editorV2/panels/condition_preview/relatio
 import { PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
-  shuffled, placeKingsIfAbsent, legalPlacementForSpecies
+  shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing
 } from './board_utils'
 
 function descriptorAllowsZeroPairs(descriptor) {
@@ -129,6 +129,9 @@ export function collectVerifiedMoves({
       if (attemptKind === MOVE_KIND_EN_PASSANT && recentMoveContext) {
         priorPieces.set(recentMoveContext.movedPieceEndPosition, `${Board.opposingTeam(movingTeam)}${Board.PAWN}`)
       }
+
+      const opposingTeam = Board.opposingTeam(movingTeam)
+      if (!teamHasKing(priorPieces, movingTeam) || !teamHasKing(priorPieces, opposingTeam)) { continue }
 
       const priorLayout = buildLayoutFromPieces(priorPieces)
       const priorBoard = buildBoardFromLayout(priorLayout, recentMoveContext, movingTeam)
