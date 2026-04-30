@@ -94,10 +94,12 @@ function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
   return result
 }
 
+// Strategy C generalized: for ANY actor (not just king), the hint can be satisfied
+// by putting the matching team's king in check + placing matching pieces where
+// they can't defend (no legal capture-attacker or block-ray move). When in check,
+// a piece's only legal moves are defending moves; if there are none (or ≤ N), the
+// actor's mobility ≤ N. Works for king (escape blocked) and non-king (pin/no-defend).
 function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
-  if (hint.maxMobility !== 0) { return null }
-  if (!pieceMatchesFilter(Board.KING, hint.filter)) { return null }
-
   const kingCode = pieceCode(hint.team, Board.KING)
   let kingPos = null
   for (const [pos, piece] of pieces.entries()) {
@@ -119,6 +121,22 @@ function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
       } catch { continue }
       if (!attacks.includes(kingPos)) { continue }
 
+      // After placing the check-attacker, see if total matching mobility is already ≤ maxMobility.
+      let totalMobility = 0
+      let valid = true
+      try {
+        const board = piecesIntoBoard(withAttacker, hint.team)
+        for (const [pos, piece] of withAttacker.entries()) {
+          if (piece.charAt(0) !== hint.team) { continue }
+          if (!pieceMatchesFilter(piece.slice(1), hint.filter)) { continue }
+          const moves = Rules.availableMovesFrom({ board, startPosition: pos })
+          totalMobility += moves.length
+          if (totalMobility > hint.maxMobility) { break }
+        }
+      } catch { valid = false }
+      if (valid && totalMobility <= hint.maxMobility) { return withAttacker }
+
+      // Fall back to topping up with direct blocking for any residual.
       let blocked = null
       try { blocked = applyStrategyDirectBlock(withAttacker, hint, movingTeam, random) } catch { blocked = null }
       if (blocked !== null) { return blocked }
