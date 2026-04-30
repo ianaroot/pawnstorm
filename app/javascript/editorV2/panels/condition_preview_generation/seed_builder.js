@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import {
-  buildCandidateSkeletons, mergeRelationPieces
+  mergeRelationPieces
 } from 'editorV2/panels/condition_preview/skeleton_builders'
 import {
   candidateSpecies,
@@ -8,6 +8,8 @@ import {
 } from 'editorV2/panels/condition_preview/example_utils'
 import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
 import { clonePiecesMap, shuffled, legalPlacementForSpecies } from './board_utils'
+import { buildSideConfigurations } from './configurations'
+import { buildConfigSkeletons } from './relation_geometry'
 
 const IDENTITY_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
 
@@ -152,33 +154,35 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
 
     const subjectPool = fixedSubjectPlacement
       ? [fixedSubjectPlacement.species]
-      : shuffled(
-          plan.subject === 'moved_piece' && movedPiecePool
-            ? plan.subjectSpeciesPool.filter(s => movedPiecePool.includes(s))
-            : [...plan.subjectSpeciesPool],
-          random
-        )
+      : (plan.subject === 'moved_piece' && movedPiecePool
+          ? plan.subjectSpeciesPool.filter(s => movedPiecePool.includes(s))
+          : [...plan.subjectSpeciesPool])
     const targetPool = fixedTargetPlacement
       ? [fixedTargetPlacement.species]
-      : shuffled(
-          plan.target === 'moved_piece' && movedPiecePool
-            ? plan.targetSpeciesPool.filter(s => movedPiecePool.includes(s))
-            : [...plan.targetSpeciesPool],
-          random
-        )
+      : (plan.target === 'moved_piece' && movedPiecePool
+          ? plan.targetSpeciesPool.filter(s => movedPiecePool.includes(s))
+          : [...plan.targetSpeciesPool])
 
     if (usesZeroRelationPath(plan.requirements)) {
       relationalPositions.push(null)
       continue
     }
 
+    const subjectConfigs = fixedSubjectPlacement
+      ? [[fixedSubjectPlacement.species]]
+      : buildSideConfigurations({ plan, side: 'subject', pool: subjectPool, random })
+    const targetConfigs = fixedTargetPlacement
+      ? [[fixedTargetPlacement.species]]
+      : buildSideConfigurations({ plan, side: 'target', pool: targetPool, random })
+
     let found = false
-    outer: for (const subjectSpecies of subjectPool) {
-      for (const targetSpecies of targetPool) {
-        const skeletons = shuffled(
-          buildCandidateSkeletons({ plan, subjectSpecies, targetSpecies, fixedPieces: currentPieces, fixedSubjectPlacement, fixedTargetPlacement, reservedSquares }),
-          random
-        )
+    outer: for (const subjectConfig of subjectConfigs) {
+      for (const targetConfig of targetConfigs) {
+        const skeletons = buildConfigSkeletons({
+          plan, subjectConfig, targetConfig,
+          fixedPieces: currentPieces, fixedSubjectPlacement, fixedTargetPlacement,
+          reservedSquares, random
+        })
         if (skeletons.length === 0) { continue }
         const skeleton = skeletons[0]
 
@@ -192,10 +196,8 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
         currentPieces = skeleton.pieces
         geometryKeys.push(skeleton.geometryKey)
         relationalPositions.push({
-          subjectPosition: skeleton.subjectPosition,
-          subjectSpecies: skeleton.subjectSpecies,
-          targetPosition: skeleton.targetPosition,
-          targetSpecies: skeleton.targetSpecies
+          subjectPositions: skeleton.subjectPlacements,
+          targetPositions: skeleton.targetPlacements
         })
         found = true
         break outer

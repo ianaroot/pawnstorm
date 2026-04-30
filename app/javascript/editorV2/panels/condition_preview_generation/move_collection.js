@@ -64,12 +64,14 @@ function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
     if (plan.subject === 'enemy_moved_piece') {
       const capturedPool = plan.sourceConstraints?.enemyCapturedPieceSpeciesPool
       const capturedSpecies = capturedPool?.length > 0 ? capturedPool[Math.floor(random() * capturedPool.length)] : null
-      return buildEnemyRecentMoveContext(rp.subjectPosition, rp.subjectSpecies, enemyTeam, capturedSpecies, combinedPlan.movingTeam, random)
+      const canonical = rp.subjectPositions[0]
+      return buildEnemyRecentMoveContext(canonical.position, canonical.species, enemyTeam, capturedSpecies, combinedPlan.movingTeam, random)
     }
     if (plan.target === 'enemy_moved_piece') {
       const capturedPool = plan.sourceConstraints?.enemyCapturedPieceSpeciesPool
       const capturedSpecies = capturedPool?.length > 0 ? capturedPool[Math.floor(random() * capturedPool.length)] : null
-      return buildEnemyRecentMoveContext(rp.targetPosition, rp.targetSpecies, enemyTeam, capturedSpecies, combinedPlan.movingTeam, random)
+      const canonical = rp.targetPositions[0]
+      return buildEnemyRecentMoveContext(canonical.position, canonical.species, enemyTeam, capturedSpecies, combinedPlan.movingTeam, random)
     }
   }
 
@@ -260,16 +262,18 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
       const rp = seed.relationalPositions[i]
       if (!rp) { return }
       if (plan.subject === 'moved_piece') {
-        const species = rp.subjectSpecies
-        if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
-          options.push({ square: rp.subjectPosition, species })
-        }
+        rp.subjectPositions.forEach(({ position, species }) => {
+          if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
+            options.push({ square: position, species })
+          }
+        })
       }
       if (plan.target === 'moved_piece') {
-        const species = rp.targetSpecies
-        if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
-          options.push({ square: rp.targetPosition, species })
-        }
+        rp.targetPositions.forEach(({ position, species }) => {
+          if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
+            options.push({ square: position, species })
+          }
+        })
       }
     })
     return options
@@ -281,16 +285,18 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
       const rp = seed.relationalPositions[i]
       if (!rp) { return }
       if (plan.subject === 'allied' || plan.subject === 'moved_piece') {
-        const species = rp.subjectSpecies
-        if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
-          options.push({ square: rp.subjectPosition, species })
-        }
+        rp.subjectPositions.forEach(({ position, species }) => {
+          if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
+            options.push({ square: position, species })
+          }
+        })
       }
       if (plan.target === 'allied' || plan.target === 'moved_piece') {
-        const species = rp.targetSpecies
-        if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
-          options.push({ square: rp.targetPosition, species })
-        }
+        rp.targetPositions.forEach(({ position, species }) => {
+          if (!movedPieceSpeciesConstraint || movedPieceSpeciesConstraint.includes(species)) {
+            options.push({ square: position, species })
+          }
+        })
       }
     })
     if (options.length > 0 || relationalPlans.length > 0) { return options }
@@ -308,7 +314,12 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
 
   // 'separate' variant
   const occupied = new Set(seed.pieces.keys())
-  const relationalPositionsList = seed.relationalPositions.filter(rp => rp !== null).flatMap(rp => [rp.subjectPosition, rp.targetPosition])
+  const relationalPositionsList = seed.relationalPositions
+    .filter(rp => rp !== null)
+    .flatMap(rp => [
+      ...rp.subjectPositions.map(p => p.position),
+      ...rp.targetPositions.map(p => p.position)
+    ])
   const relationalPositionSet = new Set(relationalPositionsList)
   const extraSquares = sortByDistanceFromRelation(
     Array.from({ length: 64 }, (_, i) => i).filter(i => !occupied.has(i) && !relationalPositionSet.has(i)),
