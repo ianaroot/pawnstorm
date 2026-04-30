@@ -106,6 +106,16 @@ function teamAlreadyHasKing(pieces, team) {
   return false
 }
 
+function findExistingKingPlacement(team, pieces) {
+  const kingPiece = `${team}${Board.KING}`
+  for (const [position, piece] of pieces.entries()) {
+    if (piece === kingPiece) {
+      return { position, species: Board.KING }
+    }
+  }
+  return null
+}
+
 function filterKingIfTeamHasOne(pool, team, pieces) {
   return teamAlreadyHasKing(pieces, team) ? pool.filter(s => s !== Board.KING) : pool
 }
@@ -163,8 +173,12 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
   const movedPiecePool = combinedPlan.movedPieceSpeciesPool
 
   for (const plan of relationalPlans) {
-    const fixedSubjectPlacement = IDENTITY_ACTORS.has(plan.subject) ? (placedActors.get(plan.subject) ?? null) : null
-    const fixedTargetPlacement = IDENTITY_ACTORS.has(plan.target) ? (placedActors.get(plan.target) ?? null) : null
+    const fixedSubjectPlacement = IDENTITY_ACTORS.has(plan.subject)
+      ? (placedActors.get(plan.subject) ?? null)
+      : (plan.subjectFilter === 'king' ? findExistingKingPlacement(plan.subjectTeam, currentPieces) : null)
+    const fixedTargetPlacement = IDENTITY_ACTORS.has(plan.target)
+      ? (placedActors.get(plan.target) ?? null)
+      : (plan.targetFilter === 'king' ? findExistingKingPlacement(plan.targetTeam, currentPieces) : null)
 
     const subjectPool = fixedSubjectPlacement
       ? [fixedSubjectPlacement.species]

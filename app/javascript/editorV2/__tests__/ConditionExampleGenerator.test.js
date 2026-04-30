@@ -460,6 +460,33 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('reuses an existing enemy king when a later plan in the chain also needs the enemy king', () => {
+    const payloads = [
+      {
+        version: 2,
+        kind: 'relational',
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        operator: 'adjacent',
+        target: 'enemy',
+        targetFilter: 'king'
+      },
+      {
+        version: 2,
+        kind: 'relational',
+        subject: 'moved_piece',
+        subjectFilter: 'any',
+        operator: 'attack',
+        target: 'enemy',
+        targetFilter: 'king'
+      }
+    ]
+
+    const preview = generateConditionExamples(payloads, { random: seededRandom(601) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
   it('builds verified examples for unary captured piece count equal to 1', () => {
     const payload = {
       version: 2,
