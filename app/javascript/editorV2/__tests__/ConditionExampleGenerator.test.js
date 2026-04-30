@@ -410,6 +410,85 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('builds verified examples for allied queen attack enemy any with target count equal to 3', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'queen',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      targetComparisonMetric: 'count',
+      targetComparator: 'equal_to',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 3
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(101) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.result.targetPositions.length).toBe(3)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('builds verified examples for allied pawn attack enemy any with subject count equal to 2', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'pawn',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 2
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(102) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.result.subjectPositions.length).toBe(2)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces aggregate_value > 4 target examples that include two-minor configurations, not only majors', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      targetComparisonMetric: 'aggregate_value',
+      targetComparator: 'greater_than',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 4
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(103), maxExamples: 50 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+
+    const minorSpecies = new Set([Board.NIGHT, Board.BISHOP])
+    const hasTwoMinors = preview.examples.some(example => {
+      const targetSpecies = example.result.targetPositions.map(pos => example.afterBoard.pieceTypeAt(pos))
+      if (targetSpecies.length < 2) { return false }
+      return targetSpecies.every(species => minorSpecies.has(species))
+    })
+
+    expect(hasTwoMinors).toBe(true)
+  })
+
   it('supports exact-number value comparisons on relational conditions', () => {
     const payload = {
       kind: 'relational',
