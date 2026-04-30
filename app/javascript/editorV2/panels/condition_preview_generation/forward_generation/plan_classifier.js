@@ -13,6 +13,8 @@ function directionFromComparator(comparator) {
     case 'less_than':
     case 'less_than_or_equal_to':
       return '-'
+    case 'equal_to':
+      return '='
     default:
       return null
   }

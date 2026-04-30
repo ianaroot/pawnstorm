@@ -22,7 +22,7 @@ import {
 function descriptorAllowsZeroPairs(descriptor) {
   const { comparator, source } = descriptor
   if (source === PRIOR_BOARD_COMPARISON_SOURCE) {
-    return comparator === 'less_than' || comparator === 'less_than_or_equal_to'
+    return comparator === 'less_than' || comparator === 'less_than_or_equal_to' || comparator === 'equal_to'
   }
   const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
   switch (comparator) {

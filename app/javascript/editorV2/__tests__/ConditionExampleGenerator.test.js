@@ -485,6 +485,32 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
+  it('produces N=1 (not just 0=0) examples for king subject of attack count = PBS', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'king', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(901) })
+    expect(preview.status).toBe('ready')
+    const hasNonZeroCount = preview.examples.some(ex => ex.result.pairs.length >= 1)
+    expect(hasNonZeroCount).toBe(true)
+  })
+
+  it('uses forward generation for enemy attack moved_piece king count = prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any', operator: 'attack',
+      target: 'moved_piece', targetFilter: 'king',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(805) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('uses forward generation for moved_piece mobility > prior_board_state', () => {
     const payload = {
       version: 2, kind: 'unary',
