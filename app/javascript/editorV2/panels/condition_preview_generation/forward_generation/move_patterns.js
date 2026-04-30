@@ -786,6 +786,86 @@ function generateStableCountPbs({ driver, combinedPlan, random }) {
   return null
 }
 
+// ===== Group mobility forward (unary allied/enemy mobility +PBS) =====
+// Engineers a prior board with the subject piece surrounded by blockers, then
+// finds a move that lifts blockers (or moves the subject) to increase mobility.
+// Migrated from the legacy collectMobilityForwardExamples in unary_position_collection.
+
+const BLOCKER_POOL_FOR_MOBILITY = [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN, Board.QUEEN]
+
+function generateGroupMobilityIncrease({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
+  const plan = driver.plan
+  if (plan.kind !== 'unary') { return null }
+  if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return null }
+  if (plan.operator !== 'mobility') { return null }
+  if (driver.pbsDirection !== '+') { return null }
+
+  const movingTeam = combinedPlan.movingTeam
+  const subjectTeam = plan.subjectTeam
+  const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
+  if (!subjectSpecies) { return null }
+
+  let pieces = new Map()
+  const subjectPos = randomPosition(random)
+  if (subjectPos === null) { return null }
+  pieces = placePiece(pieces, subjectPos, pieceCode(subjectTeam, subjectSpecies))
+  if (!pieces) { return null }
+
+  const blockerCount = 3 + Math.floor(random() * 4)
+  const nearby = ALL_POSITIONS.filter(sq => {
+    if (pieces.has(sq)) { return false }
+    const rd = Math.abs(Board.rankIndex(sq) - Board.rankIndex(subjectPos))
+    const fd = Math.abs(Board.fileIndex(sq) - Board.fileIndex(subjectPos))
+    return rd <= 3 && fd <= 3
+  })
+  let placed = 0
+  for (const sq of shuffled(nearby, random)) {
+    if (placed >= blockerCount) { break }
+    const team = random() < 0.7 ? movingTeam : Board.opposingTeam(movingTeam)
+    const validSpecies = BLOCKER_POOL_FOR_MOBILITY.filter(s => legalPlacementForSpecies(sq, s))
+    if (validSpecies.length === 0) { continue }
+    const blockerSpecies = pickRandom(validSpecies, random)
+    const next = placePiece(pieces, sq, pieceCode(team, blockerSpecies))
+    if (next) { pieces = next; placed += 1 }
+  }
+
+  const hasMovingPiece = Array.from(pieces.values()).some(p =>
+    p.charAt(0) === movingTeam && p.slice(1) !== Board.KING
+  )
+  if (!hasMovingPiece) {
+    const fallback = pickRandom(BLOCKER_POOL_FOR_MOBILITY, random)
+    for (const sq of shuffled([...ALL_POSITIONS], random)) {
+      if (pieces.has(sq)) { continue }
+      if (!legalPlacementForSpecies(sq, fallback)) { continue }
+      const next = placePiece(pieces, sq, pieceCode(movingTeam, fallback))
+      if (next) { pieces = next; break }
+    }
+  }
+
+  const piecesWithKings = placeKingsIfAbsent(pieces, random)
+  if (piecesWithKings === null) { return null }
+  const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
+
+  const movers = shuffled(
+    Array.from(piecesWithKings.entries()).filter(([, p]) =>
+      p.charAt(0) === movingTeam && p.slice(1) !== Board.KING
+    ),
+    random
+  )
+  for (const [from] of movers) {
+    for (const to of shuffled([...ALL_POSITIONS], random)) {
+      if (to === from) { continue }
+      let moveObject
+      try { moveObject = Rules.getMoveObject(from, to, priorBoard) } catch { continue }
+      if (moveObject.illegal) { continue }
+      if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
+      return { priorBoard, moveObject }
+    }
+  }
+  return null
+}
+
 // ===== Promotion pattern (unary moved_piece value > prior) =====
 
 function generatePromotionForValueIncrease({ driver, combinedPlan, random }) {
@@ -835,6 +915,7 @@ export const PATTERNS = [
   { name: 'D:mover-blocks-ray', generate: generateMoverBlocksRay },
   { name: 'M:moved-mobility-increase', generate: generateMoverMobilityChange('+') },
   { name: 'M:moved-mobility-decrease', generate: generateMoverMobilityChange('-') },
+  { name: 'M:group-mobility-increase', generate: generateGroupMobilityIncrease },
   { name: 'V:promotion-value-increase', generate: generatePromotionForValueIncrease },
   { name: 'A=:mover-preserves-subject', generate: generateMoverPreservesSubject },
   { name: 'F=:mover-preserves-target', generate: generateMoverPreservesTarget },
