@@ -1,5 +1,12 @@
 export const COUNT_COMPARISON_METRIC = 'count'
 export const VALUE_COMPARISON_METRIC = 'value'
+export const INDIVIDUAL_VALUE_METRIC = 'individual_value'
+export const AGGREGATE_VALUE_METRIC = 'aggregate_value'
+
+export function isValueMetric(metric) {
+  return metric === INDIVIDUAL_VALUE_METRIC || metric === AGGREGATE_VALUE_METRIC
+}
+
 export const EXACT_NUMBER_COMPARISON_SOURCE = 'exact_number'
 export const PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
 
@@ -70,7 +77,7 @@ export function usesZeroRelationPath(requirements) {
 }
 
 function descriptorAllowsZeroValue(descriptor) {
-  if (descriptor.metric !== VALUE_COMPARISON_METRIC) { return false }
+  if (!isValueMetric(descriptor.metric)) { return false }
   const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
   switch (descriptor.comparator) {
     case 'equal_to': return total === 0

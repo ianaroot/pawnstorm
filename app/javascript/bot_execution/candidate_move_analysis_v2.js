@@ -319,10 +319,13 @@ class CandidateMoveAnalysisV2 {
   relationalAggregateValueFromPairs(pairs, side) {
     if (pairs.length === 0) { return null }
     const board = this.afterBoard()
-    return pairs.reduce((sum, pair) => {
-      const position = side === "subject" ? pair.subjectPosition : pair.targetPosition
-      return sum + materialValue(board.pieceTypeAt(position))
-    }, 0)
+    const positionKey = side === "subject" ? "subjectPosition" : "targetPosition"
+    const uniquePositions = new Set(pairs.map(pair => pair[positionKey]))
+    let sum = 0
+    for (const position of uniquePositions) {
+      sum += materialValue(board.pieceTypeAt(position))
+    }
+    return sum
   }
 
   relationalCombinatorial({ pairs, groupBySide, valueSide, valueComparator, valueReferenceTotal, countComparator, countReferenceTotal }) {

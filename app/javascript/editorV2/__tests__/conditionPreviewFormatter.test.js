@@ -68,7 +68,7 @@ describe('conditionPreviewFormatter', () => {
           target: 'enemy',
           targetFilter: 'rook'
         }).text
-      ).toBe('Allies any : value : > Enemy rook/s')
+      ).toBe('Allies any : aggregate value : > Enemy rook/s')
     })
 
     it('formats same_piece with the explicit operator phrase', () => {

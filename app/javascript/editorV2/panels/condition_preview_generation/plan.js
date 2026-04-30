@@ -4,7 +4,7 @@ import {
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  VALUE_COMPARISON_METRIC,
+  VALUE_COMPARISON_METRIC, isValueMetric,
   EXACT_NUMBER_COMPARISON_SOURCE,
   PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonRequirementsFromDescriptors
@@ -72,7 +72,7 @@ function mergeConstraints(base, extra) {
 
 function expandDescriptorVariants(descriptors) {
   return descriptors.reduce((variants, descriptor) => {
-    const options = descriptor.metric === VALUE_COMPARISON_METRIC
+    const options = isValueMetric(descriptor.metric)
       ? valueSourceOptions(descriptor)
       : [{ resolvedTotal: descriptor.total, constraints: {} }]
 
@@ -93,7 +93,7 @@ function expandDescriptorVariants(descriptors) {
 
 export function expandRelationalPlanSources(plan) {
   if (!plan.comparisonDescriptors.some(descriptor => (
-    descriptor.metric === VALUE_COMPARISON_METRIC &&
+    isValueMetric(descriptor.metric) &&
     ![EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE].includes(descriptor.source)
   ))) {
     return [plan]

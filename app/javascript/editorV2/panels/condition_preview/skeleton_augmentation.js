@@ -6,7 +6,9 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/board_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
+import {
+  usesZeroRelationPath, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC, PRIOR_BOARD_COMPARISON_SOURCE
+} from 'editorV2/panels/condition_preview/comparison_requirements'
 
 const MAX_VALUE_CONTRIBUTORS_PER_SIDE = 4
 
@@ -70,7 +72,7 @@ function descriptorForSide(plan, side) {
 }
 
 function valueBoundsForDescriptor(descriptor) {
-  if (!descriptor || descriptor.metric !== 'value') { return null }
+  if (!descriptor || descriptor.metric !== AGGREGATE_VALUE_METRIC) { return null }
 
   const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
   switch (descriptor.comparator) {
@@ -371,15 +373,24 @@ export function augmentExistingRelation({ plan, skeleton, requirements, random }
 export function augmentSkeletonsForComparisons({ plan, skeleton, random }) {
   const requirements = plan.requirements
   if (!requirements.comparisonsPresent) { return [skeleton] }
-  if (plan.comparisonDescriptors.some(descriptor => (
-    descriptor.metric === 'value' && descriptor.source !== 'prior_board_state'
-  ))) {
-    return augmentSkeletonsForValueComparisons({ plan, skeleton, random })
-  }
-  if (!requirements.exactCountComparisonsPresent) { return [skeleton] }
-  if (requirements.subject === null || requirements.target === null) { return [] }
-  if (requirements.subject < 0 || requirements.target < 0) { return [] }
-  if (usesZeroRelationPath(requirements)) { return [] }
 
-  return augmentExistingRelation({ plan, skeleton, requirements, random })
+  const hasAggregate = plan.comparisonDescriptors.some(descriptor =>
+    descriptor.metric === AGGREGATE_VALUE_METRIC && descriptor.source !== PRIOR_BOARD_COMPARISON_SOURCE
+  )
+
+  let skeletons = [skeleton]
+
+  if (hasAggregate) {
+    skeletons = skeletons.flatMap(s => augmentSkeletonsForValueComparisons({ plan, skeleton: s, random }))
+    if (skeletons.length === 0) { return [] }
+  }
+
+  const hasCountRequirement = requirements.exactCountComparisonsPresent &&
+    requirements.subject !== null && requirements.target !== null &&
+    requirements.subject >= 0 && requirements.target >= 0 &&
+    !usesZeroRelationPath(requirements)
+
+  if (!hasCountRequirement) { return skeletons }
+
+  return skeletons.flatMap(s => augmentExistingRelation({ plan, skeleton: s, requirements, random }))
 }

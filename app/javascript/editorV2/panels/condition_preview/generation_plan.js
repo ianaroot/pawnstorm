@@ -5,7 +5,8 @@ import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/relational_utils'
 import {
-  COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
+  COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC, isValueMetric,
+  EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements, comparisonRequirementsFromDescriptors
 } from 'editorV2/panels/condition_preview/comparison_requirements'
 
@@ -31,18 +32,34 @@ function unaryTeamForActor(actor, movingTeam) {
 
 function valueFilteredSpeciesPool(pool, descriptors, side) {
   const descriptor = descriptors.find(d => d.side === side)
-  if (!descriptor || descriptor.metric !== VALUE_COMPARISON_METRIC) { return pool }
+  if (!descriptor) { return pool }
   if (descriptor.source !== EXACT_NUMBER_COMPARISON_SOURCE) { return pool }
   const total = Number(descriptor.total || 0)
+
+  if (descriptor.metric === INDIVIDUAL_VALUE_METRIC) {
+    switch (descriptor.comparator) {
+      case 'equal_to':               return pool.filter(s => materialValue(s) === total)
+      case 'less_than':              return pool.filter(s => materialValue(s) < total)
+      case 'less_than_or_equal_to':  return pool.filter(s => materialValue(s) <= total)
+      case 'greater_than':           return pool.filter(s => materialValue(s) > total)
+      case 'greater_than_or_equal_to': return pool.filter(s => materialValue(s) >= total)
+      default:                       return pool
+    }
+  }
+
+  if (descriptor.metric === AGGREGATE_VALUE_METRIC) {
+    switch (descriptor.comparator) {
+      case 'less_than':              return pool.filter(s => materialValue(s) < total)
+      case 'less_than_or_equal_to':  return pool.filter(s => materialValue(s) <= total)
+      default:                       return pool
+    }
+  }
+
+  // legacy 'value' metric
   switch (descriptor.comparator) {
-    case 'equal_to':
-      return pool.filter(species => materialValue(species) <= total)
-    case 'less_than':
-      return pool.filter(species => materialValue(species) < total)
-    case 'less_than_or_equal_to':
-      return pool.filter(species => materialValue(species) <= total)
-    default:
-      return pool
+    case 'less_than':              return pool.filter(s => materialValue(s) < total)
+    case 'less_than_or_equal_to':  return pool.filter(s => materialValue(s) <= total)
+    default:                       return pool
   }
 }
 
@@ -94,11 +111,12 @@ export function buildRelationalPlan(payload, options = {}) {
     const descriptor = comparisons[index]
     if (descriptor.source === PRIOR_BOARD_COMPARISON_SOURCE && ![
       COUNT_COMPARISON_METRIC,
-      VALUE_COMPARISON_METRIC
+      INDIVIDUAL_VALUE_METRIC,
+      AGGREGATE_VALUE_METRIC
     ].includes(descriptor.metric)) {
       return { status: 'unsupported', reason: 'Prior-board relational comparisons are not supported yet.' }
     }
-    if (![COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC].includes(descriptor.metric)) {
+    if (![COUNT_COMPARISON_METRIC, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC].includes(descriptor.metric)) {
       return { status: 'unsupported', reason: `${descriptor.metric} relational comparisons are not supported yet.` }
     }
     if (descriptor.metric === COUNT_COMPARISON_METRIC && ![
@@ -107,7 +125,7 @@ export function buildRelationalPlan(payload, options = {}) {
     ].includes(descriptor.source)) {
       return { status: 'unsupported', reason: 'This relational comparison source is not supported yet.' }
     }
-    if (descriptor.metric === VALUE_COMPARISON_METRIC && ![
+    if (isValueMetric(descriptor.metric) && ![
       EXACT_NUMBER_COMPARISON_SOURCE,
       PRIOR_BOARD_COMPARISON_SOURCE,
       'moved_piece',
@@ -210,7 +228,7 @@ function mergeConstraints(base, extra) {
 
 function expandDescriptorVariants(descriptors) {
   return descriptors.reduce((variants, descriptor) => {
-    const options = descriptor.metric === VALUE_COMPARISON_METRIC
+    const options = isValueMetric(descriptor.metric)
       ? valueSourceOptions(descriptor)
       : [{
         resolvedTotal: descriptor.total,
@@ -243,7 +261,7 @@ function expandDescriptorVariants(descriptors) {
 
 export function expandRelationalPlanSources(plan) {
   if (!plan.comparisonDescriptors.some(descriptor => (
-    descriptor.metric === VALUE_COMPARISON_METRIC &&
+    isValueMetric(descriptor.metric) &&
     ![EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE].includes(descriptor.source)
   ))) {
     return [plan]

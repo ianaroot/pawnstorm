@@ -1349,6 +1349,119 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(false)
     })
 
+    it('does not double-count a single subject that participates in multiple pairs when computing subject aggregate_value', () => {
+      // wP e4 attacks bN d5 and bB f5 — one pawn, two enemies. Pairs: (e4,d5), (e4,f5).
+      // Aggregate over unique subject positions = value(wP) = 1, not 1+1=2.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e4: 'wP',
+          d5: 'bN',
+          f5: 'bB',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'aggregate_value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('counts each unique subject once when multiple pairs share subjects with multiple targets', () => {
+      // wP a4 attacks bR b5; wP e4 attacks bN d5 and bB f5.
+      // Pairs: (a4,b5), (e4,d5), (e4,f5). Unique subjects: {a4, e4}. Aggregate = 1+1 = 2.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a4: 'wP',
+          b5: 'bR',
+          e4: 'wP',
+          d5: 'bN',
+          f5: 'bB',
+          h2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'aggregate_value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('does not double-count a single target that is attacked by multiple subjects when computing target aggregate_value', () => {
+      // wP c4 and wP e4 both attack bN d5. Pairs: (c4,d5), (e4,d5).
+      // Aggregate over unique target positions = value(bN) = 3, not 3+3=6.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c4: 'wP',
+          e4: 'wP',
+          d5: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'equal_to',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 3
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
     it('returns true for count+aggregate_value combinatorial when two pawns combined attacked value exceeds threshold', () => {
       // wP c5 attacks bR d6 (5), wP f5 attacks bR e6 (5). Both groups sum 5.
       // Find 2 groups with combined sum > 8: 5+5=10 > 8 → true.

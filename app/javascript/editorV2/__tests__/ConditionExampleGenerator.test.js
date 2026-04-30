@@ -98,7 +98,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'attack',
       target: 'enemy',
       targetFilter: 'any',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'greater_than',
       subjectComparisonSource: 'enemy'
     }, { random: seededRandom(11) })
@@ -115,7 +115,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'greater_than',
       subjectComparisonSource: 'prior_board_state'
     }
@@ -140,7 +140,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'less_than',
       subjectComparisonSource: 'prior_board_state'
     }
@@ -165,7 +165,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'equal_to',
       subjectComparisonSource: 'prior_board_state'
     }
@@ -418,11 +418,11 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      targetComparisonMetric: 'value',
+      targetComparisonMetric: 'aggregate_value',
       targetComparator: 'equal_to',
       targetComparisonSource: 'exact_number',
       targetComparisonSourceTotal: 1,
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'equal_to',
       subjectComparisonSource: 'exact_number',
       subjectComparisonSourceTotal: 8
@@ -448,7 +448,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'greater_than',
       subjectComparisonSource: 'moved_piece'
     }
@@ -472,7 +472,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'attack',
       target: 'enemy',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'greater_than',
       subjectComparisonSource: 'captured_piece'
     }
@@ -496,7 +496,7 @@ describe('ConditionExampleGenerator', () => {
       operator: 'adjacent',
       target: 'enemy',
       targetFilter: 'pawn',
-      subjectComparisonMetric: 'value',
+      subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'greater_than',
       subjectComparisonSource: 'enemy_captured_piece'
     }
