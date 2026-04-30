@@ -485,6 +485,18 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
+  it('uses forward generation for moved_piece mobility > prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'mobility', comparator: 'greater_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(804) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
   it('uses forward generation for moved_piece value > prior_board_state via promotion', () => {
     const payload = {
       version: 2, kind: 'unary',
