@@ -9,7 +9,7 @@ import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode
 } from 'editorV2/panels/condition_preview/board_utils'
-import { placePiece } from '../piece_placement'
+import { placePiece, legalPlacementForSpecies } from '../piece_placement'
 import { placeKingsIfAbsent } from '../board_utils'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
@@ -94,6 +94,7 @@ function pickMoverSpecies(plan, side, random) {
 // Move captures an enemy shielder, decreasing shield count.
 
 function generateShieldDecreaseCapture({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (plan.operator !== 'shield' || driver.pbsDirection !== '-') { return null }
 
@@ -107,24 +108,52 @@ function generateShieldDecreaseCapture({ driver, combinedPlan, random }) {
   let pieces = placePiece(new Map(), targetPos, pieceCode(targetTeam, targetSpecies))
   if (!pieces) { return null }
 
-  const step = pickRandom([...RAY_STEPS], random)
+  // Two flavors, alternated by random choice:
+  //   moverIsAttacker=true:  the slider that creates the shield ray is itself the mover.
+  //                          Three-piece minimum (king + shielder + mover-slider).
+  //   moverIsAttacker=false: a separate slider sits on the ray; the mover is a different
+  //                          piece that walks in to capture the shielder.
+  const moverIsAttacker = random() < 0.5
+
+  let step
+  let attackerSpecies
+  if (moverIsAttacker) {
+    attackerSpecies = pickRandom([Board.QUEEN, Board.ROOK, Board.BISHOP], random)
+    if (!attackerSpecies) { return null }
+    const stepsForSpecies = attackerSpecies === Board.ROOK ? [1, -1, 8, -8]
+      : attackerSpecies === Board.BISHOP ? [7, -7, 9, -9]
+      : [1, -1, 8, -8, 7, -7, 9, -9]
+    step = pickRandom(stepsForSpecies, random)
+  } else {
+    step = pickRandom([...RAY_STEPS], random)
+    attackerSpecies = pickRandom(shieldAttackerSpeciesForStep(step), random)
+    if (!attackerSpecies) { return null }
+  }
+
   const shielderPos = nextPositionOnRay(targetPos, -step)
   if (shielderPos === null) { return null }
+  const shielderSpecies = pickRandom(plan.subjectSpeciesPool, random)
+  if (!shielderSpecies) { return null }
+  pieces = placePiece(pieces, shielderPos, pieceCode(plan.subjectTeam, shielderSpecies))
+  if (!pieces) { return null }
 
   const attackerDistance = 1 + Math.floor(random() * 3)
   let attackerPos = shielderPos
   for (let i = 0; i < attackerDistance; i += 1) {
     attackerPos = nextPositionOnRay(attackerPos, -step)
     if (attackerPos === null) { return null }
+    if (pieces.has(attackerPos)) { return null }
   }
 
-  const shielderSpecies = pickRandom(plan.subjectSpeciesPool, random)
-  if (!shielderSpecies) { return null }
-  pieces = placePiece(pieces, shielderPos, pieceCode(plan.subjectTeam, shielderSpecies))
-  if (!pieces) { return null }
+  if (moverIsAttacker) {
+    pieces = placePiece(pieces, attackerPos, pieceCode(movingTeam, attackerSpecies))
+    if (!pieces) { return null }
+    return tryFinalize({
+      pieces, moverOrigin: attackerPos, moverEnd: shielderPos,
+      movingTeam, random, requireCapture: true
+    })
+  }
 
-  const attackerSpecies = pickRandom(shieldAttackerSpeciesForStep(step), random)
-  if (!attackerSpecies) { return null }
   pieces = placePiece(pieces, attackerPos, pieceCode(Board.opposingTeam(targetTeam), attackerSpecies))
   if (!pieces) { return null }
 
@@ -143,63 +172,12 @@ function generateShieldDecreaseCapture({ driver, combinedPlan, random }) {
   return null
 }
 
-// ===== Pattern E2 (shield-decrease via slider-as-attacker capture) =====
-// The mover IS the slider that creates the shield ray. On prior board, mover (slider)
-// attacks the shielder along a ray that, if shielder weren't there, would also hit the king.
-// Move: slider captures shielder. Mover ends at shielder's old position (adjacent to king).
-// Three pieces total: king, shielder, mover (slider). Cleaner than E1 which uses a separate attacker.
-
-function generateShieldDecreaseSliderCapture({ driver, combinedPlan, random }) {
-  const plan = driver.plan
-  if (plan.operator !== 'shield' || driver.pbsDirection !== '-') { return null }
-
-  const movingTeam = combinedPlan.movingTeam
-  const targetTeam = plan.targetTeam
-
-  const targetSpecies = pickRandom(plan.targetSpeciesPool, random)
-  if (!targetSpecies) { return null }
-  const targetPos = randomPosition(random)
-  if (targetPos === null) { return null }
-  let pieces = placePiece(new Map(), targetPos, pieceCode(targetTeam, targetSpecies))
-  if (!pieces) { return null }
-
-  // Pick a slider species for the mover.
-  const sliderSpecies = pickRandom([Board.QUEEN, Board.ROOK, Board.BISHOP], random)
-  const stepsForSpecies = sliderSpecies === Board.ROOK ? [1, -1, 8, -8]
-    : sliderSpecies === Board.BISHOP ? [7, -7, 9, -9]
-    : [1, -1, 8, -8, 7, -7, 9, -9]
-  const step = pickRandom(stepsForSpecies, random)
-
-  // Shielder one step from target in -step direction.
-  const shielderPos = nextPositionOnRay(targetPos, -step)
-  if (shielderPos === null) { return null }
-  const shielderSpecies = pickRandom(plan.subjectSpeciesPool, random)
-  if (!shielderSpecies) { return null }
-  pieces = placePiece(pieces, shielderPos, pieceCode(plan.subjectTeam, shielderSpecies))
-  if (!pieces) { return null }
-
-  // Slider further along -step from shielder, with empty squares between for the slider's ray.
-  const sliderDistance = 1 + Math.floor(random() * 3)
-  let sliderPos = shielderPos
-  for (let i = 0; i < sliderDistance; i += 1) {
-    sliderPos = nextPositionOnRay(sliderPos, -step)
-    if (sliderPos === null) { return null }
-    if (pieces.has(sliderPos)) { return null }
-  }
-
-  pieces = placePiece(pieces, sliderPos, pieceCode(movingTeam, sliderSpecies))
-  if (!pieces) { return null }
-
-  const finalized = tryFinalize({ pieces, moverOrigin: sliderPos, moverEnd: shielderPos, movingTeam, random, requireCapture: true })
-  if (finalized) { return finalized }
-  return null
-}
-
 // ===== Pattern A (mover becomes subject) for attack/defend/adjacent =====
 // Mover ends at a position with [operator] relation to target.
 // Mover at origin does not have that relation. Hence count increases.
 
 function generateMoverBecomesSubject({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '+') { return null }
   if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
@@ -243,6 +221,7 @@ function generateMoverBecomesSubject({ driver, combinedPlan, random }) {
 // Mover at origin had the relation to target; at end, doesn't. Count decreases.
 
 function generateMoverLeavesSubject({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '-') { return null }
   if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
@@ -288,6 +267,7 @@ function generateMoverLeavesSubject({ driver, combinedPlan, random }) {
 // Mover captures a participant on the relation, removing it from the after-board.
 
 function generateCaptureDecreasesRelation({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '-') { return null }
   if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
@@ -360,6 +340,7 @@ function generateCaptureDecreasesRelation({ driver, combinedPlan, random }) {
 // Mover ends at a position attacked/defended by an existing piece. Count increases.
 
 function generateMoverBecomesTarget({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '+') { return null }
   if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
@@ -404,6 +385,7 @@ function generateMoverBecomesTarget({ driver, combinedPlan, random }) {
 // Mover at origin was attacked/defended by an existing piece; at end, isn't.
 
 function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '-') { return null }
   if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
@@ -447,6 +429,7 @@ function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
 // After: mover off the ray; slider attacks target. Count increases.
 
 function generateMoverUnblocksRay({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '+') { return null }
   if (!['attack', 'defend'].includes(plan.operator)) { return null }
@@ -505,6 +488,7 @@ function generateMoverUnblocksRay({ driver, combinedPlan, random }) {
 // After: mover ends on the ray, blocking. Slider no longer attacks target. Count decreases.
 
 function generateMoverBlocksRay({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '-') { return null }
   if (!['attack', 'defend'].includes(plan.operator)) { return null }
@@ -558,7 +542,8 @@ function generateMoverBlocksRay({ driver, combinedPlan, random }) {
 
 function generateMoverMobilityChange(direction) {
   return ({ driver, combinedPlan, random }) => {
-    const plan = driver.plan
+    if (!driver) { return null }
+  const plan = driver.plan
     if (plan.kind !== 'unary') { return null }
     if (plan.subject !== 'moved_piece') { return null }
     if (plan.operator !== 'mobility') { return null }
@@ -643,6 +628,7 @@ function findReachingBoth({ origin, dest, operator, pool, basePieces }) {
 // Yields count = N = N (typically N=1) for moved_piece-as-subject `=` PBS chains.
 
 function generateMoverPreservesSubject({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '=') { return null }
   if (plan.kind !== 'relational') { return null }
@@ -705,6 +691,7 @@ function generateMoverPreservesSubject({ driver, combinedPlan, random }) {
 // Yields count = N = N for moved_piece-as-target `=` PBS chains.
 
 function generateMoverPreservesTarget({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '=') { return null }
   if (plan.kind !== 'relational') { return null }
@@ -764,6 +751,7 @@ function generateMoverPreservesTarget({ driver, combinedPlan, random }) {
 // (king moves between unattacked squares); for non-king, broader equality cases.
 
 function generateStableCountPbs({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (driver.pbsDirection !== '=') { return null }
   if (plan.kind !== 'relational') { return null }
@@ -801,6 +789,7 @@ function generateStableCountPbs({ driver, combinedPlan, random }) {
 // ===== Promotion pattern (unary moved_piece value > prior) =====
 
 function generatePromotionForValueIncrease({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
   const plan = driver.plan
   if (plan.kind !== 'unary') { return null }
   if (plan.subject !== 'moved_piece') { return null }
@@ -837,7 +826,6 @@ function generatePromotionForValueIncrease({ driver, combinedPlan, random }) {
 
 export const PATTERNS = [
   { name: 'E:shield-decrease-capture', generate: generateShieldDecreaseCapture },
-  { name: 'E2:shield-decrease-slider-capture', generate: generateShieldDecreaseSliderCapture },
   { name: 'A:mover-becomes-subject', generate: generateMoverBecomesSubject },
   { name: 'B:mover-leaves-subject', generate: generateMoverLeavesSubject },
   { name: 'E:capture-decreases-relation', generate: generateCaptureDecreasesRelation },
