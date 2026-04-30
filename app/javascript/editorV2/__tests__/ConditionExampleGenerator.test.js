@@ -460,6 +460,44 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('uses forward generation for allied attack enemy count > prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(801) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
+  it('uses forward generation for allied defend allied count < prior_board_state via mover-leaves-target', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'defend',
+      target: 'allied', targetFilter: 'pawn',
+      subjectComparisonMetric: 'count', subjectComparator: 'less_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(802) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('uses forward generation for moved_piece value > prior_board_state via promotion', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'value', comparator: 'greater_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(803) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('builds verified examples via forward generation for the move-into-shield-break-with-defense chain', () => {
     const payloads = [
       { version: 2, kind: 'relational', subject: 'moved_piece', subjectFilter: 'any', operator: 'adjacent', target: 'enemy', targetFilter: 'king' },

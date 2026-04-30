@@ -5,21 +5,9 @@ import {
 } from 'editorV2/panels/condition_preview/example_utils'
 import { buildAggregatedResult, buildAggregatedHighlights } from '../move_collection'
 import { classifyPlan } from './plan_classifier'
-import { generateShieldDecreaseCapture } from './move_patterns'
+import { PATTERNS } from './move_patterns'
 
 const DEFAULT_ATTEMPTS_PER_DRIVER = 200
-
-function patternsApplicableToDriver(classification) {
-  const patterns = []
-  if (
-    classification.kind === 'relational' &&
-    classification.plan.operator === 'shield' &&
-    classification.pbsDirection === '-'
-  ) {
-    patterns.push({ name: 'E:shield-decrease-capture', generate: generateShieldDecreaseCapture })
-  }
-  return patterns
-}
 
 function buildExample({ priorBoard, moveObject, combinedPlan }) {
   const analysis = new CandidateMoveAnalysisV2({ board: priorBoard, moveObject })
@@ -60,8 +48,7 @@ export function collectForwardExamples({ combinedPlan, random, maxExamples = 30,
   const evaluator = new ConditionEvaluatorV2()
 
   driverLoop: for (const driver of drivers) {
-    const patterns = patternsApplicableToDriver(driver)
-    for (const pattern of patterns) {
+    for (const pattern of PATTERNS) {
       for (let attempt = 0; attempt < attemptsPerDriver; attempt += 1) {
         if (examples.length >= maxExamples) { break driverLoop }
         const result = pattern.generate({ driver, combinedPlan, random })
