@@ -485,6 +485,17 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
+  it('builds verified examples via hint resolver for the checkmate chain', () => {
+    const payloads = [
+      { version: 2, kind: 'relational', subject: 'allied', subjectFilter: 'any', operator: 'attack', target: 'enemy', targetFilter: 'king' },
+      { version: 2, kind: 'unary', subject: 'enemy', subjectFilter: 'any', operator: 'mobility', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(1001) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('produces N=1 (not just 0=0) examples for king subject of attack count = PBS', () => {
     const payload = {
       version: 2, kind: 'relational',
