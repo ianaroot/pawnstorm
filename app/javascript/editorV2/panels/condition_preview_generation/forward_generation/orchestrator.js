@@ -47,10 +47,14 @@ export function collectForwardExamples({ combinedPlan, random, maxExamples = 30,
   const seen = new Set()
   const evaluator = new ConditionEvaluatorV2()
 
-  driverLoop: for (const driver of drivers) {
-    for (const pattern of PATTERNS) {
-      for (let attempt = 0; attempt < attemptsPerDriver; attempt += 1) {
-        if (examples.length >= maxExamples) { break driverLoop }
+  // Round-robin through (driver, pattern) combinations so every applicable pattern
+  // gets a turn before any single pattern fills the pool. Each round attempts one
+  // generation per (driver, pattern) pair; we keep cycling until budget or pool full.
+  roundLoop: for (let round = 0; round < attemptsPerDriver; round += 1) {
+    if (examples.length >= maxExamples) { break }
+    for (const driver of drivers) {
+      for (const pattern of PATTERNS) {
+        if (examples.length >= maxExamples) { break roundLoop }
         const result = pattern.generate({ driver, combinedPlan, random })
         if (!result) { continue }
         const { priorBoard, moveObject } = result
