@@ -4,6 +4,8 @@ import { collectVerifiedExamples } from './move_collection'
 import { collectCastleExamples, collectPromotionExamples, collectEnPassantExamples } from './special_moves'
 import { buildUnaryWorkItems, collectUnaryExamples, buildPositionWorkItems, collectPositionExamples } from './unary_position_collection'
 import { mergeMoveKindExamples } from './enrichment'
+import { collectForwardExamples } from './forward_generation/orchestrator'
+import { combinedPlanHasPbs } from './forward_generation/plan_classifier'
 import {
   candidateIdentity, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
@@ -21,6 +23,7 @@ function makeAdder(seen) {
     const id = candidateIdentity(example)
     if (seen.has(id)) { return }
     seen.add(id)
+    if (!example.generationPath) { example.generationPath = 'reverse' }
     pool.push(example)
   }
 }
@@ -101,6 +104,12 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const positionPlans = plans.filter(p => p.kind === 'position')
 
   const activePlans = buildActiveCombinedPlans(combinedPlan)
+
+  // ── Forward generation for PBS-aware chains ──────────────────────────────
+  if (combinedPlanHasPbs(combinedPlan)) {
+    collectForwardExamples({ combinedPlan, random, maxExamples: MAX_CANDIDATE_POOL })
+      .forEach(ex => addUnique(ex, standardExamples))
+  }
 
   // ── Relational seed-based standard collection ────────────────────────────
   if (relationalPlans.length > 0) {

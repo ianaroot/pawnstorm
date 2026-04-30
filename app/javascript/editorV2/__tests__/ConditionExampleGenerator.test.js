@@ -460,6 +460,20 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('builds verified examples via forward generation for the move-into-shield-break-with-defense chain', () => {
+    const payloads = [
+      { version: 2, kind: 'relational', subject: 'moved_piece', subjectFilter: 'any', operator: 'adjacent', target: 'enemy', targetFilter: 'king' },
+      { version: 2, kind: 'relational', subject: 'enemy', subjectFilter: 'any', operator: 'shield', target: 'enemy', targetFilter: 'king', subjectComparisonMetric: 'count', subjectComparator: 'less_than', subjectComparisonSource: 'prior_board_state' },
+      { version: 2, kind: 'relational', subject: 'enemy', subjectFilter: 'pawn', operator: 'attack', target: 'moved_piece', targetFilter: 'any', subjectComparisonMetric: 'count', subjectComparator: 'equal_to', subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0 },
+      { version: 2, kind: 'relational', subject: 'allied', subjectFilter: 'any', operator: 'defend', target: 'moved_piece', targetFilter: 'any' }
+    ]
+
+    const preview = generateConditionExamples(payloads, { random: seededRandom(701) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('reuses an existing enemy king when a later plan in the chain also needs the enemy king', () => {
     const payloads = [
       {
