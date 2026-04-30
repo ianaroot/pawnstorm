@@ -149,7 +149,8 @@ function deriveVerifiedExample({ combinedPlan, priorBoard, moveObject, baseExamp
     geometryKey: `${baseExample.geometryKey}:enriched:${suffix}`,
     movedPieceInRelation,
     moveKind: baseExample.moveKind,
-    sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
+    sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject),
+    generationPath: baseExample.generationPath
   }
 }
 

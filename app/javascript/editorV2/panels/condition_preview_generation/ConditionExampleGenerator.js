@@ -13,6 +13,7 @@ import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparis
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
+const FORWARD_POOL_SHARE = 0.5
 const MAX_SEEDS_PER_VARIANT = 600
 const SPECIAL_MOVE_MS_RESERVE = 100
 
@@ -106,27 +107,36 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const activePlans = buildActiveCombinedPlans(combinedPlan)
 
   // ── Forward generation for PBS-aware chains ──────────────────────────────
+  // Cap forward's contribution to FORWARD_POOL_SHARE so reverse-gen retains room
+  // to surface its own variety (random board augmentation, enrichment-driven extras).
   if (combinedPlanHasPbs(combinedPlan)) {
-    collectForwardExamples({ combinedPlan, random, maxExamples: MAX_CANDIDATE_POOL })
+    const forwardCap = Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_SHARE)
+    collectForwardExamples({ combinedPlan, random, maxExamples: forwardCap })
       .forEach(ex => addUnique(ex, standardExamples))
   }
 
   // ── Relational seed-based standard collection ────────────────────────────
+  // Round-robin (activePlan, variant) tuples per attempt so no single tuple
+  // monopolizes the pool. activePlans expansion + variants both interleave.
   if (relationalPlans.length > 0) {
     const relDeadline = Date.now() + perPlanMs * relationalPlans.length
     const variants = effectiveVariants(combinedPlan)
-
-    outer: for (const activePlan of activePlans) {
+    const tuples = []
+    for (const activePlan of activePlans) {
       for (const variant of variants) {
-        let attempts = 0
-        while (attempts < MAX_SEEDS_PER_VARIANT && standardExamples.length < MAX_CANDIDATE_POOL && Date.now() <= relDeadline) {
-          attempts++
-          const seed = buildSeed(activePlan, MOVE_KIND_STANDARD, random)
-          if (!seed) { continue }
-          collectVerifiedExamples({ combinedPlan: activePlan, seed, variant, random })
-            .forEach(ex => addUnique(ex, standardExamples))
-        }
-        if (Date.now() > relDeadline) { break outer }
+        tuples.push({ activePlan, variant })
+      }
+    }
+
+    const maxRounds = MAX_SEEDS_PER_VARIANT
+    roundLoop: for (let round = 0; round < maxRounds; round += 1) {
+      if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > relDeadline) { break }
+      for (const { activePlan, variant } of tuples) {
+        if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > relDeadline) { break roundLoop }
+        const seed = buildSeed(activePlan, MOVE_KIND_STANDARD, random)
+        if (!seed) { continue }
+        collectVerifiedExamples({ combinedPlan: activePlan, seed, variant, random })
+          .forEach(ex => addUnique(ex, standardExamples))
       }
     }
   }
