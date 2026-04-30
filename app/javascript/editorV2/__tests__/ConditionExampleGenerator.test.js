@@ -485,6 +485,130 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
+  it('uses forward generation for allied attack count < prior_board_state via mover-leaves-subject (B)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'less_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1101) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
+  it('uses forward generation for enemy attack allied count > prior_board_state via mover-becomes-target (F)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any', operator: 'attack',
+      target: 'allied', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1102) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('uses forward generation for allied defend allied count > prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'defend',
+      target: 'allied', targetFilter: 'pawn',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1103) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('uses forward generation for moved_piece mobility < prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'mobility', comparator: 'less_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1104) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('uses forward generation for adjacent count < prior_board_state', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'adjacent',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'less_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1105) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('flags contradiction when a singular actor has count > 1', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 2
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1106) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/singular actor/i)
+  })
+
+  it('flags contradiction when a singular actor uses aggregate_value', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 4
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1107) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/aggregate value cannot be combined with a singular actor/i)
+  })
+
+  it('uses forward generation for allied any mobility > prior_board_state via group-mobility-increase pattern', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'mobility', comparator: 'greater_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1108) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('falls back to Strategy A direct-blocking when no king is available to put in check', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'enemy', subjectFilter: 'pawn',
+      operator: 'mobility', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1109) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+  })
+
+  it('uses forward generation for shield count < PBS pattern (slider-as-attacker variant exercised)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any', operator: 'shield',
+      target: 'enemy', targetFilter: 'king',
+      subjectComparisonMetric: 'count', subjectComparator: 'less_than', subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1110) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('builds verified examples via hint resolver for lone enemy mobility = 0', () => {
     const payload = {
       version: 2, kind: 'unary',
