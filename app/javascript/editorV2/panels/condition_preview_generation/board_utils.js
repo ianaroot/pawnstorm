@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import { placePiece } from './piece_placement'
 
 export const MAX_PAWNS_PER_TEAM = 8
 
@@ -141,7 +142,7 @@ function anyKingIsAdjacentTo(pieces, position) {
 }
 
 export function placeKingsIfAbsent(pieces, random) {
-  const result = clonePiecesMap(pieces)
+  let result = pieces
 
   for (const team of [Board.WHITE, Board.BLACK]) {
     if (teamHasKing(result, team)) { continue }
@@ -151,9 +152,16 @@ export function placeKingsIfAbsent(pieces, random) {
       random
     )
 
-    const pos = candidates.find(p => !anyKingIsAdjacentTo(result, p))
-    if (pos === undefined) { return null }
-    result.set(pos, `${team}${Board.KING}`)
+    let placed = false
+    for (const pos of candidates) {
+      if (anyKingIsAdjacentTo(result, pos)) { continue }
+      const next = placePiece(result, pos, `${team}${Board.KING}`)
+      if (next === null) { continue }
+      result = next
+      placed = true
+      break
+    }
+    if (!placed) { return null }
   }
 
   return result

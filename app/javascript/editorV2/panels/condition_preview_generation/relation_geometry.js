@@ -1,14 +1,15 @@
 import Board from 'gameplay/board'
 import { controlledSquares, nextPositionOnRay } from 'gameplay/board_query_utils'
 import {
-  pieceCode, clonePiecesMap,
+  pieceCode,
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
   RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep
 } from 'editorV2/panels/condition_preview/geometry_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import { shuffled, legalPlacementForSpecies } from './board_utils'
+import { shuffled } from './board_utils'
+import { placePiece, legalPlacementForSpecies, piecesSatisfyInvariants } from './piece_placement'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -45,11 +46,14 @@ function placeAttackDefendExtras({ plan, side, extraSpecies, anchorPosition, cur
       )
     }
     if (candidates.length === 0) { return null }
-    const position = candidates[0]
     const team = side === 'subject' ? plan.subjectTeam : plan.targetTeam
-    pieces = clonePiecesMap(pieces)
-    pieces.set(position, pieceCode(team, species))
-    placements.push({ position, species })
+    let placed = null
+    for (const position of candidates) {
+      const next = placePiece(pieces, position, pieceCode(team, species))
+      if (next !== null) { pieces = next; placed = position; break }
+    }
+    if (placed === null) { return null }
+    placements.push({ position: placed, species })
   }
   return { pieces, placements }
 }
@@ -65,11 +69,14 @@ function placeAdjacentExtras({ plan, side, extraSpecies, anchorPosition, current
       random
     )
     if (candidates.length === 0) { return null }
-    const position = candidates[0]
     const team = side === 'subject' ? plan.subjectTeam : plan.targetTeam
-    pieces = clonePiecesMap(pieces)
-    pieces.set(position, pieceCode(team, species))
-    placements.push({ position, species })
+    let placed = null
+    for (const position of candidates) {
+      const next = placePiece(pieces, position, pieceCode(team, species))
+      if (next !== null) { pieces = next; placed = position; break }
+    }
+    if (placed === null) { return null }
+    placements.push({ position: placed, species })
   }
   return { pieces, placements }
 }
@@ -133,10 +140,12 @@ function placeShieldExtras({ plan, side, extraSpecies, anchorRelationPosition, a
 
     if (!chosen) { return null }
 
-    pieces = clonePiecesMap(pieces)
     const relationTeam = side === 'subject' ? plan.subjectTeam : plan.targetTeam
-    pieces.set(chosen.relationPosition, pieceCode(relationTeam, species))
-    pieces.set(chosen.attackerPosition, pieceCode(attackerTeam, chosen.attackerSpecies))
+    const afterRelation = placePiece(pieces, chosen.relationPosition, pieceCode(relationTeam, species))
+    if (afterRelation === null) { return null }
+    const afterAttacker = placePiece(afterRelation, chosen.attackerPosition, pieceCode(attackerTeam, chosen.attackerSpecies))
+    if (afterAttacker === null) { return null }
+    pieces = afterAttacker
     placements.push({ position: chosen.relationPosition, species })
     usedSquares.add(chosen.relationPosition)
     usedSquares.add(chosen.attackerPosition)
@@ -199,7 +208,7 @@ export function buildConfigSkeletons({
       fixedSubjectPlacement,
       fixedTargetPlacement,
       reservedSquares
-    }),
+    }).filter(skeleton => piecesSatisfyInvariants(skeleton.pieces)),
     random
   )
 

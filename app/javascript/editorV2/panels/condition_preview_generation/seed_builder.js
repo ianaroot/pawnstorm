@@ -1,13 +1,11 @@
 import Board from 'gameplay/board'
 import {
-  mergeRelationPieces
-} from 'editorV2/panels/condition_preview/skeleton_builders'
-import {
   candidateSpecies,
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
 import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
-import { clonePiecesMap, shuffled, legalPlacementForSpecies } from './board_utils'
+import { shuffled } from './board_utils'
+import { placePiece, teamHasKing } from './piece_placement'
 import { buildSideConfigurations } from './configurations'
 import { buildConfigSkeletons } from './relation_geometry'
 
@@ -98,14 +96,6 @@ export function enPassantPresetsForTeam(team) {
 
 // ===== Required position pieces =====
 
-function teamAlreadyHasKing(pieces, team) {
-  const kingPiece = `${team}${Board.KING}`
-  for (const piece of pieces.values()) {
-    if (piece === kingPiece) { return true }
-  }
-  return false
-}
-
 function findExistingKingPlacement(team, pieces) {
   const kingPiece = `${team}${Board.KING}`
   for (const [position, piece] of pieces.entries()) {
@@ -116,22 +106,37 @@ function findExistingKingPlacement(team, pieces) {
   return null
 }
 
+// Optimization: skip king from "any"-style pools when team already has its king,
+// avoiding pointless config attempts that placePiece would reject.
 function filterKingIfTeamHasOne(pool, team, pieces) {
-  return teamAlreadyHasKing(pieces, team) ? pool.filter(s => s !== Board.KING) : pool
+  return teamHasKing(pieces, team) ? pool.filter(s => s !== Board.KING) : pool
 }
 
 function buildRequiredPieces(requiredPositions, random) {
-  const pieces = new Map()
+  let pieces = new Map()
   for (const [sq, { team, filter }] of requiredPositions.entries()) {
     const basePool = candidateSpecies(filter, null)
     if (!basePool || basePool.length === 0) { return null }
     const pool = filterKingIfTeamHasOne(basePool, team, pieces)
     if (pool.length === 0) { return null }
     const species = pool[Math.floor(random() * pool.length)]
-    const piece = `${team}${species}`
-    const existing = pieces.get(sq)
-    if (existing && existing !== piece) { return null }
-    pieces.set(sq, piece)
+    const next = placePiece(pieces, sq, `${team}${species}`)
+    if (next === null) { return null }
+    pieces = next
+  }
+  return pieces
+}
+
+// Idempotent merge: skip squares already holding the same piece, otherwise placePiece.
+// Used for fixed pieces from special-move presets that may overlap requiredPieces.
+function mergeFixedPieces(basePieces, fixedPieces, reservedSquares) {
+  let pieces = basePieces
+  for (const [position, piece] of fixedPieces.entries()) {
+    if (pieces.get(position) === piece) { continue }
+    if (reservedSquares.has(position)) { return null }
+    const next = placePiece(pieces, position, piece)
+    if (next === null) { return null }
+    pieces = next
   }
   return pieces
 }
@@ -147,8 +152,8 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
     : null
 
   const fixedPieces = specialPreset
-    ? mergeRelationPieces({ basePieces: requiredPieces, relationPieces: specialPreset.fixedPieces, reservedSquares: new Set() })
-    : clonePiecesMap(requiredPieces)
+    ? mergeFixedPieces(requiredPieces, specialPreset.fixedPieces, new Set())
+    : new Map(requiredPieces)
   if (!fixedPieces) { return null }
 
   const reservedSquares = specialPreset ? new Set(specialPreset.reservedSquares) : new Set()
@@ -251,10 +256,11 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
       for (let j = 0; j < 2 && extraPool.length > 0; j++) {
         const species = extraPool[Math.floor(random() * extraPool.length)]
         const free = Array.from({ length: 64 }, (_, k) => k)
-          .filter(sq => !currentPieces.has(sq) && !reservedSquares.has(sq) && legalPlacementForSpecies(sq, species))
+          .filter(sq => !currentPieces.has(sq) && !reservedSquares.has(sq))
         if (free.length === 0) { break }
-        currentPieces = new Map(currentPieces)
-        currentPieces.set(free[Math.floor(random() * free.length)], `${plan.targetTeam}${species}`)
+        const square = free[Math.floor(random() * free.length)]
+        const next = placePiece(currentPieces, square, `${plan.targetTeam}${species}`)
+        if (next !== null) { currentPieces = next }
       }
     }
   }
