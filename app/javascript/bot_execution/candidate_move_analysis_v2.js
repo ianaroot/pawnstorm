@@ -122,9 +122,11 @@ class CandidateMoveAnalysisV2 {
   }
 
   resolvedCapturedPiece() {
-    const species = this.capturedPieceSpecies()
+    const position = this.capturedPiecePosition()
+    if (position === null) return null
+    const species = this.board.pieceTypeAt(position)
     if (species === null) return null
-    return { species }
+    return { species, position }
   }
 
   resolvedEnemyMovedPiece(boardScope = AFTER_BOARD) {
@@ -146,7 +148,8 @@ class CandidateMoveAnalysisV2 {
     const recentMove = this.board.recentMoveContext
     if (!recentMove || recentMove.capturedPieceSpecies === null) return null
     return {
-      species: recentMove.capturedPieceSpecies
+      species: recentMove.capturedPieceSpecies,
+      position: recentMove.capturedPiecePosition ?? null
     }
   }
 

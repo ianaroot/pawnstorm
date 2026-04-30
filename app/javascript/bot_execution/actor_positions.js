@@ -21,6 +21,18 @@ export function relationalActorPositions(analysis, { actor, filter = "any", filt
       if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return [] }
       return [resolved.position]
     }
+    case "captured_piece": {
+      const resolved = analysis.resolvedCapturedPiece()
+      if (!resolved) { return [] }
+      if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return [] }
+      return [resolved.position]
+    }
+    case "enemy_captured_piece": {
+      const resolved = analysis.resolvedEnemyCapturedPiece()
+      if (!resolved || resolved.position === null) { return [] }
+      if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return [] }
+      return [resolved.position]
+    }
     default:
       throw new Error(`Unsupported actor: ${actor}`)
   }

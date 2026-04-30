@@ -460,6 +460,50 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('builds verified examples for unary captured piece count equal to 1', () => {
+    const payload = {
+      version: 2,
+      kind: 'unary',
+      subject: 'captured_piece',
+      subjectFilter: 'any',
+      operator: 'count',
+      comparator: 'equal_to',
+      target: 'exact_number',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(401) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('builds verified examples for unary captured piece count greater than 0', () => {
+    const payload = {
+      version: 2,
+      kind: 'unary',
+      subject: 'captured_piece',
+      subjectFilter: 'any',
+      operator: 'count',
+      comparator: 'greater_than',
+      target: 'exact_number',
+      targetTotal: 0
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(402) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('produces examples with exactly one king per team', () => {
     const payload = {
       kind: 'relational',
