@@ -98,11 +98,25 @@ export function enPassantPresetsForTeam(team) {
 
 // ===== Required position pieces =====
 
+function teamAlreadyHasKing(pieces, team) {
+  const kingPiece = `${team}${Board.KING}`
+  for (const piece of pieces.values()) {
+    if (piece === kingPiece) { return true }
+  }
+  return false
+}
+
+function filterKingIfTeamHasOne(pool, team, pieces) {
+  return teamAlreadyHasKing(pieces, team) ? pool.filter(s => s !== Board.KING) : pool
+}
+
 function buildRequiredPieces(requiredPositions, random) {
   const pieces = new Map()
   for (const [sq, { team, filter }] of requiredPositions.entries()) {
-    const pool = candidateSpecies(filter, null)
-    if (!pool || pool.length === 0) { return null }
+    const basePool = candidateSpecies(filter, null)
+    if (!basePool || basePool.length === 0) { return null }
+    const pool = filterKingIfTeamHasOne(basePool, team, pieces)
+    if (pool.length === 0) { return null }
     const species = pool[Math.floor(random() * pool.length)]
     const piece = `${team}${species}`
     const existing = pieces.get(sq)
@@ -154,14 +168,22 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
 
     const subjectPool = fixedSubjectPlacement
       ? [fixedSubjectPlacement.species]
-      : (plan.subject === 'moved_piece' && movedPiecePool
-          ? plan.subjectSpeciesPool.filter(s => movedPiecePool.includes(s))
-          : [...plan.subjectSpeciesPool])
+      : filterKingIfTeamHasOne(
+          plan.subject === 'moved_piece' && movedPiecePool
+            ? plan.subjectSpeciesPool.filter(s => movedPiecePool.includes(s))
+            : [...plan.subjectSpeciesPool],
+          plan.subjectTeam,
+          currentPieces
+        )
     const targetPool = fixedTargetPlacement
       ? [fixedTargetPlacement.species]
-      : (plan.target === 'moved_piece' && movedPiecePool
-          ? plan.targetSpeciesPool.filter(s => movedPiecePool.includes(s))
-          : [...plan.targetSpeciesPool])
+      : filterKingIfTeamHasOne(
+          plan.target === 'moved_piece' && movedPiecePool
+            ? plan.targetSpeciesPool.filter(s => movedPiecePool.includes(s))
+            : [...plan.targetSpeciesPool],
+          plan.targetTeam,
+          currentPieces
+        )
 
     if (usesZeroRelationPath(plan.requirements)) {
       relationalPositions.push(null)

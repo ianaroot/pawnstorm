@@ -460,6 +460,32 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('produces examples with exactly one king per team', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any'
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(301), maxExamples: 50 })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+
+    preview.examples.forEach(example => {
+      let whiteKings = 0
+      let blackKings = 0
+      example.afterBoard.layOut.forEach(piece => {
+        if (piece === Board.WHITE_KING) { whiteKings += 1 }
+        if (piece === Board.BLACK_KING) { blackKings += 1 }
+      })
+      expect(whiteKings).toBe(1)
+      expect(blackKings).toBe(1)
+    })
+  })
+
   it('highlights only the qualifying subset for count + aggregate combinatorial conditions', () => {
     const payload = {
       kind: 'relational',
