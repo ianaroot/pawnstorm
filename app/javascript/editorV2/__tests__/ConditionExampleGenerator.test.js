@@ -460,6 +460,34 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('highlights only the qualifying subset for count + aggregate combinatorial conditions', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'pawn',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number',
+      subjectComparisonSourceTotal: 2,
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      targetComparisonMetric: 'aggregate_value',
+      targetComparator: 'greater_than',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 8
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(201), maxExamples: 50 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+
+    preview.examples.forEach(example => {
+      expect(example.highlights.after.subjectPositions.length).toBe(2)
+    })
+  })
+
   it('produces aggregate_value > 4 target examples that include two-minor configurations, not only majors', () => {
     const payload = {
       kind: 'relational',

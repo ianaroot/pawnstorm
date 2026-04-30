@@ -2,13 +2,18 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
+import { findCombinatorialQualifyingGroups } from 'bot_execution/relational_qualifying'
 import { originCandidatesForSpecies, sortByDistanceFromRelation } from 'editorV2/panels/condition_preview/geometry_utils'
 import {
   legalPriorTurnState, moveKindForMoveObject, soundForMove, candidateIdentity,
   MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/example_utils'
 import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
-import { PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
+import {
+  PRIOR_BOARD_COMPARISON_SOURCE,
+  COUNT_COMPARISON_METRIC,
+  AGGREGATE_VALUE_METRIC
+} from 'editorV2/panels/condition_preview/comparison_requirements'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing
@@ -174,6 +179,58 @@ export function collectVerifiedMoves({
 
 // ===== buildAggregatedResult =====
 
+function combinatorialFilterArgs(plan) {
+  const descriptors = plan.comparisonDescriptors ?? []
+  const subjectDescriptor = descriptors.find(d => d.side === 'subject')
+  const targetDescriptor = descriptors.find(d => d.side === 'target')
+
+  const descriptorTotal = (descriptor) => Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
+
+  if (subjectDescriptor?.metric === COUNT_COMPARISON_METRIC && targetDescriptor?.metric === AGGREGATE_VALUE_METRIC) {
+    return {
+      groupBySide: 'subject', valueSide: 'target',
+      valueComparator: targetDescriptor.comparator,
+      valueReferenceTotal: descriptorTotal(targetDescriptor),
+      countComparator: subjectDescriptor.comparator,
+      countReferenceTotal: descriptorTotal(subjectDescriptor)
+    }
+  }
+
+  if (subjectDescriptor?.metric === AGGREGATE_VALUE_METRIC && targetDescriptor?.metric === COUNT_COMPARISON_METRIC) {
+    return {
+      groupBySide: 'target', valueSide: 'subject',
+      valueComparator: subjectDescriptor.comparator,
+      valueReferenceTotal: descriptorTotal(subjectDescriptor),
+      countComparator: targetDescriptor.comparator,
+      countReferenceTotal: descriptorTotal(targetDescriptor)
+    }
+  }
+
+  return null
+}
+
+function applyCombinatorialFilter(plan, result, analysis) {
+  const args = combinatorialFilterArgs(plan)
+  if (!args) { return result }
+
+  const qualifyingKeys = findCombinatorialQualifyingGroups({
+    pairs: result.pairs, board: analysis.afterBoard(), ...args
+  })
+  if (qualifyingKeys === null) { return result }
+
+  const keySet = new Set(qualifyingKeys)
+  const filteredPairs = result.pairs.filter(pair => {
+    const key = args.groupBySide === 'subject' ? pair.subjectPosition : pair.targetPosition
+    return keySet.has(key)
+  })
+
+  return {
+    pairs: filteredPairs,
+    subjectPositions: [...new Set(filteredPairs.map(p => p.subjectPosition))],
+    targetPositions: [...new Set(filteredPairs.map(p => p.targetPosition))]
+  }
+}
+
 export function buildAggregatedResult(combinedPlan, analysis) {
   let subjectPositions = []
   let targetPositions = []
@@ -181,8 +238,9 @@ export function buildAggregatedResult(combinedPlan, analysis) {
 
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
-      const result = analysis.relationalResult(plan.relationParams)
-      if (result.pairs.length === 0 && !plan.comparisonDescriptors?.some(descriptorAllowsZeroPairs)) { return null }
+      const rawResult = analysis.relationalResult(plan.relationParams)
+      if (rawResult.pairs.length === 0 && !plan.comparisonDescriptors?.some(descriptorAllowsZeroPairs)) { return null }
+      const result = applyCombinatorialFilter(plan, rawResult, analysis)
       subjectPositions = [...subjectPositions, ...result.subjectPositions]
       targetPositions = [...targetPositions, ...result.targetPositions]
       pairs = [...pairs, ...result.pairs]

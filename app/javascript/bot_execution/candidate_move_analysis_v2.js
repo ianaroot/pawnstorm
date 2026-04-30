@@ -11,6 +11,7 @@ import {
   comparisonSourceTotal
 } from "bot_execution/relational_analysis"
 import { positionFilteredPositions, positionMetricTotal } from "bot_execution/position_analysis"
+import { combinatorialQualifyingExists } from "bot_execution/relational_qualifying"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -328,53 +329,8 @@ class CandidateMoveAnalysisV2 {
     return sum
   }
 
-  relationalCombinatorial({ pairs, groupBySide, valueSide, valueComparator, valueReferenceTotal, countComparator, countReferenceTotal }) {
-    const board = this.afterBoard()
-    const groupMap = new Map()
-    for (const pair of pairs) {
-      const key = groupBySide === "subject" ? pair.subjectPosition : pair.targetPosition
-      const valuePosition = valueSide === "subject" ? pair.subjectPosition : pair.targetPosition
-      groupMap.set(key, (groupMap.get(key) ?? 0) + materialValue(board.pieceTypeAt(valuePosition)))
-    }
-    const valueSums = Array.from(groupMap.values())
-    const M = valueSums.length
-    const minSize = this.combinatorialMinSize(countComparator, countReferenceTotal)
-    const maxSize = this.combinatorialMaxSize(countComparator, countReferenceTotal, M)
-    for (let size = minSize; size <= maxSize; size++) {
-      if (this.combinatorialSearch(valueSums, size, valueComparator, valueReferenceTotal)) { return true }
-    }
-    return false
-  }
-
-  combinatorialSearch(valueSums, size, comparator, referenceTotal, startIdx = 0, currentSum = 0) {
-    if (size === 0) { return this.relationalCompareValues(comparator, currentSum, referenceTotal) }
-    if (startIdx + size > valueSums.length) { return false }
-    for (let i = startIdx; i <= valueSums.length - size; i++) {
-      if (this.combinatorialSearch(valueSums, size - 1, comparator, referenceTotal, i + 1, currentSum + valueSums[i])) { return true }
-    }
-    return false
-  }
-
-  combinatorialMinSize(comparator, n) {
-    switch (comparator) {
-      case "equal_to": return n
-      case "greater_than": return n + 1
-      case "less_than": return 0
-      case "greater_than_or_equal_to": return n
-      case "less_than_or_equal_to": return 0
-      default: throw new Error(`Unknown comparator: ${comparator}`)
-    }
-  }
-
-  combinatorialMaxSize(comparator, n, total) {
-    switch (comparator) {
-      case "equal_to": return n
-      case "greater_than": return total
-      case "less_than": return Math.max(0, n - 1)
-      case "greater_than_or_equal_to": return total
-      case "less_than_or_equal_to": return n
-      default: throw new Error(`Unknown comparator: ${comparator}`)
-    }
+  relationalCombinatorial(args) {
+    return combinatorialQualifyingExists({ ...args, board: this.afterBoard() })
   }
 
   relationalCompareValues(comparator, left, right) {
