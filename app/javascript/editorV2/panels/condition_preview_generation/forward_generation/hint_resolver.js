@@ -62,9 +62,23 @@ function pieceMatchesFilter(species, filter) {
 }
 
 // Apply ACTOR_MOBILITY_AT_MOST hint: for each matching piece on the board, ensure
-// its mobility (legal-move count) is ≤ hint.maxMobility. Achieve by placing
-// blockers/attackers to reduce excess move-targets.
+// its mobility (legal-move count) is ≤ hint.maxMobility. Achieves the semantic
+// property "actor's mobility ≤ N" via one of these strategies:
+//   - C (check + block): place an allied attacker giving check on a matching king.
+//     King's legal moves are then restricted to escape; non-king matching pieces
+//     are restricted to defending moves. Strategy A runs on top to handle remaining
+//     mobility. Most useful for mobility=0 with king in scope.
+//   - A (direct block): place blockers/attackers at excess move-targets.
+//
+// Both strategies satisfy the same hint. Resolver tries C first (when applicable),
+// falls back to A.
 function applyMobilityAtMost(pieces, hint, movingTeam, random) {
+  const cResult = tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random)
+  if (cResult !== null) { return cResult }
+  return applyStrategyDirectBlock(pieces, hint, movingTeam, random)
+}
+
+function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
   const matching = []
   for (const [position, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
@@ -78,6 +92,39 @@ function applyMobilityAtMost(pieces, hint, movingTeam, random) {
     if (result === null) { return null }
   }
   return result
+}
+
+function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
+  if (hint.maxMobility !== 0) { return null }
+  if (!pieceMatchesFilter(Board.KING, hint.filter)) { return null }
+
+  const kingCode = pieceCode(hint.team, Board.KING)
+  let kingPos = null
+  for (const [pos, piece] of pieces.entries()) {
+    if (piece === kingCode) { kingPos = pos; break }
+  }
+  if (kingPos === null) { return null }
+
+  const attackerPool = [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN]
+  for (const attackerSpecies of shuffled(attackerPool, random)) {
+    for (const attackerPos of shuffled([...ALL_POSITIONS], random)) {
+      if (attackerPos === kingPos) { continue }
+      if (pieces.has(attackerPos)) { continue }
+      const withAttacker = placePiece(pieces, attackerPos, pieceCode(movingTeam, attackerSpecies))
+      if (!withAttacker) { continue }
+      let attacks
+      try {
+        const board = piecesIntoBoard(withAttacker, hint.team)
+        attacks = controlledSquares({ board, attackerPosition: attackerPos })
+      } catch { continue }
+      if (!attacks.includes(kingPos)) { continue }
+
+      let blocked = null
+      try { blocked = applyStrategyDirectBlock(withAttacker, hint, movingTeam, random) } catch { blocked = null }
+      if (blocked !== null) { return blocked }
+    }
+  }
+  return null
 }
 
 function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTeam, random) {
@@ -223,7 +270,9 @@ export function resolveViaHints({ combinedPlan, random }) {
   if (pieces === null || pieces.size === 0) { return null }
 
   for (const hint of hints) {
-    pieces = applyHint(pieces, hint, movingTeam, random)
+    try {
+      pieces = applyHint(pieces, hint, movingTeam, random)
+    } catch { pieces = null }
     if (pieces === null) { return null }
   }
 

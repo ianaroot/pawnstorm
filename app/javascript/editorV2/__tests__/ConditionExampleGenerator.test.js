@@ -485,6 +485,19 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
+  it('builds verified examples via hint resolver for lone enemy mobility = 0', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'mobility', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2001) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+  })
+
   it('builds verified examples via hint resolver for the checkmate chain', () => {
     const payloads = [
       { version: 2, kind: 'relational', subject: 'allied', subjectFilter: 'any', operator: 'attack', target: 'enemy', targetFilter: 'king' },
