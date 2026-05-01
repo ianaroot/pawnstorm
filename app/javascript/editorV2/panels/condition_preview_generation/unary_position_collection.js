@@ -1,15 +1,13 @@
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
-import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
-import Rules from 'gameplay/rules'
 import { relativeRank, relativeToAbsolutePosition, materialValue } from 'gameplay/board_query_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/geometry_utils'
 import {
-  candidateSpecies, legalPriorTurnState, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD
+  candidateSpecies, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD
 } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
-  shuffled, legalPlacementForSpecies, placeKingsIfAbsent, teamHasKing, MAX_PAWNS_PER_TEAM
+  clonePiecesMap, squareIsOccupied, shuffled,
+  legalPlacementForSpecies, teamHasKing, MAX_PAWNS_PER_TEAM
 } from './board_utils'
 import { collectVerifiedMoves, buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
 
@@ -20,7 +18,6 @@ const VALUE_CAP_OVER_MINIMUM = 12
 const SINGULAR_BOARD_ATTEMPTS = 50
 const MOBILITY_BOARD_ATTEMPTS = 100
 const POSITION_BOARD_ATTEMPTS = 80
-const MAX_FORWARD_MOBILITY_ATTEMPTS = 20
 const BLOCKER_SPECIES_POOL = Object.freeze([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN, Board.QUEEN])
 const MAX_PIECE_MOBILITY = 27
 const SINGULAR_CROSS_ACTOR_TARGETS = Object.freeze(new Set(['captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
