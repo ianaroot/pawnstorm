@@ -4,6 +4,29 @@
 // Adding a new predicate type means adding a compile rule that emits semantic
 // hints derived from the predicate's meaning. The resolver (separate module)
 // is the only place that turns hints into placements.
+//
+// ===== Hint design rules (anti-patterns to avoid) =====
+//
+// Granular hints constrain the resulting board's properties (counts, totals,
+// relationships, mobility) — never its specific piece-square assignments. The
+// resolver retains all positional freedom. Bias creeps in only when:
+//
+//   1. Hints contain `square=` (procedural). Disallowed by contract — a hint
+//      that names a square is a chain-shape template in disguise.
+//   2. The resolver short-circuits to the first valid placement instead of
+//      sampling. Mitigation: shuffled iteration + random species selection
+//      (see buildMinimumSeed and Strategy A in hint_resolver).
+//   3. Strategies are ordered such that one always wins. Mitigation:
+//      round-robin or random strategy choice in the resolver, not always
+//      "try C then A" — see hint_resolver for current strategy ordering.
+//
+// ===== Diversity test (guardrail when adding a hint type) =====
+//
+// When introducing a new hint type, generate 30 boards from the same chain
+// and inspect piece-square distribution. If pieces cluster on the same square
+// more than ~20% of the time, the hint is over-narrow — likely smuggling a
+// position commitment, or pinning the resolver to one strategy. Loosen the
+// hint or add resolver freedom before merging.
 
 export const HINT_TYPES = Object.freeze({
   RELATION_HOLDS: 'relation_holds',

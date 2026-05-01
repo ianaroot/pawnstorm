@@ -4,6 +4,21 @@
 // satisfies the hint's semantic property by placing pieces, not by following
 // chain-specific patterns. Adding a new hint type means adding one application
 // function; existing application functions don't change.
+//
+// ===== Diversity discipline =====
+//
+// Hints constrain board properties; the resolver retains positional freedom.
+// To preserve diversity across N runs of the same chain:
+//
+//   - Iterate candidate squares and species via shuffled() / pickRandom(),
+//     never deterministic for-each. (See buildMinimumSeed, applyStrategyDirectBlock.)
+//   - When a hint has multiple satisfying strategies, do NOT always try them in
+//     a fixed order — that biases output toward whichever strategy fires first.
+//     Prefer round-robin or random strategy choice. The current
+//     applyMobilityAtMost still tries C-then-A; rotate it before adding more
+//     strategies, or new hint types will inherit the bias.
+//   - Hints must not name squares. If you find yourself reading hint.square,
+//     stop — that is a chain-shape template, not a semantic hint.
 
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
@@ -298,9 +313,11 @@ export function resolveViaHints({ combinedPlan, random }) {
   if (pieces === null) { return null }
 
   // Find a legal move for the moving team that lands on this exact after-state.
+  // Kings are valid movers — Rules.getMoveObject + legalPriorTurnState reject
+  // illegal king moves (into check, etc.); no need to filter them here.
   const piecesByTeam = []
   for (const [pos, piece] of pieces.entries()) {
-    if (piece.charAt(0) === movingTeam && piece.slice(1) !== Board.KING) {
+    if (piece.charAt(0) === movingTeam) {
       piecesByTeam.push({ position: pos, species: piece.slice(1) })
     }
   }

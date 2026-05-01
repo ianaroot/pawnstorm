@@ -830,8 +830,9 @@ function generateGroupMobilityIncrease({ driver, combinedPlan, random }) {
     if (next) { pieces = next; placed += 1 }
   }
 
+  // Kings are valid movers — Rules validates king moves like any other piece.
   const hasMovingPiece = Array.from(pieces.values()).some(p =>
-    p.charAt(0) === movingTeam && p.slice(1) !== Board.KING
+    p.charAt(0) === movingTeam
   )
   if (!hasMovingPiece) {
     const fallback = pickRandom(BLOCKER_POOL_FOR_MOBILITY, random)
@@ -849,7 +850,7 @@ function generateGroupMobilityIncrease({ driver, combinedPlan, random }) {
 
   const movers = shuffled(
     Array.from(piecesWithKings.entries()).filter(([, p]) =>
-      p.charAt(0) === movingTeam && p.slice(1) !== Board.KING
+      p.charAt(0) === movingTeam
     ),
     random
   )

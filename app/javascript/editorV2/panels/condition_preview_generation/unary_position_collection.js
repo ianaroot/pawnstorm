@@ -677,9 +677,14 @@ function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, val
         return pool[Math.floor(random() * pool.length)]
       }).filter(Boolean)
     : Array.from({ length: item.count || 1 }, () => {
+        // King is a valid candidate when only one piece is being placed; with
+        // count >= 2 we filter king out to avoid the inevitable two-king
+        // invariant rejection. (Same spirit as filterKingIfTeamHasOne in
+        // seed_builder; here `pieces` is fresh, so count is the discriminator.)
+        const allowKing = (item.count || 1) === 1
         const pool = item.species
           ? placeablePool.filter(s => s === item.species)
-          : placeablePool.filter(s => s !== Board.KING)
+          : (allowKing ? placeablePool : placeablePool.filter(s => s !== Board.KING))
         if (pool.length === 0) { return null }
         return pool[Math.floor(random() * pool.length)]
       }).filter(Boolean)
