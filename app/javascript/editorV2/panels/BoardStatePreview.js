@@ -267,6 +267,12 @@ class BoardStatePreview {
     boardEl.style.transition = `opacity ${BOARD_FADE}ms ease`
     renderLayout(boardEl, example.priorBoard.layOut, example.highlights?.prior || {})
     this._boardEl = boardEl
+
+    const pathBadge = document.createElement('span')
+    pathBadge.className = `mini-board__path-badge mini-board__path-badge--${example.generationPath}`
+    pathBadge.textContent = example.generationPath === 'forward' ? 'F' : 'R'
+    boardEl.appendChild(pathBadge)
+
     left.appendChild(boardEl)
 
     // Right: stacked buttons
