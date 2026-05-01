@@ -357,6 +357,11 @@ export function buildPositionPlan(payload, options = {}) {
     subject: payload.subject,
     subjectFilter: payload.subjectFilter || 'any',
     subjectFilterMode: payload.subjectFilterMode || null,
+    // target is part of the polymorphic plan contract; position plans have no
+    // target actor concept, so it's null. Readers comparing plan.target to an
+    // actor name agnostically read false. Sub-fields (targetTeam, etc.) stay
+    // kind-specific — only access after confirming plan.target is a real actor.
+    target: null,
     positionAxis: payload.positionAxis,
     positionComparator: payload.positionComparator,
     positionTarget: payload.positionTarget,

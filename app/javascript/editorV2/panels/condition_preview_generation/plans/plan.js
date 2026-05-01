@@ -121,12 +121,8 @@ function extractMovedPieceSpeciesPool(plans) {
   let pool = null
   for (const plan of plans) {
     let planPool = null
-    if (plan.kind === 'relational') {
-      if (plan.subject === 'moved_piece') { planPool = plan.subjectSpeciesPool }
-      else if (plan.target === 'moved_piece') { planPool = plan.targetSpeciesPool }
-    } else if (plan.kind === 'unary') {
-      if (plan.subject === 'moved_piece') { planPool = plan.subjectSpeciesPool }
-    }
+    if (plan.subject === 'moved_piece') { planPool = plan.subjectSpeciesPool }
+    else if (plan.target === 'moved_piece') { planPool = plan.targetSpeciesPool }
     if (planPool === null) { continue }
     pool = pool === null ? [...planPool] : pool.filter(s => planPool.includes(s))
   }
