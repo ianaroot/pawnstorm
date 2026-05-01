@@ -3,21 +3,21 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { findCombinatorialQualifyingGroups } from 'bot_execution/relational_qualifying'
-import { originCandidatesForSpecies, sortByDistanceFromRelation } from 'editorV2/panels/condition_preview/geometry_utils'
+import { originCandidatesForSpecies, sortByDistanceFromRelation } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import {
   legalPriorTurnState, moveKindForMoveObject, soundForMove, candidateIdentity,
   MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
-import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { relationalActorLabels } from 'editorV2/panels/condition_preview_generation/shared/relational_utils'
 import {
   PRIOR_BOARD_COMPARISON_SOURCE,
   COUNT_COMPARISON_METRIC,
   AGGREGATE_VALUE_METRIC
-} from 'editorV2/panels/condition_preview/comparison_requirements'
+} from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing
-} from './board_utils'
+} from '../shared/board_utils'
 
 function descriptorAllowsZeroPairs(descriptor) {
   const { comparator, source } = descriptor

@@ -1,15 +1,15 @@
 import Board from 'gameplay/board'
-import { buildPlan } from 'editorV2/panels/condition_preview/generation_plan'
+import { buildPlan } from 'editorV2/panels/condition_preview_generation/plans/generation_plan'
 import {
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   VALUE_COMPARISON_METRIC, isValueMetric,
   EXACT_NUMBER_COMPARISON_SOURCE,
   PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonRequirementsFromDescriptors,
   valueComparisonAllowsEmpty
-} from 'editorV2/panels/condition_preview/comparison_requirements'
+} from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 
 const ALL_MOVE_KINDS = Object.freeze([MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT])
 

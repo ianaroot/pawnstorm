@@ -1,14 +1,14 @@
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import Board from 'gameplay/board'
 import { relativeRank, relativeToAbsolutePosition, materialValue } from 'gameplay/board_query_utils'
-import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/geometry_utils'
+import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import {
   candidateSpecies, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD
-} from 'editorV2/panels/condition_preview/example_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   clonePiecesMap, squareIsOccupied, shuffled,
   legalPlacementForSpecies, teamHasKing, MAX_PAWNS_PER_TEAM
-} from './board_utils'
+} from '../shared/board_utils'
 import { collectVerifiedMoves, buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))

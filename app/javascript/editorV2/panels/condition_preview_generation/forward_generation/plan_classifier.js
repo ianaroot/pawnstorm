@@ -3,7 +3,7 @@ import {
   AGGREGATE_VALUE_METRIC,
   INDIVIDUAL_VALUE_METRIC,
   PRIOR_BOARD_COMPARISON_SOURCE
-} from 'editorV2/panels/condition_preview/comparison_requirements'
+} from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 
 function directionFromComparator(comparator) {
   switch (comparator) {

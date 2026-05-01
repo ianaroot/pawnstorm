@@ -2,11 +2,11 @@ import Board from 'gameplay/board'
 import {
   candidateSpecies,
   MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
-import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/comparison_requirements'
-import { shuffled } from './board_utils'
-import { placePiece, teamHasKing } from './piece_placement'
-import { buildSideConfigurations } from './configurations'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
+import { shuffled } from '../shared/board_utils'
+import { placePiece, teamHasKing } from '../shared/piece_placement'
+import { buildSideConfigurations } from '../plans/configurations'
 import { buildConfigSkeletons } from './relation_geometry'
 
 const IDENTITY_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])

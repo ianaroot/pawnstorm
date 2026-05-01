@@ -2,8 +2,8 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import {
   candidateIdentity, moveKindForMoveObject, soundForMove
-} from 'editorV2/panels/condition_preview/example_utils'
-import { buildAggregatedResult, buildAggregatedHighlights } from '../move_collection'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { buildAggregatedResult, buildAggregatedHighlights } from '../collection/move_collection'
 import { classifyPlan } from './plan_classifier'
 import { PATTERNS } from './move_patterns'
 import { resolveViaHints } from './hint_resolver'

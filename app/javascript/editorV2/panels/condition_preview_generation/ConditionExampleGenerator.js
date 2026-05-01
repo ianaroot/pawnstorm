@@ -1,16 +1,16 @@
-import { buildCombinedPlan, expandRelationalPlanSources } from './plan'
-import { buildSeed } from './seed_builder'
-import { collectVerifiedExamples } from './move_collection'
-import { collectCastleExamples, collectPromotionExamples, collectEnPassantExamples } from './special_moves'
-import { buildUnaryWorkItems, collectUnaryExamples, buildPositionWorkItems, collectPositionExamples } from './unary_position_collection'
-import { mergeMoveKindExamples } from './enrichment'
+import { buildCombinedPlan, expandRelationalPlanSources } from './plans/plan'
+import { buildSeed } from './seeds/seed_builder'
+import { collectVerifiedExamples } from './collection/move_collection'
+import { collectCastleExamples, collectPromotionExamples, collectEnPassantExamples } from './collection/special_moves'
+import { buildUnaryWorkItems, collectUnaryExamples, buildPositionWorkItems, collectPositionExamples } from './collection/unary_position_collection'
+import { mergeMoveKindExamples } from './enrichment/enrichment'
 import { collectForwardExamples } from './forward_generation/orchestrator'
 import { combinedPlanHasPbs } from './forward_generation/plan_classifier'
 import { chainHasActionableHints } from './forward_generation/hint_compiler'
 import {
   candidateIdentity, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
-import { usesZeroRelationPath } from 'editorV2/panels/condition_preview/comparison_requirements'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120

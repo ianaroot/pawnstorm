@@ -1,4 +1,4 @@
-import { candidateIdentity } from 'editorV2/panels/condition_preview/example_utils'
+import { candidateIdentity } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 export function subjectSpeciesSignature(example) {
   const positions = example.result?.subjectPositions ?? []

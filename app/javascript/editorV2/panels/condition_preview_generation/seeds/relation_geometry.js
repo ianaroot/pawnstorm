@@ -3,13 +3,13 @@ import { controlledSquares, nextPositionOnRay } from 'gameplay/board_query_utils
 import {
   pieceCode,
   buildBoardFromLayout, buildLayoutFromPieces
-} from 'editorV2/panels/condition_preview_generation/board_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import {
   RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep
-} from 'editorV2/panels/condition_preview/geometry_utils'
-import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/skeleton_builders'
-import { shuffled } from './board_utils'
-import { placePiece, legalPlacementForSpecies, piecesSatisfyInvariants } from './piece_placement'
+} from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
+import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview_generation/seeds/skeleton_builders'
+import { shuffled } from '../shared/board_utils'
+import { placePiece, legalPlacementForSpecies, piecesSatisfyInvariants } from '../shared/piece_placement'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 

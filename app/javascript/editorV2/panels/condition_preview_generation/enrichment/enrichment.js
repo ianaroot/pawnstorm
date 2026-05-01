@@ -2,12 +2,12 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies } from './board_utils'
+import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies } from '../shared/board_utils'
 import {
   moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState,
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
-import { buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { buildAggregatedResult, buildAggregatedHighlights } from '../collection/move_collection'
 import { selectDiverseExamples, uniqueExamples } from './diversity_selection'
 
 const ENRICHMENT_PROBABILITY = 0.5

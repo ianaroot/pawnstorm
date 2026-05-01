@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import { controlledSquares, shieldedPositions, nextPositionOnRay } from 'gameplay/board_query_utils'
-import { pieceCode, clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, legalPlacementForSpecies } from 'editorV2/panels/condition_preview_generation/board_utils'
-import { RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/geometry_utils'
+import { pieceCode, clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, legalPlacementForSpecies } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
+import { RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 

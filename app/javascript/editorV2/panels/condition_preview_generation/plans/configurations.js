@@ -6,8 +6,8 @@ import {
   AGGREGATE_VALUE_METRIC,
   EXACT_NUMBER_COMPARISON_SOURCE,
   PRIOR_BOARD_COMPARISON_SOURCE
-} from 'editorV2/panels/condition_preview/comparison_requirements'
-import { shuffled } from './board_utils'
+} from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
+import { shuffled } from '../shared/board_utils'
 
 const HARD_SET_SIZE_CAP = 4
 

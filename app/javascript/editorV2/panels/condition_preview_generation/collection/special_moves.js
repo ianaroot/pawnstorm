@@ -5,14 +5,14 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import {
   legalPriorTurnState, soundForMove, candidateIdentity,
   MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
-} from 'editorV2/panels/condition_preview/example_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   placeKingsIfAbsent, shuffled
-} from './board_utils'
+} from '../shared/board_utils'
 import {
   buildSeedFromPreset, castlePresetsForTeam, promotionPresetsForTeam, enPassantPresetsForTeam
-} from './seed_builder'
+} from '../seeds/seed_builder'
 import {
   collectVerifiedExamples, buildAggregatedResult, buildAggregatedHighlights
 } from './move_collection'

@@ -2,7 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import { nextPositionOnRay } from 'gameplay/board_query_utils'
-import { candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
+import { candidateSpecies } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 function rayStepBetween(fromPosition, toPosition) {
   const fileDiff = Board.fileIndex(toPosition) - Board.fileIndex(fromPosition)

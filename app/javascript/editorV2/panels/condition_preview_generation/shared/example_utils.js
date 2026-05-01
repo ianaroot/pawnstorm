@@ -1,10 +1,10 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/geometry_utils'
+import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import {
   square, clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
   pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch
-} from 'editorV2/panels/condition_preview_generation/board_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'

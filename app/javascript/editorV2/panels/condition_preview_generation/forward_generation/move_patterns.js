@@ -4,13 +4,13 @@ import { nextPositionOnRay, controlledSquares } from 'gameplay/board_query_utils
 import {
   RAY_STEPS, shieldAttackerSpeciesForStep, originCandidatesForSpecies,
   adjacentNeighborPositions
-} from 'editorV2/panels/condition_preview/geometry_utils'
-import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
+import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode
-} from 'editorV2/panels/condition_preview_generation/board_utils'
-import { placePiece, legalPlacementForSpecies } from '../piece_placement'
-import { placeKingsIfAbsent } from '../board_utils'
+} from 'editorV2/panels/condition_preview_generation/shared/board_utils'
+import { placePiece, legalPlacementForSpecies } from '../shared/piece_placement'
+import { placeKingsIfAbsent } from '../shared/board_utils'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
