@@ -281,7 +281,12 @@ const PREDICATES = Object.freeze({
 export function satisfies(hint, pieces, context) {
   const predicate = PREDICATES[hint.type]
   if (!predicate) { return true }
-  return predicate(pieces, hint, context)
+  // Route to the correct frame's pieces map. Default to current; prior-frame
+  // hints (PBS direction) check against context.priorPieces.
+  const targetMap = hint.frame === 'prior' && context?.priorPieces
+    ? context.priorPieces
+    : pieces
+  return predicate(targetMap, hint, context)
 }
 
 // ===== Emission =====
@@ -305,7 +310,106 @@ function frameForDescriptor(descriptor) {
   return descriptor.source === 'prior_board_state' ? 'prior' : 'current'
 }
 
-function compileRelationalDescriptor(plan, descriptor) {
+// PBS-direction descriptors (source = prior_board_state) emit PAIRED hints —
+// one prior-frame, one current-frame — with sampled (n_prior, n_current) values
+// consistent with the descriptor's direction. The strategies then engineer each
+// frame's pieces map separately and the move falls out of the diff.
+function pbsDirectionFromComparator(comparator) {
+  switch (comparator) {
+    case 'greater_than':
+    case 'greater_than_or_equal_to': return '+'
+    case 'less_than':
+    case 'less_than_or_equal_to':    return '-'
+    case 'equal_to':                 return '='
+    default:                         return null
+  }
+}
+
+function samplePbsCountPair(direction, random) {
+  const r = random ?? (() => 0.5)
+  switch (direction) {
+    case '+': {
+      const nPrior = Math.floor(r() * 3)        // 0..2
+      const delta = 1 + Math.floor(r() * 2)      // 1..2
+      return [nPrior, nPrior + delta]
+    }
+    case '-': {
+      const nPrior = 1 + Math.floor(r() * 3)    // 1..3
+      const delta = 1 + Math.floor(r() * nPrior) // 1..nPrior
+      return [nPrior, nPrior - delta]
+    }
+    case '=': {
+      const n = 1 + Math.floor(r() * 3)         // 1..3
+      return [n, n]
+    }
+    default: return [null, null]
+  }
+}
+
+function samplePbsValuePair(direction, random) {
+  const r = random ?? (() => 0.5)
+  switch (direction) {
+    case '+': {
+      const vPrior = Math.floor(r() * 4)        // 0..3
+      const delta = 1 + Math.floor(r() * 3)      // 1..3
+      return [vPrior, vPrior + delta]
+    }
+    case '-': {
+      const vPrior = 1 + Math.floor(r() * 5)    // 1..5
+      const delta = 1 + Math.floor(r() * vPrior) // 1..vPrior
+      return [vPrior, vPrior - delta]
+    }
+    case '=': {
+      const v = 1 + Math.floor(r() * 5)         // 1..5
+      return [v, v]
+    }
+    default: return [null, null]
+  }
+}
+
+function compileRelationalPbsDescriptor(plan, descriptor, random) {
+  const direction = pbsDirectionFromComparator(descriptor.comparator)
+  if (!direction) { return [] }
+
+  const subject = relationalSideShape(plan, 'subject')
+  const target = relationalSideShape(plan, 'target')
+  const baseShape = {
+    operator: plan.operator,
+    subject, target,
+    side: descriptor.side
+  }
+
+  switch (descriptor.metric) {
+    case 'count': {
+      const [nPrior, nCurrent] = samplePbsCountPair(direction, random)
+      if (nPrior === null) { return [] }
+      return [
+        { type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: 'equal_to', n: nPrior, frame: 'prior' },
+        { type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: 'equal_to', n: nCurrent, frame: 'current' }
+      ]
+    }
+    case 'aggregate_value': {
+      const [vPrior, vCurrent] = samplePbsValuePair(direction, random)
+      if (vPrior === null) { return [] }
+      return [
+        { type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: 'equal_to', total: vPrior, frame: 'prior' },
+        { type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: 'equal_to', total: vCurrent, frame: 'current' }
+      ]
+    }
+    case 'individual_value':
+      // Individual-value PBS-direction is rarer. Defer concrete sampling to a
+      // later milestone; emit nothing for now (post-evaluator handles it).
+      return []
+    default:
+      return []
+  }
+}
+
+function compileRelationalDescriptor(plan, descriptor, random) {
+  if (descriptor.source === 'prior_board_state') {
+    return compileRelationalPbsDescriptor(plan, descriptor, random)
+  }
+
   const subject = relationalSideShape(plan, 'subject')
   const target = relationalSideShape(plan, 'target')
   const baseShape = {
@@ -317,17 +421,17 @@ function compileRelationalDescriptor(plan, descriptor) {
   const total = Number(descriptor.resolvedTotal ?? descriptor.total ?? 0)
   switch (descriptor.metric) {
     case 'count':
-      return { type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: descriptor.comparator, n: total }
+      return [{ type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: descriptor.comparator, n: total }]
     case 'aggregate_value':
-      return { type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: descriptor.comparator, total }
+      return [{ type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: descriptor.comparator, total }]
     case 'individual_value':
-      return { type: HINT_TYPES.RELATION_INDIVIDUAL_VALUE, ...baseShape, valueOp: descriptor.comparator, value: total }
+      return [{ type: HINT_TYPES.RELATION_INDIVIDUAL_VALUE, ...baseShape, valueOp: descriptor.comparator, value: total }]
     default:
-      return null
+      return []
   }
 }
 
-function compileRelational(plan) {
+function compileRelational(plan, random) {
   const descriptors = plan.comparisonDescriptors ?? []
   if (descriptors.length === 0) {
     // No descriptor — structural relation only. Carry plan shape so the
@@ -348,8 +452,8 @@ function compileRelational(plan) {
   }
   const hints = []
   for (const descriptor of descriptors) {
-    const hint = compileRelationalDescriptor(plan, descriptor)
-    if (hint) { hints.push(hint) }
+    const emitted = compileRelationalDescriptor(plan, descriptor, random)
+    for (const hint of emitted) { hints.push(hint) }
   }
   // If no descriptor produced a recognized hint, fall back to RELATION_HOLDS.
   if (hints.length === 0) {
@@ -452,11 +556,11 @@ function compilePosition(plan) {
   return hints
 }
 
-export function compileHints(combinedPlan) {
+export function compileHints(combinedPlan, random) {
   const hints = []
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
-      hints.push(...compileRelational(plan))
+      hints.push(...compileRelational(plan, random))
     } else if (plan.kind === 'unary') {
       hints.push(...compileUnary(plan))
     } else if (plan.kind === 'position') {

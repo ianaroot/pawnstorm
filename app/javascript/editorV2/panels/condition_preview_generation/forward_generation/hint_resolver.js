@@ -24,7 +24,7 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { controlledSquares, materialValue } from 'gameplay/board_query_utils'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode
+  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, clonePiecesMap
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { usesZeroRelationPath } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
@@ -362,11 +362,10 @@ function reachOf(operator, board, attackerPosition) {
 }
 
 export function resolveViaHints({ combinedPlan, random }) {
-  const hints = compileHints(combinedPlan)
+  const hints = compileHints(combinedPlan, random)
   if (!hints.some(h => h.type !== HINT_TYPES.RELATION_HOLDS)) { return null }
 
   const movingTeam = combinedPlan.movingTeam
-  const ctx = { movingTeam, random }
 
   let pieces = buildMinimumSeed(combinedPlan, random)
   if (pieces === null) { return null }
@@ -379,6 +378,14 @@ export function resolveViaHints({ combinedPlan, random }) {
   // need to constrain king mobility, not just non-king actors).
   pieces = placeKingsIfAbsent(pieces, random)
   if (pieces === null) { return null }
+
+  // Parallel prior-frame state. For chains with no PBS-direction descriptors,
+  // priorPieces stays equal to the current state and the move is synthesized
+  // by the reconstruction loop below. PBS-direction strategies (Phase 8d)
+  // augment priorPieces independently from `pieces`; the move then falls out
+  // of the diff between the two maps.
+  const priorPieces = clonePiecesMap(pieces)
+  const ctx = { movingTeam, random, priorPieces }
 
   for (const hint of hints) {
     try {
