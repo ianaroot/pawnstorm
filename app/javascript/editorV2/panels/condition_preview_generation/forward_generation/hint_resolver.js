@@ -25,7 +25,7 @@ import Rules from 'gameplay/rules'
 import { controlledSquares } from 'gameplay/board_query_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode
-} from 'editorV2/panels/condition_preview/board_utils'
+} from 'editorV2/panels/condition_preview_generation/board_utils'
 import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
 import {
   adjacentNeighborPositions, originCandidatesForSpecies

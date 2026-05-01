@@ -3,6 +3,22 @@ import { placePiece } from './piece_placement'
 
 export const MAX_PAWNS_PER_TEAM = 8
 
+export function square(value) {
+  return Board.gridCalculatorReverse(value)
+}
+
+export function pieceCode(team, species) {
+  return `${team}${species}`
+}
+
+export function pieceTeam(piece) {
+  return piece ? Board.parseTeam(piece) : null
+}
+
+export function pieceSpecies(piece) {
+  return piece ? Board.parseSpecies(piece) : null
+}
+
 export function legalPlacementForSpecies(position, species) {
   if (species !== Board.PAWN) { return true }
   const rank = Board.rankIndex(position)
@@ -32,27 +48,6 @@ export function shuffled(values, random) {
     copy[swapIndex] = current
   }
   return copy
-}
-
-export function weightedSpeciesCandidates({ includeKing = true, allowedSpecies = null } = {}) {
-  const allowed = allowedSpecies ? new Set(allowedSpecies) : null
-  return WEIGHTED_SPECIES_DISTRIBUTION.filter(species => {
-    if (!includeKing && species === Board.KING) { return false }
-    if (allowed && !allowed.has(species)) { return false }
-    return true
-  })
-}
-
-export function weightedRandomSpecies(random, options = {}) {
-  const candidates = weightedSpeciesCandidates(options)
-  if (candidates.length === 0) { return null }
-  return candidates[Math.floor(random() * candidates.length)]
-}
-
-export function pushUnique(queue, seenKeys, entry, key) {
-  if (seenKeys.has(key)) { return }
-  seenKeys.add(key)
-  queue.push(entry)
 }
 
 export function clonePiecesMap(piecesMap) {
@@ -88,12 +83,6 @@ export function layoutsMatch(left, right) {
   }
   return true
 }
-
-export function occupiedCount(board) {
-  return board.layOut.filter(piece => piece !== Board.EMPTY_SQUARE).length
-}
-
-// ===== New utilities =====
 
 export function teamHasKing(pieces, team) {
   const kingCode = `${team}${Board.KING}`

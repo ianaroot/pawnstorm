@@ -3,7 +3,7 @@ import { controlledSquares, nextPositionOnRay } from 'gameplay/board_query_utils
 import {
   pieceCode,
   buildBoardFromLayout, buildLayoutFromPieces
-} from 'editorV2/panels/condition_preview/board_utils'
+} from 'editorV2/panels/condition_preview_generation/board_utils'
 import {
   RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep
 } from 'editorV2/panels/condition_preview/geometry_utils'

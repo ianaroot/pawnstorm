@@ -4,7 +4,7 @@ import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/ge
 import {
   square, clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
   pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch
-} from 'editorV2/panels/condition_preview/board_utils'
+} from 'editorV2/panels/condition_preview_generation/board_utils'
 
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'
