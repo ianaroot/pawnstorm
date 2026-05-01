@@ -7,7 +7,8 @@ import {
   VALUE_COMPARISON_METRIC, isValueMetric,
   EXACT_NUMBER_COMPARISON_SOURCE,
   PRIOR_BOARD_COMPARISON_SOURCE,
-  comparisonRequirementsFromDescriptors
+  comparisonRequirementsFromDescriptors,
+  valueComparisonAllowsEmpty
 } from 'editorV2/panels/condition_preview/comparison_requirements'
 
 const ALL_MOVE_KINDS = Object.freeze([MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT])
@@ -216,6 +217,59 @@ function detectSingularActorWithImpossibleCount({ plans }) {
   return null
 }
 
+function detectFilterMatchesNoSpecies({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'relational') { continue }
+    const subjectDescriptors = plan.comparisonDescriptors.filter(d => d.side === 'subject')
+    const targetDescriptors  = plan.comparisonDescriptors.filter(d => d.side === 'target')
+    if (plan.subjectSpeciesPool.length === 0
+        && plan.requirements.subject !== 0
+        && !valueComparisonAllowsEmpty(subjectDescriptors)) {
+      return `The '${plan.subjectFilter}' filter matches no pieces with the required value; this condition can never be satisfied.`
+    }
+    if (plan.targetSpeciesPool.length === 0
+        && plan.requirements.target !== 0
+        && !valueComparisonAllowsEmpty(targetDescriptors)) {
+      return `The '${plan.targetFilter}' filter matches no pieces with the required value; this condition can never be satisfied.`
+    }
+  }
+  return null
+}
+
+const ALL_RELATIVE_RANKS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7])
+const ILLEGAL_PAWN_RANKS = Object.freeze(new Set([0, 7]))
+
+function rankSatisfiesComparator(rank, comparator, target) {
+  switch (comparator) {
+    case 'equal_to':                 return rank === target
+    case 'greater_than':             return rank > target
+    case 'greater_than_or_equal_to': return rank >= target
+    case 'less_than':                return rank < target
+    case 'less_than_or_equal_to':    return rank <= target
+    default:                         return false
+  }
+}
+
+function detectImpossiblePawnPosition({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'position') { continue }
+    if (plan.subjectFilter !== 'pawn') { continue }
+    if (plan.positionAxis !== 'rank') { continue }
+    const matching = ALL_RELATIVE_RANKS.filter(r =>
+      rankSatisfiesComparator(r, plan.positionComparator, plan.positionTarget)
+    )
+    // Empty matching set is a different impossibility (out-of-range comparator/target);
+    // leave that for upstream/other detectors. We fire only when the satisfying ranks
+    // exist but every one of them is a pawn-illegal rank.
+    if (matching.length === 0) { continue }
+    if (matching.every(r => ILLEGAL_PAWN_RANKS.has(r))) {
+      const ranksText = matching.map(r => r + 1).join(' or ')
+      return `Pawns cannot be on rank ${ranksText} relative to the moving team; this condition can never be satisfied.`
+    }
+  }
+  return null
+}
+
 function detectSingularActorWithAggregateValue({ plans }) {
   for (const plan of plans) {
     if (plan.kind !== 'relational') { continue }
@@ -236,8 +290,10 @@ const CONTRADICTION_DETECTORS = [
   detectImpossibleMovedPieceSpecies,
   detectConflictingRequiredPositions,
   detectIllegalPawnRanks,
+  detectImpossiblePawnPosition,
   detectSingularActorWithImpossibleCount,
-  detectSingularActorWithAggregateValue
+  detectSingularActorWithAggregateValue,
+  detectFilterMatchesNoSpecies
 ]
 
 function detectContradiction(context) {

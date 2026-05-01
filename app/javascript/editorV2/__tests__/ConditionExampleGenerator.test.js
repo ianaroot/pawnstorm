@@ -572,6 +572,56 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.reason).toMatch(/aggregate value cannot be combined with a singular actor/i)
   })
 
+  it('flags contradiction when subject species filter matches no pieces with the required value', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'pawn', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'individual_value', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 9
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1109) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/filter matches no pieces with the required value/i)
+  })
+
+  it('flags contradiction when target species filter matches no pieces with the required value', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'pawn',
+      targetComparisonMetric: 'individual_value', targetComparator: 'equal_to',
+      targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 9
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1110) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/filter matches no pieces with the required value/i)
+  })
+
+  it('flags contradiction when a pawn is required on an illegal rank', () => {
+    const payload = {
+      version: 2, kind: 'position',
+      subject: 'allied', subjectFilter: 'pawn', operator: 'count',
+      positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 0,
+      comparator: 'greater_than_or_equal_to', targetTotal: 1
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1111) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/pawns cannot be on rank 1/i)
+  })
+
+  it('flags contradiction when a directional rank constraint resolves to only an illegal pawn rank', () => {
+    const payload = {
+      version: 2, kind: 'position',
+      subject: 'allied', subjectFilter: 'pawn', operator: 'count',
+      positionAxis: 'rank', positionComparator: 'less_than', positionTarget: 1,
+      comparator: 'greater_than_or_equal_to', targetTotal: 1
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1112) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/pawns cannot be on rank 1/i)
+  })
+
   it('uses forward generation for allied any mobility > prior_board_state via group-mobility-increase pattern', () => {
     const payload = {
       version: 2, kind: 'unary',
