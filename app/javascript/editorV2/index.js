@@ -14,6 +14,7 @@ import { EVENTS, MAX_HISTORY } from 'editorV2/constants'
 import { showError } from 'editorV2/utils/errors'
 import ToolbarHandler from 'editorV2/handlers/ToolbarHandler'
 import BoardStatePreview from 'editorV2/panels/BoardStatePreview'
+import EditorActions from 'editorV2/EditorActions'
 
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
   if (!container) { throw new Error('Container element is required') }
@@ -74,7 +75,11 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     clickHandler.setBoardStatePreview(boardStatePreview)
   }
   clickHandler.setSyncManager(syncManager)
-  const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
+  const editorActions = new EditorActions(store, history, syncManager)
+  editorActions.clickHandler = clickHandler
+  const keyboardHandler = new KeyboardHandler()
+  keyboardHandler.actions = editorActions
+  toolbarHandler.actions = editorActions
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   hoverPreviewHandler.attach()

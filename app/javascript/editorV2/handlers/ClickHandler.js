@@ -12,7 +12,6 @@ class ClickHandler {
     
     this.boundHandleClick = this.handleClick.bind(this)
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this)
-    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
     this.boundHandleSave = this.handleSave.bind(this)
     this.boundHandleCancel = this.closeEditor.bind(this)
     this.boundHandleStoreUpdate = this.handleStoreUpdate.bind(this)
@@ -52,11 +51,7 @@ class ClickHandler {
   
   // * Setup global handlers * Call this once after all nodes are attached
   setupGlobalHandlers() {
-    // Document click: deselect when clicking outside nodes
     document.addEventListener('click', this.boundHandleClick)
-    
-    // Keyboard: delete selected node
-    document.addEventListener('keydown', this.boundHandleKeyDown)
   }
 
   setEditorPanel(panel) {
@@ -121,48 +116,15 @@ class ClickHandler {
     }
   }
 
-  handleKeyDown(event) {
-    if (event.key.toLowerCase() === 'p') {
-      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
-      if (this.isEditableTarget(event.target)) { return }
-      event.preventDefault()
-      if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
-        this.boardStatePreview.toggle()
-      } else if (this.store.getSelectedNodeIds().length > 1) {
-        this.boardStatePreview.isEnabled = true
-        this.renderSelectionPreview()
-      } else if (this.editingNodeId && this.conditionForm) {
-        this.boardStatePreview?.activate(this.conditionForm)
-      }
-      return
+  togglePreview() {
+    if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
+      this.boardStatePreview.toggle()
+    } else if (this.store.getSelectedNodeIds().length > 1) {
+      this.boardStatePreview.isEnabled = true
+      this.renderSelectionPreview()
+    } else if (this.editingNodeId && this.conditionForm) {
+      this.boardStatePreview?.activate(this.conditionForm)
     }
-
-    if (event.key === 'Enter') {
-      if (this.isTextareaTarget(event.target) && event.shiftKey) { return }
-      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
-      if (this.editingNodeId) {
-        event.preventDefault()
-        this.handleSave()
-      }
-      return
-    }
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-        return
-      }
-      if (this.getDeletableSelectedNodeIds().length > 0) {
-        this.deleteSelectedNodes()
-      }
-    }
-    // Escape: close editor panel
-    if (event.key === 'Escape') {
-      this.closeEditor()
-    }
-  }
-
-  isTextareaTarget(target) {
-    return target?.tagName === 'TEXTAREA'
   }
 
   isEditableTarget(target) {
@@ -484,7 +446,6 @@ class ClickHandler {
 
   destroy() {
     document.removeEventListener('click', this.boundHandleClick)
-    document.removeEventListener('keydown', this.boundHandleKeyDown)
     this.conditionForm?.detach()
     this.unsubscribeStore?.()
     clearTimeout(this._chainPreviewTimer)

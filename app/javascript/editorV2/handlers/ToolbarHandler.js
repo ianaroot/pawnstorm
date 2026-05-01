@@ -123,26 +123,22 @@ class ToolbarHandler {
   }
 
   async undo() {
-    if (!this.history.canUndo()) return
-    if (this.syncManager.isUndoRedoPending) return   
-    await this.syncManager.undo()
+    await this.actions?.undo()
   }
 
   async redo() {
-    if (!this.history.canRedo()) return
-    if (this.syncManager.isUndoRedoPending) return
-    await this.syncManager.redo()
+    await this.actions?.redo()
   }
-  
+
   updateButtons() {
     const undoBtn = document.querySelector('.btn-undo')
     const redoBtn = document.querySelector('.btn-redo')
     if (undoBtn) {
-      undoBtn.disabled = !this.history.canUndo() || this.syncManager.isUndoRedoPending
+      undoBtn.disabled = !this.actions?.canUndo()
       undoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
     }
     if (redoBtn) {
-      redoBtn.disabled = !this.history.canRedo() || this.syncManager.isUndoRedoPending
+      redoBtn.disabled = !this.actions?.canRedo()
       redoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
     }
     this.updateDeleteButton()
@@ -150,24 +146,13 @@ class ToolbarHandler {
   }
   
   handleDeleteClick() {
-    if (this.clickHandler?.deleteSelectedNodes) {
-      this.clickHandler.deleteSelectedNodes()
-      return
-    }
-    this.clickHandler?.deleteSelectedNode?.()
+    this.actions?.deleteSelected()
   }
-  
+
   updateDeleteButton() {
     const deleteBtn = document.querySelector('.btn-delete-node')
     if (!deleteBtn) return
-    const selectedIds = this.clickHandler?.getDeletableSelectedNodeIds?.() || this.store.getSelectedNodeIds().filter(clientId => {
-      const node = this.store.getNode(clientId)
-      return node && node.type !== 'root'
-    })
-
-    // Disable if: no deletable selection
-    const isDisabled = selectedIds.length === 0
-    deleteBtn.disabled = isDisabled
+    deleteBtn.disabled = !this.actions?.canDelete()
   }
 
   isBotStale() {
