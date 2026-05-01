@@ -199,18 +199,24 @@ export function buildConfigSkeletons({
   const extraSubjectSpecies = subjectConfig.slice(1)
   const extraTargetSpecies = targetConfig.slice(1)
 
-  const baseSkeletons = shuffled(
-    buildCandidateSkeletons({
-      plan,
-      subjectSpecies: canonicalSubjectSpecies,
-      targetSpecies: canonicalTargetSpecies,
-      fixedPieces,
-      fixedSubjectPlacement,
-      fixedTargetPlacement,
-      reservedSquares
-    }).filter(skeleton => piecesSatisfyInvariants(skeleton.pieces)),
-    random
-  )
+  // Skeletons that satisfy the relation using only fixedPieces (no new pieces
+  // added) come first. Adding non-relation pieces here is doing enrichment's
+  // job — the dedicated enrichment phase handles fill-in with proper legality
+  // (move-path forbidden squares, prior-turn legality, etc). Producing minimal
+  // skeletons keeps relations clean and lets enrichment own the noise.
+  const candidates = buildCandidateSkeletons({
+    plan,
+    subjectSpecies: canonicalSubjectSpecies,
+    targetSpecies: canonicalTargetSpecies,
+    fixedPieces,
+    fixedSubjectPlacement,
+    fixedTargetPlacement,
+    reservedSquares
+  }).filter(skeleton => piecesSatisfyInvariants(skeleton.pieces))
+
+  const noExtras = candidates.filter(s => s.pieces.size === fixedPieces.size)
+  const withExtras = candidates.filter(s => s.pieces.size > fixedPieces.size)
+  const baseSkeletons = [...shuffled(noExtras, random), ...shuffled(withExtras, random)]
 
   const results = []
   for (const base of baseSkeletons) {

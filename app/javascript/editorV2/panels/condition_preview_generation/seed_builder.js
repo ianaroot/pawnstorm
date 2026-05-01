@@ -178,11 +178,17 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, attemptKind, ra
   const movedPiecePool = combinedPlan.movedPieceSpeciesPool
 
   for (const plan of relationalPlans) {
+    // Identity actors (moved_piece, etc.) reuse a previously-placed actor when
+    // available. When the chain's first plan needs the actor as a king and a
+    // special preset (e.g. castle) already placed one, fall through to the
+    // existing king on the board so we don't strip king from the pool below.
     const fixedSubjectPlacement = IDENTITY_ACTORS.has(plan.subject)
-      ? (placedActors.get(plan.subject) ?? null)
+      ? (placedActors.get(plan.subject)
+          ?? (plan.subjectFilter === 'king' ? findExistingKingPlacement(plan.subjectTeam, currentPieces) : null))
       : (plan.subjectFilter === 'king' ? findExistingKingPlacement(plan.subjectTeam, currentPieces) : null)
     const fixedTargetPlacement = IDENTITY_ACTORS.has(plan.target)
-      ? (placedActors.get(plan.target) ?? null)
+      ? (placedActors.get(plan.target)
+          ?? (plan.targetFilter === 'king' ? findExistingKingPlacement(plan.targetTeam, currentPieces) : null))
       : (plan.targetFilter === 'king' ? findExistingKingPlacement(plan.targetTeam, currentPieces) : null)
 
     const subjectPool = fixedSubjectPlacement
