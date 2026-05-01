@@ -77,6 +77,16 @@ class KeyboardHandler {
       this.actions?.save()
       return
     }
+
+    // Arrow keys: navigate board state preview
+    if (event.key === 'ArrowLeft') {
+      this.actions?.navigatePreview(-1)
+      return
+    }
+    if (event.key === 'ArrowRight') {
+      this.actions?.navigatePreview(1)
+      return
+    }
   }
 
   isInputElement(target) {

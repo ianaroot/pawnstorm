@@ -70,13 +70,14 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   
   // 6. Attach Global UI handlers
   const boardStatePreviewWrap = document.getElementById('board-state-preview-wrap')
-  if (boardStatePreviewWrap) {
-    const boardStatePreview = new BoardStatePreview(boardStatePreviewWrap)
+  const boardStatePreview = boardStatePreviewWrap ? new BoardStatePreview(boardStatePreviewWrap) : null
+  if (boardStatePreview) {
     clickHandler.setBoardStatePreview(boardStatePreview)
   }
   clickHandler.setSyncManager(syncManager)
   const editorActions = new EditorActions(store, history, syncManager)
   editorActions.clickHandler = clickHandler
+  editorActions.boardStatePreview = boardStatePreview
   const keyboardHandler = new KeyboardHandler()
   keyboardHandler.actions = editorActions
   toolbarHandler.actions = editorActions

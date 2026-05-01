@@ -53,6 +53,11 @@ class EditorActions {
     this.clickHandler?.closeEditor()
   }
 
+  navigatePreview(delta) {
+    if (!this.boardStatePreview || this.boardStatePreview.examples.length <= 1) { return }
+    this.boardStatePreview._navigate(delta)
+  }
+
   copy() {
     return this.copySelectedNodes()
   }
