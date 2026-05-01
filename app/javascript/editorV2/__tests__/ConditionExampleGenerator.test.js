@@ -1286,6 +1286,52 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('routes a PBS-direction less-than count chain without stalling (M4a)', () => {
+    // The user's stalling case: enemy/pawn count < prior attacks moved_piece.
+    // Direction '-' with sampled nCurrent=0, nPrior=1 was prone to expensive
+    // search before bounding. This spec catches regressions in either
+    // correctness or runtime (vitest will time out if it stalls).
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'pawn',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'less_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2007) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a PBS-direction count chain through forward generation (M4a)', () => {
+    // Subject count > prior_board_state on attacks against moved_piece.
+    // Strategy engineers the position-change-induced count delta (moved_piece
+    // moves, same attackers reach it differently in prior vs current).
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2006) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('routes a filterMode=exclude chain through forward generation', () => {
     // Weak Branch 6 from the failed-chain bot: bishop attacks 2+ non-pawns AND
     // no enemies attack the bishop. Tests filterMode='exclude' threading

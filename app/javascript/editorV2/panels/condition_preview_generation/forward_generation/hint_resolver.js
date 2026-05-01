@@ -41,6 +41,7 @@ import { actorAggregateValueStrategy } from './strategies/actor_aggregate_value'
 import { relationAggregateValueStrategy } from './strategies/relation_aggregate_value'
 import { relationIndividualValueStrategy } from './strategies/relation_individual_value'
 import { actorIndividualValueStrategy } from './strategies/actor_individual_value'
+import { relationPbsCountStrategy } from './strategies/relation_pbs_count'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -239,7 +240,8 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]: [actorAggregateValueStrategy],
   [HINT_TYPES.RELATION_AGGREGATE_VALUE]: [relationAggregateValueStrategy],
   [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]: [relationIndividualValueStrategy],
-  [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy]
+  [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy],
+  [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {
@@ -399,6 +401,19 @@ export function resolveViaHints({ combinedPlan, random }) {
   // if we return null here.
   if (!verifyHints(pieces, hints, ctx)) { return null }
 
+  // If a PBS-direction strategy mutated priorPieces, the move falls out of
+  // the diff between prior and current. Otherwise synthesize the move by
+  // picking any moving-team piece and finding an origin.
+  const diffMove = priorMatchesCurrent(pieces, ctx.priorPieces) ? null : deriveMoveFromDiff(ctx.priorPieces, pieces, movingTeam)
+  if (diffMove !== null) {
+    const priorBoard = piecesIntoBoard(ctx.priorPieces, movingTeam)
+    let moveObject
+    try { moveObject = Rules.getMoveObject(diffMove.origin, diffMove.dest, priorBoard) } catch { return null }
+    if (moveObject.illegal) { return null }
+    if (!legalPriorTurnState(priorBoard, moveObject)) { return null }
+    return { priorBoard, moveObject }
+  }
+
   // Find a legal move for the moving team that lands on this exact after-state.
   // Kings are valid movers — Rules.getMoveObject + legalPriorTurnState reject
   // illegal king moves (into check, etc.); no need to filter them here.
@@ -430,4 +445,32 @@ export function resolveViaHints({ combinedPlan, random }) {
     }
   }
   return null
+}
+
+function priorMatchesCurrent(currentPieces, priorPieces) {
+  if (currentPieces.size !== priorPieces.size) { return false }
+  for (const [pos, piece] of currentPieces.entries()) {
+    if (priorPieces.get(pos) !== piece) { return false }
+  }
+  return true
+}
+
+// Derive a single legal move from the diff between prior and current pieces.
+// Returns { origin, dest } or null if the diff isn't shaped like one move.
+function deriveMoveFromDiff(priorPieces, currentPieces, movingTeam) {
+  const onlyInPrior = []
+  const onlyInCurrent = []
+  for (const [pos, piece] of priorPieces.entries()) {
+    if (currentPieces.get(pos) !== piece) { onlyInPrior.push({ pos, piece }) }
+  }
+  for (const [pos, piece] of currentPieces.entries()) {
+    if (priorPieces.get(pos) !== piece) { onlyInCurrent.push({ pos, piece }) }
+  }
+  if (onlyInCurrent.length !== 1) { return null }
+  const dest = onlyInCurrent[0]
+  if (dest.piece.charAt(0) !== movingTeam) { return null }
+  // Origin: position in prior with the same moved piece, not in current at that pos.
+  const origins = onlyInPrior.filter(p => p.piece === dest.piece)
+  if (origins.length !== 1) { return null }
+  return { origin: origins[0].pos, dest: dest.pos }
 }

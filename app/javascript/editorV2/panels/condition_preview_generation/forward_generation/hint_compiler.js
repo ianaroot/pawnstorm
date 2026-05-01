@@ -48,6 +48,12 @@ export const HINT_TYPES = Object.freeze({
   RELATION_AGGREGATE_VALUE: 'relation_aggregate_value',
   RELATION_INDIVIDUAL_VALUE: 'relation_individual_value',
 
+  // PBS-direction relational hints. Composite: each carries paired (nPrior,
+  // nCurrent) sampled to satisfy the descriptor's direction. Predicate checks
+  // both frames; strategy engineers both via a single coordinated placement.
+  RELATION_PBS_COUNT: 'relation_pbs_count',
+  RELATION_PBS_AGGREGATE_VALUE: 'relation_pbs_aggregate_value',
+
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
   ACTOR_AGGREGATE_VALUE: 'actor_aggregate_value',
@@ -266,16 +272,39 @@ export function positionMatchesAxis(position, hint, movingTeam) {
   }
 }
 
+// PBS-direction predicates check both prior and current frames. The single
+// composite hint carries (nPrior, nCurrent) so the predicate can verify both
+// boards against their respective targets.
+function relationPbsCountSatisfies(pieces, hint, context) {
+  const priorPieces = context?.priorPieces
+  if (!priorPieces) { return false }
+  const checkHint = { ...hint, type: HINT_TYPES.RELATION_COUNT, countOp: 'equal_to' }
+  const priorOk = relationCountSatisfies(priorPieces, { ...checkHint, n: hint.nPrior }, context)
+  const currentOk = relationCountSatisfies(pieces, { ...checkHint, n: hint.nCurrent }, context)
+  return priorOk && currentOk
+}
+
+function relationPbsAggregateValueSatisfies(pieces, hint, context) {
+  const priorPieces = context?.priorPieces
+  if (!priorPieces) { return false }
+  const checkHint = { ...hint, type: HINT_TYPES.RELATION_AGGREGATE_VALUE, totalOp: 'equal_to' }
+  const priorOk = relationAggregateValueSatisfies(priorPieces, { ...checkHint, total: hint.vPrior }, context)
+  const currentOk = relationAggregateValueSatisfies(pieces, { ...checkHint, total: hint.vCurrent }, context)
+  return priorOk && currentOk
+}
+
 const PREDICATES = Object.freeze({
-  [HINT_TYPES.RELATION_HOLDS]:             relationHoldsSatisfies,
-  [HINT_TYPES.RELATION_COUNT]:             relationCountSatisfies,
-  [HINT_TYPES.RELATION_AGGREGATE_VALUE]:   relationAggregateValueSatisfies,
-  [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]:  relationIndividualValueSatisfies,
-  [HINT_TYPES.ACTOR_COUNT]:                actorCountSatisfies,
-  [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:      actorAggregateValueSatisfies,
-  [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:     actorIndividualValueSatisfies,
-  [HINT_TYPES.ACTOR_MOBILITY]:             actorMobilitySatisfies,
-  [HINT_TYPES.ACTOR_AT_POSITION]:          actorAtPositionSatisfies
+  [HINT_TYPES.RELATION_HOLDS]:                  relationHoldsSatisfies,
+  [HINT_TYPES.RELATION_COUNT]:                  relationCountSatisfies,
+  [HINT_TYPES.RELATION_AGGREGATE_VALUE]:        relationAggregateValueSatisfies,
+  [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]:       relationIndividualValueSatisfies,
+  [HINT_TYPES.RELATION_PBS_COUNT]:              relationPbsCountSatisfies,
+  [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]:    relationPbsAggregateValueSatisfies,
+  [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
+  [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
+  [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
+  [HINT_TYPES.ACTOR_MOBILITY]:                  actorMobilitySatisfies,
+  [HINT_TYPES.ACTOR_AT_POSITION]:               actorAtPositionSatisfies
 })
 
 export function satisfies(hint, pieces, context) {
@@ -376,29 +405,24 @@ function compileRelationalPbsDescriptor(plan, descriptor, random) {
   const baseShape = {
     operator: plan.operator,
     subject, target,
-    side: descriptor.side
+    side: descriptor.side,
+    direction
   }
 
   switch (descriptor.metric) {
     case 'count': {
       const [nPrior, nCurrent] = samplePbsCountPair(direction, random)
       if (nPrior === null) { return [] }
-      return [
-        { type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: 'equal_to', n: nPrior, frame: 'prior' },
-        { type: HINT_TYPES.RELATION_COUNT, ...baseShape, countOp: 'equal_to', n: nCurrent, frame: 'current' }
-      ]
+      return [{ type: HINT_TYPES.RELATION_PBS_COUNT, ...baseShape, nPrior, nCurrent }]
     }
     case 'aggregate_value': {
       const [vPrior, vCurrent] = samplePbsValuePair(direction, random)
       if (vPrior === null) { return [] }
-      return [
-        { type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: 'equal_to', total: vPrior, frame: 'prior' },
-        { type: HINT_TYPES.RELATION_AGGREGATE_VALUE, ...baseShape, totalOp: 'equal_to', total: vCurrent, frame: 'current' }
-      ]
+      return [{ type: HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE, ...baseShape, vPrior, vCurrent }]
     }
     case 'individual_value':
-      // Individual-value PBS-direction is rarer. Defer concrete sampling to a
-      // later milestone; emit nothing for now (post-evaluator handles it).
+      // Individual-value PBS-direction is rarer. Defer to a later milestone;
+      // emit nothing for now (post-evaluator handles it).
       return []
     default:
       return []
