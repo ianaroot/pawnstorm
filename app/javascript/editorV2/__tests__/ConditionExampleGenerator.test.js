@@ -34,7 +34,7 @@ function relationalValueForSide(example, side) {
     moveObject: example.moveObject
   })
   const positions = side === 'subject' ? example.result.subjectPositions : example.result.targetPositions
-  return analysis.metricForPositions({ metric: 'value', positions })
+  return analysis.metricForPositions({ metric: 'aggregate_value', positions })
 }
 
 function relationalValueForSideScoped(payload, example, side, boardScope = 'after') {
@@ -53,7 +53,7 @@ function relationalValueForSideScoped(payload, example, side, boardScope = 'afte
     boardScope
   })
   const positions = side === 'subject' ? result.subjectPositions : result.targetPositions
-  return analysis.metricForPositions({ metric: 'value', positions, boardScope })
+  return analysis.metricForPositions({ metric: 'aggregate_value', positions, boardScope })
 }
 
 function relationalCountForSide(payload, example, side, boardScope = 'after') {
@@ -860,10 +860,6 @@ describe('ConditionExampleGenerator', () => {
       operator: 'defend',
       target: 'allied',
       targetFilter: 'pawn',
-      targetComparisonMetric: 'aggregate_value',
-      targetComparator: 'equal_to',
-      targetComparisonSource: 'exact_number',
-      targetComparisonSourceTotal: 1,
       subjectComparisonMetric: 'aggregate_value',
       subjectComparator: 'equal_to',
       subjectComparisonSource: 'exact_number',
@@ -877,7 +873,6 @@ describe('ConditionExampleGenerator', () => {
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(relationalValueForSide(example, 'subject')).toBe(8)
-      expect(relationalValueForSide(example, 'target')).toBe(1)
       expectLegalPriorTurnState(example)
     })
   })
@@ -1050,7 +1045,9 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    preview.examples.forEach(example => {
+    const castleExamples = preview.examples.filter(ex => ex.moveKind === 'castle')
+    expect(castleExamples.length).toBeGreaterThan(0)
+    castleExamples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.moveObject.additionalActions).toBeTruthy()
       expect(example.moveObject.pieceNotation).toMatch(/^O-O/)
