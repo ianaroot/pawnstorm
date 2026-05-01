@@ -1286,6 +1286,23 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('routes a same_piece chain (enemy_moved_piece + captured_piece) through forward generation (8f)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'same_piece',
+      target: 'captured_piece', targetFilter: 'any'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2015) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('routes a PBS-direction equal count chain through forward generation (M8)', () => {
     const payload = {
       version: 2, kind: 'relational',

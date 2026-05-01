@@ -63,8 +63,8 @@ function valueFilteredSpeciesPool(pool, descriptors, side) {
   }
 }
 
-const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield'])
-const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
+const SUPPORTED_RELATIONAL_OPERATORS = new Set(['attack', 'defend', 'adjacent', 'shield', 'same_piece'])
+const SUPPORTED_RELATIONAL_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece'])
 const FILTER_LABELS = Object.freeze({
   allied: 'Allied',
   enemy: 'Enemy',

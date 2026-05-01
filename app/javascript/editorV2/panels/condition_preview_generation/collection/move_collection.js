@@ -238,6 +238,18 @@ export function buildAggregatedResult(combinedPlan, analysis) {
 
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
+      // same_piece bypasses pair-aggregation — both actors resolve to the same
+      // square (the captured piece's prior position). CEv2 is authoritative
+      // for evaluation; we produce a synthetic single-pair result for highlighting.
+      if (plan.operator === 'same_piece') {
+        const capturedPos = analysis.capturedPiecePosition()
+        if (capturedPos !== null && capturedPos !== undefined) {
+          subjectPositions.push(capturedPos)
+          targetPositions.push(capturedPos)
+          pairs.push({ subject: capturedPos, target: capturedPos })
+        }
+        continue
+      }
       const rawResult = analysis.relationalResult(plan.relationParams)
       if (rawResult.pairs.length === 0 && !plan.comparisonDescriptors?.some(descriptorAllowsZeroPairs)) { return null }
       const result = applyCombinatorialFilter(plan, rawResult, analysis)

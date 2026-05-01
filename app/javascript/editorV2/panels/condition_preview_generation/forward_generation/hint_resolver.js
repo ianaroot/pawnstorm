@@ -45,6 +45,7 @@ import { relationPbsCountStrategy } from './strategies/relation_pbs_count'
 import { relationPbsCountBystanderStrategy } from './strategies/relation_pbs_count_bystander'
 import { relationPbsAggregateValueStrategy } from './strategies/relation_pbs_aggregate_value'
 import { actorPbsMobilityStrategy } from './strategies/actor_pbs_mobility'
+import { relationSamePieceStrategy } from './strategies/relation_same_piece'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -62,8 +63,8 @@ function shuffled(values, random) {
   return copy
 }
 
-function piecesIntoBoard(pieces, allowedToMove) {
-  return buildBoardFromLayout(buildLayoutFromPieces(pieces), null, allowedToMove)
+function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
+  return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
 }
 
 function actorTeamOnBoard(actor, movingTeam) {
@@ -246,7 +247,8 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy],
   [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy, relationPbsCountBystanderStrategy],
   [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]: [relationPbsAggregateValueStrategy],
-  [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy]
+  [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy],
+  [HINT_TYPES.RELATION_SAME_PIECE]: [relationSamePieceStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {
@@ -282,6 +284,9 @@ function buildMinimumSeed(combinedPlan, random) {
       // attempt). Skip seed placement; the strategy for RELATION_COUNT(=0)
       // returns pieces unchanged when the current count already satisfies.
       if (usesZeroRelationPath(plan.requirements)) { continue }
+      // Same-piece doesn't have a placement geometry — the strategy engineers
+      // the captured piece + mover + recentMoveContext entirely on its own.
+      if (plan.operator === 'same_piece') { continue }
       const subjectTeam = plan.subjectTeam
       const targetTeam = plan.targetTeam
       const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
@@ -392,7 +397,10 @@ export function resolveViaHints({ combinedPlan, random }) {
   // augment priorPieces independently from `pieces`; the move then falls out
   // of the diff between the two maps.
   const priorPieces = clonePiecesMap(pieces)
-  const ctx = { movingTeam, random, priorPieces }
+  // recentMoveContext is null by default; same_piece strategy sets it when
+  // engineering a capture that declares the captured piece as the prior turn's
+  // enemy moved_piece.
+  const ctx = { movingTeam, random, priorPieces, recentMoveContext: null }
 
   for (const hint of hints) {
     try {
@@ -411,7 +419,7 @@ export function resolveViaHints({ combinedPlan, random }) {
   // picking any moving-team piece and finding an origin.
   const diffMove = priorMatchesCurrent(pieces, ctx.priorPieces) ? null : deriveMoveFromDiff(ctx.priorPieces, pieces, movingTeam)
   if (diffMove !== null) {
-    const priorBoard = piecesIntoBoard(ctx.priorPieces, movingTeam)
+    const priorBoard = piecesIntoBoard(ctx.priorPieces, movingTeam, ctx.recentMoveContext)
     let moveObject
     try { moveObject = Rules.getMoveObject(diffMove.origin, diffMove.dest, priorBoard) } catch { return null }
     if (moveObject.illegal) { return null }

@@ -57,6 +57,11 @@ export const HINT_TYPES = Object.freeze({
   // PBS-direction mobility for a single actor. Composite (nPrior, nCurrent).
   ACTOR_PBS_MOBILITY: 'actor_pbs_mobility',
 
+  // Same-piece relation. Today only emitted for {enemy_moved_piece,
+  // captured_piece}: the move captures the piece declared as the prior turn's
+  // enemy_moved_piece via recentMoveContext.
+  RELATION_SAME_PIECE: 'relation_same_piece',
+
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
   ACTOR_AGGREGATE_VALUE: 'actor_aggregate_value',
@@ -115,8 +120,8 @@ export function pieceMatchesFilter(species, filter, filterMode) {
   return filterMode === 'exclude' ? !matches : matches
 }
 
-export function piecesIntoBoard(pieces, allowedToMove) {
-  return buildBoardFromLayout(buildLayoutFromPieces(pieces), null, allowedToMove)
+export function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
+  return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
 }
 
 // Iterate piece entries matching team + filter. Yields { position, species }.
@@ -287,6 +292,23 @@ function relationPbsCountSatisfies(pieces, hint, context) {
   return priorOk && currentOk
 }
 
+function relationSamePieceSatisfies(pieces, hint, context) {
+  // Weak verification: the strategy must have set up a recentMoveContext
+  // pointing at an enemy piece on the prior board. Full move-object
+  // validation runs via the post-evaluator. Uses recentMoveContext.movedPieceEndPosition
+  // as the canonical "captured-piece prior square" — same value for standard
+  // captures and en passant (the existing en passant preset already sets
+  // movedPieceEndPosition = capturedSquare).
+  const rmc = context?.recentMoveContext
+  if (!rmc || rmc.movedPieceEndPosition === undefined) { return false }
+  const priorPieces = context?.priorPieces
+  if (!priorPieces) { return false }
+  const piece = priorPieces.get(rmc.movedPieceEndPosition)
+  if (!piece) { return false }
+  const movingTeam = context?.movingTeam ?? Board.WHITE
+  return piece.charAt(0) !== movingTeam
+}
+
 function actorPbsMobilitySatisfies(pieces, hint, context) {
   const priorPieces = context?.priorPieces
   if (!priorPieces) { return false }
@@ -322,6 +344,7 @@ const PREDICATES = Object.freeze({
   [HINT_TYPES.RELATION_PBS_COUNT]:              relationPbsCountSatisfies,
   [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]:    relationPbsAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_PBS_MOBILITY]:              actorPbsMobilitySatisfies,
+  [HINT_TYPES.RELATION_SAME_PIECE]:             relationSamePieceSatisfies,
   [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
@@ -499,6 +522,23 @@ function compileRelationalDescriptor(plan, descriptor, random) {
 }
 
 function compileRelational(plan, random) {
+  // Same-piece operator: today only the {enemy_moved_piece, captured_piece}
+  // pair is supported. Emit before the descriptor pass since same_piece
+  // doesn't carry a comparison descriptor.
+  if (plan.operator === 'same_piece') {
+    const actors = new Set([plan.subject, plan.target])
+    if (actors.has('enemy_moved_piece') && actors.has('captured_piece')) {
+      return [{
+        type: HINT_TYPES.RELATION_SAME_PIECE,
+        operator: 'same_piece',
+        subject: relationalSideShape(plan, 'subject'),
+        target: relationalSideShape(plan, 'target')
+      }]
+    }
+    // Other same_piece pairs aren't supported in forward gen — fall through
+    // to RELATION_HOLDS so the chain isn't gated off entirely.
+  }
+
   const descriptors = plan.comparisonDescriptors ?? []
   if (descriptors.length === 0) {
     // No descriptor — structural relation only. Carry plan shape so the
