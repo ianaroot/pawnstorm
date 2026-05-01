@@ -213,6 +213,8 @@ class ConditionForm {
       modePositionBtn: this.editorPanel.querySelector('#cond-mode-position'),
       measureSubjectNote: this.editorPanel.querySelector('#cond-measure-subject-note'),
       relationalTargetNote: this.editorPanel.querySelector('#cond-relational-target-note'),
+      leftAggregateNote: this.editorPanel.querySelector('#cond-left-aggregate-note'),
+      rightAggregateNote: this.editorPanel.querySelector('#cond-right-aggregate-note'),
       mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout)'),
       positionLayout: this.editorPanel.querySelector('#cond-position-layout'),
       positionSubject: this.editorPanel.querySelector('#cond-position-subject'),
@@ -470,9 +472,12 @@ class ConditionForm {
     this.showAllOptions(fields.rightSubject)
     this.disableRelationalSubjectOptions(fields, samePieceMode)
     this.disableRelationalComparisonSourceOptions(fields)
+    this.disableRelationalComparisonMetricOptions(fields)
 
     fields.relationalTargetNote?.classList.toggle('hidden', rel.operator !== 'shield')
     fields.measureSubjectNote?.classList.toggle('hidden', true)
+    fields.rightAggregateNote?.classList.toggle('hidden', !this.leftUsesAggregateValue())
+    fields.leftAggregateNote?.classList.toggle('hidden', !this.rightUsesAggregateValue())
   }
 
   renderMeasure(fields) {
@@ -788,6 +793,10 @@ class ConditionForm {
       rel.ui.leftComparisonOpen = false
     }
 
+    if (this.leftUsesAggregateValue() && rel.right.comparisonMetric === 'aggregate_value') {
+      rel.right.comparisonMetric = 'count'
+    }
+
     this.applyRelationalComparisonSourceCompatibility('left')
     this.applyRelationalComparisonSourceCompatibility('right')
     this.applyFilterModeCompatibilityRules()
@@ -810,6 +819,16 @@ class ConditionForm {
   rightUsesPriorBoardState() {
     const rel = this.state.relational
     return this.state.mode === 'relational' && rel.ui.rightComparisonOpen && rel.right.comparisonSource === 'prior_board_state'
+  }
+
+  leftUsesAggregateValue() {
+    const rel = this.state.relational
+    return this.state.mode === 'relational' && rel.ui.leftComparisonOpen && rel.left.comparisonMetric === 'aggregate_value'
+  }
+
+  rightUsesAggregateValue() {
+    const rel = this.state.relational
+    return this.state.mode === 'relational' && rel.ui.rightComparisonOpen && rel.right.comparisonMetric === 'aggregate_value'
   }
 
   comparisonLocked(side) {
@@ -1015,6 +1034,16 @@ class ConditionForm {
     const allowedSources = this.allowedRelationalComparisonSourcesForMetric(this.state.relational[side].comparisonMetric || 'count')
     const allSources = Array.from(select.options).map(option => option.value)
     this.disableOptions(select, allSources.filter(value => !allowedSources.includes(value)))
+  }
+
+  disableRelationalComparisonMetricOptions(fields) {
+    this.disableRelationalComparisonMetricOptionsForSide('left', fields.leftComparisonMetric)
+    this.disableRelationalComparisonMetricOptionsForSide('right', fields.rightComparisonMetric)
+  }
+
+  disableRelationalComparisonMetricOptionsForSide(side, select) {
+    const otherUsesAggregate = side === 'left' ? this.rightUsesAggregateValue() : this.leftUsesAggregateValue()
+    this.disableOptions(select, otherUsesAggregate ? ['aggregate_value'] : [])
   }
 
   setUnaryComparisonInputsDisabled(fields, disabled) {
