@@ -22,17 +22,25 @@
 
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { controlledSquares } from 'gameplay/board_query_utils'
+import { controlledSquares, materialValue } from 'gameplay/board_query_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { usesZeroRelationPath } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 import {
   adjacentNeighborPositions, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
-import { compileHints, HINT_TYPES } from './hint_compiler'
+import { compileHints, HINT_TYPES, satisfies, pieceMatchesFilter } from './hint_compiler'
+import { relationCountStrategy } from './strategies/relation_count'
+import { actorCountStrategy } from './strategies/actor_count'
+import { actorAtPositionStrategy } from './strategies/actor_at_position'
+import { actorAggregateValueStrategy } from './strategies/actor_aggregate_value'
+import { relationAggregateValueStrategy } from './strategies/relation_aggregate_value'
+import { relationIndividualValueStrategy } from './strategies/relation_individual_value'
+import { actorIndividualValueStrategy } from './strategies/actor_individual_value'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -61,49 +69,48 @@ function actorTeamOnBoard(actor, movingTeam) {
   return Board.opposingTeam(movingTeam)
 }
 
-function pieceMatchesFilter(species, filter) {
-  if (filter === 'any') { return true }
-  switch (filter) {
-    case 'king':   return species === Board.KING
-    case 'queen':  return species === Board.QUEEN
-    case 'rook':   return species === Board.ROOK
-    case 'bishop': return species === Board.BISHOP
-    case 'knight': return species === Board.NIGHT
-    case 'pawn':   return species === Board.PAWN
-    case 'major':  return species === Board.QUEEN || species === Board.ROOK
-    case 'minor':  return species === Board.BISHOP || species === Board.NIGHT
-    default: return true
-  }
-}
-
-// Apply ACTOR_MOBILITY_AT_MOST hint: for each matching piece on the board, ensure
-// its mobility (legal-move count) is ≤ hint.maxMobility. Achieves the semantic
-// property "actor's mobility ≤ N" via one of these strategies:
-//   - C (check + block): place an allied attacker giving check on a matching king.
-//     King's legal moves are then restricted to escape; non-king matching pieces
-//     are restricted to defending moves. Strategy A runs on top to handle remaining
-//     mobility. Most useful for mobility=0 with king in scope.
+// Apply ACTOR_MOBILITY hint by reducing mobility (today's strategies cover
+// {≤, <, =} comparators via shared "≤ N" mechanics). Strategies:
+//   - C (check + block): place an allied attacker giving check on a matching
+//     king. King's legal moves are then restricted to escape; non-king matching
+//     pieces are restricted to defending moves. Strategy A runs on top to
+//     handle remaining mobility. Most useful for mobility=0 with king in scope.
 //   - A (direct block): place blockers/attackers at excess move-targets.
 //
-// Both strategies satisfy the same hint. Resolver tries C first (when applicable),
-// falls back to A.
-function applyMobilityAtMost(pieces, hint, movingTeam, random) {
+// Both strategies satisfy "≤ N." Resolver tries C first (when applicable),
+// falls back to A. For >/≥ comparators, no strategy is implemented yet —
+// emission for those is gated off in the compiler.
+function applyMobilityReduce(pieces, hint, movingTeam, random) {
   const cResult = tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random)
   if (cResult !== null) { return cResult }
   return applyStrategyDirectBlock(pieces, hint, movingTeam, random)
 }
 
+// Translate a generalized ACTOR_MOBILITY hint into a `maxMobility` ceiling for
+// the existing reduce strategies. Returns null if the comparator isn't yet
+// supported (>, ≥) or maps to an out-of-range bound.
+function mobilityCeilingFor(hint) {
+  switch (hint.mobilityOp) {
+    case 'less_than_or_equal_to':
+    case 'equal_to':              return hint.n
+    case 'less_than':             return Math.max(0, hint.n - 1)
+    default:                      return null
+  }
+}
+
 function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
+  const ceiling = mobilityCeilingFor(hint)
+  if (ceiling === null) { return null }
   const matching = []
   for (const [position, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
-    if (!pieceMatchesFilter(piece.slice(1), hint.filter)) { continue }
+    if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     matching.push({ position, piece })
   }
 
   let result = pieces
   for (const { position, piece } of matching) {
-    result = restrictMobilityForPiece(result, position, piece, hint.maxMobility, movingTeam, random)
+    result = restrictMobilityForPiece(result, position, piece, ceiling, movingTeam, random)
     if (result === null) { return null }
   }
   return result
@@ -115,6 +122,8 @@ function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
 // a piece's only legal moves are defending moves; if there are none (or ≤ N), the
 // actor's mobility ≤ N. Works for king (escape blocked) and non-king (pin/no-defend).
 function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
+  const ceiling = mobilityCeilingFor(hint)
+  if (ceiling === null) { return null }
   const kingCode = pieceCode(hint.team, Board.KING)
   let kingPos = null
   for (const [pos, piece] of pieces.entries()) {
@@ -136,20 +145,20 @@ function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
       } catch { continue }
       if (!attacks.includes(kingPos)) { continue }
 
-      // After placing the check-attacker, see if total matching mobility is already ≤ maxMobility.
+      // After placing the check-attacker, see if total matching mobility is already ≤ ceiling.
       let totalMobility = 0
       let valid = true
       try {
         const board = piecesIntoBoard(withAttacker, hint.team)
         for (const [pos, piece] of withAttacker.entries()) {
           if (piece.charAt(0) !== hint.team) { continue }
-          if (!pieceMatchesFilter(piece.slice(1), hint.filter)) { continue }
+          if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
           const moves = Rules.availableMovesFrom({ board, startPosition: pos })
           totalMobility += moves.length
-          if (totalMobility > hint.maxMobility) { break }
+          if (totalMobility > ceiling) { break }
         }
       } catch { valid = false }
-      if (valid && totalMobility <= hint.maxMobility) { return withAttacker }
+      if (valid && totalMobility <= ceiling) { return withAttacker }
 
       // Fall back to topping up with direct blocking for any residual.
       let blocked = null
@@ -206,16 +215,50 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
   return result
 }
 
-function applyHint(pieces, hint, movingTeam, random) {
-  switch (hint.type) {
-    case HINT_TYPES.RELATION_HOLDS:
-      // Satisfied by upstream seed; no augmentation needed here.
-      return pieces
-    case HINT_TYPES.ACTOR_MOBILITY_AT_MOST:
-      return applyMobilityAtMost(pieces, hint, movingTeam, random)
-    default:
-      return pieces
+// Strategy registry. Each entry maps a hint type to an ordered list of
+// strategy functions. Each strategy takes (pieces, hint, ctx) and returns:
+//   - a new pieces map (augmented to satisfy the hint), or
+//   - null if it cannot apply (resolver tries the next strategy).
+//
+// Empty array = the hint is satisfied implicitly (e.g., by buildMinimumSeed).
+// Missing entry = the hint type is not yet supported; resolver leaves pieces
+// unchanged. The verify pass also skips unsupported types — we don't claim
+// to satisfy what we have no strategy for, and the post-evaluator catches any
+// resulting false positives.
+//
+// As strategies for new hint types land, add them here AND remove the type
+// from NON_ACTIONABLE in hint_compiler.js.
+const STRATEGIES = Object.freeze({
+  [HINT_TYPES.RELATION_HOLDS]: [],
+  [HINT_TYPES.ACTOR_MOBILITY]: [
+    (pieces, hint, ctx) => applyMobilityReduce(pieces, hint, ctx.movingTeam, ctx.random)
+  ],
+  [HINT_TYPES.RELATION_COUNT]: [relationCountStrategy],
+  [HINT_TYPES.ACTOR_COUNT]: [actorCountStrategy],
+  [HINT_TYPES.ACTOR_AT_POSITION]: [actorAtPositionStrategy],
+  [HINT_TYPES.ACTOR_AGGREGATE_VALUE]: [actorAggregateValueStrategy],
+  [HINT_TYPES.RELATION_AGGREGATE_VALUE]: [relationAggregateValueStrategy],
+  [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]: [relationIndividualValueStrategy],
+  [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy]
+})
+
+function applyHint(pieces, hint, ctx) {
+  const strategies = STRATEGIES[hint.type]
+  if (strategies === undefined) { return pieces } // unsupported type — silent no-op
+  if (strategies.length === 0) { return pieces } // implicit (seed-satisfied)
+  for (const strategy of strategies) {
+    const result = strategy(pieces, hint, ctx)
+    if (result !== null) { return result }
   }
+  return null // tried every strategy, none could apply
+}
+
+function verifyHints(pieces, hints, ctx) {
+  for (const hint of hints) {
+    if (!(hint.type in STRATEGIES)) { continue } // unsupported type, don't verify
+    if (!satisfies(hint, pieces, ctx)) { return false }
+  }
+  return true
 }
 
 // Build minimum seed from relational plan structure: place at least one subject
@@ -227,6 +270,11 @@ function buildMinimumSeed(combinedPlan, random) {
 
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
+      // Zero-count plans want NO qualifying pair on the resulting board.
+      // Placing one would violate the predicate (and verify would reject every
+      // attempt). Skip seed placement; the strategy for RELATION_COUNT(=0)
+      // returns pieces unchanged when the current count already satisfies.
+      if (usesZeroRelationPath(plan.requirements)) { continue }
       const subjectTeam = plan.subjectTeam
       const targetTeam = plan.targetTeam
       const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
@@ -258,16 +306,33 @@ function buildMinimumSeed(combinedPlan, random) {
       }
       if (!placed) { return null }
     } else if (plan.kind === 'unary') {
+      // Skip seed placement for unary count=0 plans only. Placing a matching
+      // piece would directly violate the predicate. value=0 and mobility=0
+      // plans still get a seed because their strategies operate on the seeded
+      // piece (mobility reduce; value pool narrowing).
+      const total = Number(plan.targetTotal ?? 0)
+      if (plan.operator === 'count' && plan.target === 'exact_number'
+          && plan.comparator === 'equal_to' && total === 0) { continue }
+
       // Place a piece matching plan.subject's actor + filter so mobility hints have a target.
       if (plan.subject === 'allied' || plan.subject === 'enemy') {
         const team = actorTeamOnBoard(plan.subject, movingTeam)
-        const speciesPool = plan.subjectSpeciesPool
+        // Narrow pool for unary value < N / <= N so the seeded piece can't
+        // already overshoot the constraint (strategies don't reduce values).
+        let speciesPool = plan.subjectSpeciesPool
+        if (plan.operator === 'value' && plan.target === 'exact_number') {
+          if (plan.comparator === 'less_than') {
+            speciesPool = speciesPool.filter(s => materialValue(s) < total)
+          } else if (plan.comparator === 'less_than_or_equal_to') {
+            speciesPool = speciesPool.filter(s => materialValue(s) <= total)
+          }
+        }
         const species = pickRandom(speciesPool, random)
         if (!species) { continue }
         // Skip if a matching piece is already on the board (e.g., placed by a relational plan).
         let alreadyMatched = false
         for (const piece of pieces.values()) {
-          if (piece.charAt(0) === team && pieceMatchesFilter(piece.slice(1), plan.subjectFilter)) {
+          if (piece.charAt(0) === team && pieceMatchesFilter(piece.slice(1), plan.subjectFilter, plan.subjectFilterMode)) {
             alreadyMatched = true
             break
           }
@@ -298,19 +363,28 @@ export function resolveViaHints({ combinedPlan, random }) {
   if (!hints.some(h => h.type !== HINT_TYPES.RELATION_HOLDS)) { return null }
 
   const movingTeam = combinedPlan.movingTeam
+  const ctx = { movingTeam, random }
 
   let pieces = buildMinimumSeed(combinedPlan, random)
-  if (pieces === null || pieces.size === 0) { return null }
+  if (pieces === null) { return null }
+  // pieces.size === 0 is legitimate for chains that consist entirely of
+  // zero-count or actor-only constraints — strategies and placeKingsIfAbsent
+  // populate the board from there.
 
   for (const hint of hints) {
     try {
-      pieces = applyHint(pieces, hint, movingTeam, random)
+      pieces = applyHint(pieces, hint, ctx)
     } catch { pieces = null }
     if (pieces === null) { return null }
   }
 
   pieces = placeKingsIfAbsent(pieces, random)
   if (pieces === null) { return null }
+
+  // Verify: every supported hint must hold on the augmented board. The
+  // orchestrator's outer attempt loop will retry with a fresh RNG sequence
+  // if we return null here.
+  if (!verifyHints(pieces, hints, ctx)) { return null }
 
   // Find a legal move for the moving team that lands on this exact after-state.
   // Kings are valid movers — Rules.getMoveObject + legalPriorTurnState reject

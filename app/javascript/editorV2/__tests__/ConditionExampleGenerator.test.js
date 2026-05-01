@@ -5,6 +5,7 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator'
+import { maxOccupancyRatio, uniqueAfterBoardLayouts } from './diversity_helpers'
 
 function seededRandom(seed = 12345) {
   let current = seed >>> 0
@@ -1264,5 +1265,130 @@ describe('ConditionExampleGenerator', () => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
     })
+  })
+
+  it('routes a relational count chain through forward generation', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'pawn', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than_or_equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 2
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2001) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a filterMode=exclude chain through forward generation', () => {
+    // Weak Branch 6 from the failed-chain bot: bishop attacks 2+ non-pawns AND
+    // no enemies attack the bishop. Tests filterMode='exclude' threading
+    // through pieceMatchesFilter and qualifyingPairs.
+    const payloads = [
+      {
+        version: 2, kind: 'relational',
+        subject: 'moved_piece', subjectFilter: 'bishop', subjectFilterMode: 'include',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'pawn', targetFilterMode: 'exclude',
+        targetComparisonMetric: 'count', targetComparator: 'greater_than',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 1
+      },
+      {
+        version: 2, kind: 'relational',
+        subject: 'enemy', subjectFilter: 'any',
+        operator: 'attack',
+        target: 'moved_piece', targetFilter: 'any',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(2005) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      payloads.forEach(payload => expect(evaluateExample(payload, example)).toBe(true))
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a zero-count chain through forward generation (no qualifying pair seeded)', () => {
+    // Seed builder must skip pair placement for zero-count plans; otherwise the
+    // verify pass would reject every attempt.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'king',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2004) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a two-plan aggregate-value chain through forward generation', () => {
+    // Both-side aggregate value (Branch 4 from the failed-chain bot). Both
+    // unary value hints must be satisfied jointly. Caps at value > 34 per side.
+    const payloads = [
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'value', comparator: 'greater_than',
+        target: 'exact_number', targetTotal: 34
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'enemy', subjectFilter: 'any',
+        operator: 'value', comparator: 'greater_than',
+        target: 'exact_number', targetTotal: 34
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(2003) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      payloads.forEach(payload => {
+        expect(evaluateExample(payload, example)).toBe(true)
+      })
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces diverse boards for a non-positional chain (resolver bias guardrail)', () => {
+    // Diversity guardrail: a chain with no positional commitments should not
+    // cluster pieces on the same square across its example pool. Threshold is
+    // generous (0.6) — the goal is to catch hint over-narrowness, not nitpick
+    // legitimate clustering near move-paths.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any', operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than_or_equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 2
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2002) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThanOrEqual(10)
+    expect(maxOccupancyRatio(preview.examples)).toBeLessThanOrEqual(0.6)
+    expect(uniqueAfterBoardLayouts(preview.examples)).toBeGreaterThanOrEqual(
+      Math.floor(preview.examples.length * 0.8)
+    )
   })
 })
