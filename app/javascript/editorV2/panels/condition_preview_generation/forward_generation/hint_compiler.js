@@ -54,6 +54,9 @@ export const HINT_TYPES = Object.freeze({
   RELATION_PBS_COUNT: 'relation_pbs_count',
   RELATION_PBS_AGGREGATE_VALUE: 'relation_pbs_aggregate_value',
 
+  // PBS-direction mobility for a single actor. Composite (nPrior, nCurrent).
+  ACTOR_PBS_MOBILITY: 'actor_pbs_mobility',
+
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
   ACTOR_AGGREGATE_VALUE: 'actor_aggregate_value',
@@ -284,6 +287,24 @@ function relationPbsCountSatisfies(pieces, hint, context) {
   return priorOk && currentOk
 }
 
+function actorPbsMobilitySatisfies(pieces, hint, context) {
+  const priorPieces = context?.priorPieces
+  if (!priorPieces) { return false }
+  const movingTeam = context?.movingTeam ?? Board.WHITE
+
+  function totalMobility(map) {
+    const board = piecesIntoBoard(map, movingTeam)
+    let total = 0
+    for (const { position } of matchingPieces(map, hint.team, hint.filter, hint.filterMode)) {
+      const moves = Rules.availableMovesFrom({ board, startPosition: position })
+      total += moves.length
+    }
+    return total
+  }
+
+  return totalMobility(priorPieces) === hint.nPrior && totalMobility(pieces) === hint.nCurrent
+}
+
 function relationPbsAggregateValueSatisfies(pieces, hint, context) {
   const priorPieces = context?.priorPieces
   if (!priorPieces) { return false }
@@ -300,6 +321,7 @@ const PREDICATES = Object.freeze({
   [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]:       relationIndividualValueSatisfies,
   [HINT_TYPES.RELATION_PBS_COUNT]:              relationPbsCountSatisfies,
   [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]:    relationPbsAggregateValueSatisfies,
+  [HINT_TYPES.ACTOR_PBS_MOBILITY]:              actorPbsMobilitySatisfies,
   [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
@@ -369,6 +391,27 @@ function samplePbsCountPair(direction, random) {
     }
     case '=': {
       const n = 1 + Math.floor(r() * 3)         // 1..3
+      return [n, n]
+    }
+    default: return [null, null]
+  }
+}
+
+function samplePbsMobilityPair(direction, random) {
+  const r = random ?? (() => 0.5)
+  switch (direction) {
+    case '+': {
+      const nPrior = 1 + Math.floor(r() * 4)        // 1..4
+      const delta = 1 + Math.floor(r() * 3)          // 1..3
+      return [nPrior, nPrior + delta]
+    }
+    case '-': {
+      const nPrior = 2 + Math.floor(r() * 5)        // 2..6
+      const delta = 1 + Math.floor(r() * (nPrior))   // 1..nPrior
+      return [nPrior, Math.max(0, nPrior - delta)]
+    }
+    case '=': {
+      const n = 1 + Math.floor(r() * 5)             // 1..5
       return [n, n]
     }
     default: return [null, null]
@@ -497,7 +540,7 @@ function compileRelational(plan, random) {
   return hints
 }
 
-function compileUnary(plan) {
+function compileUnary(plan, random) {
   const hints = []
   const team = plan.subjectTeam
   const filter = plan.subjectFilter
@@ -521,6 +564,19 @@ function compileUnary(plan) {
         n: total
       })
     }
+    return hints
+  }
+
+  if (plan.operator === 'mobility' && target === 'prior_board_state') {
+    const direction = pbsDirectionFromComparator(plan.comparator)
+    if (!direction) { return hints }
+    const [nPrior, nCurrent] = samplePbsMobilityPair(direction, random)
+    if (nPrior === null) { return hints }
+    hints.push({
+      type: HINT_TYPES.ACTOR_PBS_MOBILITY,
+      actor, filter, filterMode, team, speciesPool,
+      direction, nPrior, nCurrent
+    })
     return hints
   }
 
@@ -586,7 +642,7 @@ export function compileHints(combinedPlan, random) {
     if (plan.kind === 'relational') {
       hints.push(...compileRelational(plan, random))
     } else if (plan.kind === 'unary') {
-      hints.push(...compileUnary(plan))
+      hints.push(...compileUnary(plan, random))
     } else if (plan.kind === 'position') {
       hints.push(...compilePosition(plan))
     }

@@ -1286,6 +1286,44 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('routes a moved_piece PBS mobility chain through forward generation (M6)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
+      operator: 'mobility', comparator: 'greater_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2010) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a PBS-direction aggregate-value chain through forward generation (M5)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2009) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('routes a PBS shield bystander chain through forward generation (M4b)', () => {
     // Bystander-blocking shape (Weak Branch 3): enemy non-pawn count > prior
     // shielding enemy rook. Neither side is moved_piece — the count change

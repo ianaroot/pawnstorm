@@ -43,6 +43,8 @@ import { relationIndividualValueStrategy } from './strategies/relation_individua
 import { actorIndividualValueStrategy } from './strategies/actor_individual_value'
 import { relationPbsCountStrategy } from './strategies/relation_pbs_count'
 import { relationPbsCountBystanderStrategy } from './strategies/relation_pbs_count_bystander'
+import { relationPbsAggregateValueStrategy } from './strategies/relation_pbs_aggregate_value'
+import { actorPbsMobilityStrategy } from './strategies/actor_pbs_mobility'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -242,7 +244,9 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.RELATION_AGGREGATE_VALUE]: [relationAggregateValueStrategy],
   [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]: [relationIndividualValueStrategy],
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy],
-  [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy, relationPbsCountBystanderStrategy]
+  [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy, relationPbsCountBystanderStrategy],
+  [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]: [relationPbsAggregateValueStrategy],
+  [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {
