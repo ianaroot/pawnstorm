@@ -263,6 +263,92 @@ function generateMoverLeavesSubject({ driver, combinedPlan, random }) {
   return null
 }
 
+// ===== Pattern F (mover becomes target) for attack/defend =====
+// Mover ends at a position attacked/defended by an existing piece. Count increases.
+
+function generateMoverBecomesTarget({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
+  const plan = driver.plan
+  if (driver.pbsDirection !== '+') { return null }
+  if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
+  if (plan.targetTeam !== combinedPlan.movingTeam) { return null }
+
+  const movingTeam = combinedPlan.movingTeam
+
+  const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
+  if (!subjectSpecies) { return null }
+  const subjectPos = randomPosition(random)
+  if (subjectPos === null) { return null }
+  let pieces = placePiece(new Map(), subjectPos, pieceCode(plan.subjectTeam, subjectSpecies))
+  if (!pieces) { return null }
+
+  const moverSpecies = pickRandom(plan.targetSpeciesPool, random)
+  if (!moverSpecies) { return null }
+
+  const endCandidates = shuffled(
+    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
+    random
+  )
+
+  for (const moverEnd of endCandidates) {
+    if (pieces.has(moverEnd)) { continue }
+    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }))
+    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...pieces.keys(), moverEnd]) })
+    const validOrigins = shuffled(reachOrigins.filter(p => !relationEnds.has(p)), random)
+
+    for (const moverOrigin of validOrigins) {
+      const trial = placePiece(pieces, moverOrigin, pieceCode(movingTeam, moverSpecies))
+      if (!trial) { continue }
+      const finalized = tryFinalize({ pieces: trial, moverOrigin, moverEnd, movingTeam, random })
+      if (finalized) { return finalized }
+    }
+  }
+  return null
+}
+
+// ===== Pattern G (mover leaves target) for attack/defend/adjacent =====
+// Mover at origin was attacked/defended by an existing piece; at end, isn't.
+
+function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
+  if (!driver) { return null }
+  const plan = driver.plan
+  if (driver.pbsDirection !== '-') { return null }
+  if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
+  if (plan.targetTeam !== combinedPlan.movingTeam) { return null }
+
+  const movingTeam = combinedPlan.movingTeam
+
+  const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
+  if (!subjectSpecies) { return null }
+  const subjectPos = randomPosition(random)
+  if (subjectPos === null) { return null }
+  let pieces = placePiece(new Map(), subjectPos, pieceCode(plan.subjectTeam, subjectSpecies))
+  if (!pieces) { return null }
+
+  const moverSpecies = pickRandom(plan.targetSpeciesPool, random)
+  if (!moverSpecies) { return null }
+
+  const originCandidates = shuffled(
+    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
+    random
+  )
+
+  for (const moverOrigin of originCandidates) {
+    const trial = placePiece(pieces, moverOrigin, pieceCode(movingTeam, moverSpecies))
+    if (!trial) { continue }
+
+    const moverFromOrigin = controlledFromPosition({ position: moverOrigin, currentPieces: trial })
+    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: trial }))
+    const endCandidates = shuffled([...moverFromOrigin].filter(p => p !== moverOrigin && !trial.has(p) && !relationEnds.has(p)), random)
+
+    for (const moverEnd of endCandidates) {
+      const finalized = tryFinalize({ pieces: trial, moverOrigin, moverEnd, movingTeam, random })
+      if (finalized) { return finalized }
+    }
+  }
+  return null
+}
+
 // ===== Pattern E generic (capture decreases relation count) for attack/defend/adjacent =====
 // Mover captures a participant on the relation, removing it from the after-board.
 
@@ -330,94 +416,6 @@ function generateCaptureDecreasesRelation({ driver, combinedPlan, random }) {
       const trial = placePiece(piecesWithCaptured, moverOrigin, pieceCode(movingTeam, moverSpecies))
       if (!trial) { continue }
       const finalized = tryFinalize({ pieces: trial, moverOrigin, moverEnd: capturedPos, movingTeam, random, requireCapture: true })
-      if (finalized) { return finalized }
-    }
-  }
-  return null
-}
-
-// ===== Pattern F (mover becomes target) for attack/defend =====
-// Mover ends at a position attacked/defended by an existing piece. Count increases.
-
-function generateMoverBecomesTarget({ driver, combinedPlan, random }) {
-  if (!driver) { return null }
-  const plan = driver.plan
-  if (driver.pbsDirection !== '+') { return null }
-  if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
-  if (plan.targetTeam !== combinedPlan.movingTeam) { return null }
-
-  const movingTeam = combinedPlan.movingTeam
-
-  // Place subject (the attacker/defender/neighbor).
-  const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
-  if (!subjectSpecies) { return null }
-  const subjectPos = randomPosition(random)
-  if (subjectPos === null) { return null }
-  let pieces = placePiece(new Map(), subjectPos, pieceCode(plan.subjectTeam, subjectSpecies))
-  if (!pieces) { return null }
-
-  const moverSpecies = pickRandom(plan.targetSpeciesPool, random)
-  if (!moverSpecies) { return null }
-
-  // End: a position with relation from subject's POV.
-  const endCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
-    random
-  )
-
-  for (const moverEnd of endCandidates) {
-    if (pieces.has(moverEnd)) { continue }
-    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }))
-    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...pieces.keys(), moverEnd]) })
-    const validOrigins = shuffled(reachOrigins.filter(p => !relationEnds.has(p)), random)
-
-    for (const moverOrigin of validOrigins) {
-      const trial = placePiece(pieces, moverOrigin, pieceCode(movingTeam, moverSpecies))
-      if (!trial) { continue }
-      const finalized = tryFinalize({ pieces: trial, moverOrigin, moverEnd, movingTeam, random })
-      if (finalized) { return finalized }
-    }
-  }
-  return null
-}
-
-// ===== Pattern G (mover leaves target) for attack/defend/adjacent =====
-// Mover at origin was attacked/defended by an existing piece; at end, isn't.
-
-function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
-  if (!driver) { return null }
-  const plan = driver.plan
-  if (driver.pbsDirection !== '-') { return null }
-  if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
-  if (plan.targetTeam !== combinedPlan.movingTeam) { return null }
-
-  const movingTeam = combinedPlan.movingTeam
-
-  const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
-  if (!subjectSpecies) { return null }
-  const subjectPos = randomPosition(random)
-  if (subjectPos === null) { return null }
-  let pieces = placePiece(new Map(), subjectPos, pieceCode(plan.subjectTeam, subjectSpecies))
-  if (!pieces) { return null }
-
-  const moverSpecies = pickRandom(plan.targetSpeciesPool, random)
-  if (!moverSpecies) { return null }
-
-  const originCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
-    random
-  )
-
-  for (const moverOrigin of originCandidates) {
-    const trial = placePiece(pieces, moverOrigin, pieceCode(movingTeam, moverSpecies))
-    if (!trial) { continue }
-
-    const moverFromOrigin = controlledFromPosition({ position: moverOrigin, currentPieces: trial })
-    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: trial }))
-    const endCandidates = shuffled([...moverFromOrigin].filter(p => p !== moverOrigin && !trial.has(p) && !relationEnds.has(p)), random)
-
-    for (const moverEnd of endCandidates) {
-      const finalized = tryFinalize({ pieces: trial, moverOrigin, moverEnd, movingTeam, random })
       if (finalized) { return finalized }
     }
   }
@@ -537,64 +535,6 @@ function generateMoverBlocksRay({ driver, combinedPlan, random }) {
   return null
 }
 
-// ===== Mobility moved_piece patterns =====
-// Mover moves to a square with more (or fewer) available moves.
-
-function generateMoverMobilityChange(direction) {
-  return ({ driver, combinedPlan, random }) => {
-    if (!driver) { return null }
-  const plan = driver.plan
-    if (plan.kind !== 'unary') { return null }
-    if (plan.subject !== 'moved_piece') { return null }
-    if (plan.operator !== 'mobility') { return null }
-    if (driver.pbsDirection !== direction) { return null }
-
-    const movingTeam = combinedPlan.movingTeam
-    const moverSpecies = pickRandom(plan.subjectSpeciesPool, random)
-    if (!moverSpecies) { return null }
-
-    const origin = randomPosition(random)
-    if (origin === null) { return null }
-    let pieces = placePiece(new Map(), origin, pieceCode(movingTeam, moverSpecies))
-    if (!pieces) { return null }
-
-    // Optionally add some blockers near the origin to constrain mobility.
-    const nearby = ALL_POSITIONS.filter(p => {
-      if (pieces.has(p)) { return false }
-      const rd = Math.abs(Board.rankIndex(p) - Board.rankIndex(origin))
-      const fd = Math.abs(Board.fileIndex(p) - Board.fileIndex(origin))
-      return rd <= 2 && fd <= 2
-    })
-    const blockerCount = direction === '+' ? 4 : 1
-    for (const sq of shuffled(nearby, random).slice(0, blockerCount)) {
-      const blockerSpecies = pickRandom([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK], random)
-      const team = random() < 0.5 ? movingTeam : Board.opposingTeam(movingTeam)
-      const next = placePiece(pieces, sq, pieceCode(team, blockerSpecies))
-      if (next) { pieces = next }
-    }
-
-    const piecesWithKings = placeKingsIfAbsent(pieces, random)
-    if (piecesWithKings === null) { return null }
-    const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
-
-    const moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: origin })
-    const originMobility = moves.length
-    if (moves.length === 0) { return null }
-
-    for (const moveObject of shuffled([...moves], random)) {
-      if (moveObject.illegal) { continue }
-      const afterBoard = priorBoard.lightClone()
-      try { afterBoard._hypotheticallyMovePiece(moveObject) } catch { continue }
-      const endMobility = Rules.availableMovesFrom({ board: afterBoard, startPosition: moveObject.endPosition }).length
-      const passes = direction === '+' ? endMobility > originMobility : endMobility < originMobility
-      if (!passes) { continue }
-      if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
-      return { priorBoard, moveObject }
-    }
-    return null
-  }
-}
-
 // ===== Helper: reach (positions a piece would have relation with from a square) =====
 
 function reachOf({ operator, position, species, basePieces }) {
@@ -671,64 +611,6 @@ function generateMoverPreservesSubject({ driver, combinedPlan, random }) {
     let placed = false
     for (const sharedPos of shuffled(sharedReach, random)) {
       const trial = placePiece(augmented, sharedPos, pieceCode(plan.targetTeam, targetSpecies))
-      if (trial) { augmented = trial; placed = true; break }
-    }
-    if (!placed) { continue }
-
-    const augmentedBoard = piecesIntoBoard(augmented, movingTeam)
-    let augmentedMove
-    try { augmentedMove = Rules.getMoveObject(origin, dest, augmentedBoard) } catch { continue }
-    if (augmentedMove.illegal) { continue }
-    if (!legalPriorTurnState(augmentedBoard, augmentedMove)) { continue }
-
-    return { priorBoard: augmentedBoard, moveObject: augmentedMove }
-  }
-  return null
-}
-
-// ===== Pattern F= (mover preserves target role for "= PBS") =====
-// Mover IS target. Place a subject piece whose relation reach covers both origin and destination.
-// Yields count = N = N for moved_piece-as-target `=` PBS chains.
-
-function generateMoverPreservesTarget({ driver, combinedPlan, random }) {
-  if (!driver) { return null }
-  const plan = driver.plan
-  if (driver.pbsDirection !== '=') { return null }
-  if (plan.kind !== 'relational') { return null }
-  if (!['attack', 'defend', 'adjacent'].includes(plan.operator)) { return null }
-  if (plan.target !== 'moved_piece') { return null }
-
-  const movingTeam = combinedPlan.movingTeam
-  const moverSpecies = pickRandom(plan.targetSpeciesPool, random)
-  if (!moverSpecies) { return null }
-
-  const origin = randomPosition(random)
-  if (origin === null) { return null }
-  let basePieces = placePiece(new Map(), origin, pieceCode(movingTeam, moverSpecies))
-  if (!basePieces) { return null }
-
-  basePieces = placeKingsIfAbsent(basePieces, random)
-  if (basePieces === null) { return null }
-
-  const priorBoard = piecesIntoBoard(basePieces, movingTeam)
-  const moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: origin })
-
-  for (const move of shuffled([...moves], random)) {
-    if (move.illegal) { continue }
-    if (!legalPriorTurnState(priorBoard, move)) { continue }
-    const dest = move.endPosition
-
-    const candidates = findReachingBoth({
-      origin, dest, operator: plan.operator,
-      pool: plan.subjectSpeciesPool,
-      basePieces
-    })
-    if (candidates.length === 0) { continue }
-
-    let augmented = basePieces
-    let placed = false
-    for (const candidate of shuffled(candidates, random)) {
-      const trial = placePiece(augmented, candidate.position, pieceCode(plan.subjectTeam, candidate.species))
       if (trial) { augmented = trial; placed = true; break }
     }
     if (!placed) { continue }
@@ -910,15 +792,16 @@ export const PATTERNS = [
   { name: 'A:mover-becomes-subject', generate: generateMoverBecomesSubject },
   { name: 'B:mover-leaves-subject', generate: generateMoverLeavesSubject },
   { name: 'E:capture-decreases-relation', generate: generateCaptureDecreasesRelation },
+  // F=, Pattern M (moved-mobility) deleted in 8d M7 — equal-direction count
+  // and moved-piece mobility are covered by the resolver. F and G stayed
+  // because parity attempts surfaced cases the resolver doesn't reliably
+  // hit on M4a's seed range.
   { name: 'F:mover-becomes-target', generate: generateMoverBecomesTarget },
   { name: 'G:mover-leaves-target', generate: generateMoverLeavesTarget },
   { name: 'C:mover-unblocks-ray', generate: generateMoverUnblocksRay },
   { name: 'D:mover-blocks-ray', generate: generateMoverBlocksRay },
-  { name: 'M:moved-mobility-increase', generate: generateMoverMobilityChange('+') },
-  { name: 'M:moved-mobility-decrease', generate: generateMoverMobilityChange('-') },
   { name: 'M:group-mobility-increase', generate: generateGroupMobilityIncrease },
   { name: 'V:promotion-value-increase', generate: generatePromotionForValueIncrease },
   { name: 'A=:mover-preserves-subject', generate: generateMoverPreservesSubject },
-  { name: 'F=:mover-preserves-target', generate: generateMoverPreservesTarget },
   { name: 'Q:stable-count-pbs', generate: generateStableCountPbs }
 ]

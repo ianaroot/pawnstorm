@@ -1286,6 +1286,78 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('routes a PBS-direction equal count chain through forward generation (M8)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2011) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a PBS-direction equal aggregate-value chain through forward generation (M8)', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'aggregate_value', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2012) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a PBS-direction equal mobility chain through forward generation (M8)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
+      operator: 'mobility', comparator: 'equal_to',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2013) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a PBS-direction less-than mobility chain through forward generation (M8)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
+      operator: 'mobility', comparator: 'less_than',
+      target: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2014) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('routes a moved_piece PBS mobility chain through forward generation (M6)', () => {
     const payload = {
       version: 2, kind: 'unary',
