@@ -42,6 +42,7 @@ import { relationAggregateValueStrategy } from './strategies/relation_aggregate_
 import { relationIndividualValueStrategy } from './strategies/relation_individual_value'
 import { actorIndividualValueStrategy } from './strategies/actor_individual_value'
 import { relationPbsCountStrategy } from './strategies/relation_pbs_count'
+import { relationPbsCountBystanderStrategy } from './strategies/relation_pbs_count_bystander'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -241,7 +242,7 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.RELATION_AGGREGATE_VALUE]: [relationAggregateValueStrategy],
   [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]: [relationIndividualValueStrategy],
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]: [actorIndividualValueStrategy],
-  [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy]
+  [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy, relationPbsCountBystanderStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {

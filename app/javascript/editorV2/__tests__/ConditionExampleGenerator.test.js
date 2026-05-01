@@ -1286,6 +1286,29 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('routes a PBS shield bystander chain through forward generation (M4b)', () => {
+    // Bystander-blocking shape (Weak Branch 3): enemy non-pawn count > prior
+    // shielding enemy rook. Neither side is moved_piece — the count change
+    // comes from an allied slider's move installing a shielding line.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'pawn', subjectFilterMode: 'exclude',
+      operator: 'shield',
+      target: 'enemy', targetFilter: 'rook', targetFilterMode: 'include',
+      subjectComparisonMetric: 'count', subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(2008) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
   it('routes a PBS-direction less-than count chain without stalling (M4a)', () => {
     // The user's stalling case: enemy/pawn count < prior attacks moved_piece.
     // Direction '-' with sampled nCurrent=0, nPrior=1 was prone to expensive
