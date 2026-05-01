@@ -321,9 +321,12 @@ function buildMinimumSeed(combinedPlan, random) {
         // already overshoot the constraint (strategies don't reduce values).
         let speciesPool = plan.subjectSpeciesPool
         if (plan.operator === 'value' && plan.target === 'exact_number') {
+          // Seed must not pre-violate the value predicate. For each comparator,
+          // pick a species whose individual value can't already overshoot the
+          // aggregate constraint (the strategy can add more pieces if needed).
           if (plan.comparator === 'less_than') {
             speciesPool = speciesPool.filter(s => materialValue(s) < total)
-          } else if (plan.comparator === 'less_than_or_equal_to') {
+          } else if (plan.comparator === 'less_than_or_equal_to' || plan.comparator === 'equal_to') {
             speciesPool = speciesPool.filter(s => materialValue(s) <= total)
           }
         }
@@ -368,8 +371,14 @@ export function resolveViaHints({ combinedPlan, random }) {
   let pieces = buildMinimumSeed(combinedPlan, random)
   if (pieces === null) { return null }
   // pieces.size === 0 is legitimate for chains that consist entirely of
-  // zero-count or actor-only constraints — strategies and placeKingsIfAbsent
-  // populate the board from there.
+  // zero-count or actor-only constraints — strategies populate the board
+  // from there.
+
+  // Place kings BEFORE strategies so each strategy sees the full set of
+  // pieces it's expected to constrain (most importantly, mobility strategies
+  // need to constrain king mobility, not just non-king actors).
+  pieces = placeKingsIfAbsent(pieces, random)
+  if (pieces === null) { return null }
 
   for (const hint of hints) {
     try {
@@ -377,9 +386,6 @@ export function resolveViaHints({ combinedPlan, random }) {
     } catch { pieces = null }
     if (pieces === null) { return null }
   }
-
-  pieces = placeKingsIfAbsent(pieces, random)
-  if (pieces === null) { return null }
 
   // Verify: every supported hint must hold on the augmented board. The
   // orchestrator's outer attempt loop will retry with a fresh RNG sequence
