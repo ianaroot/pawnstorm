@@ -429,6 +429,66 @@ describe('EditorActions', () => {
       expect(boardStatePreview.showSelectionPreview).toHaveBeenCalled()
       const preview = boardStatePreview.showSelectionPreview.mock.calls.at(-1)[0]
       expect(preview.status).toBe('ready')
+    })
+
+    it('does not show the editor panel when no node is being edited', () => {
+      vi.useFakeTimers()
+      const conditionB = new Node({
+        clientId: 'condition-b',
+        type: 'condition',
+        position: { x: 160, y: 100 },
+        data: {
+          version: 2, kind: 'relational',
+          subject: 'allied', subjectFilter: 'any',
+          operator: 'defend', target: 'allied', targetFilter: 'any'
+        }
+      })
+      store.addNode(conditionB)
+      store.addConnection(new Connection({ sourceId: 'condition', targetId: conditionB.clientId }))
+      store.updateNode('condition', {
+        data: {
+          version: 2, kind: 'relational',
+          subject: 'allied', subjectFilter: 'any',
+          operator: 'defend', target: 'allied', targetFilter: 'pawn'
+        }
+      })
+      store.setSelectedNodeIds(['condition', conditionB.clientId])
+
+      editorActions.renderSelectionPreview()
+      vi.runAllTimers()
+      vi.useRealTimers()
+
+      expect(editorPanel.classList.contains('hidden')).toBe(true)
+    })
+
+    it('shows the editor panel when a node is already being edited', () => {
+      vi.useFakeTimers()
+      const conditionB = new Node({
+        clientId: 'condition-b',
+        type: 'condition',
+        position: { x: 160, y: 100 },
+        data: {
+          version: 2, kind: 'relational',
+          subject: 'allied', subjectFilter: 'any',
+          operator: 'defend', target: 'allied', targetFilter: 'any'
+        }
+      })
+      store.addNode(conditionB)
+      store.addConnection(new Connection({ sourceId: 'condition', targetId: conditionB.clientId }))
+      store.updateNode('condition', {
+        data: {
+          version: 2, kind: 'relational',
+          subject: 'allied', subjectFilter: 'any',
+          operator: 'defend', target: 'allied', targetFilter: 'pawn'
+        }
+      })
+      store.setSelectedNodeIds(['condition', conditionB.clientId])
+      clickHandler.getEditingNodeId.mockReturnValue('condition')
+
+      editorActions.renderSelectionPreview()
+      vi.runAllTimers()
+      vi.useRealTimers()
+
       expect(editorPanel.classList.contains('hidden')).toBe(false)
     })
 
@@ -471,6 +531,170 @@ describe('EditorActions', () => {
       const preview = boardStatePreview.showSelectionPreview.mock.calls.at(-1)[0]
       expect(preview.status).toBe('unsupported')
       expect(preview.reason).toBe("OR branches aren't supported in condition chain previews yet.")
+    })
+  })
+
+  // ===== canUndo / canRedo =====
+
+  describe('canUndo / canRedo', () => {
+    it('returns true when history allows and no operation is pending', () => {
+      expect(editorActions.canUndo()).toBe(true)
+      expect(editorActions.canRedo()).toBe(true)
+    })
+
+    it('returns false when undo/redo is pending', () => {
+      syncManager.isUndoRedoPending = true
+      expect(editorActions.canUndo()).toBe(false)
+      expect(editorActions.canRedo()).toBe(false)
+    })
+
+    it('returns false when history cannot undo', () => {
+      history.canUndo.mockReturnValue(false)
+      expect(editorActions.canUndo()).toBe(false)
+    })
+
+    it('returns false when history cannot redo', () => {
+      history.canRedo.mockReturnValue(false)
+      expect(editorActions.canRedo()).toBe(false)
+    })
+  })
+
+  // ===== closeEditor =====
+
+  describe('closeEditor', () => {
+    it('calls clickHandler.closeEditor', () => {
+      editorActions.closeEditor()
+      expect(clickHandler.closeEditor).toHaveBeenCalled()
+    })
+  })
+
+  // ===== preview =====
+
+  describe('preview', () => {
+    let boardStatePreview
+    let editorPanel
+    let formText
+
+    beforeEach(() => {
+      editorPanel = document.createElement('div')
+      formText = document.createElement('div')
+      formText.className = 'condition-form-formulation__text'
+      editorPanel.appendChild(formText)
+      clickHandler.editorPanel = editorPanel
+
+      boardStatePreview = {
+        activate: vi.fn(),
+        deactivate: vi.fn(),
+        toggle: vi.fn(),
+        showSelectionPreview: vi.fn(),
+        _navigate: vi.fn(),
+        isEnabled: false,
+        mode: 'idle',
+        examples: []
+      }
+      editorActions.boardStatePreview = boardStatePreview
+    })
+
+    describe('activateConditionPreview', () => {
+      it('calls boardStatePreview.activate with the conditionForm', () => {
+        const conditionForm = {}
+        editorActions.activateConditionPreview(conditionForm)
+        expect(boardStatePreview.activate).toHaveBeenCalledWith(conditionForm)
+      })
+
+      it('hides the formulation text', () => {
+        editorActions.activateConditionPreview({})
+        expect(formText.classList.contains('hidden')).toBe(true)
+      })
+    })
+
+    describe('deactivatePreview', () => {
+      it('calls boardStatePreview.deactivate', () => {
+        editorActions.deactivatePreview()
+        expect(boardStatePreview.deactivate).toHaveBeenCalled()
+      })
+
+      it('shows the formulation text', () => {
+        formText.classList.add('hidden')
+        editorActions.deactivatePreview()
+        expect(formText.classList.contains('hidden')).toBe(false)
+      })
+    })
+
+    describe('togglePreview', () => {
+      it('toggles an active preview off and shows the formulation text', () => {
+        boardStatePreview.isEnabled = true
+        boardStatePreview.mode = 'form'
+        boardStatePreview.toggle.mockImplementation(() => { boardStatePreview.isEnabled = false })
+        formText.classList.add('hidden')
+
+        editorActions.togglePreview()
+
+        expect(boardStatePreview.toggle).toHaveBeenCalled()
+        expect(formText.classList.contains('hidden')).toBe(false)
+      })
+
+      it('does not show formulation text when toggling back on', () => {
+        boardStatePreview.isEnabled = true
+        boardStatePreview.mode = 'form'
+        boardStatePreview.toggle.mockImplementation(() => { boardStatePreview.isEnabled = true })
+        formText.classList.add('hidden')
+
+        editorActions.togglePreview()
+
+        expect(formText.classList.contains('hidden')).toBe(true)
+      })
+
+      it('enables preview and calls renderSelectionPreview when multiple nodes are selected', () => {
+        store.addNode(new Node({ clientId: 'score', type: 'score', position: { x: 400, y: 300 } }))
+        store.setSelectedNodeIds(['condition', 'score'])
+        vi.spyOn(editorActions, 'renderSelectionPreview').mockImplementation(() => {})
+
+        editorActions.togglePreview()
+
+        expect(boardStatePreview.isEnabled).toBe(true)
+        expect(formText.classList.contains('hidden')).toBe(true)
+        expect(editorActions.renderSelectionPreview).toHaveBeenCalled()
+      })
+
+      it('activates condition preview when a single condition node is being edited', () => {
+        const conditionForm = {}
+        clickHandler.getEditingNodeId.mockReturnValue('condition')
+        clickHandler.conditionForm = conditionForm
+        vi.spyOn(editorActions, 'activateConditionPreview').mockImplementation(() => {})
+
+        editorActions.togglePreview()
+
+        expect(editorActions.activateConditionPreview).toHaveBeenCalledWith(conditionForm)
+      })
+
+      it('does nothing when idle, no multi-selection, and no editing node', () => {
+        editorActions.togglePreview()
+
+        expect(boardStatePreview.toggle).not.toHaveBeenCalled()
+        expect(boardStatePreview.activate).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('navigatePreview', () => {
+      it('returns false and does not navigate when preview is idle', () => {
+        expect(editorActions.navigatePreview(1)).toBe(false)
+        expect(boardStatePreview._navigate).not.toHaveBeenCalled()
+      })
+
+      it('returns false when there is only one example', () => {
+        boardStatePreview.mode = 'form'
+        boardStatePreview.examples = [{}]
+        expect(editorActions.navigatePreview(1)).toBe(false)
+        expect(boardStatePreview._navigate).not.toHaveBeenCalled()
+      })
+
+      it('delegates to boardStatePreview._navigate and returns true', () => {
+        boardStatePreview.mode = 'form'
+        boardStatePreview.examples = [{}, {}]
+        expect(editorActions.navigatePreview(-1)).toBe(true)
+        expect(boardStatePreview._navigate).toHaveBeenCalledWith(-1)
+      })
     })
   })
 })
