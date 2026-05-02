@@ -52,6 +52,11 @@ export function actorCountStrategy(pieces, hint, ctx) {
   // When the actor is singular, intersect species pool with ctx.{actor}.species_set
   // so sibling plans' species constraints flow through.
   const varKey = ACTOR_TO_VAR_KEY[hint.actor]
+  // Defense-in-depth: contradiction detectors reject `count > 1` for singular
+  // actors at plan-build time, but guard here too so a future code path that
+  // reaches this strategy without going through plan-build still degrades
+  // cleanly instead of producing a malformed narrowing.
+  if (varKey && ctx[varKey] && additions > 1) { return null }
   const hintPool = hint.speciesPool ?? []
   const effectivePool = (varKey && ctx[varKey])
     ? hintPool.filter(s => ctx[varKey].species_set.has(s))

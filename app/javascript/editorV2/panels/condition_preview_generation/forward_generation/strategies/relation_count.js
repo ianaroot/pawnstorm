@@ -137,6 +137,13 @@ export function relationCountStrategy(pieces, hint, ctx) {
   const additions = neededAdditions(hint.countOp, hint.n, currentCount)
   if (additions === null || additions <= 0) { return null }
 
+  // Singular actors hold at most one piece. Adding >1 on the singular side
+  // would create a malformed narrowing (last-placed wins arbitrarily); fail
+  // the attempt instead.
+  const side = hint.side === 'subject' ? hint.subject : hint.target
+  const sideVarKey = ACTOR_TO_VAR_KEY[side.actor]
+  if (sideVarKey && ctx[sideVarKey] && additions > 1) { return null }
+
   const anchorPositions = pairs.map(p => hint.side === 'subject' ? p.targetPosition : p.subjectPosition)
   if (anchorPositions.length === 0) { return null }
 

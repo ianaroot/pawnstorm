@@ -51,6 +51,7 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
     : hintPool
   let lastSpeciesUsed = null
   let lastPosUsed = null
+  let placementCount = 0
 
   // Inventory awareness for group actors: cap value additions at the
   // converged value_range.max so we don't overshoot sibling constraints.
@@ -71,6 +72,11 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
       }
       return result
     }
+
+    // Singular actors are by definition one piece. If a single placement
+    // didn't bring the sum into the satisfying range, no second piece can
+    // legitimately be added (the second one isn't the singular actor).
+    if (varKey && ctx[varKey] && placementCount > 0) { return null }
 
     const max = maxAdditionForOp(hint.totalOp, hint.total, current)
     if (max === null || max <= 0) { return null }
@@ -93,6 +99,7 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
       if (next) { result = next; lastSpeciesUsed = species; lastPosUsed = pos; placed = true; break }
     }
     if (!placed) { return null }
+    placementCount += 1
   }
   return null
 }

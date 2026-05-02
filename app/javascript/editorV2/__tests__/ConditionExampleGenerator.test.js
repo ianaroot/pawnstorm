@@ -623,6 +623,30 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.reason).toMatch(/pawns cannot be on rank 1/i)
   })
 
+  it('flags contradiction when a unary singular actor has count > 1', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 2
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1113) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/singular actor.*cannot have count > 1/i)
+  })
+
+  it('flags contradiction when moved_piece is required to have count = 0', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(1114) })
+    expect(preview.status).toBe('contradictory')
+    expect(preview.reason).toMatch(/moved_piece must exist/i)
+  })
+
   it('uses forward generation for allied any mobility > prior_board_state via group-mobility-increase pattern', () => {
     const payload = {
       version: 2, kind: 'unary',

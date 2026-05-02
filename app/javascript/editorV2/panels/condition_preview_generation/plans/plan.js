@@ -279,6 +279,47 @@ function detectSingularActorWithAggregateValue({ plans }) {
   return null
 }
 
+// Mirrors detectSingularActorWithImpossibleCount for unary plans. Comparators
+// that require count > 1 on a singular actor are unsatisfiable since each
+// singular actor is at most one piece.
+function detectSingularActorWithImpossibleUnaryCount({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'unary') { continue }
+    if (!SINGULAR_ACTORS.has(plan.subject)) { continue }
+    if (plan.operator !== 'count') { continue }
+    if (plan.target !== 'exact_number') { continue }
+    const total = Number(plan.targetTotal ?? 0)
+    const requiresMoreThanOne =
+      (plan.comparator === 'equal_to' && total > 1) ||
+      (plan.comparator === 'greater_than' && total >= 1) ||
+      (plan.comparator === 'greater_than_or_equal_to' && total > 1)
+    if (requiresMoreThanOne) {
+      return `A singular actor (${plan.subject}) cannot have count > 1; its count is at most 1.`
+    }
+  }
+  return null
+}
+
+// moved_piece always exists by definition (a move occurred). A unary
+// constraint demanding moved_piece count = 0 is a contradiction.
+function detectMovedPieceWithCountZero({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'unary') { continue }
+    if (plan.subject !== 'moved_piece') { continue }
+    if (plan.operator !== 'count') { continue }
+    if (plan.target !== 'exact_number') { continue }
+    const total = Number(plan.targetTotal ?? 0)
+    const requiresZero =
+      (plan.comparator === 'equal_to' && total === 0) ||
+      (plan.comparator === 'less_than' && total <= 1) ||
+      (plan.comparator === 'less_than_or_equal_to' && total === 0)
+    if (requiresZero) {
+      return 'moved_piece must exist (a move occurred), but a condition requires its count to be zero.'
+    }
+  }
+  return null
+}
+
 const CONTRADICTION_DETECTORS = [
   detectIncompatibleMoveKinds,
   detectImpossibleMovedPieceSpecies,
@@ -286,6 +327,8 @@ const CONTRADICTION_DETECTORS = [
   detectIllegalPawnRanks,
   detectImpossiblePawnPosition,
   detectSingularActorWithImpossibleCount,
+  detectSingularActorWithImpossibleUnaryCount,
+  detectMovedPieceWithCountZero,
   detectSingularActorWithAggregateValue,
   detectFilterMatchesNoSpecies
 ]

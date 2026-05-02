@@ -85,6 +85,7 @@ function addQualifyingTargetWithSpecies(pieces, hint, ctx, anchorSubjectPosition
 export function relationAggregateValueStrategy(pieces, hint, ctx) {
   if (hint.frame !== 'current') { return null }
   let result = pieces
+  let placementCount = 0
 
   for (let i = 0; i < MAX_PLACEMENT_ITERATIONS; i += 1) {
     const board = piecesIntoBoard(result, ctx.movingTeam)
@@ -92,11 +93,15 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
     const current = sumOnSide(result, board, hint)
     if (compareValue(current, hint.totalOp, hint.total)) { return result }
 
+    const side = hint.side === 'subject' ? hint.subject : hint.target
+    const sideVarKey = ACTOR_TO_VAR_KEY[side.actor]
+    // Singular side holds at most one piece. If one placement didn't
+    // satisfy, a second wouldn't legitimately be the singular actor.
+    if (sideVarKey && ctx[sideVarKey] && placementCount > 0) { return null }
+
     const max = maxAdditionForOp(hint.totalOp, hint.total, current)
     if (max === null || max <= 0) { return null }
 
-    const side = hint.side === 'subject' ? hint.subject : hint.target
-    const sideVarKey = ACTOR_TO_VAR_KEY[side.actor]
     const hintSidePool = side.speciesPool ?? []
     const sidePool = (sideVarKey && ctx[sideVarKey])
       ? hintSidePool.filter(s => ctx[sideVarKey].species_set.has(s))
@@ -116,6 +121,7 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
       : addQualifyingTargetWithSpecies(result, hint, ctx, anchorPositions, species)
     if (placed === null) { return null }
     result = placed.pieces
+    placementCount += 1
     // When the side is a singular actor, narrow ctx species_set + position_set
     // to the committed values.
     if (sideVarKey && ctx[sideVarKey]) {
