@@ -1,6 +1,5 @@
 import TemplatePicker from 'editorV2/templates/TemplatePicker'
 import { findTemplateAnchor } from 'editorV2/templates/TemplatePlacement'
-import { findAnchoredNodePlacement } from 'editorV2/utils/nodePlacement'
 
 
 class ToolbarHandler {
@@ -84,13 +83,7 @@ class ToolbarHandler {
   
   async handleAddNode(e) {
     const type = e.target.dataset.type
-    if (!type) return
-    const position = this.findPlacementPosition(type)
-    try {
-      await this.syncManager.createNode(type, position, {})
-    } catch (err) {
-      console.error('Failed to create node:', err)
-    }
+    if (type) await this.actions?.addNode(type)
   }
 
   attachTemplatePicker() {
@@ -111,15 +104,6 @@ class ToolbarHandler {
 
   openTemplatePicker() {
     this.templatePicker?.open()
-  }
-
-  findPlacementPosition(type) {
-    const recentAnchor = this.store.getRecentPlacementAnchor()
-    const origin = recentAnchor && this.viewport?.isGraphPointVisible?.(recentAnchor)
-      ? recentAnchor
-      : this.viewport?.getVisibleCanvasCenter() || recentAnchor || { x: 200, y: 200 }
-
-    return findAnchoredNodePlacement(this.store, type, origin)
   }
 
   async undo() {

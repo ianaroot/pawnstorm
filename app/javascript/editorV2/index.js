@@ -78,6 +78,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const editorActions = new EditorActions(store, history, syncManager)
   editorActions.clickHandler = clickHandler
   editorActions.boardStatePreview = boardStatePreview
+  editorActions.viewport = canvasViewport
   const keyboardHandler = new KeyboardHandler()
   keyboardHandler.actions = editorActions
   toolbarHandler.actions = editorActions

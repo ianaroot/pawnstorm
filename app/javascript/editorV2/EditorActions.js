@@ -53,6 +53,19 @@ class EditorActions {
     this.clickHandler?.closeEditor()
   }
 
+  async addNode(type) {
+    const recentAnchor = this.store.getRecentPlacementAnchor()
+    const origin = recentAnchor && this.viewport?.isGraphPointVisible?.(recentAnchor)
+      ? recentAnchor
+      : this.viewport?.getVisibleCanvasCenter() || recentAnchor || { x: 200, y: 200 }
+    const position = findAnchoredNodePlacement(this.store, type, origin)
+    try {
+      await this.syncManager.createNode(type, position, {})
+    } catch (err) {
+      console.error('Failed to create node:', err)
+    }
+  }
+
   navigatePreview(delta) {
     if (!this.boardStatePreview || this.boardStatePreview.mode === 'idle' || this.boardStatePreview.examples.length <= 1) { return false }
     this.boardStatePreview._navigate(delta)
