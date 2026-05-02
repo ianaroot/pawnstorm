@@ -26,7 +26,9 @@ function mobilityAt(pieces, position, movingTeam) {
 export function actorPbsMobilityStrategy(pieces, hint, ctx) {
   if (hint.actor !== 'moved_piece') { return null }
   const { random, movingTeam, priorPieces } = ctx
-  const speciesPool = hint.speciesPool ?? []
+  // Mover species pool: intersect ctx.movedPiece.species_set with hint's pool.
+  const hintPool = hint.speciesPool ?? []
+  const speciesPool = [...ctx.movedPiece.species_set].filter(s => s !== null && hintPool.includes(s))
   if (speciesPool.length === 0) { return null }
 
   for (let s = 0; s < MAX_SPECIES_ATTEMPTS; s += 1) {
@@ -60,6 +62,9 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
 
         priorPieces.clear()
         for (const [p, piece] of priorTrial.entries()) { priorPieces.set(p, piece) }
+        // Narrow ctx.movedPiece.species_set to the committed mover species.
+        ctx.movedPiece.species_set.clear()
+        ctx.movedPiece.species_set.add(species)
         return currentTrial
       }
     }

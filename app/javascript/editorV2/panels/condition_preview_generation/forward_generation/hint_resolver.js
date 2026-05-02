@@ -35,6 +35,7 @@ import {
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
+import { buildChainConstraints, ACTOR_TO_VAR_KEY } from './chain_constraints'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -265,9 +266,32 @@ function verifyHints(pieces, hints, ctx) {
 // Build minimum seed from relational plan structure: place at least one subject
 // + target satisfying each relational plan. For unary-only chains, place the
 // unary subject so mobility hints have something to constrain.
-function buildMinimumSeed(combinedPlan, random) {
+//
+// `chainConstraints` carries converged singular-actor variables (movedPiece,
+// capturedPiece, etc.). When a relational subject or target is a singular
+// actor, the seed picks species from the converged set rather than the plan's
+// pool, and narrows the converged set to the pick so sibling strategies see
+// the commit.
+function buildMinimumSeed(combinedPlan, chainConstraints, random) {
   const movingTeam = combinedPlan.movingTeam
   let pieces = new Map()
+
+  function pickSpeciesForSide(plan, side) {
+    const actor = side === 'subject' ? plan.subject : plan.target
+    const planPool = side === 'subject' ? plan.subjectSpeciesPool : plan.targetSpeciesPool
+    const varKey = ACTOR_TO_VAR_KEY[actor]
+    if (varKey && chainConstraints) {
+      const set = chainConstraints[varKey].species_set
+      const pool = [...set].filter(s => s !== null && (planPool ? planPool.includes(s) : true))
+      const pick = pickRandom(shuffled(pool, random), random)
+      if (!pick) { return null }
+      // Narrow the converged set so sibling strategies see the commit.
+      set.clear()
+      set.add(pick)
+      return pick
+    }
+    return pickRandom(planPool, random)
+  }
 
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
@@ -281,8 +305,8 @@ function buildMinimumSeed(combinedPlan, random) {
       if (plan.operator === 'same_piece') { continue }
       const subjectTeam = plan.subjectTeam
       const targetTeam = plan.targetTeam
-      const subjectSpecies = pickRandom(plan.subjectSpeciesPool, random)
-      const targetSpecies = pickRandom(plan.targetSpeciesPool, random)
+      const subjectSpecies = pickSpeciesForSide(plan, 'subject')
+      const targetSpecies = pickSpeciesForSide(plan, 'target')
       if (!subjectSpecies || !targetSpecies) { return null }
 
       // Place target first, then subject in attack range.
@@ -379,7 +403,13 @@ export function resolveViaHints({ combinedPlan, random }) {
 
   const movingTeam = combinedPlan.movingTeam
 
-  let pieces = buildMinimumSeed(combinedPlan, random)
+  // chainConstraints holds converged constraints on the four singular move-event
+  // actors (movedPiece, capturedPiece, enemyMovedPiece, enemyCapturedPiece).
+  // Built before seed/strategies so they can consult and narrow it.
+  const chainConstraints = buildChainConstraints(combinedPlan)
+  if (chainConstraints === null) { return null }
+
+  let pieces = buildMinimumSeed(combinedPlan, chainConstraints, random)
   if (pieces === null) { return null }
   // pieces.size === 0 is legitimate for chains that consist entirely of
   // zero-count or actor-only constraints — strategies populate the board
@@ -400,7 +430,13 @@ export function resolveViaHints({ combinedPlan, random }) {
   // recentMoveContext is null by default; same_piece strategy sets it when
   // engineering a capture that declares the captured piece as the prior turn's
   // enemy moved_piece.
-  const ctx = { movingTeam, random, priorPieces, recentMoveContext: null }
+  const ctx = {
+    movingTeam, random, priorPieces, recentMoveContext: null,
+    movedPiece: chainConstraints.movedPiece,
+    capturedPiece: chainConstraints.capturedPiece,
+    enemyMovedPiece: chainConstraints.enemyMovedPiece,
+    enemyCapturedPiece: chainConstraints.enemyCapturedPiece
+  }
 
   for (const hint of hints) {
     try {

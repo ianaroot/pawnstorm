@@ -10,6 +10,7 @@ import { pieceCode, ALL_POSITIONS, shuffled, pickRandom } from 'editorV2/panels/
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { compareValue } from '../hint_compiler'
 import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 
 const MAX_PLACEMENT_ITERATIONS = 40
 
@@ -42,14 +43,28 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
   if (hint.frame !== 'current') { return null }
   let result = pieces
 
+  // When the actor is singular, intersect species pool with ctx.{actor}.species_set.
+  const varKey = ACTOR_TO_VAR_KEY[hint.actor]
+  const hintPool = hint.speciesPool ?? []
+  const effectivePool = (varKey && ctx[varKey])
+    ? hintPool.filter(s => ctx[varKey].species_set.has(s))
+    : hintPool
+  let lastSpeciesUsed = null
+
   for (let i = 0; i < MAX_PLACEMENT_ITERATIONS; i += 1) {
     const current = sumActorValue(result, hint)
-    if (compareValue(current, hint.totalOp, hint.total)) { return result }
+    if (compareValue(current, hint.totalOp, hint.total)) {
+      if (varKey && ctx[varKey] && lastSpeciesUsed !== null) {
+        ctx[varKey].species_set.clear()
+        ctx[varKey].species_set.add(lastSpeciesUsed)
+      }
+      return result
+    }
 
     const max = maxAdditionForOp(hint.totalOp, hint.total, current)
     if (max === null || max <= 0) { return null }
 
-    const fitting = (hint.speciesPool ?? []).filter(s => {
+    const fitting = effectivePool.filter(s => {
       const v = materialValue(s)
       return v > 0 && v <= max
     })
@@ -60,7 +75,7 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
     for (const pos of shuffled([...ALL_POSITIONS], ctx.random)) {
       if (result.has(pos)) { continue }
       const next = placePiece(result, pos, pieceCode(hint.team, species))
-      if (next) { result = next; placed = true; break }
+      if (next) { result = next; lastSpeciesUsed = species; placed = true; break }
     }
     if (!placed) { return null }
   }

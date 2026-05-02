@@ -15,6 +15,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { positionMatchesAxis } from '../hint_compiler'
 import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 
 
 
@@ -37,14 +38,26 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
   const qualifyingSet = new Set(qualifying)
   const misplaced = matching.filter(m => !qualifyingSet.has(m.pos))
 
-  // No matching pieces: place one on a qualifying square.
+  // No matching pieces: place one on a qualifying square. When the actor is
+  // singular, narrow the species pool by ctx.{actor}.species_set.
   if (matching.length === 0) {
-    const speciesCandidates = shuffled([...(hint.speciesPool ?? [])], random)
+    const varKey = ACTOR_TO_VAR_KEY[hint.actor]
+    const hintPool = hint.speciesPool ?? []
+    const effectivePool = (varKey && ctx[varKey])
+      ? hintPool.filter(s => ctx[varKey].species_set.has(s))
+      : hintPool
+    const speciesCandidates = shuffled([...effectivePool], random)
     for (const species of speciesCandidates) {
       for (const pos of shuffled([...qualifying], random)) {
         if (pieces.has(pos)) { continue }
         const next = placePiece(pieces, pos, pieceCode(hint.team, species))
-        if (next) { return next }
+        if (next) {
+          if (varKey && ctx[varKey]) {
+            ctx[varKey].species_set.clear()
+            ctx[varKey].species_set.add(species)
+          }
+          return next
+        }
       }
     }
     return null

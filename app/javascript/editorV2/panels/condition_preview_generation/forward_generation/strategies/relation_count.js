@@ -19,6 +19,25 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import {
   compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+
+// When a relational side is a singular actor, intersect its species pool with
+// ctx.{actor}.species_set so sibling plans' species constraints flow through.
+function effectiveSpeciesPool(side, hintSide, ctx) {
+  const varKey = ACTOR_TO_VAR_KEY[side.actor]
+  const hintPool = side.speciesPool ?? []
+  return (varKey && ctx[varKey])
+    ? hintPool.filter(s => ctx[varKey].species_set.has(s))
+    : hintPool
+}
+
+function narrowSingularActorIfApplicable(side, ctx, species) {
+  const varKey = ACTOR_TO_VAR_KEY[side.actor]
+  if (varKey && ctx[varKey]) {
+    ctx[varKey].species_set.clear()
+    ctx[varKey].species_set.add(species)
+  }
+}
 
 
 
@@ -46,7 +65,7 @@ function neededAdditions(countOp, n, current) {
 // works.
 function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
   const { random, movingTeam } = ctx
-  const subjectSpeciesCandidates = shuffled([...hint.subject.speciesPool], random)
+  const subjectSpeciesCandidates = shuffled([...effectiveSpeciesPool(hint.subject, 'subject', ctx)], random)
   if (subjectSpeciesCandidates.length === 0) { return null }
 
   for (const targetPos of shuffled([...anchorTargetPositions], random)) {
@@ -61,7 +80,10 @@ function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
           board, operator: hint.operator, targetPosition: targetPos,
           subjectTeam: hint.subject.team
         })
-        if (subjects.includes(subjectPos)) { return next }
+        if (subjects.includes(subjectPos)) {
+          narrowSingularActorIfApplicable(hint.subject, ctx, subjectSpecies)
+          return next
+        }
       }
     }
   }
@@ -72,7 +94,7 @@ function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
 // subject positions. Returns the augmented pieces map, or null.
 function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
   const { random, movingTeam } = ctx
-  const targetSpeciesCandidates = shuffled([...hint.target.speciesPool], random)
+  const targetSpeciesCandidates = shuffled([...effectiveSpeciesPool(hint.target, 'target', ctx)], random)
   if (targetSpeciesCandidates.length === 0) { return null }
 
   for (const subjectPos of shuffled([...anchorSubjectPositions], random)) {
@@ -87,7 +109,10 @@ function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
           board, operator: hint.operator, targetPosition: targetPos,
           subjectTeam: hint.subject.team
         })
-        if (subjects.includes(subjectPos)) { return next }
+        if (subjects.includes(subjectPos)) {
+          narrowSingularActorIfApplicable(hint.target, ctx, targetSpecies)
+          return next
+        }
       }
     }
   }

@@ -10,6 +10,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { compareValue } from '../hint_compiler'
 import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 
 
 
@@ -39,10 +40,18 @@ export function actorCountStrategy(pieces, hint, ctx) {
   const additions = neededAdditions(hint.countOp, hint.n, currentCount)
   if (additions === null || additions <= 0) { return null }
 
-  const speciesCandidates = shuffled([...(hint.speciesPool ?? [])], ctx.random)
+  // When the actor is singular, intersect species pool with ctx.{actor}.species_set
+  // so sibling plans' species constraints flow through.
+  const varKey = ACTOR_TO_VAR_KEY[hint.actor]
+  const hintPool = hint.speciesPool ?? []
+  const effectivePool = (varKey && ctx[varKey])
+    ? hintPool.filter(s => ctx[varKey].species_set.has(s))
+    : hintPool
+  const speciesCandidates = shuffled([...effectivePool], ctx.random)
   if (speciesCandidates.length === 0) { return null }
 
   let result = pieces
+  let speciesUsed = null
   for (let i = 0; i < additions; i += 1) {
     let placed = false
     for (const species of speciesCandidates) {
@@ -51,12 +60,18 @@ export function actorCountStrategy(pieces, hint, ctx) {
         const next = placePiece(result, pos, pieceCode(hint.team, species))
         if (!next) { continue }
         result = next
+        speciesUsed = species
         placed = true
         break
       }
       if (placed) { break }
     }
     if (!placed) { return null }
+  }
+  // Singular actor: narrow ctx to the committed species so sibling strategies see the commit.
+  if (varKey && ctx[varKey] && speciesUsed !== null) {
+    ctx[varKey].species_set.clear()
+    ctx[varKey].species_set.add(speciesUsed)
   }
   return result
 }

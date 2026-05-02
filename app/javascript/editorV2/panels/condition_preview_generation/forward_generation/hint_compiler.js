@@ -319,23 +319,32 @@ function unaryCountPairSatisfies(pieces, hint, context) {
   return compareValue(subjectCount, hint.countOp, targetCount)
 }
 
-// Resolve the species of a singular move-event actor from board state +
-// recentMoveContext. Returns null if the actor isn't represented.
-//   moved_piece           — derived from prior→current diff (the resolver's
-//                           reconstruction), so we can't read it here pre-diff.
-//                           Strategies stash the chosen mover species in ctx.
-//   captured_piece        — same; strategies stash via ctx.
+// Resolve the species of a singular move-event actor.
+//   moved_piece           — read from ctx.movedPiece.species_set; returns the
+//                           singleton when the strategy committed, else null.
+//   captured_piece        — read from ctx.capturedPiece.species_set; same.
 //   enemy_moved_piece     — recentMoveContext.movedPieceSpeciesAfterMove
 //   enemy_captured_piece  — recentMoveContext.capturedPieceSpecies
+//
+// For ctx-backed actors, the predicate runs after strategies have committed,
+// so the species_set should be a singleton. If multiple options remain (no
+// strategy committed) or null is the only member ("no capture"), returns null.
 function singularActorSpecies(actor, pieces, context, movingTeam) {
   const rmc = context?.recentMoveContext
   switch (actor) {
-    case 'moved_piece':         return context?.moverSpecies ?? null
-    case 'captured_piece':      return context?.capturedSpecies ?? null
+    case 'moved_piece':         return committedSpeciesFromVar(context?.movedPiece)
+    case 'captured_piece':      return committedSpeciesFromVar(context?.capturedPiece)
     case 'enemy_moved_piece':   return rmc?.movedPieceSpeciesAfterMove ?? null
     case 'enemy_captured_piece': return rmc?.capturedPieceSpecies ?? null
     default:                    return null
   }
+}
+
+function committedSpeciesFromVar(varObj) {
+  const set = varObj?.species_set
+  if (!set || set.size !== 1) { return null }
+  const [only] = set
+  return only === null ? null : only
 }
 
 function singularActorPresence(actor, pieces, context, movingTeam) {

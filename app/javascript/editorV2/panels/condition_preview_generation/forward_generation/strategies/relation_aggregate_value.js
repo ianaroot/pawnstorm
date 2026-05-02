@@ -13,6 +13,7 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import {
   compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 
 const MAX_PLACEMENT_ITERATIONS = 40
 
@@ -94,8 +95,13 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
     const max = maxAdditionForOp(hint.totalOp, hint.total, current)
     if (max === null || max <= 0) { return null }
 
-    const sidePool = hint.side === 'subject' ? hint.subject.speciesPool : hint.target.speciesPool
-    const fitting = (sidePool ?? []).filter(s => {
+    const side = hint.side === 'subject' ? hint.subject : hint.target
+    const sideVarKey = ACTOR_TO_VAR_KEY[side.actor]
+    const hintSidePool = side.speciesPool ?? []
+    const sidePool = (sideVarKey && ctx[sideVarKey])
+      ? hintSidePool.filter(s => ctx[sideVarKey].species_set.has(s))
+      : hintSidePool
+    const fitting = sidePool.filter(s => {
       const v = materialValue(s)
       return v > 0 && v <= max
     })
@@ -110,6 +116,11 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
       : addQualifyingTargetWithSpecies(result, hint, ctx, anchorPositions, species)
     if (next === null) { return null }
     result = next
+    // When the side is a singular actor, narrow ctx to the committed species.
+    if (sideVarKey && ctx[sideVarKey]) {
+      ctx[sideVarKey].species_set.clear()
+      ctx[sideVarKey].species_set.add(species)
+    }
   }
   return null
 }

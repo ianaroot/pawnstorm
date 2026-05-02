@@ -44,9 +44,12 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
   if (hint.operator !== 'attack' && hint.operator !== 'defend') { return null }
 
   const { random, movingTeam, priorPieces } = ctx
-  const movedSpeciesPool = hint.target.speciesPool ?? []
   const subjectTeam = hint.subject.team
 
+  // Mover species pool: intersect ctx.movedPiece.species_set with hint's target
+  // pool. Sibling plans' moved_piece species constraints flow through ctx.
+  const hintPool = hint.target.speciesPool ?? []
+  const movedSpeciesPool = [...ctx.movedPiece.species_set].filter(s => s !== null && hintPool.includes(s))
   if (movedSpeciesPool.length === 0) { return null }
 
   // The board state at strategy time has seed pieces + kings. We'll layer the
@@ -98,6 +101,10 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
         for (const [p, piece] of placement.priorPieces.entries()) {
           priorPieces.set(p, piece)
         }
+        // The committed mover species is the moved_piece. Narrow ctx so
+        // sibling strategies see the commit.
+        ctx.movedPiece.species_set.clear()
+        ctx.movedPiece.species_set.add(movedSpecies)
         return placement.currentPieces
       }
     }

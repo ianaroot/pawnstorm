@@ -41,7 +41,9 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
   if (hint.operator !== 'attack' && hint.operator !== 'defend') { return null }
 
   const { random, movingTeam, priorPieces } = ctx
-  const movedSpeciesPool = hint.target.speciesPool ?? []
+  // Mover species pool: intersect ctx.movedPiece.species_set with hint's pool.
+  const hintTargetPool = hint.target.speciesPool ?? []
+  const movedSpeciesPool = [...ctx.movedPiece.species_set].filter(s => s !== null && hintTargetPool.includes(s))
   const subjectSpeciesPool = hint.subject.speciesPool ?? []
   const subjectTeam = hint.subject.team
   if (movedSpeciesPool.length === 0 || subjectSpeciesPool.length === 0) { return null }
@@ -79,6 +81,10 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
         for (const [p, piece] of placement.priorPieces.entries()) {
           priorPieces.set(p, piece)
         }
+        // Narrow ctx.movedPiece.species_set to the committed mover species so
+        // sibling strategies see the commit.
+        ctx.movedPiece.species_set.clear()
+        ctx.movedPiece.species_set.add(movedSpecies)
         return placement.currentPieces
       }
     }

@@ -40,9 +40,14 @@ const MAX_SLIDER_DISTANCE = 6
 
 
 
-function sliderSpeciesForRay(step, random) {
+// Pick a slider species compatible with the ray AND with the converged
+// ctx.movedPiece.species_set (the slider IS the mover). Returns null if no
+// valid intersection.
+function sliderSpeciesForRay(step, random, ctx) {
   const isOrthogonal = ROOK_RAY_STEPS.includes(step)
-  const candidates = isOrthogonal ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
+  const baseCandidates = isOrthogonal ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
+  const candidates = baseCandidates.filter(s => ctx.movedPiece.species_set.has(s))
+  if (candidates.length === 0) { return null }
   return pickRandom(shuffled(candidates, random), random)
 }
 
@@ -93,7 +98,7 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
         if (bystanderPos === null) { continue }
         if (pieces.has(bystanderPos)) { continue }
 
-        const sliderSpecies = sliderSpeciesForRay(step, random)
+        const sliderSpecies = sliderSpeciesForRay(step, random, ctx)
         if (!sliderSpecies) { continue }
 
         // Walk past bystander to find slider final positions.
@@ -127,6 +132,12 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
             // Mutate ctx.priorPieces in place.
             priorPieces.clear()
             for (const [p, piece] of prior.entries()) { priorPieces.set(p, piece) }
+
+            // The slider is the moved_piece. Narrow ctx.movedPiece.species_set
+            // to the committed slider species so sibling strategies see the
+            // commit.
+            ctx.movedPiece.species_set.clear()
+            ctx.movedPiece.species_set.add(sliderSpecies)
 
             return current
           }

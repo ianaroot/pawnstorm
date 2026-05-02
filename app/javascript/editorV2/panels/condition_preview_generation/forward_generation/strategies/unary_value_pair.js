@@ -4,10 +4,14 @@
 // and a value comparator. Strategy engineers a move scenario where both actors
 // exist with species whose material values satisfy the comparator.
 //
-// Actor species are stored in actorSpecies (a map from actor name to species)
-// and resolved as follows:
-//   moved_piece           — ctx.moverSpecies (committed by the strategy)
-//   captured_piece        — ctx.capturedSpecies (move must be a capture)
+// Subject and target species pools come from the converged chain constraints
+// in ctx (ctx.{actor}.species_set) — sibling plans' species constraints flow
+// through automatically. After committing, the strategy narrows ctx for both
+// actors to singletons.
+//
+// Actor species resolve as follows (applied at engineering time):
+//   moved_piece           — narrowed via ctx.movedPiece.species_set
+//   captured_piece        — narrowed via ctx.capturedPiece.species_set
 //   enemy_moved_piece     — recentMoveContext.movedPieceSpeciesAfterMove
 //   enemy_captured_piece  — recentMoveContext.capturedPieceSpecies
 //
@@ -24,6 +28,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
+import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 
 const MAX_POSITION_CANDIDATES = 8
 const MAX_ORIGIN_CANDIDATES = 12
@@ -63,12 +68,21 @@ export function valueComparablePairs(subjectPool, targetPool, valueOp, random) {
   return shuffled(pairs, random)
 }
 
+function nonNullSpecies(speciesSet) {
+  return [...speciesSet].filter(s => s !== null)
+}
+
 export function unaryValuePairStrategy(pieces, hint, ctx) {
   const { random, movingTeam, priorPieces } = ctx
   const enemyTeam = Board.opposingTeam(movingTeam)
 
+  const subjectVarKey = ACTOR_TO_VAR_KEY[hint.subjectActor]
+  const targetVarKey = ACTOR_TO_VAR_KEY[hint.targetActor]
+  const subjectPool = nonNullSpecies(ctx[subjectVarKey].species_set)
+  const targetPool = nonNullSpecies(ctx[targetVarKey].species_set)
+
   const candidatePairs = valueComparablePairs(
-    hint.subjectSpeciesPool, hint.targetSpeciesPool, hint.valueOp, random
+    subjectPool, targetPool, hint.valueOp, random
   ).slice(0, MAX_PAIR_ATTEMPTS)
 
   for (const [subjectSpecies, targetSpecies] of candidatePairs) {
@@ -77,6 +91,9 @@ export function unaryValuePairStrategy(pieces, hint, ctx) {
       [hint.targetActor]: targetSpecies
     }
     const result = engineerScenario({ pieces, actorSpecies, ctx, movingTeam, enemyTeam, priorPieces, random })
+    // engineerScenario narrows ctx.movedPiece (to trialMover) and ctx.capturedPiece
+    // (to capturedSpecies, when capturing) on commit. enemy_moved_piece and
+    // enemy_captured_piece species commits live in ctx.recentMoveContext.
     if (result) { return result }
   }
   return null
@@ -118,9 +135,12 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
     const priorWithCaptured = placePiece(priorPieces, capturedPos, pieceCode(enemyTeam, capturedSpecies))
     if (!priorWithCaptured) { continue }
 
+    // Mover candidates: bound species if the actor pair includes moved_piece;
+    // otherwise drawn from converged ctx.movedPiece.species_set so sibling
+    // constraints flow through.
     const moverCandidates = moverSpecies
       ? [moverSpecies]
-      : shuffled([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN], random)
+      : shuffled([...ctx.movedPiece.species_set].filter(s => s !== Board.KING), random)
 
     for (const trialMover of moverCandidates) {
       const originCandidates = shuffled(
@@ -147,8 +167,13 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
         priorPieces.clear()
         for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
 
-        ctx.moverSpecies = trialMover
-        ctx.capturedSpecies = capturedSpecies
+        // Narrow ctx species sets to the committed singletons. Enemy_*_piece
+        // species commits live in ctx.recentMoveContext.
+        ctx.movedPiece.species_set.clear()
+        ctx.movedPiece.species_set.add(trialMover)
+        ctx.capturedPiece.species_set.clear()
+        ctx.capturedPiece.species_set.add(capturedSpecies)
+
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = buildRecentMoveContext({
             team: enemyTeam,
@@ -167,7 +192,7 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
 function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, enemyCapturedSpecies, ctx, movingTeam, enemyTeam, priorPieces, random }) {
   const moverCandidates = moverSpecies
     ? [moverSpecies]
-    : shuffled([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN], random)
+    : shuffled([...ctx.movedPiece.species_set].filter(s => s !== Board.KING), random)
 
   for (const trialMover of moverCandidates) {
     const startCandidates = shuffled(
@@ -196,7 +221,11 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
         priorPieces.clear()
         for (const [p, piece] of trialPrior.entries()) { priorPieces.set(p, piece) }
 
-        ctx.moverSpecies = trialMover
+        // Narrow ctx.movedPiece to the committed mover. No capture happened,
+        // so ctx.capturedPiece is unchanged (still includes null).
+        ctx.movedPiece.species_set.clear()
+        ctx.movedPiece.species_set.add(trialMover)
+
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = buildRecentMoveContext({
             team: enemyTeam,

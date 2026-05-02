@@ -6,8 +6,14 @@
 // will satisfy the same predicate naturally because en passant presets
 // already set recentMoveContext.movedPieceEndPosition = capturedSquare.
 //
+// Captured/mover species pools are read from the converged chain constraints
+// in ctx (ctx.capturedPiece.species_set, ctx.movedPiece.species_set) so this
+// strategy stays consistent with sibling plans' species constraints. After
+// committing, the strategy narrows ctx to singletons.
+//
 // Constraints:
-//   - Captured species: any non-king (we don't capture kings).
+//   - Captured species: any non-king (kings can't be captured; pre-pass
+//     initial domain already excludes king from capturedPiece.species_set).
 //   - Pawn-on-starting-rank guard: an enemy pawn cannot be on its own
 //     starting rank as the declared enemy_moved_piece (can't have just
 //     moved TO its starting rank).
@@ -25,9 +31,6 @@ const MAX_SPECIES_ATTEMPTS = 5
 const MAX_POSITION_CANDIDATES = 8
 const MAX_ORIGIN_CANDIDATES = 12
 
-const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
-const MOVER_SPECIES_POOL = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN, Board.KING])
-
 
 
 function pawnOnStartingRank(team, position) {
@@ -37,12 +40,20 @@ function pawnOnStartingRank(team, position) {
   return false
 }
 
+function nonNullSpecies(speciesSet) {
+  return [...speciesSet].filter(s => s !== null)
+}
+
 export function relationSamePieceStrategy(pieces, hint, ctx) {
   const { random, movingTeam, priorPieces } = ctx
   const enemyTeam = Board.opposingTeam(movingTeam)
 
+  const capturedCandidates = nonNullSpecies(ctx.capturedPiece.species_set)
+  const moverCandidates = [...ctx.movedPiece.species_set]
+  if (capturedCandidates.length === 0 || moverCandidates.length === 0) { return null }
+
   for (let s = 0; s < MAX_SPECIES_ATTEMPTS; s += 1) {
-    const capturedSpecies = pickRandom(shuffled([...CAPTURABLE_SPECIES], random), random)
+    const capturedSpecies = pickRandom(shuffled(capturedCandidates, random), random)
     if (!capturedSpecies) { continue }
 
     const candidatePositions = shuffled(
@@ -55,7 +66,7 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
       const priorWithCaptured = placePiece(priorPieces, capturedPos, pieceCode(enemyTeam, capturedSpecies))
       if (!priorWithCaptured) { continue }
 
-      for (const moverSpecies of shuffled([...MOVER_SPECIES_POOL], random)) {
+      for (const moverSpecies of shuffled(moverCandidates, random)) {
         const originCandidates = shuffled(
           ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
           random
@@ -81,6 +92,13 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
           // Mutate ctx state.
           priorPieces.clear()
           for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
+
+          // Narrow ctx species sets to the committed singletons so sibling
+          // strategies see the commit.
+          ctx.capturedPiece.species_set.clear()
+          ctx.capturedPiece.species_set.add(capturedSpecies)
+          ctx.movedPiece.species_set.clear()
+          ctx.movedPiece.species_set.add(moverSpecies)
 
           // The captured piece IS the enemy's prior moved_piece — declare
           // that via recentMoveContext for same_piece evaluation.

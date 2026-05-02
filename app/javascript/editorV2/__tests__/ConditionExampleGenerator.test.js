@@ -1636,4 +1636,36 @@ describe('ConditionExampleGenerator', () => {
       expectLegalPriorTurnState(example)
     })
   })
+
+  it('coordinates singular actor identity across plans via chain_constraints (patch 1)', () => {
+    // Two plans both reference moved_piece. Plan 1 (unary value pair) constrains
+    // captured_piece value > moved_piece value. Plan 2 (relational) constrains
+    // the moved_piece to be a major (queen or rook) via the target filter.
+    // The framework should converge moved_piece species to {queen, rook} so the
+    // unary value pair strategy picks from that narrowed set.
+    const payloads = [
+      {
+        version: 2, kind: 'unary',
+        subject: 'captured_piece', subjectFilter: 'any',
+        operator: 'value', comparator: 'greater_than',
+        target: 'moved_piece', targetFilter: 'any'
+      },
+      {
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'defend',
+        target: 'moved_piece', targetFilter: 'major'
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(9001) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      // Each plan must hold on the example
+      expect(evaluateExample(payloads[0], example)).toBe(true)
+      expect(evaluateExample(payloads[1], example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
 })
