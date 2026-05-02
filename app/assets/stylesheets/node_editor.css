@@ -1,3 +1,7 @@
+:root {
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+}
+
 .page-content.page-content--bot-editor {
   max-width: none;
   padding: 0;
@@ -944,7 +948,7 @@
 
 .form-group select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 7px center;
 }
@@ -1155,7 +1159,7 @@
 
 .form-part select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 7px center;
 }
@@ -1299,7 +1303,7 @@
 .condition-form-side select,
 .condition-form-operator select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 7px center;
 }
@@ -1316,7 +1320,7 @@
 
 .condition-form-operator select {
   border-color: rgba(168, 85, 247, 0.55);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E"), linear-gradient(180deg, #33273a 0%, #2a202f 100%);
+  background-image: var(--select-arrow), linear-gradient(180deg, #33273a 0%, #2a202f 100%);
   background-repeat: no-repeat, no-repeat;
   background-position: right 7px center, 0 0;
   background-size: 8px 5px, auto;
@@ -1365,7 +1369,7 @@
   border-radius: 6px;
   color: #E5E5E5;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 5px center;
 }
