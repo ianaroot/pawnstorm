@@ -36,7 +36,10 @@ function buildEditorPanel() {
   panel.innerHTML = `
     <span id="edit-node-type"></span>
     <div id="condition-form" class="hidden"></div>
-    <div id="score-form" class="hidden"></div>
+    <div id="score-form" class="hidden">
+        <select id="action-type"><option value="add">Add</option><option value="multiply">Multiply</option></select>
+        <input id="action-value" type="number" value="1">
+      </div>
     <div id="organizer-form" class="hidden">
       <input id="organizer-title" type="text" value="Organizer">
       <textarea id="organizer-notes"></textarea>
@@ -217,5 +220,35 @@ describe('ClickHandler', () => {
     store.setSelectedNodeIds([conditionNode.clientId, actionNode.clientId])
 
     expect(clickHandler.actions.renderSelectionPreview).toHaveBeenCalled()
+  })
+
+  // ── buildDataPayloadByType ─────────────────────────────────────────────────
+
+  it('returns actionType and numeric value from DOM for a score node', () => {
+    editorPanel.querySelector('#action-type').value = 'multiply'
+    editorPanel.querySelector('#action-value').value = '3'
+
+    const payload = clickHandler.buildDataPayloadByType(actionNode)
+
+    expect(payload).toEqual({ actionType: 'multiply', value: 3 })
+  })
+
+  it('returns title and notes from DOM for an organizer node', () => {
+    editorPanel.querySelector('#organizer-title').value = 'My Group'
+    editorPanel.querySelector('#organizer-notes').value = 'Some notes'
+
+    const payload = clickHandler.buildDataPayloadByType(organizerNode)
+
+    expect(payload).toEqual({ title: 'My Group', notes: 'Some notes' })
+  })
+
+  it('delegates to conditionForm.buildPayload for a condition node', () => {
+    const expected = { subject: 'allied', operator: 'targets', target: 'enemy' }
+    clickHandler.conditionForm.buildPayload = vi.fn(() => expected)
+
+    const payload = clickHandler.buildDataPayloadByType(conditionNode)
+
+    expect(clickHandler.conditionForm.buildPayload).toHaveBeenCalled()
+    expect(payload).toBe(expected)
   })
 })
