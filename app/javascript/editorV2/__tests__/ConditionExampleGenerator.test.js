@@ -1683,6 +1683,76 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.status).toBe('no_examples')
   })
 
+  it('flags contradiction when relational subject count contributes lower bound conflicting with unary cap (patch 2b)', () => {
+    // Plan A: enemy/pawn attacks moved_piece, subject count ≥ 3 → at least 3
+    // enemy pawns exist. Plan B: enemy/pawn count = 0. Range [3, 0] → unsat.
+    const payloads = [
+      {
+        version: 2, kind: 'relational',
+        subject: 'enemy', subjectFilter: 'pawn',
+        operator: 'attack',
+        target: 'moved_piece', targetFilter: 'any',
+        subjectComparisonMetric: 'count',
+        subjectComparator: 'greater_than_or_equal_to',
+        subjectComparisonSource: 'exact_number',
+        subjectComparisonSourceTotal: 3
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'enemy', subjectFilter: 'pawn',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7004) })
+    expect(preview.status).toBe('no_examples')
+  })
+
+  it('flags contradiction when position count contributes lower bound conflicting with unary cap (patch 2b)', () => {
+    // Plan A: allied/pawn on rank ≥ 5 count ≥ 2 → at least 2 allied pawns
+    // exist (some at rank ≥ 5). Plan B: allied/pawn count = 0. Range [2, 0] → unsat.
+    const payloads = [
+      {
+        version: 2, kind: 'position',
+        subject: 'allied', subjectFilter: 'pawn',
+        positionAxis: 'rank', positionComparator: 'greater_than_or_equal_to', positionTarget: 5,
+        operator: 'count', comparator: 'greater_than_or_equal_to', targetTotal: 2
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'pawn',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7005) })
+    expect(preview.status).toBe('no_examples')
+  })
+
+  it('flags contradiction when singular actor species conflicts with inventory cap (patch 2b)', () => {
+    // moved_piece value > 5 narrows moved_piece species_set to {queen} via
+    // plan-builder. allied/queen count = 0 narrows inventory.movingTeam.current.queen
+    // count_range to [0, 0]. Singular-actor contribution then raises that
+    // count_range.min to 1 (moved_piece is a queen, on the board). Range becomes
+    // [1, 0] → unsat.
+    const payloads = [
+      {
+        version: 2, kind: 'unary',
+        subject: 'moved_piece', subjectFilter: 'any',
+        operator: 'value', comparator: 'greater_than',
+        target: 'exact_number', targetTotal: 5
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'queen',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7003) })
+    expect(preview.status).toBe('no_examples')
+  })
+
   it('coordinates singular actor identity across plans via chain_constraints (patch 1)', () => {
     // Two plans both reference moved_piece. Plan 1 (unary value pair) constrains
     // captured_piece value > moved_piece value. Plan 2 (relational) constrains

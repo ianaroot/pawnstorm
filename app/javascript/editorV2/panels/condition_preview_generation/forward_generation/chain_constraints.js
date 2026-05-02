@@ -36,6 +36,35 @@ export const ACTOR_TO_VAR_KEY = Object.freeze({
   enemy_captured_piece: 'enemyCapturedPiece'
 })
 
+// Filter → species membership. Used to map a converged species_set onto the
+// most-specific filter that contains it (for singular-actor inventory
+// contributions).
+const FILTER_SPECIES = Object.freeze({
+  king:   [Board.KING],
+  queen:  [Board.QUEEN],
+  rook:   [Board.ROOK],
+  bishop: [Board.BISHOP],
+  knight: [Board.NIGHT],
+  pawn:   [Board.PAWN],
+  major:  [Board.QUEEN, Board.ROOK],
+  minor:  [Board.BISHOP, Board.NIGHT],
+  any:    [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING]
+})
+
+// Most-specific filter whose species superset includes all of `speciesSet`
+// (excluding null). Returns null if speciesSet is empty after null exclusion.
+// E.g. {QUEEN} → 'queen'; {KNIGHT, BISHOP} → 'minor'; {KING, QUEEN} → 'any'.
+function mostSpecificFilter(speciesSet) {
+  const clean = [...speciesSet].filter(s => s !== null)
+  if (clean.length === 0) { return null }
+  const order = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn', 'major', 'minor', 'any']
+  for (const filter of order) {
+    const filterSpecies = FILTER_SPECIES[filter]
+    if (clean.every(s => filterSpecies.includes(s))) { return filter }
+  }
+  return 'any'
+}
+
 function fullPositionSet() {
   return new Set(ALL_POSITIONS)
 }
@@ -159,9 +188,23 @@ const OPERATOR_TO_RANGE_KEY = Object.freeze({
   mobility: 'mobility_range'
 })
 
+// Lower-bound contribution from a comparator + total. Returns null when the
+// comparator implies no lower bound (less_than, less_than_or_equal_to).
+function lowerBoundFromComparator(comparator, total) {
+  switch (comparator) {
+    case 'equal_to':                 return total
+    case 'greater_than':             return total + 1
+    case 'greater_than_or_equal_to': return total
+    case 'less_than':
+    case 'less_than_or_equal_to':    return null
+    default:                         return null
+  }
+}
+
 // Contribute a unary plan's constraints to the inventory tree. Only handles
-// group actors (allied, enemy) with target=exact_number; cross-actor and
-// prior_board_state targets defer to other variable categories.
+// group actors (allied, enemy) with target=exact_number; unary pair (target
+// is another actor) and prior_board_state targets defer to other variable
+// categories.
 function contributeUnaryToInventory(plan, vars) {
   if (plan.kind !== 'unary') { return }
   if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return }
@@ -176,6 +219,119 @@ function contributeUnaryToInventory(plan, vars) {
   const cell = vars.inventory[team]?.current?.[filter]
   if (!cell) { return }
   narrowRange(cell[rangeKey], plan.comparator, Number(plan.targetTotal ?? 0))
+}
+
+// Contribute lower bounds from a relational plan's comparison descriptors.
+// `subject count >= N` implies at least N distinct subject pieces exist on
+// the board (they're in the relation), so inventory.{subjectTeam}.{filter}.count.min
+// rises to N. Same for target side. aggregate_value descriptors contribute
+// to value_range. Less-than comparators give no lower bound. Zero-count
+// descriptors give no lower bound. Singular actors are handled by
+// contributeSingularActorsToInventory; skip them here.
+//
+// PBS-direction descriptors (source = prior_board_state) are deferred to
+// patch 3 — their (n_prior, n_current) pairing needs more careful handling.
+function contributeRelationalToInventory(plan, vars) {
+  if (plan.kind !== 'relational') { return }
+  const descriptors = plan.comparisonDescriptors ?? []
+  for (const descriptor of descriptors) {
+    if (descriptor.source !== 'exact_number') { continue }
+
+    const total = Number(descriptor.resolvedTotal ?? descriptor.total ?? 0)
+    const lowerBound = lowerBoundFromComparator(descriptor.comparator, total)
+    if (lowerBound === null || lowerBound <= 0) { continue }
+
+    const isSubject = descriptor.side === 'subject'
+    const actor = isSubject ? plan.subject : plan.target
+    if (actor !== 'allied' && actor !== 'enemy') { continue }
+
+    const team = isSubject ? plan.subjectTeam : plan.targetTeam
+    const filter = isSubject ? plan.subjectFilter : plan.targetFilter
+    if (!INVENTORY_FILTERS.includes(filter)) { continue }
+
+    const rangeKey = descriptor.metric === 'count' ? 'count_range'
+                   : descriptor.metric === 'aggregate_value' ? 'value_range'
+                   : null
+    if (!rangeKey) { continue }
+
+    const cell = vars.inventory[team]?.current?.[filter]
+    if (!cell) { continue }
+    raiseMin(cell[rangeKey], lowerBound)
+  }
+}
+
+// Contribute lower bounds from a position plan. `allied/pawn on rank > 4
+// count >= 2` means at least 2 allied pawns exist on the board (some at
+// rank > 4; possibly more elsewhere). Inventory's count.min rises to 2.
+//
+// Edge case noted but not specially handled: a chain author could write
+// something bizarre like `allied/pawn count = 0 rank > 1` which technically
+// translates to "no allied pawns past starting rank" (or, with a broad
+// interpretation, "no allied pawns at all"). We don't try to extract extra
+// inventory inferences from such constraints — the post-evaluator handles
+// correctness, and inventory's lower-bound-only philosophy stays consistent.
+function contributePositionToInventory(plan, vars) {
+  if (plan.kind !== 'position') { return }
+  if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return }
+  if (!INVENTORY_FILTERS.includes(plan.subjectFilter)) { return }
+
+  const total = Number(plan.targetTotal ?? 0)
+  const lowerBound = lowerBoundFromComparator(plan.comparator, total)
+  if (lowerBound === null || lowerBound <= 0) { return }
+
+  const cell = vars.inventory[plan.subjectTeam]?.current?.[plan.subjectFilter]
+  if (!cell) { return }
+
+  const rangeKey = plan.operator === 'count' ? 'count_range'
+                 : plan.operator === 'value' ? 'value_range'
+                 : plan.operator === 'mobility' ? 'mobility_range'
+                 : null
+  if (!rangeKey) { return }
+
+  raiseMin(cell[rangeKey], lowerBound)
+}
+
+// After all plans have contributed, derive inventory contributions from the
+// converged singular-actor species_sets. Each guaranteed-existing actor adds
+// +1 to the count_range minimum at the most-specific filter containing its
+// species_set, in the appropriate frame(s).
+//
+// Frame contributions:
+//   moved_piece            — both current and prior (the piece exists in both
+//                            frames, just at different positions)
+//   captured_piece         — prior only (gone in current)
+//   enemy_moved_piece      — prior only (conservative: skip current since the
+//                            piece may have been captured by our move)
+//   enemy_captured_piece   — neither (was captured before our prior frame)
+function contributeSingularActorsToInventory(vars) {
+  // moved_piece always exists.
+  const movedFilter = mostSpecificFilter(vars.movedPiece.species_set)
+  if (movedFilter) {
+    raiseMin(vars.inventory[vars.movedPiece.team].current[movedFilter].count_range, 1)
+    raiseMin(vars.inventory[vars.movedPiece.team].prior[movedFilter].count_range, 1)
+  }
+
+  // captured_piece: only contributes when existence is required (null excluded).
+  if (!vars.capturedPiece.species_set.has(null)) {
+    const capFilter = mostSpecificFilter(vars.capturedPiece.species_set)
+    if (capFilter) {
+      raiseMin(vars.inventory[vars.capturedPiece.team].prior[capFilter].count_range, 1)
+    }
+  }
+
+  // enemy_moved_piece: only contributes when existence is required.
+  if (!vars.enemyMovedPiece.species_set.has(null)) {
+    const emFilter = mostSpecificFilter(vars.enemyMovedPiece.species_set)
+    if (emFilter) {
+      raiseMin(vars.inventory[vars.enemyMovedPiece.team].prior[emFilter].count_range, 1)
+    }
+  }
+
+  // enemy_captured_piece: doesn't contribute to either frame.
+}
+
+function raiseMin(range, value) {
+  if (value > range.min) { range.min = value }
 }
 
 // Propagate range constraints across the filter hierarchy. After all plans
@@ -251,8 +407,10 @@ function contributePlanConstraints(plan, vars) {
     vars.enemyMovedPiece.species_set.delete(null)
   }
 
-  // Inventory tree narrowings (group actors via unary plans).
+  // Inventory tree narrowings.
   contributeUnaryToInventory(plan, vars)
+  contributeRelationalToInventory(plan, vars)
+  contributePositionToInventory(plan, vars)
 }
 
 // Per-variable satisfiability check. An empty species_set on any singular
@@ -292,6 +450,9 @@ export function buildChainConstraints(combinedPlan) {
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)
   }
+  // Derive inventory contributions from converged singular-actor species_sets.
+  // Runs after all plan contributions so we operate on narrowed sets.
+  contributeSingularActorsToInventory(vars)
   propagateInventoryRanges(vars.inventory)
   if (!isSatisfiable(vars)) { return null }
   return vars
