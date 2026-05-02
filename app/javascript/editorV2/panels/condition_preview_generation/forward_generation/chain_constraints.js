@@ -22,7 +22,8 @@
 //   - Relation participant coordination via inventory (patch 5)
 
 import Board from 'gameplay/board'
-import { ALL_POSITIONS } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
+import { attackingPositions, defendingPositions, adjacentPositions, shieldingPositions } from 'gameplay/board_query_utils'
+import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview_generation/collection/unary_position_collection'
 
@@ -597,12 +598,90 @@ function resamplePbsPair(priorRange, currentRange, direction, random) {
   }
 }
 
+// ===== Position constraints (patch 5) =====
+//
+// Region representations:
+//   { kind: 'set', squares: Set<int> }                    — concrete squares
+//   { kind: 'related', actor, operator }                  — variable-dependent:
+//       resolves to squares related to {actor}'s position via {operator}
+//
+// positionConstraint shape:
+//   { subset: { team, filter }, region, count_range: { min, max }, plan }
+//
+// Resolution: regions are materialized against ctx (singular-actor position_sets)
+// at consumption time. When the dependent variable narrows to a singleton, the
+// region resolves to a deterministic set; otherwise it's the union of related
+// squares for each candidate position.
+
+export function resolveRegion(region, ctx, pieces) {
+  if (!region) { return new Set() }
+  if (region.kind === 'set') { return region.squares }
+  if (region.kind === 'related') {
+    const varKey = ACTOR_TO_VAR_KEY[region.actor]
+    if (!varKey || !ctx[varKey]) { return new Set() }
+    const positions = ctx[varKey].position_set
+    const result = new Set()
+    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces ?? new Map()), null, ctx.movingTeam)
+    for (const targetPos of positions) {
+      const related = relatedPositions(region.operator, targetPos, board, ctx[varKey].team)
+      for (const p of related) { result.add(p) }
+    }
+    return result
+  }
+  return new Set()
+}
+
+function relatedPositions(operator, targetPos, board, subjectTeam) {
+  // Returns positions where a subject (any species) could be placed such that
+  // it relates to targetPos via the operator. For 'adjacent', it's just the
+  // 8 neighbors. For attack/defend/shield, depends on board state.
+  switch (operator) {
+    case 'adjacent': return adjacentPositions({ board, targetPosition: targetPos, team: subjectTeam })
+    case 'attack':   return attackingPositions({ board, targetPosition: targetPos, team: subjectTeam })
+    case 'defend':   return defendingPositions({ board, targetPosition: targetPos, team: subjectTeam })
+    case 'shield':   return shieldingPositions({ board, targetPosition: targetPos, team: subjectTeam })
+    default:         return []
+  }
+}
+
+// Contribute a positionConstraint from a relational plan when one side is a
+// singular actor. The other side's pieces must be placed at squares related
+// to the singular actor's position. Deferred placement: seed-builder won't
+// place these pieces; resolvePositionConstraints does after strategies commit.
+function contributeRelationalPositionConstraint(plan, vars) {
+  if (plan.kind !== 'relational') { return }
+  if (plan.operator === 'same_piece') { return }
+  // Only emit a constraint when ONE side is singular (the other becomes the
+  // deferred-placement side). All-group relational plans use seed_builder.
+  const subjectIsSingular = SINGULAR_ACTORS.has(plan.subject)
+  const targetIsSingular = SINGULAR_ACTORS.has(plan.target)
+  if (subjectIsSingular === targetIsSingular) { return }  // both or neither
+
+  const singularSide = subjectIsSingular ? 'subject' : 'target'
+  const groupSide = subjectIsSingular ? 'target' : 'subject'
+  const singularActor = subjectIsSingular ? plan.subject : plan.target
+  const groupTeam = groupSide === 'subject' ? plan.subjectTeam : plan.targetTeam
+  const groupFilter = groupSide === 'subject' ? plan.subjectFilter : plan.targetFilter
+
+  // Existential semantics: at least 1 piece on the group side related to
+  // the singular actor (unless plan demands count=0, which is handled by
+  // zero-count-skip path elsewhere).
+  vars.positionConstraints.push({
+    subset: { team: groupTeam, filter: groupFilter || 'any' },
+    region: { kind: 'related', actor: singularActor, operator: plan.operator },
+    count_range: { min: 1, max: Infinity },
+    plan
+  })
+}
+
 export function buildChainConstraints(combinedPlan) {
   const vars = initSingularActors(combinedPlan.movingTeam)
   vars.inventory = initInventory(combinedPlan.movingTeam)
   vars.movingTeam = combinedPlan.movingTeam
+  vars.positionConstraints = []
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)
+    contributeRelationalPositionConstraint(plan, vars)
   }
   // Derive inventory contributions from converged singular-actor species_sets.
   // Runs after all plan contributions so we operate on narrowed sets.

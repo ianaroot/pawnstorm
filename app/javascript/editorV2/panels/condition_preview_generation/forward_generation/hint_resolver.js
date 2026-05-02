@@ -35,7 +35,7 @@ import {
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
-import { buildChainConstraints, narrowPbsHintsByInventory, ACTOR_TO_VAR_KEY } from './chain_constraints'
+import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY } from './chain_constraints'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -273,6 +273,67 @@ function verifyHints(pieces, hints, ctx) {
   return true
 }
 
+// Resolution pass — places pieces for positionConstraints whose region's
+// underlying singular actor has been committed to a specific position. For
+// constraints where the underlying actor's position_set is still wider than
+// a singleton, no resolution is attempted: the seed-placed pieces are
+// expected to satisfy the chain via the existing pre-strategy placements.
+//
+// This pass is what lifts chains where a strategy COMMITS a singular actor's
+// position (e.g. M4b's slider) — the seed-placed dependent pieces won't be
+// adjacent to the committed position, but the resolution pass adds an
+// additional piece in the post-commit region so post-evaluation finds it.
+function resolvePositionConstraints(pieces, ctx) {
+  const constraints = ctx.positionConstraints ?? []
+  if (constraints.length === 0) { return pieces }
+
+  for (const constraint of constraints) {
+    const region = constraint.region
+    if (region.kind === 'related') {
+      const varKey = ACTOR_TO_VAR_KEY[region.actor]
+      if (!varKey || !ctx[varKey]) { continue }
+      // Only resolve when the dependent actor is committed to a singleton
+      // position. A wider position_set means no strategy committed; the
+      // seed's tentative placements are the chain's best shot.
+      if (ctx[varKey].position_set.size !== 1) { continue }
+    }
+
+    const resolvedRegion = resolveRegion(region, ctx, pieces)
+    const occupied = new Set(pieces.keys())
+    const free = [...resolvedRegion].filter(p => !occupied.has(p))
+    if (free.length === 0) { continue }
+    const minPlacements = Math.max(1, constraint.count_range.min)
+    let placedCount = 0
+    for (const pos of shuffled(free, ctx.random)) {
+      if (placedCount >= minPlacements) { break }
+      const species = pickSpeciesForSubset(constraint.subset, ctx)
+      if (!species) { continue }
+      const next = placePiece(pieces, pos, pieceCode(constraint.subset.team, species))
+      if (!next) { continue }
+      pieces = next
+      placedCount += 1
+    }
+  }
+  return pieces
+}
+
+function pickSpeciesForSubset(subset, ctx) {
+  const filter = subset.filter || 'any'
+  const filterToSpecies = {
+    any:    [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN],
+    king:   [Board.KING],
+    queen:  [Board.QUEEN],
+    rook:   [Board.ROOK],
+    bishop: [Board.BISHOP],
+    knight: [Board.NIGHT],
+    pawn:   [Board.PAWN],
+    major:  [Board.QUEEN, Board.ROOK],
+    minor:  [Board.BISHOP, Board.NIGHT]
+  }
+  const candidates = filterToSpecies[filter] || filterToSpecies.any
+  return pickRandom(candidates, ctx.random)
+}
+
 // Build minimum seed from relational plan structure: place at least one subject
 // + target satisfying each relational plan. For unary-only chains, place the
 // unary subject so mobility hints have something to constrain.
@@ -338,6 +399,14 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
       // Same-piece doesn't have a placement geometry — the strategy engineers
       // the captured piece + mover + recentMoveContext entirely on its own.
       if (plan.operator === 'same_piece') { continue }
+      // Note: relational plans with exactly one singular side ALSO contribute
+      // a positionConstraint (see chain_constraints.contributeRelationalPositionConstraint).
+      // The seed places pieces tentatively here for strategies that need
+      // anchors (e.g., relation_count uses the singular-side piece to engineer
+      // count constraints). After strategies commit singular-actor positions,
+      // resolvePositionConstraints adds additional pieces in the resolved
+      // regions so post-evaluation finds qualifying pairs even when the
+      // strategy's commitment lands at a different position than the seed.
       const subjectTeam = plan.subjectTeam
       const targetTeam = plan.targetTeam
       const subjectSpecies = pickSpeciesForSide(plan, 'subject')
@@ -486,7 +555,8 @@ export function resolveViaHints({ combinedPlan, random }) {
     capturedPiece: chainConstraints.capturedPiece,
     enemyMovedPiece: chainConstraints.enemyMovedPiece,
     enemyCapturedPiece: chainConstraints.enemyCapturedPiece,
-    inventory: chainConstraints.inventory
+    inventory: chainConstraints.inventory,
+    positionConstraints: chainConstraints.positionConstraints
   }
 
   for (const hint of hints) {
@@ -495,6 +565,14 @@ export function resolveViaHints({ combinedPlan, random }) {
     } catch { pieces = null }
     if (pieces === null) { return null }
   }
+
+  // Resolution pass — place pieces for positionConstraints (deferred from
+  // seed-builder when one side of a relational plan is a singular actor).
+  // Phase A: lock in any uncommitted singular-actor positions. Phase B:
+  // resolve each positionConstraint and place the group-side piece(s) in
+  // the resolved region.
+  pieces = resolvePositionConstraints(pieces, ctx)
+  if (pieces === null) { return null }
 
   // Verify: every supported hint must hold on the augmented board. The
   // orchestrator's outer attempt loop will retry with a fresh RNG sequence
