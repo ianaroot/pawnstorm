@@ -1637,6 +1637,52 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('flags contradiction when group-actor count plans conflict (patch 2 inventory)', () => {
+    // Plan A says allied count = 5; Plan B says allied count = 0. Inventory
+    // narrowing produces an empty count_range for allied/any/current. The
+    // chain should be flagged as no_examples (unsat detected upstream by the
+    // existing detectFilterMatchesNoSpecies / chain validation, OR by the
+    // inventory's range arithmetic returning null from buildChainConstraints).
+    const payloads = [
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 5
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7001) })
+    expect(preview.status).toBe('no_examples')
+  })
+
+  it('flags contradiction when subset narrowing makes parent count_range invalid (patch 2 inventory)', () => {
+    // Plan A says allied/bishop count = 2 (subset). Plan B says allied/any
+    // count = 0 (parent). After subset propagation: allied/any count.min ≥ 2
+    // (from bishop), but allied/any count.max = 0. Empty range → unsat.
+    const payloads = [
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'bishop',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 2
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7002) })
+    expect(preview.status).toBe('no_examples')
+  })
+
   it('coordinates singular actor identity across plans via chain_constraints (patch 1)', () => {
     // Two plans both reference moved_piece. Plan 1 (unary value pair) constrains
     // captured_piece value > moved_piece value. Plan 2 (relational) constrains

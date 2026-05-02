@@ -435,7 +435,8 @@ export function resolveViaHints({ combinedPlan, random }) {
     movedPiece: chainConstraints.movedPiece,
     capturedPiece: chainConstraints.capturedPiece,
     enemyMovedPiece: chainConstraints.enemyMovedPiece,
-    enemyCapturedPiece: chainConstraints.enemyCapturedPiece
+    enemyCapturedPiece: chainConstraints.enemyCapturedPiece,
+    inventory: chainConstraints.inventory
   }
 
   for (const hint of hints) {
