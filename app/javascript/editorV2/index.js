@@ -83,6 +83,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   keyboardHandler.actions = editorActions
   toolbarHandler.actions = editorActions
   clickHandler.actions = editorActions
+  if (boardStatePreview) { boardStatePreview.actions = editorActions }
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   hoverPreviewHandler.attach()

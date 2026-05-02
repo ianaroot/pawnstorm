@@ -133,7 +133,7 @@ class BoardStatePreview {
 
     this.toggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation()
-      this.toggle()
+      this.actions?.togglePreview()
     })
     this.mode = 'idle'
     this.selectionPreview = null

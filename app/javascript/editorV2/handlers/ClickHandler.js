@@ -190,7 +190,7 @@ class ClickHandler {
 
   closeEditor() {
     this._hideEditorPanel()
-    this.boardStatePreview?.deactivate()
+    this.actions?.deactivatePreview()
   }
 
   setBoardStatePreview(preview) {
@@ -243,11 +243,11 @@ class ClickHandler {
         this.populateConditionForm(node)
         break
       case 'score':
-        this.boardStatePreview?.deactivate()
+        this.actions?.deactivatePreview()
         this.populateActionEditor(node)
         break
       case 'organizer':
-        this.boardStatePreview?.deactivate()
+        this.actions?.deactivatePreview()
         this.populateOrganizerEditor(node)
         break
       default:
@@ -257,8 +257,8 @@ class ClickHandler {
 
   populateConditionForm(node) {
     this.conditionForm?.populate(node.data)
-    if (this.boardStatePreview && this.conditionForm) {
-      this.boardStatePreview.activate(this.conditionForm)
+    if (this.conditionForm) {
+      this.actions?.activateConditionPreview(this.conditionForm)
     }
   }
 
