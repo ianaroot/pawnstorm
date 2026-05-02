@@ -2227,6 +2227,7 @@
 .board-state-preview-wrap {
   width: min(34rem, calc(100vw - 0.5rem));
   margin-top: 8px;
+  margin-left: auto;
   padding: 8px 15px 6px;
   background: #252220;
   border: 1px solid #3d3a35;
