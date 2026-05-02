@@ -13,28 +13,15 @@
 // null for it.
 
 import {
-  pieceCode
+  pieceCode, ALL_POSITIONS, shuffled
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import {
   compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
 // How many additional qualifying pieces on `side` we need to place to satisfy.
 // Returns null when the constraint requires REMOVING pieces (we don't reduce).

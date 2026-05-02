@@ -6,32 +6,20 @@
 // pool allows it).
 
 import { materialValue } from 'gameplay/board_query_utils'
-import { pieceCode } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
+import { pieceCode, ALL_POSITIONS, shuffled, pickRandom } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
-import { compareValue, pieceMatchesFilter } from '../hint_compiler'
+import { compareValue } from '../hint_compiler'
+import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 const MAX_PLACEMENT_ITERATIONS = 40
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
 function sumActorValue(pieces, hint) {
   let total = 0
   for (const [, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
-    if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
+    if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     total += materialValue(piece.slice(1))
   }
   return total

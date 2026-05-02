@@ -8,10 +8,9 @@ import {
   RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep
 } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview_generation/seeds/skeleton_builders'
-import { shuffled } from '../shared/board_utils'
+import { shuffled, ALL_POSITIONS } from '../shared/board_utils'
 import { placePiece, legalPlacementForSpecies, piecesSatisfyInvariants } from '../shared/piece_placement'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
 function positionsAttackingAnchor({ species, anchorPosition, occupied }) {
   const attackerTeam = Board.WHITE

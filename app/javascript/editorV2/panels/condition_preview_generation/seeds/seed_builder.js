@@ -5,7 +5,7 @@ import {
   SINGULAR_ACTORS
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
-import { shuffled } from '../shared/board_utils'
+import { shuffled, ALL_POSITIONS } from '../shared/board_utils'
 import { placePiece, teamHasKing } from '../shared/piece_placement'
 import { buildSideConfigurations } from '../plans/configurations'
 import { buildConfigSkeletons } from './relation_geometry'
@@ -260,8 +260,7 @@ export function buildSeedFromPreset(combinedPlan, specialPreset, moveKind, rando
       const extraPool = plan.targetSpeciesPool.filter(s => s !== Board.KING)
       for (let j = 0; j < 2 && extraPool.length > 0; j++) {
         const species = extraPool[Math.floor(random() * extraPool.length)]
-        const free = Array.from({ length: 64 }, (_, k) => k)
-          .filter(sq => !currentPieces.has(sq) && !reservedSquares.has(sq))
+        const free = ALL_POSITIONS.filter(sq => !currentPieces.has(sq) && !reservedSquares.has(sq))
         if (free.length === 0) { break }
         const square = free[Math.floor(random() * free.length)]
         const next = placePiece(currentPieces, square, `${plan.targetTeam}${species}`)

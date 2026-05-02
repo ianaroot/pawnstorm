@@ -5,21 +5,13 @@
 // If the chain requires fewer pieces than already present, returns null.
 
 import {
-  pieceCode
+  pieceCode, ALL_POSITIONS, shuffled
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
-import { compareValue, pieceMatchesFilter } from '../hint_compiler'
+import { compareValue } from '../hint_compiler'
+import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
 function neededAdditions(countOp, n, current) {
   switch (countOp) {
@@ -38,7 +30,7 @@ export function actorCountStrategy(pieces, hint, ctx) {
   let currentCount = 0
   for (const [, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
-    if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
+    if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     currentCount += 1
   }
 

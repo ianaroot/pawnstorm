@@ -11,7 +11,7 @@
 // To preserve diversity across N runs of the same chain:
 //
 //   - Iterate candidate squares and species via shuffled() / pickRandom(),
-//     never deterministic for-each. (See buildMinimumSeed, applyStrategyDirectBlock.)
+//     never deterministic for-each. (See buildMinimumSeed, applyDirectBlock.)
 //   - When a hint has multiple satisfying strategies, do NOT always try them in
 //     a fixed order — that biases output toward whichever strategy fires first.
 //     Prefer round-robin or random strategy choice. The current
@@ -24,16 +24,17 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { controlledSquares, materialValue } from 'gameplay/board_query_utils'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, clonePiecesMap
+  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, clonePiecesMap,
+  ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
-import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { candidateSpecies, legalPriorTurnState, speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { usesZeroRelationPath } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 import {
   adjacentNeighborPositions, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
-import { compileHints, HINT_TYPES, satisfies, pieceMatchesFilter } from './hint_compiler'
+import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -49,21 +50,8 @@ import { relationSamePieceStrategy } from './strategies/relation_same_piece'
 import { unaryValuePairStrategy } from './strategies/unary_value_pair'
 import { unaryCountPairStrategy } from './strategies/unary_count_pair'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
 function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
   return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
@@ -88,9 +76,9 @@ function actorTeamOnBoard(actor, movingTeam) {
 // falls back to A. For >/≥ comparators, no strategy is implemented yet —
 // emission for those is gated off in the compiler.
 function applyMobilityReduce(pieces, hint, movingTeam, random) {
-  const cResult = tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random)
+  const cResult = tryCheckPlusBlock(pieces, hint, movingTeam, random)
   if (cResult !== null) { return cResult }
-  return applyStrategyDirectBlock(pieces, hint, movingTeam, random)
+  return applyDirectBlock(pieces, hint, movingTeam, random)
 }
 
 // Translate a generalized ACTOR_MOBILITY hint into a `maxMobility` ceiling for
@@ -105,13 +93,13 @@ function mobilityCeilingFor(hint) {
   }
 }
 
-function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
+function applyDirectBlock(pieces, hint, movingTeam, random) {
   const ceiling = mobilityCeilingFor(hint)
   if (ceiling === null) { return null }
   const matching = []
   for (const [position, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
-    if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
+    if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     matching.push({ position, piece })
   }
 
@@ -128,7 +116,7 @@ function applyStrategyDirectBlock(pieces, hint, movingTeam, random) {
 // they can't defend (no legal capture-attacker or block-ray move). When in check,
 // a piece's only legal moves are defending moves; if there are none (or ≤ N), the
 // actor's mobility ≤ N. Works for king (escape blocked) and non-king (pin/no-defend).
-function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
+function tryCheckPlusBlock(pieces, hint, movingTeam, random) {
   const ceiling = mobilityCeilingFor(hint)
   if (ceiling === null) { return null }
   const kingCode = pieceCode(hint.team, Board.KING)
@@ -159,7 +147,7 @@ function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
         const board = piecesIntoBoard(withAttacker, hint.team)
         for (const [pos, piece] of withAttacker.entries()) {
           if (piece.charAt(0) !== hint.team) { continue }
-          if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
+          if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
           const moves = Rules.availableMovesFrom({ board, startPosition: pos })
           totalMobility += moves.length
           if (totalMobility > ceiling) { break }
@@ -169,7 +157,7 @@ function tryStrategyCheckPlusBlock(pieces, hint, movingTeam, random) {
 
       // Fall back to topping up with direct blocking for any residual.
       let blocked = null
-      try { blocked = applyStrategyDirectBlock(withAttacker, hint, movingTeam, random) } catch { blocked = null }
+      try { blocked = applyDirectBlock(withAttacker, hint, movingTeam, random) } catch { blocked = null }
       if (blocked !== null) { return blocked }
     }
   }
@@ -359,7 +347,7 @@ function buildMinimumSeed(combinedPlan, random) {
         // Skip if a matching piece is already on the board (e.g., placed by a relational plan).
         let alreadyMatched = false
         for (const piece of pieces.values()) {
-          if (piece.charAt(0) === team && pieceMatchesFilter(piece.slice(1), plan.subjectFilter, plan.subjectFilterMode)) {
+          if (piece.charAt(0) === team && speciesMatchesFilter(piece.slice(1), plan.subjectFilter, plan.subjectFilterMode)) {
             alreadyMatched = true
             break
           }

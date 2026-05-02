@@ -2,7 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies } from '../shared/board_utils'
+import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from '../shared/board_utils'
 import {
   moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState,
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT
@@ -58,7 +58,7 @@ export function weightedEnrichmentCandidateSquares(example, random) {
   const forbidden = forbiddenSquaresForEnrichment(example)
   const endPositionIsSpecial = example.moveKind !== MOVE_KIND_CASTLE && example.moveKind !== MOVE_KIND_EN_PASSANT
 
-  const candidates = Array.from({ length: 64 }, (_, position) => position).filter(position => {
+  const candidates = ALL_POSITIONS.filter(position => {
     if (endPositionIsSpecial && position === example.moveObject.endPosition) { return true }
     return !forbidden.has(position)
   })

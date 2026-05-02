@@ -39,6 +39,8 @@ const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
   Board.KING
 ])
 
+export const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
+
 export function shuffled(values, random) {
   const copy = [...values]
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -48,6 +50,11 @@ export function shuffled(values, random) {
     copy[swapIndex] = current
   }
   return copy
+}
+
+export function pickRandom(values, random) {
+  if (!values || values.length === 0) { return null }
+  return values[Math.floor(random() * values.length)]
 }
 
 export function clonePiecesMap(piecesMap) {
@@ -137,7 +144,7 @@ export function placeKingsIfAbsent(pieces, random) {
     if (teamHasKing(result, team)) { continue }
 
     const candidates = shuffled(
-      Array.from({ length: 64 }, (_, i) => i).filter(pos => !result.has(pos)),
+      ALL_POSITIONS.filter(pos => !result.has(pos)),
       random
     )
 

@@ -29,7 +29,7 @@ import {
   ROOK_RAY_STEPS, BISHOP_RAY_STEPS, nextPositionOnRay
 } from 'gameplay/board_query_utils'
 import {
-  pieceCode, clonePiecesMap
+  pieceCode, clonePiecesMap, shuffled, pickRandom, ALL_POSITIONS
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 
@@ -38,19 +38,7 @@ const MAX_OUTER_ATTEMPTS = 3
 const TARGET_POS_CANDIDATES = 4
 const MAX_SLIDER_DISTANCE = 6
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
 function sliderSpeciesForRay(step, random) {
   const isOrthogonal = ROOK_RAY_STEPS.includes(step)
@@ -95,7 +83,7 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
     if (!targetSpecies || !subjectSpecies) { continue }
 
     const targetCandidates = shuffled(
-      Array.from({ length: 64 }, (_, i) => i).filter(p => !pieces.has(p)),
+      ALL_POSITIONS.filter(p => !pieces.has(p)),
       random
     ).slice(0, TARGET_POS_CANDIDATES)
 

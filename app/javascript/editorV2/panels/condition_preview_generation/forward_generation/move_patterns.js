@@ -7,28 +7,16 @@ import {
 } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode
+  buildBoardFromLayout, buildLayoutFromPieces, pieceCode,
+  ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece, legalPlacementForSpecies } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
 // ===== Helpers =====
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
 function randomPosition(random, exclude = new Set()) {
   const free = ALL_POSITIONS.filter(p => !exclude.has(p))

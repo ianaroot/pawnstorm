@@ -37,7 +37,7 @@ import {
 import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
-import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { SINGULAR_ACTORS, speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 export const HINT_TYPES = Object.freeze({
   // Structural fallback — at least one qualifying pair exists. Emitted for
@@ -108,26 +108,7 @@ function mobilityUpperBoundFromComparator(comparator, total) {
 }
 
 // ===== Filter / actor helpers =====
-
-// Match a piece's species against (filter, filterMode). filterMode 'exclude'
-// inverts the match — `filter='pawn', filterMode='exclude'` means "anything
-// but a pawn." Defaults to 'include' when filterMode is null/undefined.
-export function pieceMatchesFilter(species, filter, filterMode) {
-  if (!filter || filter === 'any') { return true }
-  let matches
-  switch (filter) {
-    case 'king':   matches = species === Board.KING; break
-    case 'queen':  matches = species === Board.QUEEN; break
-    case 'rook':   matches = species === Board.ROOK; break
-    case 'bishop': matches = species === Board.BISHOP; break
-    case 'knight': matches = species === Board.NIGHT; break
-    case 'pawn':   matches = species === Board.PAWN; break
-    case 'major':  matches = species === Board.QUEEN || species === Board.ROOK; break
-    case 'minor':  matches = species === Board.BISHOP || species === Board.NIGHT; break
-    default:       return true
-  }
-  return filterMode === 'exclude' ? !matches : matches
-}
+// (speciesMatchesFilter lives in shared/example_utils.js — imported below.)
 
 export function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
   return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
@@ -138,7 +119,7 @@ export function* matchingPieces(pieces, team, filter, filterMode) {
   for (const [position, piece] of pieces.entries()) {
     if (piece.charAt(0) !== team) { continue }
     const species = piece.slice(1)
-    if (!pieceMatchesFilter(species, filter, filterMode)) { continue }
+    if (!speciesMatchesFilter(species, filter, filterMode)) { continue }
     yield { position, species }
   }
 }
@@ -172,7 +153,7 @@ export function qualifyingPairs(pieces, board, hint) {
       if (!piece) { continue }
       if (piece.charAt(0) !== hint.subject.team) { continue }
       const species = piece.slice(1)
-      if (!pieceMatchesFilter(species, hint.subject.filter, hint.subject.filterMode)) { continue }
+      if (!speciesMatchesFilter(species, hint.subject.filter, hint.subject.filterMode)) { continue }
       pairs.push({ subjectPosition, targetPosition: target.position, subjectSpecies: species, targetSpecies: target.species })
     }
   }

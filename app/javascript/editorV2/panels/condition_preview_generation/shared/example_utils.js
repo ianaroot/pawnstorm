@@ -3,7 +3,7 @@ import Rules from 'gameplay/rules'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import {
   square, clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
-  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch
+  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 
 export const MOVE_KIND_STANDARD = 'standard'
@@ -16,7 +16,6 @@ export const MOVE_KIND_EN_PASSANT = 'en_passant'
 export const SINGULAR_ACTORS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']))
 
 const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
 export function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
   if (filter === 'any') { return true }

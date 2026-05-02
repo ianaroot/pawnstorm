@@ -6,12 +6,11 @@ import {
   candidateSpecies, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD, buildRecentMoveContext
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
-  clonePiecesMap, squareIsOccupied, shuffled,
+  clonePiecesMap, squareIsOccupied, shuffled, ALL_POSITIONS,
   legalPlacementForSpecies, teamHasKing, MAX_PAWNS_PER_TEAM
 } from '../shared/board_utils'
 import { collectVerifiedMoves, buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 const EXACT_NUMBER_TARGET = 'exact_number'
 const PRIOR_BOARD_TARGET = 'prior_board_state'
 const VALUE_CAP_OVER_MINIMUM = 12
@@ -45,18 +44,10 @@ function isIncreasingComparator(comparator) {
   return comparator === 'greater_than' || comparator === 'greater_than_or_equal_to'
 }
 
-function targetCountsForComparator(comparator, targetTotal) {
-  switch (comparator) {
-    case 'equal_to':                 return [targetTotal]
-    case 'greater_than':             return range(targetTotal + 1, targetTotal + VALUE_CAP_OVER_MINIMUM + 1)
-    case 'greater_than_or_equal_to': return range(targetTotal, targetTotal + VALUE_CAP_OVER_MINIMUM)
-    case 'less_than':                return range(Math.max(1, targetTotal - VALUE_CAP_OVER_MINIMUM), targetTotal - 1)
-    case 'less_than_or_equal_to':    return range(Math.max(1, targetTotal - VALUE_CAP_OVER_MINIMUM), targetTotal)
-    default:                         return [targetTotal]
-  }
-}
-
-function targetValuesForComparator(comparator, targetTotal) {
+// Enumerates the set of target totals (count or value) that satisfy
+// `comparator` against `targetTotal`. Count and value share this shape — both
+// are positive integers compared against a target.
+function targetTotalsForComparator(comparator, targetTotal) {
   switch (comparator) {
     case 'equal_to':                 return [targetTotal]
     case 'greater_than':             return range(targetTotal + 1, targetTotal + VALUE_CAP_OVER_MINIMUM + 1)
@@ -239,8 +230,8 @@ export function buildUnaryWorkItems(unaryPlan, random) {
   }
 
   // allied or enemy
-  const effectiveCounts = targetTotal !== null ? targetCountsForComparator(comparator, targetTotal) : range(1, 10)
-  const effectiveValues = targetTotal !== null ? targetValuesForComparator(comparator, targetTotal) : range(1, 15)
+  const effectiveCounts = targetTotal !== null ? targetTotalsForComparator(comparator, targetTotal) : range(1, 10)
+  const effectiveValues = targetTotal !== null ? targetTotalsForComparator(comparator, targetTotal) : range(1, 15)
   const effectiveMobilities = targetTotal !== null ? targetMobilitiesForComparator(comparator, targetTotal) : range(0, MAX_PIECE_MOBILITY)
 
   if (operator === 'count') {
@@ -353,18 +344,18 @@ export function buildPositionWorkItems(positionPlan, movingTeam, random) {
 
   // allied or enemy
   if (operator === 'count') {
-    targetCountsForComparator(comparator, targetTotal).forEach(count => {
+    targetTotalsForComparator(comparator, targetTotal).forEach(count => {
       if (count > 0 && count <= validSquares.length) { items.push({ count }) }
     })
   } else if (operator === 'value') {
-    targetValuesForComparator(comparator, targetTotal).forEach(v => {
+    targetTotalsForComparator(comparator, targetTotal).forEach(v => {
       valueCombinationsForTotal(v, subjectSpeciesPool).forEach(valueCombination => {
         if (valueCombination.length <= validSquares.length) { items.push({ valueCombination }) }
       })
     })
   } else if (operator === 'mobility') {
     const mobilities = targetMobilitiesForComparator(comparator, targetTotal)
-    const counts = targetCountsForComparator(comparator, targetTotal)
+    const counts = targetTotalsForComparator(comparator, targetTotal)
     for (let attempt = 0; attempt < MAX_POSITION_BOARD_ATTEMPTS; attempt++) {
       mobilities.forEach(targetMobility => {
         subjectSpeciesPool.forEach(species => { items.push({ species, targetMobility }) })

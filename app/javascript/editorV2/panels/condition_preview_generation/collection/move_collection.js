@@ -16,7 +16,7 @@ import {
 } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
-  shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing
+  shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing, ALL_POSITIONS
 } from '../shared/board_utils'
 
 function descriptorAllowsZeroPairs(descriptor) {
@@ -90,7 +90,7 @@ function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
       const capturedSpecies = enemyCapturedPool?.length > 0
         ? enemyCapturedPool[Math.floor(random() * enemyCapturedPool.length)]
         : null
-      const freeSquares = Array.from({ length: 64 }, (_, i) => i).filter(p => !seed.pieces.has(p))
+      const freeSquares = ALL_POSITIONS.filter(p => !seed.pieces.has(p))
       const endPosition = freeSquares.length > 0
         ? freeSquares[Math.floor(random() * freeSquares.length)]
         : 0
@@ -392,7 +392,7 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
     ])
   const relationalPositionSet = new Set(relationalPositionsList)
   const extraSquares = sortByDistanceFromRelation(
-    Array.from({ length: 64 }, (_, i) => i).filter(i => !occupied.has(i) && !relationalPositionSet.has(i)),
+    ALL_POSITIONS.filter(i => !occupied.has(i) && !relationalPositionSet.has(i)),
     relationalPositionsList
   )
 

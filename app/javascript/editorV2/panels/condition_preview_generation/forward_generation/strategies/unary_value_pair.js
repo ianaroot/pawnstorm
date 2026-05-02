@@ -19,13 +19,12 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { materialValue } from 'gameplay/board_query_utils'
 import {
-  pieceCode, clonePiecesMap
+  pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 const MAX_POSITION_CANDIDATES = 8
 const MAX_ORIGIN_CANDIDATES = 12
 const MAX_PAIR_ATTEMPTS = 5
@@ -38,19 +37,7 @@ const COMPARATOR_FN = Object.freeze({
   less_than_or_equal_to: (a, b) => a <= b
 })
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
 function pawnOnStartingRank(team, position) {
   const rank = Board.rankIndex(position)

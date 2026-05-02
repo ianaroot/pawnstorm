@@ -13,12 +13,11 @@
 // arrive in M4b.
 
 import {
-  pieceCode, clonePiecesMap
+  pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 // Aggressive bounds. The orchestrator runs the resolver up to ~200 times, so a
 // failing strategy still gets many fresh-RNG retries — we don't need to
 // exhaust every combination on a single call.
@@ -27,19 +26,7 @@ const CURRENT_POS_CANDIDATES = 4
 const PRIOR_POS_CANDIDATES = 4
 const ATTACKER_PLACEMENT_ATTEMPTS = 15
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
-function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
 
 // Count subjects from `subjectTeam` reaching `targetPos` on the given board
 // via `operator`. Equivalent to `qualifyingPairs` count but with a single

@@ -10,21 +10,13 @@
 // outer attempt loop retries with a fresh RNG sequence.
 
 import {
-  pieceCode, clonePiecesMap
+  pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
-import { pieceMatchesFilter, positionMatchesAxis } from '../hint_compiler'
+import { positionMatchesAxis } from '../hint_compiler'
+import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
-const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
-function shuffled(values, random) {
-  const copy = [...values]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
 
 function qualifyingSquaresForHint(hint, movingTeam) {
   return ALL_POSITIONS.filter(p => positionMatchesAxis(p, hint, movingTeam))
@@ -38,7 +30,7 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
   const matching = []
   for (const [pos, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
-    if (!pieceMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
+    if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     matching.push({ pos, piece })
   }
 
