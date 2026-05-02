@@ -54,8 +54,9 @@ class EditorActions {
   }
 
   navigatePreview(delta) {
-    if (!this.boardStatePreview || this.boardStatePreview.examples.length <= 1) { return }
+    if (!this.boardStatePreview || this.boardStatePreview.mode === 'idle' || this.boardStatePreview.examples.length <= 1) { return false }
     this.boardStatePreview._navigate(delta)
+    return true
   }
 
   copy() {

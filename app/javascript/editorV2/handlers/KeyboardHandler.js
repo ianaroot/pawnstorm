@@ -80,11 +80,11 @@ class KeyboardHandler {
 
     // Arrow keys: navigate board state preview
     if (event.key === 'ArrowLeft') {
-      this.actions?.navigatePreview(-1)
+      if (this.actions?.navigatePreview(-1)) { event.preventDefault() }
       return
     }
     if (event.key === 'ArrowRight') {
-      this.actions?.navigatePreview(1)
+      if (this.actions?.navigatePreview(1)) { event.preventDefault() }
       return
     }
   }
