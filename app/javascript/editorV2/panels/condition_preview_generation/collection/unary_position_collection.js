@@ -20,7 +20,7 @@ const MOBILITY_BOARD_ATTEMPTS = 100
 const POSITION_BOARD_ATTEMPTS = 80
 const BLOCKER_SPECIES_POOL = Object.freeze([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN, Board.QUEEN])
 const MAX_PIECE_MOBILITY = 27
-const SINGULAR_CROSS_ACTOR_TARGETS = Object.freeze(new Set(['captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
+const SINGULAR_CROSS_ACTOR_TARGETS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
 
 // ===== Utilities =====
 
@@ -411,6 +411,11 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
 
   function applyCrossActorTarget(pieces, pawnCount, baseRecentMoveContext, baseCapturedPool) {
     if (item.targetSingularSpecies !== undefined) {
+      if (target === 'moved_piece') {
+        // Mover species is already the targetSingularSpecies (set by subject
+        // branch); no extra placement needed here.
+        return { pieces, recentMoveContext: baseRecentMoveContext, capturedPieceSpeciesPool: baseCapturedPool }
+      }
       if (target === 'captured_piece') {
         return { pieces, recentMoveContext: baseRecentMoveContext, capturedPieceSpeciesPool: [item.targetSingularSpecies] }
       }
@@ -476,10 +481,16 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   }
 
   if (subject === 'captured_piece') {
-    const result = placeNextPiece({ pieces: new Map(), species: item.movedSpecies, team: subjectTeam, random })
+    // When target=moved_piece, the mover species is constrained by the
+    // unary pair comparator (item.targetSingularSpecies) — use it instead
+    // of the freely-picked item.movedSpecies.
+    const moverSpecies = (target === 'moved_piece' && item.targetSingularSpecies)
+      ? item.targetSingularSpecies
+      : item.movedSpecies
+    const result = placeNextPiece({ pieces: new Map(), species: moverSpecies, team: subjectTeam, random })
     if (!result) { return null }
-    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, item.movedSpecies), null, [item.capturedSpecies])
-    return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: item.movedSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
+    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, moverSpecies), null, [item.capturedSpecies])
+    return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
   if (subject === 'enemy_moved_piece') {
@@ -487,7 +498,9 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
     if (!enemyResult) { return null }
     const baseContext = buildEnemyRecentMoveContext(enemyResult.square, item.enemyMovedSpecies, enemyTeam, null, movingTeam, random)
     const allSpecies = candidateSpecies('any', null)
-    const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
+    const moverSpecies = (target === 'moved_piece' && item.targetSingularSpecies)
+      ? item.targetSingularSpecies
+      : allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
     const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
@@ -499,7 +512,9 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
     if (!enemyResult) { return null }
     const baseContext = buildEnemyRecentMoveContext(enemyResult.square, item.enemyMoverSpecies, enemyTeam, item.enemyCapturedSpecies, movingTeam, random)
     const allSpecies = candidateSpecies('any', null)
-    const moverSpecies = allSpecies[Math.floor(random() * allSpecies.length)]
+    const moverSpecies = (target === 'moved_piece' && item.targetSingularSpecies)
+      ? item.targetSingularSpecies
+      : allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
     const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)

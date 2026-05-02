@@ -1587,4 +1587,53 @@ describe('ConditionExampleGenerator', () => {
       Math.floor(preview.examples.length * 0.8)
     )
   })
+
+  it('routes a unary value pair chain (captured_piece >= moved_piece) through forward generation (8c-cleanup)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'captured_piece', subjectFilter: 'any',
+      operator: 'value', comparator: 'greater_than_or_equal_to',
+      target: 'moved_piece', targetFilter: 'any'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(8001) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a unary value pair chain (enemy_moved_piece > enemy_captured_piece) through forward generation (8c-cleanup)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'value', comparator: 'greater_than',
+      target: 'enemy_captured_piece', targetFilter: 'any'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(8002) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('routes a unary count pair chain (captured_piece = moved_piece, capture present) through forward generation (8c-cleanup)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'captured_piece', subjectFilter: 'any',
+      operator: 'count', comparator: 'equal_to',
+      target: 'moved_piece', targetFilter: 'any'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(8003) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
 })

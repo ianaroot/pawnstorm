@@ -62,6 +62,14 @@ export const HINT_TYPES = Object.freeze({
   // enemy_moved_piece via recentMoveContext.
   RELATION_SAME_PIECE: 'relation_same_piece',
 
+  // Unary pair hints. Composite hint carrying both actors and the comparator.
+  // Emitted when a unary plan compares one move-event actor's value/count
+  // against another's (e.g. captured_piece value >= moved_piece). Strategies
+  // engineer a move scenario where both actors exist with species satisfying
+  // the comparator.
+  UNARY_VALUE_PAIR: 'unary_value_pair',
+  UNARY_COUNT_PAIR: 'unary_count_pair',
+
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
   ACTOR_AGGREGATE_VALUE: 'actor_aggregate_value',
@@ -309,6 +317,49 @@ function relationSamePieceSatisfies(pieces, hint, context) {
   return piece.charAt(0) !== movingTeam
 }
 
+// Unary value pair predicate. Weak verification: confirm the strategy set up
+// move-event actors whose species satisfy the comparator. Both actors are
+// singular move-event actors (moved_piece, captured_piece, enemy_moved_piece,
+// enemy_captured_piece). The post-evaluator runs the full chain check; this
+// predicate just confirms structural setup.
+function unaryValuePairSatisfies(pieces, hint, context) {
+  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const subjectSpecies = singularActorSpecies(hint.subjectActor, pieces, context, movingTeam)
+  const targetSpecies = singularActorSpecies(hint.targetActor, pieces, context, movingTeam)
+  if (subjectSpecies === null || targetSpecies === null) { return false }
+  return compareValue(materialValue(subjectSpecies), hint.valueOp, materialValue(targetSpecies))
+}
+
+function unaryCountPairSatisfies(pieces, hint, context) {
+  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const subjectCount = singularActorPresence(hint.subjectActor, pieces, context, movingTeam) ? 1 : 0
+  const targetCount = singularActorPresence(hint.targetActor, pieces, context, movingTeam) ? 1 : 0
+  return compareValue(subjectCount, hint.countOp, targetCount)
+}
+
+// Resolve the species of a singular move-event actor from board state +
+// recentMoveContext. Returns null if the actor isn't represented.
+//   moved_piece           — derived from prior→current diff (the resolver's
+//                           reconstruction), so we can't read it here pre-diff.
+//                           Strategies stash the chosen mover species in ctx.
+//   captured_piece        — same; strategies stash via ctx.
+//   enemy_moved_piece     — recentMoveContext.movedPieceSpeciesAfterMove
+//   enemy_captured_piece  — recentMoveContext.capturedPieceSpecies
+function singularActorSpecies(actor, pieces, context, movingTeam) {
+  const rmc = context?.recentMoveContext
+  switch (actor) {
+    case 'moved_piece':         return context?.engineeredMoverSpecies ?? null
+    case 'captured_piece':      return context?.engineeredCapturedSpecies ?? null
+    case 'enemy_moved_piece':   return rmc?.movedPieceSpeciesAfterMove ?? null
+    case 'enemy_captured_piece': return rmc?.capturedPieceSpecies ?? null
+    default:                    return null
+  }
+}
+
+function singularActorPresence(actor, pieces, context, movingTeam) {
+  return singularActorSpecies(actor, pieces, context, movingTeam) !== null
+}
+
 function actorPbsMobilitySatisfies(pieces, hint, context) {
   const priorPieces = context?.priorPieces
   if (!priorPieces) { return false }
@@ -345,6 +396,8 @@ const PREDICATES = Object.freeze({
   [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]:    relationPbsAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_PBS_MOBILITY]:              actorPbsMobilitySatisfies,
   [HINT_TYPES.RELATION_SAME_PIECE]:             relationSamePieceSatisfies,
+  [HINT_TYPES.UNARY_VALUE_PAIR]:                unaryValuePairSatisfies,
+  [HINT_TYPES.UNARY_COUNT_PAIR]:                unaryCountPairSatisfies,
   [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
@@ -580,6 +633,10 @@ function compileRelational(plan, random) {
   return hints
 }
 
+const SINGULAR_MOVE_EVENT_ACTORS = new Set([
+  'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'
+])
+
 function compileUnary(plan, random) {
   const hints = []
   const team = plan.subjectTeam
@@ -590,6 +647,37 @@ function compileUnary(plan, random) {
   const target = plan.target
   const total = Number(plan.targetTotal ?? 0)
   const frame = target === 'prior_board_state' ? 'prior' : 'current'
+
+  // Unary pair: target is another move-event actor. Emit a composite hint
+  // carrying both actors. Strategy engineers a move scenario where both
+  // singular actors exist with species satisfying the comparator.
+  if (SINGULAR_MOVE_EVENT_ACTORS.has(actor) && SINGULAR_MOVE_EVENT_ACTORS.has(target)) {
+    if (plan.operator === 'value') {
+      hints.push({
+        type: HINT_TYPES.UNARY_VALUE_PAIR,
+        subjectActor: actor, subjectTeam: team,
+        subjectFilter: filter, subjectFilterMode: filterMode, subjectSpeciesPool: speciesPool,
+        targetActor: target, targetTeam: plan.targetTeam,
+        targetFilter: plan.targetFilter, targetFilterMode: plan.targetFilterMode,
+        targetSpeciesPool: plan.targetSpeciesPool,
+        valueOp: plan.comparator
+      })
+      return hints
+    }
+    if (plan.operator === 'count') {
+      hints.push({
+        type: HINT_TYPES.UNARY_COUNT_PAIR,
+        subjectActor: actor, subjectTeam: team,
+        subjectFilter: filter, subjectFilterMode: filterMode, subjectSpeciesPool: speciesPool,
+        targetActor: target, targetTeam: plan.targetTeam,
+        targetFilter: plan.targetFilter, targetFilterMode: plan.targetFilterMode,
+        targetSpeciesPool: plan.targetSpeciesPool,
+        countOp: plan.comparator
+      })
+      return hints
+    }
+    // mobility unary pair not yet supported; fall through.
+  }
 
   if (plan.operator === 'mobility' && target === 'exact_number') {
     // Today only emit for comparators the existing strategy handles. The shape

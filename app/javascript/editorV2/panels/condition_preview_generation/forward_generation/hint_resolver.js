@@ -46,6 +46,8 @@ import { relationPbsCountBystanderStrategy } from './strategies/relation_pbs_cou
 import { relationPbsAggregateValueStrategy } from './strategies/relation_pbs_aggregate_value'
 import { actorPbsMobilityStrategy } from './strategies/actor_pbs_mobility'
 import { relationSamePieceStrategy } from './strategies/relation_same_piece'
+import { unaryValuePairStrategy } from './strategies/unary_value_pair'
+import { unaryCountPairStrategy } from './strategies/unary_count_pair'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
@@ -248,7 +250,9 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.RELATION_PBS_COUNT]: [relationPbsCountStrategy, relationPbsCountBystanderStrategy],
   [HINT_TYPES.RELATION_PBS_AGGREGATE_VALUE]: [relationPbsAggregateValueStrategy],
   [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy],
-  [HINT_TYPES.RELATION_SAME_PIECE]: [relationSamePieceStrategy]
+  [HINT_TYPES.RELATION_SAME_PIECE]: [relationSamePieceStrategy],
+  [HINT_TYPES.UNARY_VALUE_PAIR]: [unaryValuePairStrategy],
+  [HINT_TYPES.UNARY_COUNT_PAIR]: [unaryCountPairStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {
@@ -318,6 +322,14 @@ function buildMinimumSeed(combinedPlan, random) {
       }
       if (!placed) { return null }
     } else if (plan.kind === 'unary') {
+      // Unary pair plans (target is a singular move-event actor) are
+      // engineered entirely by their own strategy — it commits a mover and/or
+      // captured piece consistent with the comparator. Seed-placing here
+      // would conflict.
+      if (plan.target === 'moved_piece' || plan.target === 'captured_piece' ||
+          plan.target === 'enemy_moved_piece' || plan.target === 'enemy_captured_piece') {
+        continue
+      }
       // Skip seed placement for unary count=0 plans only. Placing a matching
       // piece would directly violate the predicate. value=0 and mobility=0
       // plans still get a seed because their strategies operate on the seeded
