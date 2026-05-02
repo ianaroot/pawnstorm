@@ -31,6 +31,8 @@ Rails.application.routes.draw do
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
   end
 
+  resources :eligibility_checks, only: [:create]
+
   resources :tournaments, only: [:index, :new, :create], constraints: { id: /\d+/ } do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
@@ -38,6 +40,7 @@ Rails.application.routes.draw do
       post :abort
       post :pause
       post :resume
+      get :eligible_bots
     end
   end
 

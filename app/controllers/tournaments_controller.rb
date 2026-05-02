@@ -1,7 +1,7 @@
 class TournamentsController < ApplicationController
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
-  before_action :set_tournament, only: [:abort, :pause, :resume, :start]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots]
   before_action :authorize_public_tournament_access!, only: [:show, :pairing]
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
 
@@ -81,6 +81,19 @@ class TournamentsController < ApplicationController
     else
       redirect_to tournament_show_path(@tournament), alert: start_tournament.error_message
     end
+  end
+
+  def eligible_bots
+    unless current_user && !current_user.guest?
+      render json: { eligible_bot_ids: [] } and return
+    end
+
+    bots = current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil)
+    eligible_bot_ids = bots.filter_map do |bot|
+      bot.id if BotEligibilityChecker.new(bot.compiled_program, @tournament.constraints).check[:eligible]
+    end
+
+    render json: { eligible_bot_ids: eligible_bot_ids }
   end
 
   private
@@ -210,7 +223,7 @@ class TournamentsController < ApplicationController
     c["max_branch_length"] = raw[:max_branch_length].to_i if raw[:max_branch_length].present?
     c["budget"]           = raw[:budget].to_i           if raw[:budget].present?
 
-    costs = (raw[:costs] || {}).filter_map { |k, v| [k.to_s, v.to_i] if v.present? && v.to_i > 0 }.to_h
+    costs = (raw[:costs]&.to_unsafe_h || {}).filter_map { |k, v| [k.to_s, v.to_i] if v.present? && v.to_i > 0 }.to_h
     c["costs"] = costs if costs.any?
 
     banned_types = Array(raw.dig(:score_node_restrictions, :banned_action_types)).reject(&:blank?)
