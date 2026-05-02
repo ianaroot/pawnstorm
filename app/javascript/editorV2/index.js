@@ -43,6 +43,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const nodeRenderer = new NodeRenderer(container, store, api)
   const connectionRenderer = new ConnectionRenderer(svgContainer, store, canvasViewport)
   connectionRenderer.container = container
+  connectionRenderer.attachHoverTracking()
   
   // 3. Initialize Handlers
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
