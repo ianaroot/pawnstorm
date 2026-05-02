@@ -60,9 +60,13 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
     if (!movedSpecies) { continue }
 
     // Pick a current position that's free in pieces (after kings placed).
-    const candidateCurrent = shuffled(
-      ALL_POSITIONS.filter(p => !pieces.has(p)), random
-    )
+    // Filter by ctx.movedPiece.position_set so sibling position constraints
+    // flow through.
+    const movedPositionSet = ctx.movedPiece?.position_set
+    const positionCandidates = movedPositionSet
+      ? [...movedPositionSet].filter(p => !pieces.has(p))
+      : ALL_POSITIONS.filter(p => !pieces.has(p))
+    const candidateCurrent = shuffled(positionCandidates, random)
 
     for (const currentPos of candidateCurrent.slice(0, CURRENT_POS_CANDIDATES)) {
       // Place moved_piece in current.
@@ -105,6 +109,8 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
         // sibling strategies see the commit.
         ctx.movedPiece.species_set.clear()
         ctx.movedPiece.species_set.add(movedSpecies)
+        ctx.movedPiece.position_set.clear()
+        ctx.movedPiece.position_set.add(currentPos)
         return placement.currentPieces
       }
     }

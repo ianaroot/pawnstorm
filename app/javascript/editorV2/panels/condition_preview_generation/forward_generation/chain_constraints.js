@@ -24,6 +24,7 @@
 import Board from 'gameplay/board'
 import { ALL_POSITIONS } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { qualifyingSquares } from 'editorV2/panels/condition_preview_generation/collection/unary_position_collection'
 
 const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
@@ -260,6 +261,34 @@ function contributeRelationalToInventory(plan, vars) {
   }
 }
 
+// Narrow a singular actor's position_set when a position plan with that
+// actor as subject demands the piece be on qualifying squares. For singular
+// actors with non-zero existential count requirement, the piece's position
+// MUST be in the qualifying square set.
+function contributePositionPlanToActorPositionSet(plan, vars) {
+  if (plan.kind !== 'position') { return }
+  if (!SINGULAR_ACTORS.has(plan.subject)) { return }
+
+  // Existential semantics: count > 0 means the actor's position must be in
+  // qualifyingSquares. count = 0 means the actor's position must NOT be in
+  // qualifyingSquares.
+  const total = Number(plan.targetTotal ?? 0)
+  const lowerBound = lowerBoundFromComparator(plan.comparator, total)
+
+  const varKey = ACTOR_TO_VAR_KEY[plan.subject]
+  const positionSet = vars[varKey].position_set
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
+  const qualifyingSet = new Set(qualifying)
+
+  if (lowerBound !== null && lowerBound > 0) {
+    for (const pos of [...positionSet]) {
+      if (!qualifyingSet.has(pos)) { positionSet.delete(pos) }
+    }
+  } else if (plan.comparator === 'equal_to' && total === 0) {
+    for (const pos of qualifying) { positionSet.delete(pos) }
+  }
+}
+
 // Contribute lower bounds from a position plan. `allied/pawn on rank > 4
 // count >= 2` means at least 2 allied pawns exist on the board (some at
 // rank > 4; possibly more elsewhere). Inventory's count.min rises to 2.
@@ -411,6 +440,9 @@ function contributePlanConstraints(plan, vars) {
   contributeUnaryToInventory(plan, vars)
   contributeRelationalToInventory(plan, vars)
   contributePositionToInventory(plan, vars)
+
+  // Position narrowing for singular actors.
+  contributePositionPlanToActorPositionSet(plan, vars)
 }
 
 // Per-variable satisfiability check. An empty species_set on any singular
@@ -423,9 +455,13 @@ function contributePlanConstraints(plan, vars) {
 // translate zero-count plans into ctx narrowings; the post-evaluator catches
 // such conflicts at runtime. Future patches may add zero-count handling.
 function isSatisfiable(vars) {
-  // Singular-actor variables: empty species_set is unsat.
+  // Singular-actor variables: empty species_set is unsat. Empty position_set
+  // is unsat for guaranteed-existing actors (movedPiece always exists; the
+  // captured/enemy_*_piece variables only matter when null is excluded).
   for (const key of ['movedPiece', 'capturedPiece', 'enemyMovedPiece', 'enemyCapturedPiece']) {
     if (vars[key].species_set.size === 0) { return false }
+    const mustExist = key === 'movedPiece' || !vars[key].species_set.has(null)
+    if (mustExist && vars[key].position_set.size === 0) { return false }
   }
   // Inventory ranges: any cell with min > max is unsat.
   if (vars.inventory) {
@@ -564,6 +600,7 @@ function resamplePbsPair(priorRange, currentRange, direction, random) {
 export function buildChainConstraints(combinedPlan) {
   const vars = initSingularActors(combinedPlan.movingTeam)
   vars.inventory = initInventory(combinedPlan.movingTeam)
+  vars.movingTeam = combinedPlan.movingTeam
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)
   }

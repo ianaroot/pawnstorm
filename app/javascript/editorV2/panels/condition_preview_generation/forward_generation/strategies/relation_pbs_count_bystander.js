@@ -111,7 +111,15 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
           sliderCandidates.push(cursor)
         }
 
-        for (const finalSliderPos of shuffled(sliderCandidates, random)) {
+        // Filter slider candidates by ctx.movedPiece.position_set — the slider
+        // IS the moved_piece, so its destination must be in the converged
+        // position_set. Sibling plans (e.g. allied defends moved_piece) see
+        // the same commitment.
+        const movedPositionSet = ctx.movedPiece?.position_set
+        const filteredSliderCandidates = movedPositionSet
+          ? sliderCandidates.filter(p => movedPositionSet.has(p))
+          : sliderCandidates
+        for (const finalSliderPos of shuffled(filteredSliderCandidates, random)) {
           let current = pieces
           current = placePiece(current, targetPos, pieceCode(hint.target.team, targetSpecies))
           if (!current) { continue }
@@ -133,11 +141,13 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
             priorPieces.clear()
             for (const [p, piece] of prior.entries()) { priorPieces.set(p, piece) }
 
-            // The slider is the moved_piece. Narrow ctx.movedPiece.species_set
-            // to the committed slider species so sibling strategies see the
-            // commit.
+            // The slider is the moved_piece. Narrow ctx.movedPiece species_set
+            // and position_set to the committed slider species and final
+            // position so sibling strategies see the commit.
             ctx.movedPiece.species_set.clear()
             ctx.movedPiece.species_set.add(sliderSpecies)
+            ctx.movedPiece.position_set.clear()
+            ctx.movedPiece.position_set.add(finalSliderPos)
 
             return current
           }

@@ -303,6 +303,31 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
     return pickRandom(planPool, random)
   }
 
+  // Pick a position for a piece, respecting ctx.{actor}.position_set when
+  // the actor is a singular move-event actor. Returns null if no candidate
+  // position is available.
+  function pickPositionForActor(actor, occupied) {
+    const varKey = ACTOR_TO_VAR_KEY[actor]
+    let candidates = ALL_POSITIONS
+    if (varKey && chainConstraints) {
+      candidates = [...chainConstraints[varKey].position_set]
+    }
+    const free = candidates.filter(p => !occupied.has(p))
+    if (free.length === 0) { return null }
+    return pickRandom(shuffled(free, random), random)
+  }
+
+  // Narrow ctx.{actor}.position_set to {pos} when the seed commits a singular
+  // actor's position. Sibling strategies see the commitment.
+  function narrowPositionForActor(actor, pos) {
+    const varKey = ACTOR_TO_VAR_KEY[actor]
+    if (varKey && chainConstraints) {
+      const set = chainConstraints[varKey].position_set
+      set.clear()
+      set.add(pos)
+    }
+  }
+
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
       // Zero-count plans want NO qualifying pair on the resulting board.
@@ -319,15 +344,24 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
       const targetSpecies = pickSpeciesForSide(plan, 'target')
       if (!subjectSpecies || !targetSpecies) { return null }
 
-      // Place target first, then subject in attack range.
-      const targetPos = pickRandom(shuffled(ALL_POSITIONS, random), random)
+      // Place target first, then subject in attack range. For singular-actor
+      // sides, draw position from the converged position_set so the seed
+      // respects sibling position constraints. The seed places tentatively
+      // and does NOT narrow position_set — strategies (M4a, M4b, etc.) are
+      // the authoritative committers for the move's actor positions, and
+      // their geometry constraints may conflict with whatever the seed picks.
+      const targetPos = pickPositionForActor(plan.target, pieces)
+      if (targetPos === null) { return null }
       let next = placePiece(pieces, targetPos, pieceCode(targetTeam, targetSpecies))
       if (!next) { continue }
       pieces = next
 
       // Find a square from which subjectSpecies attacks targetPos.
-      const tempPieces = new Map([[targetPos, pieceCode(targetTeam, targetSpecies)]])
-      const candidatePositions = shuffled(ALL_POSITIONS, random)
+      const subjectVarKey = ACTOR_TO_VAR_KEY[plan.subject]
+      const subjectPositionCandidates = (subjectVarKey && chainConstraints)
+        ? [...chainConstraints[subjectVarKey].position_set]
+        : ALL_POSITIONS
+      const candidatePositions = shuffled(subjectPositionCandidates, random)
       let placed = false
       for (const candidatePos of candidatePositions) {
         if (pieces.has(candidatePos)) { continue }
