@@ -66,7 +66,7 @@ export default class extends Controller {
       if (result.eligible) {
         this.setStatus('Eligible', 'success')
       } else {
-        this.setStatus(`Ineligible: ${result.violations.join(', ')}`, 'error')
+        this.setStatus(`Ineligible: ${result.violations.map(v => v.message).join(', ')}`, 'error')
       }
     } catch {
       this.setStatus('Could not check eligibility.', 'error')
