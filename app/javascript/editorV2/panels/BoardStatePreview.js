@@ -251,6 +251,7 @@ class BoardStatePreview {
 
     if (this.status !== 'ready') {
       this.content.appendChild(this.buildMessage())
+      this._appendChain()
       return
     }
 
@@ -376,17 +377,20 @@ class BoardStatePreview {
     body.appendChild(side)
     this.content.appendChild(body)
 
-    if (this.conditionLabels?.length >= 2) {
-      const chain = document.createElement('ol')
-      chain.className = 'board-state-preview__chain'
-      this.conditionLabels.forEach(label => {
-        const item = document.createElement('li')
-        item.className = 'board-state-preview__chain-item'
-        item.textContent = label
-        chain.appendChild(item)
-      })
-      this.content.appendChild(chain)
-    }
+    this._appendChain()
+  }
+
+  _appendChain() {
+    if (!this.conditionLabels || this.conditionLabels.length < 2) { return }
+    const chain = document.createElement('ol')
+    chain.className = 'board-state-preview__chain'
+    this.conditionLabels.forEach(label => {
+      const item = document.createElement('li')
+      item.className = 'board-state-preview__chain-item'
+      item.textContent = label
+      chain.appendChild(item)
+    })
+    this.content.appendChild(chain)
   }
 
   // ── Animation cycle ────────────────────────────────────────────────────────
