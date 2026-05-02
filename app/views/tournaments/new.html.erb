@@ -5,24 +5,29 @@
   <%= form_with url: tournaments_path, scope: :tournament, method: :post, local: true do |form| %>
     <div class="setup-form-grid">
       <div class="setup-form-col">
-        <div class="setup-form-section">
-          <h2>Details</h2>
-          <div class="form-field">
-            <%= form.label :name, 'Name' %>
-            <%= form.text_field :name, value: @name %>
+
+        <div class="ci-section">
+          <p class="ci-heading">Details</p>
+          <div class="ci-row">
+            <span class="ci-label">Name</span>
+            <input class="ci-input ci-input--text" type="text"
+              name="tournament[name]"
+              value="<%= @name %>">
           </div>
-          <div class="form-field">
-            <%= form.label :description, 'Description' %>
-            <%= form.text_area :description, value: @description, rows: 6 %>
+          <div class="ci-field-block">
+            <span class="ci-label">Description</span>
+            <textarea class="ci-textarea" name="tournament[description]" rows="5"><%= @description %></textarea>
           </div>
         </div>
 
-        <div class="setup-form-section">
-          <h2>Format</h2>
-          <p>Default is 10 games per pairing. Maximum is <%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>.</p>
-          <div class="form-field form-field-narrow">
-            <%= form.label :games_per_pair, 'Games Per Pairing' %>
-            <%= form.number_field :games_per_pair, value: @games_per_pair, min: 1, max: Tournaments::CreateTournament::MAX_GAMES_PER_PAIR, step: 1 %>
+        <div class="ci-section">
+          <p class="ci-heading">Format</p>
+          <div class="ci-row">
+            <span class="ci-label">Games per pairing</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[games_per_pair]"
+              value="<%= @games_per_pair %>"
+              min="1" max="<%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>" step="1">
           </div>
         </div>
 
@@ -30,134 +35,145 @@
       </div>
 
       <div class="setup-form-col">
-        <div class="setup-form-section">
-          <h2>Access</h2>
-          <p>Public tournaments are listed. Link-only tournaments are accessible by invite link.</p>
-          <div class="form-field form-field-narrow">
-            <%= form.label :visibility, 'Visibility' %>
-            <%= form.select :visibility,
-              Tournament.visibilities.keys.map { |v| [v.humanize, v] },
-              selected: @visibility %>
+
+        <div class="ci-section">
+          <p class="ci-heading">Access</p>
+          <div class="ci-row">
+            <span class="ci-label">Visibility</span>
+            <div class="ci-pills">
+              <% Tournament.visibilities.keys.each do |v| %>
+                <label class="ci-pill">
+                  <input type="radio" name="tournament[visibility]" value="<%= v %>"
+                    <%= "checked" if @visibility == v || (@visibility.nil? && v == 'link_only') %>>
+                  <span><%= v.humanize %></span>
+                </label>
+              <% end %>
+            </div>
           </div>
         </div>
 
-        <div class="setup-form-section">
-          <h2>Entries</h2>
-          <p>One-entry mode lets each user replace their entry before start. Unlimited allows multiple entries per user, one per bot.</p>
-          <div class="form-field form-field-narrow">
-            <%= form.label :entries_per_user, 'Entries Per User' %>
-            <%= form.select :entries_per_user,
-              Tournament.entries_per_users.keys.map { |e| [e.humanize, e] },
-              selected: @entries_per_user %>
+        <div class="ci-section">
+          <p class="ci-heading">Entries</p>
+          <div class="ci-row">
+            <span class="ci-label">Per user</span>
+            <div class="ci-pills">
+              <% Tournament.entries_per_users.keys.each do |e| %>
+                <label class="ci-pill">
+                  <input type="radio" name="tournament[entries_per_user]" value="<%= e %>"
+                    <%= "checked" if @entries_per_user == e || (@entries_per_user.nil? && e == 'one') %>>
+                  <span><%= e.humanize %></span>
+                </label>
+              <% end %>
+            </div>
           </div>
-          <div class="form-field form-field-narrow">
-            <%= form.label :max_entries, 'Max Entries' %>
-            <%= form.number_field :max_entries, value: @max_entries, min: 2, step: 1, placeholder: 'Unlimited' %>
+          <div class="ci-row">
+            <span class="ci-label">Max entries</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[max_entries]"
+              value="<%= @max_entries %>"
+              min="2" step="1" placeholder="unlimited">
           </div>
         </div>
+
       </div>
     </div>
 
     <details class="constraints-section" <%= "open" if @constraints.present? %>>
       <summary class="constraints-summary">Bot Eligibility Constraints</summary>
       <div class="constraints-body">
-        <p class="constraints-intro">Leave all fields blank to allow any bot. Set restrictions to limit which bots can enter this tournament.</p>
-
         <div class="constraints-grid">
-          <div class="constraints-col">
-            <h3 class="constraints-col-heading">Budget</h3>
-            <div class="form-field form-field-narrow">
-              <label for="constraints_budget">Total Budget</label>
-              <input type="number" id="constraints_budget"
+
+          <%# ── Budget ──────────────────────────────────────── %>
+          <div>
+            <p class="ci-heading">Budget</p>
+            <div class="ci-row">
+              <span class="ci-label">Total budget</span>
+              <input class="ci-input ci-input--box" type="number"
                 name="tournament[constraints][budget]"
                 value="<%= @constraints&.dig("budget") %>"
-                min="0" step="1" placeholder="None"
+                min="0" step="1" placeholder="N/A"
                 onblur="if(this.value==='0')this.value=''">
             </div>
-
-            <p class="constraints-hint">Cost per component (leave blank to exclude from budget):</p>
-            <% cost_labels = {
+            <p class="ci-subheading">Costs</p>
+            <% {
               "score_node"           => "Score node",
               "unary_condition"      => "Unary condition",
               "relational_condition" => "Relational condition",
               "position_condition"   => "Position condition",
               "and"                  => "AND edge",
               "or"                   => "OR merge"
-            } %>
-            <div class="cost-fields-grid">
-              <% cost_labels.each do |key, label| %>
-                <div class="form-field form-field-narrow">
-                  <label for="constraints_costs_<%= key %>"><%= label %></label>
-                  <input type="number" id="constraints_costs_<%= key %>"
-                    name="tournament[constraints][costs][<%= key %>]"
-                    value="<%= @constraints&.dig("costs", key) %>"
-                    min="0" step="1" placeholder="Free"
-                    onblur="if(this.value==='0')this.value=''">
-                </div>
-              <% end %>
-            </div>
+            }.each do |key, label| %>
+              <div class="ci-row">
+                <span class="ci-label"><%= label %></span>
+                <input class="ci-input ci-input--box" type="number"
+                  name="tournament[constraints][costs][<%= key %>]"
+                  value="<%= @constraints&.dig("costs", key) %>"
+                  min="0" step="1" placeholder="N/A"
+                  onblur="if(this.value==='0')this.value=''">
+              </div>
+            <% end %>
           </div>
 
-          <div class="constraints-col constraints-col--centered">
-            <h3 class="constraints-col-heading">Structure</h3>
-
-            <div class="check-field">
-              <label class="check-label">
+          <%# ── Structure ───────────────────────────────────── %>
+          <div class="ci-structure">
+            <p class="ci-heading">Structure</p>
+            <div class="ci-row">
+              <span class="ci-label">Disallow AND branches</span>
+              <label class="ci-toggle">
                 <input type="checkbox"
                   name="tournament[constraints][allow_and]"
                   value="false"
                   <%= "checked" if @constraints&.dig("allow_and") == false %>>
-                Disallow AND branches
+                <span class="ci-toggle-track"></span>
               </label>
             </div>
-            <div class="check-field">
-              <label class="check-label">
+            <div class="ci-row">
+              <span class="ci-label">Disallow OR branches</span>
+              <label class="ci-toggle">
                 <input type="checkbox"
                   name="tournament[constraints][allow_or]"
                   value="false"
                   <%= "checked" if @constraints&.dig("allow_or") == false %>>
-                Disallow OR branches
+                <span class="ci-toggle-track"></span>
               </label>
             </div>
-
-            <div class="form-field form-field-narrow" style="margin-top: 0.75rem;">
-              <label for="constraints_max_branch_length">Max Branch Length</label>
-              <input type="number" id="constraints_max_branch_length"
+            <div class="ci-row">
+              <span class="ci-label">Max branch length</span>
+              <input class="ci-input ci-input--box" type="number"
                 name="tournament[constraints][max_branch_length]"
                 value="<%= @constraints&.dig("max_branch_length") %>"
-                min="1" step="1" placeholder="Unlimited">
+                min="1" step="1" placeholder="N/A">
             </div>
           </div>
 
-          <div class="constraints-banned">
-            <div class="constraints-col">
-              <h3 class="constraints-col-heading">Banned Condition Kinds</h3>
-              <p class="constraints-hint">Check to ban that condition kind.</p>
+          <%# ── Banned ──────────────────────────────────────── %>
+          <div>
+            <p class="ci-heading">Banned Condition Kinds</p>
+            <div class="ci-pills">
               <% %w[unary relational position].each do |kind| %>
-                <label class="check-label">
+                <label class="ci-pill">
                   <input type="checkbox"
                     name="tournament[constraints][condition_restrictions][banned_kinds][]"
                     value="<%= kind %>"
                     <%= "checked" if @constraints&.dig("condition_restrictions", "banned_kinds")&.include?(kind) %>>
-                  <%= kind %>
+                  <span><%= kind %></span>
                 </label>
               <% end %>
             </div>
-
-            <div class="constraints-col">
-              <h3 class="constraints-col-heading">Banned Score Actions</h3>
-              <p class="constraints-hint">Check to ban that action type.</p>
+            <p class="ci-subheading">Banned Score Actions</p>
+            <div class="ci-pills">
               <% %w[add subtract set return].each do |action_type| %>
-                <label class="check-label">
+                <label class="ci-pill">
                   <input type="checkbox"
                     name="tournament[constraints][score_node_restrictions][banned_action_types][]"
                     value="<%= action_type %>"
                     <%= "checked" if @constraints&.dig("score_node_restrictions", "banned_action_types")&.include?(action_type) %>>
-                  <%= action_type %>
+                  <span><%= action_type %></span>
                 </label>
               <% end %>
             </div>
           </div>
+
         </div>
       </div>
     </details>
