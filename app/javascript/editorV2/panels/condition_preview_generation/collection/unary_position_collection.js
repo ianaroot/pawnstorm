@@ -20,7 +20,7 @@ const MOBILITY_BOARD_ATTEMPTS = 100
 const POSITION_BOARD_ATTEMPTS = 80
 const BLOCKER_SPECIES_POOL = Object.freeze([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN, Board.QUEEN])
 const MAX_PIECE_MOBILITY = 27
-const SINGULAR_CROSS_ACTOR_TARGETS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
+const UNARY_PAIR_TARGETS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
 
 // ===== Utilities =====
 
@@ -158,20 +158,20 @@ function buildEnemyRecentMoveContext(endPosition, species, enemyTeam, capturedSp
 
 // ===== Work item helpers =====
 
-function singularCrossActorTargetItems({ target, subjectValue, comparator, targetSpeciesPool, operator, random }) {
+function unaryPairTargetItems({ target, subjectValue, comparator, targetSpeciesPool, operator, random }) {
   if (operator === 'count') {
     const validTargets = range(1, 15).filter(t => satisfiesComparator(comparator, 1, t))
     return shuffled(validTargets, random).slice(0, 4).map(targetCount => ({ targetCount }))
   }
 
   if (operator === 'mobility') {
-    if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+    if (UNARY_PAIR_TARGETS.has(target)) {
       return shuffled([...targetSpeciesPool], random).slice(0, 4).map(targetSingularSpecies => ({ targetSingularSpecies }))
     }
     return range(1, 4).map(targetCount => ({ targetCount }))
   }
 
-  if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+  if (UNARY_PAIR_TARGETS.has(target)) {
     const validSpecies = targetSpeciesPool.filter(s => s !== Board.KING && satisfiesComparator(comparator, subjectValue, materialValue(s)))
     return shuffled(validSpecies, random).slice(0, 4).map(targetSingularSpecies => ({ targetSingularSpecies }))
   }
@@ -191,14 +191,14 @@ function singularCrossActorTargetItems({ target, subjectValue, comparator, targe
 export function buildUnaryWorkItems(unaryPlan, random) {
   const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = unaryPlan
   const items = []
-  const isCrossActor = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
+  const isPairTarget = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
 
   if (subject === 'moved_piece') {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       subjectSpeciesPool.forEach(movedSpecies => {
-        if (isCrossActor) {
+        if (isPairTarget) {
           const sv = operator === 'value' ? materialValue(movedSpecies) : 1
-          singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+          unaryPairTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
             .forEach(targetItem => items.push({ movedSpecies, ...targetItem }))
         } else {
           items.push({ movedSpecies })
@@ -213,9 +213,9 @@ export function buildUnaryWorkItems(unaryPlan, random) {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(movers, random).slice(0, 4).forEach(movedSpecies => {
         subjectSpeciesPool.forEach(capturedSpecies => {
-          if (isCrossActor) {
+          if (isPairTarget) {
             const sv = operator === 'value' ? materialValue(capturedSpecies) : 1
-            singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+            unaryPairTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
               .forEach(targetItem => items.push({ movedSpecies, capturedSpecies, ...targetItem }))
           } else {
             items.push({ movedSpecies, capturedSpecies })
@@ -229,9 +229,9 @@ export function buildUnaryWorkItems(unaryPlan, random) {
   if (subject === 'enemy_moved_piece') {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       subjectSpeciesPool.forEach(enemyMovedSpecies => {
-        if (isCrossActor) {
+        if (isPairTarget) {
           const sv = operator === 'value' ? materialValue(enemyMovedSpecies) : 1
-          singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+          unaryPairTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
             .forEach(targetItem => items.push({ enemyMovedSpecies, ...targetItem }))
         } else {
           items.push({ enemyMovedSpecies })
@@ -246,9 +246,9 @@ export function buildUnaryWorkItems(unaryPlan, random) {
     for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(enemyMovers, random).slice(0, 4).forEach(enemyMoverSpecies => {
         subjectSpeciesPool.forEach(enemyCapturedSpecies => {
-          if (isCrossActor) {
+          if (isPairTarget) {
             const sv = operator === 'value' ? materialValue(enemyCapturedSpecies) : 1
-            singularCrossActorTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
+            unaryPairTargetItems({ target, subjectValue: sv, comparator, targetSpeciesPool, operator, random })
               .forEach(targetItem => items.push({ enemyMoverSpecies, enemyCapturedSpecies, ...targetItem }))
           } else {
             items.push({ enemyMoverSpecies, enemyCapturedSpecies })
@@ -288,7 +288,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
     })
   }
 
-  if (isCrossActor) {
+  if (isPairTarget) {
     const paired = []
 
     if (operator === 'count') {
@@ -301,7 +301,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
     } else if (operator === 'mobility') {
       for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
         range(1, 6).forEach(sc => {
-          if (SINGULAR_CROSS_ACTOR_TARGETS.has(target)) {
+          if (UNARY_PAIR_TARGETS.has(target)) {
             shuffled([...targetSpeciesPool], random).slice(0, 2).forEach(targetSingularSpecies => {
               paired.push({ count: sc, targetSingularSpecies })
             })
@@ -409,7 +409,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   const isPBSIncreasing = isPBS && isIncreasingComparator(comparator)
   const isPBSDecreasing = isPBS && !isPBSIncreasing && comparator !== 'equal_to'
 
-  function applyCrossActorTarget(pieces, pawnCount, baseRecentMoveContext, baseCapturedPool) {
+  function applyPairTarget(pieces, pawnCount, baseRecentMoveContext, baseCapturedPool) {
     if (item.targetSingularSpecies !== undefined) {
       if (target === 'moved_piece') {
         // Mover species is already the targetSingularSpecies (set by subject
@@ -476,7 +476,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
     const capturedPieceSpeciesPool = isPBS
       ? [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
       : null
-    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, species), null, capturedPieceSpeciesPool)
+    const applied = applyPairTarget(result.pieces, initPawnCount(subjectTeam, species), null, capturedPieceSpeciesPool)
     return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: species, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
@@ -489,7 +489,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
       : item.movedSpecies
     const result = placeNextPiece({ pieces: new Map(), species: moverSpecies, team: subjectTeam, random })
     if (!result) { return null }
-    const applied = applyCrossActorTarget(result.pieces, initPawnCount(subjectTeam, moverSpecies), null, [item.capturedSpecies])
+    const applied = applyPairTarget(result.pieces, initPawnCount(subjectTeam, moverSpecies), null, [item.capturedSpecies])
     return { afterPieces: applied.pieces, movedPieceSquare: result.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
@@ -503,7 +503,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
       : allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
-    const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
+    const applied = applyPairTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
     return { afterPieces: applied.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
@@ -517,7 +517,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
       : allSpecies[Math.floor(random() * allSpecies.length)]
     const moverResult = placeNextPiece({ pieces: enemyResult.pieces, species: moverSpecies, team: movingTeam, random })
     if (!moverResult) { return null }
-    const applied = applyCrossActorTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
+    const applied = applyPairTarget(moverResult.pieces, initPawnCount(movingTeam, moverSpecies), baseContext, null)
     return { afterPieces: applied.pieces, movedPieceSquare: moverResult.square, movedPieceSpecies: moverSpecies, capturedPieceSpeciesPool: applied.capturedPieceSpeciesPool, recentMoveContext: applied.recentMoveContext }
   }
 
@@ -767,7 +767,7 @@ export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, ma
     movedPieceSquare,
     movedPieceSpecies,
     movingTeam: combinedPlan.movingTeam,
-    attemptKind: MOVE_KIND_STANDARD,
+    moveKind: MOVE_KIND_STANDARD,
     recentMoveContext,
     capturedPieceSpeciesPool,
     evaluationPayloads: combinedPlan.evaluationPayloads,
@@ -820,7 +820,7 @@ export function collectPositionExamples({ combinedPlan, positionPlan, item, rand
     movedPieceSquare,
     movedPieceSpecies,
     movingTeam: combinedPlan.movingTeam,
-    attemptKind: MOVE_KIND_STANDARD,
+    moveKind: MOVE_KIND_STANDARD,
     recentMoveContext,
     capturedPieceSpeciesPool,
     evaluationPayloads: combinedPlan.evaluationPayloads,

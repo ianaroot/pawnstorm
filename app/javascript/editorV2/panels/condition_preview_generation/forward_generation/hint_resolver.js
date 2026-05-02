@@ -234,7 +234,7 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
 // resulting false positives.
 //
 // As strategies for new hint types land, add them here AND remove the type
-// from NON_ACTIONABLE in hint_compiler.js.
+// from STRUCTURAL_HINTS in hint_compiler.js.
 const STRATEGIES = Object.freeze({
   [HINT_TYPES.RELATION_HOLDS]: [],
   [HINT_TYPES.ACTOR_MOBILITY]: [

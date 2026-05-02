@@ -4,16 +4,16 @@
 // and a value comparator. Strategy engineers a move scenario where both actors
 // exist with species whose material values satisfy the comparator.
 //
-// Actors and how they're bound:
-//   moved_piece           — bind via mover species; ctx.engineeredMoverSpecies
-//   captured_piece        — bind via capture species; ctx.engineeredCapturedSpecies
-//                           Engineering requires the move be a capture.
-//   enemy_moved_piece     — bind via recentMoveContext.movedPieceSpeciesAfterMove
-//   enemy_captured_piece  — bind via recentMoveContext.capturedPieceSpecies
+// Actor species are stored in actorSpecies (a map from actor name to species)
+// and resolved as follows:
+//   moved_piece           — ctx.moverSpecies (committed by the strategy)
+//   captured_piece        — ctx.capturedSpecies (move must be a capture)
+//   enemy_moved_piece     — recentMoveContext.movedPieceSpeciesAfterMove
+//   enemy_captured_piece  — recentMoveContext.capturedPieceSpecies
 //
-// The bindings determine what scenario must be engineered:
-//   - captured_piece in bindings → move must be a capture
-//   - enemy_*_piece in bindings → recentMoveContext must be synthesized
+// The actor mix determines the move scenario:
+//   - captured_piece present → move must be a capture
+//   - enemy_*_piece present → recentMoveContext must be synthesized
 
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
@@ -75,11 +75,6 @@ export function valueComparablePairs(subjectPool, targetPool, valueOp, random) {
   return shuffled(pairs, random)
 }
 
-// Bind species to actors per the hint. Returns an object keyed by actor name.
-function bindActors(hint, subjectSpecies, targetSpecies) {
-  return { [hint.subjectActor]: subjectSpecies, [hint.targetActor]: targetSpecies }
-}
-
 export function unaryValuePairStrategy(pieces, hint, ctx) {
   const { random, movingTeam, priorPieces } = ctx
   const enemyTeam = Board.opposingTeam(movingTeam)
@@ -89,21 +84,25 @@ export function unaryValuePairStrategy(pieces, hint, ctx) {
   ).slice(0, PAIR_ATTEMPTS)
 
   for (const [subjectSpecies, targetSpecies] of candidatePairs) {
-    const bindings = bindActors(hint, subjectSpecies, targetSpecies)
-    const result = engineerScenario({ pieces, bindings, ctx, movingTeam, enemyTeam, priorPieces, random })
+    const actorSpecies = {
+      [hint.subjectActor]: subjectSpecies,
+      [hint.targetActor]: targetSpecies
+    }
+    const result = engineerScenario({ pieces, actorSpecies, ctx, movingTeam, enemyTeam, priorPieces, random })
     if (result) { return result }
   }
   return null
 }
 
-// Engineer the move scenario per bindings. Returns the resulting pieces map
-// (current/after state) and mutates ctx.priorPieces / ctx.recentMoveContext /
-// ctx.engineered* fields. Returns null if engineering fails for this binding.
-function engineerScenario({ pieces, bindings, ctx, movingTeam, enemyTeam, priorPieces, random }) {
-  const capturedSpecies = bindings.captured_piece
-  const moverSpecies = bindings.moved_piece
-  const enemyMovedSpecies = bindings.enemy_moved_piece
-  const enemyCapturedSpecies = bindings.enemy_captured_piece
+// Engineer the move scenario per actorSpecies. Returns the resulting pieces map
+// (current/after state) and mutates ctx.priorPieces, ctx.recentMoveContext,
+// ctx.moverSpecies, ctx.capturedSpecies. Returns null if engineering fails for
+// this species choice.
+function engineerScenario({ pieces, actorSpecies, ctx, movingTeam, enemyTeam, priorPieces, random }) {
+  const capturedSpecies = actorSpecies.captured_piece
+  const moverSpecies = actorSpecies.moved_piece
+  const enemyMovedSpecies = actorSpecies.enemy_moved_piece
+  const enemyCapturedSpecies = actorSpecies.enemy_captured_piece
 
   const needsCapture = capturedSpecies !== undefined
 
@@ -160,8 +159,8 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
         priorPieces.clear()
         for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
 
-        ctx.engineeredMoverSpecies = trialMover
-        ctx.engineeredCapturedSpecies = capturedSpecies
+        ctx.moverSpecies = trialMover
+        ctx.capturedSpecies = capturedSpecies
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = synthesizeEnemyRecentMoveContext({
             enemyTeam, enemyMovedSpecies, enemyCapturedSpecies, capturedPos, random
@@ -206,7 +205,7 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
         priorPieces.clear()
         for (const [p, piece] of trialPrior.entries()) { priorPieces.set(p, piece) }
 
-        ctx.engineeredMoverSpecies = trialMover
+        ctx.moverSpecies = trialMover
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = synthesizeEnemyRecentMoveContext({
             enemyTeam, enemyMovedSpecies, enemyCapturedSpecies, capturedPos: null, random

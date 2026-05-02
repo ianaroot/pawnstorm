@@ -104,7 +104,7 @@ function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
 // ===== collectVerifiedMoves =====
 
 export function collectVerifiedMoves({
-  pieces, movedPieceSquare, movedPieceSpecies, movingTeam, attemptKind, recentMoveContext,
+  pieces, movedPieceSquare, movedPieceSpecies, movingTeam, moveKind, recentMoveContext,
   capturedPieceSpeciesPool, evaluationPayloads, random, maxResults
 }) {
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
@@ -118,7 +118,7 @@ export function collectVerifiedMoves({
 
   for (const originPosition of originCandidates) {
     if (piecesWithKings.has(originPosition)) { continue }
-    if (attemptKind === MOVE_KIND_EN_PASSANT && recentMoveContext && originPosition === recentMoveContext.movedPieceEndPosition) { continue }
+    if (moveKind === MOVE_KIND_EN_PASSANT && recentMoveContext && originPosition === recentMoveContext.movedPieceEndPosition) { continue }
 
     const captureOptions = capturedPieceSpeciesPool === null
       ? [null]
@@ -133,7 +133,7 @@ export function collectVerifiedMoves({
         priorPieces.set(movedPieceSquare, `${Board.opposingTeam(movingTeam)}${capturedSpecies}`)
       }
 
-      if (attemptKind === MOVE_KIND_EN_PASSANT && recentMoveContext) {
+      if (moveKind === MOVE_KIND_EN_PASSANT && recentMoveContext) {
         priorPieces.set(recentMoveContext.movedPieceEndPosition, `${Board.opposingTeam(movingTeam)}${Board.PAWN}`)
       }
 
@@ -157,7 +157,7 @@ export function collectVerifiedMoves({
       const captureForbidden = capturedPieceSpeciesPool !== null && capturedPieceSpeciesPool.length === 0
       if (captureRequired && !moveObject.captureNotation) { continue }
       if (captureForbidden && moveObject.captureNotation) { continue }
-      if (capturedPieceSpeciesPool === null && attemptKind !== MOVE_KIND_EN_PASSANT && moveObject.captureNotation) { continue }
+      if (capturedPieceSpeciesPool === null && moveKind !== MOVE_KIND_EN_PASSANT && moveObject.captureNotation) { continue }
 
       if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
 
@@ -434,7 +434,7 @@ export function collectVerifiedExamples({ combinedPlan, seed, variant, capturedP
       movedPieceSquare: option.square,
       movedPieceSpecies: option.species,
       movingTeam: combinedPlan.movingTeam,
-      attemptKind: seed.attemptKind,
+      moveKind: seed.moveKind,
       recentMoveContext,
       capturedPieceSpeciesPool,
       evaluationPayloads: combinedPlan.evaluationPayloads,

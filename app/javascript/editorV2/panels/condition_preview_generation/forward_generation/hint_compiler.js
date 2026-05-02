@@ -37,6 +37,7 @@ import {
 import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
+import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 export const HINT_TYPES = Object.freeze({
   // Structural fallback — at least one qualifying pair exists. Emitted for
@@ -348,8 +349,8 @@ function unaryCountPairSatisfies(pieces, hint, context) {
 function singularActorSpecies(actor, pieces, context, movingTeam) {
   const rmc = context?.recentMoveContext
   switch (actor) {
-    case 'moved_piece':         return context?.engineeredMoverSpecies ?? null
-    case 'captured_piece':      return context?.engineeredCapturedSpecies ?? null
+    case 'moved_piece':         return context?.moverSpecies ?? null
+    case 'captured_piece':      return context?.capturedSpecies ?? null
     case 'enemy_moved_piece':   return rmc?.movedPieceSpeciesAfterMove ?? null
     case 'enemy_captured_piece': return rmc?.capturedPieceSpecies ?? null
     default:                    return null
@@ -633,10 +634,6 @@ function compileRelational(plan, random) {
   return hints
 }
 
-const SINGULAR_MOVE_EVENT_ACTORS = new Set([
-  'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'
-])
-
 function compileUnary(plan, random) {
   const hints = []
   const team = plan.subjectTeam
@@ -651,7 +648,7 @@ function compileUnary(plan, random) {
   // Unary pair: target is another move-event actor. Emit a composite hint
   // carrying both actors. Strategy engineers a move scenario where both
   // singular actors exist with species satisfying the comparator.
-  if (SINGULAR_MOVE_EVENT_ACTORS.has(actor) && SINGULAR_MOVE_EVENT_ACTORS.has(target)) {
+  if (SINGULAR_ACTORS.has(actor) && SINGULAR_ACTORS.has(target)) {
     if (plan.operator === 'value') {
       hints.push({
         type: HINT_TYPES.UNARY_VALUE_PAIR,
@@ -782,11 +779,11 @@ export function compileHints(combinedPlan, random) {
 // Either structural-only (RELATION_HOLDS) or strategy-not-yet-implemented (the
 // granular ACTOR_*/RELATION_* set arrived in 8c step 1; strategies arrive in
 // step 2). As each strategy lands, remove its type from this set.
-const NON_ACTIONABLE = new Set([
+const STRUCTURAL_HINTS = new Set([
   HINT_TYPES.RELATION_HOLDS
   // All other granular types now actionable (milestones 2-4).
 ])
 
-export function chainHasActionableHints(combinedPlan) {
-  return compileHints(combinedPlan).some(h => !NON_ACTIONABLE.has(h.type))
+export function chainHasNonStructuralHints(combinedPlan) {
+  return compileHints(combinedPlan).some(h => !STRUCTURAL_HINTS.has(h.type))
 }

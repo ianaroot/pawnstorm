@@ -11,6 +11,10 @@ export const MOVE_KIND_CASTLE = 'castle'
 export const MOVE_KIND_PROMOTION = 'promotion'
 export const MOVE_KIND_EN_PASSANT = 'en_passant'
 
+// Singular move-event actors — count is always 0 or 1 (one piece per role).
+// Distinct from group actors (allied, enemy) which can have many pieces.
+export const SINGULAR_ACTORS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']))
+
 const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 

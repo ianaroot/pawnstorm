@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies, SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview_generation/shared/relational_utils'
@@ -302,7 +302,6 @@ export function buildUnaryPlan(payload, options = {}) {
   const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE && payload.target !== PRIOR_BOARD_COMPARISON_SOURCE
   const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
 
-  const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
   const baseSubjectPool = candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null)
   const subjectSpeciesPool = (SINGULAR_ACTORS.has(payload.subject) && payload.operator === 'value' && payload.target === EXACT_NUMBER_COMPARISON_SOURCE)
     ? singularActorValuePool(baseSubjectPool, payload.comparator, payload.targetTotal ?? 0)

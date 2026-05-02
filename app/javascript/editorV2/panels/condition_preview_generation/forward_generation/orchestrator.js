@@ -7,7 +7,7 @@ import { buildAggregatedResult, buildAggregatedHighlights } from '../collection/
 import { classifyPlan } from './plan_classifier'
 import { PATTERNS } from './move_patterns'
 import { resolveViaHints } from './hint_resolver'
-import { chainHasActionableHints } from './hint_compiler'
+import { chainHasNonStructuralHints } from './hint_compiler'
 
 const DEFAULT_ATTEMPTS_PER_DRIVER = 200
 const DEFAULT_HINT_RESOLVER_ATTEMPTS = 200
@@ -44,7 +44,7 @@ function buildExample({ priorBoard, moveObject, combinedPlan }) {
 export function collectForwardExamples({ combinedPlan, random, maxExamples = 30, attemptsPerDriver = DEFAULT_ATTEMPTS_PER_DRIVER }) {
   const classifications = combinedPlan.plans.map(classifyPlan)
   const drivers = classifications.filter(c => c.pbsDirection !== null)
-  const useHintResolver = chainHasActionableHints(combinedPlan)
+  const useHintResolver = chainHasNonStructuralHints(combinedPlan)
   if (drivers.length === 0 && !useHintResolver) { return [] }
 
   const examples = []

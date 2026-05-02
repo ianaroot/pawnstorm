@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import { buildPlan } from 'editorV2/panels/condition_preview_generation/plans/generation_plan'
 import {
-  MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
+  MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, SINGULAR_ACTORS
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   VALUE_COMPARISON_METRIC, isValueMetric,
@@ -152,8 +152,6 @@ function positionRequirementsFromPlans(plans) {
 // Discipline: detectors describe WHY the chain is impossible. Generic
 // "couldn't generate" failures stay in the existing fallback path; only
 // definitively impossible chains get specific messages here.
-
-const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
 
 function detectIncompatibleMoveKinds({ moveKinds }) {
   if (moveKinds.length === 0) {

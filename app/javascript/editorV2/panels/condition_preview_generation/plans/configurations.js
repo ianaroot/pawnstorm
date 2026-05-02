@@ -8,10 +8,9 @@ import {
   PRIOR_BOARD_COMPARISON_SOURCE
 } from 'editorV2/panels/condition_preview_generation/plans/comparison_requirements'
 import { shuffled } from '../shared/board_utils'
+import { SINGULAR_ACTORS } from '../shared/example_utils'
 
 const HARD_SET_SIZE_CAP = 4
-
-const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
 
 export function valueBoundsForDescriptor(descriptor) {
   if (!descriptor || descriptor.metric !== AGGREGATE_VALUE_METRIC) { return null }

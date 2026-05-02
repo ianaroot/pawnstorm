@@ -6,7 +6,7 @@ import { buildUnaryWorkItems, collectUnaryExamples, buildPositionWorkItems, coll
 import { mergeMoveKindExamples } from './enrichment/enrichment'
 import { collectForwardExamples } from './forward_generation/orchestrator'
 import { combinedPlanHasPbs } from './forward_generation/plan_classifier'
-import { chainHasActionableHints } from './forward_generation/hint_compiler'
+import { chainHasNonStructuralHints } from './forward_generation/hint_compiler'
 import {
   candidateIdentity, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
@@ -46,7 +46,7 @@ function effectiveVariants(combinedPlan) {
   return [{ type: 'involved' }, { type: 'separate' }]
 }
 
-function buildActiveCombinedPlans(combinedPlan) {
+function buildChainVariants(combinedPlan) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
   if (relationalPlans.length === 0) { return [combinedPlan] }
 
@@ -72,19 +72,19 @@ function buildActiveCombinedPlans(combinedPlan) {
   })
 }
 
-function collectSpecialMoveExamples({ activePlan, addUnique, castle, promotion, enPassant, deadline, random }) {
-  if (activePlan.moveKinds.includes(MOVE_KIND_CASTLE) && Date.now() <= deadline) {
-    collectCastleExamples({ combinedPlan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })
+function collectSpecialMoveExamples({ chainVariant, addUnique, castle, promotion, enPassant, deadline, random }) {
+  if (chainVariant.moveKinds.includes(MOVE_KIND_CASTLE) && Date.now() <= deadline) {
+    collectCastleExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
       .forEach(ex => addUnique(ex, castle))
   }
 
-  if (activePlan.moveKinds.includes(MOVE_KIND_PROMOTION) && Date.now() <= deadline) {
-    collectPromotionExamples({ combinedPlan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })
+  if (chainVariant.moveKinds.includes(MOVE_KIND_PROMOTION) && Date.now() <= deadline) {
+    collectPromotionExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
       .forEach(ex => addUnique(ex, promotion))
   }
 
-  if (activePlan.moveKinds.includes(MOVE_KIND_EN_PASSANT) && Date.now() <= deadline) {
-    collectEnPassantExamples({ combinedPlan: activePlan, random, maxExamples: MAX_CANDIDATE_POOL })
+  if (chainVariant.moveKinds.includes(MOVE_KIND_EN_PASSANT) && Date.now() <= deadline) {
+    collectEnPassantExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
       .forEach(ex => addUnique(ex, enPassant))
   }
 }
@@ -105,38 +105,38 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const unaryPlans = plans.filter(p => p.kind === 'unary')
   const positionPlans = plans.filter(p => p.kind === 'position')
 
-  const activePlans = buildActiveCombinedPlans(combinedPlan)
+  const chainVariants = buildChainVariants(combinedPlan)
 
   // ── Forward generation (PBS drivers + hint resolver) ────────────────────
   // Cap forward's contribution to FORWARD_POOL_SHARE so reverse-gen retains room
   // to surface its own variety (random board augmentation, enrichment-driven extras).
-  if (combinedPlanHasPbs(combinedPlan) || chainHasActionableHints(combinedPlan)) {
+  if (combinedPlanHasPbs(combinedPlan) || chainHasNonStructuralHints(combinedPlan)) {
     const forwardCap = Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_SHARE)
     collectForwardExamples({ combinedPlan, random, maxExamples: forwardCap })
       .forEach(ex => addUnique(ex, standardExamples))
   }
 
   // ── Relational seed-based standard collection ────────────────────────────
-  // Round-robin (activePlan, variant) tuples per attempt so no single tuple
-  // monopolizes the pool. activePlans expansion + variants both interleave.
+  // Round-robin (chainVariant, variant) tuples per attempt so no single tuple
+  // monopolizes the pool. chainVariants expansion + variants both interleave.
   if (relationalPlans.length > 0) {
     const relDeadline = Date.now() + perPlanMs * relationalPlans.length
     const variants = effectiveVariants(combinedPlan)
     const tuples = []
-    for (const activePlan of activePlans) {
+    for (const chainVariant of chainVariants) {
       for (const variant of variants) {
-        tuples.push({ activePlan, variant })
+        tuples.push({ chainVariant, variant })
       }
     }
 
     const maxRounds = MAX_SEEDS_PER_VARIANT
     roundLoop: for (let round = 0; round < maxRounds; round += 1) {
       if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > relDeadline) { break }
-      for (const { activePlan, variant } of tuples) {
+      for (const { chainVariant, variant } of tuples) {
         if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > relDeadline) { break roundLoop }
-        const seed = buildSeed(activePlan, MOVE_KIND_STANDARD, random)
+        const seed = buildSeed(chainVariant, MOVE_KIND_STANDARD, random)
         if (!seed) { continue }
-        collectVerifiedExamples({ combinedPlan: activePlan, seed, variant, random })
+        collectVerifiedExamples({ combinedPlan: chainVariant, seed, variant, random })
           .forEach(ex => addUnique(ex, standardExamples))
       }
     }
@@ -166,9 +166,9 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
 
   // ── Special move collection (across all active expanded plans) ───────────
   const specialDeadline = Date.now() + specialMoveMs
-  for (const activePlan of activePlans) {
+  for (const chainVariant of chainVariants) {
     if (Date.now() > specialDeadline) { break }
-    collectSpecialMoveExamples({ activePlan, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random })
+    collectSpecialMoveExamples({ chainVariant, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random })
   }
 
   return { standardExamples, castleExamples, promotionExamples, enPassantExamples }
