@@ -1,7 +1,7 @@
 class TournamentsController < ApplicationController
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
-  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility]
   before_action :authorize_public_tournament_access!, only: [:show, :pairing]
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
 
@@ -80,6 +80,27 @@ class TournamentsController < ApplicationController
       redirect_to tournament_show_path(@tournament), notice: 'Tournament started.'
     else
       redirect_to tournament_show_path(@tournament), alert: start_tournament.error_message
+    end
+  end
+
+  def eligibility
+    bot = current_user.bots.find_by(id: params[:bot_id])
+    return render json: { eligible: false, cost: 0, budget: nil, violations: ['Bot not found.'] }, status: :not_found unless bot
+
+    unless bot.compiled_program
+      return render json: { eligible: false, cost: 0, budget: nil, violations: ['Bot has not been compiled.'] }
+    end
+
+    result = BotEligibilityChecker.new(bot.compiled_program, @tournament.constraints).check
+    render json: result
+  end
+
+  def lookup
+    tournament = Tournament.status_open.find_by(invite_token: params[:token])
+    if tournament
+      render json: { id: tournament.id, name: tournament.name }
+    else
+      render json: { error: 'not_found' }, status: :not_found
     end
   end
 

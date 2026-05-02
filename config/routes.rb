@@ -41,8 +41,11 @@ Rails.application.routes.draw do
       post :pause
       post :resume
       get :eligible_bots
+      get :eligibility
     end
   end
+
+  get 'tournament_lookup', to: 'tournaments#lookup'
 
   resources :public_tournaments, only: [:show], controller: 'tournaments' do
     member do
