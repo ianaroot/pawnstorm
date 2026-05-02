@@ -116,9 +116,7 @@ class EditorActions {
       return
     }
 
-    const conditionLabels = chain.payloads.length >= 2
-      ? chain.payloads.map(p => formatConditionPreview(p).text)
-      : []
+    const conditionLabels = chain.payloads.map(p => formatConditionPreview(p).text)
 
     this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
     clearTimeout(this._chainPreviewTimer)
