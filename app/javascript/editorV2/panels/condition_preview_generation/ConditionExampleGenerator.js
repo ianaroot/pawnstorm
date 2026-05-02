@@ -5,8 +5,6 @@ import { collectCastleExamples, collectPromotionExamples, collectEnPassantExampl
 import { buildUnaryWorkItems, collectUnaryExamples, buildPositionWorkItems, collectPositionExamples } from './collection/unary_position_collection'
 import { mergeMoveKindExamples } from './enrichment/enrichment'
 import { collectForwardExamples } from './forward_generation/orchestrator'
-import { combinedPlanHasPbs } from './forward_generation/plan_classifier'
-import { chainHasNonStructuralHints } from './forward_generation/hint_compiler'
 import {
   candidateIdentity, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
@@ -110,7 +108,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // ── Forward generation (PBS drivers + hint resolver) ────────────────────
   // Cap forward's contribution to FORWARD_POOL_SHARE so reverse-gen retains room
   // to surface its own variety (random board augmentation, enrichment-driven extras).
-  if (combinedPlanHasPbs(combinedPlan) || chainHasNonStructuralHints(combinedPlan)) {
+  if (plans.length > 0) {
     const forwardCap = Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_SHARE)
     collectForwardExamples({ combinedPlan, random, maxExamples: forwardCap })
       .forEach(ex => addUnique(ex, standardExamples))

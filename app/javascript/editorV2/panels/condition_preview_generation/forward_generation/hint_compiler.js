@@ -40,9 +40,13 @@ import {
 import { SINGULAR_ACTORS, speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 export const HINT_TYPES = Object.freeze({
-  // Structural fallback — at least one qualifying pair exists. Emitted for
-  // relational plans without descriptors (and as a transitional fallback).
-  RELATION_HOLDS: 'relation_holds',
+  // Descriptor-less relational fallback — at least one qualifying pair exists.
+  // Emitted for relational plans with no comparison descriptors. Predicate is
+  // move-object-aware: when moved_piece is one of the relation's actors and
+  // its position has been committed by another strategy, the qualifying pair
+  // must involve that committed position. Otherwise any pair on the board
+  // passes; the post-evaluator is the final word on correctness.
+  BARE_RELATION: 'bare_relation',
 
   // Granular relational hints — descriptor-driven.
   RELATION_COUNT: 'relation_count',
@@ -163,9 +167,26 @@ export function qualifyingPairs(pieces, board, hint) {
 // ===== Predicate functions (one per hint type) =====
 // Each returns true iff the property the hint claims about the board holds.
 
-function relationHoldsSatisfies(pieces, hint, context) {
+function bareRelationSatisfies(pieces, hint, context) {
   const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
-  return qualifyingPairs(pieces, board, hint.shape).length > 0
+  const pairs = qualifyingPairs(pieces, board, hint.shape)
+  if (pairs.length === 0) { return false }
+
+  // When moved_piece is one of the relation's actors and another strategy
+  // committed its position, require the qualifying pair to involve that
+  // position. Otherwise fall back to "any pair"; post-evaluator catches the
+  // rest.
+  const movedPos = context?.movedPiece?.position_set?.size === 1
+    ? [...context.movedPiece.position_set][0]
+    : null
+  if (movedPos === null) { return true }
+  if (hint.subject?.actor === 'moved_piece') {
+    return pairs.some(p => p.subjectPosition === movedPos)
+  }
+  if (hint.target?.actor === 'moved_piece') {
+    return pairs.some(p => p.targetPosition === movedPos)
+  }
+  return true
 }
 
 function relationCountSatisfies(pieces, hint, context) {
@@ -379,7 +400,7 @@ function relationPbsAggregateValueSatisfies(pieces, hint, context) {
 }
 
 const PREDICATES = Object.freeze({
-  [HINT_TYPES.RELATION_HOLDS]:                  relationHoldsSatisfies,
+  [HINT_TYPES.BARE_RELATION]:                   bareRelationSatisfies,
   [HINT_TYPES.RELATION_COUNT]:                  relationCountSatisfies,
   [HINT_TYPES.RELATION_AGGREGATE_VALUE]:        relationAggregateValueSatisfies,
   [HINT_TYPES.RELATION_INDIVIDUAL_VALUE]:       relationIndividualValueSatisfies,
@@ -580,16 +601,16 @@ function compileRelational(plan, random) {
       }]
     }
     // Other same_piece pairs aren't supported in forward gen — fall through
-    // to RELATION_HOLDS so the chain isn't gated off entirely.
+    // to BARE_RELATION so the chain isn't gated off entirely.
   }
 
   const descriptors = plan.comparisonDescriptors ?? []
   if (descriptors.length === 0) {
-    // No descriptor — structural relation only. Carry plan shape so the
+    // No descriptor — bare relational structure only. Carry plan shape so the
     // predicate can verify, plus the legacy `plan` field for backwards-compat
     // with current resolver consumers (which expect `hint.plan`).
     return [{
-      type: HINT_TYPES.RELATION_HOLDS,
+      type: HINT_TYPES.BARE_RELATION,
       operator: plan.operator,
       subject: relationalSideShape(plan, 'subject'),
       target: relationalSideShape(plan, 'target'),
@@ -606,10 +627,10 @@ function compileRelational(plan, random) {
     const emitted = compileRelationalDescriptor(plan, descriptor, random)
     for (const hint of emitted) { hints.push(hint) }
   }
-  // If no descriptor produced a recognized hint, fall back to RELATION_HOLDS.
+  // If no descriptor produced a recognized hint, fall back to BARE_RELATION.
   if (hints.length === 0) {
     hints.push({
-      type: HINT_TYPES.RELATION_HOLDS,
+      type: HINT_TYPES.BARE_RELATION,
       operator: plan.operator,
       subject: relationalSideShape(plan, 'subject'),
       target: relationalSideShape(plan, 'target'),
@@ -765,15 +786,3 @@ export function compileHints(combinedPlan, random) {
   return hints
 }
 
-// Hint types whose presence does NOT cause forward generation to fire today.
-// Either structural-only (RELATION_HOLDS) or strategy-not-yet-implemented (the
-// granular ACTOR_*/RELATION_* set arrived in 8c step 1; strategies arrive in
-// step 2). As each strategy lands, remove its type from this set.
-const STRUCTURAL_HINTS = new Set([
-  HINT_TYPES.RELATION_HOLDS
-  // All other granular types now actionable (milestones 2-4).
-])
-
-export function chainHasNonStructuralHints(combinedPlan) {
-  return compileHints(combinedPlan).some(h => !STRUCTURAL_HINTS.has(h.type))
-}

@@ -1,3 +1,4 @@
+import { materialValue } from 'gameplay/board_query_utils'
 import { candidateIdentity } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 
 export function subjectSpeciesSignature(example) {
@@ -25,6 +26,27 @@ export function varietySignature(example) {
 
 export function movedPieceSignature(example) {
   return example.afterBoard.pieceTypeAt(example.moveObject.endPosition)
+}
+
+// Sum of material values across a side's pieces. Bucketing by the
+// (subject value sum, target value sum) pair surfaces examples that
+// satisfy the same value condition via different species combinations
+// (e.g. Q ≥ R, R ≥ B, Q ≥ N all bucket separately).
+function sideValueTotal(positions, board) {
+  if (!positions || positions.length === 0) { return 0 }
+  let total = 0
+  for (const position of positions) {
+    const species = board.pieceTypeAt(position)
+    if (!species) { continue }
+    total += materialValue(species)
+  }
+  return total
+}
+
+export function valueComboSignature(example) {
+  const subjectTotal = sideValueTotal(example.result?.subjectPositions, example.afterBoard)
+  const targetTotal = sideValueTotal(example.result?.targetPositions, example.afterBoard)
+  return `${subjectTotal}=>${targetTotal}`
 }
 
 export function bucketKeyForExample(example) {
@@ -86,6 +108,7 @@ export function selectDiverseExamples(candidates, maxExamples) {
   const variantBuckets = new Map()
   const movedPieceBuckets = new Map()
   const geometryBuckets = new Map()
+  const valueComboBuckets = new Map()
 
   candidates.forEach(candidate => {
     const subjectKey = subjectSpeciesSignature(candidate)
@@ -94,6 +117,7 @@ export function selectDiverseExamples(candidates, maxExamples) {
     const variantKey = candidate.variantType
     const movedKey = movedPieceSignature(candidate)
     const geometryKey = candidate.geometryKey ?? ''
+    const valueComboKey = valueComboSignature(candidate)
 
     if (!subjectBuckets.has(subjectKey)) { subjectBuckets.set(subjectKey, []) }
     if (!targetBuckets.has(targetKey)) { targetBuckets.set(targetKey, []) }
@@ -101,6 +125,7 @@ export function selectDiverseExamples(candidates, maxExamples) {
     if (!variantBuckets.has(variantKey)) { variantBuckets.set(variantKey, []) }
     if (!movedPieceBuckets.has(movedKey)) { movedPieceBuckets.set(movedKey, []) }
     if (!geometryBuckets.has(geometryKey)) { geometryBuckets.set(geometryKey, []) }
+    if (!valueComboBuckets.has(valueComboKey)) { valueComboBuckets.set(valueComboKey, []) }
 
     subjectBuckets.get(subjectKey).push(candidate)
     targetBuckets.get(targetKey).push(candidate)
@@ -108,12 +133,14 @@ export function selectDiverseExamples(candidates, maxExamples) {
     variantBuckets.get(variantKey).push(candidate)
     movedPieceBuckets.get(movedKey).push(candidate)
     geometryBuckets.get(geometryKey).push(candidate)
+    valueComboBuckets.get(valueComboKey).push(candidate)
   })
 
   roundRobinAppend({ selected, candidatesByKey: movedPieceBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: subjectBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: targetBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: pairBuckets, maxExamples, seenIdentities })
+  roundRobinAppend({ selected, candidatesByKey: valueComboBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: variantBuckets, maxExamples, seenIdentities })
   roundRobinAppend({ selected, candidatesByKey: geometryBuckets, maxExamples, seenIdentities })
 

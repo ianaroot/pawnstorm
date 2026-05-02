@@ -62,9 +62,12 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
 
         priorPieces.clear()
         for (const [p, piece] of priorTrial.entries()) { priorPieces.set(p, piece) }
-        // Narrow ctx.movedPiece.species_set to the committed mover species.
+        // Narrow ctx.movedPiece species_set + position_set to the committed
+        // mover species and current-board position.
         ctx.movedPiece.species_set.clear()
         ctx.movedPiece.species_set.add(species)
+        ctx.movedPiece.position_set.clear()
+        ctx.movedPiece.position_set.add(currentPos)
         return currentTrial
       }
     }

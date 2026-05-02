@@ -75,10 +75,3 @@ export function classifyPlan(plan) {
   return classification
 }
 
-export function planHasPbs(plan) {
-  return classifyPlan(plan).pbsDirection !== null
-}
-
-export function combinedPlanHasPbs(combinedPlan) {
-  return combinedPlan.plans.some(planHasPbs)
-}

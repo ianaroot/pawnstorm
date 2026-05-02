@@ -50,6 +50,7 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
     ? hintPool.filter(s => ctx[varKey].species_set.has(s))
     : hintPool
   let lastSpeciesUsed = null
+  let lastPosUsed = null
 
   // Inventory awareness for group actors: cap value additions at the
   // converged value_range.max so we don't overshoot sibling constraints.
@@ -65,6 +66,8 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
       if (varKey && ctx[varKey] && lastSpeciesUsed !== null) {
         ctx[varKey].species_set.clear()
         ctx[varKey].species_set.add(lastSpeciesUsed)
+        ctx[varKey].position_set.clear()
+        ctx[varKey].position_set.add(lastPosUsed)
       }
       return result
     }
@@ -87,7 +90,7 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
     for (const pos of shuffled([...ALL_POSITIONS], ctx.random)) {
       if (result.has(pos)) { continue }
       const next = placePiece(result, pos, pieceCode(hint.team, species))
-      if (next) { result = next; lastSpeciesUsed = species; placed = true; break }
+      if (next) { result = next; lastSpeciesUsed = species; lastPosUsed = pos; placed = true; break }
     }
     if (!placed) { return null }
   }

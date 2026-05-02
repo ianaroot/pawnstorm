@@ -57,7 +57,7 @@ function addQualifyingSubjectWithSpecies(pieces, hint, ctx, anchorTargetPosition
         board, operator: hint.operator, targetPosition: targetPos,
         subjectTeam: hint.subject.team
       })
-      if (subjects.includes(subjectPos)) { return next }
+      if (subjects.includes(subjectPos)) { return { pieces: next, position: subjectPos } }
     }
   }
   return null
@@ -76,7 +76,7 @@ function addQualifyingTargetWithSpecies(pieces, hint, ctx, anchorSubjectPosition
         board, operator: hint.operator, targetPosition: targetPos,
         subjectTeam: hint.subject.team
       })
-      if (subjects.includes(subjectPos)) { return next }
+      if (subjects.includes(subjectPos)) { return { pieces: next, position: targetPos } }
     }
   }
   return null
@@ -111,15 +111,18 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
     if (anchorPositions.length === 0) { return null }
 
     const species = pickRandom(shuffled(fitting, ctx.random), ctx.random)
-    const next = hint.side === 'subject'
+    const placed = hint.side === 'subject'
       ? addQualifyingSubjectWithSpecies(result, hint, ctx, anchorPositions, species)
       : addQualifyingTargetWithSpecies(result, hint, ctx, anchorPositions, species)
-    if (next === null) { return null }
-    result = next
-    // When the side is a singular actor, narrow ctx to the committed species.
+    if (placed === null) { return null }
+    result = placed.pieces
+    // When the side is a singular actor, narrow ctx species_set + position_set
+    // to the committed values.
     if (sideVarKey && ctx[sideVarKey]) {
       ctx[sideVarKey].species_set.clear()
       ctx[sideVarKey].species_set.add(species)
+      ctx[sideVarKey].position_set.clear()
+      ctx[sideVarKey].position_set.add(placed.position)
     }
   }
   return null

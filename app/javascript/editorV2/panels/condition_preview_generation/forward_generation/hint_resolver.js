@@ -35,7 +35,7 @@ import {
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
-import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY } from './chain_constraints'
+import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY, ALL_SPECIES, INVENTORY_FILTERS } from './chain_constraints'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -232,10 +232,11 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
 // to satisfy what we have no strategy for, and the post-evaluator catches any
 // resulting false positives.
 //
-// As strategies for new hint types land, add them here AND remove the type
-// from STRUCTURAL_HINTS in hint_compiler.js.
+// An empty strategy array (e.g. BARE_RELATION) means: the seed handles
+// satisfying it; no strategy needs to commit additional pieces. The predicate
+// still runs in verifyHints.
 const STRATEGIES = Object.freeze({
-  [HINT_TYPES.RELATION_HOLDS]: [],
+  [HINT_TYPES.BARE_RELATION]: [],
   [HINT_TYPES.ACTOR_MOBILITY]: [
     (pieces, hint, ctx) => applyMobilityReduce(pieces, hint, ctx)
   ],
@@ -301,37 +302,56 @@ function resolvePositionConstraints(pieces, ctx) {
     const resolvedRegion = resolveRegion(region, ctx, pieces)
     const occupied = new Set(pieces.keys())
     const free = [...resolvedRegion].filter(p => !occupied.has(p))
-    if (free.length === 0) { continue }
-    const minPlacements = Math.max(1, constraint.count_range.min)
+    const minPlacements = constraint.count_range.min
     let placedCount = 0
     for (const pos of shuffled(free, ctx.random)) {
       if (placedCount >= minPlacements) { break }
-      const species = pickSpeciesForSubset(constraint.subset, ctx)
+      const species = pickSpeciesForSubset(constraint.subset, ctx, pieces)
       if (!species) { continue }
       const next = placePiece(pieces, pos, pieceCode(constraint.subset.team, species))
       if (!next) { continue }
       pieces = next
       placedCount += 1
     }
+    // Fail the attempt if we couldn't satisfy the constraint's lower bound.
+    // The outer loop retries with fresh RNG, which may pick a different
+    // committed position or species mix that admits more placements.
+    if (placedCount < minPlacements) { return null }
   }
   return pieces
 }
 
-function pickSpeciesForSubset(subset, ctx) {
+// Pick a species for a positionConstraint subset. Honors filter + filterMode
+// (so 'pawn' with mode='exclude' yields non-pawn candidates). Skips species
+// that would push any inventory cell over its count_range.max.
+function pickSpeciesForSubset(subset, ctx, pieces) {
   const filter = subset.filter || 'any'
-  const filterToSpecies = {
-    any:    [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN],
-    king:   [Board.KING],
-    queen:  [Board.QUEEN],
-    rook:   [Board.ROOK],
-    bishop: [Board.BISHOP],
-    knight: [Board.NIGHT],
-    pawn:   [Board.PAWN],
-    major:  [Board.QUEEN, Board.ROOK],
-    minor:  [Board.BISHOP, Board.NIGHT]
-  }
-  const candidates = filterToSpecies[filter] || filterToSpecies.any
+  const filterMode = subset.filterMode || null
+  const team = subset.team
+  const frame = subset.frame || 'current'
+
+  const candidates = ALL_SPECIES.filter(species => {
+    if (!speciesMatchesFilter(species, filter, filterMode)) { return false }
+    if (!ctx.inventory) { return true }
+    for (const invFilter of INVENTORY_FILTERS) {
+      if (!speciesMatchesFilter(species, invFilter, null)) { continue }
+      const cell = ctx.inventory[team]?.[frame]?.[invFilter]
+      if (!cell) { continue }
+      const current = countTeamFilter(pieces, team, invFilter)
+      if (current >= cell.count_range.max) { return false }
+    }
+    return true
+  })
   return pickRandom(candidates, ctx.random)
+}
+
+function countTeamFilter(pieces, team, filter) {
+  let count = 0
+  for (const piece of pieces.values()) {
+    if (piece.charAt(0) !== team) { continue }
+    if (speciesMatchesFilter(piece.slice(1), filter, null)) { count += 1 }
+  }
+  return count
 }
 
 // Build minimum seed from relational plan structure: place at least one subject
@@ -512,7 +532,6 @@ function reachOf(operator, board, attackerPosition) {
 
 export function resolveViaHints({ combinedPlan, random }) {
   const hints = compileHints(combinedPlan, random)
-  if (!hints.some(h => h.type !== HINT_TYPES.RELATION_HOLDS)) { return null }
 
   const movingTeam = combinedPlan.movingTeam
 

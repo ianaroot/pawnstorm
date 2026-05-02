@@ -413,9 +413,18 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
     relationalPositionsList
   )
 
+  // King is excluded when the seed already places a moving-team king. The
+  // 'separate' branch picks NEW squares for the moved piece (extraSquares are
+  // unoccupied), so a KING option here would create a second king of the
+  // moving team. The 'involved' branch reuses existing piece squares so this
+  // doesn't apply there.
+  const seedHasMovingKing = teamHasKing(seed.pieces, combinedPlan.movingTeam)
+  const baseSpeciesPool = seedHasMovingKing
+    ? [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
+    : [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING]
   const speciesPool = movedPieceSpeciesConstraint
     ? [...movedPieceSpeciesConstraint]
-    : [Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING]
+    : baseSpeciesPool
 
   const options = []
   for (const species of speciesPool) {

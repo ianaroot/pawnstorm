@@ -81,10 +81,12 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
         for (const [p, piece] of placement.priorPieces.entries()) {
           priorPieces.set(p, piece)
         }
-        // Narrow ctx.movedPiece.species_set to the committed mover species so
-        // sibling strategies see the commit.
+        // Narrow ctx.movedPiece species_set + position_set so sibling
+        // strategies see the commit.
         ctx.movedPiece.species_set.clear()
         ctx.movedPiece.species_set.add(movedSpecies)
+        ctx.movedPiece.position_set.clear()
+        ctx.movedPiece.position_set.add(currentPos)
         return placement.currentPieces
       }
     }

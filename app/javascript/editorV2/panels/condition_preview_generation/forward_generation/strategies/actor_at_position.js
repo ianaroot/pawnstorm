@@ -5,7 +5,7 @@
 // relocates it (delete + place on a qualifying square). If no matching piece
 // exists yet, places one on a qualifying square.
 //
-// Note: relocation can break sibling hints in conjunction (e.g. RELATION_HOLDS
+// Note: relocation can break sibling hints in conjunction (e.g. BARE_RELATION
 // may have anchored on the moved piece). The verify pass catches that and the
 // outer attempt loop retries with a fresh RNG sequence.
 
@@ -55,6 +55,8 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
           if (varKey && ctx[varKey]) {
             ctx[varKey].species_set.clear()
             ctx[varKey].species_set.add(species)
+            ctx[varKey].position_set.clear()
+            ctx[varKey].position_set.add(pos)
           }
           return next
         }
@@ -68,6 +70,7 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
 
   // Relocate misplaced pieces one at a time.
   let result = pieces
+  let lastPlacedPos = null
   for (const { pos, piece } of misplaced) {
     const cloned = clonePiecesMap(result)
     cloned.delete(pos)
@@ -75,9 +78,13 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
     for (const newPos of shuffled([...qualifying], random)) {
       if (cloned.has(newPos)) { continue }
       const next = placePiece(cloned, newPos, piece)
-      if (next) { result = next; placed = true; break }
+      if (next) { result = next; lastPlacedPos = newPos; placed = true; break }
     }
     if (!placed) { return null }
+  }
+  if (varKey && ctx[varKey] && lastPlacedPos !== null) {
+    ctx[varKey].position_set.clear()
+    ctx[varKey].position_set.add(lastPlacedPos)
   }
   return result
 }

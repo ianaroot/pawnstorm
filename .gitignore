@@ -42,3 +42,5 @@
 
 
 .DS_Store
+# Added by code-review-graph
+.code-review-graph/

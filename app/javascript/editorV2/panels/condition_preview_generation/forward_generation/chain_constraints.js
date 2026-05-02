@@ -27,7 +27,7 @@ import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces } from 'edit
 import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview_generation/collection/unary_position_collection'
 
-const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
+export const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
 
 // Map actor name (as used in plans) to the variable key used in ctx.
@@ -119,7 +119,7 @@ function initSingularActors(movingTeam) {
 //   any → minor → bishop | knight
 //   any → pawn
 
-const INVENTORY_FILTERS = Object.freeze(['any', 'king', 'queen', 'rook', 'bishop', 'knight', 'pawn', 'major', 'minor'])
+export const INVENTORY_FILTERS = Object.freeze(['any', 'king', 'queen', 'rook', 'bishop', 'knight', 'pawn', 'major', 'minor'])
 
 // Subset → parent map. Used for narrowing propagation:
 //   subset narrows ⇒ parent's lower bound rises
@@ -662,12 +662,13 @@ function contributeRelationalPositionConstraint(plan, vars) {
   const singularActor = subjectIsSingular ? plan.subject : plan.target
   const groupTeam = groupSide === 'subject' ? plan.subjectTeam : plan.targetTeam
   const groupFilter = groupSide === 'subject' ? plan.subjectFilter : plan.targetFilter
+  const groupFilterMode = groupSide === 'subject' ? plan.subjectFilterMode : plan.targetFilterMode
 
   // Existential semantics: at least 1 piece on the group side related to
   // the singular actor (unless plan demands count=0, which is handled by
   // zero-count-skip path elsewhere).
   vars.positionConstraints.push({
-    subset: { team: groupTeam, filter: groupFilter || 'any' },
+    subset: { team: groupTeam, filter: groupFilter || 'any', filterMode: groupFilterMode || null },
     region: { kind: 'related', actor: singularActor, operator: plan.operator },
     count_range: { min: 1, max: Infinity },
     plan

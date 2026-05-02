@@ -167,12 +167,18 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
         priorPieces.clear()
         for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
 
-        // Narrow ctx species sets to the committed singletons. Enemy_*_piece
-        // species commits live in ctx.recentMoveContext.
+        // Narrow ctx species + position sets to the committed singletons.
+        // Both pieces commit to capturedPos: the captured piece sat there on
+        // the prior board, and the mover lands there after the capture.
+        // Enemy_*_piece species commits live in ctx.recentMoveContext.
         ctx.movedPiece.species_set.clear()
         ctx.movedPiece.species_set.add(trialMover)
+        ctx.movedPiece.position_set.clear()
+        ctx.movedPiece.position_set.add(capturedPos)
         ctx.capturedPiece.species_set.clear()
         ctx.capturedPiece.species_set.add(capturedSpecies)
+        ctx.capturedPiece.position_set.clear()
+        ctx.capturedPiece.position_set.add(capturedPos)
 
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = buildRecentMoveContext({
@@ -221,10 +227,13 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
         priorPieces.clear()
         for (const [p, piece] of trialPrior.entries()) { priorPieces.set(p, piece) }
 
-        // Narrow ctx.movedPiece to the committed mover. No capture happened,
-        // so ctx.capturedPiece is unchanged (still includes null).
+        // Narrow ctx.movedPiece to the committed mover and end position. No
+        // capture happened, so ctx.capturedPiece is unchanged (still
+        // includes null).
         ctx.movedPiece.species_set.clear()
         ctx.movedPiece.species_set.add(trialMover)
+        ctx.movedPiece.position_set.clear()
+        ctx.movedPiece.position_set.add(dest)
 
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
           ctx.recentMoveContext = buildRecentMoveContext({

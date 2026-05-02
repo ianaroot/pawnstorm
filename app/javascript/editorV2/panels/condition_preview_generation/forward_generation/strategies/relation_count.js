@@ -31,11 +31,13 @@ function effectiveSpeciesPool(side, hintSide, ctx) {
     : hintPool
 }
 
-function narrowSingularActorIfApplicable(side, ctx, species) {
+function narrowSingularActorIfApplicable(side, ctx, species, position) {
   const varKey = ACTOR_TO_VAR_KEY[side.actor]
   if (varKey && ctx[varKey]) {
     ctx[varKey].species_set.clear()
     ctx[varKey].species_set.add(species)
+    ctx[varKey].position_set.clear()
+    ctx[varKey].position_set.add(position)
   }
 }
 
@@ -81,7 +83,7 @@ function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
           subjectTeam: hint.subject.team
         })
         if (subjects.includes(subjectPos)) {
-          narrowSingularActorIfApplicable(hint.subject, ctx, subjectSpecies)
+          narrowSingularActorIfApplicable(hint.subject, ctx, subjectSpecies, subjectPos)
           return next
         }
       }
@@ -110,7 +112,7 @@ function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
           subjectTeam: hint.subject.team
         })
         if (subjects.includes(subjectPos)) {
-          narrowSingularActorIfApplicable(hint.target, ctx, targetSpecies)
+          narrowSingularActorIfApplicable(hint.target, ctx, targetSpecies, targetPos)
           return next
         }
       }

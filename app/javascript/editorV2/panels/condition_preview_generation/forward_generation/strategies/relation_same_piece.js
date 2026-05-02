@@ -93,12 +93,18 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
           priorPieces.clear()
           for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
 
-          // Narrow ctx species sets to the committed singletons so sibling
-          // strategies see the commit.
+          // Narrow ctx species + position sets to the committed singletons.
+          // Both the captured piece (prior-board position) and the moving
+          // piece (lands at capturedPos after the capture) commit to the
+          // same square.
           ctx.capturedPiece.species_set.clear()
           ctx.capturedPiece.species_set.add(capturedSpecies)
+          ctx.capturedPiece.position_set.clear()
+          ctx.capturedPiece.position_set.add(capturedPos)
           ctx.movedPiece.species_set.clear()
           ctx.movedPiece.species_set.add(moverSpecies)
+          ctx.movedPiece.position_set.clear()
+          ctx.movedPiece.position_set.add(capturedPos)
 
           // The captured piece IS the enemy's prior moved_piece — declare
           // that via recentMoveContext for same_piece evaluation.
