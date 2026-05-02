@@ -125,7 +125,9 @@ class EditorActions {
   }
 
   showSelectionPreviewPanel(preview) {
-    this.clickHandler?.editorPanel?.classList.remove('hidden')
+    if (this.clickHandler?.getEditingNodeId()) {
+      this.clickHandler?.editorPanel?.classList.remove('hidden')
+    }
     this.boardStatePreview?.showSelectionPreview(preview)
   }
 
