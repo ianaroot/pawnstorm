@@ -22,7 +22,7 @@ const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 // Aggressive bounds. The orchestrator runs the resolver up to ~200 times, so a
 // failing strategy still gets many fresh-RNG retries — we don't need to
 // exhaust every combination on a single call.
-const OUTER_ATTEMPTS = 3
+const MAX_OUTER_ATTEMPTS = 3
 const CURRENT_POS_CANDIDATES = 4
 const PRIOR_POS_CANDIDATES = 4
 const ATTACKER_PLACEMENT_ATTEMPTS = 15
@@ -65,7 +65,7 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
   // The board state at strategy time has seed pieces + kings. We'll layer the
   // moved_piece + attackers on top of it, mutating both the current `pieces`
   // map and ctx.priorPieces.
-  for (let attempt = 0; attempt < OUTER_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_OUTER_ATTEMPTS; attempt += 1) {
     const movedSpecies = pickRandom(shuffled(movedSpeciesPool, random), random)
     if (!movedSpecies) { continue }
 

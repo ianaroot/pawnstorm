@@ -173,6 +173,36 @@ export function legalPriorTurnState(priorBoard, moveObject) {
   return !Rules.checkQuery({ board: priorBoard, teamString: opposingTeam })
 }
 
+// Build a recentMoveContext describing a move that already happened. Used by
+// strategies and work-item builders that need to declare a prior turn's
+// enemy_moved_piece / enemy_captured_piece for chain evaluation.
+//
+// `team` is the team whose recent move this represents (typically the chain's
+// enemy). `species` is what they moved. `endPosition` is where it landed —
+// random if not provided. `capturedSpecies` is what they captured (null = no
+// capture); when present, capturedPiecePosition defaults to endPosition and
+// capturedPieceTeam defaults to the opposing team.
+export function buildRecentMoveContext({ team, species = Board.PAWN, endPosition = null, capturedSpecies = null, random }) {
+  const finalEnd = endPosition ?? Math.floor(random() * 64)
+  const candidates = shuffled(
+    originCandidatesForSpecies(finalEnd, species).filter(p => p !== finalEnd),
+    random
+  )
+  const startPosition = candidates[0] ?? finalEnd
+  const isCapture = capturedSpecies !== null && capturedSpecies !== undefined
+  return {
+    moveObject: { startPosition, endPosition: finalEnd },
+    movingTeam: team,
+    movedPieceStartPosition: startPosition,
+    movedPieceEndPosition: finalEnd,
+    movedPieceSpeciesBeforeMove: species,
+    movedPieceSpeciesAfterMove: species,
+    capturedPiecePosition: isCapture ? finalEnd : null,
+    capturedPieceTeam: isCapture ? Board.opposingTeam(team) : null,
+    capturedPieceSpecies: isCapture ? capturedSpecies : null
+  }
+}
+
 export function moveKindForMoveObject(moveObject) {
   if (/^O-O/.test(moveObject.pieceNotation || '')) { return MOVE_KIND_CASTLE }
   if (moveObject.promotionPiece) { return MOVE_KIND_PROMOTION }

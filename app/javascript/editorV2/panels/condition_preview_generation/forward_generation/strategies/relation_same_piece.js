@@ -18,12 +18,13 @@ import {
   pieceCode, clonePiecesMap
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
+import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
-const SPECIES_ATTEMPTS = 5
-const POSITION_CANDIDATES = 8
-const ORIGIN_CANDIDATES = 12
+const MAX_SPECIES_ATTEMPTS = 5
+const MAX_POSITION_CANDIDATES = 8
+const MAX_ORIGIN_CANDIDATES = 12
 
 const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
 const MOVER_SPECIES_POOL = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN, Board.KING])
@@ -53,13 +54,13 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
   const { random, movingTeam, priorPieces } = ctx
   const enemyTeam = Board.opposingTeam(movingTeam)
 
-  for (let s = 0; s < SPECIES_ATTEMPTS; s += 1) {
+  for (let s = 0; s < MAX_SPECIES_ATTEMPTS; s += 1) {
     const capturedSpecies = pickRandom(shuffled([...CAPTURABLE_SPECIES], random), random)
     if (!capturedSpecies) { continue }
 
     const candidatePositions = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
-    ).slice(0, POSITION_CANDIDATES)
+    ).slice(0, MAX_POSITION_CANDIDATES)
 
     for (const capturedPos of candidatePositions) {
       if (capturedSpecies === Board.PAWN && pawnOnStartingRank(enemyTeam, capturedPos)) { continue }
@@ -71,7 +72,7 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
         const originCandidates = shuffled(
           ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
           random
-        ).slice(0, ORIGIN_CANDIDATES)
+        ).slice(0, MAX_ORIGIN_CANDIDATES)
 
         for (const origin of originCandidates) {
           const trial = placePiece(priorWithCaptured, origin, pieceCode(movingTeam, moverSpecies))
@@ -94,8 +95,10 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
           priorPieces.clear()
           for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
 
-          ctx.recentMoveContext = synthesizeRecentMoveContext({
-            capturedPos, capturedSpecies, enemyTeam, random
+          // The captured piece IS the enemy's prior moved_piece — declare
+          // that via recentMoveContext for same_piece evaluation.
+          ctx.recentMoveContext = buildRecentMoveContext({
+            team: enemyTeam, species: capturedSpecies, endPosition: capturedPos, random
           })
 
           return placedAfter
@@ -104,23 +107,4 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
     }
   }
   return null
-}
-
-// Synthesize a recentMoveContext that declares the captured piece as the
-// enemy's last-turn moved_piece. The pre-prior origin is plausible-but-not-
-// engineered (per user's note: minor inconsistencies are tolerable).
-function synthesizeRecentMoveContext({ capturedPos, capturedSpecies, enemyTeam, random }) {
-  const candidates = shuffled(ALL_POSITIONS.filter(p => p !== capturedPos), random)
-  const movedPieceStartPosition = candidates[0] ?? capturedPos
-  return {
-    moveObject: { startPosition: movedPieceStartPosition, endPosition: capturedPos },
-    movingTeam: enemyTeam,
-    movedPieceStartPosition,
-    movedPieceEndPosition: capturedPos,
-    movedPieceSpeciesBeforeMove: capturedSpecies,
-    movedPieceSpeciesAfterMove: capturedSpecies,
-    capturedPiecePosition: null,
-    capturedPieceTeam: null,
-    capturedPieceSpecies: null
-  }
 }

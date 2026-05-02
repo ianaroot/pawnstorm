@@ -14,7 +14,7 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
-const OUTER_ATTEMPTS = 3
+const MAX_OUTER_ATTEMPTS = 3
 const CURRENT_POS_CANDIDATES = 4
 const PRIOR_POS_CANDIDATES = 4
 const ATTACKER_PLACEMENT_ATTEMPTS = 20
@@ -59,7 +59,7 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
   const subjectTeam = hint.subject.team
   if (movedSpeciesPool.length === 0 || subjectSpeciesPool.length === 0) { return null }
 
-  for (let attempt = 0; attempt < OUTER_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_OUTER_ATTEMPTS; attempt += 1) {
     const movedSpecies = pickRandom(shuffled(movedSpeciesPool, random), random)
     if (!movedSpecies) { continue }
 

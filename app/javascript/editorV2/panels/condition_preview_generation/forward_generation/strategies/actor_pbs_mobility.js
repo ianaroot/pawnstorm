@@ -14,8 +14,8 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import { piecesIntoBoard } from '../hint_compiler'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
-const SPECIES_ATTEMPTS = 4
-const POSITION_CANDIDATES = 12
+const MAX_SPECIES_ATTEMPTS = 4
+const MAX_POSITION_CANDIDATES = 12
 
 function shuffled(values, random) {
   const copy = [...values]
@@ -42,13 +42,13 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
   const speciesPool = hint.speciesPool ?? []
   if (speciesPool.length === 0) { return null }
 
-  for (let s = 0; s < SPECIES_ATTEMPTS; s += 1) {
+  for (let s = 0; s < MAX_SPECIES_ATTEMPTS; s += 1) {
     const species = pickRandom(shuffled(speciesPool, random), random)
     if (!species) { continue }
 
     const currentCandidates = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
-    ).slice(0, POSITION_CANDIDATES)
+    ).slice(0, MAX_POSITION_CANDIDATES)
 
     for (const currentPos of currentCandidates) {
       const currentTrial = placePiece(pieces, currentPos, pieceCode(hint.team, species))
@@ -57,7 +57,7 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
 
       const priorCandidates = shuffled(
         ALL_POSITIONS.filter(p => p !== currentPos && !priorPieces.has(p)), random
-      ).slice(0, POSITION_CANDIDATES)
+      ).slice(0, MAX_POSITION_CANDIDATES)
 
       for (const priorPos of priorCandidates) {
         const priorTrial = placePiece(priorPieces, priorPos, pieceCode(hint.team, species))

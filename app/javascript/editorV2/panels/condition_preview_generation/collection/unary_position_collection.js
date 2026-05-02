@@ -3,7 +3,7 @@ import Board from 'gameplay/board'
 import { relativeRank, relativeToAbsolutePosition, materialValue } from 'gameplay/board_query_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview_generation/shared/geometry_utils'
 import {
-  candidateSpecies, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD
+  candidateSpecies, soundForMove, moveKindForMoveObject, MOVE_KIND_STANDARD, buildRecentMoveContext
 } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import {
   clonePiecesMap, squareIsOccupied, shuffled,
@@ -15,9 +15,9 @@ const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 const EXACT_NUMBER_TARGET = 'exact_number'
 const PRIOR_BOARD_TARGET = 'prior_board_state'
 const VALUE_CAP_OVER_MINIMUM = 12
-const SINGULAR_BOARD_ATTEMPTS = 50
-const MOBILITY_BOARD_ATTEMPTS = 100
-const POSITION_BOARD_ATTEMPTS = 80
+const MAX_SINGULAR_BOARD_ATTEMPTS = 50
+const MAX_MOBILITY_BOARD_ATTEMPTS = 100
+const MAX_POSITION_BOARD_ATTEMPTS = 80
 const BLOCKER_SPECIES_POOL = Object.freeze([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN, Board.QUEEN])
 const MAX_PIECE_MOBILITY = 27
 const UNARY_PAIR_TARGETS = Object.freeze(new Set(['moved_piece', 'captured_piece', 'enemy_captured_piece', 'enemy_moved_piece']))
@@ -135,27 +135,6 @@ function placeNextPiece({ pieces, species, team, random }) {
   return { pieces: result, square: candidates[0] }
 }
 
-// ===== Enemy recent move context =====
-
-function buildEnemyRecentMoveContext(endPosition, species, enemyTeam, capturedSpecies, movingTeam, random) {
-  const candidates = shuffled(
-    originCandidatesForSpecies(endPosition, species).filter(p => p !== endPosition),
-    random
-  )
-  const startPosition = candidates.length > 0 ? candidates[0] : endPosition
-  return {
-    moveObject: { startPosition, endPosition },
-    movingTeam: enemyTeam,
-    movedPieceStartPosition: startPosition,
-    movedPieceEndPosition: endPosition,
-    movedPieceSpeciesBeforeMove: species,
-    movedPieceSpeciesAfterMove: species,
-    capturedPiecePosition: capturedSpecies ? endPosition : null,
-    capturedPieceTeam: capturedSpecies ? movingTeam : null,
-    capturedPieceSpecies: capturedSpecies ?? null
-  }
-}
-
 // ===== Work item helpers =====
 
 function unaryPairTargetItems({ target, subjectValue, comparator, targetSpeciesPool, operator, random }) {
@@ -194,7 +173,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
   const isPairTarget = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
 
   if (subject === 'moved_piece') {
-    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_SINGULAR_BOARD_ATTEMPTS; i++) {
       subjectSpeciesPool.forEach(movedSpecies => {
         if (isPairTarget) {
           const sv = operator === 'value' ? materialValue(movedSpecies) : 1
@@ -210,7 +189,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
 
   if (subject === 'captured_piece') {
     const movers = candidateSpecies('any', null)
-    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(movers, random).slice(0, 4).forEach(movedSpecies => {
         subjectSpeciesPool.forEach(capturedSpecies => {
           if (isPairTarget) {
@@ -227,7 +206,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
   }
 
   if (subject === 'enemy_moved_piece') {
-    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_SINGULAR_BOARD_ATTEMPTS; i++) {
       subjectSpeciesPool.forEach(enemyMovedSpecies => {
         if (isPairTarget) {
           const sv = operator === 'value' ? materialValue(enemyMovedSpecies) : 1
@@ -243,7 +222,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
 
   if (subject === 'enemy_captured_piece') {
     const enemyMovers = candidateSpecies('any', null)
-    for (let i = 0; i < SINGULAR_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_SINGULAR_BOARD_ATTEMPTS; i++) {
       shuffled(enemyMovers, random).slice(0, 4).forEach(enemyMoverSpecies => {
         subjectSpeciesPool.forEach(enemyCapturedSpecies => {
           if (isPairTarget) {
@@ -269,7 +248,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
       if (count > 0) { items.push({ count }) }
     })
   } else if (operator === 'mobility') {
-    for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
+    for (let attempt = 0; attempt < MAX_MOBILITY_BOARD_ATTEMPTS; attempt++) {
       effectiveMobilities.forEach(targetMobility => {
         subjectSpeciesPool.forEach(species => { items.push({ species, targetMobility }) })
       })
@@ -299,7 +278,7 @@ export function buildUnaryWorkItems(unaryPlan, random) {
         })
       })
     } else if (operator === 'mobility') {
-      for (let attempt = 0; attempt < MOBILITY_BOARD_ATTEMPTS; attempt++) {
+      for (let attempt = 0; attempt < MAX_MOBILITY_BOARD_ATTEMPTS; attempt++) {
         range(1, 6).forEach(sc => {
           if (UNARY_PAIR_TARGETS.has(target)) {
             shuffled([...targetSpeciesPool], random).slice(0, 2).forEach(targetSingularSpecies => {
@@ -347,7 +326,7 @@ export function buildPositionWorkItems(positionPlan, movingTeam, random) {
   const items = []
 
   if (subject === 'moved_piece') {
-    for (let i = 0; i < POSITION_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_POSITION_BOARD_ATTEMPTS; i++) {
       shuffled(validSquares, random).forEach(movedSquare => {
         subjectSpeciesPool.forEach(movedSpecies => {
           if (legalPlacementForSpecies(movedSquare, movedSpecies)) {
@@ -360,7 +339,7 @@ export function buildPositionWorkItems(positionPlan, movingTeam, random) {
   }
 
   if (subject === 'enemy_moved_piece') {
-    for (let i = 0; i < POSITION_BOARD_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_POSITION_BOARD_ATTEMPTS; i++) {
       shuffled(validSquares, random).forEach(enemyMovedSquare => {
         subjectSpeciesPool.forEach(enemyMovedSpecies => {
           if (legalPlacementForSpecies(enemyMovedSquare, enemyMovedSpecies)) {
@@ -386,7 +365,7 @@ export function buildPositionWorkItems(positionPlan, movingTeam, random) {
   } else if (operator === 'mobility') {
     const mobilities = targetMobilitiesForComparator(comparator, targetTotal)
     const counts = targetCountsForComparator(comparator, targetTotal)
-    for (let attempt = 0; attempt < POSITION_BOARD_ATTEMPTS; attempt++) {
+    for (let attempt = 0; attempt < MAX_POSITION_BOARD_ATTEMPTS; attempt++) {
       mobilities.forEach(targetMobility => {
         subjectSpeciesPool.forEach(species => { items.push({ species, targetMobility }) })
       })
@@ -422,14 +401,14 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
       if (target === 'enemy_captured_piece') {
         const endPos = baseRecentMoveContext?.movedPieceEndPosition ?? (pieces.keys().next().value ?? 0)
         const species = baseRecentMoveContext?.movedPieceSpeciesAfterMove ?? Board.PAWN
-        const ctx = buildEnemyRecentMoveContext(endPos, species, enemyTeam, item.targetSingularSpecies, movingTeam, random)
+        const ctx = buildRecentMoveContext({ team: enemyTeam, species, endPosition: endPos, capturedSpecies: item.targetSingularSpecies, random })
         return { pieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
       }
       if (target === 'enemy_moved_piece') {
         const enemyResult = placeNextPiece({ pieces, species: item.targetSingularSpecies, team: enemyTeam, random })
         const endPos = enemyResult ? enemyResult.square : (baseRecentMoveContext?.movedPieceEndPosition ?? 0)
         const placedPieces = enemyResult ? enemyResult.pieces : pieces
-        const ctx = buildEnemyRecentMoveContext(endPos, item.targetSingularSpecies, enemyTeam, null, movingTeam, random)
+        const ctx = buildRecentMoveContext({ team: enemyTeam, species: item.targetSingularSpecies, endPosition: endPos, random })
         return { pieces: placedPieces, recentMoveContext: ctx, capturedPieceSpeciesPool: baseCapturedPool }
       }
     }
@@ -496,7 +475,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   if (subject === 'enemy_moved_piece') {
     const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMovedSpecies, team: enemyTeam, random })
     if (!enemyResult) { return null }
-    const baseContext = buildEnemyRecentMoveContext(enemyResult.square, item.enemyMovedSpecies, enemyTeam, null, movingTeam, random)
+    const baseContext = buildRecentMoveContext({ team: enemyTeam, species: item.enemyMovedSpecies, endPosition: enemyResult.square, random })
     const allSpecies = candidateSpecies('any', null)
     const moverSpecies = (target === 'moved_piece' && item.targetSingularSpecies)
       ? item.targetSingularSpecies
@@ -510,7 +489,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   if (subject === 'enemy_captured_piece') {
     const enemyResult = placeNextPiece({ pieces: new Map(), species: item.enemyMoverSpecies, team: enemyTeam, random })
     if (!enemyResult) { return null }
-    const baseContext = buildEnemyRecentMoveContext(enemyResult.square, item.enemyMoverSpecies, enemyTeam, item.enemyCapturedSpecies, movingTeam, random)
+    const baseContext = buildRecentMoveContext({ team: enemyTeam, species: item.enemyMoverSpecies, endPosition: enemyResult.square, capturedSpecies: item.enemyCapturedSpecies, random })
     const allSpecies = candidateSpecies('any', null)
     const moverSpecies = (target === 'moved_piece' && item.targetSingularSpecies)
       ? item.targetSingularSpecies
@@ -559,8 +538,8 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   // ===== Group subject (allied / enemy): count or value =====
 
   let pieces = new Map()
-  const subjectMovedSquares = []
-  const targetMovedSquares = []
+  const subjectSquares = []
+  const targetSquares = []
   const pawnCount = { [subjectTeam]: 0 }
   if (targetTeam && targetTeam !== subjectTeam) { pawnCount[targetTeam] = 0 }
 
@@ -582,7 +561,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
     if (!result) { return null }
     pieces = result.pieces
     if (species === Board.PAWN) { pawnCount[subjectTeam]++ }
-    subjectMovedSquares.push({ square: result.square, species })
+    subjectSquares.push({ square: result.square, species })
   }
 
   if (target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET) {
@@ -596,7 +575,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
       if (result) {
         pieces = result.pieces
         if (species === Board.PAWN) { pawnCount[targetTeam]++ }
-        targetMovedSquares.push({ square: result.square, species })
+        targetSquares.push({ square: result.square, species })
       }
     }
   }
@@ -610,10 +589,10 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   if (isPBSIncreasing && subjectTeam === movingTeam && (operator === 'count' || operator === 'value')) {
     // PBS increasing (allied subject): moved piece IS a random allied subject piece.
     // In the prior board it will be at its origin (not yet qualifying), creating the delta.
-    if (subjectMovedSquares.length > 0) {
-      const idx = Math.floor(random() * subjectMovedSquares.length)
-      movedPieceSquare = subjectMovedSquares[idx].square
-      movedPieceSpecies = subjectMovedSquares[idx].species
+    if (subjectSquares.length > 0) {
+      const idx = Math.floor(random() * subjectSquares.length)
+      movedPieceSquare = subjectSquares[idx].square
+      movedPieceSpecies = subjectSquares[idx].species
     }
   } else if (isPBSDecreasing && subjectTeam !== movingTeam && (operator === 'count' || operator === 'value')) {
     // PBS decreasing (enemy subject): capture strategy — moved piece captures an enemy subject piece.
@@ -627,14 +606,14 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   }
 
   if (movedPieceSquare === null) {
-    if (subjectTeam === movingTeam && subjectMovedSquares.length > 0) {
-      const idx = Math.floor(random() * subjectMovedSquares.length)
-      movedPieceSquare = subjectMovedSquares[idx].square
-      movedPieceSpecies = subjectMovedSquares[idx].species
-    } else if (targetTeam === movingTeam && targetMovedSquares.length > 0) {
-      const idx = Math.floor(random() * targetMovedSquares.length)
-      movedPieceSquare = targetMovedSquares[idx].square
-      movedPieceSpecies = targetMovedSquares[idx].species
+    if (subjectTeam === movingTeam && subjectSquares.length > 0) {
+      const idx = Math.floor(random() * subjectSquares.length)
+      movedPieceSquare = subjectSquares[idx].square
+      movedPieceSpecies = subjectSquares[idx].species
+    } else if (targetTeam === movingTeam && targetSquares.length > 0) {
+      const idx = Math.floor(random() * targetSquares.length)
+      movedPieceSquare = targetSquares[idx].square
+      movedPieceSpecies = targetSquares[idx].species
     } else {
       const canPlaceKing = !teamHasKing(pieces, movingTeam)
       const moverPool = candidateSpecies('any', null).filter(s => s !== Board.KING || canPlaceKing)
@@ -670,7 +649,7 @@ function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, val
   if (subject === 'enemy_moved_piece') {
     const placed = placeAtSquare({ pieces: new Map(), species: item.enemyMovedSpecies, team: enemyTeam, square: item.enemyMovedSquare })
     if (!placed) { return null }
-    const recentMoveContext = buildEnemyRecentMoveContext(item.enemyMovedSquare, item.enemyMovedSpecies, enemyTeam, null, movingTeam, random)
+    const recentMoveContext = buildRecentMoveContext({ team: enemyTeam, species: item.enemyMovedSpecies, endPosition: item.enemyMovedSquare, random })
     const moverPool = candidateSpecies('any', null)
     const moverSpecies = moverPool[Math.floor(random() * moverPool.length)]
     const moverResult = placeNextPiece({ pieces: placed, species: moverSpecies, team: movingTeam, random })

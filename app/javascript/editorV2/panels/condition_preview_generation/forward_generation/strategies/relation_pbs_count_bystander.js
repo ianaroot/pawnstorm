@@ -34,7 +34,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 
 const ALL_RAY_STEPS = Object.freeze([...ROOK_RAY_STEPS, ...BISHOP_RAY_STEPS])
-const OUTER_ATTEMPTS = 3
+const MAX_OUTER_ATTEMPTS = 3
 const TARGET_POS_CANDIDATES = 4
 const MAX_SLIDER_DISTANCE = 6
 
@@ -89,7 +89,7 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
   const subjectSpeciesPool = hint.subject.speciesPool ?? []
   if (targetSpeciesPool.length === 0 || subjectSpeciesPool.length === 0) { return null }
 
-  for (let attempt = 0; attempt < OUTER_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_OUTER_ATTEMPTS; attempt += 1) {
     const targetSpecies = pickRandom(shuffled(targetSpeciesPool, random), random)
     const subjectSpecies = pickRandom(shuffled(subjectSpeciesPool, random), random)
     if (!targetSpecies || !subjectSpecies) { continue }

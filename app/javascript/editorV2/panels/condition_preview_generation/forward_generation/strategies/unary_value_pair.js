@@ -22,12 +22,13 @@ import {
   pieceCode, clonePiecesMap
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
+import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
 
 const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
-const POSITION_CANDIDATES = 8
-const ORIGIN_CANDIDATES = 12
-const PAIR_ATTEMPTS = 5
+const MAX_POSITION_CANDIDATES = 8
+const MAX_ORIGIN_CANDIDATES = 12
+const MAX_PAIR_ATTEMPTS = 5
 
 const COMPARATOR_FN = Object.freeze({
   equal_to: (a, b) => a === b,
@@ -81,7 +82,7 @@ export function unaryValuePairStrategy(pieces, hint, ctx) {
 
   const candidatePairs = valueComparablePairs(
     hint.subjectSpeciesPool, hint.targetSpeciesPool, hint.valueOp, random
-  ).slice(0, PAIR_ATTEMPTS)
+  ).slice(0, MAX_PAIR_ATTEMPTS)
 
   for (const [subjectSpecies, targetSpecies] of candidatePairs) {
     const actorSpecies = {
@@ -122,7 +123,7 @@ function engineerScenario({ pieces, actorSpecies, ctx, movingTeam, enemyTeam, pr
 function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyMovedSpecies, enemyCapturedSpecies, ctx, movingTeam, enemyTeam, priorPieces, random }) {
   const candidatePositions = shuffled(
     ALL_POSITIONS.filter(p => !pieces.has(p)), random
-  ).slice(0, POSITION_CANDIDATES)
+  ).slice(0, MAX_POSITION_CANDIDATES)
 
   for (const capturedPos of candidatePositions) {
     if (capturedSpecies === Board.PAWN && pawnOnStartingRank(enemyTeam, capturedPos)) { continue }
@@ -138,7 +139,7 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
       const originCandidates = shuffled(
         ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
         random
-      ).slice(0, ORIGIN_CANDIDATES)
+      ).slice(0, MAX_ORIGIN_CANDIDATES)
 
       for (const origin of originCandidates) {
         const trial = placePiece(priorWithCaptured, origin, pieceCode(movingTeam, trialMover))
@@ -162,8 +163,11 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
         ctx.moverSpecies = trialMover
         ctx.capturedSpecies = capturedSpecies
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
-          ctx.recentMoveContext = synthesizeEnemyRecentMoveContext({
-            enemyTeam, enemyMovedSpecies, enemyCapturedSpecies, capturedPos, random
+          ctx.recentMoveContext = buildRecentMoveContext({
+            team: enemyTeam,
+            species: enemyMovedSpecies,
+            capturedSpecies: enemyCapturedSpecies,
+            random
           })
         }
         return placedAfter
@@ -181,7 +185,7 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
   for (const trialMover of moverCandidates) {
     const startCandidates = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
-    ).slice(0, POSITION_CANDIDATES)
+    ).slice(0, MAX_POSITION_CANDIDATES)
 
     for (const origin of startCandidates) {
       if (trialMover === Board.PAWN && pawnOnStartingRank(movingTeam, origin)) { continue }
@@ -207,8 +211,11 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
 
         ctx.moverSpecies = trialMover
         if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
-          ctx.recentMoveContext = synthesizeEnemyRecentMoveContext({
-            enemyTeam, enemyMovedSpecies, enemyCapturedSpecies, capturedPos: null, random
+          ctx.recentMoveContext = buildRecentMoveContext({
+            team: enemyTeam,
+            species: enemyMovedSpecies,
+            capturedSpecies: enemyCapturedSpecies,
+            random
           })
         }
         return placedAfter
@@ -216,22 +223,4 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
     }
   }
   return null
-}
-
-function synthesizeEnemyRecentMoveContext({ enemyTeam, enemyMovedSpecies, enemyCapturedSpecies, capturedPos, random }) {
-  const movedSpecies = enemyMovedSpecies ?? Board.PAWN
-  const candidates = shuffled(ALL_POSITIONS.filter(p => p !== capturedPos), random)
-  const startPosition = candidates[0] ?? 0
-  const endPosition = candidates[1] ?? startPosition
-  return {
-    moveObject: { startPosition, endPosition },
-    movingTeam: enemyTeam,
-    movedPieceStartPosition: startPosition,
-    movedPieceEndPosition: endPosition,
-    movedPieceSpeciesBeforeMove: movedSpecies,
-    movedPieceSpeciesAfterMove: movedSpecies,
-    capturedPiecePosition: enemyCapturedSpecies !== undefined ? endPosition : null,
-    capturedPieceTeam: enemyCapturedSpecies !== undefined ? Board.opposingTeam(enemyTeam) : null,
-    capturedPieceSpecies: enemyCapturedSpecies ?? null
-  }
 }
