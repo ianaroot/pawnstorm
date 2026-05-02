@@ -74,7 +74,6 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   if (boardStatePreview) {
     clickHandler.setBoardStatePreview(boardStatePreview)
   }
-  clickHandler.setSyncManager(syncManager)
   const editorActions = new EditorActions(store, history, syncManager)
   editorActions.clickHandler = clickHandler
   editorActions.boardStatePreview = boardStatePreview
@@ -82,6 +81,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const keyboardHandler = new KeyboardHandler()
   keyboardHandler.actions = editorActions
   toolbarHandler.actions = editorActions
+  clickHandler.actions = editorActions
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   hoverPreviewHandler.attach()

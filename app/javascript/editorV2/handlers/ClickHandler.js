@@ -116,17 +116,6 @@ class ClickHandler {
     }
   }
 
-  togglePreview() {
-    if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
-      this.boardStatePreview.toggle()
-    } else if (this.store.getSelectedNodeIds().length > 1) {
-      this.boardStatePreview.isEnabled = true
-      this.renderSelectionPreview()
-    } else if (this.editingNodeId && this.conditionForm) {
-      this.boardStatePreview?.activate(this.conditionForm)
-    }
-  }
-
   isEditableTarget(target) {
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable
   }
@@ -374,18 +363,7 @@ class ClickHandler {
   }
 
   async handleSave() {
-    if (!this.editingNodeId) { return }
-    const node = this.store.getNode(this.editingNodeId)
-    if (!node || !this.syncManager) { return }
-    try {
-      const payload = this.buildDataPayloadByType(node)
-      if (payload) {
-        await this.syncManager.updateNodeData(this.editingNodeId, payload)
-      }
-      this.closeEditor()
-    } catch (error) {
-      console.error('Failed to save node:', error)
-    }
+    await this.actions?.save()
   }
 
   getSelectedNodeIds() {
@@ -397,43 +375,6 @@ class ClickHandler {
       const node = this.store.getNode(clientId)
       return node && node.type !== 'root'
     })
-  }
-
-  async deleteSelectedNodes() {
-    const selectedNodeIds = this.getSelectedNodeIds()
-    const deletableNodeIds = this.getDeletableSelectedNodeIds()
-    if (deletableNodeIds.length === 0) { return }
-    const confirmationMessage = deletableNodeIds.length === 1
-      ? 'Delete 1 selected node?'
-      : `Delete ${deletableNodeIds.length} selected nodes?`
-    if (!confirm(confirmationMessage)) { return }
-    try {
-      await this.syncManager?.deleteNodes(deletableNodeIds) 
-      const remainingSelectedIds = selectedNodeIds.filter(clientId => !deletableNodeIds.includes(clientId))
-      this.store.setSelectedNodeIds(remainingSelectedIds)
-      this.syncSelectionClasses()
-
-      if (this.editingNodeId && deletableNodeIds.includes(this.editingNodeId)) {
-        this.closeEditor()
-      }
-
-      if (remainingSelectedIds.length > 0) {
-        this.onNodeSelected?.(remainingSelectedIds[0])
-      } else {
-        this.onNodeDeselected?.()
-      }
-    } catch (error) {
-      console.error('Failed to delete node:', error)
-    }
-  }
-
-  async deleteSelectedNode() {
-    return this.deleteSelectedNodes()
-  }
-  
-
-  setSyncManager(syncManager) {
-    this.syncManager = syncManager
   }
 
   getSelectedNodeId() {

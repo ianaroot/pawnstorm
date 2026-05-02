@@ -34,7 +34,25 @@ class EditorActions {
   }
 
   async deleteSelected() {
-    await this.clickHandler?.deleteSelectedNodes()
+    const deletableNodeIds = this.clickHandler?.getDeletableSelectedNodeIds() ?? []
+    if (deletableNodeIds.length === 0) { return }
+    const message = deletableNodeIds.length === 1
+      ? 'Delete 1 selected node?'
+      : `Delete ${deletableNodeIds.length} selected nodes?`
+    if (!confirm(message)) { return }
+    const selectedNodeIds = this.store.getSelectedNodeIds()
+    const editingNodeId = this.clickHandler?.getEditingNodeId()
+    try {
+      await this.syncManager.deleteNodes(deletableNodeIds)
+      const remainingSelectedIds = selectedNodeIds.filter(id => !deletableNodeIds.includes(id))
+      this.store.setSelectedNodeIds(remainingSelectedIds)
+      this.clickHandler?.syncSelectionClasses()
+      if (editingNodeId && deletableNodeIds.includes(editingNodeId)) {
+        this.clickHandler?.closeEditor()
+      }
+    } catch (error) {
+      console.error('Failed to delete node:', error)
+    }
   }
 
   canDelete() {
@@ -42,11 +60,31 @@ class EditorActions {
   }
 
   togglePreview() {
-    this.clickHandler?.togglePreview()
+    if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
+      this.boardStatePreview.toggle()
+    } else if (this.store.getSelectedNodeIds().length > 1) {
+      this.boardStatePreview.isEnabled = true
+      this.clickHandler?.renderSelectionPreview()
+    } else if (this.clickHandler?.getEditingNodeId() && this.clickHandler?.conditionForm) {
+      this.boardStatePreview?.activate(this.clickHandler.conditionForm)
+    }
   }
 
   async save() {
-    await this.clickHandler?.handleSave()
+    const editingNodeId = this.clickHandler?.getEditingNodeId()
+    if (!editingNodeId) { return }
+    const node = this.store.getNode(editingNodeId)
+    if (!node) { return }
+    const payload = this.clickHandler?.buildDataPayloadByType(node)
+    if (payload) {
+      try {
+        await this.syncManager.updateNodeData(editingNodeId, payload)
+      } catch (error) {
+        console.error('Failed to save node:', error)
+        return
+      }
+    }
+    this.clickHandler?.closeEditor()
   }
 
   closeEditor() {
