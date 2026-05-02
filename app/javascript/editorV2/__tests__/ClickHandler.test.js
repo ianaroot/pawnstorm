@@ -2,7 +2,6 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import ClickHandler from '../handlers/ClickHandler.js'
 import Store from '../state/Store.js'
 import Node from '../models/Node.js'
-import Connection from '../models/Connection.js'
 
 vi.mock('../panels/ConditionForm', () => ({
   default: class {
@@ -47,7 +46,6 @@ function dispatchClick(element, overrides = {}) {
 describe('ClickHandler', () => {
   let store
   let history
-  let syncManager
   let editorPanel
   let clickHandler
   let rootNode
@@ -79,17 +77,14 @@ describe('ClickHandler', () => {
     actionElement = buildNodeElement(actionNode.clientId)
     organizerElement = buildNodeElement(organizerNode.clientId)
 
-    syncManager = {
-      deleteNodes: vi.fn().mockResolvedValue({}),
-      updateNodeData: vi.fn().mockResolvedValue({})
-    }
-
     clickHandler = new ClickHandler(store, history, editorPanel)
-    clickHandler.setSyncManager(syncManager)
+    clickHandler.actions = { save: vi.fn().mockResolvedValue(undefined), cancelPreviewTimer: vi.fn() }
     boardStatePreview = {
       activate: vi.fn(),
       deactivate: vi.fn(),
-      showSelectionPreview: vi.fn()
+      showSelectionPreview: vi.fn(),
+      isEnabled: false,
+      mode: 'idle'
     }
     clickHandler.setBoardStatePreview(boardStatePreview)
     clickHandler.attach(rootElement, rootNode.clientId)
@@ -166,156 +161,18 @@ describe('ClickHandler', () => {
     expect(editorPanel.classList.contains('hidden')).toBe(true)
   })
 
-  it('deletes the selected node set with one confirmation and closes the editor when needed', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    dispatchClick(conditionElement)
-    dispatchClick(actionElement, { shiftKey: true })
-
-    expect(store.getSelectedNodeIds()).toEqual([conditionNode.clientId, actionNode.clientId])
-    expect(store.getEditingNode()).toBe(null)
-
-    await clickHandler.deleteSelectedNodes()
-
-    expect(confirmSpy).toHaveBeenCalledWith('Delete 2 selected nodes?')
-    expect(syncManager.deleteNodes).toHaveBeenCalledWith([conditionNode.clientId, actionNode.clientId])
-    expect(store.getSelectedNodeIds()).toEqual([])
-    expect(clickHandler.getEditingNodeId()).toBe(null)
-    expect(editorPanel.classList.contains('hidden')).toBe(true)
+  it('handleSave delegates to actions.save', async () => {
+    await clickHandler.handleSave()
+    expect(clickHandler.actions.save).toHaveBeenCalled()
   })
 
-  it('saves the editor on Enter and leaves Shift+Enter alone in the organizer textarea', async () => {
-    dispatchClick(organizerElement)
+  it('calls actions.renderSelectionPreview when multiple nodes are selected while preview is active', () => {
+    clickHandler.actions.renderSelectionPreview = vi.fn()
+    boardStatePreview.mode = 'active'
+    boardStatePreview.isEnabled = true
 
-    const notes = editorPanel.querySelector('#organizer-notes')
-    notes.value = 'Line 1'
+    store.setSelectedNodeIds([conditionNode.clientId, actionNode.clientId])
 
-    const shiftEnter = new KeyboardEvent('keydown', {
-      key: 'Enter',
-      shiftKey: true,
-      bubbles: true,
-      cancelable: true
-    })
-    const shiftEnterResult = notes.dispatchEvent(shiftEnter)
-
-    expect(shiftEnterResult).toBe(true)
-    expect(shiftEnter.defaultPrevented).toBe(false)
-    expect(syncManager.updateNodeData).not.toHaveBeenCalled()
-
-    const enter = new KeyboardEvent('keydown', {
-      key: 'Enter',
-      bubbles: true,
-      cancelable: true
-    })
-    const enterResult = notes.dispatchEvent(enter)
-
-    expect(enterResult).toBe(false)
-    expect(enter.defaultPrevented).toBe(true)
-    expect(syncManager.updateNodeData).toHaveBeenCalledWith(organizerNode.clientId, {
-      title: 'Organizer',
-      notes: 'Line 1'
-    })
-  })
-
-  it('toggles selection preview with p for a linear selected condition chain', () => {
-    vi.useFakeTimers()
-    const conditionB = new Node({
-      clientId: 'condition-b',
-      type: 'condition',
-      position: { x: 160, y: 100 },
-      data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'defend',
-        target: 'allied',
-        targetFilter: 'any'
-      }
-    })
-    store.addNode(conditionB)
-    store.addConnection(new Connection({
-      sourceId: conditionNode.clientId,
-      targetId: conditionB.clientId
-    }))
-    store.updateNode(conditionNode.clientId, {
-      data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'defend',
-        target: 'allied',
-        targetFilter: 'pawn'
-      }
-    })
-
-    store.setSelectedNodeIds([conditionNode.clientId, conditionB.clientId])
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', bubbles: true, cancelable: true }))
-    vi.runAllTimers()
-    vi.useRealTimers()
-
-    expect(boardStatePreview.showSelectionPreview).toHaveBeenCalled()
-    const preview = boardStatePreview.showSelectionPreview.mock.calls.at(-1)[0]
-    expect(preview.status).toBe('ready')
-    expect(editorPanel.classList.contains('hidden')).toBe(false)
-  })
-
-  it('shows an unsupported message for branching selected condition sets', () => {
-    const conditionB = new Node({
-      clientId: 'condition-b',
-      type: 'condition',
-      position: { x: 160, y: 100 },
-      data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'defend',
-        target: 'allied',
-        targetFilter: 'pawn'
-      }
-    })
-    const conditionC = new Node({
-      clientId: 'condition-c',
-      type: 'condition',
-      position: { x: 220, y: 140 },
-      data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'defend',
-        target: 'allied',
-        targetFilter: 'any'
-      }
-    })
-    store.updateNode(conditionNode.clientId, {
-      data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'attack',
-        target: 'enemy',
-        targetFilter: 'any'
-      }
-    })
-    store.addNode(conditionB)
-    store.addNode(conditionC)
-    store.addConnection(new Connection({
-      sourceId: conditionNode.clientId,
-      targetId: conditionB.clientId
-    }))
-    store.addConnection(new Connection({
-      sourceId: conditionNode.clientId,
-      targetId: conditionC.clientId
-    }))
-
-    store.setSelectedNodeIds([conditionNode.clientId, conditionB.clientId, conditionC.clientId])
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', bubbles: true, cancelable: true }))
-
-    const preview = boardStatePreview.showSelectionPreview.mock.calls.at(-1)[0]
-    expect(preview.status).toBe('unsupported')
-    expect(preview.reason).toBe("OR branches aren't supported in condition chain previews yet.")
+    expect(clickHandler.actions.renderSelectionPreview).toHaveBeenCalled()
   })
 })

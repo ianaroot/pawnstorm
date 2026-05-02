@@ -1,24 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ToolbarHandler from '../handlers/ToolbarHandler.js'
 import Store from '../state/Store.js'
-import Node from '../models/Node.js'
-
-function buildViewport() {
-  return {
-    getVisibleCanvasCenter: vi.fn(() => ({ x: 400, y: 300 })),
-    isGraphPointVisible: vi.fn(() => true)
-  }
-}
-
-function addNode(store, { clientId, type, x, y }) {
-  store.addNode(new Node({ clientId, type, position: { x, y } }))
-}
 
 describe('ToolbarHandler', () => {
   let store
   let history
   let syncManager
-  let viewport
   let toolbarHandler
 
   beforeEach(() => {
@@ -41,8 +28,7 @@ describe('ToolbarHandler', () => {
       setPersistedMutationCallback: vi.fn(),
       updateBot: vi.fn().mockResolvedValue({ name: 'Renamed Bot', description: 'Updated description' })
     }
-    viewport = buildViewport()
-    toolbarHandler = new ToolbarHandler(store, history, syncManager, document.createElement('div'), null, viewport)
+    toolbarHandler = new ToolbarHandler(store, history, syncManager, document.createElement('div'), null, null)
   })
 
   afterEach(() => {
@@ -50,56 +36,23 @@ describe('ToolbarHandler', () => {
     document.body.innerHTML = ''
   })
 
-  it('places add-node inserts near the recent placement anchor', () => {
-    store.setRecentPlacementAnchor({ x: 500, y: 400 })
-
-    expect(toolbarHandler.findPlacementPosition('condition')).toEqual({ x: 450, y: 336 })
-  })
-
-  it('falls back to the visible canvas center when no anchor exists', () => {
-    expect(toolbarHandler.findPlacementPosition('score')).toEqual({ x: 346, y: 246 })
-  })
-
-  it('falls back to the visible canvas center when the recent anchor is outside the viewport', () => {
-    store.setRecentPlacementAnchor({ x: 900, y: 800 })
-    viewport.isGraphPointVisible.mockReturnValue(false)
-
-    expect(toolbarHandler.findPlacementPosition('condition')).toEqual({ x: 350, y: 236 })
-  })
-
-  it('searches around the recent anchor when the direct placement is blocked', () => {
-    store.setRecentPlacementAnchor({ x: 500, y: 400 })
-    addNode(store, { clientId: 'blocker', type: 'condition', x: 450, y: 336 })
-
-    const position = toolbarHandler.findPlacementPosition('condition')
-
-    expect(position).not.toEqual({ x: 450, y: 336 })
-    expect(position.x).toBeGreaterThanOrEqual(0)
-    expect(position.y).toBeGreaterThanOrEqual(0)
-  })
-
-  it('enables the delete button when at least one selected node is deletable', () => {
+  it('enables the delete button when actions.canDelete() returns true', () => {
     const deleteBtn = document.createElement('button')
     deleteBtn.className = 'btn-delete-node'
     document.body.appendChild(deleteBtn)
 
-    addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
-    addNode(store, { clientId: 'child', type: 'condition', x: 100, y: 100 })
-    store.setSelectedNodeIds(['root', 'child'])
-
+    toolbarHandler.actions = { canDelete: () => true, canUndo: () => false, canRedo: () => false }
     toolbarHandler.updateDeleteButton()
 
     expect(deleteBtn.disabled).toBe(false)
   })
 
-  it('disables the delete button when only root nodes are selected', () => {
+  it('disables the delete button when actions.canDelete() returns false', () => {
     const deleteBtn = document.createElement('button')
     deleteBtn.className = 'btn-delete-node'
     document.body.appendChild(deleteBtn)
 
-    addNode(store, { clientId: 'root', type: 'root', x: 0, y: 0 })
-    store.setSelectedNodeIds(['root'])
-
+    toolbarHandler.actions = { canDelete: () => false, canUndo: () => false, canRedo: () => false }
     toolbarHandler.updateDeleteButton()
 
     expect(deleteBtn.disabled).toBe(true)

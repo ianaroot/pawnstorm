@@ -2,6 +2,9 @@ import { findAnchoredNodePlacement } from 'editorV2/utils/nodePlacement'
 import generateUUID from 'editorV2/utils/uuid'
 import Node from 'editorV2/models/Node'
 import Connection from 'editorV2/models/Connection'
+import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
+import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
+import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 
 const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
 const CLIPBOARD_STORAGE_VERSION = 1
@@ -13,6 +16,7 @@ class EditorActions {
     this.history = history
     this.syncManager = syncManager
     this.clipboard = this.loadClipboard()
+    this._chainPreviewTimer = null
   }
 
   async undo() {
@@ -64,7 +68,7 @@ class EditorActions {
       this.boardStatePreview.toggle()
     } else if (this.store.getSelectedNodeIds().length > 1) {
       this.boardStatePreview.isEnabled = true
-      this.clickHandler?.renderSelectionPreview()
+      this.renderSelectionPreview()
     } else if (this.clickHandler?.getEditingNodeId() && this.clickHandler?.conditionForm) {
       this.boardStatePreview?.activate(this.clickHandler.conditionForm)
     }
@@ -88,7 +92,51 @@ class EditorActions {
   }
 
   closeEditor() {
+    this.cancelPreviewTimer()
     this.clickHandler?.closeEditor()
+  }
+
+  buildSelectionPreview() {
+    return buildSelectedConditionChain({
+      selectedNodeIds: this.store.getSelectedNodeIds(),
+      getNode: (clientId) => this.store.getNode(clientId),
+      internalConnections: this.store.getInternalConnections(this.store.getSelectedNodeIds())
+    })
+  }
+
+  showSelectionPreviewPanel(preview) {
+    this.clickHandler?.editorPanel?.classList.remove('hidden')
+    this.boardStatePreview?.showSelectionPreview(preview)
+  }
+
+  renderSelectionPreview() {
+    const chain = this.buildSelectionPreview()
+    if (chain.status !== 'ready') {
+      this.showSelectionPreviewPanel({ status: chain.status, reason: chain.reason, examples: [] })
+      return
+    }
+
+    const conditionLabels = chain.payloads.length >= 2
+      ? chain.payloads.map(p => formatConditionPreview(p).text)
+      : []
+
+    this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = setTimeout(() => {
+      try {
+        const preview = generateConditionExamples(chain.payloads)
+        preview.conditionLabels = conditionLabels
+        this.showSelectionPreviewPanel(preview)
+      } catch (e) {
+        console.error('generateConditionExamples threw:', e)
+        this.showSelectionPreviewPanel({ status: 'no_examples', reason: 'An error occurred generating the preview.', examples: [], payloadCount: chain.payloads.length })
+      }
+    }, 0)
+  }
+
+  cancelPreviewTimer() {
+    clearTimeout(this._chainPreviewTimer)
+    this._chainPreviewTimer = null
   }
 
   async addNode(type) {
