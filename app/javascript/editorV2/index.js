@@ -98,10 +98,10 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
 
   // 7. Initialize Undo/Redo UI Callbacks
   history.setUpdateUICallback(() => {
-    updateUndoRedoUI(history)
+    toolbarHandler.updateButtons()
   })
-  
-  updateUndoRedoUI(history)
+
+  toolbarHandler.updateButtons()
   requestAnimationFrame(() => {
     canvasViewport.fitToGraph()
   })
@@ -132,11 +132,11 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     // Undo/redo - async because they sync with server
     undo: async () => {
       await syncManager.undo()
-      updateUndoRedoUI(history)
+      toolbarHandler.updateButtons()
     },
     redo: async () => {
       await syncManager.redo()
-      updateUndoRedoUI(history)
+      toolbarHandler.updateButtons()
     },
     canUndo: () => history.canUndo() && !syncManager.isUndoRedoPending,
     canRedo: () => history.canRedo() && !syncManager.isUndoRedoPending,
@@ -161,12 +161,3 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   }
 }
 
-function updateUndoRedoUI(history) {
-  const undoBtn = document.querySelector('.btn-undo')
-  const redoBtn = document.querySelector('.btn-redo')
-  const countDisplay = document.querySelector('.undo-count')
-  
-  if (undoBtn)      { undoBtn.disabled = !history.canUndo() }
-  if (redoBtn)      { redoBtn.disabled = !history.canRedo() }
-  if (countDisplay) { countDisplay.textContent = history.getHistoryDisplay() }
-}

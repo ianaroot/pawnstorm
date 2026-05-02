@@ -125,6 +125,8 @@ class ToolbarHandler {
       redoBtn.disabled = !this.actions?.canRedo()
       redoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
     }
+    const countDisplay = document.querySelector('.undo-count')
+    if (countDisplay) { countDisplay.textContent = this.history.getHistoryDisplay() }
     this.updateDeleteButton()
     this.updateCompileAction()
   }

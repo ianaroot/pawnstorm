@@ -116,10 +116,6 @@ class ClickHandler {
     }
   }
 
-  isEditableTarget(target) {
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable
-  }
-
   selectNode(clientId, element, { additive = false } = {}) {
     if (additive) {
       this.store.toggleNodeSelection(clientId)

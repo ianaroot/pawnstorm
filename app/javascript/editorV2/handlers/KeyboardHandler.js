@@ -1,3 +1,5 @@
+import { isEditableTarget } from 'editorV2/utils/dom'
+
 class KeyboardHandler {
   constructor() {
     this.boundHandleKeyDown = this.handleKeyDown.bind(this)
@@ -24,7 +26,7 @@ class KeyboardHandler {
     }
 
     // Ignore if in input field
-    if (this.isInputElement(event.target)) { return }
+    if (isEditableTarget(event.target)) { return }
     const key = event.key?.toLowerCase()
 
     // Copy: Ctrl/Cmd+C
@@ -87,13 +89,6 @@ class KeyboardHandler {
       if (this.actions?.navigatePreview(1)) { event.preventDefault() }
       return
     }
-  }
-
-  isInputElement(target) {
-    if (!target || !target.tagName) { return false }
-    const tag = target.tagName.toLowerCase()
-    const isEditable = target.isContentEditable
-    return tag === 'input' || tag === 'textarea' || tag === 'select' || isEditable
   }
 
   canUndo() { return this.actions?.canUndo() ?? false }
