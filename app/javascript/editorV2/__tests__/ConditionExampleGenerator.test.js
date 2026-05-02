@@ -1683,6 +1683,33 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.status).toBe('no_examples')
   })
 
+  it('flags contradiction when PBS direction + conflicts with sibling count cap (patch 3)', () => {
+    // Plan A: PBS-direction + on enemy attacker count → requires n_current > n_prior,
+    // so n_current ≥ 1.
+    // Plan B: enemy count = 0 → inventory.enemy.current.any.count_range = [0, 0].
+    // No compatible (n_prior, n_current) sample exists. PBS narrowing returns
+    // false; chain falls through reverse-gen and yields no examples.
+    const payloads = [
+      {
+        version: 2, kind: 'relational',
+        subject: 'enemy', subjectFilter: 'any',
+        operator: 'attack',
+        target: 'moved_piece', targetFilter: 'any',
+        subjectComparisonMetric: 'count',
+        subjectComparator: 'greater_than',
+        subjectComparisonSource: 'prior_board_state'
+      },
+      {
+        version: 2, kind: 'unary',
+        subject: 'enemy', subjectFilter: 'any',
+        operator: 'count', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 0
+      }
+    ]
+    const preview = generateConditionExamples(payloads, { random: seededRandom(7006) })
+    expect(preview.status).toBe('no_examples')
+  })
+
   it('flags contradiction when relational subject count contributes lower bound conflicting with unary cap (patch 2b)', () => {
     // Plan A: enemy/pawn attacks moved_piece, subject count ≥ 3 → at least 3
     // enemy pawns exist. Plan B: enemy/pawn count = 0. Range [3, 0] → unsat.

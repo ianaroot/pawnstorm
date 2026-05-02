@@ -35,7 +35,7 @@ import {
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
-import { buildChainConstraints, ACTOR_TO_VAR_KEY } from './chain_constraints'
+import { buildChainConstraints, narrowPbsHintsByInventory, ACTOR_TO_VAR_KEY } from './chain_constraints'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -76,26 +76,35 @@ function actorTeamOnBoard(actor, movingTeam) {
 // Both strategies satisfy "≤ N." Resolver tries C first (when applicable),
 // falls back to A. For >/≥ comparators, no strategy is implemented yet —
 // emission for those is gated off in the compiler.
-function applyMobilityReduce(pieces, hint, movingTeam, random) {
-  const cResult = tryCheckPlusBlock(pieces, hint, movingTeam, random)
+function applyMobilityReduce(pieces, hint, ctx) {
+  const cResult = tryCheckPlusBlock(pieces, hint, ctx)
   if (cResult !== null) { return cResult }
-  return applyDirectBlock(pieces, hint, movingTeam, random)
+  return applyDirectBlock(pieces, hint, ctx)
 }
 
 // Translate a generalized ACTOR_MOBILITY hint into a `maxMobility` ceiling for
 // the existing reduce strategies. Returns null if the comparator isn't yet
-// supported (>, ≥) or maps to an out-of-range bound.
-function mobilityCeilingFor(hint) {
+// supported (>, ≥) or maps to an out-of-range bound. When inventory carries a
+// stricter mobility_range.max for the matching (team, frame, filter), the
+// ceiling tightens accordingly so we respect sibling constraints.
+function mobilityCeilingFor(hint, ctx) {
+  let ceiling
   switch (hint.mobilityOp) {
     case 'less_than_or_equal_to':
-    case 'equal_to':              return hint.n
-    case 'less_than':             return Math.max(0, hint.n - 1)
+    case 'equal_to':              ceiling = hint.n; break
+    case 'less_than':             ceiling = Math.max(0, hint.n - 1); break
     default:                      return null
   }
+  const cell = (hint.actor === 'allied' || hint.actor === 'enemy')
+    ? ctx?.inventory?.[hint.team]?.[hint.frame ?? 'current']?.[hint.filter ?? 'any']
+    : null
+  const inventoryMax = cell?.mobility_range.max ?? Infinity
+  return Math.min(ceiling, inventoryMax)
 }
 
-function applyDirectBlock(pieces, hint, movingTeam, random) {
-  const ceiling = mobilityCeilingFor(hint)
+function applyDirectBlock(pieces, hint, ctx) {
+  const { movingTeam, random } = ctx
+  const ceiling = mobilityCeilingFor(hint, ctx)
   if (ceiling === null) { return null }
   const matching = []
   for (const [position, piece] of pieces.entries()) {
@@ -117,8 +126,9 @@ function applyDirectBlock(pieces, hint, movingTeam, random) {
 // they can't defend (no legal capture-attacker or block-ray move). When in check,
 // a piece's only legal moves are defending moves; if there are none (or ≤ N), the
 // actor's mobility ≤ N. Works for king (escape blocked) and non-king (pin/no-defend).
-function tryCheckPlusBlock(pieces, hint, movingTeam, random) {
-  const ceiling = mobilityCeilingFor(hint)
+function tryCheckPlusBlock(pieces, hint, ctx) {
+  const { movingTeam, random } = ctx
+  const ceiling = mobilityCeilingFor(hint, ctx)
   if (ceiling === null) { return null }
   const kingCode = pieceCode(hint.team, Board.KING)
   let kingPos = null
@@ -158,7 +168,7 @@ function tryCheckPlusBlock(pieces, hint, movingTeam, random) {
 
       // Fall back to topping up with direct blocking for any residual.
       let blocked = null
-      try { blocked = applyDirectBlock(withAttacker, hint, movingTeam, random) } catch { blocked = null }
+      try { blocked = applyDirectBlock(withAttacker, hint, ctx) } catch { blocked = null }
       if (blocked !== null) { return blocked }
     }
   }
@@ -227,7 +237,7 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
 const STRATEGIES = Object.freeze({
   [HINT_TYPES.RELATION_HOLDS]: [],
   [HINT_TYPES.ACTOR_MOBILITY]: [
-    (pieces, hint, ctx) => applyMobilityReduce(pieces, hint, ctx.movingTeam, ctx.random)
+    (pieces, hint, ctx) => applyMobilityReduce(pieces, hint, ctx)
   ],
   [HINT_TYPES.RELATION_COUNT]: [relationCountStrategy],
   [HINT_TYPES.ACTOR_COUNT]: [actorCountStrategy],
@@ -404,10 +414,16 @@ export function resolveViaHints({ combinedPlan, random }) {
   const movingTeam = combinedPlan.movingTeam
 
   // chainConstraints holds converged constraints on the four singular move-event
-  // actors (movedPiece, capturedPiece, enemyMovedPiece, enemyCapturedPiece).
-  // Built before seed/strategies so they can consult and narrow it.
+  // actors (movedPiece, capturedPiece, enemyMovedPiece, enemyCapturedPiece)
+  // and the inventory tree (group actors). Built before seed/strategies so
+  // they can consult and narrow it.
   const chainConstraints = buildChainConstraints(combinedPlan)
   if (chainConstraints === null) { return null }
+
+  // Narrow PBS sample pairs (n_prior, n_current) by inventory + direction.
+  // Re-samples in place when the existing sample is incompatible with sibling
+  // inventory ranges. Returns false on unsat (no compatible pair exists).
+  if (!narrowPbsHintsByInventory(hints, chainConstraints, random)) { return null }
 
   let pieces = buildMinimumSeed(combinedPlan, chainConstraints, random)
   if (pieces === null) { return null }

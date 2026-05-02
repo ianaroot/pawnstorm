@@ -51,8 +51,16 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
     : hintPool
   let lastSpeciesUsed = null
 
+  // Inventory awareness for group actors: cap value additions at the
+  // converged value_range.max so we don't overshoot sibling constraints.
+  const inventoryCell = (hint.actor === 'allied' || hint.actor === 'enemy')
+    ? ctx.inventory?.[hint.team]?.[hint.frame]?.[hint.filter ?? 'any']
+    : null
+  const valueUpperBound = inventoryCell?.value_range.max ?? Infinity
+
   for (let i = 0; i < MAX_PLACEMENT_ITERATIONS; i += 1) {
     const current = sumActorValue(result, hint)
+    if (current > valueUpperBound) { return null }
     if (compareValue(current, hint.totalOp, hint.total)) {
       if (varKey && ctx[varKey] && lastSpeciesUsed !== null) {
         ctx[varKey].species_set.clear()
@@ -63,10 +71,14 @@ export function actorAggregateValueStrategy(pieces, hint, ctx) {
 
     const max = maxAdditionForOp(hint.totalOp, hint.total, current)
     if (max === null || max <= 0) { return null }
+    // Don't add more than (inventory.value_range.max - current) either.
+    const inventoryHeadroom = valueUpperBound - current
+    const effectiveMax = Math.min(max, inventoryHeadroom)
+    if (effectiveMax <= 0) { return null }
 
     const fitting = effectivePool.filter(s => {
       const v = materialValue(s)
-      return v > 0 && v <= max
+      return v > 0 && v <= effectiveMax
     })
     if (fitting.length === 0) { return null }
 

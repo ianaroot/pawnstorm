@@ -444,6 +444,123 @@ function isSatisfiable(vars) {
   return true
 }
 
+// ===== PBS sample propagation =====
+//
+// PBS-direction hints carry a sampled (prior, current) pair (count, value, or
+// mobility) for the strategy to engineer. When sibling inventory constraints
+// narrow the prior/current ranges, the existing sample may fall outside the
+// compatible region. This pass re-samples each PBS hint within the converged
+// inventory bounds + direction constraint. If no compatible pair exists, the
+// chain is unsat.
+//
+// Mutates hints in place; returns true on success, false on unsat.
+export function narrowPbsHintsByInventory(hints, chainConstraints, random) {
+  const inventory = chainConstraints?.inventory
+  if (!inventory) { return true }
+
+  for (const hint of hints) {
+    const lookup = pbsLookup(hint)
+    if (!lookup) { continue }
+    const teamCells = inventory[lookup.team]
+    if (!teamCells) { continue }
+    const priorRange = teamCells.prior?.[lookup.filter]?.[lookup.rangeKey]
+    const currentRange = teamCells.current?.[lookup.filter]?.[lookup.rangeKey]
+    if (!priorRange || !currentRange) { continue }
+
+    const [priorKey, currentKey] = lookup.pairKeys
+    const priorVal = hint[priorKey]
+    const currentVal = hint[currentKey]
+
+    if (pbsSampleCompatible(priorVal, currentVal, priorRange, currentRange, hint.direction)) {
+      continue
+    }
+
+    const newPair = resamplePbsPair(priorRange, currentRange, hint.direction, random)
+    if (!newPair) { return false }
+    hint[priorKey] = newPair[0]
+    hint[currentKey] = newPair[1]
+  }
+  return true
+}
+
+function pbsLookup(hint) {
+  // Map the PBS hint to (team, filter, rangeKey, pairKeys) for inventory access.
+  switch (hint.type) {
+    case 'relation_pbs_count': {
+      const side = hint.side === 'subject' ? hint.subject : hint.target
+      return { team: side.team, filter: side.filter || 'any', rangeKey: 'count_range', pairKeys: ['nPrior', 'nCurrent'] }
+    }
+    case 'relation_pbs_aggregate_value': {
+      const side = hint.side === 'subject' ? hint.subject : hint.target
+      return { team: side.team, filter: side.filter || 'any', rangeKey: 'value_range', pairKeys: ['vPrior', 'vCurrent'] }
+    }
+    case 'actor_pbs_mobility': {
+      return { team: hint.team, filter: hint.filter || 'any', rangeKey: 'mobility_range', pairKeys: ['nPrior', 'nCurrent'] }
+    }
+    default:
+      return null
+  }
+}
+
+function pbsSampleCompatible(priorVal, currentVal, priorRange, currentRange, direction) {
+  if (priorVal < priorRange.min || priorVal > priorRange.max) { return false }
+  if (currentVal < currentRange.min || currentVal > currentRange.max) { return false }
+  switch (direction) {
+    case '+': return currentVal > priorVal
+    case '-': return currentVal < priorVal
+    case '=': return currentVal === priorVal
+    default:  return true
+  }
+}
+
+function resamplePbsPair(priorRange, currentRange, direction, random) {
+  switch (direction) {
+    case '=': {
+      const lo = Math.max(priorRange.min, currentRange.min)
+      const hi = Math.min(priorRange.max, currentRange.max)
+      if (lo > hi || !Number.isFinite(hi)) { return Number.isFinite(hi) ? null : [lo, lo] }
+      const n = lo + Math.floor(random() * (hi - lo + 1))
+      return [n, n]
+    }
+    case '+': {
+      // currentVal > priorVal
+      const priorLo = priorRange.min
+      const priorHi = Math.min(priorRange.max, Number.isFinite(currentRange.max) ? currentRange.max - 1 : Number.MAX_SAFE_INTEGER)
+      if (priorLo > priorHi) { return null }
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        const span = Math.min(priorHi - priorLo, 100)
+        const nPrior = priorLo + Math.floor(random() * (span + 1))
+        const currentLo = Math.max(currentRange.min, nPrior + 1)
+        const currentHi = Number.isFinite(currentRange.max) ? currentRange.max : Math.max(currentLo, nPrior + 3)
+        if (currentLo > currentHi) { continue }
+        const cSpan = Math.min(currentHi - currentLo, 100)
+        const nCurrent = currentLo + Math.floor(random() * (cSpan + 1))
+        return [nPrior, nCurrent]
+      }
+      return null
+    }
+    case '-': {
+      // currentVal < priorVal
+      const priorLo = Math.max(priorRange.min, currentRange.min + 1)
+      const priorHi = priorRange.max
+      if (priorLo > priorHi) { return null }
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        const span = Math.min(Number.isFinite(priorHi) ? priorHi - priorLo : 5, 100)
+        const nPrior = priorLo + Math.floor(random() * (span + 1))
+        const currentLo = currentRange.min
+        const currentHi = Math.min(currentRange.max, nPrior - 1)
+        if (currentLo > currentHi) { continue }
+        const cSpan = Math.min(currentHi - currentLo, 100)
+        const nCurrent = currentLo + Math.floor(random() * (cSpan + 1))
+        return [nPrior, nCurrent]
+      }
+      return null
+    }
+    default:
+      return null
+  }
+}
+
 export function buildChainConstraints(combinedPlan) {
   const vars = initSingularActors(combinedPlan.movingTeam)
   vars.inventory = initInventory(combinedPlan.movingTeam)
