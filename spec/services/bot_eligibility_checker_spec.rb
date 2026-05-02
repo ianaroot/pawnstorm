@@ -350,13 +350,13 @@ RSpec.describe BotEligibilityChecker do
   end
 
   describe "score_node_restrictions" do
-    context "with allowed_action_types" do
-      it "is eligible when all score nodes use allowed types" do
-        result = check(linear_program, { "score_node_restrictions" => { "allowed_action_types" => ["add", "subtract"] } })
+    context "with banned_action_types" do
+      it "is eligible when no score nodes use a banned type" do
+        result = check(linear_program, { "score_node_restrictions" => { "banned_action_types" => ["return"] } })
         expect(result[:eligible]).to be true
       end
 
-      it "adds a violation for each score node using a disallowed type" do
+      it "adds a violation for each score node using a banned type" do
         prog = program(
           root("r", children: ["c1", "c2"]),
           condition("c1", children: ["s1"]),
@@ -364,26 +364,36 @@ RSpec.describe BotEligibilityChecker do
           score("s1", action_type: "return"),
           score("s2", action_type: "return")
         )
-        result = check(prog, { "score_node_restrictions" => { "allowed_action_types" => ["add"] } })
+        result = check(prog, { "score_node_restrictions" => { "banned_action_types" => ["return"] } })
         expect(result[:violations].count { |v| v[:type] == "score_node_action_type" }).to eq(2)
+      end
+
+      it "is eligible with no banned types set" do
+        result = check(linear_program, { "score_node_restrictions" => {} })
+        expect(result[:eligible]).to be true
       end
     end
   end
 
   describe "condition_restrictions" do
-    context "with allowed_kinds" do
-      it "adds a violation for a condition using a disallowed kind" do
+    context "with banned_kinds" do
+      it "adds a violation for a condition using a banned kind" do
         prog = program(
           root("r", children: ["c1"]),
           condition("c1", kind: "relational", children: ["s1"]),
           score("s1")
         )
-        result = check(prog, { "condition_restrictions" => { "allowed_kinds" => ["unary"] } })
+        result = check(prog, { "condition_restrictions" => { "banned_kinds" => ["relational"] } })
         expect(result[:violations]).to include(include(type: "condition_kind"))
       end
 
-      it "is eligible when all conditions use allowed kinds" do
-        result = check(linear_program, { "condition_restrictions" => { "allowed_kinds" => ["unary"] } })
+      it "is eligible when no conditions use a banned kind" do
+        result = check(linear_program, { "condition_restrictions" => { "banned_kinds" => ["relational"] } })
+        expect(result[:eligible]).to be true
+      end
+
+      it "is eligible with no banned kinds set" do
+        result = check(linear_program, { "condition_restrictions" => {} })
         expect(result[:eligible]).to be true
       end
     end
@@ -435,8 +445,8 @@ RSpec.describe BotEligibilityChecker do
         score("s1", action_type: "return")
       )
       constraints = {
-        "condition_restrictions" => { "allowed_kinds" => ["unary"] },
-        "score_node_restrictions" => { "allowed_action_types" => ["add"] }
+        "condition_restrictions" => { "banned_kinds" => ["relational"] },
+        "score_node_restrictions" => { "banned_action_types" => ["return"] }
       }
       result = check(prog, constraints)
       expect(result[:eligible]).to be false

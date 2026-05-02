@@ -126,25 +126,25 @@ class BotEligibilityChecker
   end
 
   def check_score_node_restrictions(score_nodes, violations)
-    allowed_types = @score_node_restrictions["allowed_action_types"]
-    return unless allowed_types
+    banned_types = @score_node_restrictions["banned_action_types"]
+    return unless banned_types&.any?
 
     score_nodes.each do |node|
       action_type = node.dig("data", "actionType")
-      next if allowed_types.include?(action_type)
-      violations << { type: "score_node_action_type", message: "Bot uses score action type '#{action_type}' (not allowed in this tournament)" }
+      next unless banned_types.include?(action_type)
+      violations << { type: "score_node_action_type", message: "Bot uses banned score action type '#{action_type}'" }
     end
   end
 
   def check_condition_restrictions(violations)
-    allowed_kinds = @condition_restrictions["allowed_kinds"]
+    banned_kinds = @condition_restrictions["banned_kinds"]
 
     @nodes.each_value do |node|
       next unless node["type"] == "condition"
       kind = node.dig("data", "kind")
 
-      if allowed_kinds && !allowed_kinds.include?(kind)
-        violations << { type: "condition_kind", message: "Bot uses condition kind '#{kind}' (not allowed in this tournament)" }
+      if banned_kinds&.include?(kind)
+        violations << { type: "condition_kind", message: "Bot uses banned condition kind '#{kind}'" }
         next
       end
 

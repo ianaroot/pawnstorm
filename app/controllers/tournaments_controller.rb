@@ -185,6 +185,7 @@ class TournamentsController < ApplicationController
     @entries_per_user = creation.entries_per_user
     @max_entries = creation.max_entries
     @games_per_pair = creation.games_per_pair
+    @constraints = creation.constraints
   end
 
   def setup_params
@@ -192,6 +193,32 @@ class TournamentsController < ApplicationController
   end
 
   def tournament_params
-    params.fetch(:tournament, {}).permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
+    base = params.fetch(:tournament, {}).permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
+    base[:constraints] = permitted_constraints
+    base
+  end
+
+  def permitted_constraints
+    raw = params.dig(:tournament, :constraints) || {}
+    return nil if raw.blank?
+
+    c = {}
+    c["allow_and"] = false if raw[:allow_and] == "false"
+    c["allow_or"]  = false if raw[:allow_or]  == "false"
+
+    c["max_score_nodes"]  = raw[:max_score_nodes].to_i  if raw[:max_score_nodes].present?
+    c["max_branch_length"] = raw[:max_branch_length].to_i if raw[:max_branch_length].present?
+    c["budget"]           = raw[:budget].to_i           if raw[:budget].present?
+
+    costs = (raw[:costs] || {}).filter_map { |k, v| [k.to_s, v.to_i] if v.present? && v.to_i > 0 }.to_h
+    c["costs"] = costs if costs.any?
+
+    banned_types = Array(raw.dig(:score_node_restrictions, :banned_action_types)).reject(&:blank?)
+    c["score_node_restrictions"] = { "banned_action_types" => banned_types } if banned_types.any?
+
+    banned_kinds = Array(raw.dig(:condition_restrictions, :banned_kinds)).reject(&:blank?)
+    c["condition_restrictions"] = { "banned_kinds" => banned_kinds } if banned_kinds.any?
+
+    c.presence
   end
 end
