@@ -306,7 +306,8 @@ class BoardStatePreview {
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
-    const legendEntries = this.mode === 'selection'
+    const isChain = this.examples[0]?.highlights?.prior?.relationPositions?.length > 0
+    const legendEntries = this.mode === 'selection' || isChain
       ? [
           { swatchClass: 'mini-board__tile--relation', label: 'Relation piece' },
           { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
