@@ -2338,6 +2338,20 @@
   background-color: rgba(251, 191, 36, 0.3);
 }
 
+.mini-board__tile--subject.mini-board__tile--moved-start,
+.mini-board__tile--subject.mini-board__tile--moved-end {
+  background-color: rgba(192, 132, 252, 0.3);
+  outline: none;
+  box-shadow: inset 0 0 0 4px #c084fc, inset 0 0 0 8px #fbbf24;
+}
+
+.mini-board__tile--target.mini-board__tile--moved-start,
+.mini-board__tile--target.mini-board__tile--moved-end {
+  background-color: rgba(74, 222, 128, 0.3);
+  outline: none;
+  box-shadow: inset 0 0 0 4px #4ade80, inset 0 0 0 8px #fbbf24;
+}
+
 /* Piece glyphs — explicit team colors with contrasting shadow */
 .mini-piece {
   display: block;

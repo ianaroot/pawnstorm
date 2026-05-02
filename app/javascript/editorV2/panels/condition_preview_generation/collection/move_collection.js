@@ -298,7 +298,7 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
       subjectPositions: [...priorSubject],
       targetPositions: [...priorTarget],
       movedStartPosition: moveObject.startPosition,
-      movedEndPosition: null
+      movedEndPosition: moveObject.endPosition
     },
     after: {
       subjectPositions: [...afterSubject],
