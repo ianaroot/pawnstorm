@@ -32,8 +32,8 @@ function speciesAttacksFrom({ species, origin, currentPieces }) {
   return new Set(controlledSquares({ board, attackerPosition: origin }))
 }
 
-function originsThatReach({ destination, species, occupied }) {
-  return originCandidatesForSpecies(destination, species).filter(p => p !== destination && !occupied.has(p))
+function originsThatReach({ destination, species, occupied, team = Board.WHITE }) {
+  return originCandidatesForSpecies(destination, species, team).filter(p => p !== destination && !occupied.has(p))
 }
 
 function controlledFromPosition({ position, currentPieces }) {
@@ -41,12 +41,12 @@ function controlledFromPosition({ position, currentPieces }) {
   return new Set(controlledSquares({ board, attackerPosition: position }))
 }
 
-function relationDestinations({ operator, anchorPosition, species, currentPieces, occupiedExtras = new Set() }) {
+function relationDestinations({ operator, anchorPosition, species, currentPieces, occupiedExtras = new Set(), team = Board.WHITE }) {
   const occupied = new Set([...currentPieces.keys(), ...occupiedExtras])
   switch (operator) {
     case 'attack':
     case 'defend':
-      return originCandidatesForSpecies(anchorPosition, species)
+      return originCandidatesForSpecies(anchorPosition, species, team)
         .filter(p => p !== anchorPosition && !occupied.has(p))
     case 'adjacent':
       return adjacentNeighborPositions(anchorPosition)
@@ -150,7 +150,7 @@ function generateShieldDecreaseCapture({ driver, combinedPlan, random }) {
   if (!moverSpecies) { return null }
 
   const occupiedKeys = new Set(pieces.keys())
-  const origins = shuffled(originsThatReach({ destination: shielderPos, species: moverSpecies, occupied: occupiedKeys }), random)
+  const origins = shuffled(originsThatReach({ destination: shielderPos, species: moverSpecies, occupied: occupiedKeys, team: movingTeam }), random)
   for (const origin of origins) {
     const trial = placePiece(pieces, origin, pieceCode(movingTeam, moverSpecies))
     if (!trial) { continue }
@@ -185,14 +185,14 @@ function generateMoverBecomesSubject({ driver, combinedPlan, random }) {
 
   const occupiedKeys = new Set(pieces.keys())
   const endCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces }),
+    relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces, team: movingTeam }),
     random
   )
 
   for (const moverEnd of endCandidates) {
     // Find an origin that reaches moverEnd but doesn't have the relation to target.
-    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...occupiedKeys, moverEnd]) })
-    const relationOrigins = new Set(relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces }))
+    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...occupiedKeys, moverEnd]), team: movingTeam })
+    const relationOrigins = new Set(relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces, team: movingTeam }))
     const validOrigins = shuffled(reachOrigins.filter(p => !relationOrigins.has(p)), random)
 
     for (const origin of validOrigins) {
@@ -230,7 +230,7 @@ function generateMoverLeavesSubject({ driver, combinedPlan, random }) {
   // Mover at origin has relation to target.
   const occupiedKeys = new Set(pieces.keys())
   const originCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces }),
+    relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: pieces, team: movingTeam }),
     random
   )
 
@@ -240,7 +240,7 @@ function generateMoverLeavesSubject({ driver, combinedPlan, random }) {
 
     // End: somewhere mover can legally move to that doesn't have the relation to target.
     const moverFromOrigin = controlledFromPosition({ position: moverOrigin, currentPieces: trial })
-    const relationDests = new Set(relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: trial }))
+    const relationDests = new Set(relationDestinations({ operator: plan.operator, anchorPosition: targetPos, species: moverSpecies, currentPieces: trial, team: movingTeam }))
     const endCandidates = shuffled([...moverFromOrigin].filter(p => p !== moverOrigin && !trial.has(p) && !relationDests.has(p)), random)
 
     for (const moverEnd of endCandidates) {
@@ -274,14 +274,14 @@ function generateMoverBecomesTarget({ driver, combinedPlan, random }) {
   if (!moverSpecies) { return null }
 
   const endCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
+    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces, team: plan.subjectTeam }),
     random
   )
 
   for (const moverEnd of endCandidates) {
     if (pieces.has(moverEnd)) { continue }
-    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }))
-    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...pieces.keys(), moverEnd]) })
+    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces, team: plan.subjectTeam }))
+    const reachOrigins = originsThatReach({ destination: moverEnd, species: moverSpecies, occupied: new Set([...pieces.keys(), moverEnd]), team: movingTeam })
     const validOrigins = shuffled(reachOrigins.filter(p => !relationEnds.has(p)), random)
 
     for (const moverOrigin of validOrigins) {
@@ -317,7 +317,7 @@ function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
   if (!moverSpecies) { return null }
 
   const originCandidates = shuffled(
-    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces }),
+    relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: pieces, team: plan.subjectTeam }),
     random
   )
 
@@ -326,7 +326,7 @@ function generateMoverLeavesTarget({ driver, combinedPlan, random }) {
     if (!trial) { continue }
 
     const moverFromOrigin = controlledFromPosition({ position: moverOrigin, currentPieces: trial })
-    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: trial }))
+    const relationEnds = new Set(relationDestinations({ operator: plan.operator, anchorPosition: subjectPos, species: subjectSpecies, currentPieces: trial, team: plan.subjectTeam }))
     const endCandidates = shuffled([...moverFromOrigin].filter(p => p !== moverOrigin && !trial.has(p) && !relationEnds.has(p)), random)
 
     for (const moverEnd of endCandidates) {
@@ -381,7 +381,8 @@ function generateCaptureDecreasesRelation({ driver, combinedPlan, random }) {
       operator: plan.operator,
       anchorPosition: anchorPos,
       species: anchorSide === 'subject' ? anchorSpecies : capturedSpecies,
-      currentPieces: pieces
+      currentPieces: pieces,
+      team: anchorSide === 'subject' ? anchorTeam : capturedTeam
     }),
     random
   )
@@ -396,7 +397,7 @@ function generateCaptureDecreasesRelation({ driver, combinedPlan, random }) {
     if (!moverSpecies) { continue }
 
     const moverOrigins = shuffled(
-      originsThatReach({ destination: capturedPos, species: moverSpecies, occupied: new Set(piecesWithCaptured.keys()) }),
+      originsThatReach({ destination: capturedPos, species: moverSpecies, occupied: new Set(piecesWithCaptured.keys()), team: movingTeam }),
       random
     )
 
@@ -509,7 +510,7 @@ function generateMoverBlocksRay({ driver, combinedPlan, random }) {
   if (!moverSpecies) { return null }
 
   const moverOrigins = shuffled(
-    originsThatReach({ destination: blockSquare, species: moverSpecies, occupied: new Set(pieces.keys()) }),
+    originsThatReach({ destination: blockSquare, species: moverSpecies, occupied: new Set(pieces.keys()), team: movingTeam }),
     random
   )
 

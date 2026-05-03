@@ -616,7 +616,7 @@ export function resolveViaHints({ combinedPlan, random }) {
   // Strategy: pick any moving-team piece's after-position; find an origin from
   // which it could move there. Then construct prior board.
   for (const { position: endPos, species } of shuffled(piecesByTeam, random)) {
-    const origins = shuffled(originCandidatesForSpecies(endPos, species), random)
+    const origins = shuffled(originCandidatesForSpecies(endPos, species, movingTeam), random)
     for (const origin of origins) {
       if (origin === endPos) { continue }
       if (pieces.has(origin)) { continue }

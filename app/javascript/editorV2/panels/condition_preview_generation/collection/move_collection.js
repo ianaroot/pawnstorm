@@ -40,7 +40,7 @@ const MAX_EXAMPLES_PER_SEED = 3
 
 function buildEnemyRecentMoveContext(endPosition, species, enemyTeam, capturedSpecies, movingTeam, random) {
   const candidates = shuffled(
-    originCandidatesForSpecies(endPosition, species).filter(p => p !== endPosition),
+    originCandidatesForSpecies(endPosition, species, enemyTeam).filter(p => p !== endPosition),
     random
   )
   const startPosition = candidates.length > 0 ? candidates[0] : endPosition
@@ -113,7 +113,7 @@ export function collectVerifiedMoves({
   const afterLayout = buildLayoutFromPieces(piecesWithKings)
   const afterBoard = buildBoardFromLayout(afterLayout)
 
-  const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies), random)
+  const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies, movingTeam), random)
   const moves = []
 
   for (const originPosition of originCandidates) {

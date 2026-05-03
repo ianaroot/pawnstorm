@@ -17,10 +17,24 @@ export function positionsForSliderOrigins(endPosition, steps) {
   return origins
 }
 
-export function originCandidatesForSpecies(endPosition, species) {
+// Pawn origin candidates depend on team: white pawns came from south of
+// endPosition (rank - 1), black pawns from north (rank + 1). Diagonal capture
+// origins are included so en-passant and regular pawn captures can be
+// reconstructed by Rules.getMoveObject. File-wrap protected so a-file/h-file
+// don't pull in cross-file diagonals.
+export function originCandidatesForSpecies(endPosition, species, team = Board.WHITE) {
   switch (species) {
-    case Board.PAWN:
-      return [endPosition - 8, endPosition - 16].filter(position => Board._inBounds(position))
+    case Board.PAWN: {
+      const file = endPosition % 8
+      const dir = team === Board.BLACK ? 1 : -1
+      const candidates = [
+        endPosition + 8 * dir,   // forward one
+        endPosition + 16 * dir   // forward two (initial double)
+      ]
+      if (file > 0) { candidates.push(endPosition + 8 * dir - 1) }  // diagonal capture from file - 1
+      if (file < 7) { candidates.push(endPosition + 8 * dir + 1) }  // diagonal capture from file + 1
+      return candidates.filter(position => Board._inBounds(position))
+    }
     case Board.NIGHT:
       return knightControlledSquares(endPosition)
     case Board.BISHOP:

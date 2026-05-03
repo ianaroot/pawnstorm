@@ -118,7 +118,7 @@ export function collectLegalReverseMoves({
   const afterLayout = buildLayoutFromPieces(piecesWithKings)
   const afterBoard = buildBoardFromLayout(afterLayout, recentMoveContext)
 
-  const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies), random)
+  const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies, Board.WHITE), random)
   const moves = []
   for (let index = 0; index < originCandidates.length; index += 1) {
     const originPosition = originCandidates[index]
@@ -184,7 +184,7 @@ export function legalPriorTurnState(priorBoard, moveObject) {
 export function buildRecentMoveContext({ team, species = Board.PAWN, endPosition = null, capturedSpecies = null, random }) {
   const finalEnd = endPosition ?? Math.floor(random() * 64)
   const candidates = shuffled(
-    originCandidatesForSpecies(finalEnd, species).filter(p => p !== finalEnd),
+    originCandidatesForSpecies(finalEnd, species, team).filter(p => p !== finalEnd),
     random
   )
   const startPosition = candidates[0] ?? finalEnd

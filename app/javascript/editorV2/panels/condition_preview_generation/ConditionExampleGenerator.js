@@ -199,6 +199,7 @@ function emitStats(options, payloadArray, produced, finalExamples, startTime) {
   if (!onComplete) { return }
   const survived = emptyPipelineCounter()
   for (const example of finalExamples) {
+    if (example.enriched) { continue }
     if (example.generationPath in survived) {
       survived[example.generationPath] += 1
     }

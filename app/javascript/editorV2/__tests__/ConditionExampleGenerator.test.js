@@ -1013,7 +1013,14 @@ describe('ConditionExampleGenerator', () => {
       subjectComparisonSource: 'enemy_captured_piece'
     }
 
-    const preview = generateConditionExamples(payload, { random: seededRandom(22) })
+    // Restrict to standard moves: en-passant examples don't carry a
+    // capturedPieceSpecies in recentMoveContext (the prior turn was a
+    // double-move, no capture), so they wouldn't demonstrate the
+    // enemy_captured_piece value-comparison path this test verifies.
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(22),
+      moveKinds: ['standard']
+    })
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
@@ -1126,6 +1133,82 @@ describe('ConditionExampleGenerator', () => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.moveObject.additionalActions).toBeTruthy()
       expect(example.moveObject.pieceNotation).toMatch(/^O-O/)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces en-passant examples for a chain where moved_piece IS the relation subject (involved variant)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(8001),
+      moveKinds: ['en_passant']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    const enPassantExamples = preview.examples.filter(ex => ex.moveKind === 'en_passant')
+    expect(enPassantExamples.length).toBeGreaterThan(0)
+    enPassantExamples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.additionalActions).toBeTruthy()
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces en-passant examples for a chain where captured_piece (not moved_piece) is the relation subject (separate variant)', () => {
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'captured_piece', subjectFilter: 'pawn',
+      subjectFilterMode: 'include',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(8002),
+      moveKinds: ['en_passant']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    const enPassantExamples = preview.examples.filter(ex => ex.moveKind === 'en_passant')
+    expect(enPassantExamples.length).toBeGreaterThan(0)
+    enPassantExamples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.additionalActions).toBeTruthy()
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces en-passant examples for a chain referencing neither moved_piece nor captured_piece', () => {
+    // The condition is about the enemy king's count — independent of which
+    // move occurred. En-passant should still appear in the example mix.
+    const payload = {
+      version: 2, kind: 'unary',
+      subject: 'enemy', subjectFilter: 'king',
+      subjectFilterMode: 'include',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(8003),
+      moveKinds: ['en_passant']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    const enPassantExamples = preview.examples.filter(ex => ex.moveKind === 'en_passant')
+    expect(enPassantExamples.length).toBeGreaterThan(0)
+    enPassantExamples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.additionalActions).toBeTruthy()
       expectLegalPriorTurnState(example)
     })
   })
