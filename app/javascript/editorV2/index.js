@@ -131,17 +131,17 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     deleteConnection: (clientId) => syncManager.deleteConnection(clientId),
     updateNodeData: (clientId, data) => syncManager.updateNodeData(clientId, data),
     
-    // Undo/redo - async because they sync with server
+    // Undo/redo - delegate to EditorActions so all callers share one code path
     undo: async () => {
-      await syncManager.undo()
+      await editorActions.undo()
       toolbarHandler.updateButtons()
     },
     redo: async () => {
-      await syncManager.redo()
+      await editorActions.redo()
       toolbarHandler.updateButtons()
     },
-    canUndo: () => history.canUndo() && !syncManager.isUndoRedoPending,
-    canRedo: () => history.canRedo() && !syncManager.isUndoRedoPending,
+    canUndo: () => editorActions.canUndo(),
+    canRedo: () => editorActions.canRedo(),
     
     // Selection
     getSelectedNode: () => clickHandler.getSelectedNodeId(),

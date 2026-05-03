@@ -91,9 +91,6 @@ class KeyboardHandler {
     }
   }
 
-  canUndo() { return this.actions?.canUndo() ?? false }
-  canRedo() { return this.actions?.canRedo() ?? false }
-
   destroy() {
     this.detach()
   }

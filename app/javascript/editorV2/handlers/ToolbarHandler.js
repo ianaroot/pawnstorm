@@ -282,11 +282,6 @@ class ToolbarHandler {
       this.editorRoot.dataset.editorBotDescriptionValue = description
     }
   }
-  
-
-  // destroy() {
-  //   // Event listeners are on document elements, cleaned up automatically
-  // }
 }
 
 export default ToolbarHandler

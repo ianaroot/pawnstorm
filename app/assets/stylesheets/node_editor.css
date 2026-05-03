@@ -318,7 +318,7 @@
   position: absolute;
   width: var(--connection-delete-button-size);
   height: var(--connection-delete-button-size);
-  background: #EF4444;
+  background: #e94560;
   color: white;
   border: none;
   border-radius: 50%;

@@ -150,7 +150,7 @@ class ConnectionRenderer {
         break
 
       case EVENTS.NODE_REMOVE:
-        this.removeConnectionsForNode(data.clientId)
+        this.pruneOrphanedConnections()
         break
 
       case EVENTS.GRAPH_REPLACE:
@@ -249,23 +249,9 @@ class ConnectionRenderer {
 
     const deleteBtn = document.createElement('button')
     deleteBtn.className = 'connection-delete-btn'
-    deleteBtn.textContent = ''
     deleteBtn.setAttribute('aria-label', 'Delete connection')
-    deleteBtn.style.cssText = `
-      position: absolute;
-      left: ${sceneMidpoint.x}px;
-      top: ${sceneMidpoint.y}px;
-      background: #e94560;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      line-height: 1;
-      display: none;
-      pointer-events: auto;
-      transform: translate(-50%, -50%);
-      z-index: 100;
-    `
+    deleteBtn.style.left = `${sceneMidpoint.x}px`
+    deleteBtn.style.top = `${sceneMidpoint.y}px`
     deleteBtn.dataset.clientId = clientId
     deleteBtn.dataset.sourceId = sourceId
     deleteBtn.dataset.targetId = targetId
@@ -361,7 +347,7 @@ class ConnectionRenderer {
     elements.deleteBtn?.remove()
   }
 
-  removeConnectionsForNode(clientId) {
+  pruneOrphanedConnections() {
     this.elements.forEach((elements, connClientId) => {
       const conn = this.store.getConnection(connClientId)
       if (!conn) {

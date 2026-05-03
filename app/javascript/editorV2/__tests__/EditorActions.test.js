@@ -534,6 +534,44 @@ describe('EditorActions', () => {
     })
   })
 
+  // ===== undo / redo =====
+
+  describe('undo / redo', () => {
+    it('undo calls syncManager.undo when allowed', async () => {
+      await editorActions.undo()
+      expect(syncManager.undo).toHaveBeenCalled()
+    })
+
+    it('undo is a no-op when history.canUndo() returns false', async () => {
+      history.canUndo.mockReturnValue(false)
+      await editorActions.undo()
+      expect(syncManager.undo).not.toHaveBeenCalled()
+    })
+
+    it('undo is a no-op when an undo/redo is already pending', async () => {
+      syncManager.isUndoRedoPending = true
+      await editorActions.undo()
+      expect(syncManager.undo).not.toHaveBeenCalled()
+    })
+
+    it('redo calls syncManager.redo when allowed', async () => {
+      await editorActions.redo()
+      expect(syncManager.redo).toHaveBeenCalled()
+    })
+
+    it('redo is a no-op when history.canRedo() returns false', async () => {
+      history.canRedo.mockReturnValue(false)
+      await editorActions.redo()
+      expect(syncManager.redo).not.toHaveBeenCalled()
+    })
+
+    it('redo is a no-op when an undo/redo is already pending', async () => {
+      syncManager.isUndoRedoPending = true
+      await editorActions.redo()
+      expect(syncManager.redo).not.toHaveBeenCalled()
+    })
+  })
+
   // ===== canUndo / canRedo =====
 
   describe('canUndo / canRedo', () => {
