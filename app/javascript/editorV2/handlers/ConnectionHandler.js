@@ -119,16 +119,12 @@ class ConnectionHandler {
   
   handlePointerUp(event) {
     if (!this.eventMatchesActivePointer(event)) { return }
-    
-    // Check if we're over an input connector
+
     const releaseTarget = this.releaseTargetFor(event)
-    const inputConnector = releaseTarget?.closest?.('.node-connector.input')
-    if (inputConnector && this.sourceClientId) {
-      const targetNode = inputConnector.closest('.node')
-      const targetClientId = targetNode?.dataset.clientId
-      
+    const targetNode = releaseTarget?.closest?.('.node')
+    if (targetNode?.querySelector('.node-connector.input') && this.sourceClientId) {
+      const targetClientId = targetNode.dataset.clientId
       if (targetClientId && targetClientId !== this.sourceClientId) {
-        // Valid target - create connection
         this.finishConnection(this.sourceClientId, targetClientId)
       }
     }

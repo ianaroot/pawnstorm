@@ -305,12 +305,29 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
     aggregatedResult.subjectPositions.forEach(p => priorSubject.add(p))
   }
 
+  if (combinedPlan.plans.length > 1) {
+    const priorRelation = [...new Set([...priorSubject, ...priorTarget])]
+    const afterRelation = [...new Set([...afterSubject, ...afterTarget])]
+    return {
+      prior: {
+        relationPositions: priorRelation,
+        movedStartPosition: moveObject.startPosition,
+        movedEndPosition: moveObject.endPosition
+      },
+      after: {
+        relationPositions: afterRelation,
+        movedStartPosition: null,
+        movedEndPosition: moveObject.endPosition
+      }
+    }
+  }
+
   return {
     prior: {
       subjectPositions: [...priorSubject],
       targetPositions: [...priorTarget],
       movedStartPosition: moveObject.startPosition,
-      movedEndPosition: null
+      movedEndPosition: moveObject.endPosition
     },
     after: {
       subjectPositions: [...afterSubject],

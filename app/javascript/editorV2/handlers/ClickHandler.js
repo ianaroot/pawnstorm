@@ -1,8 +1,5 @@
 import ConditionForm from 'editorV2/panels/ConditionForm'
 import { EVENTS } from 'editorV2/constants'
-import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
-import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
-import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
@@ -12,7 +9,6 @@ class ClickHandler {
     
     this.boundHandleClick = this.handleClick.bind(this)
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this)
-    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
     this.boundHandleSave = this.handleSave.bind(this)
     this.boundHandleCancel = this.closeEditor.bind(this)
     this.boundHandleStoreUpdate = this.handleStoreUpdate.bind(this)
@@ -20,10 +16,9 @@ class ClickHandler {
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
-    
+
     // Currently editing node
     this.editingNodeId = null
-    this._chainPreviewTimer = null
 
     // Callbacks
     this.onNodeSelected = null
@@ -52,11 +47,7 @@ class ClickHandler {
   
   // * Setup global handlers * Call this once after all nodes are attached
   setupGlobalHandlers() {
-    // Document click: deselect when clicking outside nodes
     document.addEventListener('click', this.boundHandleClick)
-    
-    // Keyboard: delete selected node
-    document.addEventListener('keydown', this.boundHandleKeyDown)
   }
 
   setEditorPanel(panel) {
@@ -79,7 +70,7 @@ class ClickHandler {
     if (this.store.getSelectedNodeIds().length > 1) {
       if (this.editingNodeId) { this._hideEditorPanel() }
       if (this.boardStatePreview?.mode !== 'idle' && this.boardStatePreview?.isEnabled) {
-        this.renderSelectionPreview()
+        this.actions?.renderSelectionPreview()
       }
     }
   }
@@ -119,54 +110,6 @@ class ClickHandler {
         this.openEditor(clientId)
       }
     }
-  }
-
-  handleKeyDown(event) {
-    if (event.key.toLowerCase() === 'p') {
-      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
-      if (this.isEditableTarget(event.target)) { return }
-      event.preventDefault()
-      if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
-        this.boardStatePreview.toggle()
-      } else if (this.store.getSelectedNodeIds().length > 1) {
-        this.boardStatePreview.isEnabled = true
-        this.renderSelectionPreview()
-      } else if (this.editingNodeId && this.conditionForm) {
-        this.boardStatePreview?.activate(this.conditionForm)
-      }
-      return
-    }
-
-    if (event.key === 'Enter') {
-      if (this.isTextareaTarget(event.target) && event.shiftKey) { return }
-      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) { return }
-      if (this.editingNodeId) {
-        event.preventDefault()
-        this.handleSave()
-      }
-      return
-    }
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-        return
-      }
-      if (this.getDeletableSelectedNodeIds().length > 0) {
-        this.deleteSelectedNodes()
-      }
-    }
-    // Escape: close editor panel
-    if (event.key === 'Escape') {
-      this.closeEditor()
-    }
-  }
-
-  isTextareaTarget(target) {
-    return target?.tagName === 'TEXTAREA'
-  }
-
-  isEditableTarget(target) {
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable
   }
 
   selectNode(clientId, element, { additive = false } = {}) {
@@ -237,8 +180,7 @@ class ClickHandler {
   }
   
   _hideEditorPanel() {
-    clearTimeout(this._chainPreviewTimer)
-    this._chainPreviewTimer = null
+    this.actions?.cancelPreviewTimer()
     this.editingNodeId = null
     this.store.setEditingNode(null)
     if (this.editorPanel) {
@@ -248,7 +190,7 @@ class ClickHandler {
 
   closeEditor() {
     this._hideEditorPanel()
-    this.boardStatePreview?.deactivate()
+    this.actions?.deactivatePreview()
   }
 
   setBoardStatePreview(preview) {
@@ -263,44 +205,6 @@ class ClickHandler {
     conditionForm?.classList.toggle('hidden', !isPreviewOnly && this.store.getNode(this.editingNodeId)?.type !== 'condition')
     conditionLayout?.classList.toggle('hidden', isPreviewOnly)
     conditionFormulation?.classList.toggle('hidden', isPreviewOnly)
-  }
-
-  buildSelectionPreview() {
-    return buildSelectedConditionChain({
-      selectedNodeIds: this.store.getSelectedNodeIds(),
-      getNode: (clientId) => this.store.getNode(clientId),
-      internalConnections: this.store.getInternalConnections(this.store.getSelectedNodeIds())
-    })
-  }
-
-  showSelectionPreviewPanel(preview) {
-    this.editorPanel?.classList.remove('hidden')
-    this.boardStatePreview?.showSelectionPreview(preview)
-  }
-
-  renderSelectionPreview() {
-    const chain = this.buildSelectionPreview()
-    if (chain.status !== 'ready') {
-      this.showSelectionPreviewPanel({ status: chain.status, reason: chain.reason, examples: [] })
-      return
-    }
-
-    const conditionLabels = chain.payloads.length >= 2
-      ? chain.payloads.map(p => formatConditionPreview(p).text)
-      : []
-
-    this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
-    clearTimeout(this._chainPreviewTimer)
-    this._chainPreviewTimer = setTimeout(() => {
-      try {
-        const preview = generateConditionExamples(chain.payloads)
-        preview.conditionLabels = conditionLabels
-        this.showSelectionPreviewPanel(preview)
-      } catch (e) {
-        console.error('generateConditionExamples threw:', e)
-        this.showSelectionPreviewPanel({ status: 'no_examples', reason: "An error occurred generating the preview.", examples: [], payloadCount: chain.payloads.length })
-      }
-    }, 0)
   }
 
   // ===== Editor Panel Population =====
@@ -339,11 +243,11 @@ class ClickHandler {
         this.populateConditionForm(node)
         break
       case 'score':
-        this.boardStatePreview?.deactivate()
+        this.actions?.deactivatePreview()
         this.populateActionEditor(node)
         break
       case 'organizer':
-        this.boardStatePreview?.deactivate()
+        this.actions?.deactivatePreview()
         this.populateOrganizerEditor(node)
         break
       default:
@@ -353,8 +257,8 @@ class ClickHandler {
 
   populateConditionForm(node) {
     this.conditionForm?.populate(node.data)
-    if (this.boardStatePreview && this.conditionForm) {
-      this.boardStatePreview.activate(this.conditionForm)
+    if (this.conditionForm) {
+      this.actions?.activateConditionPreview(this.conditionForm)
     }
   }
 
@@ -412,18 +316,7 @@ class ClickHandler {
   }
 
   async handleSave() {
-    if (!this.editingNodeId) { return }
-    const node = this.store.getNode(this.editingNodeId)
-    if (!node || !this.syncManager) { return }
-    try {
-      const payload = this.buildDataPayloadByType(node)
-      if (payload) {
-        await this.syncManager.updateNodeData(this.editingNodeId, payload)
-      }
-      this.closeEditor()
-    } catch (error) {
-      console.error('Failed to save node:', error)
-    }
+    await this.actions?.save()
   }
 
   getSelectedNodeIds() {
@@ -437,43 +330,6 @@ class ClickHandler {
     })
   }
 
-  async deleteSelectedNodes() {
-    const selectedNodeIds = this.getSelectedNodeIds()
-    const deletableNodeIds = this.getDeletableSelectedNodeIds()
-    if (deletableNodeIds.length === 0) { return }
-    const confirmationMessage = deletableNodeIds.length === 1
-      ? 'Delete 1 selected node?'
-      : `Delete ${deletableNodeIds.length} selected nodes?`
-    if (!confirm(confirmationMessage)) { return }
-    try {
-      await this.syncManager?.deleteNodes(deletableNodeIds) 
-      const remainingSelectedIds = selectedNodeIds.filter(clientId => !deletableNodeIds.includes(clientId))
-      this.store.setSelectedNodeIds(remainingSelectedIds)
-      this.syncSelectionClasses()
-
-      if (this.editingNodeId && deletableNodeIds.includes(this.editingNodeId)) {
-        this.closeEditor()
-      }
-
-      if (remainingSelectedIds.length > 0) {
-        this.onNodeSelected?.(remainingSelectedIds[0])
-      } else {
-        this.onNodeDeselected?.()
-      }
-    } catch (error) {
-      console.error('Failed to delete node:', error)
-    }
-  }
-
-  async deleteSelectedNode() {
-    return this.deleteSelectedNodes()
-  }
-  
-
-  setSyncManager(syncManager) {
-    this.syncManager = syncManager
-  }
-
   getSelectedNodeId() {
     return this.store.getPrimarySelectedNode()
   }
@@ -484,10 +340,9 @@ class ClickHandler {
 
   destroy() {
     document.removeEventListener('click', this.boundHandleClick)
-    document.removeEventListener('keydown', this.boundHandleKeyDown)
     this.conditionForm?.detach()
     this.unsubscribeStore?.()
-    clearTimeout(this._chainPreviewTimer)
+    this.actions?.cancelPreviewTimer()
     this.attachedElements = new WeakMap()
     this.editingNodeId = null
   }

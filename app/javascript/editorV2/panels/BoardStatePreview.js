@@ -1,4 +1,5 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
+import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 
@@ -132,7 +133,7 @@ class BoardStatePreview {
 
     this.toggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation()
-      this.toggle()
+      this.actions?.togglePreview()
     })
     this.mode = 'idle'
     this.selectionPreview = null
@@ -204,7 +205,9 @@ class BoardStatePreview {
     this._stopCycle()
     this._applyPreview({ status: 'loading', reason: 'Computing preview…', examples: [] })
     this._generationTimer = setTimeout(() => {
-      this._applyPreview(generateConditionExamples(payload))
+      const preview = generateConditionExamples(payload)
+      preview.conditionLabels = [formatConditionPreview(payload).text]
+      this._applyPreview(preview)
     }, 0)
   }
 
@@ -251,6 +254,7 @@ class BoardStatePreview {
 
     if (this.status !== 'ready') {
       this.content.appendChild(this.buildMessage())
+      this._appendChain()
       return
     }
 
@@ -306,7 +310,8 @@ class BoardStatePreview {
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
-    const legendEntries = this.mode === 'selection'
+    const isChain = (this.conditionLabels?.length ?? 0) > 1
+    const legendEntries = this.mode === 'selection' || isChain
       ? [
           { swatchClass: 'mini-board__tile--relation', label: 'Relation piece' },
           { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
@@ -375,17 +380,20 @@ class BoardStatePreview {
     body.appendChild(side)
     this.content.appendChild(body)
 
-    if (this.conditionLabels?.length >= 2) {
-      const chain = document.createElement('ol')
-      chain.className = 'board-state-preview__chain'
-      this.conditionLabels.forEach(label => {
-        const item = document.createElement('li')
-        item.className = 'board-state-preview__chain-item'
-        item.textContent = label
-        chain.appendChild(item)
-      })
-      this.content.appendChild(chain)
-    }
+    this._appendChain()
+  }
+
+  _appendChain() {
+    if (!this.conditionLabels?.length) { return }
+    const chain = document.createElement('ol')
+    chain.className = 'board-state-preview__chain'
+    this.conditionLabels.forEach(label => {
+      const item = document.createElement('li')
+      item.className = 'board-state-preview__chain-item'
+      item.textContent = label
+      chain.appendChild(item)
+    })
+    this.content.appendChild(chain)
   }
 
   // ── Animation cycle ────────────────────────────────────────────────────────
