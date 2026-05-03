@@ -2,9 +2,9 @@ class TournamentsController < ApplicationController
   include ConstraintsParams
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
-  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility, :edit, :update, :open_registration]
   before_action :authorize_public_tournament_access!, only: [:show, :pairing]
-  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
+  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start, :edit, :update, :open_registration]
 
   def index
     @filter_params = params.permit(:name, :status, :owner, :my_entries)
@@ -19,6 +19,25 @@ class TournamentsController < ApplicationController
   def new
     creation = Tournaments::CreateTournament.new(user: current_user, params: setup_params)
     assign_form_state(creation)
+  end
+
+  def edit
+    assign_form_state_from_tournament
+  end
+
+  def update
+    unless @tournament.status_draft?
+      return redirect_to tournament_show_path(@tournament), alert: 'Tournament settings are locked once opened.'
+    end
+
+    updater = Tournaments::UpdateTournament.new(tournament: @tournament, params: tournament_params)
+    if updater.call
+      redirect_to tournament_show_path(@tournament), notice: 'Tournament updated.'
+    else
+      assign_form_state_from_tournament
+      flash.now[:alert] = updater.error_message
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   def create
@@ -42,6 +61,10 @@ class TournamentsController < ApplicationController
 
   def show_by_invite
     @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    if @tournament.status_draft? && @tournament.creator != current_user
+      head :not_found
+      return
+    end
     @tournament_poll_url = invitation_tournament_path(@tournament.invite_token, format: :json)
     @invite_token = @tournament.invite_token
     assign_show_state
@@ -72,6 +95,14 @@ class TournamentsController < ApplicationController
   def resume
     @tournament.resume!
     redirect_to tournament_show_path(@tournament), notice: 'Tournament resumed.'
+  end
+
+  def open_registration
+    unless @tournament.status_draft?
+      return redirect_to tournament_show_path(@tournament), alert: 'Tournament is not in draft.'
+    end
+    @tournament.update!(status: :open)
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament is now open for entries.'
   end
 
   def start
@@ -122,6 +153,7 @@ class TournamentsController < ApplicationController
 
   helper_method :tournament_show_path
   def tournament_show_path(tournament)
+    return invitation_tournament_path(tournament.invite_token) if tournament.status_draft?
     tournament.visibility_public? ? public_tournament_path(tournament) : invitation_tournament_path(tournament.invite_token)
   end
 
@@ -224,6 +256,16 @@ class TournamentsController < ApplicationController
     @max_entries = creation.max_entries
     @games_per_pair = creation.games_per_pair
     @constraints = creation.constraints
+  end
+
+  def assign_form_state_from_tournament
+    @name = @tournament.name
+    @description = @tournament.description
+    @visibility = @tournament.visibility
+    @entries_per_user = @tournament.entries_per_user
+    @max_entries = @tournament.max_entries
+    @games_per_pair = @tournament.games_per_pair
+    @constraints = @tournament.constraints
   end
 
   def setup_params

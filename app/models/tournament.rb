@@ -10,7 +10,8 @@ class Tournament < ApplicationRecord
     starting: 1,
     running: 2,
     completed: 3,
-    aborted: 4
+    aborted: 4,
+    draft: 5
   }, prefix: true
 
   enum :visibility, {
@@ -32,9 +33,9 @@ class Tournament < ApplicationRecord
   scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
   scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
   scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
-  scope :publicly_visible, -> { visibility_public }
+  scope :publicly_visible, -> { visibility_public.where.not(status: :draft) }
   scope :visible_to, ->(user) {
-    visible = visibility_public
+    visible = publicly_visible
     return visible unless user&.persisted? && !user.guest?
 
     visible.or(where(creator_id: user.id)).or(with_entry_from(user.id))

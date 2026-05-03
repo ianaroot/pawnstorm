@@ -37,7 +37,7 @@ module Tournaments
         max_entries: max_entries,
         games_per_pair: games_per_pair,
         constraints: constraints,
-        status: :open
+        status: :draft
       )
       true
     rescue StandardError => e

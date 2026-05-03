@@ -33,13 +33,14 @@ Rails.application.routes.draw do
 
   resources :eligibility_checks, only: [:create]
 
-  resources :tournaments, only: [:index, :new, :create], constraints: { id: /\d+/ } do
+  resources :tournaments, only: [:index, :new, :create, :edit, :update], constraints: { id: /\d+/ } do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
       post :start
       post :abort
       post :pause
       post :resume
+      post :open_registration
       get :eligible_bots
       get :eligibility
     end

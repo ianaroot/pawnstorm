@@ -471,3 +471,26 @@ details[open] .constraints-summary::after {
   border-color: var(--accent-primary);
   box-shadow: none;
 }
+
+/* ── Tournament Draft Management ──────────────────── */
+
+.tournament-draft {
+  padding: 2rem 0;
+}
+
+.tournament-draft h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.tournament-draft p {
+  color: #9ca3af;
+  margin: 0 0 1.25rem;
+}
+
+.tournament-draft__actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}

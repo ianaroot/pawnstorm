@@ -206,6 +206,12 @@
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
+.tournament-status-pill--draft {
+  background: rgba(167, 139, 250, 0.12);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+}
+
 /* ============================================
    BOT STATUS PILLS
    ============================================ */
