@@ -637,3 +637,7 @@ details[open] .constraints-summary::after {
   color: #f87171;
   font-size: 0.75rem;
 }
+
+.ce-sep {
+  color: #4ade80;
+}

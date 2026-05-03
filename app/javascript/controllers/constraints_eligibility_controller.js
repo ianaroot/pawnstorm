@@ -109,7 +109,10 @@ export default class extends Controller {
   renderRow(result) {
     const name     = this.escapeHtml(result.bot_name)
     const cost     = result.budget != null ? `${result.cost} / ${result.budget}` : result.cost
-    const violations = result.violations.map(v => this.escapeHtml(v.message)).join('; ')
+    const violations = result.violations
+      .filter(v => v.type !== 'budget')
+      .map(v => this.escapeHtml(v.message))
+      .join('<span class="ce-sep"> ; </span>')
 
     return `
       <tr class="ce-row"
