@@ -494,3 +494,146 @@ details[open] .constraints-summary::after {
   gap: 0.75rem;
   align-items: center;
 }
+
+/* ── Constraints Eligibility Checker ──────────────── */
+
+.ce-check-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2d2a26;
+}
+
+.ce-check-btn {
+  padding: 5px 14px;
+  background: #1a1815;
+  color: #d1d5db;
+  border: 1px solid #4b4742;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.ce-check-btn:hover:not(:disabled) {
+  background: #252220;
+  color: #f3f4f6;
+}
+
+.ce-check-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ce-check-note {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+[data-constraints-eligibility-target="panel"] {
+  margin-top: 1rem;
+}
+
+.ce-error,
+.ce-empty {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.ce-error { color: var(--error); }
+
+.ce-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ce-filter-input {
+  padding: 4px 8px;
+  background: #1a1815;
+  border: 1px solid #4b4742;
+  border-radius: 4px;
+  color: #e5e7eb;
+  font-size: 0.8125rem;
+  width: 180px;
+}
+
+.ce-filter-pills {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.ce-pill {
+  padding: 3px 10px;
+  background: transparent;
+  color: #9ca3af;
+  border: 1px solid #3d3a35;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.ce-pill:hover { color: #e5e7eb; }
+
+.ce-pill--active {
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.ce-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.ce-table th {
+  text-align: left;
+  padding: 4px 8px;
+  color: #6b7280;
+  font-weight: 600;
+  border-bottom: 1px solid #2d2a26;
+}
+
+.ce-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #1e1c19;
+  vertical-align: top;
+}
+
+.ce-row:last-child td { border-bottom: none; }
+
+.ce-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.ce-badge--eligible {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.ce-badge--ineligible {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.ce-cost {
+  white-space: nowrap;
+  color: #9ca3af;
+}
+
+.ce-violations {
+  color: #f87171;
+  font-size: 0.75rem;
+}

@@ -74,6 +74,8 @@
     </div>
   </div>
 
+  <div data-controller="constraints-eligibility"
+       data-constraints-eligibility-url-value="<%= eligibility_checks_path %>">
   <details class="constraints-section" <%= "open" if @constraints.present? %>>
     <summary class="constraints-summary">Bot Eligibility Constraints</summary>
     <div class="constraints-body">
@@ -171,7 +173,16 @@
         </div>
 
       </div>
+
+      <div class="ce-check-bar">
+        <button type="button" class="ce-check-btn"
+                data-constraints-eligibility-target="button"
+                data-action="click->constraints-eligibility#check">Check my bots</button>
+        <span class="ce-check-note">Checks against current (unsaved) settings</span>
+      </div>
+      <div data-constraints-eligibility-target="panel" hidden></div>
     </div>
   </details>
+  </div>
 
 <% end %>
