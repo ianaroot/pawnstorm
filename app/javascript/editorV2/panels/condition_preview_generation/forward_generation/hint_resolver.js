@@ -35,7 +35,8 @@ import {
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
-import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY, ALL_SPECIES, INVENTORY_FILTERS } from './chain_constraints'
+import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY, ALL_SPECIES } from './chain_constraints'
+import { respectsInventoryCaps } from './inventory_protocol'
 import { relationCountStrategy } from './strategies/relation_count'
 import { actorCountStrategy } from './strategies/actor_count'
 import { actorAtPositionStrategy } from './strategies/actor_at_position'
@@ -115,7 +116,7 @@ function applyDirectBlock(pieces, hint, ctx) {
 
   let result = pieces
   for (const { position, piece } of matching) {
-    result = restrictMobilityForPiece(result, position, piece, ceiling, movingTeam, random)
+    result = restrictMobilityForPiece(result, position, piece, ceiling, movingTeam, random, ctx)
     if (result === null) { return null }
   }
   return result
@@ -139,6 +140,7 @@ function tryCheckPlusBlock(pieces, hint, ctx) {
 
   const attackerPool = [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN]
   for (const attackerSpecies of shuffled(attackerPool, random)) {
+    if (!respectsInventoryCaps(movingTeam, attackerSpecies, pieces, ctx, 'current')) { continue }
     for (const attackerPos of shuffled([...ALL_POSITIONS], random)) {
       if (attackerPos === kingPos) { continue }
       if (pieces.has(attackerPos)) { continue }
@@ -175,7 +177,7 @@ function tryCheckPlusBlock(pieces, hint, ctx) {
   return null
 }
 
-function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTeam, random) {
+function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTeam, random, ctx) {
   const targetTeam = piece.charAt(0)
   const board = piecesIntoBoard(pieces, targetTeam)
   const moves = Rules.availableMovesFrom({ board, startPosition: position })
@@ -201,6 +203,7 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
       }
     }
     for (const trial of trials) {
+      if (!respectsInventoryCaps(trial.team, trial.species, result, ctx, 'current')) { continue }
       const next = placePiece(result, dest, pieceCode(trial.team, trial.species))
       if (!next) { continue }
       // Verify mobility actually went down.
@@ -322,8 +325,9 @@ function resolvePositionConstraints(pieces, ctx) {
 }
 
 // Pick a species for a positionConstraint subset. Honors filter + filterMode
-// (so 'pawn' with mode='exclude' yields non-pawn candidates). Skips species
-// that would push any inventory cell over its count_range.max.
+// (so 'pawn' with mode='exclude' yields non-pawn candidates). Defers cap
+// checking to respectsInventoryCaps which walks every filter the species
+// belongs to.
 function pickSpeciesForSubset(subset, ctx, pieces) {
   const filter = subset.filter || 'any'
   const filterMode = subset.filterMode || null
@@ -332,26 +336,9 @@ function pickSpeciesForSubset(subset, ctx, pieces) {
 
   const candidates = ALL_SPECIES.filter(species => {
     if (!speciesMatchesFilter(species, filter, filterMode)) { return false }
-    if (!ctx.inventory) { return true }
-    for (const invFilter of INVENTORY_FILTERS) {
-      if (!speciesMatchesFilter(species, invFilter, null)) { continue }
-      const cell = ctx.inventory[team]?.[frame]?.[invFilter]
-      if (!cell) { continue }
-      const current = countTeamFilter(pieces, team, invFilter)
-      if (current >= cell.count_range.max) { return false }
-    }
-    return true
+    return respectsInventoryCaps(team, species, pieces, ctx, frame)
   })
   return pickRandom(candidates, ctx.random)
-}
-
-function countTeamFilter(pieces, team, filter) {
-  let count = 0
-  for (const piece of pieces.values()) {
-    if (piece.charAt(0) !== team) { continue }
-    if (speciesMatchesFilter(piece.slice(1), filter, null)) { count += 1 }
-  }
-  return count
 }
 
 // Build minimum seed from relational plan structure: place at least one subject
@@ -433,6 +420,8 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
       const targetSpecies = pickSpeciesForSide(plan, 'target')
       if (!subjectSpecies || !targetSpecies) { return null }
 
+      if (!respectsInventoryCaps(targetTeam, targetSpecies, pieces, chainConstraints, 'current')) { return null }
+
       // Place target first, then subject in attack range. For singular-actor
       // sides, draw position from the converged position_set so the seed
       // respects sibling position constraints. The seed places tentatively
@@ -444,6 +433,8 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
       let next = placePiece(pieces, targetPos, pieceCode(targetTeam, targetSpecies))
       if (!next) { continue }
       pieces = next
+
+      if (!respectsInventoryCaps(subjectTeam, subjectSpecies, pieces, chainConstraints, 'current')) { return null }
 
       // Find a square from which subjectSpecies attacks targetPos.
       const subjectVarKey = ACTOR_TO_VAR_KEY[plan.subject]
@@ -510,6 +501,7 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
           }
         }
         if (alreadyMatched) { continue }
+        if (!respectsInventoryCaps(team, species, pieces, chainConstraints, 'current')) { continue }
         const candidatePositions = shuffled(ALL_POSITIONS, random)
         for (const pos of candidatePositions) {
           if (pieces.has(pos)) { continue }

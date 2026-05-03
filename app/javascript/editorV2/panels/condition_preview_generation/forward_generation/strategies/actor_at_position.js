@@ -16,6 +16,7 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import { positionMatchesAxis } from '../hint_compiler'
 import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 
 
@@ -27,6 +28,8 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
   const { random, movingTeam } = ctx
   const qualifying = qualifyingSquaresForHint(hint, movingTeam)
   if (qualifying.length === 0) { return null }
+
+  const varKey = ACTOR_TO_VAR_KEY[hint.actor]
 
   const matching = []
   for (const [pos, piece] of pieces.entries()) {
@@ -41,13 +44,13 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
   // No matching pieces: place one on a qualifying square. When the actor is
   // singular, narrow the species pool by ctx.{actor}.species_set.
   if (matching.length === 0) {
-    const varKey = ACTOR_TO_VAR_KEY[hint.actor]
     const hintPool = hint.speciesPool ?? []
     const effectivePool = (varKey && ctx[varKey])
       ? hintPool.filter(s => ctx[varKey].species_set.has(s))
       : hintPool
     const speciesCandidates = shuffled([...effectivePool], random)
     for (const species of speciesCandidates) {
+      if (!respectsInventoryCaps(hint.team, species, pieces, ctx, 'current')) { continue }
       for (const pos of shuffled([...qualifying], random)) {
         if (pieces.has(pos)) { continue }
         const next = placePiece(pieces, pos, pieceCode(hint.team, species))
@@ -68,7 +71,9 @@ export function actorAtPositionStrategy(pieces, hint, ctx) {
   // All matching pieces already on qualifying squares.
   if (misplaced.length === 0) { return pieces }
 
-  // Relocate misplaced pieces one at a time.
+  // Relocate misplaced pieces one at a time. (Relocation removes from one
+  // square and re-places at another — net zero change to inventory counts,
+  // so no caps check needed.)
   let result = pieces
   let lastPlacedPos = null
   for (const { pos, piece } of misplaced) {

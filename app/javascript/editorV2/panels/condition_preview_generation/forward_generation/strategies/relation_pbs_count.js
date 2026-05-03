@@ -17,6 +17,7 @@ import {
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 // Aggressive bounds. The orchestrator runs the resolver up to ~200 times, so a
 // failing strategy still gets many fresh-RNG retries — we don't need to
@@ -68,6 +69,9 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
       : ALL_POSITIONS.filter(p => !pieces.has(p))
     const candidateCurrent = shuffled(positionCandidates, random)
 
+    if (!respectsInventoryCaps(movingTeam, movedSpecies, pieces, ctx, 'current')) { continue }
+    if (!respectsInventoryCaps(movingTeam, movedSpecies, priorPieces, ctx, 'prior')) { continue }
+
     for (const currentPos of candidateCurrent.slice(0, CURRENT_POS_CANDIDATES)) {
       // Place moved_piece in current.
       const currentWithMover = placePiece(pieces, currentPos, pieceCode(movingTeam, movedSpecies))
@@ -94,7 +98,8 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
           hint,
           subjectTeam,
           movingTeam,
-          random
+          random,
+          ctx
         })
         if (placement === null) { continue }
 
@@ -118,7 +123,7 @@ export function relationPbsCountStrategy(pieces, hint, ctx) {
   return null
 }
 
-function engineerAttackers({ currentBase, priorBase, currentPos, priorPos, hint, subjectTeam, movingTeam, random }) {
+function engineerAttackers({ currentBase, priorBase, currentPos, priorPos, hint, subjectTeam, movingTeam, random, ctx }) {
   // Iteratively add subjects until current count = nCurrent. After each
   // addition, check that prior count is on track toward nPrior. If we'd
   // overshoot prior, skip that placement and try another.
@@ -142,6 +147,9 @@ function engineerAttackers({ currentBase, priorBase, currentPos, priorPos, hint,
       random
     )
     if (species === null || candidatePos === null) { return null }
+
+    if (!respectsInventoryCaps(subjectTeam, species, current, ctx, 'current')) { continue }
+    if (!respectsInventoryCaps(subjectTeam, species, prior, ctx, 'prior')) { continue }
 
     const trialCurrent = placePiece(current, candidatePos, pieceCode(subjectTeam, species))
     const trialPrior = placePiece(prior, candidatePos, pieceCode(subjectTeam, species))

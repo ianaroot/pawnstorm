@@ -12,6 +12,7 @@ import {
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_OUTER_ATTEMPTS = 3
 const CURRENT_POS_CANDIDATES = 4
@@ -52,6 +53,9 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
     const movedSpecies = pickRandom(shuffled(movedSpeciesPool, random), random)
     if (!movedSpecies) { continue }
 
+    if (!respectsInventoryCaps(movingTeam, movedSpecies, pieces, ctx, 'current')) { continue }
+    if (!respectsInventoryCaps(movingTeam, movedSpecies, priorPieces, ctx, 'prior')) { continue }
+
     const candidateCurrent = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
     ).slice(0, CURRENT_POS_CANDIDATES)
@@ -73,7 +77,8 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
           priorBase: priorWithMover,
           currentPos, priorPos, hint,
           subjectTeam, movingTeam, random,
-          subjectPool: subjectSpeciesPool
+          subjectPool: subjectSpeciesPool,
+          ctx
         })
         if (placement === null) { continue }
 
@@ -94,7 +99,7 @@ export function relationPbsAggregateValueStrategy(pieces, hint, ctx) {
   return null
 }
 
-function engineerByValue({ currentBase, priorBase, currentPos, priorPos, hint, subjectTeam, movingTeam, random, subjectPool }) {
+function engineerByValue({ currentBase, priorBase, currentPos, priorPos, hint, subjectTeam, movingTeam, random, subjectPool, ctx }) {
   let current = clonePiecesMap(currentBase)
   let prior = clonePiecesMap(priorBase)
 
@@ -112,7 +117,9 @@ function engineerByValue({ currentBase, priorBase, currentPos, priorPos, hint, s
     const cap = Math.max(remainingCurrent, remainingPrior)
     const fitting = subjectPool.filter(s => {
       const v = materialValue(s)
-      return v > 0 && v <= cap
+      if (v <= 0 || v > cap) { return false }
+      return respectsInventoryCaps(subjectTeam, s, current, ctx, 'current')
+          && respectsInventoryCaps(subjectTeam, s, prior, ctx, 'prior')
     })
     if (fitting.length === 0) { return null }
     const species = pickRandom(shuffled(fitting, random), random)

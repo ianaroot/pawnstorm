@@ -26,6 +26,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_SPECIES_ATTEMPTS = 5
 const MAX_POSITION_CANDIDATES = 8
@@ -60,6 +61,8 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
     ).slice(0, MAX_POSITION_CANDIDATES)
 
+    if (!respectsInventoryCaps(enemyTeam, capturedSpecies, priorPieces, ctx, 'prior')) { continue }
+
     for (const capturedPos of candidatePositions) {
       if (capturedSpecies === Board.PAWN && pawnOnStartingRank(enemyTeam, capturedPos)) { continue }
 
@@ -67,6 +70,9 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
       if (!priorWithCaptured) { continue }
 
       for (const moverSpecies of shuffled(moverCandidates, random)) {
+        if (!respectsInventoryCaps(movingTeam, moverSpecies, priorWithCaptured, ctx, 'prior')) { continue }
+        if (!respectsInventoryCaps(movingTeam, moverSpecies, pieces, ctx, 'current')) { continue }
+
         const originCandidates = shuffled(
           ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
           random

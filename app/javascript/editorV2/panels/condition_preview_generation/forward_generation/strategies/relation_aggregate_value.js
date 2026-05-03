@@ -14,6 +14,7 @@ import {
   compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_PLACEMENT_ITERATIONS = 40
 
@@ -106,9 +107,11 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
     const sidePool = (sideVarKey && ctx[sideVarKey])
       ? hintSidePool.filter(s => ctx[sideVarKey].species_set.has(s))
       : hintSidePool
+    const sideTeam = hint.side === 'subject' ? hint.subject.team : hint.target.team
     const fitting = sidePool.filter(s => {
       const v = materialValue(s)
-      return v > 0 && v <= max
+      if (v <= 0 || v > max) { return false }
+      return respectsInventoryCaps(sideTeam, s, result, ctx, hint.frame)
     })
     if (fitting.length === 0) { return null }
 

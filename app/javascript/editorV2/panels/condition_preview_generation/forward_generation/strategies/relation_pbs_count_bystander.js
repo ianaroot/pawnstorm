@@ -32,6 +32,7 @@ import {
   pieceCode, clonePiecesMap, shuffled, pickRandom, ALL_POSITIONS
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const ALL_RAY_STEPS = Object.freeze([...ROOK_RAY_STEPS, ...BISHOP_RAY_STEPS])
 const MAX_OUTER_ATTEMPTS = 3
@@ -121,10 +122,13 @@ export function relationPbsCountBystanderStrategy(pieces, hint, ctx) {
           : sliderCandidates
         for (const finalSliderPos of shuffled(filteredSliderCandidates, random)) {
           let current = pieces
+          if (!respectsInventoryCaps(hint.target.team, targetSpecies, current, ctx, 'current')) { continue }
           current = placePiece(current, targetPos, pieceCode(hint.target.team, targetSpecies))
           if (!current) { continue }
+          if (!respectsInventoryCaps(hint.subject.team, subjectSpecies, current, ctx, 'current')) { continue }
           current = placePiece(current, bystanderPos, pieceCode(hint.subject.team, subjectSpecies))
           if (!current) { continue }
+          if (!respectsInventoryCaps(movingTeam, sliderSpecies, current, ctx, 'current')) { continue }
           current = placePiece(current, finalSliderPos, pieceCode(movingTeam, sliderSpecies))
           if (!current) { continue }
 

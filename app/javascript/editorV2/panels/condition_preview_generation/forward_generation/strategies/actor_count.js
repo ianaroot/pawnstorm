@@ -11,6 +11,7 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import { compareValue } from '../hint_compiler'
 import { speciesMatchesFilter } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 
 
@@ -35,19 +36,10 @@ export function actorCountStrategy(pieces, hint, ctx) {
     currentCount += 1
   }
 
-  // Inventory awareness for group actors: cap additions at the converged
-  // count_range.max so we don't overshoot sibling constraints.
-  const inventoryCell = (hint.actor === 'allied' || hint.actor === 'enemy')
-    ? ctx.inventory?.[hint.team]?.[hint.frame]?.[hint.filter ?? 'any']
-    : null
-  const upperBound = inventoryCell?.count_range.max ?? Infinity
-  if (currentCount > upperBound) { return null }
-
   if (compareValue(currentCount, hint.countOp, hint.n)) { return pieces }
 
   const additions = neededAdditions(hint.countOp, hint.n, currentCount)
   if (additions === null || additions <= 0) { return null }
-  if (currentCount + additions > upperBound) { return null }
 
   // When the actor is singular, intersect species pool with ctx.{actor}.species_set
   // so sibling plans' species constraints flow through.
@@ -70,6 +62,7 @@ export function actorCountStrategy(pieces, hint, ctx) {
   for (let i = 0; i < additions; i += 1) {
     let placed = false
     for (const species of speciesCandidates) {
+      if (!respectsInventoryCaps(hint.team, species, result, ctx, hint.frame)) { continue }
       for (const pos of shuffled([...ALL_POSITIONS], ctx.random)) {
         if (result.has(pos)) { continue }
         const next = placePiece(result, pos, pieceCode(hint.team, species))

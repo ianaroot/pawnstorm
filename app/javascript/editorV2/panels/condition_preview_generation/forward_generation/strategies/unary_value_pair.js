@@ -29,6 +29,7 @@ import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview_generation/shared/example_utils'
 import { piecesIntoBoard } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_POSITION_CANDIDATES = 8
 const MAX_ORIGIN_CANDIDATES = 12
@@ -129,6 +130,8 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
     ALL_POSITIONS.filter(p => !pieces.has(p)), random
   ).slice(0, MAX_POSITION_CANDIDATES)
 
+  if (!respectsInventoryCaps(enemyTeam, capturedSpecies, priorPieces, ctx, 'prior')) { return null }
+
   for (const capturedPos of candidatePositions) {
     if (capturedSpecies === Board.PAWN && pawnOnStartingRank(enemyTeam, capturedPos)) { continue }
 
@@ -143,6 +146,9 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
       : shuffled([...ctx.movedPiece.species_set].filter(s => s !== Board.KING), random)
 
     for (const trialMover of moverCandidates) {
+      if (!respectsInventoryCaps(movingTeam, trialMover, priorWithCaptured, ctx, 'prior')) { continue }
+      if (!respectsInventoryCaps(movingTeam, trialMover, pieces, ctx, 'current')) { continue }
+
       const originCandidates = shuffled(
         ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
         random
@@ -201,6 +207,9 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
     : shuffled([...ctx.movedPiece.species_set].filter(s => s !== Board.KING), random)
 
   for (const trialMover of moverCandidates) {
+    if (!respectsInventoryCaps(movingTeam, trialMover, priorPieces, ctx, 'prior')) { continue }
+    if (!respectsInventoryCaps(movingTeam, trialMover, pieces, ctx, 'current')) { continue }
+
     const startCandidates = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random
     ).slice(0, MAX_POSITION_CANDIDATES)

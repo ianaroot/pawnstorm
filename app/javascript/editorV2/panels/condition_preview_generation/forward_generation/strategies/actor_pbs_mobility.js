@@ -12,6 +12,7 @@ import {
 } from 'editorV2/panels/condition_preview_generation/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview_generation/shared/piece_placement'
 import { piecesIntoBoard } from '../hint_compiler'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_SPECIES_ATTEMPTS = 4
 const MAX_POSITION_CANDIDATES = 12
@@ -34,6 +35,9 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
   for (let s = 0; s < MAX_SPECIES_ATTEMPTS; s += 1) {
     const species = pickRandom(shuffled(speciesPool, random), random)
     if (!species) { continue }
+
+    if (!respectsInventoryCaps(hint.team, species, pieces, ctx, 'current')) { continue }
+    if (!respectsInventoryCaps(hint.team, species, priorPieces, ctx, 'prior')) { continue }
 
     const currentCandidates = shuffled(
       ALL_POSITIONS.filter(p => !pieces.has(p)), random

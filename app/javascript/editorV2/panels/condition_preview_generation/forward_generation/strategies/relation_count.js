@@ -20,6 +20,7 @@ import {
   compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
+import { respectsInventoryCaps } from '../inventory_protocol'
 
 // When a relational side is a singular actor, intersect its species pool with
 // ctx.{actor}.species_set so sibling plans' species constraints flow through.
@@ -72,6 +73,7 @@ function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
 
   for (const targetPos of shuffled([...anchorTargetPositions], random)) {
     for (const subjectSpecies of subjectSpeciesCandidates) {
+      if (!respectsInventoryCaps(hint.subject.team, subjectSpecies, pieces, ctx, hint.frame)) { continue }
       for (const subjectPos of shuffled([...ALL_POSITIONS], random)) {
         if (subjectPos === targetPos) { continue }
         if (pieces.has(subjectPos)) { continue }
@@ -101,6 +103,7 @@ function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
 
   for (const subjectPos of shuffled([...anchorSubjectPositions], random)) {
     for (const targetSpecies of targetSpeciesCandidates) {
+      if (!respectsInventoryCaps(hint.target.team, targetSpecies, pieces, ctx, hint.frame)) { continue }
       for (const targetPos of shuffled([...ALL_POSITIONS], random)) {
         if (targetPos === subjectPos) { continue }
         if (pieces.has(targetPos)) { continue }
