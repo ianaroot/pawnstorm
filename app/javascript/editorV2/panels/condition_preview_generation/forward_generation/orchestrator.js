@@ -11,7 +11,7 @@ import { resolveViaHints } from './hint_resolver'
 const DEFAULT_ATTEMPTS_PER_DRIVER = 200
 const DEFAULT_HINT_RESOLVER_ATTEMPTS = 200
 
-function buildExample({ priorBoard, moveObject, combinedPlan }) {
+function buildExample({ priorBoard, moveObject, combinedPlan, generationPath }) {
   const analysis = new CandidateMoveAnalysisV2({ board: priorBoard, moveObject })
   const aggregatedResult = buildAggregatedResult(combinedPlan, analysis)
   if (!aggregatedResult) { return null }
@@ -36,7 +36,7 @@ function buildExample({ priorBoard, moveObject, combinedPlan }) {
     movedPieceInRelation,
     moveKind: moveKindForMoveObject(moveObject),
     sound: soundForMove(priorBoard, afterBoard, moveObject),
-    generationPath: 'forward'
+    generationPath
   }
 }
 
@@ -61,7 +61,7 @@ export function collectForwardExamples({ combinedPlan, random, maxExamples = 30,
     const input = { board: result.priorBoard, moveObject: result.moveObject }
     const passes = combinedPlan.evaluationPayloads.every(payload => evaluator.evaluate(payload, input))
     if (!passes) { continue }
-    const example = buildExample({ priorBoard: result.priorBoard, moveObject: result.moveObject, combinedPlan })
+    const example = buildExample({ priorBoard: result.priorBoard, moveObject: result.moveObject, combinedPlan, generationPath: 'forward-resolver' })
     if (!example) { continue }
     const id = candidateIdentity(example)
     if (seen.has(id)) { continue }
@@ -85,7 +85,7 @@ export function collectForwardExamples({ combinedPlan, random, maxExamples = 30,
         const input = { board: priorBoard, moveObject }
         const passes = combinedPlan.evaluationPayloads.every(payload => evaluator.evaluate(payload, input))
         if (!passes) { continue }
-        const example = buildExample({ priorBoard, moveObject, combinedPlan })
+        const example = buildExample({ priorBoard, moveObject, combinedPlan, generationPath: 'forward-pattern' })
         if (!example) { continue }
         const id = candidateIdentity(example)
         if (seen.has(id)) { continue }

@@ -3,6 +3,7 @@ import generateUUID from 'editorV2/utils/uuid'
 import Node from 'editorV2/models/Node'
 import Connection from 'editorV2/models/Connection'
 import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
+import { pipelineStats } from 'editorV2/panels/condition_preview_generation/stats/pipeline_stats'
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/ConditionChainSelection'
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
 
@@ -144,7 +145,10 @@ class EditorActions {
     clearTimeout(this._chainPreviewTimer)
     this._chainPreviewTimer = setTimeout(() => {
       try {
-        const preview = generateConditionExamples(chain.payloads)
+        const preview = generateConditionExamples(chain.payloads, {
+          nodeIds: chain.orderedNodeIds,
+          stats: { onComplete: pipelineStats.record }
+        })
         preview.conditionLabels = conditionLabels
         this.showSelectionPreviewPanel(preview)
       } catch (e) {

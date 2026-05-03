@@ -471,7 +471,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(801) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('uses forward generation for allied defend allied count < prior_board_state via mover-leaves-target', () => {
@@ -496,7 +496,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(1101) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('uses forward generation for enemy attack allied count > prior_board_state via mover-becomes-target (F)', () => {
@@ -681,7 +681,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(1110) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('builds verified examples via hint resolver for lone enemy mobility = 0', () => {
@@ -694,7 +694,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2001) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('builds verified examples via hint resolver for the checkmate chain', () => {
@@ -705,7 +705,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payloads, { random: seededRandom(1001) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('produces N=1 (not just 0=0) examples for king subject of attack count = PBS', () => {
@@ -731,7 +731,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(805) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('uses forward generation for moved_piece mobility > prior_board_state', () => {
@@ -756,7 +756,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(803) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('builds verified examples via forward generation for the move-into-shield-break-with-defense chain', () => {
@@ -770,7 +770,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payloads, { random: seededRandom(701) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
   })
 
   it('reuses an existing enemy king when a later plan in the chain also needs the enemy king', () => {
@@ -1303,7 +1303,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1320,7 +1320,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2015) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1339,7 +1339,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2011) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1358,7 +1358,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2012) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1375,7 +1375,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2013) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1392,7 +1392,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(2014) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1410,7 +1410,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1430,7 +1430,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1453,7 +1453,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1499,7 +1499,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1532,7 +1532,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       payloads.forEach(payload => expect(evaluateExample(payload, example)).toBe(true))
       expectLegalPriorTurnState(example)
@@ -1553,7 +1553,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)
@@ -1581,7 +1581,7 @@ describe('ConditionExampleGenerator', () => {
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       payloads.forEach(payload => {
         expect(evaluateExample(payload, example)).toBe(true)
@@ -1622,7 +1622,7 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(8001) })
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
-    expect(preview.examples.some(ex => ex.generationPath === 'forward')).toBe(true)
+    expect(preview.examples.some(ex => ex.generationPath?.startsWith('forward-'))).toBe(true)
     preview.examples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expectLegalPriorTurnState(example)

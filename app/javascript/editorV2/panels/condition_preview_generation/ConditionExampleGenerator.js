@@ -70,21 +70,36 @@ function buildChainVariants(combinedPlan) {
   })
 }
 
-function collectSpecialMoveExamples({ chainVariant, addUnique, castle, promotion, enPassant, deadline, random }) {
+function collectSpecialMoveExamples({ chainVariant, addUnique, castle, promotion, enPassant, deadline, random, produced }) {
   if (chainVariant.moveKinds.includes(MOVE_KIND_CASTLE) && Date.now() <= deadline) {
-    collectCastleExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-      .forEach(ex => addUnique(ex, castle))
+    const examples = collectCastleExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
+    produced['castle'] += examples.length
+    examples.forEach(ex => { ex.generationPath = 'castle'; addUnique(ex, castle) })
   }
 
   if (chainVariant.moveKinds.includes(MOVE_KIND_PROMOTION) && Date.now() <= deadline) {
-    collectPromotionExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-      .forEach(ex => addUnique(ex, promotion))
+    const examples = collectPromotionExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
+    produced['promotion'] += examples.length
+    examples.forEach(ex => { ex.generationPath = 'promotion'; addUnique(ex, promotion) })
   }
 
   if (chainVariant.moveKinds.includes(MOVE_KIND_EN_PASSANT) && Date.now() <= deadline) {
-    collectEnPassantExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-      .forEach(ex => addUnique(ex, enPassant))
+    const examples = collectEnPassantExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
+    produced['en-passant'] += examples.length
+    examples.forEach(ex => { ex.generationPath = 'en-passant'; addUnique(ex, enPassant) })
   }
+}
+
+const PIPELINE_KEYS = Object.freeze([
+  'forward-resolver', 'forward-pattern',
+  'reverse-relational', 'reverse-unary', 'reverse-position',
+  'castle', 'promotion', 'en-passant'
+])
+
+function emptyPipelineCounter() {
+  const counter = {}
+  for (const key of PIPELINE_KEYS) { counter[key] = 0 }
+  return counter
 }
 
 function collectAllExamples({ combinedPlan, random, totalMs }) {
@@ -94,6 +109,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const castleExamples = []
   const promotionExamples = []
   const enPassantExamples = []
+  const produced = emptyPipelineCounter()
 
   const plans = combinedPlan.plans
   const specialMoveMs = Math.min(totalMs * 0.2, SPECIAL_MOVE_MS_RESERVE)
@@ -110,8 +126,11 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // to surface its own variety (random board augmentation, enrichment-driven extras).
   if (plans.length > 0) {
     const forwardCap = Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_SHARE)
-    collectForwardExamples({ combinedPlan, random, maxExamples: forwardCap })
-      .forEach(ex => addUnique(ex, standardExamples))
+    const forwardExamples = collectForwardExamples({ combinedPlan, random, maxExamples: forwardCap })
+    forwardExamples.forEach(ex => {
+      produced[ex.generationPath] = (produced[ex.generationPath] ?? 0) + 1
+      addUnique(ex, standardExamples)
+    })
   }
 
   // ── Relational seed-based standard collection ────────────────────────────
@@ -134,8 +153,9 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
         if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > relDeadline) { break roundLoop }
         const seed = buildSeed(chainVariant, MOVE_KIND_STANDARD, random)
         if (!seed) { continue }
-        collectVerifiedExamples({ combinedPlan: chainVariant, seed, variant, random })
-          .forEach(ex => addUnique(ex, standardExamples))
+        const examples = collectVerifiedExamples({ combinedPlan: chainVariant, seed, variant, random })
+        produced['reverse-relational'] += examples.length
+        examples.forEach(ex => { ex.generationPath = 'reverse-relational'; addUnique(ex, standardExamples) })
       }
     }
   }
@@ -146,8 +166,9 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
     const workItems = buildUnaryWorkItems(unaryPlan, random)
     for (const item of workItems) {
       if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > unaryDeadline) { break }
-      collectUnaryExamples({ combinedPlan, unaryPlan, item, random })
-        .forEach(ex => addUnique(ex, standardExamples))
+      const examples = collectUnaryExamples({ combinedPlan, unaryPlan, item, random })
+      produced['reverse-unary'] += examples.length
+      examples.forEach(ex => { ex.generationPath = 'reverse-unary'; addUnique(ex, standardExamples) })
     }
   }
 
@@ -157,8 +178,9 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
     const workItems = buildPositionWorkItems(positionPlan, combinedPlan.movingTeam, random)
     for (const item of workItems) {
       if (standardExamples.length >= MAX_CANDIDATE_POOL || Date.now() > posDeadline) { break }
-      collectPositionExamples({ combinedPlan, positionPlan, item, random })
-        .forEach(ex => addUnique(ex, standardExamples))
+      const examples = collectPositionExamples({ combinedPlan, positionPlan, item, random })
+      produced['reverse-position'] += examples.length
+      examples.forEach(ex => { ex.generationPath = 'reverse-position'; addUnique(ex, standardExamples) })
     }
   }
 
@@ -166,16 +188,37 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const specialDeadline = Date.now() + specialMoveMs
   for (const chainVariant of chainVariants) {
     if (Date.now() > specialDeadline) { break }
-    collectSpecialMoveExamples({ chainVariant, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random })
+    collectSpecialMoveExamples({ chainVariant, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random, produced })
   }
 
-  return { standardExamples, castleExamples, promotionExamples, enPassantExamples }
+  return { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced }
+}
+
+function emitStats(options, payloadArray, produced, finalExamples, startTime) {
+  const onComplete = options.stats?.onComplete
+  if (!onComplete) { return }
+  const survived = emptyPipelineCounter()
+  for (const example of finalExamples) {
+    if (example.generationPath in survived) {
+      survived[example.generationPath] += 1
+    }
+  }
+  onComplete({
+    ts: new Date().toISOString(),
+    node_ids: options.nodeIds ?? null,
+    payloads: payloadArray,
+    produced,
+    survived,
+    total_survived: finalExamples.length,
+    elapsed_ms: Date.now() - startTime
+  })
 }
 
 export function generateConditionExamples(payloads, options = {}) {
   const maxExamples = options.maxExamples ?? MAX_DEFAULT_EXAMPLES
   const random = options.random ?? Math.random
   const totalMs = options.maxMs ?? 500
+  const startTime = Date.now()
 
   const payloadArray = Array.isArray(payloads) ? payloads : [payloads]
 
@@ -184,23 +227,28 @@ export function generateConditionExamples(payloads, options = {}) {
     return { status: combinedPlan.status, reason: combinedPlan.reason, examples: [], payloadCount: payloadArray.length }
   }
 
-  const { standardExamples, castleExamples, promotionExamples, enPassantExamples } = collectAllExamples({
+  const { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced } = collectAllExamples({
     combinedPlan, random, totalMs
   })
 
   const total = standardExamples.length + castleExamples.length + promotionExamples.length + enPassantExamples.length
   if (total === 0) {
+    emitStats(options, payloadArray, produced, [], startTime)
     return { status: 'no_examples', reason: NO_EXAMPLES_REASON, examples: [], payloadCount: payloadArray.length }
   }
+
+  const finalExamples = mergeMoveKindExamples({
+    standardExamples, castleExamples, promotionExamples, enPassantExamples,
+    combinedPlan, maxExamples, random
+  })
+
+  emitStats(options, payloadArray, produced, finalExamples, startTime)
 
   return {
     status: 'ready',
     reason: null,
     payloadCount: payloadArray.length,
-    examples: mergeMoveKindExamples({
-      standardExamples, castleExamples, promotionExamples, enPassantExamples,
-      combinedPlan, maxExamples, random
-    })
+    examples: finalExamples
   }
 }
 

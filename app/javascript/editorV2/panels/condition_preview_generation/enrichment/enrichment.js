@@ -150,7 +150,8 @@ function deriveVerifiedExample({ combinedPlan, priorBoard, moveObject, baseExamp
     movedPieceInRelation,
     moveKind: baseExample.moveKind,
     sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject),
-    generationPath: baseExample.generationPath
+    generationPath: baseExample.generationPath,
+    enriched: true
   }
 }
 
