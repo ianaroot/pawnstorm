@@ -64,6 +64,11 @@ class EditorActions {
     return (this.clickHandler?.getDeletableSelectedNodeIds()?.length ?? 0) > 0
   }
 
+  logSelectedNodeIds() {
+    const serverIds = this.store.getSelectedNodeIds().map(clientId => this.store.getNode(clientId)?.serverId)
+    console.log(`node ids: ${serverIds.join(',')}`)
+  }
+
   togglePreview() {
     if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
       this.boardStatePreview.toggle()

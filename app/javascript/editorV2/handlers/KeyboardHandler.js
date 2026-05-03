@@ -73,6 +73,13 @@ class KeyboardHandler {
       return
     }
 
+    // l: log selected node ids
+    if (key === 'l' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
+      event.preventDefault()
+      this.actions?.logSelectedNodeIds()
+      return
+    }
+
     // Enter: save editing node
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
       event.preventDefault()
