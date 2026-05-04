@@ -6,6 +6,8 @@ import {
 } from '../shared/board_utils'
 import { buildSeedFromPreset, promotionPresetsForTeam } from '../seeds/seed_builder'
 import { Candidate } from '../shared/candidate'
+import { CandidateVerifier } from '../shared/candidate_verifier'
+import { ExampleFactory } from '../shared/example_factory'
 
 const CAPTURED_SPECIES_OPTIONS = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
 
@@ -37,6 +39,8 @@ export function collectPromotionExamples({ combinedPlan, random, maxExamples }) 
   const examples = []
   const seen = new Set()
   const enemyTeam = Board.opposingTeam(combinedPlan.movingTeam)
+  const verifier = new CandidateVerifier({ combinedPlan })
+  const factory = new ExampleFactory({ combinedPlan })
 
   for (const preset of roundRobinPromotionPresets(allPresets, random)) {
     if (examples.length >= maxExamples) { break }
@@ -77,11 +81,11 @@ export function collectPromotionExamples({ combinedPlan, random, maxExamples }) 
 
       if (!moveObject.promotionPiece) { continue }
 
-      const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
-      if (!candidate.isVerified()) { continue }
+      const candidate = new Candidate({ priorBoard, moveObject })
+      if (!verifier.isVerified(candidate)) { continue }
       if (!candidate.matchesLayout(afterLayout)) { continue }
 
-      const example = candidate.buildExample({
+      const example = factory.build(candidate, {
         generationPath: 'promotion',
         geometryKey: seed.geometryKey,
         moveKind: MOVE_KIND_PROMOTION

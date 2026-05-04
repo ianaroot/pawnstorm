@@ -6,11 +6,15 @@ import {
 } from '../shared/board_utils'
 import { buildSeedFromPreset, castlePresetsForTeam } from '../seeds/seed_builder'
 import { Candidate } from '../shared/candidate'
+import { CandidateVerifier } from '../shared/candidate_verifier'
+import { ExampleFactory } from '../shared/example_factory'
 
 export function collectCastleExamples({ combinedPlan, random, maxExamples }) {
   const presets = castlePresetsForTeam(combinedPlan.movingTeam)
   const examples = []
   const seen = new Set()
+  const verifier = new CandidateVerifier({ combinedPlan })
+  const factory = new ExampleFactory({ combinedPlan })
 
   for (const preset of presets) {
     if (examples.length >= maxExamples) { break }
@@ -44,11 +48,11 @@ export function collectCastleExamples({ combinedPlan, random, maxExamples }) {
 
     if (!moveObject.additionalActions) { continue }
 
-    const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
-    if (!candidate.isVerified()) { continue }
+    const candidate = new Candidate({ priorBoard, moveObject })
+    if (!verifier.isVerified(candidate)) { continue }
     if (!candidate.matchesLayout(afterLayout)) { continue }
 
-    const example = candidate.buildExample({
+    const example = factory.build(candidate, {
       generationPath: 'castle',
       geometryKey: seed.geometryKey,
       moveKind: MOVE_KIND_CASTLE

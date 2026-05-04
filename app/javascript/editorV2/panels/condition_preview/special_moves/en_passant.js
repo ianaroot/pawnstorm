@@ -6,6 +6,8 @@ import {
 } from '../shared/board_utils'
 import { buildSeedFromPreset, enPassantPresetsForTeam } from '../seeds/seed_builder'
 import { Candidate } from '../shared/candidate'
+import { CandidateVerifier } from '../shared/candidate_verifier'
+import { ExampleFactory } from '../shared/example_factory'
 
 // Constructs prior+after directly from the preset, mirroring castle and
 // promotion. Bypasses collectVerifiedExamples (whose variant filter was
@@ -22,6 +24,8 @@ export function collectEnPassantExamples({ combinedPlan, random, maxExamples }) 
   const moverPiece = `${movingTeam}${Board.PAWN}`
   const enemyPawn = `${enemyTeam}${Board.PAWN}`
   const dir = movingTeam === Board.BLACK ? 1 : -1
+  const verifier = new CandidateVerifier({ combinedPlan })
+  const factory = new ExampleFactory({ combinedPlan })
 
   for (const preset of presets) {
     if (examples.length >= maxExamples) { break }
@@ -74,11 +78,11 @@ export function collectEnPassantExamples({ combinedPlan, random, maxExamples }) 
       // capturedSquare). If Rules didn't recognize this as en-passant, skip.
       if (!moveObject.additionalActions) { continue }
 
-      const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
-      if (!candidate.isVerified()) { continue }
+      const candidate = new Candidate({ priorBoard, moveObject })
+      if (!verifier.isVerified(candidate)) { continue }
       if (!candidate.matchesLayout(afterLayout)) { continue }
 
-      const example = candidate.buildExample({
+      const example = factory.build(candidate, {
         generationPath: 'en-passant',
         geometryKey: seed.geometryKey,
         moveKind: MOVE_KIND_EN_PASSANT

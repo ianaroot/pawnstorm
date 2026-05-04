@@ -1,4 +1,6 @@
 import { Candidate } from '../shared/candidate'
+import { CandidateVerifier } from '../shared/candidate_verifier'
+import { ExampleFactory } from '../shared/example_factory'
 import { classifyPlan } from './plan_classifier'
 import { PATTERNS } from './move_patterns'
 
@@ -10,6 +12,9 @@ export function collectForwardPatternExamples({ combinedPlan, random, maxStandar
   const drivers = classifications.filter(c => c.pbsDirection !== null)
   if (drivers.length === 0) { return }
 
+  const verifier = new CandidateVerifier({ combinedPlan })
+  const factory = new ExampleFactory({ combinedPlan })
+
   // Round-robin through (driver, pattern) combinations so every applicable pattern
   // gets a turn before any single pattern fills the pool.
   roundLoop: for (let round = 0; round < attemptsPerDriver; round += 1) {
@@ -19,9 +24,9 @@ export function collectForwardPatternExamples({ combinedPlan, random, maxStandar
         if (standardExamples.length >= maxStandardSize) { break roundLoop }
         const result = pattern.generate({ driver, combinedPlan, random })
         if (!result) { continue }
-        const candidate = new Candidate({ combinedPlan, priorBoard: result.priorBoard, moveObject: result.moveObject })
-        if (!candidate.isVerified()) { continue }
-        const example = candidate.buildExample({ generationPath: 'forward-pattern', geometryKey: 'forward' })
+        const candidate = new Candidate({ priorBoard: result.priorBoard, moveObject: result.moveObject })
+        if (!verifier.isVerified(candidate)) { continue }
+        const example = factory.build(candidate, { generationPath: 'forward-pattern', geometryKey: 'forward' })
         if (!example) { continue }
         produced['forward-pattern'] += 1
         addUnique(example, standardExamples)
