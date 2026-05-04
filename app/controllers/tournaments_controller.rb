@@ -1,9 +1,11 @@
 class TournamentsController < ApplicationController
+  include BotEligibility
+  include ConstraintsParams
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
-  before_action :set_tournament, only: [:abort, :pause, :resume, :start]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility, :edit, :update, :open_registration]
   before_action :authorize_public_tournament_access!, only: [:show, :pairing]
-  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start]
+  before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start, :edit, :update, :open_registration]
 
   def index
     @filter_params = params.permit(:name, :status, :owner, :my_entries)
@@ -18,6 +20,25 @@ class TournamentsController < ApplicationController
   def new
     creation = Tournaments::CreateTournament.new(user: current_user, params: setup_params)
     assign_form_state(creation)
+  end
+
+  def edit
+    assign_form_state_from_tournament
+  end
+
+  def update
+    unless @tournament.status_draft?
+      return redirect_to tournament_show_path(@tournament), alert: 'Tournament settings are locked once opened.'
+    end
+
+    updater = Tournaments::UpdateTournament.new(tournament: @tournament, params: tournament_params)
+    if updater.call
+      redirect_to tournament_show_path(@tournament), notice: 'Tournament updated.'
+    else
+      assign_form_state_from_tournament
+      flash.now[:alert] = updater.error_message
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   def create
@@ -41,6 +62,10 @@ class TournamentsController < ApplicationController
 
   def show_by_invite
     @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    if @tournament.status_draft? && @tournament.creator != current_user
+      head :not_found
+      return
+    end
     @tournament_poll_url = invitation_tournament_path(@tournament.invite_token, format: :json)
     @invite_token = @tournament.invite_token
     assign_show_state
@@ -73,6 +98,23 @@ class TournamentsController < ApplicationController
     redirect_to tournament_show_path(@tournament), notice: 'Tournament resumed.'
   end
 
+  def open_registration
+    unless @tournament.status_draft?
+      return redirect_to tournament_show_path(@tournament), alert: 'Tournament is not in draft.'
+    end
+
+    if @tournament.constraints.present?
+      begin
+        BotEligibilityChecker.new(nil, @tournament.constraints).check
+      rescue StandardError
+        return redirect_to tournament_show_path(@tournament), alert: 'Tournament constraints are invalid. Please review and save them before opening.'
+      end
+    end
+
+    @tournament.update!(status: :open)
+    redirect_to tournament_show_path(@tournament), notice: 'Tournament is now open for entries.'
+  end
+
   def start
     start_tournament = Tournaments::StartTournament.new(user: current_user, tournament: @tournament)
 
@@ -83,10 +125,49 @@ class TournamentsController < ApplicationController
     end
   end
 
+  def eligibility
+    bot = current_user.bots.find_by(id: params[:bot_id])
+    return render json: { eligible: false, cost: 0, budget: nil, violations: [{ type: "not_found", message: "Bot not found." }] }, status: :not_found unless bot
+
+    unless bot.compiled_program
+      return render json: { eligible: false, cost: 0, budget: nil, violations: [{ type: "not_compiled", message: "Bot has not been compiled." }] }
+    end
+
+    result = check_bot_eligibility(bot, @tournament.constraints)
+    render json: result
+  end
+
+  def lookup
+    tournament = Tournament.status_open.find_by(invite_token: params[:token])
+    if tournament
+      render json: { id: tournament.id, name: tournament.name }
+    else
+      render json: { error: 'not_found' }, status: :not_found
+    end
+  end
+
+  def eligible_bots
+    unless current_user && !current_user.guest?
+      render json: { eligible_bot_ids: [] } and return
+    end
+
+    if @tournament.status_draft? && @tournament.creator != current_user
+      render json: { eligible_bot_ids: [] } and return
+    end
+
+    bots = current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil)
+    eligible_bot_ids = bots.filter_map do |bot|
+      bot.id if check_bot_eligibility(bot, @tournament.constraints)[:eligible]
+    end
+
+    render json: { eligible_bot_ids: eligible_bot_ids }
+  end
+
   private
 
   helper_method :tournament_show_path
   def tournament_show_path(tournament)
+    return invitation_tournament_path(tournament.invite_token) if tournament.status_draft?
     tournament.visibility_public? ? public_tournament_path(tournament) : invitation_tournament_path(tournament.invite_token)
   end
 
@@ -133,6 +214,9 @@ class TournamentsController < ApplicationController
     @open_registration_entries = @tournament.tournament_entries.includes(:bot_owner, :bot).order(:seed_order)
     @current_user_entry = current_user ? @open_registration_entries.detect { |entry| entry.bot_owner == current_user } : nil
     @eligible_bots = current_user&.guest? || current_user.nil? ? Bot.none : current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil).order(:name)
+    if @tournament.constraints.present?
+      @eligible_bots = @eligible_bots.select { |bot| check_bot_eligibility(bot, @tournament.constraints)[:eligible] }
+    end
     @tournament_full = @tournament.max_entries.present? && @open_registration_entries.size >= @tournament.max_entries
   end
 
@@ -185,6 +269,17 @@ class TournamentsController < ApplicationController
     @entries_per_user = creation.entries_per_user
     @max_entries = creation.max_entries
     @games_per_pair = creation.games_per_pair
+    @constraints = creation.constraints
+  end
+
+  def assign_form_state_from_tournament
+    @name = @tournament.name
+    @description = @tournament.description
+    @visibility = @tournament.visibility
+    @entries_per_user = @tournament.entries_per_user
+    @max_entries = @tournament.max_entries
+    @games_per_pair = @tournament.games_per_pair
+    @constraints = @tournament.constraints
   end
 
   def setup_params
@@ -192,6 +287,12 @@ class TournamentsController < ApplicationController
   end
 
   def tournament_params
-    params.fetch(:tournament, {}).permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
+    base = params.fetch(:tournament, {}).permit(:name, :description, :visibility, :entries_per_user, :max_entries, :games_per_pair)
+    base[:constraints] = permitted_constraints
+    base
+  end
+
+  def permitted_constraints
+    parse_constraints(params.dig(:tournament, :constraints) || {})
   end
 end

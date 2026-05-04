@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_24_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_02_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -198,6 +198,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_24_120000) do
     t.integer "max_entries"
     t.string "invite_token", null: false
     t.datetime "started_at"
+    t.jsonb "constraints"
     t.index ["creator_id"], name: "index_tournaments_on_creator_id"
     t.index ["invite_token"], name: "index_tournaments_on_invite_token", unique: true
     t.index ["status"], name: "index_tournaments_on_status"

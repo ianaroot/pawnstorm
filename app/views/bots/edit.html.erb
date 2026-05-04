@@ -52,21 +52,44 @@
       </button>
     </div>
 
-    <div class="toolbar-section toolbar-section--push-right">
-      <%= link_to 'compile bot',
-          compile_bot_path(@bot),
-          data: { turbo_method: :post },
-          class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
-          id: 'compile-and-exit-link' %>
-      <span id="compile-status" class="compile-status hidden"></span>
-    </div>
-
-    <div class="toolbar-section">
-      <%= button_to 'Clone Bot',
-          clone_bot_path(@bot),
-          method: :post,
-          class: 'btn-clone',
-          data: { turbo_confirm: "Clone \"#{@bot.name}\"? A compiled copy will be created." } %>
+    <div class="toolbar-section toolbar-section--push-right toolbar-right-group">
+      <div class="toolbar-right-group__top">
+        <%= link_to 'compile bot',
+            compile_bot_path(@bot),
+            data: { turbo_method: :post },
+            class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
+            id: 'compile-and-exit-link' %>
+        <span id="compile-status" class="compile-status hidden"></span>
+        <%= button_to 'Clone Bot',
+            clone_bot_path(@bot),
+            method: :post,
+            class: 'btn-clone',
+            data: { turbo_confirm: "Clone \"#{@bot.name}\"? A compiled copy will be created." } %>
+      </div>
+      <div class="toolbar-eligibility"
+           data-controller="bot-eligibility"
+           data-bot-eligibility-bot-id-value="<%= @bot.id %>"
+           data-bot-eligibility-stale-value="<%= @bot.compiled_program_stale? %>">
+        <button type="button" class="toolbar-eligibility__toggle" data-action="click->bot-eligibility#toggle">Check tournament eligibility</button>
+        <div class="toolbar-eligibility__panel" data-bot-eligibility-target="panel" hidden>
+          <select data-bot-eligibility-target="select"
+                  data-action="change->bot-eligibility#tournamentChanged">
+            <% if @open_tournaments.any? %>
+              <option value="">— tournament —</option>
+              <% @open_tournaments.each do |t| %>
+                <option value="<%= t.id %>"><%= t.name %></option>
+              <% end %>
+            <% else %>
+              <option value="" disabled>No open tournaments</option>
+            <% end %>
+          </select>
+          <small class="toolbar-eligibility__note">Only tournaments with eligibility constraints are listed.</small>
+          <input type="text" placeholder="invite token"
+                 data-bot-eligibility-target="inviteInput"
+                 data-action="keydown.enter->bot-eligibility#lookupInviteTournament">
+          <span class="toolbar-eligibility__status" data-bot-eligibility-target="status"></span>
+        </div>
+      </div>
     </div>
   </div>
 
