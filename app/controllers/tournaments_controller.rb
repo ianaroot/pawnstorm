@@ -102,6 +102,15 @@ class TournamentsController < ApplicationController
     unless @tournament.status_draft?
       return redirect_to tournament_show_path(@tournament), alert: 'Tournament is not in draft.'
     end
+
+    if @tournament.constraints.present?
+      begin
+        BotEligibilityChecker.new(nil, @tournament.constraints).check
+      rescue StandardError
+        return redirect_to tournament_show_path(@tournament), alert: 'Tournament constraints are invalid. Please review and save them before opening.'
+      end
+    end
+
     @tournament.update!(status: :open)
     redirect_to tournament_show_path(@tournament), notice: 'Tournament is now open for entries.'
   end
