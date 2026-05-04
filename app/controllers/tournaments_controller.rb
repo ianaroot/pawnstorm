@@ -151,6 +151,10 @@ class TournamentsController < ApplicationController
       render json: { eligible_bot_ids: [] } and return
     end
 
+    if @tournament.status_draft? && @tournament.creator != current_user
+      render json: { eligible_bot_ids: [] } and return
+    end
+
     bots = current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil)
     eligible_bot_ids = bots.filter_map do |bot|
       bot.id if check_bot_eligibility(bot, @tournament.constraints)[:eligible]
