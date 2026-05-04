@@ -2024,4 +2024,51 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('emits a max=0 positionConstraint for relational count=0 chains so the resolver does not engineer the forbidden piece', () => {
+    // Pre-fix, contributeRelationalPositionConstraint emitted
+    // {min: 1, max: Infinity} regardless of the plan's count comparison. For
+    // chains like "enemy attack moved_piece count = 0", the resolution pass
+    // then engineered ≥1 enemy attacker — exactly the forbidden piece — and
+    // the post-evaluator rejected every attempt. This chain should now produce
+    // examples through forward generation.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(9101) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(ex => ex.generationPath === 'forward-resolver')).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('emits a positionConstraint for position-plan count=0 chains', () => {
+    // Pre-fix, position plans emitted no positionConstraint at all. The
+    // emission is now wired but the standalone position chain still gets
+    // examples primarily from reverse-position (which handled this shape via
+    // work-items pre-fix). A `forward-resolver` assertion would fail here
+    // until patch-2 enforcement makes other paths consult the new constraint.
+    // For now we just verify the chain stays satisfiable end-to-end.
+    const payload = {
+      version: 2, kind: 'position',
+      subject: 'enemy', subjectFilter: 'pawn', subjectFilterMode: 'include',
+      positionAxis: 'rank', positionComparator: 'less_than', positionTarget: 4,
+      operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(9102) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
 })

@@ -204,6 +204,23 @@ function lowerBoundFromComparator(comparator, total) {
   }
 }
 
+// Translate (comparator, total) into a positionConstraint count_range. Used
+// for both relational and position-plan constraint emission. The min: 0 for
+// less_than family is conservative — if CEv2 requires the relation to "exist"
+// (count ≥ 1) for the chain to fire, a tighter min: 1 would be correct. Today
+// the post-evaluator backstops; revisit if engineering empty-relation boards
+// turns out to waste real attempts.
+function countRangeFromComparator(comparator, total) {
+  switch (comparator) {
+    case 'equal_to':                 return { min: total, max: total }
+    case 'less_than':                return { min: 0, max: total - 1 }
+    case 'less_than_or_equal_to':    return { min: 0, max: total }
+    case 'greater_than':             return { min: total + 1, max: Infinity }
+    case 'greater_than_or_equal_to': return { min: total, max: Infinity }
+    default:                         return { min: 1, max: Infinity }
+  }
+}
+
 // Contribute a unary plan's constraints to the inventory tree. Only handles
 // group actors (allied, enemy) with target=exact_number; unary pair (target
 // is another actor) and prior_board_state targets defer to other variable
@@ -684,13 +701,50 @@ function contributeRelationalPositionConstraint(plan, vars) {
   const groupFilter = groupSide === 'subject' ? plan.subjectFilter : plan.targetFilter
   const groupFilterMode = groupSide === 'subject' ? plan.subjectFilterMode : plan.targetFilterMode
 
-  // Existential semantics: at least 1 piece on the group side related to
-  // the singular actor (unless plan demands count=0, which is handled by
-  // zero-count-skip path elsewhere).
   vars.positionConstraints.push({
     subset: { team: groupTeam, filter: groupFilter || 'any', filterMode: groupFilterMode || null },
     region: { kind: 'related', singularActor, singularRole, operator: plan.operator },
-    count_range: { min: 1, max: Infinity },
+    count_range: countRangeForGroupSide(plan, groupSide),
+    plan
+  })
+}
+
+// Derive a positionConstraint's count_range from the relational plan's
+// group-side count descriptor. No descriptor → existential default
+// {min: 1, max: ∞}. PBS (prior_board_state) source → existential default
+// (we'd need the sampled value to bound; punt for now). Otherwise translate
+// the (comparator, total) directly via countRangeFromComparator.
+function countRangeForGroupSide(plan, groupSide) {
+  const descriptor = (plan.comparisonDescriptors ?? []).find(
+    d => d.side === groupSide && d.metric === 'count'
+  )
+  if (!descriptor) { return { min: 1, max: Infinity } }
+  if (descriptor.source !== 'exact_number') { return { min: 1, max: Infinity } }
+  const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
+  return countRangeFromComparator(descriptor.comparator, total)
+}
+
+// Contribute a positionConstraint from a position plan with a group subject.
+// The qualifying squares for the plan's axis condition become the region;
+// the count_range comes from the plan's count comparator and total.
+//
+// Singular-subject position plans are handled by
+// contributePositionPlanToActorPositionSet (narrows the actor's position_set
+// directly). Group subjects need a positionConstraint because no singular
+// actor's position represents them.
+function contributePositionPlanToPositionConstraints(plan, vars) {
+  if (plan.kind !== 'position') { return }
+  if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return }
+  if (plan.operator !== 'count') { return }
+
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
+  if (qualifying.length === 0) { return }
+
+  const total = Number(plan.targetTotal ?? 0)
+  vars.positionConstraints.push({
+    subset: { team: plan.subjectTeam, filter: plan.subjectFilter || 'any', filterMode: plan.subjectFilterMode || null },
+    region: { kind: 'set', squares: new Set(qualifying) },
+    count_range: countRangeFromComparator(plan.comparator, total),
     plan
   })
 }
@@ -703,6 +757,7 @@ export function buildChainConstraints(combinedPlan) {
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)
     contributeRelationalPositionConstraint(plan, vars)
+    contributePositionPlanToPositionConstraints(plan, vars)
   }
   // Derive inventory contributions from converged singular-actor species_sets.
   // Runs after all plan contributions so we operate on narrowed sets.
