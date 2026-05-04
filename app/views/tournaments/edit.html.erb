@@ -1,4 +1,5 @@
 <div class="setup-form-page">
+  <%= link_to "← Back to tournament", tournament_show_path(@tournament) %>
   <h1>Edit Tournament</h1>
 
   <%= render 'form', url: tournament_path(@tournament), method: :patch, submit_label: 'Save Changes' %>
