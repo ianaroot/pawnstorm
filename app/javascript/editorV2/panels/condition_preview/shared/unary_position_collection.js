@@ -726,13 +726,13 @@ function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, val
 
 // ===== Example collection =====
 
-export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, maxResults = 3 }) {
+export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, verifier, factory, maxResults = 3 }) {
   const setup = buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
   if (!setup) { return [] }
 
   const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
 
-  const moves = collectVerifiedMoves({
+  const candidates = collectVerifiedMoves({
     pieces: afterPieces,
     movedPieceSquare,
     movedPieceSpecies,
@@ -740,41 +740,22 @@ export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, ma
     moveKind: MOVE_KIND_STANDARD,
     recentMoveContext,
     capturedPieceSpeciesPool,
-    evaluationPayloads: combinedPlan.evaluationPayloads,
+    verifier,
     random,
     maxResults
   })
 
+  const geometryKey = `unary-${unaryPlan.subject}-${unaryPlan.operator}`
   const examples = []
-  for (const { priorBoard, moveObject, afterBoard } of moves) {
-    const analysis = new CandidateMoveAnalysisV2({ board: priorBoard, moveObject })
-    const aggregatedResult = buildAggregatedResult(combinedPlan, analysis)
-    if (!aggregatedResult) { continue }
-
-    const highlights = buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard)
-    const movedPieceInRelation = (
-      aggregatedResult.subjectPositions.includes(moveObject.endPosition) ||
-      aggregatedResult.targetPositions.includes(moveObject.endPosition)
-    )
-
-    examples.push({
-      priorBoard,
-      afterBoard,
-      moveObject,
-      result: aggregatedResult,
-      highlights,
-      variantType: movedPieceInRelation ? 'involved' : 'separate',
-      geometryKey: `unary-${unaryPlan.subject}-${unaryPlan.operator}`,
-      movedPieceInRelation,
-      moveKind: moveKindForMoveObject(moveObject),
-      sound: soundForMove(priorBoard, afterBoard, moveObject)
-    })
+  for (const candidate of candidates) {
+    const example = factory.build(candidate, { generationPath: 'reverse-unary', geometryKey })
+    if (!example) { continue }
+    examples.push(example)
   }
-
   return examples
 }
 
-export function collectPositionExamples({ combinedPlan, positionPlan, item, random, maxResults = 3 }) {
+export function collectPositionExamples({ combinedPlan, positionPlan, item, random, verifier, factory, maxResults = 3 }) {
   const validSquares = qualifyingSquares(
     positionPlan.positionAxis, positionPlan.positionComparator, positionPlan.positionTarget,
     combinedPlan.movingTeam
@@ -785,7 +766,7 @@ export function collectPositionExamples({ combinedPlan, positionPlan, item, rand
 
   const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
 
-  const moves = collectVerifiedMoves({
+  const candidates = collectVerifiedMoves({
     pieces: afterPieces,
     movedPieceSquare,
     movedPieceSpecies,
@@ -793,36 +774,17 @@ export function collectPositionExamples({ combinedPlan, positionPlan, item, rand
     moveKind: MOVE_KIND_STANDARD,
     recentMoveContext,
     capturedPieceSpeciesPool,
-    evaluationPayloads: combinedPlan.evaluationPayloads,
+    verifier,
     random,
     maxResults
   })
 
+  const geometryKey = `position-${positionPlan.positionAxis}-${positionPlan.positionComparator}-${positionPlan.positionTarget}`
   const examples = []
-  for (const { priorBoard, moveObject, afterBoard } of moves) {
-    const analysis = new CandidateMoveAnalysisV2({ board: priorBoard, moveObject })
-    const aggregatedResult = buildAggregatedResult(combinedPlan, analysis)
-    if (!aggregatedResult) { continue }
-
-    const highlights = buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard)
-    const movedPieceInRelation = (
-      aggregatedResult.subjectPositions.includes(moveObject.endPosition) ||
-      aggregatedResult.targetPositions.includes(moveObject.endPosition)
-    )
-
-    examples.push({
-      priorBoard,
-      afterBoard,
-      moveObject,
-      result: aggregatedResult,
-      highlights,
-      variantType: movedPieceInRelation ? 'involved' : 'separate',
-      geometryKey: `position-${positionPlan.positionAxis}-${positionPlan.positionComparator}-${positionPlan.positionTarget}`,
-      movedPieceInRelation,
-      moveKind: moveKindForMoveObject(moveObject),
-      sound: soundForMove(priorBoard, afterBoard, moveObject)
-    })
+  for (const candidate of candidates) {
+    const example = factory.build(candidate, { generationPath: 'reverse-position', geometryKey })
+    if (!example) { continue }
+    examples.push(example)
   }
-
   return examples
 }

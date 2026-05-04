@@ -18,6 +18,7 @@ import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, layoutsMatch,
   shuffled, placeKingsIfAbsent, legalPlacementForSpecies, teamHasKing, ALL_POSITIONS
 } from './board_utils'
+import { Candidate } from './candidate'
 
 function descriptorAllowsZeroPairs(descriptor) {
   const { comparator, source } = descriptor
@@ -105,16 +106,15 @@ function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
 
 export function collectVerifiedMoves({
   pieces, movedPieceSquare, movedPieceSpecies, movingTeam, moveKind, recentMoveContext,
-  capturedPieceSpeciesPool, evaluationPayloads, random, maxResults
+  capturedPieceSpeciesPool, verifier, random, maxResults
 }) {
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
   if (!piecesWithKings) { return [] }
 
   const afterLayout = buildLayoutFromPieces(piecesWithKings)
-  const afterBoard = buildBoardFromLayout(afterLayout)
 
   const originCandidates = shuffled(originCandidatesForSpecies(movedPieceSquare, movedPieceSpecies, movingTeam), random)
-  const moves = []
+  const candidates = []
 
   for (const originPosition of originCandidates) {
     if (piecesWithKings.has(originPosition)) { continue }
@@ -151,30 +151,25 @@ export function collectVerifiedMoves({
         continue
       }
 
-      if (moveObject.illegal) { continue }
-
+      // Capture-constraint filter: pipeline-specific, not part of general verification.
       const captureRequired = capturedPieceSpeciesPool !== null && capturedPieceSpeciesPool.length > 0
       const captureForbidden = capturedPieceSpeciesPool !== null && capturedPieceSpeciesPool.length === 0
       if (captureRequired && !moveObject.captureNotation) { continue }
       if (captureForbidden && moveObject.captureNotation) { continue }
       if (capturedPieceSpeciesPool === null && moveKind !== MOVE_KIND_EN_PASSANT && moveObject.captureNotation) { continue }
 
-      if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
+      // Verification: cheap checks (legality, layout match) before expensive (post-eval).
+      const candidate = new Candidate({ priorBoard, moveObject })
+      if (!verifier.isLegal(candidate)) { continue }
+      if (!candidate.matchesLayout(afterLayout)) { continue }
+      if (!verifier.passesEvaluation(candidate)) { continue }
 
-      const rebuiltAfter = priorBoard.lightClone()
-      rebuiltAfter._hypotheticallyMovePiece(moveObject)
-      if (!layoutsMatch(rebuiltAfter.layOut, afterLayout)) { continue }
-
-      const evaluator = new ConditionEvaluatorV2()
-      const input = { board: priorBoard, moveObject }
-      if (!evaluationPayloads.every(payload => evaluator.evaluate(payload, input))) { continue }
-
-      moves.push({ priorBoard, moveObject, afterBoard })
-      if (moves.length >= maxResults) { return moves }
+      candidates.push(candidate)
+      if (candidates.length >= maxResults) { return candidates }
     }
   }
 
-  return moves
+  return candidates
 }
 
 // ===== buildAggregatedResult =====
@@ -438,7 +433,7 @@ function buildMovedPieceOptions({ combinedPlan, seed, variant, relationalPlans }
 
 // ===== collectVerifiedExamples =====
 
-export function collectVerifiedExamples({ combinedPlan, seed, variant, capturedPieceSpeciesPool = null, random }) {
+export function collectVerifiedExamples({ combinedPlan, seed, variant, capturedPieceSpeciesPool = null, random, verifier, factory }) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
   const recentMoveContext = seed.recentMoveContext
     ?? buildComparisonRecentMoveContext({ combinedPlan, seed, random })
@@ -455,7 +450,7 @@ export function collectVerifiedExamples({ combinedPlan, seed, variant, capturedP
     const afterPieces = clonePiecesMap(seed.pieces)
     afterPieces.set(option.square, `${combinedPlan.movingTeam}${option.species}`)
 
-    const moveExamples = collectVerifiedMoves({
+    const candidates = collectVerifiedMoves({
       pieces: afterPieces,
       movedPieceSquare: option.square,
       movedPieceSpecies: option.species,
@@ -463,40 +458,20 @@ export function collectVerifiedExamples({ combinedPlan, seed, variant, capturedP
       moveKind: seed.moveKind,
       recentMoveContext,
       capturedPieceSpeciesPool,
-      evaluationPayloads: combinedPlan.evaluationPayloads,
+      verifier,
       random,
       maxResults: MAX_REVERSE_MOVES_PER_OPTION
     })
 
-    for (const moveExample of moveExamples) {
-      const analysis = new CandidateMoveAnalysisV2({ board: moveExample.priorBoard, moveObject: moveExample.moveObject })
-      const aggregatedResult = buildAggregatedResult(combinedPlan, analysis)
-      if (!aggregatedResult) { continue }
+    for (const candidate of candidates) {
+      const example = factory.build(candidate, {
+        generationPath: 'reverse-relational',
+        geometryKey: seed.geometryKey
+      })
+      if (!example) { continue }
 
-      const movedPieceInRelation = (
-        aggregatedResult.subjectPositions.includes(moveExample.moveObject.endPosition) ||
-        aggregatedResult.targetPositions.includes(moveExample.moveObject.endPosition)
-      )
-
-      if (variant.type === 'involved' && !movedPieceInRelation) { continue }
-      if (variant.type === 'separate' && movedPieceInRelation) { continue }
-
-      const highlights = buildAggregatedHighlights(
-        combinedPlan, moveExample.moveObject, aggregatedResult, moveExample.priorBoard
-      )
-
-      const example = {
-        priorBoard: moveExample.priorBoard,
-        afterBoard: moveExample.afterBoard,
-        moveObject: moveExample.moveObject,
-        result: aggregatedResult,
-        highlights,
-        variantType: movedPieceInRelation ? 'involved' : 'separate',
-        geometryKey: seed.geometryKey,
-        movedPieceInRelation,
-        moveKind: moveKindForMoveObject(moveExample.moveObject),
-        sound: soundForMove(moveExample.priorBoard, moveExample.afterBoard, moveExample.moveObject)
-      }
+      if (variant.type === 'involved' && !example.movedPieceInRelation) { continue }
+      if (variant.type === 'separate' && example.movedPieceInRelation) { continue }
 
       const identity = candidateIdentity(example)
       if (seenCandidates.has(identity)) { continue }
