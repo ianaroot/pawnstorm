@@ -78,19 +78,19 @@ function collectSpecialMoveExamples({ chainVariant, addUnique, castle, promotion
   if (chainVariant.moveKinds.includes(MOVE_KIND_CASTLE) && Date.now() <= deadline) {
     const examples = collectCastleExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
     produced['castle'] += examples.length
-    examples.forEach(ex => { ex.generationPath = 'castle'; addUnique(ex, castle) })
+    examples.forEach(ex => addUnique(ex, castle))
   }
 
   if (chainVariant.moveKinds.includes(MOVE_KIND_PROMOTION) && Date.now() <= deadline) {
     const examples = collectPromotionExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
     produced['promotion'] += examples.length
-    examples.forEach(ex => { ex.generationPath = 'promotion'; addUnique(ex, promotion) })
+    examples.forEach(ex => addUnique(ex, promotion))
   }
 
   if (chainVariant.moveKinds.includes(MOVE_KIND_EN_PASSANT) && Date.now() <= deadline) {
     const examples = collectEnPassantExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
     produced['en-passant'] += examples.length
-    examples.forEach(ex => { ex.generationPath = 'en-passant'; addUnique(ex, enPassant) })
+    examples.forEach(ex => addUnique(ex, enPassant))
   }
 }
 

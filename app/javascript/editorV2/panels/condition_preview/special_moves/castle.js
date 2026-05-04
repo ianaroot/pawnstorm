@@ -5,7 +5,7 @@ import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, placeKingsIfAbsent
 } from '../shared/board_utils'
 import { buildSeedFromPreset, castlePresetsForTeam } from '../seeds/seed_builder'
-import { evaluateAndBuildExample } from './example_construction'
+import { Candidate } from '../shared/candidate'
 
 export function collectCastleExamples({ combinedPlan, random, maxExamples }) {
   const presets = castlePresetsForTeam(combinedPlan.movingTeam)
@@ -25,7 +25,6 @@ export function collectCastleExamples({ combinedPlan, random, maxExamples }) {
     if (piecesWithKings.get(preset.rookEnd) !== `${combinedPlan.movingTeam}${Board.ROOK}`) { continue }
 
     const afterLayout = buildLayoutFromPieces(piecesWithKings)
-    const afterBoard = buildBoardFromLayout(afterLayout)
 
     const priorPieces = clonePiecesMap(piecesWithKings)
     priorPieces.delete(preset.kingEnd)
@@ -45,8 +44,13 @@ export function collectCastleExamples({ combinedPlan, random, maxExamples }) {
 
     if (!moveObject.additionalActions) { continue }
 
-    const example = evaluateAndBuildExample({
-      combinedPlan, priorBoard, afterLayout, afterBoard, moveObject, seed,
+    const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
+    if (!candidate.isVerified()) { continue }
+    if (!candidate.matchesLayout(afterLayout)) { continue }
+
+    const example = candidate.buildExample({
+      generationPath: 'castle',
+      geometryKey: seed.geometryKey,
       moveKind: MOVE_KIND_CASTLE
     })
     if (!example) { continue }

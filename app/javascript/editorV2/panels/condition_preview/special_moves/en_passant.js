@@ -5,7 +5,7 @@ import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, placeKingsIfAbsent, shuffled
 } from '../shared/board_utils'
 import { buildSeedFromPreset, enPassantPresetsForTeam } from '../seeds/seed_builder'
-import { evaluateAndBuildExample } from './example_construction'
+import { Candidate } from '../shared/candidate'
 
 // Constructs prior+after directly from the preset, mirroring castle and
 // promotion. Bypasses collectVerifiedExamples (whose variant filter was
@@ -44,7 +44,6 @@ export function collectEnPassantExamples({ combinedPlan, random, maxExamples }) 
     if (piecesWithKings.has(capturedSquare)) { continue }
 
     const afterLayout = buildLayoutFromPieces(piecesWithKings)
-    const afterBoard = buildBoardFromLayout(afterLayout)
 
     const file = destSquare % 8
     const originCandidates = []
@@ -71,13 +70,17 @@ export function collectEnPassantExamples({ combinedPlan, random, maxExamples }) 
       let moveObject
       try { moveObject = Rules.getMoveObject(origin, destSquare, priorBoard) }
       catch { continue }
-      if (moveObject.illegal) { continue }
       // Real en-passant has additionalActions (removing the captured pawn at
       // capturedSquare). If Rules didn't recognize this as en-passant, skip.
       if (!moveObject.additionalActions) { continue }
 
-      const example = evaluateAndBuildExample({
-        combinedPlan, priorBoard, afterLayout, afterBoard, moveObject, seed,
+      const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
+      if (!candidate.isVerified()) { continue }
+      if (!candidate.matchesLayout(afterLayout)) { continue }
+
+      const example = candidate.buildExample({
+        generationPath: 'en-passant',
+        geometryKey: seed.geometryKey,
         moveKind: MOVE_KIND_EN_PASSANT
       })
       if (!example) { continue }

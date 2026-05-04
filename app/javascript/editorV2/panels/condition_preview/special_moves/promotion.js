@@ -5,7 +5,7 @@ import {
   clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, placeKingsIfAbsent, shuffled
 } from '../shared/board_utils'
 import { buildSeedFromPreset, promotionPresetsForTeam } from '../seeds/seed_builder'
-import { evaluateAndBuildExample } from './example_construction'
+import { Candidate } from '../shared/candidate'
 
 const CAPTURED_SPECIES_OPTIONS = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
 
@@ -50,7 +50,6 @@ export function collectPromotionExamples({ combinedPlan, random, maxExamples }) 
     if (piecesWithKings.get(preset.moveEnd) !== `${combinedPlan.movingTeam}${preset.promotedSpecies}`) { continue }
 
     const afterLayout = buildLayoutFromPieces(piecesWithKings)
-    const afterBoard = buildBoardFromLayout(afterLayout)
 
     const basePriorPieces = clonePiecesMap(piecesWithKings)
     basePriorPieces.delete(preset.moveEnd)
@@ -78,8 +77,13 @@ export function collectPromotionExamples({ combinedPlan, random, maxExamples }) 
 
       if (!moveObject.promotionPiece) { continue }
 
-      const example = evaluateAndBuildExample({
-        combinedPlan, priorBoard, afterLayout, afterBoard, moveObject, seed,
+      const candidate = new Candidate({ combinedPlan, priorBoard, moveObject })
+      if (!candidate.isVerified()) { continue }
+      if (!candidate.matchesLayout(afterLayout)) { continue }
+
+      const example = candidate.buildExample({
+        generationPath: 'promotion',
+        geometryKey: seed.geometryKey,
         moveKind: MOVE_KIND_PROMOTION
       })
       if (!example) { continue }
