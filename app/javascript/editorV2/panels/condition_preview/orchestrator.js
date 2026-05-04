@@ -46,7 +46,6 @@ function makeAdder(seen) {
     const id = candidateIdentity(example)
     if (seen.has(id)) { return }
     seen.add(id)
-    if (!example.generationPath) { example.generationPath = 'reverse' }
     pool.push(example)
   }
 }
