@@ -1,22 +1,15 @@
 import { buildPositionWorkItems, collectPositionExamples } from '../shared/unary_position_collection'
-import { CandidateVerifier } from '../shared/candidate_verifier'
-import { ExampleFactory } from '../shared/example_factory'
+import { runWorkItemPipeline } from '../shared/work_item_pipeline'
 
 export function collectReversePositionExamples({
   combinedPlan, positionPlans, perPlanMs, random, maxStandardSize,
   addUnique, standardExamples, produced
 }) {
-  const verifier = new CandidateVerifier({ combinedPlan })
-  const factory = new ExampleFactory({ combinedPlan })
-
-  for (const positionPlan of positionPlans) {
-    const posDeadline = Date.now() + perPlanMs
-    const workItems = buildPositionWorkItems(positionPlan, combinedPlan.movingTeam, random)
-    for (const item of workItems) {
-      if (standardExamples.length >= maxStandardSize || Date.now() > posDeadline) { break }
-      const examples = collectPositionExamples({ combinedPlan, positionPlan, item, random, verifier, factory })
-      produced['reverse-position'] += examples.length
-      examples.forEach(ex => addUnique(ex, standardExamples))
-    }
-  }
+  runWorkItemPipeline({
+    plans: positionPlans, combinedPlan, perPlanMs, random, maxStandardSize,
+    buildWorkItems: buildPositionWorkItems,
+    collectExamples: collectPositionExamples,
+    pipelineKey: 'reverse-position',
+    addUnique, standardExamples, produced
+  })
 }

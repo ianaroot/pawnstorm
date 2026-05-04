@@ -158,8 +158,11 @@ function unaryPairTargetItems({ target, subjectValue, comparator, targetSpeciesP
 
 // ===== Work item builders =====
 
-export function buildUnaryWorkItems(unaryPlan, random) {
-  const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = unaryPlan
+// movingTeam is accepted for signature parity with buildPositionWorkItems
+// (so both can be driven through the same work-item pipeline runner).
+// Currently unused by the unary path.
+export function buildUnaryWorkItems(plan, random, movingTeam) { // eslint-disable-line no-unused-vars
+  const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = plan
   const items = []
   const isPairTarget = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
 
@@ -309,8 +312,8 @@ export function buildUnaryWorkItems(unaryPlan, random) {
   return shuffled(items, random)
 }
 
-export function buildPositionWorkItems(positionPlan, movingTeam, random) {
-  const { subject, subjectSpeciesPool, operator, comparator, targetTotal, positionAxis, positionComparator, positionTarget } = positionPlan
+export function buildPositionWorkItems(plan, random, movingTeam) {
+  const { subject, subjectSpeciesPool, operator, comparator, targetTotal, positionAxis, positionComparator, positionTarget } = plan
   const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam)
   if (validSquares.length === 0) { return [] }
 
@@ -726,8 +729,8 @@ function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, val
 
 // ===== Example collection =====
 
-export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, verifier, factory, maxResults = 3 }) {
-  const setup = buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
+export function collectUnaryExamples({ combinedPlan, plan, item, random, verifier, factory, maxResults = 3 }) {
+  const setup = buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan: plan, item, random })
   if (!setup) { return [] }
 
   const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
@@ -745,7 +748,7 @@ export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, ve
     maxResults
   })
 
-  const geometryKey = `unary-${unaryPlan.subject}-${unaryPlan.operator}`
+  const geometryKey = `unary-${plan.subject}-${plan.operator}`
   const examples = []
   for (const candidate of candidates) {
     const example = factory.build(candidate, { generationPath: 'reverse-unary', geometryKey })
@@ -755,13 +758,13 @@ export function collectUnaryExamples({ combinedPlan, unaryPlan, item, random, ve
   return examples
 }
 
-export function collectPositionExamples({ combinedPlan, positionPlan, item, random, verifier, factory, maxResults = 3 }) {
+export function collectPositionExamples({ combinedPlan, plan, item, random, verifier, factory, maxResults = 3 }) {
   const validSquares = qualifyingSquares(
-    positionPlan.positionAxis, positionPlan.positionComparator, positionPlan.positionTarget,
+    plan.positionAxis, plan.positionComparator, plan.positionTarget,
     combinedPlan.movingTeam
   )
 
-  const setup = buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, validSquares, random })
+  const setup = buildAfterPiecesForPositionItem({ combinedPlan, positionPlan: plan, item, validSquares, random })
   if (!setup) { return [] }
 
   const { afterPieces, movedPieceSquare, movedPieceSpecies, capturedPieceSpeciesPool, recentMoveContext } = setup
@@ -779,7 +782,7 @@ export function collectPositionExamples({ combinedPlan, positionPlan, item, rand
     maxResults
   })
 
-  const geometryKey = `position-${positionPlan.positionAxis}-${positionPlan.positionComparator}-${positionPlan.positionTarget}`
+  const geometryKey = `position-${plan.positionAxis}-${plan.positionComparator}-${plan.positionTarget}`
   const examples = []
   for (const candidate of candidates) {
     const example = factory.build(candidate, { generationPath: 'reverse-position', geometryKey })
