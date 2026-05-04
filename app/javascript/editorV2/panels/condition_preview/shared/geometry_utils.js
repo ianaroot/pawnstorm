@@ -7,6 +7,48 @@ export function adjacentNeighborPositions(position) {
   return kingControlledSquares(position)
 }
 
+function pawnControlledSquares(position, team) {
+  const file = position % 8
+  const dir = team === Board.WHITE ? 1 : -1
+  const result = []
+  if (file > 0) { result.push(position + 8 * dir - 1) }
+  if (file < 7) { result.push(position + 8 * dir + 1) }
+  return result.filter(p => Board._inBounds(p))
+}
+
+function sliderControlledSquaresFromBoard(position, steps, board) {
+  const squares = []
+  for (const step of steps) {
+    let current = nextPositionOnRay(position, step)
+    while (current !== null) {
+      squares.push(current)
+      if (board.layOut[current] !== Board.EMPTY_SQUARE) { break }
+      current = nextPositionOnRay(current, step)
+    }
+  }
+  return squares
+}
+
+// Squares the piece at `position` on `board` controls (attacks/defends).
+// Used when a singular actor is the SUBJECT of a relational position
+// constraint — the dependent group-side piece must be placed at a square
+// the singular reaches.
+export function controlledSquaresForPieceAt(position, board) {
+  const species = board.pieceTypeAt(position)
+  if (!species || species === Board.EMPTY_SQUARE) { return [] }
+  const team = board.teamAt(position)
+
+  switch (species) {
+    case Board.PAWN:   return pawnControlledSquares(position, team)
+    case Board.NIGHT:  return knightControlledSquares(position)
+    case Board.KING:   return kingControlledSquares(position)
+    case Board.BISHOP: return sliderControlledSquaresFromBoard(position, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return sliderControlledSquaresFromBoard(position, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return sliderControlledSquaresFromBoard(position, QUEEN_RAY_STEPS, board)
+    default:           return []
+  }
+}
+
 export function positionsForSliderOrigins(endPosition, steps) {
   const origins = []
   steps.forEach(step => {

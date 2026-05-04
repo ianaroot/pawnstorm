@@ -2001,4 +2001,27 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('resolves moved_piece-as-subject relations using controlled squares', () => {
+    // Plan: moved_piece (singular subject) attacks enemy/queen (group target).
+    // The position constraint emitted for queen placement must use the squares
+    // moved_piece reaches, not squares from which queen could attack moved_piece.
+    // Pre-fix, the resolver hardcoded the latter direction and this chain
+    // produced 0 examples on multi-piece boards where the directionality
+    // mismatch put queens on attacking-of-mover squares instead of attacked-by.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy', targetFilter: 'queen',
+      targetFilterMode: 'include'
+    }
+    const preview = generateConditionExamples(payload, { random: seededRandom(9002) })
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
 })

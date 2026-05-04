@@ -26,6 +26,7 @@ import { attackingPositions, defendingPositions, adjacentPositions, shieldingPos
 import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
+import { controlledSquaresForPieceAt } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 export const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
@@ -601,9 +602,17 @@ function resamplePbsPair(priorRange, currentRange, direction, random) {
 // ===== Position constraints (patch 5) =====
 //
 // Region representations:
-//   { kind: 'set', squares: Set<int> }                    — concrete squares
-//   { kind: 'related', actor, operator }                  — variable-dependent:
-//       resolves to squares related to {actor}'s position via {operator}
+//   { kind: 'set', squares: Set<int> }                            — concrete squares
+//   { kind: 'related', singularActor, singularRole, operator }    — variable-dependent
+//
+// `singularRole` controls direction of the relation:
+//   'target'  — singular is the relation's target; region holds squares from
+//               which a piece could be placed to relate TO the singular's
+//               position (e.g. enemy attacks moved_piece → squares attacking
+//               moved_piece's position).
+//   'subject' — singular is the relation's source; region holds squares the
+//               singular at its position relates TO (e.g. moved_piece attacks
+//               enemy/queen → squares moved_piece controls).
 //
 // positionConstraint shape:
 //   { subset: { team, filter }, region, count_range: { min, max }, plan }
@@ -617,13 +626,13 @@ export function resolveRegion(region, ctx, pieces) {
   if (!region) { return new Set() }
   if (region.kind === 'set') { return region.squares }
   if (region.kind === 'related') {
-    const varKey = ACTOR_TO_VAR_KEY[region.actor]
+    const varKey = ACTOR_TO_VAR_KEY[region.singularActor]
     if (!varKey || !ctx[varKey]) { return new Set() }
     const positions = ctx[varKey].position_set
     const result = new Set()
     const board = buildBoardFromLayout(buildLayoutFromPieces(pieces ?? new Map()), null, ctx.movingTeam)
     for (const targetPos of positions) {
-      const related = relatedPositions(region.operator, targetPos, board, ctx[varKey].team)
+      const related = relatedPositions(region.operator, region.singularRole, targetPos, board, ctx[varKey].team)
       for (const p of related) { result.add(p) }
     }
     return result
@@ -631,15 +640,26 @@ export function resolveRegion(region, ctx, pieces) {
   return new Set()
 }
 
-function relatedPositions(operator, targetPos, board, subjectTeam) {
-  // Returns positions where a subject (any species) could be placed such that
-  // it relates to targetPos via the operator. For 'adjacent', it's just the
-  // 8 neighbors. For attack/defend/shield, depends on board state.
+function relatedPositions(operator, singularRole, singularPos, board, singularTeam) {
+  // singularRole = 'target': singular is the target of the relation. Group-side
+  //   placements are squares from which a piece could relate TO singular's pos.
+  // singularRole = 'subject': singular is the source of the relation. Group-side
+  //   placements are squares singular's piece relates TO.
+  if (singularRole === 'subject') {
+    switch (operator) {
+      case 'adjacent': return adjacentPositions({ board, targetPosition: singularPos, team: singularTeam })
+      case 'attack':
+      case 'defend':   return controlledSquaresForPieceAt(singularPos, board)
+      case 'shield':   return [] // singular-as-shielder not yet supported; see bug list
+      default:         return []
+    }
+  }
+  // 'target' (default): legacy direction.
   switch (operator) {
-    case 'adjacent': return adjacentPositions({ board, targetPosition: targetPos, team: subjectTeam })
-    case 'attack':   return attackingPositions({ board, targetPosition: targetPos, team: subjectTeam })
-    case 'defend':   return defendingPositions({ board, targetPosition: targetPos, team: subjectTeam })
-    case 'shield':   return shieldingPositions({ board, targetPosition: targetPos, team: subjectTeam })
+    case 'adjacent': return adjacentPositions({ board, targetPosition: singularPos, team: singularTeam })
+    case 'attack':   return attackingPositions({ board, targetPosition: singularPos, team: singularTeam })
+    case 'defend':   return defendingPositions({ board, targetPosition: singularPos, team: singularTeam })
+    case 'shield':   return shieldingPositions({ board, targetPosition: singularPos, team: singularTeam })
     default:         return []
   }
 }
@@ -657,7 +677,7 @@ function contributeRelationalPositionConstraint(plan, vars) {
   const targetIsSingular = SINGULAR_ACTORS.has(plan.target)
   if (subjectIsSingular === targetIsSingular) { return }  // both or neither
 
-  const singularSide = subjectIsSingular ? 'subject' : 'target'
+  const singularRole = subjectIsSingular ? 'subject' : 'target'
   const groupSide = subjectIsSingular ? 'target' : 'subject'
   const singularActor = subjectIsSingular ? plan.subject : plan.target
   const groupTeam = groupSide === 'subject' ? plan.subjectTeam : plan.targetTeam
@@ -669,7 +689,7 @@ function contributeRelationalPositionConstraint(plan, vars) {
   // zero-count-skip path elsewhere).
   vars.positionConstraints.push({
     subset: { team: groupTeam, filter: groupFilter || 'any', filterMode: groupFilterMode || null },
-    region: { kind: 'related', actor: singularActor, operator: plan.operator },
+    region: { kind: 'related', singularActor, singularRole, operator: plan.operator },
     count_range: { min: 1, max: Infinity },
     plan
   })

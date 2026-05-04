@@ -294,7 +294,7 @@ function resolvePositionConstraints(pieces, ctx) {
   for (const constraint of constraints) {
     const region = constraint.region
     if (region.kind === 'related') {
-      const varKey = ACTOR_TO_VAR_KEY[region.actor]
+      const varKey = ACTOR_TO_VAR_KEY[region.singularActor]
       if (!varKey || !ctx[varKey]) { continue }
       // Only resolve when the dependent actor is committed to a singleton
       // position. A wider position_set means no strategy committed; the
