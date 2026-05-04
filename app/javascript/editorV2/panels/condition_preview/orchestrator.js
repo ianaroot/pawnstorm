@@ -93,23 +93,19 @@ function buildChainVariants(combinedPlan) {
   })
 }
 
-function collectSpecialMoveExamples({ chainVariant, addUnique, castle, promotion, enPassant, deadline, random, produced }) {
-  if (chainVariant.moveKinds.includes(MOVE_KIND_CASTLE) && Date.now() <= deadline) {
-    const examples = collectCastleExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-    produced['castle'] += examples.length
-    examples.forEach(ex => addUnique(ex, castle))
-  }
+const SPECIAL_MOVE_PIPELINES = Object.freeze([
+  { kind: MOVE_KIND_CASTLE,     key: 'castle',     collect: collectCastleExamples },
+  { kind: MOVE_KIND_PROMOTION,  key: 'promotion',  collect: collectPromotionExamples },
+  { kind: MOVE_KIND_EN_PASSANT, key: 'en-passant', collect: collectEnPassantExamples }
+])
 
-  if (chainVariant.moveKinds.includes(MOVE_KIND_PROMOTION) && Date.now() <= deadline) {
-    const examples = collectPromotionExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-    produced['promotion'] += examples.length
-    examples.forEach(ex => addUnique(ex, promotion))
-  }
-
-  if (chainVariant.moveKinds.includes(MOVE_KIND_EN_PASSANT) && Date.now() <= deadline) {
-    const examples = collectEnPassantExamples({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
-    produced['en-passant'] += examples.length
-    examples.forEach(ex => addUnique(ex, enPassant))
+function collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline, random, produced }) {
+  for (const { kind, key, collect } of SPECIAL_MOVE_PIPELINES) {
+    if (!chainVariant.moveKinds.includes(kind)) { continue }
+    if (Date.now() > deadline) { break }
+    const examples = collect({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
+    produced[key] += examples.length
+    examples.forEach(ex => addUnique(ex, pools[key]))
   }
 }
 
@@ -129,9 +125,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const seen = new Set()
   const addUnique = makeAdder(seen)
   const standardExamples = []
-  const castleExamples = []
-  const promotionExamples = []
-  const enPassantExamples = []
+  const pools = { castle: [], promotion: [], 'en-passant': [] }
   const produced = emptyPipelineCounter()
 
   const budgets = computeBudgets(combinedPlan, totalMs)
@@ -196,10 +190,16 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const specialDeadline = Date.now() + budgets.specialMoveMs
   for (const chainVariant of chainVariants) {
     if (Date.now() > specialDeadline) { break }
-    collectSpecialMoveExamples({ chainVariant, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random, produced })
+    collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline: specialDeadline, random, produced })
   }
 
-  return { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced }
+  return {
+    standardExamples,
+    castleExamples: pools.castle,
+    promotionExamples: pools.promotion,
+    enPassantExamples: pools['en-passant'],
+    produced
+  }
 }
 
 function emitStats(options, payloadArray, produced, finalExamples, startTime) {
