@@ -4,9 +4,9 @@ import { ExampleFactory } from '../shared/example_factory'
 import { classifyPlan } from './plan_classifier'
 import { PATTERNS } from './move_patterns'
 
-const DEFAULT_ATTEMPTS_PER_DRIVER = 200
+const DEFAULT_ATTEMPTS = 200
 
-export function collectForwardPatternExamples({ combinedPlan, random, maxStandardSize, addUnique, standardExamples, produced, attemptsPerDriver = DEFAULT_ATTEMPTS_PER_DRIVER }) {
+export function collectForwardPatternExamples({ combinedPlan, random, maxStandardSize, addUnique, standardExamples, produced, attempts = DEFAULT_ATTEMPTS }) {
   if (combinedPlan.plans.length === 0) { return }
   const classifications = combinedPlan.plans.map(classifyPlan)
   const drivers = classifications.filter(c => c.pbsDirection !== null)
@@ -17,7 +17,7 @@ export function collectForwardPatternExamples({ combinedPlan, random, maxStandar
 
   // Round-robin through (driver, pattern) combinations so every applicable pattern
   // gets a turn before any single pattern fills the pool.
-  roundLoop: for (let round = 0; round < attemptsPerDriver; round += 1) {
+  roundLoop: for (let round = 0; round < attempts; round += 1) {
     if (standardExamples.length >= maxStandardSize) { break }
     for (const driver of drivers) {
       for (const pattern of PATTERNS) {

@@ -3,14 +3,14 @@ import { CandidateVerifier } from '../shared/candidate_verifier'
 import { ExampleFactory } from '../shared/example_factory'
 import { resolveViaHints } from './hint_resolver'
 
-const DEFAULT_HINT_RESOLVER_ATTEMPTS = 200
+const DEFAULT_ATTEMPTS = 200
 
-export function collectForwardResolverExamples({ combinedPlan, random, maxStandardSize, addUnique, standardExamples, produced }) {
+export function collectForwardResolverExamples({ combinedPlan, random, maxStandardSize, addUnique, standardExamples, produced, attempts = DEFAULT_ATTEMPTS }) {
   if (combinedPlan.plans.length === 0) { return }
   const verifier = new CandidateVerifier({ combinedPlan })
   const factory = new ExampleFactory({ combinedPlan })
 
-  for (let attempt = 0; attempt < DEFAULT_HINT_RESOLVER_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     if (standardExamples.length >= maxStandardSize) { break }
     const result = resolveViaHints({ combinedPlan, random })
     if (!result) { continue }

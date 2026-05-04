@@ -16,11 +16,30 @@ import { collectEnPassantExamples } from './special_moves/en_passant'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
-const FORWARD_POOL_SHARE = 0.5
+const FORWARD_POOL_FRACTION = 0.5
 const MAX_SEEDS_PER_VARIANT = 600
-const SPECIAL_MOVE_MS_RESERVE = 100
+const SPECIAL_MOVE_MS_CAP = 100
+const FORWARD_RESOLVER_ATTEMPTS = 200
+const FORWARD_PATTERN_ATTEMPTS = 200
 
 const NO_EXAMPLES_REASON = "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work."
+
+// Single source of truth for per-pipeline budget knobs. Today's allocation is
+// uniform across chain shapes; chain-shape-aware weighting adds branches here.
+function computeBudgets(combinedPlan, totalMs) {
+  const planCount = Math.max(combinedPlan.plans.length, 1)
+  const specialMoveMs = Math.min(totalMs * 0.2, SPECIAL_MOVE_MS_CAP)
+  const perPlanMs = (totalMs - specialMoveMs) / planCount
+  return {
+    forwardCap: Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_FRACTION),
+    forwardResolverAttempts: FORWARD_RESOLVER_ATTEMPTS,
+    forwardPatternAttempts: FORWARD_PATTERN_ATTEMPTS,
+    perPlanMs,
+    specialMoveMs,
+    maxStandardSize: MAX_CANDIDATE_POOL,
+    maxSeedsPerVariant: MAX_SEEDS_PER_VARIANT
+  }
+}
 
 function makeAdder(seen) {
   return function addUnique(example, pool) {
@@ -115,10 +134,8 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const enPassantExamples = []
   const produced = emptyPipelineCounter()
 
+  const budgets = computeBudgets(combinedPlan, totalMs)
   const plans = combinedPlan.plans
-  const specialMoveMs = Math.min(totalMs * 0.2, SPECIAL_MOVE_MS_RESERVE)
-  const perPlanMs = (totalMs - specialMoveMs) / Math.max(plans.length, 1)
-
   const relationalPlans = plans.filter(p => p.kind === 'relational')
   const unaryPlans = plans.filter(p => p.kind === 'unary')
   const positionPlans = plans.filter(p => p.kind === 'position')
@@ -126,18 +143,23 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   const chainVariants = buildChainVariants(combinedPlan)
 
   // ── Forward generation ──────────────────────────────────────────────────
-  // Cap forward's contribution to FORWARD_POOL_SHARE so reverse-gen retains room
-  // to surface its own variety. Resolver runs first, then pattern picks up if
-  // any room is left under the shared cap.
+  // Resolver runs first, then pattern picks up under the shared forwardCap.
   if (plans.length > 0) {
-    const forwardCap = Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_SHARE)
-    collectForwardResolverExamples({ combinedPlan, random, maxStandardSize: forwardCap, addUnique, standardExamples, produced })
-    collectForwardPatternExamples({ combinedPlan, random, maxStandardSize: forwardCap, addUnique, standardExamples, produced })
+    collectForwardResolverExamples({
+      combinedPlan, random,
+      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
+      addUnique, standardExamples, produced
+    })
+    collectForwardPatternExamples({
+      combinedPlan, random,
+      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
+      addUnique, standardExamples, produced
+    })
   }
 
   // ── Reverse-relational ──────────────────────────────────────────────────
   if (relationalPlans.length > 0) {
-    const relDeadline = Date.now() + perPlanMs * relationalPlans.length
+    const relDeadline = Date.now() + budgets.perPlanMs * relationalPlans.length
     const variants = effectiveVariants(combinedPlan)
     const tuples = []
     for (const chainVariant of chainVariants) {
@@ -147,7 +169,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
     }
     collectReverseRelationalExamples({
       tuples, relDeadline, random,
-      maxStandardSize: MAX_CANDIDATE_POOL, maxRounds: MAX_SEEDS_PER_VARIANT,
+      maxStandardSize: budgets.maxStandardSize, maxRounds: budgets.maxSeedsPerVariant,
       addUnique, standardExamples, produced
     })
   }
@@ -155,8 +177,8 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // ── Reverse-unary ───────────────────────────────────────────────────────
   if (unaryPlans.length > 0) {
     collectReverseUnaryExamples({
-      combinedPlan, unaryPlans, perPlanMs, random,
-      maxStandardSize: MAX_CANDIDATE_POOL,
+      combinedPlan, unaryPlans, perPlanMs: budgets.perPlanMs, random,
+      maxStandardSize: budgets.maxStandardSize,
       addUnique, standardExamples, produced
     })
   }
@@ -164,14 +186,14 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // ── Reverse-position ────────────────────────────────────────────────────
   if (positionPlans.length > 0) {
     collectReversePositionExamples({
-      combinedPlan, positionPlans, perPlanMs, random,
-      maxStandardSize: MAX_CANDIDATE_POOL,
+      combinedPlan, positionPlans, perPlanMs: budgets.perPlanMs, random,
+      maxStandardSize: budgets.maxStandardSize,
       addUnique, standardExamples, produced
     })
   }
 
   // ── Special moves ───────────────────────────────────────────────────────
-  const specialDeadline = Date.now() + specialMoveMs
+  const specialDeadline = Date.now() + budgets.specialMoveMs
   for (const chainVariant of chainVariants) {
     if (Date.now() > specialDeadline) { break }
     collectSpecialMoveExamples({ chainVariant, addUnique, castle: castleExamples, promotion: promotionExamples, enPassant: enPassantExamples, deadline: specialDeadline, random, produced })
