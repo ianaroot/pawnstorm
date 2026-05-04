@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import BoardStatePreview from '../panels/BoardStatePreview.js'
 
-vi.mock('../panels/condition_preview_generation/ConditionExampleGenerator', () => ({
+vi.mock('../panels/condition_preview/orchestrator', () => ({
   default: vi.fn()
 }))
 vi.mock('../utils/conditionPreviewFormatter', () => ({
@@ -14,7 +14,7 @@ vi.mock('gameplay/sound', () => ({
   default: { playSound: vi.fn() }
 }))
 
-import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator.js'
+import generateConditionExamples from '../panels/condition_preview/orchestrator.js'
 import { formatConditionPreview } from '../utils/conditionPreviewFormatter.js'
 
 function buildWrap() {

@@ -4,7 +4,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator'
+import generateConditionExamples from '../panels/condition_preview/orchestrator'
 import { maxOccupancyRatio, uniqueAfterBoardLayouts } from './diversity_helpers'
 
 function seededRandom(seed = 12345) {
@@ -1182,6 +1182,89 @@ describe('ConditionExampleGenerator', () => {
     enPassantExamples.forEach(example => {
       expect(evaluateExample(payload, example)).toBe(true)
       expect(example.moveObject.additionalActions).toBeTruthy()
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces en-passant examples for a same_piece chain', () => {
+    // enemy_moved_piece same_piece captured_piece is exactly true for
+    // en-passant: the enemy's prior move was the double-stepped pawn, and
+    // we just captured it via en-passant. The preset's recentMoveContext
+    // sets movedPieceEndPosition = capturedSquare, which the samePiece
+    // predicate compares against the captured piece's position.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'same_piece',
+      target: 'captured_piece', targetFilter: 'any'
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(8004),
+      moveKinds: ['en_passant']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    const enPassantExamples = preview.examples.filter(ex => ex.moveKind === 'en_passant')
+    expect(enPassantExamples.length).toBeGreaterThan(0)
+    enPassantExamples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expect(example.moveObject.additionalActions).toBeTruthy()
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces standard reverse-gen examples for a same_piece chain', () => {
+    // Standard reverse-gen path also benefits from the same_piece skip in
+    // seed_builder. Restricting moveKinds to 'standard' isolates this path.
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'same_piece',
+      target: 'captured_piece', targetFilter: 'any'
+    }
+
+    const preview = generateConditionExamples(payload, {
+      random: seededRandom(8005),
+      moveKinds: ['standard']
+    })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('produces examples for a compound chain combining same_piece with attack', () => {
+    // Two relational plans: same_piece AND moved_piece attacks enemy/king.
+    // Each plan handled independently in seed_builder — same_piece skips,
+    // attack runs through skeleton building.
+    const payloads = [
+      {
+        version: 2, kind: 'relational',
+        subject: 'enemy_moved_piece', subjectFilter: 'any',
+        operator: 'same_piece',
+        target: 'captured_piece', targetFilter: 'any'
+      },
+      {
+        version: 2, kind: 'relational',
+        subject: 'moved_piece', subjectFilter: 'any',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'king', targetFilterMode: 'include'
+      }
+    ]
+
+    const preview = generateConditionExamples(payloads, { random: seededRandom(8006) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      payloads.forEach(payload => {
+        expect(evaluateExample(payload, example)).toBe(true)
+      })
       expectLegalPriorTurnState(example)
     })
   })
