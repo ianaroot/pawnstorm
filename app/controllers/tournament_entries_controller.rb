@@ -1,4 +1,5 @@
 class TournamentEntriesController < ApplicationController
+  include BotEligibility
   before_action :authenticate_registered_user!
   before_action :set_tournament
 
@@ -145,7 +146,7 @@ class TournamentEntriesController < ApplicationController
 
   def constraint_violation_message(bot)
     return nil unless tournament.constraints.present?
-    result = BotEligibilityChecker.new(bot.compiled_program, tournament.constraints).check
+    result = check_bot_eligibility(bot, tournament.constraints)
     return nil if result[:eligible]
     "Bot is not eligible for this tournament: #{result[:violations].map { |v| v[:message] }.join(', ')}"
   end

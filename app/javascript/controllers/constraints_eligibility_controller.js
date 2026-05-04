@@ -96,6 +96,7 @@ export default class extends Controller {
             <th>Eligible</th>
             <th>Cost</th>
             <th>Violations</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -123,6 +124,7 @@ export default class extends Controller {
         <td><span class="ce-badge ce-badge--${result.eligible ? 'eligible' : 'ineligible'}">${result.eligible ? 'Yes' : 'No'}</span></td>
         <td class="ce-cost">${cost}</td>
         <td class="ce-violations">${violations}</td>
+        <td><a href="/bots/${result.bot_id}/edit" class="ce-edit-link">Edit</a></td>
       </tr>
     `
   }

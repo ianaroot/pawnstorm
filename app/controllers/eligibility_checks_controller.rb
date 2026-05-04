@@ -1,4 +1,5 @@
 class EligibilityChecksController < ApplicationController
+  include BotEligibility
   include ConstraintsParams
   before_action :authenticate_registered_user!
 
@@ -10,7 +11,7 @@ class EligibilityChecksController < ApplicationController
                        .order(:name)
 
     results = bots.map do |bot|
-      result = BotEligibilityChecker.new(bot.compiled_program, constraints).check
+      result = check_bot_eligibility(bot, constraints)
       {
         bot_id:     bot.id,
         bot_name:   bot.name,

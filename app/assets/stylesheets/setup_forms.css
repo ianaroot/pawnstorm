@@ -641,3 +641,11 @@ details[open] .constraints-summary::after {
 .ce-sep {
   color: #4ade80;
 }
+
+.ce-edit-link {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ce-edit-link:hover { color: #e5e7eb; }
