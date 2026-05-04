@@ -1,4 +1,5 @@
 class TournamentEntriesController < ApplicationController
+  include BotEligibility
   before_action :authenticate_registered_user!
   before_action :set_tournament
 
@@ -36,6 +37,7 @@ class TournamentEntriesController < ApplicationController
   def create_entry
     bot = eligible_bot
     return redirect_back_with_alert('Choose a compiled bot that belongs to you.') unless bot
+    return redirect_back_with_alert(msg) if (msg = constraint_violation_message(bot))
 
     if tournament.entries_per_user_one?
       entry = current_user_entry
@@ -56,6 +58,7 @@ class TournamentEntriesController < ApplicationController
   def update_entry
     bot = eligible_bot
     return redirect_back_with_alert('Choose a compiled bot that belongs to you.') unless bot
+    return redirect_back_with_alert(msg) if (msg = constraint_violation_message(bot))
     return redirect_back_with_alert('That bot is already entered in this tournament.') if bot_already_entered?(bot, excluding: entry)
 
     save_entry(snapshot_entry(entry, bot))
@@ -139,6 +142,13 @@ class TournamentEntriesController < ApplicationController
 
   def redirect_back_with_alert(message)
     redirect_to tournament_return_path, alert: message
+  end
+
+  def constraint_violation_message(bot)
+    return nil unless tournament.constraints.present?
+    result = check_bot_eligibility(bot, tournament.constraints)
+    return nil if result[:eligible]
+    "Bot is not eligible for this tournament: #{result[:violations].map { |v| v[:message] }.join(', ')}"
   end
 
   def entry_params

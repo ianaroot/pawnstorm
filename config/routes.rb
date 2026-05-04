@@ -31,15 +31,22 @@ Rails.application.routes.draw do
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
   end
 
-  resources :tournaments, only: [:index, :new, :create], constraints: { id: /\d+/ } do
+  resources :eligibility_checks, only: [:create]
+
+  resources :tournaments, only: [:index, :new, :create, :edit, :update], constraints: { id: /\d+/ } do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
       post :start
       post :abort
       post :pause
       post :resume
+      post :open_registration
+      get :eligible_bots
+      get :eligibility
     end
   end
+
+  get 'tournament_lookup', to: 'tournaments#lookup'
 
   resources :public_tournaments, only: [:show], controller: 'tournaments' do
     member do

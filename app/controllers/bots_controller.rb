@@ -25,7 +25,9 @@ class BotsController < ApplicationController
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
     respond_to do |format|
-      format.html
+      format.html do
+        @open_tournaments = Tournament.status_open.visibility_public.where.not(constraints: nil).order(:name)
+      end
       format.json { render json: { nodes: @nodes, connections: @connections } }
     end
   end

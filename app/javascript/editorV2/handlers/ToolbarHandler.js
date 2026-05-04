@@ -196,6 +196,7 @@ class ToolbarHandler {
         if (this.editorRoot) { this.editorRoot.dataset.editorBotStaleValue = 'false' }
         this.updateCompileAction()
         this.showCompileStatus('Compiled.', false)
+        document.dispatchEvent(new CustomEvent('bot:compiled'))
       } else {
         this.showCompileStatus(data.error || 'Compile failed.', true)
       }

@@ -1,0 +1,188 @@
+<%= form_with url: url, scope: :tournament, method: method, local: true do |form| %>
+  <div class="setup-form-grid">
+    <div class="setup-form-col">
+
+      <div class="ci-section">
+        <p class="ci-heading">Details</p>
+        <div class="ci-row">
+          <span class="ci-label">Name</span>
+          <input class="ci-input ci-input--text" type="text"
+            name="tournament[name]"
+            value="<%= @name %>">
+        </div>
+        <div class="ci-field-block">
+          <span class="ci-label">Description</span>
+          <textarea class="ci-textarea" name="tournament[description]" rows="5"><%= @description %></textarea>
+        </div>
+      </div>
+
+      <div class="ci-section">
+        <p class="ci-heading">Format</p>
+        <div class="ci-row">
+          <span class="ci-label">Games per pairing</span>
+          <input class="ci-input ci-input--box" type="number"
+            name="tournament[games_per_pair]"
+            value="<%= @games_per_pair %>"
+            min="1" max="<%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>" step="1">
+        </div>
+      </div>
+
+      <%= form.submit submit_label, class: 'btn btn-primary' %>
+    </div>
+
+    <div class="setup-form-col">
+
+      <div class="ci-section">
+        <p class="ci-heading">Access</p>
+        <div class="ci-row">
+          <span class="ci-label">Visibility</span>
+          <div class="ci-pills">
+            <% Tournament.visibilities.keys.each do |v| %>
+              <label class="ci-pill">
+                <input type="radio" name="tournament[visibility]" value="<%= v %>"
+                  <%= "checked" if @visibility == v || (@visibility.nil? && v == 'link_only') %>>
+                <span><%= v.humanize %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="ci-section">
+        <p class="ci-heading">Entries</p>
+        <div class="ci-row">
+          <span class="ci-label">Per user</span>
+          <div class="ci-pills">
+            <% Tournament.entries_per_users.keys.each do |e| %>
+              <label class="ci-pill">
+                <input type="radio" name="tournament[entries_per_user]" value="<%= e %>"
+                  <%= "checked" if @entries_per_user == e || (@entries_per_user.nil? && e == 'one') %>>
+                <span><%= e.humanize %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+        <div class="ci-row">
+          <span class="ci-label">Max entries</span>
+          <input class="ci-input ci-input--box" type="number"
+            name="tournament[max_entries]"
+            value="<%= @max_entries %>"
+            min="2" step="1" placeholder="unlimited">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div data-controller="constraints-eligibility"
+       data-constraints-eligibility-url-value="<%= eligibility_checks_path %>">
+  <details class="constraints-section" <%= "open" if @constraints.present? %>>
+    <summary class="constraints-summary">Bot Eligibility Constraints</summary>
+    <div class="constraints-body">
+      <div class="constraints-grid">
+
+        <%# ── Budget ──────────────────────────────────────── %>
+        <div>
+          <p class="ci-heading">Budget</p>
+          <div class="ci-row">
+            <span class="ci-label">Total budget</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[constraints][budget]"
+              value="<%= @constraints&.dig("budget") %>"
+              min="0" step="1" placeholder="N/A"
+              onblur="if(this.value==='0')this.value=''">
+          </div>
+          <p class="ci-subheading">Costs</p>
+          <% {
+            "score_node"           => "Score node",
+            "unary_condition"      => "Unary condition",
+            "relational_condition" => "Relational condition",
+            "position_condition"   => "Position condition",
+            "and"                  => "AND edge",
+            "or"                   => "OR merge"
+          }.each do |key, label| %>
+            <div class="ci-row">
+              <span class="ci-label"><%= label %></span>
+              <input class="ci-input ci-input--box" type="number"
+                name="tournament[constraints][costs][<%= key %>]"
+                value="<%= @constraints&.dig("costs", key) %>"
+                min="0" step="1" placeholder="N/A"
+                onblur="if(this.value==='0')this.value=''">
+            </div>
+          <% end %>
+        </div>
+
+        <%# ── Structure ───────────────────────────────────── %>
+        <div class="ci-structure">
+          <p class="ci-heading">Structure</p>
+          <div class="ci-row">
+            <span class="ci-label">Disallow AND branches</span>
+            <label class="ci-toggle">
+              <input type="checkbox"
+                name="tournament[constraints][allow_and]"
+                value="false"
+                <%= "checked" if @constraints&.dig("allow_and") == false %>>
+              <span class="ci-toggle-track"></span>
+            </label>
+          </div>
+          <div class="ci-row">
+            <span class="ci-label">Disallow OR branches</span>
+            <label class="ci-toggle">
+              <input type="checkbox"
+                name="tournament[constraints][allow_or]"
+                value="false"
+                <%= "checked" if @constraints&.dig("allow_or") == false %>>
+              <span class="ci-toggle-track"></span>
+            </label>
+          </div>
+          <div class="ci-row">
+            <span class="ci-label">Max branch length</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[constraints][max_branch_length]"
+              value="<%= @constraints&.dig("max_branch_length") %>"
+              min="1" step="1" placeholder="N/A">
+          </div>
+        </div>
+
+        <%# ── Banned ──────────────────────────────────────── %>
+        <div>
+          <p class="ci-heading">Banned Condition Kinds</p>
+          <div class="ci-pills">
+            <% %w[unary relational position].each do |kind| %>
+              <label class="ci-pill">
+                <input type="checkbox"
+                  name="tournament[constraints][condition_restrictions][banned_kinds][]"
+                  value="<%= kind %>"
+                  <%= "checked" if @constraints&.dig("condition_restrictions", "banned_kinds")&.include?(kind) %>>
+                <span><%= kind %></span>
+              </label>
+            <% end %>
+          </div>
+          <p class="ci-subheading">Banned Score Actions</p>
+          <div class="ci-pills">
+            <% %w[add subtract set return].each do |action_type| %>
+              <label class="ci-pill">
+                <input type="checkbox"
+                  name="tournament[constraints][score_node_restrictions][banned_action_types][]"
+                  value="<%= action_type %>"
+                  <%= "checked" if @constraints&.dig("score_node_restrictions", "banned_action_types")&.include?(action_type) %>>
+                <span><%= action_type %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ce-check-bar">
+        <button type="button" class="ce-check-btn"
+                data-constraints-eligibility-target="button"
+                data-action="click->constraints-eligibility#check">Check my bots</button>
+        <span class="ce-check-note">Checks against current (unsaved) settings</span>
+      </div>
+      <div data-constraints-eligibility-target="panel" hidden></div>
+    </div>
+  </details>
+  </div>
+
+<% end %>
