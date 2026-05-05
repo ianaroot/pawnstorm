@@ -11,7 +11,7 @@ import {
   pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { piecesIntoBoard } from '../hint_compiler'
+import { buildLayoutAndBoard } from '../hint_compiler'
 import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_SPECIES_ATTEMPTS = 4
@@ -20,7 +20,7 @@ const MAX_POSITION_CANDIDATES = 12
 
 
 function mobilityAt(pieces, position, movingTeam) {
-  const board = piecesIntoBoard(pieces, movingTeam)
+  const board = buildLayoutAndBoard(pieces, movingTeam)
   return Rules.availableMovesFrom({ board, startPosition: position }).length
 }
 
@@ -59,7 +59,7 @@ export function actorPbsMobilityStrategy(pieces, hint, ctx) {
 
         // Verify legal move from priorPos to currentPos for this species via
         // the actual move-construction. Build a trial prior board.
-        const priorBoard = piecesIntoBoard(priorTrial, movingTeam)
+        const priorBoard = buildLayoutAndBoard(priorTrial, movingTeam)
         let moveObject
         try { moveObject = Rules.getMoveObject(priorPos, currentPos, priorBoard) } catch { continue }
         if (moveObject.illegal) { continue }

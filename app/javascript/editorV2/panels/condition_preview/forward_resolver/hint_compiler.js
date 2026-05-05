@@ -114,7 +114,7 @@ function mobilityUpperBoundFromComparator(comparator, total) {
 // ===== Filter / actor helpers =====
 // (speciesMatchesFilter lives in shared/example_utils.js — imported below.)
 
-export function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
+export function buildLayoutAndBoard(pieces, allowedToMove, recentMoveContext = null) {
   return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
 }
 
@@ -168,7 +168,7 @@ export function qualifyingPairs(pieces, board, hint) {
 // Each returns true iff the property the hint claims about the board holds.
 
 function bareRelationSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint.shape)
   if (pairs.length === 0) { return false }
 
@@ -190,7 +190,7 @@ function bareRelationSatisfies(pieces, hint, context) {
 }
 
 function relationCountSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   // count of distinct pieces on the comparison side, not pair count
   const positions = new Set(
@@ -200,7 +200,7 @@ function relationCountSatisfies(pieces, hint, context) {
 }
 
 function relationAggregateValueSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   // sum of distinct piece values on the comparison side
   const seenPositions = new Set()
@@ -216,7 +216,7 @@ function relationAggregateValueSatisfies(pieces, hint, context) {
 }
 
 function relationIndividualValueSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   if (pairs.length === 0) { return false }
   const seenPositions = new Set()
@@ -254,7 +254,7 @@ function actorIndividualValueSatisfies(pieces, hint /*, context */) {
 }
 
 function actorMobilitySatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   let total = 0
   for (const { position } of matchingPieces(pieces, hint.team, hint.filter, hint.filterMode)) {
     const moves = Rules.availableMovesFrom({ board, startPosition: position })
@@ -315,7 +315,7 @@ function relationSamePieceSatisfies(pieces, hint, context) {
   if (!priorPieces) { return false }
   const piece = priorPieces.get(rmc.movedPieceEndPosition)
   if (!piece) { return false }
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   return piece.charAt(0) !== movingTeam
 }
 
@@ -325,7 +325,7 @@ function relationSamePieceSatisfies(pieces, hint, context) {
 // enemy_captured_piece). The post-evaluator runs the full chain check; this
 // predicate just confirms structural setup.
 function unaryValuePairSatisfies(pieces, hint, context) {
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   const subjectSpecies = singularActorSpecies(hint.subjectActor, pieces, context, movingTeam)
   const targetSpecies = singularActorSpecies(hint.targetActor, pieces, context, movingTeam)
   if (subjectSpecies === null || targetSpecies === null) { return false }
@@ -333,7 +333,7 @@ function unaryValuePairSatisfies(pieces, hint, context) {
 }
 
 function unaryCountPairSatisfies(pieces, hint, context) {
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   const subjectCount = singularActorPresence(hint.subjectActor, pieces, context, movingTeam) ? 1 : 0
   const targetCount = singularActorPresence(hint.targetActor, pieces, context, movingTeam) ? 1 : 0
   return compareValue(subjectCount, hint.countOp, targetCount)
@@ -374,10 +374,10 @@ function singularActorPresence(actor, pieces, context, movingTeam) {
 function actorPbsMobilitySatisfies(pieces, hint, context) {
   const priorPieces = context?.priorPieces
   if (!priorPieces) { return false }
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
 
   function totalMobility(map) {
-    const board = piecesIntoBoard(map, movingTeam)
+    const board = buildLayoutAndBoard(map, movingTeam)
     let total = 0
     for (const { position } of matchingPieces(map, hint.team, hint.filter, hint.filterMode)) {
       const moves = Rules.availableMovesFrom({ board, startPosition: position })

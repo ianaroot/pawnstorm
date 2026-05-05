@@ -25,7 +25,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { piecesIntoBoard } from '../hint_compiler'
+import { buildLayoutAndBoard } from '../hint_compiler'
 import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_SPECIES_ATTEMPTS = 5
@@ -80,7 +80,7 @@ export function relationSamePieceStrategy(pieces, hint, ctx) {
         for (const origin of originCandidates) {
           const trial = placePiece(priorWithCaptured, origin, pieceCode(movingTeam, moverSpecies))
           if (!trial) { continue }
-          const trialBoard = piecesIntoBoard(trial, movingTeam)
+          const trialBoard = buildLayoutAndBoard(trial, movingTeam)
           let moveObject
           try { moveObject = Rules.getMoveObject(origin, capturedPos, trialBoard) } catch { continue }
           if (moveObject.illegal) { continue }

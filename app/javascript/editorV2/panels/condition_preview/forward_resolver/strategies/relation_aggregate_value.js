@@ -11,7 +11,7 @@ import { materialValue } from 'gameplay/board_query_utils'
 import { pieceCode, ALL_POSITIONS, shuffled, pickRandom } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
-  compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
+  compareValue, buildLayoutAndBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 import { respectsInventoryCaps } from '../inventory_protocol'
@@ -53,7 +53,7 @@ function addQualifyingSubjectWithSpecies(pieces, hint, ctx, anchorTargetPosition
       if (pieces.has(subjectPos)) { continue }
       const next = placePiece(pieces, subjectPos, pieceCode(hint.subject.team, subjectSpecies))
       if (!next) { continue }
-      const board = piecesIntoBoard(next, movingTeam)
+      const board = buildLayoutAndBoard(next, movingTeam)
       const subjects = subjectsRelatedToTarget({
         board, operator: hint.operator, targetPosition: targetPos,
         subjectTeam: hint.subject.team
@@ -72,7 +72,7 @@ function addQualifyingTargetWithSpecies(pieces, hint, ctx, anchorSubjectPosition
       if (pieces.has(targetPos)) { continue }
       const next = placePiece(pieces, targetPos, pieceCode(hint.target.team, targetSpecies))
       if (!next) { continue }
-      const board = piecesIntoBoard(next, movingTeam)
+      const board = buildLayoutAndBoard(next, movingTeam)
       const subjects = subjectsRelatedToTarget({
         board, operator: hint.operator, targetPosition: targetPos,
         subjectTeam: hint.subject.team
@@ -89,7 +89,7 @@ export function relationAggregateValueStrategy(pieces, hint, ctx) {
   let placementCount = 0
 
   for (let i = 0; i < MAX_PLACEMENT_ITERATIONS; i += 1) {
-    const board = piecesIntoBoard(result, ctx.movingTeam)
+    const board = buildLayoutAndBoard(result, ctx.movingTeam)
     const pairs = qualifyingPairs(result, board, hint)
     const current = sumOnSide(result, board, hint)
     if (compareValue(current, hint.totalOp, hint.total)) { return result }

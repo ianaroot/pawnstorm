@@ -27,7 +27,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { piecesIntoBoard } from '../hint_compiler'
+import { buildLayoutAndBoard } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 import { respectsInventoryCaps } from '../inventory_protocol'
 
@@ -158,7 +158,7 @@ function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyM
         if (!trial) { continue }
         let moveObject
         try {
-          const trialBoard = piecesIntoBoard(trial, movingTeam)
+          const trialBoard = buildLayoutAndBoard(trial, movingTeam)
           moveObject = Rules.getMoveObject(origin, capturedPos, trialBoard)
         } catch { continue }
         if (moveObject.illegal || !moveObject.captureNotation) { continue }
@@ -217,7 +217,7 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
       if (trialMover === Board.PAWN && pawnOnStartingRank(movingTeam, origin)) { continue }
       const trialPrior = placePiece(priorPieces, origin, pieceCode(movingTeam, trialMover))
       if (!trialPrior) { continue }
-      const priorBoard = piecesIntoBoard(trialPrior, movingTeam)
+      const priorBoard = buildLayoutAndBoard(trialPrior, movingTeam)
       let moves
       try { moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: origin }) }
       catch { continue }

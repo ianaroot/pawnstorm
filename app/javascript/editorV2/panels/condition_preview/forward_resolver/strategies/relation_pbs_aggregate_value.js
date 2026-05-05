@@ -11,7 +11,7 @@ import {
   pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
+import { buildLayoutAndBoard, subjectsRelatedToTarget } from '../hint_compiler'
 import { respectsInventoryCaps } from '../inventory_protocol'
 
 const MAX_OUTER_ATTEMPTS = 3
@@ -22,7 +22,7 @@ const ATTACKER_PLACEMENT_ATTEMPTS = 20
 
 
 function valueOnSide({ pieces, operator, targetPos, subjectTeam, movingTeam, subjectPool }) {
-  const board = piecesIntoBoard(pieces, movingTeam)
+  const board = buildLayoutAndBoard(pieces, movingTeam)
   const positions = subjectsRelatedToTarget({
     board, operator, targetPosition: targetPos, subjectTeam
   })

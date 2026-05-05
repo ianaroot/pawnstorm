@@ -10,6 +10,7 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode,
   ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildLayoutAndBoard } from '../forward_resolver/hint_compiler'
 import { placePiece, legalPlacementForSpecies } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
 
@@ -56,15 +57,10 @@ function relationDestinations({ operator, anchorPosition, species, currentPieces
   }
 }
 
-function piecesIntoBoard(pieces, allowedToMove) {
-  const layout = buildLayoutFromPieces(pieces)
-  return buildBoardFromLayout(layout, null, allowedToMove)
-}
-
 function tryFinalize({ pieces, moverOrigin, moverEnd, movingTeam, random, requireCapture = false }) {
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
   if (piecesWithKings === null) { return null }
-  const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
+  const priorBoard = buildLayoutAndBoard(piecesWithKings, movingTeam)
   let moveObject
   try { moveObject = Rules.getMoveObject(moverOrigin, moverEnd, priorBoard) } catch { return null }
   if (moveObject.illegal) { return null }
@@ -532,7 +528,7 @@ function reachOf({ operator, position, species, basePieces }) {
   }
   const tempPieces = new Map(basePieces)
   tempPieces.set(position, pieceCode(Board.WHITE, species))
-  const board = piecesIntoBoard(tempPieces, Board.WHITE)
+  const board = buildLayoutAndBoard(tempPieces, Board.WHITE)
   return new Set(controlledSquares({ board, attackerPosition: position }))
 }
 
@@ -576,7 +572,7 @@ function generateMoverPreservesSubject({ driver, combinedPlan, random }) {
   basePieces = placeKingsIfAbsent(basePieces, random)
   if (basePieces === null) { return null }
 
-  const priorBoard = piecesIntoBoard(basePieces, movingTeam)
+  const priorBoard = buildLayoutAndBoard(basePieces, movingTeam)
   const moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: origin })
   const piecesWithoutMover = new Map(basePieces)
   piecesWithoutMover.delete(origin)
@@ -604,7 +600,7 @@ function generateMoverPreservesSubject({ driver, combinedPlan, random }) {
     }
     if (!placed) { continue }
 
-    const augmentedBoard = piecesIntoBoard(augmented, movingTeam)
+    const augmentedBoard = buildLayoutAndBoard(augmented, movingTeam)
     let augmentedMove
     try { augmentedMove = Rules.getMoveObject(origin, dest, augmentedBoard) } catch { continue }
     if (augmentedMove.illegal) { continue }
@@ -646,7 +642,7 @@ function generateStableCountPbs({ driver, combinedPlan, random }) {
 
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
   if (piecesWithKings === null) { return null }
-  const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
+  const priorBoard = buildLayoutAndBoard(piecesWithKings, movingTeam)
 
   const moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: moverOrigin })
   for (const moveObject of shuffled([...moves], random)) {
@@ -717,7 +713,7 @@ function generateGroupMobilityIncrease({ driver, combinedPlan, random }) {
 
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
   if (piecesWithKings === null) { return null }
-  const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
+  const priorBoard = buildLayoutAndBoard(piecesWithKings, movingTeam)
 
   const movers = shuffled(
     Array.from(piecesWithKings.entries()).filter(([, p]) =>
@@ -763,7 +759,7 @@ function generatePromotionForValueIncrease({ driver, combinedPlan, random }) {
 
   const piecesWithKings = placeKingsIfAbsent(pieces, random)
   if (piecesWithKings === null) { return null }
-  const priorBoard = piecesIntoBoard(piecesWithKings, movingTeam)
+  const priorBoard = buildLayoutAndBoard(piecesWithKings, movingTeam)
 
   let moveObject
   try { moveObject = Rules.getMoveObject(moverOrigin, moverEnd, priorBoard, promotedSpecies) } catch { return null }
