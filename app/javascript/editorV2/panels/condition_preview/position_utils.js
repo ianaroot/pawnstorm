@@ -270,8 +270,7 @@ function buildAfterPiecesForPositionItem({ plan, item, validSquares, random }) {
 
 // ===== Example collection =====
 
-export function collectPositionExamples({ plan, item, random, maxResults = 3 }) {
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+export function collectPositionExamples({ plan, item, validSquares, random, maxResults = 3 }) {
   const setup = buildAfterPiecesForPositionItem({ plan, item, validSquares, random })
   if (!setup) { return [] }
 

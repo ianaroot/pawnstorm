@@ -9,7 +9,7 @@ import { finalizeExamples, finalizeUnaryExamples, mergeMoveKindExamples } from '
 import { collectCastleExamples, collectRelationalPromotionExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 import { buildPlan, expandRelationalPlanSources } from 'editorV2/panels/condition_preview/generation_plan'
 import { buildUnaryWorkItems, collectUnaryExamples, collectUnaryPromotionExamples } from 'editorV2/panels/condition_preview/unary_utils'
-import { buildPositionWorkItems, collectPositionExamples, collectPositionPromotionExamples, collectPositionCastleExamples } from 'editorV2/panels/condition_preview/position_utils'
+import { buildPositionWorkItems, collectPositionExamples, collectPositionPromotionExamples, collectPositionCastleExamples, qualifyingSquares } from 'editorV2/panels/condition_preview/position_utils'
 
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
@@ -139,13 +139,14 @@ function generatePositionExamples(plan, options = {}) {
   const random = options.random || Math.random
   const deadline = Date.now() + (options.maxMs ?? 500)
 
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
   const workItems = buildPositionWorkItems(plan, random)
   const examples = []
   const seen = new Set()
 
   for (let i = 0; i < workItems.length; i++) {
     if (examples.length >= MAX_CANDIDATE_POOL || Date.now() > deadline) { break }
-    const newExamples = collectPositionExamples({ plan, item: workItems[i], random })
+    const newExamples = collectPositionExamples({ plan, item: workItems[i], validSquares, random })
     for (const example of newExamples) {
       const id = candidateIdentity(example)
       if (seen.has(id)) { continue }
