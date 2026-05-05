@@ -56,13 +56,11 @@ function makeAdder(seen) {
 function effectiveVariants(combinedPlan) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
   if (relationalPlans.length === 0) { return [] }
-
   const hasRequired = relationalPlans.some(p =>
     !usesZeroRelationPath(p.requirements) &&
     p.variants?.some(v => v.type === 'required')
   )
   if (hasRequired) { return [{ type: 'required' }] }
-
   const hasAllied = relationalPlans.some(p => p.subject === 'allied' || p.target === 'allied')
   if (!hasAllied) { return [{ type: 'separate' }] }
 
@@ -97,17 +95,14 @@ function buildChainVariants(combinedPlan) {
 
 function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
   const enrichedCandidates = []
-
   baseExamples.forEach(example => {
     if (random() >= ENRICHMENT_PROBABILITY) { return }
     const enriched = enrichExample(example, combinedPlan, random)
     if (enriched) { enrichedCandidates.push(enriched) }
   })
-
   if (enrichedCandidates.length === 0) {
     return selectDiverseExamples(shuffled(baseExamples, random), maxExamples)
   }
-
   const desiredEnrichedCount = Math.min(
     enrichedCandidates.length,
     Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
@@ -117,12 +112,11 @@ function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
   const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
   const selectedBase = selectDiverseExamples(shuffled(remainingBase, random), Math.max(0, maxExamples - selectedEnriched.length))
   const combined = shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random)
-
   if (combined.length >= maxExamples) {
     return selectDiverseExamples(combined, maxExamples)
   }
-
   const fallbackPool = shuffled(uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates]), random)
+
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
@@ -134,13 +128,11 @@ function mergeMoveKindExamples({
   if (!hasSpecial) {
     return finalizeExamples(standardExamples, combinedPlan, maxExamples, random)
   }
-
   const guaranteed = []
   for (const pool of [castleExamples, promotionExamples, enPassantExamples]) {
     if (pool.length === 0) { continue }
     guaranteed.push(...finalizeExamples(pool, combinedPlan, GUARANTEED_SPECIAL_MOVE_EXAMPLES, random))
   }
-
   const guaranteedIds = new Set(guaranteed.map(candidateIdentity))
   const allExamples = uniqueExamples([...standardExamples, ...castleExamples, ...promotionExamples, ...enPassantExamples])
   const remaining = allExamples.filter(e => !guaranteedIds.has(candidateIdentity(e)))
@@ -286,29 +278,24 @@ export function generateConditionExamples(payloads, options = {}) {
   const startTime = Date.now()
 
   const payloadArray = Array.isArray(payloads) ? payloads : [payloads]
-
   const combinedPlan = buildCombinedPlan(payloadArray, options)
+
   if (combinedPlan.status !== 'supported') {
     return { status: combinedPlan.status, reason: combinedPlan.reason, examples: [], payloadCount: payloadArray.length }
   }
-
   const { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced } = collectAllExamples({
     combinedPlan, random, totalMs
   })
-
   const total = standardExamples.length + castleExamples.length + promotionExamples.length + enPassantExamples.length
   if (total === 0) {
     emitStats(options, payloadArray, produced, [], startTime)
     return { status: 'no_examples', reason: NO_EXAMPLES_REASON, examples: [], payloadCount: payloadArray.length }
   }
-
   const finalExamples = mergeMoveKindExamples({
     standardExamples, castleExamples, promotionExamples, enPassantExamples,
     combinedPlan, maxExamples, random
   })
-
   emitStats(options, payloadArray, produced, finalExamples, startTime)
-
   return {
     status: 'ready',
     reason: null,
