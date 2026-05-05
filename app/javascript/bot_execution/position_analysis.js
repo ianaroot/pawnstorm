@@ -9,7 +9,7 @@ const AFTER_BOARD = "after"
 export function positionFilteredPositions(analysis, { actor, filter = "any", filterMode = null, positionAxis, positionComparator, positionTarget, boardScope = AFTER_BOARD }) {
   return profileCollector.measure('cma.v2.position_filtered_positions', () => {
     const board = analysis.boardForScope(boardScope)
-    const team = (actor === "enemy" || actor === "enemy_moved_piece") ? analysis.enemyTeam() : analysis.movedPieceTeam()
+    const team = analysis.movedPieceTeam()
     const candidates = relationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
     return candidates.filter(position => positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }))
   })

@@ -101,8 +101,8 @@ function valueCombinationsForTotal(target, speciesPool) {
 // ===== Work item builders =====
 
 export function buildPositionWorkItems(plan, random) {
-  const { subject, subjectTeam, subjectSpeciesPool, operator, comparator, targetTotal, movingTeam, positionAxis, positionComparator, positionTarget } = plan
-  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, subjectTeam)
+  const { subject, subjectSpeciesPool, operator, comparator, targetTotal, movingTeam, positionAxis, positionComparator, positionTarget } = plan
+  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam)
   if (validSquares.length === 0) { return [] }
 
   const items = []
@@ -342,11 +342,11 @@ function collectPositionSpecialMoveExamples({ plan, presets, buildAfterPieces, c
 
 export function collectPositionPromotionExamples({ plan, random, maxExamples }) {
   if (plan.subject === 'enemy_moved_piece') { return [] }
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
   if (validSquares.length === 0) { return [] }
 
   const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
-    .filter(preset => validSquares.includes(preset.moveEnd))
+    .filter(preset => plan.subject !== 'moved_piece' || validSquares.includes(preset.moveEnd))
 
   return collectPositionSpecialMoveExamples({
     plan, presets,
@@ -361,13 +361,11 @@ export function collectPositionPromotionExamples({ plan, random, maxExamples }) 
 
 export function collectPositionCastleExamples({ plan, random, maxExamples }) {
   if (plan.subject === 'enemy_moved_piece') { return [] }
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
   if (validSquares.length === 0) { return [] }
 
   const presets = shuffled(castlePresetForTeam(plan.movingTeam), random)
-    .filter(preset => plan.subject === 'moved_piece'
-      ? validSquares.includes(preset.moveEnd)
-      : Array.from(preset.fixedPieces.keys()).some(sq => validSquares.includes(sq)))
+    .filter(preset => plan.subject !== 'moved_piece' || validSquares.includes(preset.moveEnd))
 
   return collectPositionSpecialMoveExamples({
     plan, presets,
