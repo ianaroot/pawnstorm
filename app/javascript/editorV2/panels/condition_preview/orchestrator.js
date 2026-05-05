@@ -1,10 +1,11 @@
 import { buildCombinedPlan, expandRelationalPlanSources } from './plans/plan'
-import { mergeMoveKindExamples } from './shared/enrichment'
+import { enrichExample } from './shared/enrichment'
 import {
   candidateIdentity, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from './shared/example_utils'
 import { usesZeroRelationPath } from './plans/comparison_requirements'
 import { shuffled } from './shared/board_utils'
+import { selectDiverseExamples, uniqueExamples } from './shared/diversity_selection'
 import { collectForwardResolverExamples } from './forward_resolver/collect'
 import { collectForwardPatternExamples } from './forward_pattern/collect'
 import { collectReverseRelationalExamples } from './reverse_relational/collect'
@@ -21,6 +22,8 @@ const MAX_SEEDS_PER_VARIANT = 600
 const SPECIAL_MOVE_MS_CAP = 100
 const FORWARD_RESOLVER_ATTEMPTS = 200
 const FORWARD_PATTERN_ATTEMPTS = 200
+const ENRICHMENT_PROBABILITY = 0.5
+const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 2
 
 const NO_EXAMPLES_REASON = "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work."
 
@@ -90,6 +93,60 @@ function buildChainVariants(combinedPlan) {
       plans: combinedPlan.plans.map(p => p.kind === 'relational' ? expandedRelPlans[planIndex++] : p)
     }
   })
+}
+
+function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
+  const enrichedCandidates = []
+
+  baseExamples.forEach(example => {
+    if (random() >= ENRICHMENT_PROBABILITY) { return }
+    const enriched = enrichExample(example, combinedPlan, random)
+    if (enriched) { enrichedCandidates.push(enriched) }
+  })
+
+  if (enrichedCandidates.length === 0) {
+    return selectDiverseExamples(shuffled(baseExamples, random), maxExamples)
+  }
+
+  const desiredEnrichedCount = Math.min(
+    enrichedCandidates.length,
+    Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
+  )
+  const selectedEnriched = selectDiverseExamples(uniqueExamples(enrichedCandidates), desiredEnrichedCount)
+  const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
+  const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
+  const selectedBase = selectDiverseExamples(shuffled(remainingBase, random), Math.max(0, maxExamples - selectedEnriched.length))
+  const combined = shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random)
+
+  if (combined.length >= maxExamples) {
+    return selectDiverseExamples(combined, maxExamples)
+  }
+
+  const fallbackPool = shuffled(uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates]), random)
+  return selectDiverseExamples(fallbackPool, maxExamples)
+}
+
+function mergeMoveKindExamples({
+  standardExamples, castleExamples = [], promotionExamples = [], enPassantExamples = [],
+  combinedPlan, maxExamples, random
+}) {
+  const hasSpecial = castleExamples.length > 0 || promotionExamples.length > 0 || enPassantExamples.length > 0
+  if (!hasSpecial) {
+    return finalizeExamples(standardExamples, combinedPlan, maxExamples, random)
+  }
+
+  const guaranteed = []
+  for (const pool of [castleExamples, promotionExamples, enPassantExamples]) {
+    if (pool.length === 0) { continue }
+    guaranteed.push(...finalizeExamples(pool, combinedPlan, GUARANTEED_SPECIAL_MOVE_EXAMPLES, random))
+  }
+
+  const guaranteedIds = new Set(guaranteed.map(candidateIdentity))
+  const allExamples = uniqueExamples([...standardExamples, ...castleExamples, ...promotionExamples, ...enPassantExamples])
+  const remaining = allExamples.filter(e => !guaranteedIds.has(candidateIdentity(e)))
+  const selectedRemaining = finalizeExamples(remaining, combinedPlan, Math.max(0, maxExamples - guaranteed.length), random)
+
+  return selectDiverseExamples(uniqueExamples([...guaranteed, ...selectedRemaining]), maxExamples)
 }
 
 const SPECIAL_MOVE_PIPELINES = Object.freeze([

@@ -4,18 +4,15 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from './board_utils'
 import {
-  moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState,
+  moveKindForMoveObject, soundForMove, legalPriorTurnState,
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
-import { selectDiverseExamples, uniqueExamples } from './diversity_selection'
 
-const ENRICHMENT_PROBABILITY = 0.5
-const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 2
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const ENRICHMENT_END_POSITION_WEIGHT = 4
 
-export function movePathSquares(priorBoard, moveObject) {
+function movePathSquares(priorBoard, moveObject) {
   const start = moveObject.startPosition
   const end = moveObject.endPosition
   const species = priorBoard.pieceTypeAt(start)
@@ -41,7 +38,7 @@ export function movePathSquares(priorBoard, moveObject) {
   return squares
 }
 
-export function forbiddenSquaresForEnrichment(example) {
+function forbiddenSquaresForEnrichment(example) {
   const squares = new Set(movePathSquares(example.priorBoard, example.moveObject))
 
   example.priorBoard.layOut.forEach((piece, position) => {
@@ -54,7 +51,7 @@ export function forbiddenSquaresForEnrichment(example) {
   return squares
 }
 
-export function weightedEnrichmentCandidateSquares(example, random) {
+function weightedEnrichmentCandidateSquares(example, random) {
   const forbidden = forbiddenSquaresForEnrichment(example)
   const endPositionIsSpecial = example.moveKind !== MOVE_KIND_CASTLE && example.moveKind !== MOVE_KIND_EN_PASSANT
 
@@ -74,7 +71,7 @@ export function weightedEnrichmentCandidateSquares(example, random) {
   return shuffled(weighted, random)
 }
 
-export function buildEnrichmentPlacementPolicy(example, random) {
+function buildEnrichmentPlacementPolicy(example, random) {
   const candidates = weightedEnrichmentCandidateSquares(example, random)
   const usedPositions = new Set()
   const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
@@ -155,7 +152,7 @@ function deriveVerifiedExample({ combinedPlan, priorBoard, moveObject, baseExamp
   }
 }
 
-function enrichExample(example, combinedPlan, random) {
+export function enrichExample(example, combinedPlan, random) {
   const policy = buildEnrichmentPlacementPolicy(example, random)
   const basePriorBoard = example.priorBoard.lightClone()
   let bestExample = example
@@ -188,56 +185,3 @@ function enrichExample(example, combinedPlan, random) {
   return addedCount > 0 ? bestExample : null
 }
 
-export function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
-  const enrichedCandidates = []
-
-  baseExamples.forEach(example => {
-    if (random() >= ENRICHMENT_PROBABILITY) { return }
-    const enriched = enrichExample(example, combinedPlan, random)
-    if (enriched) { enrichedCandidates.push(enriched) }
-  })
-
-  if (enrichedCandidates.length === 0) {
-    return selectDiverseExamples(shuffled(baseExamples, random), maxExamples)
-  }
-
-  const desiredEnrichedCount = Math.min(
-    enrichedCandidates.length,
-    Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
-  )
-  const selectedEnriched = selectDiverseExamples(uniqueExamples(enrichedCandidates), desiredEnrichedCount)
-  const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
-  const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
-  const selectedBase = selectDiverseExamples(shuffled(remainingBase, random), Math.max(0, maxExamples - selectedEnriched.length))
-  const combined = shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random)
-
-  if (combined.length >= maxExamples) {
-    return selectDiverseExamples(combined, maxExamples)
-  }
-
-  const fallbackPool = shuffled(uniqueExamples([...combined, ...baseExamples, ...enrichedCandidates]), random)
-  return selectDiverseExamples(fallbackPool, maxExamples)
-}
-
-export function mergeMoveKindExamples({
-  standardExamples, castleExamples = [], promotionExamples = [], enPassantExamples = [],
-  combinedPlan, maxExamples, random
-}) {
-  const hasSpecial = castleExamples.length > 0 || promotionExamples.length > 0 || enPassantExamples.length > 0
-  if (!hasSpecial) {
-    return finalizeExamples(standardExamples, combinedPlan, maxExamples, random)
-  }
-
-  const guaranteed = []
-  for (const pool of [castleExamples, promotionExamples, enPassantExamples]) {
-    if (pool.length === 0) { continue }
-    guaranteed.push(...finalizeExamples(pool, combinedPlan, GUARANTEED_SPECIAL_MOVE_EXAMPLES, random))
-  }
-
-  const guaranteedIds = new Set(guaranteed.map(candidateIdentity))
-  const allExamples = uniqueExamples([...standardExamples, ...castleExamples, ...promotionExamples, ...enPassantExamples])
-  const remaining = allExamples.filter(e => !guaranteedIds.has(candidateIdentity(e)))
-  const selectedRemaining = finalizeExamples(remaining, combinedPlan, Math.max(0, maxExamples - guaranteed.length), random)
-
-  return selectDiverseExamples(uniqueExamples([...guaranteed, ...selectedRemaining]), maxExamples)
-}
