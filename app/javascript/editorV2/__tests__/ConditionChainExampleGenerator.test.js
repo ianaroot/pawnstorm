@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import generateConditionChainExamples from '../panels/condition_preview/ConditionChainExampleGenerator'
+import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator'
 
 function seededRandom(seed = 12345) {
   let current = seed >>> 0
@@ -40,7 +40,7 @@ describe('ConditionChainExampleGenerator', () => {
       }
     ]
 
-    const preview = generateConditionChainExamples(payloads, { random: seededRandom(31) })
+    const preview = generateConditionExamples(payloads, { random: seededRandom(31) })
 
     expect(preview.status).toBe('ready')
     expect(preview.examples.length).toBeGreaterThan(0)
@@ -48,24 +48,26 @@ describe('ConditionChainExampleGenerator', () => {
       payloads.forEach(payload => {
         expect(evaluateExample(payload, example)).toBe(true)
       })
-      expect(example.chainResults).toHaveLength(payloads.length)
     })
   })
 
-  it('marks unary conditions unsupported for chain preview', () => {
-    const preview = generateConditionChainExamples([
-      {
-        kind: 'unary',
-        subject: 'allied',
-        subjectFilter: 'any',
-        operator: 'count',
-        comparator: 'greater_than',
-        target: 'exact_number',
-        targetTotal: 0
-      }
-    ])
+  it('generates examples for a single unary condition', () => {
+    const payload = {
+      kind: 'unary',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'count',
+      comparator: 'greater_than',
+      target: 'exact_number',
+      targetTotal: 0
+    }
 
-    expect(preview.status).toBe('unsupported')
-    expect(preview.reason).toBe('Unary condition previews are not supported yet.')
+    const preview = generateConditionExamples([payload], { random: seededRandom(31) })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+    })
   })
 })

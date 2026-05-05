@@ -4,7 +4,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import generateConditionExamples from '../panels/condition_preview/ConditionExampleGenerator'
+import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator'
 
 function seededRandom(seed = 12345) {
   let current = seed >>> 0
