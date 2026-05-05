@@ -615,4 +615,213 @@ describe('ConditionExampleGenerator', () => {
       expectLegalPriorTurnState(example)
     })
   })
+
+  it('generates verified examples for a position count condition on rank', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'allied',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'greater_than_or_equal_to',
+      positionTarget: 5,
+      operator: 'count',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(20), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for a position count condition on file', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'enemy',
+      subjectFilter: 'any',
+      positionAxis: 'file',
+      positionComparator: 'equal_to',
+      positionTarget: 4,
+      operator: 'count',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(21), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for a position count condition on moved_piece', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'moved_piece',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'greater_than_or_equal_to',
+      positionTarget: 6,
+      operator: 'count',
+      comparator: 'equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(22), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for a position value condition', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'allied',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'greater_than_or_equal_to',
+      positionTarget: 6,
+      operator: 'value',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 3
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(23), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for an enemy_moved_piece position condition', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'enemy_moved_piece',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'greater_than_or_equal_to',
+      positionTarget: 5,
+      operator: 'count',
+      comparator: 'equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(24), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for a position count condition on square (a1)', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'allied',
+      subjectFilter: 'any',
+      positionAxis: 'square',
+      positionComparator: 'equal_to',
+      positionTarget: 0,
+      operator: 'count',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(25), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates verified examples for an enemy position count condition on square (a1)', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'enemy',
+      subjectFilter: 'any',
+      positionAxis: 'square',
+      positionComparator: 'equal_to',
+      positionTarget: 0,
+      operator: 'count',
+      comparator: 'greater_than_or_equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(26), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates promotion examples for a position count condition on rank 8', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'moved_piece',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'equal_to',
+      positionTarget: 8,
+      operator: 'count',
+      comparator: 'equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(27), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(example => example.moveObject.promotionPiece)).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
+
+  it('generates castle examples for a position count condition on rank >= 1', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'allied',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'greater_than_or_equal_to',
+      positionTarget: 1,
+      operator: 'count',
+      comparator: 'equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(28), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(example => /^O-O/.test(example.moveObject.pieceNotation))).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
 })

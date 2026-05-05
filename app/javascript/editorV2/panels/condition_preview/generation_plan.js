@@ -1,13 +1,33 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, candidateSpecies } from 'editorV2/panels/condition_preview/example_utils'
 import {
-  teamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
+  relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/relational_utils'
 import {
   COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements, comparisonRequirementsFromDescriptors
 } from 'editorV2/panels/condition_preview/comparison_requirements'
+
+const SUPPORTED_UNARY_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value', 'mobility'])
+const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece', 'prior_board_state'])
+
+function unaryTeamForActor(actor, movingTeam) {
+  const enemyTeam = movingTeam === Board.WHITE ? Board.BLACK : Board.WHITE
+  switch (actor) {
+    case 'allied':
+    case 'moved_piece':
+    case 'captured_piece':
+      return movingTeam
+    case 'enemy':
+    case 'enemy_moved_piece':
+    case 'enemy_captured_piece':
+      return enemyTeam
+    default:
+      return movingTeam
+  }
+}
 
 function valueFilteredSpeciesPool(pool, descriptors, side) {
   const descriptor = descriptors.find(d => d.side === side)
@@ -117,10 +137,10 @@ export function buildRelationalPlan(payload, options = {}) {
     variants: buildExampleVariantPlan(payload),
     subjectSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'subject'), comparisons, 'subject'),
     targetSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'target'), comparisons, 'target'),
-    subjectTeam: teamForActor(payload.subject),
-    targetTeam: teamForActor(payload.target),
+    subjectTeam: relationalTeamForActor(payload.subject),
+    targetTeam: relationalTeamForActor(payload.target),
     movingTeam: options.movingTeam || Board.WHITE,
-    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE],
+    moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION],
     relationParams: relationParams(payload)
   }
 }
@@ -235,4 +255,109 @@ export function expandRelationalPlanSources(plan) {
     sourceConstraints: variant.sourceConstraints,
     requirements: comparisonRequirementsFromDescriptors(variant.descriptors)
   }))
+}
+
+function singularActorValuePool(pool, comparator, total) {
+  switch (comparator) {
+    case 'equal_to':                 return pool.filter(s => materialValue(s) === total)
+    case 'less_than':                return pool.filter(s => materialValue(s) < total)
+    case 'less_than_or_equal_to':    return pool.filter(s => materialValue(s) <= total)
+    case 'greater_than':             return pool.filter(s => materialValue(s) > total)
+    case 'greater_than_or_equal_to': return pool.filter(s => materialValue(s) >= total)
+    default:                         return pool
+  }
+}
+
+export function buildUnaryPlan(payload, options = {}) {
+  if (!SUPPORTED_UNARY_ACTORS.has(payload.subject)) {
+    return { status: 'unsupported', reason: `${payload.subject} unary previews are not supported yet.` }
+  }
+  if (!SUPPORTED_UNARY_OPERATORS.has(payload.operator)) {
+    return { status: 'unsupported', reason: `${payload.operator} unary previews are not supported yet.` }
+  }
+  if (!SUPPORTED_UNARY_TARGETS.has(payload.target)) {
+    return { status: 'unsupported', reason: `${payload.target} unary target previews are not supported yet.` }
+  }
+
+  const movingTeam = options.movingTeam || Board.WHITE
+  const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
+  const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE && payload.target !== PRIOR_BOARD_COMPARISON_SOURCE
+  const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
+
+  const SINGULAR_ACTORS = new Set(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+  const baseSubjectPool = candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null)
+  const subjectSpeciesPool = (SINGULAR_ACTORS.has(payload.subject) && payload.operator === 'value' && payload.target === EXACT_NUMBER_COMPARISON_SOURCE)
+    ? singularActorValuePool(baseSubjectPool, payload.comparator, payload.targetTotal ?? 0)
+    : baseSubjectPool
+
+  return {
+    status: 'supported',
+    reason: null,
+    kind: 'unary',
+    evaluationPayload: payload,
+    subject: payload.subject,
+    subjectFilter: payload.subjectFilter || 'any',
+    subjectFilterMode: payload.subjectFilterMode || null,
+    operator: payload.operator,
+    comparator: payload.comparator,
+    target: payload.target,
+    targetTotal: payload.target === EXACT_NUMBER_COMPARISON_SOURCE ? (payload.targetTotal ?? 0) : null,
+    targetFilter: payload.targetFilter || 'any',
+    targetFilterMode: payload.targetFilterMode || null,
+    subjectSpeciesPool,
+    targetSpeciesPool: targetIsActor ? candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null) : [],
+    subjectTeam,
+    targetTeam,
+    movingTeam,
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION]
+  }
+}
+
+const SUPPORTED_POSITION_SUBJECTS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
+const SUPPORTED_POSITION_OPERATORS = new Set(['count', 'value', 'mobility'])
+const SUPPORTED_POSITION_AXES = new Set(['rank', 'file', 'square'])
+
+export function buildPositionPlan(payload, options = {}) {
+  if (!SUPPORTED_POSITION_SUBJECTS.has(payload.subject)) {
+    return { status: 'unsupported', reason: `${payload.subject} position previews are not supported yet.` }
+  }
+  if (!SUPPORTED_POSITION_OPERATORS.has(payload.operator)) {
+    return { status: 'unsupported', reason: `${payload.operator} position previews are not supported yet.` }
+  }
+  if (!SUPPORTED_POSITION_AXES.has(payload.positionAxis)) {
+    return { status: 'unsupported', reason: `${payload.positionAxis} position axis is not supported yet.` }
+  }
+
+  const movingTeam = options.movingTeam || Board.WHITE
+  const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
+
+  return {
+    status: 'supported',
+    reason: null,
+    kind: 'position',
+    evaluationPayload: payload,
+    subject: payload.subject,
+    subjectFilter: payload.subjectFilter || 'any',
+    subjectFilterMode: payload.subjectFilterMode || null,
+    positionAxis: payload.positionAxis,
+    positionComparator: payload.positionComparator,
+    positionTarget: payload.positionTarget,
+    operator: payload.operator,
+    comparator: payload.comparator,
+    targetTotal: payload.targetTotal ?? 0,
+    subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
+    subjectTeam,
+    movingTeam,
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION]
+  }
+}
+
+export function buildPlan(payload, options = {}) {
+  if (!payload?.kind) {
+    return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
+  }
+  if (payload.kind === 'unary') { return buildUnaryPlan(payload, options) }
+  if (payload.kind === 'relational') { return buildRelationalPlan(payload, options) }
+  if (payload.kind === 'position') { return buildPositionPlan(payload, options) }
+  return { status: 'unsupported', reason: `${payload.kind} previews are not supported yet.` }
 }

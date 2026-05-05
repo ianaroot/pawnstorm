@@ -2,8 +2,9 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import generateConditionExamples from 'editorV2/panels/condition_preview/ConditionExampleGenerator'
 import { shuffled } from 'editorV2/panels/condition_preview/board_utils'
-import { buildRelationalPlan } from 'editorV2/panels/condition_preview/generation_plan'
-import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { buildPlan } from 'editorV2/panels/condition_preview/generation_plan'
+import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { unaryActorLabels } from 'editorV2/panels/condition_preview/unary_utils'
 
 const DEFAULT_MAX_EXAMPLES = 30
 const NO_EXAMPLES_REASON = "Couldn't build a verified example for this condition chain yet. This may mean the chain is unsatisfiable, or that the preview generator still needs work."
@@ -25,12 +26,20 @@ function unionPositions(set, positions = []) {
   positions.forEach(position => set.add(position))
 }
 
-function aggregateHighlights(plans, moveObject, results) {
+function highlightLabelsForPlan(plan, moveObject, analysis) {
+  if (plan.kind === 'unary') {
+    return unaryActorLabels(plan, moveObject, analysis)
+  }
+  const result = analysis.relationalResult(plan.relationParams)
+  return relationalActorLabels(plan, moveObject, result)
+}
+
+function aggregateHighlights(plans, moveObject, analysis) {
   const priorRelationPositions = new Set()
   const afterRelationPositions = new Set()
 
-  results.forEach((result, index) => {
-    const labels = subjectTargetLabels(plans[index], moveObject, result)
+  plans.forEach(plan => {
+    const labels = highlightLabelsForPlan(plan, moveObject, analysis)
     unionPositions(priorRelationPositions, labels.prior.subjectPositions)
     unionPositions(priorRelationPositions, labels.prior.targetPositions)
     unionPositions(afterRelationPositions, labels.after.subjectPositions)
@@ -54,13 +63,15 @@ function aggregateHighlights(plans, moveObject, results) {
 function buildChainExample(example, plans) {
   const input = { board: example.priorBoard, moveObject: example.moveObject }
   const analysis = new CandidateMoveAnalysisV2(input)
-  const results = plans.map(plan => analysis.relationalResult(plan.relationParams))
+
+  const relationalPlans = plans.filter(p => p.kind === 'relational')
+  const chainResults = relationalPlans.map(plan => analysis.relationalResult(plan.relationParams))
 
   return {
     ...example,
-    chainResults: results,
-    result: results[0],
-    highlights: aggregateHighlights(plans, example.moveObject, results)
+    chainResults,
+    result: chainResults[0] || null,
+    highlights: aggregateHighlights(plans, example.moveObject, analysis)
   }
 }
 
@@ -78,16 +89,7 @@ export function generateConditionChainExamples(payloads, options = {}) {
 
   const plans = []
   for (let index = 0; index < payloads.length; index += 1) {
-    const payload = payloads[index]
-    if (payload?.kind !== 'relational') {
-      return {
-        status: 'unsupported',
-        reason: 'Unary condition previews are not supported yet.',
-        examples: []
-      }
-    }
-
-    const plan = buildRelationalPlan(payload, options)
+    const plan = buildPlan(payloads[index], options)
     if (plan.status !== 'supported') {
       return { status: plan.status, reason: plan.reason, examples: [] }
     }

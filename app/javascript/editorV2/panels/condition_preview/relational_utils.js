@@ -34,7 +34,7 @@ function shieldAttackerPositions(pairs, board) {
   return [...attackers]
 }
 
-export function teamForActor(actor) {
+export function relationalTeamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
 }
 
@@ -62,7 +62,7 @@ export function relationParams(payload) {
   }
 }
 
-export function subjectTargetLabels(plan, moveObject, result, board = null) {
+export function relationalActorLabels(plan, moveObject, result, board = null) {
   const startPosition = moveObject.startPosition
   const endPosition = moveObject.endPosition
   const priorSubjectPositions = plan.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
@@ -114,7 +114,7 @@ export function sideSpeciesPool(payload, side) {
   return candidateSpecies(filter, filterMode)
 }
 
-export function evaluateCandidate({ plan, priorBoard, moveObject }) {
+export function evaluateRelationalCandidate({ plan, priorBoard, moveObject }) {
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject }
   if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }

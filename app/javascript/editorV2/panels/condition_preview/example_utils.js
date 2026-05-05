@@ -8,12 +8,10 @@ import {
 
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'
+export const MOVE_KIND_PROMOTION = 'promotion'
 
 const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
-const KING_CANDIDATE_POSITIONS = Object.freeze([
-  square('b1'), square('g1'), square('a1'), square('h1'), square('c1'), square('f1'),
-  square('b8'), square('g8'), square('a8'), square('h8'), square('c8'), square('f8')
-])
+const ALL_POSITIONS = Object.freeze(Array.from({ length: 64 }, (_, i) => i))
 
 export function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
   if (filter === 'any') { return true }
@@ -73,10 +71,10 @@ export function selectKingPair(basePieces, random) {
 
   const whiteCandidates = existingWhiteKings.length > 0
     ? existingWhiteKings
-    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
+    : shuffled(ALL_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
   const blackCandidates = existingBlackKings.length > 0
     ? existingBlackKings
-    : shuffled(KING_CANDIDATE_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
+    : shuffled(ALL_POSITIONS, random).filter(position => !squareIsOccupied(basePieces, position))
 
   for (let whiteIndex = 0; whiteIndex < whiteCandidates.length; whiteIndex += 1) {
     const whiteKing = whiteCandidates[whiteIndex]
@@ -172,6 +170,7 @@ export function legalPriorTurnState(priorBoard, moveObject) {
 
 export function moveKindForMoveObject(moveObject) {
   if (/^O-O/.test(moveObject.pieceNotation || '')) { return MOVE_KIND_CASTLE }
+  if (moveObject.promotionPiece) { return MOVE_KIND_PROMOTION }
   return MOVE_KIND_STANDARD
 }
 
@@ -184,15 +183,23 @@ export function soundForMove(priorBoard, afterBoard, moveObject) {
 }
 
 export function candidateIdentity(example) {
-  const subjectSig = example.result.subjectPositions.map(p => example.afterBoard.pieceTypeAt(p)).join(',')
-  const targetSig = example.result.targetPositions.map(p => example.afterBoard.pieceTypeAt(p)).join(',')
+  if (example.result === null) {
+    return [
+      example.moveKind || MOVE_KIND_STANDARD,
+      example.moveObject.startPosition,
+      example.moveObject.endPosition,
+      example.afterBoard.layOut.join('')
+    ].join(':')
+  }
+  const subjectSig = example.result.subjectPositions?.map(p => example.afterBoard.pieceTypeAt(p)).join(',') ?? ''
+  const targetSig = example.result.targetPositions?.map(p => example.afterBoard.pieceTypeAt(p)).join(',') ?? ''
   return [
     example.moveKind || MOVE_KIND_STANDARD,
     example.moveObject.startPosition,
     example.moveObject.endPosition,
-    example.geometryKey,
+    example.geometryKey ?? '',
     subjectSig,
     targetSig,
-    example.variantType
+    example.variantType ?? ''
   ].join(':')
 }

@@ -42,8 +42,27 @@ const DEFAULT_MEASURE_STATE = {
   }
 }
 
+const DEFAULT_POSITION_STATE = {
+  left: {
+    subject: 'allied',
+    filter: 'any',
+    filterMode: 'include'
+  },
+  positionAxis: 'rank',
+  positionComparator: 'equal_to',
+  positionRankTarget: 1,
+  positionFileTarget: 1,
+  positionSquareFile: 1,
+  positionSquareRank: 1,
+  comparisonOpen: false,
+  operator: 'count',
+  comparator: 'greater_than',
+  targetTotal: 0
+}
+
 const DEFAULT_GRAMMAR_RULES = Object.freeze({
   editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
+  positionSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
   regularRelationalSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
   regularRelationalTargets: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
   relationalOperatorTargetRules: {
@@ -77,13 +96,16 @@ class ConditionForm {
     this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
     this.boundHandleModeRelational = () => this.handleModeChange('relational')
     this.boundHandleModeMeasure = () => this.handleModeChange('measure')
+    this.boundHandleModePosition = () => this.handleModeChange('position')
+    this.boundHandlePositionComparisonToggle = this.togglePositionComparison.bind(this)
   }
 
   defaultState() {
     return {
       mode: 'relational',
       relational: structuredClone(DEFAULT_RELATIONAL_STATE),
-      measure: structuredClone(DEFAULT_MEASURE_STATE)
+      measure: structuredClone(DEFAULT_MEASURE_STATE),
+      position: structuredClone(DEFAULT_POSITION_STATE)
     }
   }
 
@@ -105,6 +127,8 @@ class ConditionForm {
     fields.rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.addEventListener('click', this.boundHandleModeRelational)
     fields.modeMeasureBtn?.addEventListener('click', this.boundHandleModeMeasure)
+    fields.modePositionBtn?.addEventListener('click', this.boundHandleModePosition)
+    fields.positionComparisonToggle?.addEventListener('click', this.boundHandlePositionComparisonToggle)
   }
 
   detach() {
@@ -115,6 +139,8 @@ class ConditionForm {
     fields.rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.removeEventListener('click', this.boundHandleModeRelational)
     fields.modeMeasureBtn?.removeEventListener('click', this.boundHandleModeMeasure)
+    fields.modePositionBtn?.removeEventListener('click', this.boundHandleModePosition)
+    fields.positionComparisonToggle?.removeEventListener('click', this.boundHandlePositionComparisonToggle)
   }
 
   fields() {
@@ -184,18 +210,50 @@ class ConditionForm {
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       modeRelationalBtn: this.editorPanel.querySelector('#cond-mode-relational'),
       modeMeasureBtn: this.editorPanel.querySelector('#cond-mode-measure'),
+      modePositionBtn: this.editorPanel.querySelector('#cond-mode-position'),
       measureSubjectNote: this.editorPanel.querySelector('#cond-measure-subject-note'),
       relationalTargetNote: this.editorPanel.querySelector('#cond-relational-target-note'),
+      mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout)'),
+      positionLayout: this.editorPanel.querySelector('#cond-position-layout'),
+      positionSubject: this.editorPanel.querySelector('#cond-position-subject'),
+      positionFilterMode: this.editorPanel.querySelector('#cond-position-filter-mode'),
+      positionFilter: this.editorPanel.querySelector('#cond-position-filter'),
+      positionFilterRow: this.editorPanel.querySelector('#cond-position-filter-row'),
+      positionFilterModeControl: this.editorPanel.querySelector('#cond-position-filter-mode')?.closest('.condition-form-checkbox'),
+      positionComparisonToggle: this.editorPanel.querySelector('#cond-position-comparison-toggle'),
+      positionComparisonBody: this.editorPanel.querySelector('#cond-position-comparison-body'),
+      positionAxis: this.editorPanel.querySelector('#cond-position-axis'),
+      positionComparator: this.editorPanel.querySelector('#cond-position-comparator'),
+      positionRankInput: this.editorPanel.querySelector('#cond-position-rank-input'),
+      positionFileInput: this.editorPanel.querySelector('#cond-position-file-input'),
+      positionSquareInputs: this.editorPanel.querySelector('#cond-position-square-inputs'),
+      positionSquareFile: this.editorPanel.querySelector('#cond-position-square-file'),
+      positionSquareRank: this.editorPanel.querySelector('#cond-position-square-rank'),
+      positionOperator: this.editorPanel.querySelector('#cond-position-operator'),
+      positionMetricComparator: this.editorPanel.querySelector('#cond-position-metric-comparator'),
+      positionTargetTotal: this.editorPanel.querySelector('#cond-position-target-total'),
       all: [
         leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, leftComparator, leftComparisonSource,
         relationalOperatorSelect, measureOperatorSelect,
         rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, rightComparator, rightComparisonSource,
-        unaryComparator, unaryTarget, unaryTargetFilterMode, unaryTargetFilter
+        unaryComparator, unaryTarget, unaryTargetFilterMode, unaryTargetFilter,
+        this.editorPanel.querySelector('#cond-position-subject'),
+        this.editorPanel.querySelector('#cond-position-filter-mode'),
+        this.editorPanel.querySelector('#cond-position-filter'),
+        this.editorPanel.querySelector('#cond-position-axis'),
+        this.editorPanel.querySelector('#cond-position-comparator'),
+        this.editorPanel.querySelector('#cond-position-rank-input'),
+        this.editorPanel.querySelector('#cond-position-file-input'),
+        this.editorPanel.querySelector('#cond-position-square-file'),
+        this.editorPanel.querySelector('#cond-position-square-rank'),
+        this.editorPanel.querySelector('#cond-position-operator'),
+        this.editorPanel.querySelector('#cond-position-metric-comparator')
       ],
       numberInputs: [
         leftComparisonSourceTotal,
         rightComparisonSourceTotal,
-        unaryTargetTotal
+        unaryTargetTotal,
+        this.editorPanel.querySelector('#cond-position-target-total')
       ]
     }
   }
@@ -208,6 +266,8 @@ class ConditionForm {
     }
     if (this.state.mode === 'measure') {
       this.applyUnaryCompatibilityRules()
+    } else if (this.state.mode === 'position') {
+      this.applyPositionCompatibilityRules()
     } else {
       this.applyRelationalCompatibilityRules()
     }
@@ -215,14 +275,41 @@ class ConditionForm {
   }
 
   isValidV2Node(nodeData = {}) {
-    return nodeData.version === 2 && (nodeData.kind === 'relational' || nodeData.kind === 'unary')
+    return nodeData.version === 2 && (nodeData.kind === 'relational' || nodeData.kind === 'unary' || nodeData.kind === 'position')
   }
 
   stateFromNodeData(nodeData) {
+    if (nodeData.kind === 'position') {
+      const isSquare = nodeData.positionAxis === 'square'
+      const squareFile = isSquare ? ((nodeData.positionTarget % 8) + 1) : 1
+      const squareRank = isSquare ? (Math.floor(nodeData.positionTarget / 8) + 1) : 1
+      return {
+        mode: 'position',
+        relational: structuredClone(DEFAULT_RELATIONAL_STATE),
+        measure: structuredClone(DEFAULT_MEASURE_STATE),
+        position: {
+          left: {
+            subject: nodeData.subject || 'allied',
+            filter: nodeData.subjectFilter || 'any',
+            filterMode: nodeData.subjectFilterMode || 'include'
+          },
+          positionAxis: nodeData.positionAxis || 'rank',
+          positionComparator: nodeData.positionComparator || 'equal_to',
+          positionRankTarget: nodeData.positionAxis === 'rank' ? (nodeData.positionTarget || 1) : 1,
+          positionFileTarget: nodeData.positionAxis === 'file' ? (nodeData.positionTarget || 1) : 1,
+          positionSquareFile: squareFile,
+          positionSquareRank: squareRank,
+          operator: nodeData.operator || 'count',
+          comparator: nodeData.comparator || 'greater_than',
+          targetTotal: typeof nodeData.targetTotal === 'number' ? nodeData.targetTotal : 0
+        }
+      }
+    }
     if (nodeData.kind === 'unary') {
       return {
         mode: 'measure',
         relational: structuredClone(DEFAULT_RELATIONAL_STATE),
+        position: structuredClone(DEFAULT_POSITION_STATE),
         measure: {
           left: {
             subject: nodeData.subject || 'allied',
@@ -236,6 +323,7 @@ class ConditionForm {
     } else {
       return {
         mode: 'relational',
+        position: structuredClone(DEFAULT_POSITION_STATE),
         relational: {
           left: this.relationalSideState({
             subject: nodeData.subject,
@@ -298,9 +386,13 @@ class ConditionForm {
   render() {
     const fields = this.fields()
     const isRelational = this.state.mode === 'relational'
+    const isMeasure = this.state.mode === 'measure'
+    const isPosition = this.state.mode === 'position'
 
     fields.modeRelationalBtn?.classList.toggle('active', isRelational)
-    fields.modeMeasureBtn?.classList.toggle('active', !isRelational)
+    fields.modeMeasureBtn?.classList.toggle('active', isMeasure)
+    fields.modePositionBtn?.classList.toggle('active', isPosition)
+
     fields.relationalOperatorSelect?.classList.toggle('hidden', !isRelational)
     fields.measureOperatorSelect?.classList.toggle('hidden', isRelational)
     fields.rightRelationalFields.classList.toggle('hidden', !isRelational)
@@ -308,8 +400,12 @@ class ConditionForm {
     fields.unaryTargetSection?.classList.toggle('hidden', isRelational)
     fields.leftComparisonSection.classList.toggle('hidden', !isRelational || this.usesSamePiece())
     fields.unaryTargetStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', this.state.measure.unary.target === 'exact_number')
+    fields.mainLayout?.classList.toggle('hidden', isPosition)
+    fields.positionLayout?.classList.toggle('hidden', !isPosition)
 
-    if (isRelational) {
+    if (isPosition) {
+      this.renderPosition(fields)
+    } else if (isRelational) {
       this.renderRelational(fields)
     } else {
       this.renderMeasure(fields)
@@ -411,6 +507,41 @@ class ConditionForm {
     fields.relationalTargetNote?.classList.toggle('hidden', true)
   }
 
+  renderPosition(fields) {
+    const pos = this.state.position
+    const isSquare = pos.positionAxis === 'square'
+    const filterModeAvailable = pos.left.filter !== 'any'
+
+    if (fields.positionSubject) fields.positionSubject.value = pos.left.subject
+    if (fields.positionFilterMode) fields.positionFilterMode.checked = filterModeAvailable && pos.left.filterMode === 'exclude'
+    if (fields.positionFilter) fields.positionFilter.value = pos.left.filter
+    if (fields.positionAxis) fields.positionAxis.value = pos.positionAxis
+    if (fields.positionComparator) fields.positionComparator.value = pos.positionComparator
+    if (fields.positionRankInput) fields.positionRankInput.value = pos.positionRankTarget
+    if (fields.positionFileInput) fields.positionFileInput.value = pos.positionFileTarget
+    if (fields.positionSquareFile) fields.positionSquareFile.value = pos.positionSquareFile
+    if (fields.positionSquareRank) fields.positionSquareRank.value = pos.positionSquareRank
+    if (fields.positionOperator) fields.positionOperator.value = pos.operator
+    if (fields.positionMetricComparator) fields.positionMetricComparator.value = pos.comparator
+    if (fields.positionTargetTotal) fields.positionTargetTotal.value = pos.targetTotal
+
+    fields.positionRankInput?.classList.toggle('hidden', isSquare || pos.positionAxis === 'file')
+    fields.positionFileInput?.classList.toggle('hidden', isSquare || pos.positionAxis === 'rank')
+    fields.positionSquareInputs?.classList.toggle('hidden', !isSquare)
+    fields.positionComparator?.classList.toggle('hidden', isSquare)
+
+    fields.positionComparisonBody?.classList.toggle('hidden', !pos.comparisonOpen)
+    if (fields.positionComparisonToggle) {
+      fields.positionComparisonToggle.textContent = pos.comparisonOpen ? 'Hide comparison' : '+ comparison'
+    }
+
+    fields.positionFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !filterModeAvailable)
+
+    this.showAllOptions(fields.positionSubject)
+    this.disablePositionSubjectOptions(fields)
+    this.disablePositionOperatorOptions(fields)
+  }
+
   toggleLeftComparison() {
     if (this.state.mode !== 'relational') { return }
     if (this.comparisonLocked('left')) { return }
@@ -424,6 +555,12 @@ class ConditionForm {
     }
 
     rel.ui.leftComparisonOpen = !rel.ui.leftComparisonOpen
+    this.render()
+  }
+
+  togglePositionComparison() {
+    if (this.state.mode !== 'position') { return }
+    this.state.position.comparisonOpen = !this.state.position.comparisonOpen
     this.render()
   }
 
@@ -470,7 +607,7 @@ class ConditionForm {
       this.state.relational.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
       this.state.relational.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
       this.applyRelationalCompatibilityRules()
-    } else {
+    } else if (this.state.mode === 'measure') {
       this.state.measure.left.subject = fields.leftSubject?.value || 'allied'
       this.state.measure.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
       this.state.measure.left.filter = fields.leftFilter?.value || 'any'
@@ -481,12 +618,46 @@ class ConditionForm {
       this.state.measure.unary.targetFilter = fields.unaryTargetFilter?.value || 'any'
       this.state.measure.unary.targetTotal = Number(fields.unaryTargetTotal?.value || 0)
       this.applyUnaryCompatibilityRules(changedId)
+    } else {
+      this.state.position.left.subject = fields.positionSubject?.value || 'allied'
+      this.state.position.left.filterMode = fields.positionFilterMode?.checked ? 'exclude' : 'include'
+      this.state.position.left.filter = fields.positionFilter?.value || 'any'
+      this.state.position.positionAxis = fields.positionAxis?.value || 'rank'
+      this.state.position.positionComparator = fields.positionComparator?.value || 'equal_to'
+      this.state.position.positionRankTarget = Number(fields.positionRankInput?.value || 1)
+      this.state.position.positionFileTarget = Number(fields.positionFileInput?.value || 1)
+      this.state.position.positionSquareFile = Number(fields.positionSquareFile?.value || 1)
+      this.state.position.positionSquareRank = Number(fields.positionSquareRank?.value || 1)
+      this.state.position.operator = fields.positionOperator?.value || 'count'
+      this.state.position.comparator = fields.positionMetricComparator?.value || 'greater_than'
+      this.state.position.targetTotal = Number(fields.positionTargetTotal?.value || 0)
+      this.applyPositionCompatibilityRules()
     }
 
     this.render()
   }
 
   buildPayload() {
+    if (this.state.mode === 'position') {
+      const pos = this.state.position
+      const positionTarget = this.resolvedPositionTarget(pos)
+      const payload = {
+        version: 2,
+        kind: 'position',
+        subject: pos.left.subject,
+        subjectFilter: pos.left.filter,
+        positionAxis: pos.positionAxis,
+        positionComparator: pos.positionAxis === 'square' ? 'equal_to' : pos.positionComparator,
+        positionTarget,
+        operator: pos.operator,
+        comparator: pos.comparator,
+        targetTotal: pos.targetTotal
+      }
+      if (pos.left.filter !== 'any') {
+        payload.subjectFilterMode = pos.left.filterMode
+      }
+      return payload
+    }
     if (this.state.mode === 'measure') {
       const meas = this.state.measure
       const payload = {
@@ -721,6 +892,47 @@ class ConditionForm {
     }
   }
 
+  resolvedPositionTarget(pos) {
+    if (pos.positionAxis === 'rank') { return pos.positionRankTarget }
+    if (pos.positionAxis === 'file') { return pos.positionFileTarget }
+    return (pos.positionSquareRank - 1) * 8 + (pos.positionSquareFile - 1)
+  }
+
+  applyPositionCompatibilityRules() {
+    const pos = this.state.position
+    const allowedSubjects = this.positionSubjects()
+    if (!allowedSubjects.includes(pos.left.subject)) {
+      pos.left.subject = 'allied'
+    }
+    if (pos.positionAxis === 'square') {
+      pos.positionComparator = 'equal_to'
+    }
+    const allowedOperators = this.allowedPositionOperatorsForSubject(pos.left.subject)
+    if (!allowedOperators.includes(pos.operator)) {
+      pos.operator = 'count'
+    }
+    this.applyFilterModeCompatibilityRules()
+  }
+
+  positionSubjects() {
+    return this.grammarRules.positionSubjects || ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+  }
+
+  allowedPositionOperatorsForSubject(subject) {
+    return ['count', 'value', 'mobility']
+  }
+
+  disablePositionSubjectOptions(fields) {
+    const allowed = this.positionSubjects()
+    this.disableOptions(fields.positionSubject, this.editorSubjects().filter(v => !allowed.includes(v)))
+  }
+
+  disablePositionOperatorOptions(fields) {
+    const allowed = this.allowedPositionOperatorsForSubject(this.state.position.left.subject)
+    const all = Array.from(fields.positionOperator?.options || []).map(o => o.value)
+    this.disableOptions(fields.positionOperator, all.filter(v => !allowed.includes(v)))
+  }
+
   applyFilterModeCompatibilityRules() {
     if (this.state.mode === 'relational') {
       if (this.state.relational.left.filter === 'any') {
@@ -728,6 +940,10 @@ class ConditionForm {
       }
       if (this.state.relational.right.filter === 'any') {
         this.state.relational.right.filterMode = 'include'
+      }
+    } else if (this.state.mode === 'position') {
+      if (this.state.position.left.filter === 'any') {
+        this.state.position.left.filterMode = 'include'
       }
     } else {
       if (this.state.measure.left.filter === 'any') {

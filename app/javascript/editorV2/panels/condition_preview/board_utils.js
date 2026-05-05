@@ -1,5 +1,7 @@
 import Board from 'gameplay/board'
 
+export const MAX_PAWNS_PER_TEAM = 8
+
 export function square(value) {
   return Board.gridCalculatorReverse(value)
 }
@@ -88,11 +90,11 @@ export function buildLayoutFromPieces(pieces) {
   return layout
 }
 
-export function buildBoardFromLayout(layout, recentMoveContext = null) {
+export function buildBoardFromLayout(layout, recentMoveContext = null, allowedToMove = Board.WHITE) {
   return new Board({
     layOut: layout,
     capturedPieces: [],
-    allowedToMove: Board.WHITE,
+    allowedToMove,
     movementNotation: [],
     recentMoveContext
   })

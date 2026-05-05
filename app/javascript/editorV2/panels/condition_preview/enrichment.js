@@ -2,12 +2,14 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, pieceCode, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
+import { legalPlacementForSpecies, MAX_PAWNS_PER_TEAM, pieceCode, pieceSpecies, pieceTeam, shuffled, weightedRandomSpecies } from 'editorV2/panels/condition_preview/board_utils'
 import { moveKindForMoveObject, soundForMove, candidateIdentity, legalPriorTurnState } from 'editorV2/panels/condition_preview/example_utils'
-import { subjectTargetLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { relationalActorLabels } from 'editorV2/panels/condition_preview/relational_utils'
+import { unaryActorLabels } from 'editorV2/panels/condition_preview/unary_utils'
 import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/diversity_selection'
 
 const ENRICHMENT_PROBABILITY = 0.5
+const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 1
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const MAX_EXTRA_RELATION_PAIRS_FOR_ENRICHMENT = 3
 const ENRICHMENT_END_POSITION_WEIGHT = 4
@@ -104,7 +106,7 @@ export function deriveVerifiedExample({ plan, priorBoard, moveObject, baseExampl
     afterBoard,
     moveObject: recomputedMoveObject,
     result,
-    highlights: subjectTargetLabels(plan, recomputedMoveObject, result, priorBoard),
+    highlights: relationalActorLabels(plan, recomputedMoveObject, result, priorBoard),
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:${suffix}`,
     movedPieceInRelation,
@@ -120,6 +122,14 @@ export function exampleEligibleForEnrichment(example, plan) {
 export function buildEnrichmentPlacementPolicy(example, random) {
   const candidates = weightedEnrichmentCandidateSquares(example, random)
   const usedPositions = new Set()
+  const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
+
+  const pawnCounts = { [Board.WHITE]: 0, [Board.BLACK]: 0 }
+  example.priorBoard.layOut.forEach(piece => {
+    if (piece !== Board.EMPTY_SQUARE && pieceSpecies(piece) === Board.PAWN) {
+      pawnCounts[pieceTeam(piece)]++
+    }
+  })
 
   return {
     nextPlacement() {
@@ -132,18 +142,18 @@ export function buildEnrichmentPlacementPolicy(example, random) {
         break
       }
       if (position === undefined) { return null }
-      const species = weightedRandomSpecies(random, { includeKing: false })
+      const team = position === example.moveObject.endPosition
+        ? Board.opposingTeam(movedPieceTeam)
+        : (random() < 0.5 ? Board.WHITE : Board.BLACK)
+      const allowedSpecies = pawnCounts[team] >= MAX_PAWNS_PER_TEAM
+        ? [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]
+        : null
+      const species = weightedRandomSpecies(random, { includeKing: false, allowedSpecies })
       if (!legalPlacementForSpecies(position, species)) {
         return this.nextPlacement()
       }
-      const movedPieceTeam = example.priorBoard.teamAt(example.moveObject.startPosition)
-      return {
-        position,
-        team: position === example.moveObject.endPosition
-          ? Board.opposingTeam(movedPieceTeam)
-          : (random() < 0.5 ? Board.WHITE : Board.BLACK),
-        species
-      }
+      if (species === Board.PAWN) { pawnCounts[team]++ }
+      return { position, team, species }
     }
   }
 }
@@ -184,6 +194,83 @@ export function enrichExample(example, plan, random) {
   return addedCount > 0 ? bestExample : null
 }
 
+function deriveUnaryVerifiedExample({ plan, priorBoard, moveObject, baseExample }) {
+  let recomputedMoveObject
+  try {
+    recomputedMoveObject = Rules.getMoveObject(moveObject.startPosition, moveObject.endPosition, priorBoard)
+  } catch {
+    return null
+  }
+  if (recomputedMoveObject.illegal || recomputedMoveObject.additionalActions || recomputedMoveObject.promotionPiece) { return null }
+  if (!legalPriorTurnState(priorBoard, recomputedMoveObject)) { return null }
+
+  const evaluator = new ConditionEvaluatorV2()
+  const input = { board: priorBoard, moveObject: recomputedMoveObject }
+  if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }
+
+  const analysis = new CandidateMoveAnalysisV2(input)
+  const afterBoard = priorBoard.lightClone()
+  afterBoard._hypotheticallyMovePiece(recomputedMoveObject)
+
+  return {
+    priorBoard,
+    afterBoard,
+    moveObject: recomputedMoveObject,
+    kind: 'unary',
+    result: null,
+    highlights: unaryActorLabels(plan, recomputedMoveObject, analysis),
+    moveKind: moveKindForMoveObject(recomputedMoveObject),
+    sound: soundForMove(priorBoard, afterBoard, recomputedMoveObject)
+  }
+}
+
+function enrichUnaryExample(example, plan, random) {
+  const policy = buildEnrichmentPlacementPolicy(example, random)
+  const basePriorBoard = example.priorBoard.lightClone()
+  let bestExample = example
+  let addedCount = 0
+
+  while (addedCount < MAX_ENRICHED_EXTRA_PIECES) {
+    const placement = policy.nextPlacement()
+    if (!placement) { break }
+
+    const trialPriorBoard = basePriorBoard.lightClone()
+    trialPriorBoard._placePiece({ position: placement.position, pieceObject: pieceCode(placement.team, placement.species) })
+    const derived = deriveUnaryVerifiedExample({ plan, priorBoard: trialPriorBoard, moveObject: example.moveObject, baseExample: example })
+    if (!derived) { break }
+
+    bestExample = derived
+    basePriorBoard.layOut = Board._deepCopy(trialPriorBoard.layOut)
+    addedCount += 1
+  }
+
+  return addedCount > 0 ? bestExample : null
+}
+
+export function finalizeUnaryExamples(baseExamples, plan, maxExamples, random) {
+  const enrichedCandidates = []
+
+  baseExamples.forEach(example => {
+    if (random() >= ENRICHMENT_PROBABILITY) { return }
+    const enriched = enrichUnaryExample(example, plan, random)
+    if (enriched) { enrichedCandidates.push(enriched) }
+  })
+
+  if (enrichedCandidates.length === 0) {
+    return selectDiverseExamples(shuffled(baseExamples, random), maxExamples)
+  }
+
+  const desiredEnrichedCount = Math.min(
+    enrichedCandidates.length,
+    Math.max(1, Math.round(maxExamples * ENRICHMENT_PROBABILITY))
+  )
+  const selectedEnriched = selectDiverseExamples(uniqueExamples(enrichedCandidates), desiredEnrichedCount)
+  const selectedEnrichedIds = new Set(selectedEnriched.map(candidateIdentity))
+  const remainingBase = baseExamples.filter(example => !selectedEnrichedIds.has(candidateIdentity(example)))
+  const selectedBase = selectDiverseExamples(remainingBase, Math.max(0, maxExamples - selectedEnriched.length))
+  return selectDiverseExamples(shuffled(uniqueExamples([...selectedBase, ...selectedEnriched]), random), maxExamples)
+}
+
 export function finalizeExamples(baseExamples, plan, maxExamples, random) {
   const enrichedCandidates = []
 
@@ -215,14 +302,25 @@ export function finalizeExamples(baseExamples, plan, maxExamples, random) {
   return selectDiverseExamples(fallbackPool, maxExamples)
 }
 
-export function mergeMoveKindExamples({ standardExamples, castleExamples, plan, maxExamples, random }) {
-  if (castleExamples.length === 0) {
+export function mergeMoveKindExamples({ standardExamples, castleExamples, promotionExamples = [], plan, maxExamples, random }) {
+  const hasSpecial = castleExamples.length > 0 || promotionExamples.length > 0
+  if (!hasSpecial) {
     return finalizeExamples(standardExamples, plan, maxExamples, random)
   }
 
-  const selectedCastle = selectDiverseExamples(castleExamples, 1)
-  const selectedCastleIds = new Set(selectedCastle.map(candidateIdentity))
-  const remainingStandard = standardExamples.filter(example => !selectedCastleIds.has(candidateIdentity(example)))
-  const selectedStandard = finalizeExamples(remainingStandard, plan, Math.max(0, maxExamples - selectedCastle.length), random)
-  return selectDiverseExamples(uniqueExamples([...selectedCastle, ...selectedStandard]), maxExamples)
+  const guaranteedExamples = []
+  if (castleExamples.length > 0) {
+    guaranteedExamples.push(...selectDiverseExamples(castleExamples, GUARANTEED_SPECIAL_MOVE_EXAMPLES))
+  }
+  if (promotionExamples.length > 0) {
+    guaranteedExamples.push(...selectDiverseExamples(promotionExamples, GUARANTEED_SPECIAL_MOVE_EXAMPLES))
+  }
+
+  const guaranteedIds = new Set(guaranteedExamples.map(candidateIdentity))
+  const remainingStandard = standardExamples.filter(e => !guaranteedIds.has(candidateIdentity(e)))
+  const selectedStandard = finalizeExamples(remainingStandard, plan, Math.max(0, maxExamples - guaranteedExamples.length), random)
+
+  const allSpecial = uniqueExamples([...castleExamples, ...promotionExamples])
+  const remainingSpecial = allSpecial.filter(e => !guaranteedIds.has(candidateIdentity(e)))
+  return selectDiverseExamples(uniqueExamples([...guaranteedExamples, ...selectedStandard, ...remainingSpecial]), maxExamples)
 }

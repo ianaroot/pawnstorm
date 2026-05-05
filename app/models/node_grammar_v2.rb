@@ -22,6 +22,11 @@
     SPECIAL_UNARY_TARGETS = %w[exact_number prior_board_state].freeze
     UNARY_TARGETS = (%w[exact_number] + SUBJECTS + %w[prior_board_state]).freeze
 
+    POSITION_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
+    POSITION_OPERATORS = %w[count mobility value].freeze
+    POSITION_AXES = %w[rank file square].freeze
+    POSITION_MOBILITY_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
+
     COMPARISON_METRICS = %w[count value].freeze
     COMPARATORS = %w[equal_to greater_than less_than greater_than_or_equal_to less_than_or_equal_to].freeze
     EXACT_COMPARISON_SOURCE = 'exact_number'
@@ -56,6 +61,14 @@
 
       def valid_unary_target?(value)
         UNARY_TARGETS.include?(value)
+      end
+
+      def valid_position_subject?(value)
+        POSITION_SUBJECTS.include?(value)
+      end
+
+      def valid_position_axis?(value)
+        POSITION_AXES.include?(value)
       end
 
     end

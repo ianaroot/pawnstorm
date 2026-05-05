@@ -90,6 +90,10 @@ class NodeForm
       unary_operator_options
     end
 
+    def condition_form_position_operator_options
+      NodeGrammarV2::POSITION_OPERATORS.map { |value| [operator_label(value), value] }
+    end
+
     def comparison_metric_options
       NodeGrammarV2::COMPARISON_METRICS.map { |value| [comparison_metric_label(value), value] }
     end

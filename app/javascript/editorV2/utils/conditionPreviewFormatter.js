@@ -174,7 +174,35 @@ function previewText({ left, operator, right }) {
   return `${left} : ${operator} : ${right}`
 }
 
+const FILE_LETTERS = 'abcdefgh'
+
+function positionAxisPreview(axis, comparator, positionTarget) {
+  const comparatorSymbol = comparatorLabel(comparator)
+  if (axis === 'rank') {
+    return `rank ${comparatorSymbol} ${positionTarget}`
+  }
+  if (axis === 'file') {
+    return `file ${comparatorSymbol} ${FILE_LETTERS[(positionTarget - 1)] || positionTarget}`
+  }
+  if (axis === 'square') {
+    const fileIndex = positionTarget % 8
+    const rankIndex = Math.floor(positionTarget / 8)
+    return `square ${FILE_LETTERS[fileIndex] || fileIndex + 1}${rankIndex + 1}`
+  }
+  return axis
+}
+
 export function formatConditionPreview(nodeData = {}) {
+  if (nodeData.kind === 'position') {
+    const preview = {
+      left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
+      operator: positionAxisPreview(nodeData.positionAxis, nodeData.positionComparator, nodeData.positionTarget),
+      right: `${operatorLabel(nodeData.operator)} ${comparatorLabel(nodeData.comparator)} ${nodeData.targetTotal}`
+    }
+    preview.text = previewText(preview)
+    return preview
+  }
+
   if (nodeData.kind === 'relational') {
     const preview = {
       left: sidePreview({
