@@ -74,8 +74,7 @@ function nonNullSpecies(speciesSet) {
 }
 
 export function unaryValuePairStrategy(pieces, hint, ctx) {
-  const { random, movingTeam, priorPieces } = ctx
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { random, movingTeam, enemyTeam, priorPieces } = ctx
 
   const subjectVarKey = ACTOR_TO_VAR_KEY[hint.subjectActor]
   const targetVarKey = ACTOR_TO_VAR_KEY[hint.targetActor]

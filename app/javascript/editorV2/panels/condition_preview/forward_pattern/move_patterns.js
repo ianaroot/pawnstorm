@@ -693,7 +693,7 @@ function generateGroupMobilityIncrease({ driver, combinedPlan, random }) {
   let placed = 0
   for (const sq of shuffled(nearby, random)) {
     if (placed >= blockerCount) { break }
-    const team = random() < 0.7 ? movingTeam : Board.opposingTeam(movingTeam)
+    const team = random() < 0.7 ? movingTeam : combinedPlan.enemyTeam
     const validSpecies = BLOCKER_POOL_FOR_MOBILITY.filter(s => legalPlacementForSpecies(sq, s))
     if (validSpecies.length === 0) { continue }
     const blockerSpecies = pickRandom(validSpecies, random)
@@ -749,7 +749,7 @@ function generatePromotionForValueIncrease({ driver, combinedPlan, random }) {
   if (driver.pbsDirection !== '+') { return null }
 
   const movingTeam = combinedPlan.movingTeam
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const enemyTeam = combinedPlan.enemyTeam
   const promotedSpecies = pickRandom([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT], random)
 
   // Pawn rank for white/black, and promotion rank.

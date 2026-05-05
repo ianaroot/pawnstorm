@@ -753,6 +753,7 @@ export function buildChainConstraints(combinedPlan) {
   const vars = initSingularActors(combinedPlan)
   vars.inventory = initInventory(combinedPlan)
   vars.movingTeam = combinedPlan.movingTeam
+  vars.enemyTeam = combinedPlan.enemyTeam
   vars.positionConstraints = []
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)

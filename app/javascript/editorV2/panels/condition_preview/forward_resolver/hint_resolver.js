@@ -561,7 +561,7 @@ export function resolveViaHints({ combinedPlan, random }) {
   // engineering a capture that declares the captured piece as the prior turn's
   // enemy moved_piece.
   const ctx = {
-    movingTeam, random, priorPieces, recentMoveContext: null,
+    movingTeam, enemyTeam: chainConstraints.enemyTeam, random, priorPieces, recentMoveContext: null,
     movedPiece: chainConstraints.movedPiece,
     capturedPiece: chainConstraints.capturedPiece,
     enemyMovedPiece: chainConstraints.enemyMovedPiece,

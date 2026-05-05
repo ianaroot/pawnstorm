@@ -46,8 +46,7 @@ function nonNullSpecies(speciesSet) {
 }
 
 export function relationSamePieceStrategy(pieces, hint, ctx) {
-  const { random, movingTeam, priorPieces } = ctx
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { random, movingTeam, enemyTeam, priorPieces } = ctx
 
   const capturedCandidates = nonNullSpecies(ctx.capturedPiece.species_set)
   const moverCandidates = [...ctx.movedPiece.species_set]

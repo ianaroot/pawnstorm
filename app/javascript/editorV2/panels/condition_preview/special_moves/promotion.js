@@ -38,7 +38,7 @@ export function collectPromotionExamples({ combinedPlan, random, maxExamples }) 
   const allPresets = promotionPresetsForTeam(combinedPlan.movingTeam)
   const examples = []
   const seen = new Set()
-  const enemyTeam = Board.opposingTeam(combinedPlan.movingTeam)
+  const enemyTeam = combinedPlan.enemyTeam
   const verifier = new CandidateVerifier({ combinedPlan })
   const factory = new ExampleFactory({ combinedPlan })
 
