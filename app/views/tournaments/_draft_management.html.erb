@@ -1,0 +1,10 @@
+<div class="tournament-draft">
+  <h2>Draft</h2>
+  <p>This tournament is not yet open. No one can see it or submit entries.</p>
+  <% if current_user == tournament.creator %>
+    <div class="tournament-draft__actions">
+      <%= button_to 'Open for entries', open_registration_tournament_path(tournament), method: :post, class: 'btn btn-primary' %>
+      <%= link_to 'Edit settings', edit_tournament_path(tournament), class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

@@ -2,6 +2,7 @@ import Board from "gameplay/board"
 import { materialValue, relativeRank, relativeToAbsolutePosition } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
 import { relationalActorPositions } from "bot_execution/actor_positions"
+import { compareValues } from "bot_execution/utils"
 
 const AFTER_BOARD = "after"
 
@@ -47,16 +48,5 @@ function positionSatisfied(position, team, { positionAxis, positionComparator, p
     }
     default:
       throw new Error(`Unsupported position axis: ${positionAxis}`)
-  }
-}
-
-function compareValues(value, comparator, target) {
-  switch (comparator) {
-    case "equal_to": return value === target
-    case "greater_than": return value > target
-    case "less_than": return value < target
-    case "greater_than_or_equal_to": return value >= target
-    case "less_than_or_equal_to": return value <= target
-    default: throw new Error(`Unknown position comparator: ${comparator}`)
   }
 }

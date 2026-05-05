@@ -2309,6 +2309,295 @@ describe('ConditionEvaluatorV2', () => {
     })
   })
 
+  describe('position evaluation', () => {
+    it('passes allied count on rank using moving team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'wN',
+          d6: 'wB',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'allied',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'greater_than_or_equal_to',
+            positionTarget: 5,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes enemy count on rank using enemy team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'bN',
+          c7: 'bP',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'enemy',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'greater_than_or_equal_to',
+            positionTarget: 4,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes zero enemy count on rank when no enemy piece occupies the rank from enemy perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'bN',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'enemy',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 5,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes enemy count on square using enemy team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a8: 'bR',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'enemy',
+            subjectFilter: 'any',
+            positionAxis: 'square',
+            positionComparator: 'equal_to',
+            positionTarget: 0,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes moved_piece position evaluated against the after-board', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP'
+        }
+      })
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 4,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails moved_piece position when only the prior rank matched', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP'
+        }
+      })
+      const moveObject = getMove('e2', 'e4', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'moved_piece',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 2,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('fails enemy_moved_piece position when current move captures it', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'enemy_moved_piece',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'greater_than_or_equal_to',
+            positionTarget: 1,
+            operator: 'count',
+            comparator: 'greater_than_or_equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('respects subjectFilter when computing position count', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'wN',
+          d5: 'wP',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 5,
+            operator: 'count',
+            comparator: 'equal_to',
+            targetTotal: 1
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('evaluates value operator over filtered positions and treats king value as zero', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wQ',
+          a4: 'wR',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'position',
+            subject: 'allied',
+            subjectFilter: 'any',
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 4,
+            operator: 'value',
+            comparator: 'equal_to',
+            targetTotal: 14
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+  })
+
   describe('v1 shield/cover equivalence', () => {
     it('matches v1 shielder > 0 with plain v2 shield existence', () => {
       const board = buildBoard({
