@@ -15,7 +15,6 @@ const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value', 'mobility'])
 const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece', 'prior_board_state'])
 
 function unaryTeamForActor(actor, movingTeam) {
-  const enemyTeam = movingTeam === Board.WHITE ? Board.BLACK : Board.WHITE
   switch (actor) {
     case 'allied':
     case 'moved_piece':
@@ -24,7 +23,7 @@ function unaryTeamForActor(actor, movingTeam) {
     case 'enemy':
     case 'enemy_moved_piece':
     case 'enemy_captured_piece':
-      return enemyTeam
+      return Board.opposingTeam(movingTeam)
     default:
       return movingTeam
   }
