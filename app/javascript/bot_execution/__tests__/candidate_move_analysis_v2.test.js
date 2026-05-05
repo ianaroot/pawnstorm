@@ -476,6 +476,298 @@ describe('CandidateMoveAnalysisV2', () => {
     })
   })
 
+  describe('position', () => {
+    it('filters allied positions on rank using moving team perspective (white moving)', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'wN',
+          c2: 'wP',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'allied',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than_or_equal_to',
+          positionTarget: 5
+        }))
+      ).toEqual(['c5'])
+    })
+
+    it('filters allied positions on rank using moving team perspective (black moving)', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c4: 'bN',
+          c7: 'bP',
+          h7: 'bP'
+        },
+        allowedToMove: Board.BLACK
+      })
+      const moveObject = getMove('h7', 'h6', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'allied',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than_or_equal_to',
+          positionTarget: 5
+        }))
+      ).toEqual(['c4'])
+    })
+
+    it('filters enemy positions on rank using enemy team perspective (white moving)', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c5: 'bN',
+          c7: 'bP',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than_or_equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['c5'])
+    })
+
+    it('filters enemy positions on rank using enemy team perspective (black moving)', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c4: 'wN',
+          c2: 'wP',
+          h7: 'bP'
+        },
+        allowedToMove: Board.BLACK
+      })
+      const moveObject = getMove('h7', 'h6', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than_or_equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['c4'])
+    })
+
+    it('filters allied positions on square using moving team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a1: 'wR',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'allied',
+          positionAxis: 'square',
+          positionComparator: 'equal_to',
+          positionTarget: 0
+        }))
+      ).toEqual(['a1'])
+    })
+
+    it('filters enemy positions on square using enemy team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a8: 'bR',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy',
+          positionAxis: 'square',
+          positionComparator: 'equal_to',
+          positionTarget: 0
+        }))
+      ).toEqual(['a8'])
+    })
+
+    it('filters by file axis independent of team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wN',
+          d6: 'bN',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'allied',
+          positionAxis: 'file',
+          positionComparator: 'equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['d4'])
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy',
+          positionAxis: 'file',
+          positionComparator: 'equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['d6'])
+    })
+
+    it('returns moved piece after-position when it satisfies the axis condition', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP'
+        }
+      })
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'moved_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['e4'])
+    })
+
+    it('returns empty for moved piece when only the prior position matched the axis', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP'
+        }
+      })
+      const moveObject = getMove('e2', 'e4', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        analysis.positionFilteredPositions({
+          actor: 'moved_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 2
+        })
+      ).toEqual([])
+    })
+
+    it('filters enemy_moved_piece on rank using enemy team perspective', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a2: 'wP',
+          c6: 'bN'
+        }
+      })
+      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy_moved_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 3
+        }))
+      ).toEqual(['c6'])
+    })
+
+    it('returns empty for enemy_moved_piece when current move captures it', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e2: 'wP',
+          f7: 'bP'
+        }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        analysis.positionFilteredPositions({
+          actor: 'enemy_moved_piece',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than_or_equal_to',
+          positionTarget: 1
+        })
+      ).toEqual([])
+    })
+
+    it('computes count and value metrics over filtered positions', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wQ',
+          a4: 'wR',
+          h2: 'wP'
+        }
+      })
+      const moveObject = getMove('h2', 'h3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      const filterArgs = {
+        actor: 'allied',
+        positionAxis: 'rank',
+        positionComparator: 'equal_to',
+        positionTarget: 4
+      }
+      const positions = analysis.positionFilteredPositions(filterArgs)
+
+      expect(squaresFor(positions)).toEqual(['a4', 'd4'])
+      expect(analysis.positionMetricTotal({ positions, operator: 'count' })).toBe(2)
+      expect(analysis.positionMetricTotal({ positions, operator: 'value' })).toBe(14)
+    })
+  })
+
   describe('relational attack', () => {
     it('builds pairs and deduped side sets for allied rook attacks against enemy targets', () => {
       const board = buildBoard({
