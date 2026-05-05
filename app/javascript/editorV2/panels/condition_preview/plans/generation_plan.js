@@ -86,7 +86,7 @@ function actorLabel(actor) {
   return FILTER_LABELS[actor] || actor
 }
 
-export function buildRelationalPlan(payload, options = {}) {
+function buildRelationalPlan(payload, options = {}, teams = {}) {
   if (!payload?.kind) {
     return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
   }
@@ -137,6 +137,8 @@ export function buildRelationalPlan(payload, options = {}) {
     }
   }
 
+  const { movingTeam, enemyTeam } = teams
+
   return {
     status: 'supported',
     reason: null,
@@ -157,7 +159,8 @@ export function buildRelationalPlan(payload, options = {}) {
     targetSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'target'), comparisons, 'target'),
     subjectTeam: relationalTeamForActor(payload.subject),
     targetTeam: relationalTeamForActor(payload.target),
-    movingTeam: options.movingTeam || Board.WHITE,
+    movingTeam,
+    enemyTeam,
     moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT],
     relationParams: relationParams(payload)
   }
@@ -286,7 +289,7 @@ function singularActorValuePool(pool, comparator, total) {
   }
 }
 
-export function buildUnaryPlan(payload, options = {}) {
+function buildUnaryPlan(payload, options = {}, teams = {}) {
   if (!SUPPORTED_UNARY_ACTORS.has(payload.subject)) {
     return { status: 'unsupported', reason: `${payload.subject} unary previews are not supported yet.` }
   }
@@ -297,7 +300,7 @@ export function buildUnaryPlan(payload, options = {}) {
     return { status: 'unsupported', reason: `${payload.target} unary target previews are not supported yet.` }
   }
 
-  const movingTeam = options.movingTeam || Board.WHITE
+  const { movingTeam, enemyTeam } = teams
   const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
   const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE && payload.target !== PRIOR_BOARD_COMPARISON_SOURCE
   const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
@@ -326,6 +329,7 @@ export function buildUnaryPlan(payload, options = {}) {
     subjectTeam,
     targetTeam,
     movingTeam,
+    enemyTeam,
     moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
   }
 }
@@ -334,7 +338,7 @@ const SUPPORTED_POSITION_SUBJECTS = new Set(['allied', 'enemy', 'moved_piece', '
 const SUPPORTED_POSITION_OPERATORS = new Set(['count', 'value', 'mobility'])
 const SUPPORTED_POSITION_AXES = new Set(['rank', 'file', 'square'])
 
-export function buildPositionPlan(payload, options = {}) {
+function buildPositionPlan(payload, options = {}, teams = {}) {
   if (!SUPPORTED_POSITION_SUBJECTS.has(payload.subject)) {
     return { status: 'unsupported', reason: `${payload.subject} position previews are not supported yet.` }
   }
@@ -345,7 +349,7 @@ export function buildPositionPlan(payload, options = {}) {
     return { status: 'unsupported', reason: `${payload.positionAxis} position axis is not supported yet.` }
   }
 
-  const movingTeam = options.movingTeam || Board.WHITE
+  const { movingTeam, enemyTeam } = teams
   const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
 
   return {
@@ -370,6 +374,7 @@ export function buildPositionPlan(payload, options = {}) {
     subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
     subjectTeam,
     movingTeam,
+    enemyTeam,
     moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
   }
 }
@@ -378,8 +383,13 @@ export function buildPlan(payload, options = {}) {
   if (!payload?.kind) {
     return { status: 'unsupported', reason: 'Condition preview is not available for this condition yet.' }
   }
-  if (payload.kind === 'unary') { return buildUnaryPlan(payload, options) }
-  if (payload.kind === 'relational') { return buildRelationalPlan(payload, options) }
-  if (payload.kind === 'position') { return buildPositionPlan(payload, options) }
+
+  const movingTeam = options.movingTeam || Board.WHITE
+  const enemyTeam = Board.opposingTeam(movingTeam)
+  const teams = { movingTeam, enemyTeam }
+
+  if (payload.kind === 'unary') { return buildUnaryPlan(payload, options, teams) }
+  if (payload.kind === 'relational') { return buildRelationalPlan(payload, options, teams) }
+  if (payload.kind === 'position') { return buildPositionPlan(payload, options, teams) }
   return { status: 'unsupported', reason: `${payload.kind} previews are not supported yet.` }
 }
