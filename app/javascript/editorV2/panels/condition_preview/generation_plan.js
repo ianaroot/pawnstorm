@@ -348,7 +348,7 @@ export function buildPositionPlan(payload, options = {}) {
     subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
     subjectTeam,
     movingTeam,
-    moveKinds: [MOVE_KIND_STANDARD]
+    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION]
   }
 }
 

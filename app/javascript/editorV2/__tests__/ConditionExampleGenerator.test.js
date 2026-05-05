@@ -776,4 +776,28 @@ describe('ConditionExampleGenerator', () => {
       expectLegalPriorTurnState(example)
     })
   })
+
+  it('generates promotion examples for a position count condition on rank 8', () => {
+    const payload = {
+      kind: 'position',
+      subject: 'moved_piece',
+      subjectFilter: 'any',
+      positionAxis: 'rank',
+      positionComparator: 'equal_to',
+      positionTarget: 8,
+      operator: 'count',
+      comparator: 'equal_to',
+      targetTotal: 1
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(27), maxExamples: 6 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+    expect(preview.examples.some(example => example.moveObject.promotionPiece)).toBe(true)
+    preview.examples.forEach(example => {
+      expect(evaluateExample(payload, example)).toBe(true)
+      expectLegalPriorTurnState(example)
+    })
+  })
 })

@@ -7,9 +7,10 @@ import {
   clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
-  collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD
+  collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD, MOVE_KIND_PROMOTION, candidateIdentity
 } from 'editorV2/panels/condition_preview/example_utils'
 import { buildEnemyRecentMoveContextWithCapture } from 'editorV2/panels/condition_preview/candidate_collection'
+import { promotionPresetsForTeam, collectLegalPromotionMoveExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 
 const ALL_POSITIONS = Array.from({ length: 64 }, (_, i) => i)
 const BLOCKER_SPECIES_POOL = [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN]
@@ -302,6 +303,53 @@ export function collectPositionExamples({ plan, item, random, maxResults = 3 }) 
       highlights: positionActorLabels(plan, moveObject, analysis),
       sound: soundForMove(priorBoard, afterBoard, moveObject)
     })
+  }
+
+  return examples
+}
+
+// ===== Promotion example collection =====
+
+export function collectPositionPromotionExamples({ plan, random, maxExamples }) {
+  if (plan.subject === 'enemy_moved_piece') { return [] }
+
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+  if (validSquares.length === 0) { return [] }
+
+  const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
+  const examples = []
+  const seen = new Set()
+  const evaluator = new ConditionEvaluatorV2()
+
+  for (const preset of presets) {
+    if (examples.length >= maxExamples) { break }
+    if (!validSquares.includes(preset.moveEnd)) { continue }
+
+    const afterPieces = new Map([[preset.moveEnd, pieceCode(preset.movingTeam, preset.promotedSpecies)]])
+    const moveExamples = collectLegalPromotionMoveExamples({ afterPieces, preset, random })
+
+    for (const { priorBoard, moveObject, afterBoard } of moveExamples) {
+      if (examples.length >= maxExamples) { break }
+      const input = { board: priorBoard, moveObject }
+      if (!evaluator.evaluate(plan.evaluationPayload, input)) { continue }
+
+      const analysis = new CandidateMoveAnalysisV2(input)
+      const example = {
+        priorBoard,
+        afterBoard,
+        moveObject,
+        moveKind: MOVE_KIND_PROMOTION,
+        kind: 'position',
+        result: null,
+        highlights: positionActorLabels(plan, moveObject, analysis),
+        sound: soundForMove(priorBoard, afterBoard, moveObject)
+      }
+
+      const id = candidateIdentity(example)
+      if (seen.has(id)) { continue }
+      seen.add(id)
+      examples.push(example)
+    }
   }
 
   return examples
