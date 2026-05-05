@@ -19,11 +19,11 @@ const POSITION_BOARD_ATTEMPTS = 80
 
 // ===== Position filter inversion =====
 
-export function qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam) {
+export function qualifyingSquares(positionAxis, positionComparator, positionTarget, team) {
   return ALL_POSITIONS.filter(pos => {
     switch (positionAxis) {
       case 'rank': {
-        const rank = relativeRank(pos, movingTeam)
+        const rank = relativeRank(pos, team)
         return compareValues(rank, positionComparator, positionTarget)
       }
       case 'file': {
@@ -31,7 +31,7 @@ export function qualifyingSquares(positionAxis, positionComparator, positionTarg
         return compareValues(file, positionComparator, positionTarget)
       }
       case 'square': {
-        const absoluteTarget = relativeToAbsolutePosition(positionTarget, movingTeam)
+        const absoluteTarget = relativeToAbsolutePosition(positionTarget, team)
         return pos === absoluteTarget
       }
       default:
@@ -101,8 +101,8 @@ function valueCombinationsForTotal(target, speciesPool) {
 // ===== Work item builders =====
 
 export function buildPositionWorkItems(plan, random) {
-  const { subject, subjectSpeciesPool, operator, comparator, targetTotal, movingTeam, positionAxis, positionComparator, positionTarget } = plan
-  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam)
+  const { subject, subjectTeam, subjectSpeciesPool, operator, comparator, targetTotal, movingTeam, positionAxis, positionComparator, positionTarget } = plan
+  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, subjectTeam)
   if (validSquares.length === 0) { return [] }
 
   const items = []
@@ -342,7 +342,7 @@ function collectPositionSpecialMoveExamples({ plan, presets, buildAfterPieces, c
 
 export function collectPositionPromotionExamples({ plan, random, maxExamples }) {
   if (plan.subject === 'enemy_moved_piece') { return [] }
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
   if (validSquares.length === 0) { return [] }
 
   const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
@@ -361,7 +361,7 @@ export function collectPositionPromotionExamples({ plan, random, maxExamples }) 
 
 export function collectPositionCastleExamples({ plan, random, maxExamples }) {
   if (plan.subject === 'enemy_moved_piece') { return [] }
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
   if (validSquares.length === 0) { return [] }
 
   const presets = shuffled(castlePresetForTeam(plan.movingTeam), random)
