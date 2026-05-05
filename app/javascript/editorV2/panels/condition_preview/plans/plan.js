@@ -357,6 +357,7 @@ export function buildCombinedPlan(payloads, options = {}) {
   }
 
   const movingTeam = options.movingTeam || Board.WHITE
+  const enemyTeam = Board.opposingTeam(movingTeam)
   const plans = []
 
   for (const payload of payloads) {
@@ -379,6 +380,7 @@ export function buildCombinedPlan(payloads, options = {}) {
     plans,
     moveKinds,
     movingTeam,
+    enemyTeam,
     evaluationPayloads: payloads,
     requiredPositions: extractRequiredPositions(plans),
     movedPieceSpeciesPool

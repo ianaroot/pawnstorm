@@ -85,11 +85,11 @@ function valueCombinationsForTotal(target, speciesPool) {
   return results
 }
 
-export function qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam) {
+export function qualifyingSquares(positionAxis, positionComparator, positionTarget, team) {
   return ALL_POSITIONS.filter(pos => {
     switch (positionAxis) {
       case 'rank': {
-        const rank = relativeRank(pos, movingTeam)
+        const rank = relativeRank(pos, team)
         return satisfiesComparator(positionComparator, rank, positionTarget)
       }
       case 'file': {
@@ -97,7 +97,7 @@ export function qualifyingSquares(positionAxis, positionComparator, positionTarg
         return satisfiesComparator(positionComparator, file, positionTarget)
       }
       case 'square': {
-        const absoluteTarget = relativeToAbsolutePosition(positionTarget, movingTeam)
+        const absoluteTarget = relativeToAbsolutePosition(positionTarget, team)
         return pos === absoluteTarget
       }
       default:
@@ -376,8 +376,7 @@ export function buildPositionWorkItems(plan, random, movingTeam) {
 
 function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random }) {
   const { subject, subjectTeam, targetTeam, target, subjectSpeciesPool, targetSpeciesPool, operator, comparator } = unaryPlan
-  const { movingTeam } = combinedPlan
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { movingTeam, enemyTeam } = combinedPlan
   const isPBS = target === PRIOR_BOARD_TARGET
   const isPBSIncreasing = isPBS && isIncreasingComparator(comparator)
   const isPBSDecreasing = isPBS && !isPBSIncreasing && comparator !== 'equal_to'
@@ -629,8 +628,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
 
 function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, validSquares, random }) {
   const { subject, subjectTeam, subjectSpeciesPool, operator, comparator } = positionPlan
-  const { movingTeam } = combinedPlan
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { movingTeam, enemyTeam } = combinedPlan
   const isPBS = positionPlan.target === PRIOR_BOARD_TARGET
   const isPBSIncreasing = isPBS && isIncreasingComparator(comparator)
 
