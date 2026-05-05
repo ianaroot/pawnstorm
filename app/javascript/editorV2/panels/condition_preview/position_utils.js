@@ -2,13 +2,15 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import { relativeRank, relativeToAbsolutePosition, materialValue } from 'gameplay/board_query_utils'
+import { compareValues } from 'bot_execution/utils'
 import {
   clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/board_utils'
 import {
-  collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD
+  collectLegalReverseMoves, soundForMove, candidateSpecies, MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, candidateIdentity
 } from 'editorV2/panels/condition_preview/example_utils'
 import { buildEnemyRecentMoveContextWithCapture } from 'editorV2/panels/condition_preview/candidate_collection'
+import { promotionPresetsForTeam, collectLegalPromotionMoveExamples, castlePresetForTeam, collectLegalCastleMoveExamples } from 'editorV2/panels/condition_preview/special_move_examples'
 
 const ALL_POSITIONS = Array.from({ length: 64 }, (_, i) => i)
 const BLOCKER_SPECIES_POOL = [Board.NIGHT, Board.BISHOP, Board.ROOK, Board.PAWN]
@@ -17,30 +19,19 @@ const POSITION_BOARD_ATTEMPTS = 80
 
 // ===== Position filter inversion =====
 
-function comparePosition(value, comparator, target) {
-  switch (comparator) {
-    case 'equal_to':                 return value === target
-    case 'greater_than':             return value > target
-    case 'less_than':                return value < target
-    case 'greater_than_or_equal_to': return value >= target
-    case 'less_than_or_equal_to':    return value <= target
-    default:                         return false
-  }
-}
-
-export function qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam) {
+export function qualifyingSquares(positionAxis, positionComparator, positionTarget, team) {
   return ALL_POSITIONS.filter(pos => {
     switch (positionAxis) {
       case 'rank': {
-        const rank = relativeRank(pos, movingTeam)
-        return comparePosition(rank, positionComparator, positionTarget)
+        const rank = relativeRank(pos, team)
+        return compareValues(rank, positionComparator, positionTarget)
       }
       case 'file': {
         const file = Board.fileIndex(pos) + 1
-        return comparePosition(file, positionComparator, positionTarget)
+        return compareValues(file, positionComparator, positionTarget)
       }
       case 'square': {
-        const absoluteTarget = relativeToAbsolutePosition(positionTarget, movingTeam)
+        const absoluteTarget = relativeToAbsolutePosition(positionTarget, team)
         return pos === absoluteTarget
       }
       default:
@@ -82,7 +73,7 @@ function targetValuesForComparator(comparator, targetTotal) {
 }
 
 function targetMobilitiesForComparator(comparator, total) {
-  return range(0, MAX_PIECE_MOBILITY).filter(m => comparePosition(m, comparator, total))
+  return range(0, MAX_PIECE_MOBILITY).filter(m => compareValues(m, comparator, total))
 }
 
 function valueCombinationsForTotal(target, speciesPool) {
@@ -279,8 +270,7 @@ function buildAfterPiecesForPositionItem({ plan, item, validSquares, random }) {
 
 // ===== Example collection =====
 
-export function collectPositionExamples({ plan, item, random, maxResults = 3 }) {
-  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+export function collectPositionExamples({ plan, item, validSquares, random, maxResults = 3 }) {
   const setup = buildAfterPiecesForPositionItem({ plan, item, validSquares, random })
   if (!setup) { return [] }
 
@@ -315,6 +305,75 @@ export function collectPositionExamples({ plan, item, random, maxResults = 3 }) 
   }
 
   return examples
+}
+
+// ===== Special move example collection =====
+
+function collectPositionSpecialMoveExamples({ plan, presets, buildAfterPieces, collectMoveExamples, moveKind, random, maxExamples }) {
+  const examples = []
+  const seen = new Set()
+  const evaluator = new ConditionEvaluatorV2()
+
+  for (const preset of presets) {
+    if (examples.length >= maxExamples) { break }
+    const afterPieces = buildAfterPieces(preset)
+    const moveExamples = collectMoveExamples({ afterPieces, preset, random })
+    for (const { priorBoard, moveObject, afterBoard } of moveExamples) {
+      if (examples.length >= maxExamples) { break }
+      const input = { board: priorBoard, moveObject }
+      if (!evaluator.evaluate(plan.evaluationPayload, input)) { continue }
+      const analysis = new CandidateMoveAnalysisV2(input)
+      const example = {
+        priorBoard, afterBoard, moveObject, moveKind,
+        kind: 'position', result: null,
+        highlights: positionActorLabels(plan, moveObject, analysis),
+        sound: soundForMove(priorBoard, afterBoard, moveObject)
+      }
+      const id = candidateIdentity(example)
+      if (seen.has(id)) { continue }
+      seen.add(id)
+      examples.push(example)
+    }
+  }
+  return examples
+}
+
+// ===== Promotion example collection =====
+
+export function collectPositionPromotionExamples({ plan, random, maxExamples }) {
+  if (plan.subject === 'enemy_moved_piece') { return [] }
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+  if (validSquares.length === 0) { return [] }
+
+  const presets = shuffled(promotionPresetsForTeam(plan.movingTeam), random)
+    .filter(preset => plan.subject !== 'moved_piece' || validSquares.includes(preset.moveEnd))
+
+  return collectPositionSpecialMoveExamples({
+    plan, presets,
+    buildAfterPieces: preset => new Map([[preset.moveEnd, pieceCode(preset.movingTeam, preset.promotedSpecies)]]),
+    collectMoveExamples: collectLegalPromotionMoveExamples,
+    moveKind: MOVE_KIND_PROMOTION,
+    random, maxExamples
+  })
+}
+
+// ===== Castle example collection =====
+
+export function collectPositionCastleExamples({ plan, random, maxExamples }) {
+  if (plan.subject === 'enemy_moved_piece') { return [] }
+  const validSquares = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam)
+  if (validSquares.length === 0) { return [] }
+
+  const presets = shuffled(castlePresetForTeam(plan.movingTeam), random)
+    .filter(preset => plan.subject !== 'moved_piece' || validSquares.includes(preset.moveEnd))
+
+  return collectPositionSpecialMoveExamples({
+    plan, presets,
+    buildAfterPieces: preset => new Map(preset.fixedPieces),
+    collectMoveExamples: collectLegalCastleMoveExamples,
+    moveKind: MOVE_KIND_CASTLE,
+    random, maxExamples
+  })
 }
 
 // ===== Highlight labels =====
