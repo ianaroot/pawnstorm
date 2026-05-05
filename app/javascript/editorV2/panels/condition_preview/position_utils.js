@@ -2,6 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import { relativeRank, relativeToAbsolutePosition, materialValue } from 'gameplay/board_query_utils'
+import { compareValues } from 'bot_execution/utils'
 import {
   clonePiecesMap, pieceCode, squareIsOccupied, shuffled, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/board_utils'
@@ -17,27 +18,16 @@ const POSITION_BOARD_ATTEMPTS = 80
 
 // ===== Position filter inversion =====
 
-function comparePosition(value, comparator, target) {
-  switch (comparator) {
-    case 'equal_to':                 return value === target
-    case 'greater_than':             return value > target
-    case 'less_than':                return value < target
-    case 'greater_than_or_equal_to': return value >= target
-    case 'less_than_or_equal_to':    return value <= target
-    default:                         return false
-  }
-}
-
 export function qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam) {
   return ALL_POSITIONS.filter(pos => {
     switch (positionAxis) {
       case 'rank': {
         const rank = relativeRank(pos, movingTeam)
-        return comparePosition(rank, positionComparator, positionTarget)
+        return compareValues(rank, positionComparator, positionTarget)
       }
       case 'file': {
         const file = Board.fileIndex(pos) + 1
-        return comparePosition(file, positionComparator, positionTarget)
+        return compareValues(file, positionComparator, positionTarget)
       }
       case 'square': {
         const absoluteTarget = relativeToAbsolutePosition(positionTarget, movingTeam)
@@ -82,7 +72,7 @@ function targetValuesForComparator(comparator, targetTotal) {
 }
 
 function targetMobilitiesForComparator(comparator, total) {
-  return range(0, MAX_PIECE_MOBILITY).filter(m => comparePosition(m, comparator, total))
+  return range(0, MAX_PIECE_MOBILITY).filter(m => compareValues(m, comparator, total))
 }
 
 function valueCombinationsForTotal(target, speciesPool) {
