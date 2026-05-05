@@ -10,10 +10,6 @@ function legalSubjectPlacements(subjectSpecies) {
     .map(position => ({ position, species: subjectSpecies }))
 }
 
-export function teamForActorWithContext(actor, movingTeam = Board.WHITE) {
-  return actor === 'allied' || actor === 'moved_piece' ? movingTeam : Board.opposingTeam(movingTeam)
-}
-
 export function mergeRelationPieces({ basePieces = new Map(), relationPieces, reservedSquares = new Set() }) {
   const pieces = clonePiecesMap(basePieces)
   for (const [position, piece] of relationPieces.entries()) {

@@ -158,10 +158,7 @@ function unaryPairTargetItems({ target, subjectValue, comparator, targetSpeciesP
 
 // ===== Work item builders =====
 
-// movingTeam is accepted for signature parity with buildPositionWorkItems
-// (so both can be driven through the same work-item pipeline runner).
-// Currently unused by the unary path.
-export function buildUnaryWorkItems(plan, random, movingTeam) { // eslint-disable-line no-unused-vars
+export function buildUnaryWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = plan
   const items = []
   const isPairTarget = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
@@ -312,7 +309,7 @@ export function buildUnaryWorkItems(plan, random, movingTeam) { // eslint-disabl
   return shuffled(items, random)
 }
 
-export function buildPositionWorkItems(plan, random, movingTeam) {
+export function buildPositionWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, operator, comparator, targetTotal, positionAxis, positionComparator, positionTarget } = plan
   const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, plan.subjectTeam)
   if (validSquares.length === 0) { return [] }

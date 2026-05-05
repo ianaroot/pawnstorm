@@ -60,7 +60,7 @@ function buildEnemyRecentMoveContext(endPosition, species, enemyTeam, capturedSp
 
 function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
-  const enemyTeam = Board.opposingTeam(combinedPlan.movingTeam)
+  const enemyTeam = combinedPlan.enemyTeam
 
   for (let i = 0; i < relationalPlans.length; i++) {
     const plan = relationalPlans[i]
