@@ -84,8 +84,8 @@ function fullEnemyMovedSpeciesSet() {
   return new Set([null, ...ALL_SPECIES])  // enemy can have moved any piece, OR no recent enemy move (null)
 }
 
-function initSingularActors(movingTeam) {
-  const enemyTeam = Board.opposingTeam(movingTeam)
+function initSingularActors(combinedPlan) {
+  const { movingTeam, enemyTeam } = combinedPlan
   return {
     movedPiece: {
       species_set: fullMovedSpeciesSet(),
@@ -152,8 +152,8 @@ function initFilterCells() {
   return cells
 }
 
-function initInventory(movingTeam) {
-  const enemyTeam = Board.opposingTeam(movingTeam)
+function initInventory(combinedPlan) {
+  const { movingTeam, enemyTeam } = combinedPlan
   return {
     [movingTeam]: { current: initFilterCells(), prior: initFilterCells() },
     [enemyTeam]: { current: initFilterCells(), prior: initFilterCells() }
@@ -296,7 +296,7 @@ function contributePositionPlanToActorPositionSet(plan, vars) {
 
   const varKey = ACTOR_TO_VAR_KEY[plan.subject]
   const positionSet = vars[varKey].position_set
-  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
   const qualifyingSet = new Set(qualifying)
 
   if (lowerBound !== null && lowerBound > 0) {
@@ -737,7 +737,7 @@ function contributePositionPlanToPositionConstraints(plan, vars) {
   if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return }
   if (plan.operator !== 'count') { return }
 
-  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
   if (qualifying.length === 0) { return }
 
   const total = Number(plan.targetTotal ?? 0)
@@ -750,8 +750,8 @@ function contributePositionPlanToPositionConstraints(plan, vars) {
 }
 
 export function buildChainConstraints(combinedPlan) {
-  const vars = initSingularActors(combinedPlan.movingTeam)
-  vars.inventory = initInventory(combinedPlan.movingTeam)
+  const vars = initSingularActors(combinedPlan)
+  vars.inventory = initInventory(combinedPlan)
   vars.movingTeam = combinedPlan.movingTeam
   vars.positionConstraints = []
   for (const plan of combinedPlan.plans) {
