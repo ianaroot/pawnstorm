@@ -23,6 +23,7 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { controlledSquares, materialValue } from 'gameplay/board_query_utils'
+import { actorTeam } from 'bot_execution/actor_teams'
 import {
   pieceCode, clonePiecesMap,
   ALL_POSITIONS, shuffled, pickRandom
@@ -52,15 +53,6 @@ import { relationSamePieceStrategy } from './strategies/relation_same_piece'
 import { unaryValuePairStrategy } from './strategies/unary_value_pair'
 import { unaryCountPairStrategy } from './strategies/unary_count_pair'
 
-
-
-
-function actorTeamOnBoard(actor, movingTeam) {
-  if (actor === 'allied' || actor === 'moved_piece' || actor === 'captured_piece') {
-    return movingTeam
-  }
-  return Board.opposingTeam(movingTeam)
-}
 
 // Apply ACTOR_MOBILITY hint by reducing mobility (today's strategies cover
 // {≤, <, =} comparators via shared "≤ N" mechanics). Strategies:
@@ -472,7 +464,7 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
 
       // Place a piece matching plan.subject's actor + filter so mobility hints have a target.
       if (plan.subject === 'allied' || plan.subject === 'enemy') {
-        const team = actorTeamOnBoard(plan.subject, movingTeam)
+        const team = actorTeam(plan.subject, movingTeam)
         // Narrow pool for unary value < N / <= N so the seeded piece can't
         // already overshoot the constraint (strategies don't reduce values).
         let speciesPool = plan.subjectSpeciesPool

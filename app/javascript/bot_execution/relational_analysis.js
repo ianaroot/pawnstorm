@@ -8,6 +8,7 @@ import {
 import profileCollector from "gameplay/profile_collector"
 import { unaryTotal } from "bot_execution/unary_analysis"
 import { relationalActorPositions as baseRelationalActorPositions } from "bot_execution/actor_positions"
+import { actorTeam } from "bot_execution/actor_teams"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -99,7 +100,7 @@ function relatedTargetPositionsForSubject(analysis, { operator, subjectPosition,
 
   return profileCollector.measure('cma.v2.related_target_positions_for_subject', () => {
     const board = analysis.boardForScope(boardScope)
-    const targetTeam = relationalTeamForActor(analysis, target)
+    const targetTeam = relationalTeamForActor(target, analysis.movedPieceTeam())
     let positions
     switch (operator) {
       case "attack": {
@@ -149,14 +150,16 @@ function relatedTargetPositionsForSubject(analysis, { operator, subjectPosition,
   })
 }
 
-function relationalTeamForActor(analysis, actor) {
+function relationalTeamForActor(actor, movingTeam) {
   switch (actor) {
     case "allied":
     case "moved_piece":
-      return analysis.movedPieceTeam()
     case "enemy":
     case "enemy_moved_piece":
-      return analysis.enemyTeam()
+      return actorTeam(actor, movingTeam)
+    case "captured_piece":
+    case "enemy_captured_piece":
+      throw new Error(`Captured types not supported in relational context: ${actor}`)
     default:
       throw new Error(`Unsupported V2 relational team actor: ${actor}`)
   }

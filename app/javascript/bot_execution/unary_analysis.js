@@ -1,5 +1,6 @@
 import { materialValue } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
+import { actorTeam } from "bot_execution/actor_teams"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -30,7 +31,7 @@ export function priorComparisonSourceTotal(analysis, { subject, subjectFilter, s
 
 function generalSubjectUnaryTotal(analysis, { actor, filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
   return profileCollector.measure('cma.v2.general_subject_unary_total', () => {
-    const team = actor === "allied" ? analysis.movedPieceTeam() : analysis.enemyTeam()
+    const team = actorTeam(actor, analysis.movedPieceTeam())
     const board = analysis.boardForScope(boardScope)
     const positions = board._positionsOccupiedByTeam(team).filter(position => {
       return analysis.matchesFilter({ species: board.pieceTypeAt(position), filter, filterMode })

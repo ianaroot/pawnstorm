@@ -1,6 +1,7 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
 import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies, SINGULAR_ACTORS } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { actorTeam } from 'bot_execution/actor_teams'
 import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/shared/relational_utils'
@@ -13,21 +14,6 @@ import {
 const SUPPORTED_UNARY_ACTORS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
 const SUPPORTED_UNARY_OPERATORS = new Set(['count', 'value', 'mobility'])
 const SUPPORTED_UNARY_TARGETS = new Set(['exact_number', 'allied', 'enemy', 'moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece', 'prior_board_state'])
-
-function unaryTeamForActor(actor, movingTeam) {
-  switch (actor) {
-    case 'allied':
-    case 'moved_piece':
-    case 'captured_piece':
-      return movingTeam
-    case 'enemy':
-    case 'enemy_moved_piece':
-    case 'enemy_captured_piece':
-      return Board.opposingTeam(movingTeam)
-    default:
-      return movingTeam
-  }
-}
 
 function valueFilteredSpeciesPool(pool, descriptors, side) {
   const descriptor = descriptors.find(d => d.side === side)
@@ -300,9 +286,9 @@ function buildUnaryPlan(payload, options = {}, teams = {}) {
   }
 
   const { movingTeam, enemyTeam } = teams
-  const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
+  const subjectTeam = actorTeam(payload.subject, movingTeam)
   const targetIsActor = payload.target !== EXACT_NUMBER_COMPARISON_SOURCE && payload.target !== PRIOR_BOARD_COMPARISON_SOURCE
-  const targetTeam = targetIsActor ? unaryTeamForActor(payload.target, movingTeam) : null
+  const targetTeam = targetIsActor ? actorTeam(payload.target, movingTeam) : null
 
   const baseSubjectPool = candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null)
   const subjectSpeciesPool = (SINGULAR_ACTORS.has(payload.subject) && payload.operator === 'value' && payload.target === EXACT_NUMBER_COMPARISON_SOURCE)
@@ -349,7 +335,7 @@ function buildPositionPlan(payload, options = {}, teams = {}) {
   }
 
   const { movingTeam, enemyTeam } = teams
-  const subjectTeam = unaryTeamForActor(payload.subject, movingTeam)
+  const subjectTeam = actorTeam(payload.subject, movingTeam)
 
   return {
     status: 'supported',
