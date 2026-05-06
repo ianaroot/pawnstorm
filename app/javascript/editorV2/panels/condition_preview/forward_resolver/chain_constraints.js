@@ -296,7 +296,7 @@ function contributePositionPlanToActorPositionSet(plan, vars) {
 
   const varKey = ACTOR_TO_VAR_KEY[plan.subject]
   const positionSet = vars[varKey].position_set
-  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
   const qualifyingSet = new Set(qualifying)
 
   if (lowerBound !== null && lowerBound > 0) {
@@ -737,7 +737,7 @@ function contributePositionPlanToPositionConstraints(plan, vars) {
   if (plan.subject !== 'allied' && plan.subject !== 'enemy') { return }
   if (plan.operator !== 'count') { return }
 
-  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam)
+  const qualifying = qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, vars.movingTeam)
   if (qualifying.length === 0) { return }
 
   const total = Number(plan.targetTotal ?? 0)

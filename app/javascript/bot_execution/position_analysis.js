@@ -3,14 +3,13 @@ import { materialValue, relativeRank, relativeToAbsolutePosition } from "gamepla
 import profileCollector from "gameplay/profile_collector"
 import { relationalActorPositions } from "bot_execution/actor_positions"
 import { compareValues } from "bot_execution/utils"
-import { actorTeam } from "bot_execution/actor_teams"
 
 const AFTER_BOARD = "after"
 
 export function positionFilteredPositions(analysis, { actor, filter = "any", filterMode = null, positionAxis, positionComparator, positionTarget, boardScope = AFTER_BOARD }) {
   return profileCollector.measure('cma.v2.position_filtered_positions', () => {
     const board = analysis.boardForScope(boardScope)
-    const team = actorTeam(actor, analysis.movedPieceTeam())
+    const team = analysis.movedPieceTeam()
     const candidates = relationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
     return candidates.filter(position => positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }))
   })

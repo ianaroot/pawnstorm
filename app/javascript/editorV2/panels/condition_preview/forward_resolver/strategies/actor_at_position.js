@@ -20,13 +20,13 @@ import { respectsInventoryCaps } from '../inventory_protocol'
 
 
 
-function qualifyingSquaresForHint(hint) {
-  return ALL_POSITIONS.filter(p => positionMatchesAxis(p, hint))
+function qualifyingSquaresForHint(hint, movingTeam) {
+  return ALL_POSITIONS.filter(p => positionMatchesAxis(p, hint, movingTeam))
 }
 
 export function actorAtPositionStrategy(pieces, hint, ctx) {
   const { random } = ctx
-  const qualifying = qualifyingSquaresForHint(hint)
+  const qualifying = qualifyingSquaresForHint(hint, ctx.movingTeam)
   if (qualifying.length === 0) { return null }
 
   const varKey = ACTOR_TO_VAR_KEY[hint.actor]

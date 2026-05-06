@@ -7,46 +7,10 @@ describe('position evaluation for captured-type actors', () => {
     return new ConditionEvaluatorV2().evaluate(conditionNode, { board, moveObject })
   }
 
-  // WHITE captures BLACK pawn at d5 (absolute rank 5). captured_piece is on
-  // BLACK (enemy team). From BLACK's perspective d5 is relative rank 4; from
-  // WHITE's it's relative rank 5. The condition asks for relative rank 4, so
-  // it should match only when the captured piece is evaluated from BLACK's
-  // (enemy team) perspective.
-  it('uses enemy-team perspective for captured_piece rank', () => {
-    const board = buildBoard({
-      pieces: {
-        e1: 'wK',
-        e8: 'bK',
-        e4: 'wP',
-        d5: 'bP'
-      }
-    })
-    const moveObject = getMove('e4', 'd5', board)
-
-    expect(
-      evaluate(
-        {
-          version: 2,
-          kind: 'position',
-          subject: 'captured_piece',
-          subjectFilter: 'any',
-          positionAxis: 'rank',
-          positionComparator: 'equal_to',
-          positionTarget: 4,
-          operator: 'count',
-          comparator: 'equal_to',
-          targetTotal: 1
-        },
-        board,
-        moveObject
-      )
-    ).toBe(true)
-  })
-
-  // Negative companion: from WHITE's perspective d5 is rank 5, so a query for
-  // rank 5 must NOT match (the captured piece does not live on WHITE's side
-  // of the orientation).
-  it('does not match captured_piece on moving-team rank', () => {
+  // Position rank is always evaluated from the moving team's perspective,
+  // regardless of subject. WHITE captures BLACK pawn at d5 (absolute rank 5)
+  // — from WHITE's perspective d5 is rank 5.
+  it('uses moving-team perspective for captured_piece rank', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -74,14 +38,42 @@ describe('position evaluation for captured-type actors', () => {
         board,
         moveObject
       )
+    ).toBe(true)
+  })
+
+  it('does not match captured_piece on a non-occupied rank from moving perspective', () => {
+    const board = buildBoard({
+      pieces: {
+        e1: 'wK',
+        e8: 'bK',
+        e4: 'wP',
+        d5: 'bP'
+      }
+    })
+    const moveObject = getMove('e4', 'd5', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2,
+          kind: 'position',
+          subject: 'captured_piece',
+          subjectFilter: 'any',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 4,
+          operator: 'count',
+          comparator: 'equal_to',
+          targetTotal: 1
+        },
+        board,
+        moveObject
+      )
     ).toBe(false)
   })
 
-  // BLACK previously moved e7→e5 capturing a WHITE pawn at e5 (absolute rank
-  // 5). enemy_captured_piece is on WHITE (moving team). From WHITE's
-  // perspective e5 is relative rank 5; from BLACK's it's relative rank 4.
-  // The query for rank 5 should match only when evaluated from WHITE's
-  // (moving team) perspective.
+  // Enemy captured one of WHITE's pawns at e5 (absolute rank 5) on their prior
+  // turn. Moving team perspective for enemy_captured_piece rank — rank 5 here.
   it('uses moving-team perspective for enemy_captured_piece rank', () => {
     const board = buildBoard({
       pieces: {

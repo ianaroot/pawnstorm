@@ -311,7 +311,7 @@ export function buildUnaryWorkItems(plan, random) {
 
 export function buildPositionWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, operator, comparator, targetTotal, positionAxis, positionComparator, positionTarget } = plan
-  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, plan.subjectTeam)
+  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, plan.movingTeam)
   if (validSquares.length === 0) { return [] }
 
   const items = []
@@ -756,7 +756,7 @@ export function collectUnaryExamples({ combinedPlan, plan, item, random, verifie
 export function collectPositionExamples({ combinedPlan, plan, item, random, verifier, factory, maxResults = 3 }) {
   const validSquares = qualifyingSquares(
     plan.positionAxis, plan.positionComparator, plan.positionTarget,
-    plan.subjectTeam
+    plan.movingTeam
   )
 
   const setup = buildAfterPiecesForPositionItem({ combinedPlan, positionPlan: plan, item, validSquares, random })

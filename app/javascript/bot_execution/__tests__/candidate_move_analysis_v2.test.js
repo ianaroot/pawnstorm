@@ -524,7 +524,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual(['c4'])
     })
 
-    it('filters enemy positions on rank using enemy team perspective (white moving)', () => {
+    it('filters enemy positions on rank using moving team perspective (white moving)', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -544,10 +544,10 @@ describe('CandidateMoveAnalysisV2', () => {
           positionComparator: 'greater_than_or_equal_to',
           positionTarget: 4
         }))
-      ).toEqual(['c5'])
+      ).toEqual(['c5', 'c7', 'e8'])
     })
 
-    it('filters enemy positions on rank using enemy team perspective (black moving)', () => {
+    it('filters enemy positions on rank using moving team perspective (black moving)', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -568,7 +568,7 @@ describe('CandidateMoveAnalysisV2', () => {
           positionComparator: 'greater_than_or_equal_to',
           positionTarget: 4
         }))
-      ).toEqual(['c4'])
+      ).toEqual(['c2', 'c4', 'e1'])
     })
 
     it('filters allied positions on square using moving team perspective', () => {
@@ -593,7 +593,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual(['a1'])
     })
 
-    it('filters enemy positions on square using enemy team perspective', () => {
+    it('filters enemy positions on square using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -610,7 +610,7 @@ describe('CandidateMoveAnalysisV2', () => {
           actor: 'enemy',
           positionAxis: 'square',
           positionComparator: 'equal_to',
-          positionTarget: 0
+          positionTarget: 56
         }))
       ).toEqual(['a8'])
     })
@@ -689,7 +689,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual([])
     })
 
-    it('filters enemy_moved_piece on rank using enemy team perspective', () => {
+    it('filters enemy_moved_piece on rank using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -708,7 +708,7 @@ describe('CandidateMoveAnalysisV2', () => {
           actor: 'enemy_moved_piece',
           positionAxis: 'rank',
           positionComparator: 'equal_to',
-          positionTarget: 3
+          positionTarget: 6
         }))
       ).toEqual(['c6'])
     })

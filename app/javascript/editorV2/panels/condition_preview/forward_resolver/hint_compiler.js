@@ -267,15 +267,15 @@ function actorAtPositionSatisfies(pieces, hint, context) {
   let any = false
   for (const { position } of matchingPieces(pieces, hint.team, hint.filter, hint.filterMode)) {
     any = true
-    if (!positionMatchesAxis(position, hint)) { return false }
+    if (!positionMatchesAxis(position, hint, context.movingTeam)) { return false }
   }
   return any
 }
 
-export function positionMatchesAxis(position, hint) {
+export function positionMatchesAxis(position, hint, movingTeam) {
   switch (hint.axis) {
     case 'rank': {
-      const rank = relativeRank(position, hint.team)
+      const rank = relativeRank(position, movingTeam)
       return compareValue(rank, hint.positionComparator, hint.positionTarget)
     }
     case 'file': {
@@ -283,7 +283,7 @@ export function positionMatchesAxis(position, hint) {
       return compareValue(file, hint.positionComparator, hint.positionTarget)
     }
     case 'square': {
-      const absoluteTarget = relativeToAbsolutePosition(hint.positionTarget, hint.team)
+      const absoluteTarget = relativeToAbsolutePosition(hint.positionTarget, movingTeam)
       return position === absoluteTarget
     }
     default: return false

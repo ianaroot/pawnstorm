@@ -2342,7 +2342,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes enemy count on rank using enemy team perspective', () => {
+    it('passes enemy count on rank using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -2366,7 +2366,7 @@ describe('ConditionEvaluatorV2', () => {
             positionTarget: 4,
             operator: 'count',
             comparator: 'equal_to',
-            targetTotal: 1
+            targetTotal: 3
           },
           board,
           moveObject
@@ -2374,7 +2374,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes zero enemy count on rank when no enemy piece occupies the rank from enemy perspective', () => {
+    it('passes zero enemy count on rank when no enemy piece occupies the rank from moving perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -2394,7 +2394,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             positionAxis: 'rank',
             positionComparator: 'equal_to',
-            positionTarget: 5,
+            positionTarget: 4,
             operator: 'count',
             comparator: 'equal_to',
             targetTotal: 0
@@ -2405,7 +2405,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes enemy count on square using enemy team perspective', () => {
+    it('passes enemy count on square using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -2425,7 +2425,7 @@ describe('ConditionEvaluatorV2', () => {
             subjectFilter: 'any',
             positionAxis: 'square',
             positionComparator: 'equal_to',
-            positionTarget: 0,
+            positionTarget: 56,
             operator: 'count',
             comparator: 'equal_to',
             targetTotal: 1
