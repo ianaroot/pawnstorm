@@ -52,6 +52,7 @@ import { actorPbsMobilityStrategy } from './strategies/actor_pbs_mobility'
 import { relationSamePieceStrategy } from './strategies/relation_same_piece'
 import { unaryValuePairStrategy } from './strategies/unary_value_pair'
 import { unaryCountPairStrategy } from './strategies/unary_count_pair'
+import { captureExistenceStrategy } from './strategies/capture_existence'
 
 
 // Apply ACTOR_MOBILITY hint by reducing mobility (today's strategies cover
@@ -243,7 +244,8 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy],
   [HINT_TYPES.RELATION_SAME_PIECE]: [relationSamePieceStrategy],
   [HINT_TYPES.UNARY_VALUE_PAIR]: [unaryValuePairStrategy],
-  [HINT_TYPES.UNARY_COUNT_PAIR]: [unaryCountPairStrategy]
+  [HINT_TYPES.UNARY_COUNT_PAIR]: [unaryCountPairStrategy],
+  [HINT_TYPES.CAPTURE_EXISTENCE]: [captureExistenceStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {

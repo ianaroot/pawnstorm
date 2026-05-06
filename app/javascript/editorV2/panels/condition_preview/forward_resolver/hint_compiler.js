@@ -76,6 +76,15 @@ export const HINT_TYPES = Object.freeze({
   UNARY_VALUE_PAIR: 'unary_value_pair',
   UNARY_COUNT_PAIR: 'unary_count_pair',
 
+  // Capture-event existence (or filtered absence) for captured_piece and
+  // enemy_captured_piece — the two actors whose existence requires a capture
+  // event rather than an after-board piece count. Emitted from count plans
+  // (unary or position) on these actors when the comparator implies existence
+  // (count > 0, count >= 1, count = 1) or filtered absence (count = 0 with
+  // filter ≠ 'any' OR filterMode = 'exclude'). Strategy trusts ctx — picks
+  // captured species from ctx.{actor}.species_set without re-filtering.
+  CAPTURE_EXISTENCE: 'capture_existence',
+
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
   ACTOR_AGGREGATE_VALUE: 'actor_aggregate_value',
@@ -229,6 +238,55 @@ function relationIndividualValueSatisfies(pieces, hint, context) {
     if (!compareValue(materialValue(species), hint.valueOp, hint.value)) { return false }
   }
   return true
+}
+
+// Decide whether a count plan on a captured-actor should route to
+// CAPTURE_EXISTENCE rather than ACTOR_COUNT. The capture actors don't have an
+// after-board presence; ACTOR_COUNT's predicate (which counts board pieces) is
+// the wrong shape. Routing covers existence (count > 0, count >= 1, count = 1)
+// and filtered absence (count = 0 with filter ≠ 'any' OR filterMode = 'exclude').
+// Other count comparators on these actors fall through and produce no examples
+// — they're semantically meaningless for a singular event and will be gated at
+// the grammar level.
+export function shouldRouteToCaptureExistence(actor, countOp, n, filter, filterMode) {
+  if (actor !== 'captured_piece' && actor !== 'enemy_captured_piece') { return false }
+  if (countOp === 'greater_than' && n === 0) { return true }
+  if (countOp === 'greater_than_or_equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 0) {
+    if (filter && filter !== 'any') { return true }
+    if (filterMode === 'exclude') { return true }
+  }
+  return false
+}
+
+function isCaptureExistencePresentPolarity(countOp, n) {
+  if (countOp === 'greater_than' && n === 0) { return true }
+  if (countOp === 'greater_than_or_equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 1) { return true }
+  return false
+}
+
+function committedCaptureSpecies(actor, context) {
+  if (actor === 'captured_piece') {
+    return committedSpeciesFromVar(context?.capturedPiece)
+  }
+  if (actor === 'enemy_captured_piece') {
+    return context?.recentMoveContext?.capturedPieceSpecies ?? null
+  }
+  return null
+}
+
+function captureExistenceSatisfies(pieces, hint, context) {
+  const committedSpecies = committedCaptureSpecies(hint.actor, context)
+  if (isCaptureExistencePresentPolarity(hint.countOp, hint.n)) {
+    if (committedSpecies === null) { return false }
+    return speciesMatchesFilter(committedSpecies, hint.filter, hint.filterMode)
+  }
+  // Absent polarity (count = 0 with filter or filterMode = 'exclude'):
+  // pass iff no capture happened OR the captured species fails filter.
+  if (committedSpecies === null) { return true }
+  return !speciesMatchesFilter(committedSpecies, hint.filter, hint.filterMode)
 }
 
 function actorCountSatisfies(pieces, hint /*, context */) {
@@ -410,6 +468,7 @@ const PREDICATES = Object.freeze({
   [HINT_TYPES.RELATION_SAME_PIECE]:             relationSamePieceSatisfies,
   [HINT_TYPES.UNARY_VALUE_PAIR]:                unaryValuePairSatisfies,
   [HINT_TYPES.UNARY_COUNT_PAIR]:                unaryCountPairSatisfies,
+  [HINT_TYPES.CAPTURE_EXISTENCE]:               captureExistenceSatisfies,
   [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
@@ -717,6 +776,14 @@ function compileUnary(plan, random) {
   }
 
   if (plan.operator === 'count' && target === 'exact_number') {
+    if (shouldRouteToCaptureExistence(actor, plan.comparator, total, filter, filterMode)) {
+      hints.push({
+        type: HINT_TYPES.CAPTURE_EXISTENCE,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: total
+      })
+      return hints
+    }
     hints.push({
       type: HINT_TYPES.ACTOR_COUNT,
       actor, filter, filterMode, team, speciesPool,
@@ -756,11 +823,19 @@ function compilePosition(plan) {
 
   const targetTotal = Number(plan.targetTotal ?? 0)
   if (plan.operator === 'count') {
-    hints.push({
-      type: HINT_TYPES.ACTOR_COUNT,
-      actor, team, filter, filterMode, speciesPool,
-      countOp: plan.comparator, n: targetTotal, frame: 'current'
-    })
+    if (shouldRouteToCaptureExistence(actor, plan.comparator, targetTotal, filter, filterMode)) {
+      hints.push({
+        type: HINT_TYPES.CAPTURE_EXISTENCE,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: targetTotal
+      })
+    } else {
+      hints.push({
+        type: HINT_TYPES.ACTOR_COUNT,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: targetTotal, frame: 'current'
+      })
+    }
   } else if (plan.operator === 'value') {
     hints.push({
       type: HINT_TYPES.ACTOR_AGGREGATE_VALUE,
