@@ -191,13 +191,10 @@ export function comparisonSourceTotal(analysis, { comparisonSource, subject, sub
   return profileCollector.measure('cma.v2.comparison_source_total', () => {
     switch (comparisonSource) {
       case "moved_piece":
-        return analysis.movedPieceValue()
       case "enemy_moved_piece":
-        return analysis.enemyMovedPieceValue()
       case "captured_piece":
-        return analysis.capturedPieceValue()
       case "enemy_captured_piece":
-        return analysis.enemyCapturedPieceValue()
+        return analysis.singularActorValue(comparisonSource)
       case "prior_board_state":
         return priorRelationalComparisonSourceTotal(analysis, { subject, subjectFilter, subjectFilterMode, operator })
       default:

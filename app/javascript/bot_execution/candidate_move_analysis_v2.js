@@ -88,23 +88,9 @@ class CandidateMoveAnalysisV2 {
     return materialValue(species)
   }
 
-  movedPieceValue(boardScope = AFTER_BOARD) {
-    return this.individualComparableValue(this.resolvedMovedPiece(boardScope).species)
-  }
-
-  capturedPieceValue() {
-    const resolved = this.resolvedCapturedPiece()
-    return resolved ? this.individualComparableValue(resolved.species) : 0
-  }
-
-  enemyMovedPieceValue() {
-    const recentMove = this.board.recentMoveContext
-    return recentMove ? this.individualComparableValue(recentMove.movedPieceSpeciesAfterMove) : 0
-  }
-
-  enemyCapturedPieceValue() {
-    const resolved = this.resolvedEnemyCapturedPiece()
-    return resolved ? this.individualComparableValue(resolved.species) : 0
+  singularActorValue(actor, boardScope = AFTER_BOARD) {
+    const species = this.singularActorSpecies(actor, boardScope)
+    return species === null ? 0 : this.individualComparableValue(species)
   }
 
   resolvedMovedPiece(boardScope = AFTER_BOARD) {
