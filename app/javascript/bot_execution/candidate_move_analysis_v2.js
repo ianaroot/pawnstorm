@@ -23,12 +23,38 @@ class CandidateMoveAnalysisV2 {
     this.board = board
     this.moveObject = moveObject
     this._afterBoard = null
-    this._availableMovesCache = new Map()
-    this._positionMobilityCache = new Map()
-    this._relationalResultCache = new Map()
-    this._relationalActorPositionsCache = new Map()
-    this._relatedTargetPositionsCache = new Map()
-    this._boardQueryCache = {}
+    this._caches = {
+      availableMoves: new Map(),
+      positionMobility: new Map(),
+      relationalResult: new Map(),
+      relationalActorPositions: new Map(),
+      relatedTargetPositions: new Map(),
+      boardQuery: {}
+    }
+  }
+
+  _memoize(cacheName, key, fn) {
+    const cache = this._caches[cacheName]
+    if (cache.has(key)) { return cache.get(key) }
+    const value = fn()
+    cache.set(key, value)
+    return value
+  }
+
+  cachedRelationalResult(key, fn) {
+    return this._memoize('relationalResult', key, fn)
+  }
+
+  cachedRelationalActorPositions(key, fn) {
+    return this._memoize('relationalActorPositions', key, fn)
+  }
+
+  cachedRelatedTargetPositions(key, fn) {
+    return this._memoize('relatedTargetPositions', key, fn)
+  }
+
+  boardQueryCache() {
+    return this._caches.boardQuery
   }
 
   afterBoard() {
@@ -56,31 +82,28 @@ class CandidateMoveAnalysisV2 {
 
   availableMovesFrom(position, boardScope = AFTER_BOARD) {
     return profileCollector.measure('cma.v2.available_moves_from', () => {
-      const key = `${boardScope}:${position}`
-      if (this._availableMovesCache.has(key)) { return this._availableMovesCache.get(key) }
-      const board = this.boardForScope(boardScope)
-      const moves = Rules.availableMovesFrom({ board, startPosition: position })
-      this._availableMovesCache.set(key, moves)
-      return moves
+      return this._memoize('availableMoves', `${boardScope}:${position}`, () => {
+        const board = this.boardForScope(boardScope)
+        return Rules.availableMovesFrom({ board, startPosition: position })
+      })
     })
   }
 
   positionMobility(position, boardScope = AFTER_BOARD) {
     return profileCollector.measure('cma.v2.position_mobility', () => {
-      const key = `${boardScope}:${position}`
-      if (this._positionMobilityCache.has(key)) { return this._positionMobilityCache.get(key) }
-      const board = this.boardForScope(boardScope)
-      const pieceType = board.pieceTypeAt(position)
-      const moveObjects = this.availableMovesFrom(position, boardScope)
-      let mobility
-      if (pieceType === Board.PAWN) {
-        const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
-        mobility = destinations.size
-      } else {
-        mobility = moveObjects.length
-      }
-      this._positionMobilityCache.set(key, mobility)
-      return mobility
+      return this._memoize('positionMobility', `${boardScope}:${position}`, () => {
+        const board = this.boardForScope(boardScope)
+        const pieceType = board.pieceTypeAt(position)
+        const moveObjects = this.availableMovesFrom(position, boardScope)
+        let mobility
+        if (pieceType === Board.PAWN) {
+          const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
+          mobility = destinations.size
+        } else {
+          mobility = moveObjects.length
+        }
+        return mobility
+      })
     })
   }
 

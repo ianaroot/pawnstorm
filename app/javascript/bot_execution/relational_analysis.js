@@ -52,101 +52,94 @@ export function relationalResult(analysis, { subject, subjectFilter = "any", sub
     targetFilter,
     targetFilterMode || "include"
   ].join(":")
-  if (analysis._relationalResultCache.has(cacheKey)) {
-    return analysis._relationalResultCache.get(cacheKey)
-  }
 
-  return profileCollector.measure('cma.v2.relational_result', () => {
-    const candidateSubjectPositions = relationalActorPositions(analysis, { actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, boardScope })
-    const candidateTargetPositions = relationalActorPositions(analysis, { actor: target, filter: targetFilter, filterMode: targetFilterMode, boardScope })
-    const candidateTargetPositionSet = profileCollector.measure('cma.v2.relational_result.target_set', () => new Set(candidateTargetPositions))
-    const pairs = []
-    candidateSubjectPositions.forEach((subjectPosition) => {
-      const relatedTargetPositions = relatedTargetPositionsForSubject(analysis, { operator, subjectPosition, target, boardScope })
-      relatedTargetPositions.forEach((targetPosition) => {
-        if (!candidateTargetPositionSet.has(targetPosition)) { return }
-        pairs.push({ subjectPosition, targetPosition })
+  return analysis.cachedRelationalResult(cacheKey, () => {
+    return profileCollector.measure('cma.v2.relational_result', () => {
+      const candidateSubjectPositions = relationalActorPositions(analysis, { actor: subject, filter: subjectFilter, filterMode: subjectFilterMode, boardScope })
+      const candidateTargetPositions = relationalActorPositions(analysis, { actor: target, filter: targetFilter, filterMode: targetFilterMode, boardScope })
+      const candidateTargetPositionSet = profileCollector.measure('cma.v2.relational_result.target_set', () => new Set(candidateTargetPositions))
+      const pairs = []
+      candidateSubjectPositions.forEach((subjectPosition) => {
+        const relatedTargetPositions = relatedTargetPositionsForSubject(analysis, { operator, subjectPosition, target, boardScope })
+        relatedTargetPositions.forEach((targetPosition) => {
+          if (!candidateTargetPositionSet.has(targetPosition)) { return }
+          pairs.push({ subjectPosition, targetPosition })
+        })
       })
+      return {
+        pairs,
+        subjectPositions: analysis.uniquePositions(pairs.map(pair => pair.subjectPosition)),
+        targetPositions: analysis.uniquePositions(pairs.map(pair => pair.targetPosition))
+      }
     })
-    const result = {
-      pairs,
-      subjectPositions: analysis.uniquePositions(pairs.map(pair => pair.subjectPosition)),
-      targetPositions: analysis.uniquePositions(pairs.map(pair => pair.targetPosition))
-    }
-    analysis._relationalResultCache.set(cacheKey, result)
-    return result
   })
 }
 
 export function relationalActorPositions(analysis, { actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
   const cacheKey = `${boardScope}:${actor}:${filter}:${filterMode || "include"}`
-  if (analysis._relationalActorPositionsCache.has(cacheKey)) {
-    return analysis._relationalActorPositionsCache.get(cacheKey)
-  }
 
-  return profileCollector.measure('cma.v2.relational_actor_positions', () => {
-    const positions = baseRelationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
-    analysis._relationalActorPositionsCache.set(cacheKey, positions)
-    return positions
+  return analysis.cachedRelationalActorPositions(cacheKey, () => {
+    return profileCollector.measure('cma.v2.relational_actor_positions', () => {
+      return baseRelationalActorPositions(analysis, { actor, filter, filterMode, boardScope })
+    })
   })
 }
 
 
 function relatedTargetPositionsForSubject(analysis, { operator, subjectPosition, target, boardScope = AFTER_BOARD }) {
   const cacheKey = `${boardScope}:${operator}:${subjectPosition}:${target}`
-  if (analysis._relatedTargetPositionsCache.has(cacheKey)) {
-    return analysis._relatedTargetPositionsCache.get(cacheKey)
-  }
 
-  return profileCollector.measure('cma.v2.related_target_positions_for_subject', () => {
-    const board = analysis.boardForScope(boardScope)
-    const targetTeam = relationalTeamForActor(target, analysis.movedPieceTeam())
-    let positions
-    switch (operator) {
-      case "attack": {
-        const subjectTeam = board.teamAt(subjectPosition)
-        positions = cachedControlledSquares({
-          board,
-          attackerPosition: subjectPosition,
-          cache: analysis._boardQueryCache,
-          cacheScope: boardScope
-        }).filter((targetPosition) => {
-          return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam
-        })
-        break
+  return analysis.cachedRelatedTargetPositions(cacheKey, () => {
+    return profileCollector.measure('cma.v2.related_target_positions_for_subject', () => {
+      const board = analysis.boardForScope(boardScope)
+      const targetTeam = relationalTeamForActor(target, analysis.movedPieceTeam())
+      const boardQueryCache = analysis.boardQueryCache()
+      let positions
+      switch (operator) {
+        case "attack": {
+          const subjectTeam = board.teamAt(subjectPosition)
+          positions = cachedControlledSquares({
+            board,
+            attackerPosition: subjectPosition,
+            cache: boardQueryCache,
+            cacheScope: boardScope
+          }).filter((targetPosition) => {
+            return board.teamAt(targetPosition) === targetTeam && targetTeam !== subjectTeam
+          })
+          break
+        }
+        case "defend": {
+          const subjectTeam = board.teamAt(subjectPosition)
+          positions = cachedControlledSquares({
+            board,
+            attackerPosition: subjectPosition,
+            cache: boardQueryCache,
+            cacheScope: boardScope
+          }).filter((targetPosition) => {
+            return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam
+          })
+          break
+        }
+        case "adjacent":
+          positions = adjacentPositions({ board, targetPosition: subjectPosition, team: targetTeam })
+          break
+        case "shield":
+          positions = shieldedPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
+          break
+        case "cover":
+          positions = coveredPositions({
+            board,
+            sourcePosition: subjectPosition,
+            team: targetTeam,
+            cache: boardQueryCache,
+            cacheScope: boardScope
+          })
+          break
+        default:
+          throw new Error(`Unsupported V2 relational operator: ${operator}`)
       }
-      case "defend": {
-        const subjectTeam = board.teamAt(subjectPosition)
-        positions = cachedControlledSquares({
-          board,
-          attackerPosition: subjectPosition,
-          cache: analysis._boardQueryCache,
-          cacheScope: boardScope
-        }).filter((targetPosition) => {
-          return board.teamAt(targetPosition) === targetTeam && targetTeam === subjectTeam
-        })
-        break
-      }
-      case "adjacent":
-        positions = adjacentPositions({ board, targetPosition: subjectPosition, team: targetTeam })
-        break
-      case "shield":
-        positions = shieldedPositions({ board, sourcePosition: subjectPosition, team: targetTeam })
-        break
-      case "cover":
-        positions = coveredPositions({
-          board,
-          sourcePosition: subjectPosition,
-          team: targetTeam,
-          cache: analysis._boardQueryCache,
-          cacheScope: boardScope
-        })
-        break
-      default:
-        throw new Error(`Unsupported V2 relational operator: ${operator}`)
-    }
-    analysis._relatedTargetPositionsCache.set(cacheKey, positions)
-    return positions
+      return positions
+    })
   })
 }
 
