@@ -29,9 +29,16 @@ function neededAdditions(countOp, n, current) {
 export function actorCountStrategy(pieces, hint, ctx) {
   if (hint.frame !== 'current') { return null }
 
+  // Stopgap: captured_piece subject's hint.team is correctly enemyTeam, but the
+  // strategy's after-board placement on enemyTeam corrupts sibling plans (the
+  // placed piece is read as a real enemy). Override placement to movingTeam to
+  // restore the pre-fix "harmless junk" behavior. The architectural fix lives
+  // in agents/next/5_5 capture hint bug.md.
+  const placementTeam = hint.actor === 'captured_piece' ? ctx.movingTeam : hint.team
+
   let currentCount = 0
   for (const [, piece] of pieces.entries()) {
-    if (piece.charAt(0) !== hint.team) { continue }
+    if (piece.charAt(0) !== placementTeam) { continue }
     if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
     currentCount += 1
   }
@@ -62,10 +69,10 @@ export function actorCountStrategy(pieces, hint, ctx) {
   for (let i = 0; i < additions; i += 1) {
     let placed = false
     for (const species of speciesCandidates) {
-      if (!respectsInventoryCaps(hint.team, species, result, ctx, hint.frame)) { continue }
+      if (!respectsInventoryCaps(placementTeam, species, result, ctx, hint.frame)) { continue }
       for (const pos of shuffled([...ALL_POSITIONS], ctx.random)) {
         if (result.has(pos)) { continue }
-        const next = placePiece(result, pos, pieceCode(hint.team, species))
+        const next = placePiece(result, pos, pieceCode(placementTeam, species))
         if (!next) { continue }
         result = next
         speciesUsed = species
