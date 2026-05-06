@@ -12,6 +12,7 @@ import {
 } from "bot_execution/relational_analysis"
 import { positionFilteredPositions, positionMetricTotal } from "bot_execution/position_analysis"
 import { combinatorialQualifyingExists } from "bot_execution/relational_qualifying"
+import { SINGULAR_ACTORS, RELATIONAL_SINGULAR_ACTORS } from "bot_execution/actors"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -139,19 +140,6 @@ class CandidateMoveAnalysisV2 {
     }
   }
 
-  singularActor(actor) {
-    return [
-      "moved_piece",
-      "enemy_moved_piece",
-      "captured_piece",
-      "enemy_captured_piece"
-    ].includes(actor)
-  }
-
-  relationalSingularActor(actor) {
-    return ["moved_piece", "enemy_moved_piece"].includes(actor)
-  }
-
   singularActorSpecies(actor, boardScope = AFTER_BOARD) {
     switch (actor) {
       case "moved_piece":
@@ -197,7 +185,7 @@ class CandidateMoveAnalysisV2 {
   }
 
   relationalSingularActorResolves({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
-    if (!this.relationalSingularActor(actor)) { return true }
+    if (!RELATIONAL_SINGULAR_ACTORS.has(actor)) { return true }
     return relationalActorPositions(this, { actor, filter, filterMode, boardScope }).length > 0
   }
 

@@ -1,5 +1,6 @@
 import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
 import profileCollector from "gameplay/profile_collector"
+import { SINGULAR_ACTORS } from "bot_execution/actors"
 
 class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
@@ -94,7 +95,7 @@ class ConditionEvaluatorV2 {
     }
 
     unarySideCanEvaluate({ actor, filter = "any", filterMode = null, operator, role = "subject" }, analysis) {
-      if (!analysis.singularActor(actor)) { return true }
+      if (!SINGULAR_ACTORS.has(actor)) { return true }
       if (role === "subject" && operator === "count") { return true }
       if (operator === "mobility") {
         return analysis.singularActorPresentForMobility({

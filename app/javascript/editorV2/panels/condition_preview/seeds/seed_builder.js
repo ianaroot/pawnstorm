@@ -1,9 +1,9 @@
 import Board from 'gameplay/board'
 import {
   candidateSpecies,
-  MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT,
-  SINGULAR_ACTORS
+  MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import { usesZeroRelationPath, PRIOR_BOARD_COMPARISON_SOURCE } from 'editorV2/panels/condition_preview/plans/comparison_requirements'
 import { shuffled, ALL_POSITIONS } from '../shared/board_utils'
 import { placePiece, teamHasKing } from '../shared/piece_placement'

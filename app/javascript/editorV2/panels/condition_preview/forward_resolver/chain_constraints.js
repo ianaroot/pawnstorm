@@ -24,7 +24,7 @@
 import Board from 'gameplay/board'
 import { attackingPositions, defendingPositions, adjacentPositions, shieldingPositions } from 'gameplay/board_query_utils'
 import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
 import { controlledSquaresForPieceAt } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 

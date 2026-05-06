@@ -1,6 +1,7 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
-import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies, SINGULAR_ACTORS } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT, candidateSpecies } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import { actorTeam } from 'bot_execution/actor_teams'
 import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams

@@ -8,7 +8,7 @@ import {
   PRIOR_BOARD_COMPARISON_SOURCE
 } from 'editorV2/panels/condition_preview/plans/comparison_requirements'
 import { shuffled } from '../shared/board_utils'
-import { SINGULAR_ACTORS } from '../shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 
 const HARD_SET_SIZE_CAP = 4
 

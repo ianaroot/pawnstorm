@@ -37,7 +37,8 @@ import {
 import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { SINGULAR_ACTORS, speciesMatchesFilter } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { speciesMatchesFilter } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 
 export const HINT_TYPES = Object.freeze({
   // Descriptor-less relational fallback — at least one qualifying pair exists.
