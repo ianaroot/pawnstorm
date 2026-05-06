@@ -4,34 +4,7 @@ import Board from 'gameplay/board'
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 
 import { buildBoard, getMove, playMoveSequence, position, square } from 'gameplay/__tests__/helpers'
-
-function buildEnemyKnightRecentMoveContext() {
-  return {
-    moveObject: { startPosition: position('b8'), endPosition: position('c6') },
-    movingTeam: Board.BLACK,
-    movedPieceStartPosition: position('b8'),
-    movedPieceEndPosition: position('c6'),
-    movedPieceSpeciesBeforeMove: Board.NIGHT,
-    movedPieceSpeciesAfterMove: Board.NIGHT,
-    capturedPiecePosition: null,
-    capturedPieceTeam: null,
-    capturedPieceSpecies: null
-  }
-}
-
-function buildEnemyCapturedPieceContext() {
-  return {
-    moveObject: { startPosition: position('h4'), endPosition: position('e4') },
-    movingTeam: Board.BLACK,
-    movedPieceStartPosition: position('h4'),
-    movedPieceEndPosition: position('e4'),
-    movedPieceSpeciesBeforeMove: Board.QUEEN,
-    movedPieceSpeciesAfterMove: Board.QUEEN,
-    capturedPiecePosition: position('e4'),
-    capturedPieceTeam: Board.WHITE,
-    capturedPieceSpecies: Board.BISHOP
-  }
-}
+import { buildEnemyMoveContext } from 'bot_execution/__tests__/helpers'
 
 function pairSquares(result) {
   return result.pairs
@@ -327,7 +300,7 @@ describe('CandidateMoveAnalysisV2', () => {
           c6: 'bN'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -435,7 +408,10 @@ describe('CandidateMoveAnalysisV2', () => {
           a2: 'wP'
         }
       })
-      board.recentMoveContext = buildEnemyCapturedPieceContext()
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverSpecies: Board.QUEEN, moverFrom: 'h4', moverTo: 'e4',
+        captured: { species: Board.BISHOP }
+      })
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -698,7 +674,7 @@ describe('CandidateMoveAnalysisV2', () => {
           c6: 'bN'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -739,6 +715,53 @@ describe('CandidateMoveAnalysisV2', () => {
           positionTarget: 1
         })
       ).toEqual([])
+    })
+
+    it('filters enemy_captured_piece on rank using moving team perspective (white moving)', () => {
+      // Enemy black knight captured allied rook on d5 (absolute rank 5);
+      // from white's moving perspective, that rank is 5.
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.ROOK }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy_captured_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5
+        }))
+      ).toEqual(['d5'])
+    })
+
+    it('filters enemy_captured_piece on rank using moving team perspective (black moving)', () => {
+      // Enemy white knight captured allied (black) rook on d5 (absolute rank
+      // 5); from black's moving perspective, that rank is 4 (9 - 5).
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a7: 'bP', d5: 'wN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        enemyTeam: Board.WHITE,
+        moverFrom: 'b4', moverTo: 'd5',
+        captured: { species: Board.ROOK }
+      })
+      const moveObject = getMove('a7', 'a6', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy_captured_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['d5'])
     })
 
     it('computes count and value metrics over filtered positions', () => {
@@ -936,7 +959,7 @@ describe('CandidateMoveAnalysisV2', () => {
           a2: 'wP'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })

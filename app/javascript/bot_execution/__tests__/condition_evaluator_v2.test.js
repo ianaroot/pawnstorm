@@ -6,6 +6,7 @@ import ConditionEvaluator from 'gameplay/condition_evaluator'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 
 import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helpers'
+import { buildEnemyMoveContext } from 'bot_execution/__tests__/helpers'
 
 describe('ConditionEvaluatorV2', () => {
   function evaluate(conditionNode, board, moveObject) {
@@ -609,6 +610,100 @@ describe('ConditionEvaluatorV2', () => {
         moveObject
       )
     ).toBe(false)
+  })
+
+  describe('enemy_captured_piece as unary subject', () => {
+    it('passes count = 0 when the prior enemy move was a non-capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext()
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'unary',
+            subject: 'enemy_captured_piece', subjectFilter: 'any',
+            operator: 'count', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes value = 0 unfiltered when the prior enemy move was a non-capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext()
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'unary',
+            subject: 'enemy_captured_piece', subjectFilter: 'any',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('passes filtered value queries when the enemy captured a matching ally species', () => {
+      // Enemy black knight captured allied queen at d5; mover sits on the
+      // captured square in afterBoard.
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.QUEEN }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'unary',
+            subject: 'enemy_captured_piece', subjectFilter: 'queen',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails filtered value queries when the enemy captured a different ally species', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.NIGHT }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'unary',
+            subject: 'enemy_captured_piece', subjectFilter: 'queen',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
   })
 
   describe('relational evaluation', () => {
