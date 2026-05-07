@@ -8,6 +8,7 @@ import { shuffled } from './shared/board_utils'
 import { selectDiverseExamples, uniqueExamples } from './shared/diversity_selection'
 import { collectForwardResolverExamples } from './forward_resolver/collect'
 import { collectForwardPatternExamples } from './forward_pattern/collect'
+import { collectForwardPropositionExamples } from './forward_proposition/collect'
 import { collectReverseRelationalExamples } from './reverse_relational/collect'
 import { collectReverseUnaryExamples } from './reverse_unary/collect'
 import { collectReversePositionExamples } from './reverse_position/collect'
@@ -22,6 +23,7 @@ const MAX_SEEDS_PER_VARIANT = 600
 const SPECIAL_MOVE_MS_CAP = 100
 const FORWARD_RESOLVER_ATTEMPTS = 200
 const FORWARD_PATTERN_ATTEMPTS = 200
+const FORWARD_PROPOSITION_ATTEMPTS = 200
 const ENRICHMENT_PROBABILITY = 0.5
 const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 2
 
@@ -37,6 +39,7 @@ function computeBudgets(combinedPlan, totalMs) {
     forwardCap: Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_FRACTION),
     forwardResolverAttempts: FORWARD_RESOLVER_ATTEMPTS,
     forwardPatternAttempts: FORWARD_PATTERN_ATTEMPTS,
+    forwardPropositionAttempts: FORWARD_PROPOSITION_ATTEMPTS,
     perPlanMs,
     specialMoveMs,
     maxStandardSize: MAX_CANDIDATE_POOL,
@@ -158,7 +161,7 @@ function collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline, 
 }
 
 const PIPELINE_KEYS = Object.freeze([
-  'forward-resolver', 'forward-pattern',
+  'forward-resolver', 'forward-pattern', 'forward-proposition',
   'reverse-relational', 'reverse-unary', 'reverse-position',
   'castle', 'promotion', 'en-passant'
 ])
@@ -195,6 +198,11 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
     collectForwardPatternExamples({
       combinedPlan, random,
       maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
+      addUnique, standardExamples, produced
+    })
+    collectForwardPropositionExamples({
+      combinedPlan, random,
+      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
       addUnique, standardExamples, produced
     })
   }

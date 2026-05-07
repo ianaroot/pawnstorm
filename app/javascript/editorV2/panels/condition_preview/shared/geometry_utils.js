@@ -92,6 +92,25 @@ export function originCandidatesForSpecies(endPosition, species, team = Board.WH
   }
 }
 
+// Squares from which a hypothetical (team, species) piece could attack
+// targetPosition on `board`. Sibling to board_query_utils' controllingPositions
+// (which finds EXISTING on-board attackers) — this answers the placement
+// question: "where could I put a piece such that it would attack the target?"
+// For non-pawn species the geometry is symmetric with controlledSquares; for
+// pawn it differs (a white pawn attacks NE/NW, so to attack a target it must
+// stand SW/SE of it — handled via the opposing-team flip on pawnControlledSquares).
+export function attackerCandidatesFor(targetPosition, species, team, board) {
+  switch (species) {
+    case Board.PAWN:   return pawnControlledSquares(targetPosition, Board.opposingTeam(team))
+    case Board.NIGHT:  return knightControlledSquares(targetPosition)
+    case Board.KING:   return kingControlledSquares(targetPosition)
+    case Board.BISHOP: return sliderControlledSquaresFromBoard(targetPosition, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return sliderControlledSquaresFromBoard(targetPosition, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return sliderControlledSquaresFromBoard(targetPosition, QUEEN_RAY_STEPS, board)
+    default:           return []
+  }
+}
+
 export function shieldAttackerSpeciesForStep(step) {
   return ROOK_RAY_STEPS.includes(step) ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
 }
