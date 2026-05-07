@@ -152,6 +152,7 @@ const SPECIAL_MOVE_PIPELINES = Object.freeze([
 
 function collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline, random, produced }) {
   for (const { kind, key, collect } of SPECIAL_MOVE_PIPELINES) {
+    if (!ENABLED_PIPELINES.has(key)) { continue }
     if (!chainVariant.moveKinds.includes(kind)) { continue }
     if (Date.now() > deadline) { break }
     const examples = collect({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
@@ -165,6 +166,12 @@ const PIPELINE_KEYS = Object.freeze([
   'reverse-relational', 'reverse-unary', 'reverse-position',
   'castle', 'promotion', 'en-passant'
 ])
+
+// const ENABLED_PIPELINES = new Set(PIPELINE_KEYS)
+const ENABLED_PIPELINES = new Set(['forward-proposition'])
+// Diagnostic toggle — comment the line above and uncomment the line below to
+// see forward-proposition coverage in isolation:
+// const ENABLED_PIPELINES = new Set(['forward-proposition'])
 
 function emptyPipelineCounter() {
   const counter = {}
@@ -190,25 +197,31 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // ── Forward generation ──────────────────────────────────────────────────
   // Resolver runs first, then pattern picks up under the shared forwardCap.
   if (plans.length > 0) {
-    collectForwardResolverExamples({
-      combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
-      addUnique, standardExamples, produced
-    })
-    collectForwardPatternExamples({
-      combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
-      addUnique, standardExamples, produced
-    })
-    collectForwardPropositionExamples({
-      combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
-      addUnique, standardExamples, produced
-    })
+    if (ENABLED_PIPELINES.has('forward-resolver')) {
+      collectForwardResolverExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
+        addUnique, standardExamples, produced
+      })
+    }
+    if (ENABLED_PIPELINES.has('forward-pattern')) {
+      collectForwardPatternExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
+        addUnique, standardExamples, produced
+      })
+    }
+    if (ENABLED_PIPELINES.has('forward-proposition')) {
+      collectForwardPropositionExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
+        addUnique, standardExamples, produced
+      })
+    }
   }
 
   // ── Reverse-relational ──────────────────────────────────────────────────
-  if (relationalPlans.length > 0) {
+  if (relationalPlans.length > 0 && ENABLED_PIPELINES.has('reverse-relational')) {
     const relDeadline = Date.now() + budgets.perPlanMs * relationalPlans.length
     const variants = effectiveVariants(combinedPlan)
     const tuples = []
@@ -225,7 +238,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   }
 
   // ── Reverse-unary ───────────────────────────────────────────────────────
-  if (unaryPlans.length > 0) {
+  if (unaryPlans.length > 0 && ENABLED_PIPELINES.has('reverse-unary')) {
     collectReverseUnaryExamples({
       combinedPlan, unaryPlans, perPlanMs: budgets.perPlanMs, random,
       maxStandardSize: budgets.maxStandardSize,
@@ -234,7 +247,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   }
 
   // ── Reverse-position ────────────────────────────────────────────────────
-  if (positionPlans.length > 0) {
+  if (positionPlans.length > 0 && ENABLED_PIPELINES.has('reverse-position')) {
     collectReversePositionExamples({
       combinedPlan, positionPlans, perPlanMs: budgets.perPlanMs, random,
       maxStandardSize: budgets.maxStandardSize,
