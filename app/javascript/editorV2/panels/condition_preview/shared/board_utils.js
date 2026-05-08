@@ -29,7 +29,7 @@ export function unique(values) {
   return Array.from(new Set(values))
 }
 
-const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
+export const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
   Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
   Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
   Board.ROOK, Board.ROOK,
@@ -55,6 +55,29 @@ export function shuffled(values, random) {
 export function pickRandom(values, random) {
   if (!values || values.length === 0) { return null }
   return values[Math.floor(random() * values.length)]
+}
+
+// Picks one species from speciesSet, weighted by WEIGHTED_SPECIES_DISTRIBUTION.
+// Returns null when the intersection is empty.
+export function pickWeightedSpecies(speciesSet, random) {
+  const pool = WEIGHTED_SPECIES_DISTRIBUTION.filter(s => speciesSet.has(s))
+  if (pool.length === 0) { return null }
+  return pool[Math.floor(random() * pool.length)]
+}
+
+// Returns the unique species in speciesSet ordered by weighted-random.
+// Higher-weight species (e.g. pawns) tend to come earlier.
+export function weightedShuffleSpecies(speciesSet, random) {
+  const pool = WEIGHTED_SPECIES_DISTRIBUTION.filter(s => speciesSet.has(s))
+  const shuffledPool = shuffled(pool, random)
+  const seen = new Set()
+  const result = []
+  for (const s of shuffledPool) {
+    if (seen.has(s)) { continue }
+    seen.add(s)
+    result.push(s)
+  }
+  return result
 }
 
 export function clonePiecesMap(piecesMap) {

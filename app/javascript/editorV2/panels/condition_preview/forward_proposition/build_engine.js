@@ -4,17 +4,21 @@ import { commitSingulars } from './commit_singulars'
 import { isSatisfiable } from './is_satisfiable'
 import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
+import { satisfyRelations } from './relations/satisfy_relations'
 import { synthesizeMove } from './synthesize_move'
 
 export function buildAttempt(combinedPlan, random) {
   const ctx = buildChainCtx(combinedPlan)
   if (!isSatisfiable(ctx)) { return null }
-  commitSingulars(ctx.singulars, random)
+  commitSingulars(ctx, random)
 
   let pieces = placeSingulars(ctx.singulars, random)
   if (pieces === null) { return null }
 
   pieces = satisfyPropositions(ctx, pieces, random)
+  if (pieces === null) { return null }
+
+  pieces = satisfyRelations(ctx, pieces, random)
   if (pieces === null) { return null }
 
   pieces = placeKingsIfAbsent(pieces, random)

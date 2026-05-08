@@ -15,7 +15,7 @@ describe('commitSingulars — moved_piece', () => {
   it('narrows moved_piece species_set and region to singletons', () => {
     const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
 
-    commitSingulars(singulars, () => 0.0)
+    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
 
     expect(singulars.moved_piece.species_set.size).toBe(1)
     expect(singulars.moved_piece.region.kind).toBe('set')
@@ -27,7 +27,7 @@ describe('commitSingulars — optional actors', () => {
   it('commits captured_piece to {null} when random selects the null slot', () => {
     const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
 
-    commitSingulars(singulars, () => 0.0)
+    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
 
     expect(singulars.captured_piece.species_set).toEqual(new Set([null]))
   })
@@ -35,7 +35,7 @@ describe('commitSingulars — optional actors', () => {
   it('commits captured_piece to a real species and a singleton region when random selects past the null slot', () => {
     const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
 
-    commitSingulars(singulars, () => 0.999)
+    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.999)
 
     expect(singulars.captured_piece.species_set.has(null)).toBe(false)
     expect(singulars.captured_piece.species_set.size).toBe(1)
@@ -61,7 +61,7 @@ describe('commitSingulars — relationsToAnchors narrowing', () => {
       enemy_captured_piece: { team: Board.WHITE, species_set: new Set([null]), region: { kind: 'all' }, relationsToAnchors: [] }
     }
 
-    commitSingulars(singulars, () => 0.0)
+    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
 
     const enemyPos = [...singulars.enemy_moved_piece.region.squares][0]
     expect(enemyPos).toBeDefined()
@@ -81,7 +81,7 @@ describe('commitSingulars — aliased singulars', () => {
     }])
     const singulars = buildSingulars(combinedPlan)
 
-    commitSingulars(singulars, () => 0.5)
+    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.5)
 
     expect(singulars.captured_piece).toBe(singulars.enemy_moved_piece)
     expect(singulars.captured_piece.species_set.size).toBe(1)

@@ -1,4 +1,7 @@
-import { pieceCode, shuffled, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
+import {
+  pieceCode, shuffled, weightedShuffleSpecies,
+  buildBoardFromLayout, buildLayoutFromPieces
+} from 'editorV2/panels/condition_preview/shared/board_utils'
 import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { materializeRegion } from 'editorV2/panels/condition_preview/forward_proposition/materialize_region'
@@ -48,7 +51,8 @@ function matches(prop, pos, piece, ctx, board) {
 
 function placeOne(prop, pieces, ctx, random) {
   const board = boardForRegion(prop.region, pieces)
-  const speciesPool = shuffled([...prop.species_set].filter(s => s !== null), random)
+  const filtered = new Set([...prop.species_set].filter(s => s !== null))
+  const speciesPool = weightedShuffleSpecies(filtered, random)
   for (const species of speciesPool) {
     const code = pieceCode(prop.team, species)
     const region = materializeRegion(prop.region, { singulars: ctx.singulars, board, species, team: prop.team })
