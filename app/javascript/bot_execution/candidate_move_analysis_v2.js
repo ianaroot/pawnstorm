@@ -2,6 +2,7 @@ import Board from "gameplay/board"
 import profileCollector from "gameplay/profile_collector"
 import Rules from "gameplay/rules"
 import { materialValue } from "gameplay/board_query_utils"
+import { mobilityFromMoveObjects } from "gameplay/mobility"
 import { unaryTotal, priorComparisonSourceTotal } from "bot_execution/unary_analysis"
 import {
   samePiece,
@@ -93,16 +94,10 @@ class CandidateMoveAnalysisV2 {
     return profileCollector.measure('cma.v2.position_mobility', () => {
       return this._memoize('positionMobility', `${boardScope}:${position}`, () => {
         const board = this.boardForScope(boardScope)
-        const pieceType = board.pieceTypeAt(position)
-        const moveObjects = this.availableMovesFrom(position, boardScope)
-        let mobility
-        if (pieceType === Board.PAWN) {
-          const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
-          mobility = destinations.size
-        } else {
-          mobility = moveObjects.length
-        }
-        return mobility
+        return mobilityFromMoveObjects(
+          board.pieceTypeAt(position),
+          this.availableMovesFrom(position, boardScope)
+        )
       })
     })
   }

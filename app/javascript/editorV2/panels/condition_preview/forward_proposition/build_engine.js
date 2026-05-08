@@ -5,6 +5,7 @@ import { isSatisfiable } from './is_satisfiable'
 import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
 import { satisfyRelations } from './relations/satisfy_relations'
+import { satisfyMobility } from './mobility/satisfy_mobility'
 import { synthesizeMove } from './synthesize_move'
 
 export function buildAttempt(combinedPlan, random) {
@@ -19,6 +20,9 @@ export function buildAttempt(combinedPlan, random) {
   if (pieces === null) { return null }
 
   pieces = satisfyRelations(ctx, pieces, random)
+  if (pieces === null) { return null }
+
+  pieces = satisfyMobility(ctx, pieces, random)
   if (pieces === null) { return null }
 
   pieces = placeKingsIfAbsent(pieces, random)

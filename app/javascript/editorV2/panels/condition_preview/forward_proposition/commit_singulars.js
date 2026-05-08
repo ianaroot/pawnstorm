@@ -1,9 +1,10 @@
 import {
-  ALL_POSITIONS, pickRandom, pickWeightedSpecies, pieceCode,
+  ALL_POSITIONS, pickWeightedSpecies, pieceCode,
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { intersectRegions } from './region'
 import { materializeRegion } from './materialize_region'
+import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
 import { buildSingularSelectionPool, pickFromPool } from './singular_selection'
 
 const ACTOR_KEYS = Object.freeze(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
@@ -45,8 +46,9 @@ function commitOne(singular, singulars, committed, random, ctx, key) {
 
   const candidates = singular.region.kind === 'all' ? ALL_POSITIONS : [...singular.region.squares]
   if (candidates.length === 0) { return }
-  const position = pickRandom(candidates, random)
-  singular.region = { kind: 'set', squares: new Set([position]) }
+  const mobilityRange = aggregateMobilityRangeForSingular(singular, ctx.propositions)
+  const ordered = edgeBiasedShuffle(candidates, random, mobilityRange)
+  singular.region = { kind: 'set', squares: new Set([ordered[0]]) }
 }
 
 function applyRelationsToAnchors(singular, singulars, committed, species) {
