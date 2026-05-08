@@ -109,7 +109,7 @@ class CandidateMoveAnalysisV2 {
 
   singularActorValue(actor, boardScope = AFTER_BOARD) {
     const species = this.singularActorSpecies(actor, boardScope)
-    return species === null ? 0 : this.individualComparableValue(species)
+    return species === null ? null : this.individualComparableValue(species)
   }
 
   resolvedMovedPiece(boardScope = AFTER_BOARD) {

@@ -1,3 +1,8 @@
+export function aggregateOrNull(items, fn) {
+  if (items.length === 0) return null
+  return items.reduce((sum, item) => sum + fn(item), 0)
+}
+
 export function compareValues(value, comparator, target) {
   switch (comparator) {
     case 'equal_to':                 return value === target
