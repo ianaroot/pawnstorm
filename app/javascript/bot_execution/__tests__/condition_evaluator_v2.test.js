@@ -494,7 +494,7 @@ describe('ConditionEvaluatorV2', () => {
     ).toBe(true)
   })
 
-  it('allows unfiltered captured piece value queries to return zero when no piece was captured', () => {
+  it('fails unfiltered captured piece value = 0 when no piece was captured', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -520,7 +520,7 @@ describe('ConditionEvaluatorV2', () => {
         board,
         moveObject
       )
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('fails filtered captured piece value queries when no matching piece was captured', () => {
@@ -634,7 +634,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes value = 0 unfiltered when the prior enemy move was a non-capture', () => {
+    it('fails value = 0 unfiltered when the prior enemy move was a non-capture', () => {
       const board = buildBoard({
         pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' }
       })
@@ -652,7 +652,7 @@ describe('ConditionEvaluatorV2', () => {
           board,
           moveObject
         )
-      ).toBe(true)
+      ).toBe(false)
     })
 
     it('passes filtered value queries when the enemy captured a matching ally species', () => {

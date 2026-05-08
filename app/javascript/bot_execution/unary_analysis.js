@@ -1,6 +1,7 @@
 import { materialValue } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
 import { actorTeam } from "bot_execution/actor_teams"
+import { aggregateOrNull } from "bot_execution/utils"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
@@ -42,15 +43,11 @@ function generalSubjectUnaryTotal(analysis, { actor, filter = "any", filterMode 
         return positions.length
       case "value":
         return profileCollector.measure('cma.v2.general_subject_unary_total.value', () => {
-          return positions.reduce((sum, position) => {
-            return sum + materialValue(board.pieceTypeAt(position))
-          }, 0)
+          return aggregateOrNull(positions, position => materialValue(board.pieceTypeAt(position)))
         })
       case "mobility":
         return profileCollector.measure('cma.v2.general_subject_unary_total.mobility', () => {
-          return positions.reduce((sum, position) => {
-            return sum + analysis.positionMobility(position, boardScope)
-          }, 0)
+          return aggregateOrNull(positions, position => analysis.positionMobility(position, boardScope))
         })
       default:
         throw new Error(`Unsupported V2 unary operator for ${actor}: ${operator}`)
@@ -61,7 +58,7 @@ function generalSubjectUnaryTotal(analysis, { actor, filter = "any", filterMode 
 function movedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
   return profileCollector.measure('cma.v2.moved_piece_unary_total', () => {
     const resolved = analysis.resolvedMovedPiece(boardScope)
-    if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
+    if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return operator === 'count' ? 0 : null }
     switch (operator) {
       case "count":
         return 1
@@ -77,8 +74,8 @@ function movedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, ope
 
 function capturedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, operator }) {
   const resolved = analysis.resolvedCapturedPiece()
-  if (!resolved) { return 0 }
-  if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
+  if (!resolved) { return operator === 'count' ? 0 : null }
+  if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return operator === 'count' ? 0 : null }
   switch (operator) {
     case "count":
       return 1
@@ -91,8 +88,8 @@ function capturedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, 
 
 function enemyCapturedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, operator }) {
   const resolved = analysis.resolvedEnemyCapturedPiece()
-  if (!resolved) { return 0 }
-  if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
+  if (!resolved) { return operator === 'count' ? 0 : null }
+  if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return operator === 'count' ? 0 : null }
   switch (operator) {
     case "count":
       return 1
@@ -106,14 +103,19 @@ function enemyCapturedPieceUnaryTotal(analysis, { filter = "any", filterMode = n
 function enemyMovedPieceUnaryTotal(analysis, { filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {
   return profileCollector.measure('cma.v2.enemy_moved_piece_unary_total', () => {
     const resolved = analysis.resolvedEnemyMovedPiece(boardScope)
-    if (!resolved) { return 0 }
-    if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return 0 }
+    if (!resolved) { return operator === 'count' ? 0 : null }
+    if (!analysis.matchesFilter({ species: resolved.species, filter, filterMode })) { return operator === 'count' ? 0 : null }
     switch (operator) {
       case "count":
         return 1
       case "value":
         return analysis.individualComparableValue(resolved.species)
       case "mobility":
+        // Unclear whether 0 or null is correct when the piece was captured (presentOnBoard = false).
+        // 0 allows "enemy moved piece mobility = 0" to match captures (potentially useful);
+        // null would treat off-board as undefined and make "mobility < X" fail for captured pieces
+        // (consistent with absent-actor null semantics). Currently 0 — revisit if vacuous-truth
+        // problems emerge from this path.
         if (!resolved.presentOnBoard) return 0
         return analysis.positionMobility(resolved.position, boardScope)
       default:

@@ -128,6 +128,10 @@ export function buildLayoutAndBoard(pieces, allowedToMove, recentMoveContext = n
   return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
 }
 
+function boardFromContext(pieces, context) {
+  return piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+}
+
 // Iterate piece entries matching team + filter. Yields { position, species }.
 export function* matchingPieces(pieces, team, filter, filterMode) {
   for (const [position, piece] of pieces.entries()) {

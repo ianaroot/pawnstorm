@@ -373,6 +373,13 @@ describe('CandidateMoveAnalysisV2', () => {
         })
       ).toBe(1)
 
+      // Mobility returns 0 when the enemy moved piece was captured (presentOnBoard = false).
+      // It is unclear whether 0 or null is more correct here:
+      // - 0 treats capture as "mobility is zero because the piece has no squares" — allows
+      //   conditions like "enemy moved piece mobility = 0" to match captures, which may be useful.
+      // - null would treat the off-board piece as undefined — consistent with the absent-actor
+      //   null semantics, and would make "mobility < X" conditions fail when the piece was taken.
+      // Currently returns 0. If this causes vacuous-truth problems in practice, revisit.
       expect(
         analysis.unaryTotal({
           actor: 'enemy_moved_piece',
@@ -1086,6 +1093,151 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(shieldResult)).toEqual([])
       expect(shieldResult.subjectPositions).toEqual([])
       expect(shieldResult.targetPositions).toEqual([])
+    })
+  })
+
+  describe('null semantics for absent actors and empty groups', () => {
+    describe('unaryTotal — empty group (no pieces match filter)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('positionMetricTotal — empty positions', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('captured_piece — absent (non-capture move)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'captured_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'captured_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('enemy_moved_piece — absent (no prior move context)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('enemy_captured_piece — absent (enemy made no capture)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' } })
+        board.recentMoveContext = buildEnemyMoveContext()
+        const moveObject = getMove('a2', 'a3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_captured_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_captured_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('moved_piece — filter miss', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('singularActorValue — absent actor', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null when no piece was captured', () => {
+        expect(analysis.singularActorValue('captured_piece')).toBeNull()
+      })
+
+      it('returns null when there is no prior enemy move', () => {
+        expect(analysis.singularActorValue('enemy_moved_piece')).toBeNull()
+      })
     })
   })
 
