@@ -1,5 +1,6 @@
 import Board from 'gameplay/board'
 import { placePiece } from './piece_placement'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 export const MAX_PAWNS_PER_TEAM = 8
 
@@ -148,7 +149,7 @@ function squaresAreAdjacent(a, b) {
   )
 }
 
-function anyKingIsAdjacentTo(pieces, position) {
+export function anyKingIsAdjacentTo(pieces, position) {
   for (const [sq, piece] of pieces.entries()) {
     if (
       (piece === Board.WHITE_KING || piece === Board.BLACK_KING) &&
@@ -160,7 +161,7 @@ function anyKingIsAdjacentTo(pieces, position) {
   return false
 }
 
-export function placeKingsIfAbsent(pieces, random) {
+export function placeKingsIfAbsent(pieces, random, ctx = { propositions: [] }) {
   let result = pieces
 
   for (const team of [Board.WHITE, Board.BLACK]) {
@@ -174,6 +175,7 @@ export function placeKingsIfAbsent(pieces, random) {
     let placed = false
     for (const pos of candidates) {
       if (anyKingIsAdjacentTo(result, pos)) { continue }
+      if (!respectsAllCaps(team, Board.KING, pos, ctx, result)) { continue }
       const next = placePiece(result, pos, `${team}${Board.KING}`)
       if (next === null) { continue }
       result = next

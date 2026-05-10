@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { buildSingulars } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
-import { commitSingulars } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars'
+import { commitSingularsSpecies } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_species'
+import { commitSingularsPosition } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_position'
 
 const TRIVIAL_PLAN = {
   version: 2, kind: 'unary',
@@ -11,42 +12,93 @@ const TRIVIAL_PLAN = {
   target: 'exact_number', targetTotal: 1
 }
 
-describe('commitSingulars — moved_piece', () => {
-  it('narrows moved_piece species_set and region to singletons', () => {
-    const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
+function ctxFor(combinedPlan) {
+  const singulars = buildSingulars(combinedPlan)
+  return { singulars, relations: [], propositions: [] }
+}
 
-    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
+describe('commitSingularsPosition — cap-respecting via virtual pieces', () => {
+  it('sets singular region to empty set when no candidate respects caps', () => {
+    const ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    ctx.propositions = [{
+      team: Board.WHITE,
+      frame: 'current',
+      species_set: new Set([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING]),
+      region: { kind: 'all' },
+      count_range: { min: 0, max: 0 },
+      aggregate_value_range: { min: 0, max: Infinity },
+      aggregate_mobility_range: { min: 0, max: Infinity }
+    }]
+    commitSingularsSpecies(ctx, () => 0.0)
+    commitSingularsPosition(ctx, () => 0.0)
 
-    expect(singulars.moved_piece.species_set.size).toBe(1)
-    expect(singulars.moved_piece.region.kind).toBe('set')
-    expect(singulars.moved_piece.region.squares.size).toBe(1)
+    expect(ctx.singulars.moved_piece.region.squares.size).toBe(0)
   })
 })
 
-describe('commitSingulars — optional actors', () => {
-  it('commits captured_piece to {null} when random selects the null slot', () => {
-    const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
-
-    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
-
-    expect(singulars.captured_piece.species_set).toEqual(new Set([null]))
+describe('commitSingulars — moved_piece (random 0.0)', () => {
+  let ctx
+  beforeEach(() => {
+    ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    commitSingularsSpecies(ctx, () => 0.0)
+    commitSingularsPosition(ctx, () => 0.0)
   })
 
-  it('commits captured_piece to a real species and a singleton region when random selects past the null slot', () => {
-    const singulars = buildSingulars(buildCombinedPlan([TRIVIAL_PLAN]))
+  it('narrows moved_piece species_set to a single species', () => {
+    expect(ctx.singulars.moved_piece.species_set.size).toBe(1)
+  })
 
-    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.999)
+  it('sets moved_piece region kind to "set"', () => {
+    expect(ctx.singulars.moved_piece.region.kind).toBe('set')
+  })
 
-    expect(singulars.captured_piece.species_set.has(null)).toBe(false)
-    expect(singulars.captured_piece.species_set.size).toBe(1)
-    expect(singulars.captured_piece.region.kind).toBe('set')
-    expect(singulars.captured_piece.region.squares.size).toBe(1)
+  it('narrows moved_piece region to a single square', () => {
+    expect(ctx.singulars.moved_piece.region.squares.size).toBe(1)
+  })
+})
+
+describe('commitSingulars — optional actors (random 0.0 selects null)', () => {
+  let ctx
+  beforeEach(() => {
+    ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    commitSingularsSpecies(ctx, () => 0.0)
+    commitSingularsPosition(ctx, () => 0.0)
+  })
+
+  it('commits captured_piece species_set to {null}', () => {
+    expect(ctx.singulars.captured_piece.species_set).toEqual(new Set([null]))
+  })
+})
+
+describe('commitSingulars — optional actors (random 0.999 selects past null)', () => {
+  let ctx
+  beforeEach(() => {
+    ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    commitSingularsSpecies(ctx, () => 0.999)
+    commitSingularsPosition(ctx, () => 0.999)
+  })
+
+  it('removes null from captured_piece species_set', () => {
+    expect(ctx.singulars.captured_piece.species_set.has(null)).toBe(false)
+  })
+
+  it('narrows captured_piece species_set to a single species', () => {
+    expect(ctx.singulars.captured_piece.species_set.size).toBe(1)
+  })
+
+  it('sets captured_piece region kind to "set"', () => {
+    expect(ctx.singulars.captured_piece.region.kind).toBe('set')
+  })
+
+  it('narrows captured_piece region to a single square', () => {
+    expect(ctx.singulars.captured_piece.region.squares.size).toBe(1)
   })
 })
 
 describe('commitSingulars — relationsToAnchors narrowing', () => {
-  it('narrows the lower-priority actor region against an already-committed anchor (adjacent)', () => {
-    const D4 = 27
+  const D4 = 27
+  let enemyPos
+  beforeEach(() => {
     const singulars = {
       moved_piece: {
         team: Board.WHITE, species_set: new Set([Board.NIGHT]),
@@ -60,32 +112,46 @@ describe('commitSingulars — relationsToAnchors narrowing', () => {
       },
       enemy_captured_piece: { team: Board.WHITE, species_set: new Set([null]), region: { kind: 'all' }, relationsToAnchors: [] }
     }
+    const ctx = { singulars, relations: [], propositions: [] }
+    commitSingularsSpecies(ctx, () => 0.0)
+    commitSingularsPosition(ctx, () => 0.0)
+    enemyPos = [...ctx.singulars.enemy_moved_piece.region.squares][0]
+  })
 
-    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.0)
-
-    const enemyPos = [...singulars.enemy_moved_piece.region.squares][0]
-    expect(enemyPos).toBeDefined()
+  it('places enemy_moved_piece on a square adjacent to the anchor (moved_piece at D4)', () => {
     const fileDiff = Math.abs(Board.fileIndex(enemyPos) - Board.fileIndex(D4))
     const rankDiff = Math.abs(Board.rankIndex(enemyPos) - Board.rankIndex(D4))
     expect(Math.max(fileDiff, rankDiff)).toBe(1)
   })
 })
 
-describe('commitSingulars — aliased singulars', () => {
-  it('commits aliased actors once (same reference) when same_piece collapses them', () => {
+describe('commitSingulars — aliased singulars (same_piece)', () => {
+  let ctx
+  beforeEach(() => {
     const combinedPlan = buildCombinedPlan([{
       version: 2, kind: 'relational',
       subject: 'captured_piece', subjectFilter: 'any',
       operator: 'same_piece',
       target: 'enemy_moved_piece', targetFilter: 'any'
     }])
-    const singulars = buildSingulars(combinedPlan)
+    ctx = ctxFor(combinedPlan)
+    commitSingularsSpecies(ctx, () => 0.5)
+    commitSingularsPosition(ctx, () => 0.5)
+  })
 
-    commitSingulars({ singulars, relations: [], propositions: [] }, () => 0.5)
+  it('aliases captured_piece and enemy_moved_piece to the same object reference', () => {
+    expect(ctx.singulars.captured_piece).toBe(ctx.singulars.enemy_moved_piece)
+  })
 
-    expect(singulars.captured_piece).toBe(singulars.enemy_moved_piece)
-    expect(singulars.captured_piece.species_set.size).toBe(1)
-    expect(singulars.captured_piece.species_set.has(null)).toBe(false)
-    expect(singulars.captured_piece.region.squares.size).toBe(1)
+  it('commits the aliased species_set to a single species', () => {
+    expect(ctx.singulars.captured_piece.species_set.size).toBe(1)
+  })
+
+  it('removes null from the aliased species_set', () => {
+    expect(ctx.singulars.captured_piece.species_set.has(null)).toBe(false)
+  })
+
+  it('narrows the aliased region to a single square', () => {
+    expect(ctx.singulars.captured_piece.region.squares.size).toBe(1)
   })
 })

@@ -8,6 +8,9 @@ import {
 } from './relation_helpers'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
+  if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
+    return pieces
+  }
   if (adjacentRequirementsMet(relation, pieces)) { return pieces }
   let next = pieces
   for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
@@ -28,7 +31,7 @@ function adjacentRequirementsMet(relation, pieces) {
   })
 }
 
-function activeAdjacentSets(relation, pieces) {
+export function activeAdjacentSets(relation, pieces, _board = null) {
   const activeSubjects = new Set()
   const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {

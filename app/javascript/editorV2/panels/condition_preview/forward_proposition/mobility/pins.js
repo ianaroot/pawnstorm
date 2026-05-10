@@ -1,37 +1,26 @@
 import Board from 'gameplay/board'
-import {
-  firstOccupiedOnRay, nextPositionOnRay, sliderStep, squaresBetweenClear
-} from 'gameplay/board_query_utils'
-import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
-} from 'editorV2/panels/condition_preview/shared/board_utils'
-import { shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { QUEEN_RAY_STEPS } from 'gameplay/board_query_utils'
+import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placeKingOnRayThroughTarget } from 'editorV2/panels/condition_preview/shared/king_placement'
+import { placeSliderBeyondTarget } from 'editorV2/panels/condition_preview/forward_proposition/pin_geometry'
 
 export const pinsMechanism = {
   name: 'pins',
 
   appliesTo(target, ctx, frame, pieces) {
-    return target.species !== Board.KING
+    if (target.species === Board.KING) { return false }
+    if (ctx.pinState.count >= ctx.pinState.max) { return false }
+    return true
   },
 
   apply(target, ctx, frame, pieces, random) {
-    const kingPosition = findOwnKing(target.team, pieces)
-    if (kingPosition === null) { return null }
+    if (ctx.pinState.count >= ctx.pinState.max) { return null }
 
-    const step = sliderStep(kingPosition, target.position)
-    if (step === null) { return null }
-
-    const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
-    if (!squaresBetweenClear({ board, attackerPosition: kingPosition, targetPosition: target.position, step })) { return null }
-
-    const enemyTeam = Board.opposingTeam(target.team)
-    const sliderSpecies = shieldAttackerSpeciesForStep(step)
-    const sliderSquares = emptySquaresAlongRay(target.position, step, board)
-    for (const sliderPos of shuffled(sliderSquares, random)) {
-      for (const species of shuffled(sliderSpecies, random)) {
-        const next = placePiece(pieces, sliderPos, pieceCode(enemyTeam, species))
-        if (next !== null) { return next }
+    for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
+      const next = tryPinForStep(target, ctx, frame, pieces, step, random)
+      if (next !== null) {
+        ctx.pinState.count += 1
+        return next
       }
     }
     return null
@@ -40,21 +29,17 @@ export const pinsMechanism = {
   isActive() { return false }
 }
 
-function findOwnKing(team, pieces) {
-  const code = pieceCode(team, Board.KING)
-  for (const [square, piece] of pieces) {
-    if (piece === code) { return square }
-  }
-  return null
-}
+// step = direction from king toward target (and beyond, toward slider).
+// King is on the -step side of target; slider is on the +step side.
+function tryPinForStep(target, ctx, frame, pieces, step, random) {
+  const afterKing = placeKingOnRayThroughTarget({
+    pieces, team: target.team, frame, ctx,
+    targetPos: target.position, step: -step, random
+  })
+  if (afterKing === null) { return null }
 
-function emptySquaresAlongRay(start, step, board) {
-  const blocker = firstOccupiedOnRay({ board, startPosition: start, step })
-  const result = []
-  let current = nextPositionOnRay(start, step)
-  while (current !== null && current !== blocker) {
-    result.push(current)
-    current = nextPositionOnRay(current, step)
-  }
-  return result
+  return placeSliderBeyondTarget({
+    pieces: afterKing, attackerTeam: Board.opposingTeam(target.team),
+    targetPos: target.position, step, ctx, random
+  })
 }

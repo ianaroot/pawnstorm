@@ -4,6 +4,7 @@ import {
   shuffled, pieceCode, legalPlacementForSpecies, pickWeightedSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS,
   shieldingPositions, nextPositionOnRay
@@ -20,29 +21,36 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 const SLIDER_SPECIES = new Set([Board.ROOK, Board.BISHOP, Board.QUEEN])
 
 export function satisfyShield(relation, pieces, ctx, random) {
-  if (shieldRequirementsMet(relation, pieces)) { return pieces }
+  if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
+    return pieces
+  }
+  if (shieldRequirementsMet(relation, pieces, ctx)) { return pieces }
   const variant = pickVariant(relation, ctx, random)
   let next = pieces
   for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (shieldRequirementsMet(relation, next)) { return next }
+    if (shieldRequirementsMet(relation, next, ctx)) { return next }
     const placed = placeOneTriple(variant, relation, next, ctx, random)
     if (placed === null || placed === next) { return null }
     next = placed
   }
-  return shieldRequirementsMet(relation, next) ? next : null
+  return shieldRequirementsMet(relation, next, ctx) ? next : null
 }
 
 function placeOneTriple(variant, relation, pieces, ctx, random) {
   switch (variant) {
-    case 'moved-as-target':   return tryAsTarget(relation, pieces, ctx, random)
-    case 'moved-as-shielder': return tryAsShielder(relation, pieces, ctx, random)
+    case 'bound-as-target':   return tryAsTarget(relation, pieces, ctx, random, relation.targetSide.boundSingularActor)
+    case 'bound-as-shielder': return tryAsShielder(relation, pieces, ctx, random, relation.subjectSide.boundSingularActor)
+    case 'moved-as-target':   return tryAsTarget(relation, pieces, ctx, random, 'moved_piece')
+    case 'moved-as-shielder': return tryAsShielder(relation, pieces, ctx, random, 'moved_piece')
     case 'moved-as-attacker': return tryAsAttacker(relation, pieces, ctx, random)
     default:                  return tryAsBystander(relation, pieces, ctx, random)
   }
 }
 
-function shieldRequirementsMet(relation, pieces) {
+function shieldRequirementsMet(relation, pieces, ctx) {
   const { activeSubjects, activeTargets } = activeShieldSets(relation, pieces)
+  if (!boundSingularInActiveSet(relation.subjectSide, activeSubjects, ctx)) { return false }
+  if (!boundSingularInActiveSet(relation.targetSide, activeTargets, ctx)) { return false }
   return requirementsMet({
     subjectSide: relation.subjectSide,
     targetSide: relation.targetSide,
@@ -50,8 +58,15 @@ function shieldRequirementsMet(relation, pieces) {
   })
 }
 
-function activeShieldSets(relation, pieces) {
-  const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+function boundSingularInActiveSet(sideObj, activeSet, ctx) {
+  if (!sideObj.boundSingularActor) { return true }
+  const pos = singularPosition(ctx, sideObj.boundSingularActor)
+  if (pos === null) { return false }
+  return activeSet.has(pos)
+}
+
+export function activeShieldSets(relation, pieces, board = null) {
+  board = board ?? buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const activeSubjects = new Set()
   const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {
@@ -70,6 +85,16 @@ function activeShieldSets(relation, pieces) {
 }
 
 function pickVariant(relation, ctx, random) {
+  // Bound-singular variants are forced — the relation REQUIRES the bound singular
+  // play that role (its position is committed elsewhere). No bystander fallback.
+  if (relation.subjectSide.boundSingularActor && singularPosition(ctx, relation.subjectSide.boundSingularActor) !== null) {
+    return 'bound-as-shielder'
+  }
+  if (relation.targetSide.boundSingularActor && singularPosition(ctx, relation.targetSide.boundSingularActor) !== null) {
+    return 'bound-as-target'
+  }
+
+  // Non-bound: existing moved_piece-bias dispatch for variety.
   const eligible = ['bystander']
   const movedPiece = ctx?.singulars?.moved_piece
   if (!movedPiece) { return 'bystander' }
@@ -99,7 +124,7 @@ function tryAsBystander(relation, pieces, ctx, random) {
     if (piecesWithTarget === null) { continue }
 
     for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-      const compatibleSliders = compatibleSlidersFor(step)
+      const compatibleSliders = shieldAttackerSpeciesForStep(step)
       const lineSquares = walkRay(target.position, step)
       const placed = tryPlaceShielderAndAttackerFromTarget({
         relation, attackerTeam, compatibleSliders,
@@ -124,13 +149,13 @@ function orderedTargetCandidates(relation, pieces, random) {
   return [...shuffled(fresh, random), ...shuffled(existing, random)]
 }
 
-function tryAsTarget(relation, pieces, ctx, random) {
-  const targetPos = movedPiecePosition(ctx)
+function tryAsTarget(relation, pieces, ctx, random, actorKey) {
+  const targetPos = singularPosition(ctx, actorKey)
   if (targetPos === null) { return null }
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = compatibleSlidersFor(step)
+    const compatibleSliders = shieldAttackerSpeciesForStep(step)
     const lineSquares = walkRay(targetPos, step)
     const placed = tryPlaceShielderAndAttackerFromTarget({
       relation, attackerTeam, compatibleSliders,
@@ -141,13 +166,13 @@ function tryAsTarget(relation, pieces, ctx, random) {
   return null
 }
 
-function tryAsShielder(relation, pieces, ctx, random) {
-  const shielderPos = movedPiecePosition(ctx)
+function tryAsShielder(relation, pieces, ctx, random, actorKey) {
+  const shielderPos = singularPosition(ctx, actorKey)
   if (shielderPos === null) { return null }
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = compatibleSlidersFor(step)
+    const compatibleSliders = shieldAttackerSpeciesForStep(step)
     const towardTarget = walkRay(shielderPos, -step)
     const towardAttacker = walkRay(shielderPos, step)
     const placed = tryPlaceTargetAndAttackerFromShielder({
@@ -160,7 +185,7 @@ function tryAsShielder(relation, pieces, ctx, random) {
 }
 
 function tryAsAttacker(relation, pieces, ctx, random) {
-  const attackerPos = movedPiecePosition(ctx)
+  const attackerPos = singularPosition(ctx, 'moved_piece')
   if (attackerPos === null) { return null }
   const movedSpecies = [...ctx.singulars.moved_piece.species_set][0]
   const attackerSteps = stepsForSliderSpecies(movedSpecies)
@@ -306,10 +331,6 @@ function pickSpeciesFromSet(speciesSet, position, random) {
   return pickWeightedSpecies(filtered, random)
 }
 
-function compatibleSlidersFor(step) {
-  return ROOK_RAY_STEPS.includes(step) ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
-}
-
 function stepsForSliderSpecies(species) {
   if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
   if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
@@ -317,11 +338,12 @@ function stepsForSliderSpecies(species) {
   return []
 }
 
-function movedPiecePosition(ctx) {
-  const movedPiece = ctx?.singulars?.moved_piece
-  if (!movedPiece) { return null }
-  if (movedPiece.region.kind !== 'set' || movedPiece.region.squares.size !== 1) { return null }
-  return [...movedPiece.region.squares][0]
+function singularPosition(ctx, actorKey) {
+  if (!actorKey) { return null }
+  const singular = ctx?.singulars?.[actorKey]
+  if (!singular) { return null }
+  if (singular.region.kind !== 'set' || singular.region.squares.size !== 1) { return null }
+  return [...singular.region.squares][0]
 }
 
 function walkRay(origin, step) {

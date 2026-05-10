@@ -18,15 +18,17 @@ function targetAt(square, team, species) {
   return { position: position(square), team, species }
 }
 
+const EMPTY_CTX = { propositions: [] }
+
 describe('kingAdjacentControlMechanism.appliesTo', () => {
   it('applies to king targets', () => {
     const target = targetAt('d4', Board.WHITE, Board.KING)
-    expect(kingAdjacentControlMechanism.appliesTo(target, {}, 'current', new Map())).toBe(true)
+    expect(kingAdjacentControlMechanism.appliesTo(target, EMPTY_CTX, 'current', new Map())).toBe(true)
   })
 
   it('does not apply to non-king targets', () => {
     const target = targetAt('d4', Board.WHITE, Board.QUEEN)
-    expect(kingAdjacentControlMechanism.appliesTo(target, {}, 'current', new Map())).toBe(false)
+    expect(kingAdjacentControlMechanism.appliesTo(target, EMPTY_CTX, 'current', new Map())).toBe(false)
   })
 })
 
@@ -39,7 +41,7 @@ describe('kingAdjacentControlMechanism.apply', () => {
     const target = targetAt('d4', Board.WHITE, Board.KING)
     const before = mobilityAt(boardFrom(pieces), position('d4'))
 
-    const next = kingAdjacentControlMechanism.apply(target, {}, 'current', pieces, () => 0)
+    const next = kingAdjacentControlMechanism.apply(target, EMPTY_CTX, 'current', pieces, () => 0)
     expect(next).not.toBeNull()
     const after = mobilityAt(boardFrom(next), position('d4'))
     expect(after).toBeLessThan(before)
@@ -52,10 +54,34 @@ describe('kingAdjacentControlMechanism.apply', () => {
     ])
     const target = targetAt('d4', Board.WHITE, Board.KING)
 
-    const next = kingAdjacentControlMechanism.apply(target, {}, 'current', pieces, () => 0)
+    const next = kingAdjacentControlMechanism.apply(target, EMPTY_CTX, 'current', pieces, () => 0)
     expect(next).not.toBeNull()
     const newSquare = [...next.keys()].find(square => !pieces.has(square))
     expect(next.get(newSquare).charAt(0)).toBe(Board.BLACK)
+  })
+})
+
+describe('kingAdjacentControlMechanism.apply respecting caps', () => {
+  it('returns null when every legal enemy attacker would violate a count_range.max cap', () => {
+    const pieces = piecesMap([
+      ['d4', pieceCode(Board.WHITE, Board.KING)],
+      ['d8', pieceCode(Board.BLACK, Board.KING)]
+    ])
+    const target = targetAt('d4', Board.WHITE, Board.KING)
+    const ctx = {
+      singulars: {},
+      propositions: [{
+        team: Board.BLACK,
+        frame: 'current',
+        species_set: new Set([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT, Board.PAWN]),
+        region: { kind: 'all' },
+        count_range: { min: 0, max: 0 },
+        aggregate_value_range: { min: 0, max: Infinity },
+        aggregate_mobility_range: { min: 0, max: Infinity }
+      }]
+    }
+
+    expect(kingAdjacentControlMechanism.apply(target, ctx, 'current', pieces, () => 0)).toBeNull()
   })
 })
 

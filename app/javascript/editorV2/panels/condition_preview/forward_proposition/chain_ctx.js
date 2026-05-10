@@ -12,5 +12,9 @@ export function buildChainCtx(combinedPlan) {
     relations.push(...emitted.relations)
     crossFrame.push(...emitted.crossFrame)
   }
-  return { singulars, propositions, relations, crossFrame }
+  return {
+    singulars, propositions, relations, crossFrame,
+    movingTeam: combinedPlan.movingTeam,
+    enemyTeam: combinedPlan.enemyTeam
+  }
 }

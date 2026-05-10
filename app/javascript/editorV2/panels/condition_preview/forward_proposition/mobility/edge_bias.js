@@ -3,6 +3,7 @@ import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 
 const LOW_MOBILITY_THRESHOLD = 5
 const EDGE_BIAS_PROBABILITY = 0.4
+const DEFAULT_BIAS_CAP = 2
 
 export function isEdgePosition(position) {
   const file = Board.fileIndex(position)
@@ -10,10 +11,16 @@ export function isEdgePosition(position) {
   return file === 0 || file === 7 || rank === 0 || rank === 7
 }
 
-export function edgeBiasedShuffle(positions, random, mobilityRange) {
+export function createBiasState(max = DEFAULT_BIAS_CAP) {
+  return { count: 0, max }
+}
+
+export function edgeBiasedShuffle(positions, random, mobilityRange, biasState = createBiasState()) {
+  if (biasState.count >= biasState.max) { return shuffled(positions, random) }
   if (!shouldBiasEdge(mobilityRange) || random() >= EDGE_BIAS_PROBABILITY) {
     return shuffled(positions, random)
   }
+  biasState.count += 1
   const edge = []
   const interior = []
   for (const pos of positions) {

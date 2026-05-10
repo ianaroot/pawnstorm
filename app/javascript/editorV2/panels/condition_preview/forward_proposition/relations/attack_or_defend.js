@@ -10,6 +10,12 @@ import {
 } from './relation_helpers'
 
 export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
+  // Negative-count relations (max=0 on either side) are satisfied by absence —
+  // no pairs to add. Cap enforcement in respectsAllCaps prevents other passes
+  // from creating offending pairs.
+  if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
+    return pieces
+  }
   if (attackOrDefendRequirementsMet(relation, pieces)) { return pieces }
   let next = pieces
   for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
@@ -30,8 +36,8 @@ function attackOrDefendRequirementsMet(relation, pieces) {
   })
 }
 
-function activeAttackOrDefendSets(relation, pieces) {
-  const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+export function activeAttackOrDefendSets(relation, pieces, board = null) {
+  board = board ?? buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const activeSubjects = new Set()
   const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {

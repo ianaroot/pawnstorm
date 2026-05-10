@@ -68,6 +68,7 @@ function propositionFromUnaryOrPositionPlan(plan) {
     frame: 'current',
     species_set: new Set(candidateSpecies(plan.subjectFilter, plan.subjectFilterMode)),
     region: regionFromPlan(plan),
+    boundSingularActor: SINGULAR_ACTORS.has(plan.subject) ? plan.subject : null,
     ...ranges
   }
 }
@@ -75,6 +76,13 @@ function propositionFromUnaryOrPositionPlan(plan) {
 function constraintsFromRelationalPlan(plan) {
   const subjectIsSingular = SINGULAR_ACTORS.has(plan.subject)
   const targetIsSingular = SINGULAR_ACTORS.has(plan.target)
+
+  // Shield always emits a relation (not a proposition for the non-singular side)
+  // because shield satisfaction requires placing a third piece — the enemy slider —
+  // and that placement only happens through the relation satisfier (satisfyShield).
+  if (plan.operator === 'shield') {
+    return { propositions: [], relations: [buildRelation(plan)], crossFrame: [] }
+  }
 
   if (!subjectIsSingular && !targetIsSingular) {
     return { propositions: [], relations: [buildRelation(plan)], crossFrame: [] }
@@ -126,10 +134,12 @@ function buildRelation(plan) {
 }
 
 function buildRelationSide(plan, side) {
+  const actor = side === 'subject' ? plan.subject : plan.target
   return {
     team: side === 'subject' ? plan.subjectTeam : plan.targetTeam,
     species_set: speciesSetForRelationalSide(plan, side),
     region: { kind: 'all' },
+    boundSingularActor: SINGULAR_ACTORS.has(actor) ? actor : null,
     ...rangesForRelationalSide(plan, side)
   }
 }
@@ -169,6 +179,10 @@ function speciesSetForRelationalSide(plan, side) {
 }
 
 function rangesForRelationalSide(plan, side) {
+  // Mobility metrics are intentionally not handled here — relational mobility
+  // comparisons are rejected upstream at generation_plan.js's relational
+  // descriptor validation. Mate-style chains use multi-payload composition
+  // (e.g. "allied attack enemy_king && enemy mobility = 0").
   const ranges = freshRanges()
   ranges.count_range = { min: 1, max: Infinity }
   for (const d of plan.comparisonDescriptors ?? []) {

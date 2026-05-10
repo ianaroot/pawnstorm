@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
@@ -84,6 +84,34 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 
     expect(p.aggregate_value_range).toEqual({ min: 21, max: Infinity })
     expect(p.count_range).toEqual({ min: 0, max: Infinity })
+  })
+})
+
+describe('emitConstraintsFromPlan — unary on a singular subject', () => {
+  it('tags the proposition with boundSingularActor', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'unary',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'mobility', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 0
+    }])
+    const [plan] = combinedPlan.plans
+    const { propositions } = emitConstraintsFromPlan(plan)
+
+    expect(propositions[0].boundSingularActor).toBe('enemy_moved_piece')
+  })
+
+  it('leaves boundSingularActor null on non-singular unary subjects', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'unary',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'count', comparator: 'greater_than_or_equal_to',
+      target: 'exact_number', targetTotal: 1
+    }])
+    const [plan] = combinedPlan.plans
+    const { propositions } = emitConstraintsFromPlan(plan)
+
+    expect(propositions[0].boundSingularActor).toBeNull()
   })
 })
 
@@ -198,6 +226,85 @@ describe('emitConstraintsFromPlan — relational with singular subject', () => {
     const [p] = propositions
 
     expect(p.count_range).toEqual({ min: 1, max: Infinity })
+  })
+})
+
+describe('emitConstraintsFromPlan — shield with singular subject', () => {
+  let propositions, relations
+  beforeEach(() => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'shield',
+      target: 'enemy', targetFilter: 'king'
+    }])
+    const [plan] = combinedPlan.plans
+    const result = emitConstraintsFromPlan(plan)
+    propositions = result.propositions
+    relations = result.relations
+  })
+
+  it('emits no propositions (singular-side shield routes through the relation path)', () => {
+    expect(propositions).toHaveLength(0)
+  })
+
+  it('emits one relation', () => {
+    expect(relations).toHaveLength(1)
+  })
+
+  it('tags subjectSide.boundSingularActor with the singular actor key', () => {
+    expect(relations[0].subjectSide.boundSingularActor).toBe('enemy_moved_piece')
+  })
+
+  it('leaves targetSide.boundSingularActor null (target is non-singular)', () => {
+    expect(relations[0].targetSide.boundSingularActor).toBeNull()
+  })
+})
+
+describe('emitConstraintsFromPlan — shield with singular target', () => {
+  let propositions, relations
+  beforeEach(() => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'shield',
+      target: 'moved_piece', targetFilter: 'any'
+    }])
+    const [plan] = combinedPlan.plans
+    const result = emitConstraintsFromPlan(plan)
+    propositions = result.propositions
+    relations = result.relations
+  })
+
+  it('emits no propositions (singular-side shield routes through the relation path)', () => {
+    expect(propositions).toHaveLength(0)
+  })
+
+  it('emits one relation', () => {
+    expect(relations).toHaveLength(1)
+  })
+
+  it('tags targetSide.boundSingularActor with the singular actor key', () => {
+    expect(relations[0].targetSide.boundSingularActor).toBe('moved_piece')
+  })
+
+  it('leaves subjectSide.boundSingularActor null (subject is non-singular)', () => {
+    expect(relations[0].subjectSide.boundSingularActor).toBeNull()
+  })
+})
+
+describe('emitConstraintsFromPlan — shield with both sides non-singular', () => {
+  it('emits a relation with both sides boundSingularActor set to null', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'shield',
+      target: 'allied', targetFilter: 'king'
+    }])
+    const [plan] = combinedPlan.plans
+    const { relations } = emitConstraintsFromPlan(plan)
+
+    expect(relations[0].subjectSide.boundSingularActor).toBeNull()
   })
 })
 

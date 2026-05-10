@@ -76,3 +76,26 @@ describe('placeSingulars — enemy_moved_piece', () => {
     expect(placeSingulars(singulars, () => 0.0)).toBeNull()
   })
 })
+
+describe('placeSingulars — empty-set region as commit-failure abort signal', () => {
+  it('returns null when moved_piece region is a set with size 0', () => {
+    const singulars = singularsWith({
+      moved_piece: { team: Board.WHITE, species_set: new Set([Board.NIGHT]), region: { kind: 'set', squares: new Set() } }
+    })
+
+    expect(placeSingulars(singulars, () => 0.0)).toBeNull()
+  })
+})
+
+describe('placeSingulars — already placed by early-placement', () => {
+  it('skips placing moved_piece when its position already has the matching piece', () => {
+    const initialPieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const pieces = placeSingulars(singularsWith({}), () => 0.0, initialPieces)
+    expect(pieces.size).toBe(1)
+  })
+
+  it('returns null when the existing piece at moved_piece\'s position is the wrong piece', () => {
+    const initialPieces = new Map([[D4, pieceCode(Board.BLACK, Board.QUEEN)]])
+    expect(placeSingulars(singularsWith({}), () => 0.0, initialPieces)).toBeNull()
+  })
+})

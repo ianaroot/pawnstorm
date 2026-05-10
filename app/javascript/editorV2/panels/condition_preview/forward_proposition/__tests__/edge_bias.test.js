@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 
 import {
-  isEdgePosition, edgeBiasedShuffle, aggregateMobilityRangeForSingular
+  isEdgePosition, edgeBiasedShuffle, aggregateMobilityRangeForSingular, createBiasState
 } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
 import { position } from 'gameplay/__tests__/helpers'
 
@@ -149,5 +149,44 @@ describe('aggregateMobilityRangeForSingular', () => {
       [proposition({ aggregate_mobility_range: { min: 0, max: 0 } })]
     )
     expect(result).toEqual({ min: 0, max: Infinity })
+  })
+})
+
+describe('edgeBiasedShuffle bias cap', () => {
+  const candidates = () => [position('a1'), position('d4'), position('h8'), position('e5')]
+  const tightRange = { min: 0, max: 0 }
+
+  it('increments the bias counter when a bias actually fires', () => {
+    const biasState = createBiasState()
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    expect(biasState.count).toBe(1)
+  })
+
+  it('does not increment the counter when the bias roll fails', () => {
+    const biasState = createBiasState()
+    edgeBiasedShuffle(candidates(), () => 0.9, tightRange, biasState)
+    expect(biasState.count).toBe(0)
+  })
+
+  it('does not increment the counter when the mobility range is permissive', () => {
+    const biasState = createBiasState()
+    edgeBiasedShuffle(candidates(), () => 0, undefined, biasState)
+    expect(biasState.count).toBe(0)
+  })
+
+  it('caps bias triggers at the configured maximum across repeated calls', () => {
+    const biasState = createBiasState(2)
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    expect(biasState.count).toBe(2)
+  })
+
+  it('returns a uniform shuffle once the bias cap is reached', () => {
+    const biasState = createBiasState(2)
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    const third = edgeBiasedShuffle(candidates(), () => 0, tightRange, biasState)
+    expect([...third].sort()).toEqual([...candidates()].sort())
   })
 })

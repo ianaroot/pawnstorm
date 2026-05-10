@@ -411,6 +411,97 @@ describe('satisfyRelations — shield count_range.min >= 2', () => {
   })
 })
 
+describe('satisfyRelations — shield variant: subject side bound to a singular shielder', () => {
+  let result
+  beforeEach(() => {
+    const enemyMoved = {
+      team: Board.BLACK, species_set: new Set([Board.BISHOP]),
+      region: { kind: 'set', squares: new Set([D4]) }
+    }
+    const initialPieces = new Map([[D4, pieceCode(Board.BLACK, Board.BISHOP)]])
+    const subjectSide = {
+      team: Board.BLACK, species_set: new Set([Board.BISHOP]),
+      region: { kind: 'all' },
+      count_range: { min: 1, max: Infinity },
+      aggregate_value_range: { ...PERMISSIVE },
+      aggregate_mobility_range: { ...PERMISSIVE },
+      boundSingularActor: 'enemy_moved_piece'
+    }
+    const targetSide = side({ team: Board.BLACK, species_set: new Set([Board.KING]) })
+    const ctx = {
+      singulars: { enemy_moved_piece: enemyMoved },
+      propositions: [],
+      relations: [{ operator: 'shield', subjectSide, targetSide }]
+    }
+    result = satisfyRelations(ctx, initialPieces, controlledRandom(0.99))
+  })
+
+  it('returns a non-null result', () => {
+    expect(result).not.toBeNull()
+  })
+
+  it('keeps the bound singular (black bishop) at D4', () => {
+    expect(result.get(D4)).toBe(pieceCode(Board.BLACK, Board.BISHOP))
+  })
+
+  it('makes D4 a shielder of a black king on the same ray', () => {
+    const kingPos = findOne(result, pieceCode(Board.BLACK, Board.KING))
+    const shielders = shieldingPositions({ board: boardFrom(result), targetPosition: kingPos, team: Board.BLACK })
+    expect(shielders).toContain(D4)
+  })
+})
+
+describe('satisfyRelations — bound shield ignores coincidental external shield', () => {
+  // d6 (BN) shielding d5 (BK) from d8 (WQ) on the d-file is a "coincidental"
+  // shield not involving the bound singular at f7. The satisfier must still
+  // place pieces so f7 (enemy_moved_piece) is itself a shielder.
+  const D6 = 43
+  const D5 = 35
+  const D8 = 59
+  const F7 = 53
+  let result
+  beforeEach(() => {
+    const enemyMoved = {
+      team: Board.BLACK, species_set: new Set([Board.BISHOP]),
+      region: { kind: 'set', squares: new Set([F7]) }
+    }
+    const initialPieces = new Map([
+      [F7, pieceCode(Board.BLACK, Board.BISHOP)],
+      [D6, pieceCode(Board.BLACK, Board.NIGHT)],
+      [D5, pieceCode(Board.BLACK, Board.KING)],
+      [D8, pieceCode(Board.WHITE, Board.QUEEN)]
+    ])
+    const subjectSide = {
+      team: Board.BLACK,
+      species_set: new Set([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]),
+      region: { kind: 'all' },
+      count_range: { min: 1, max: Infinity },
+      aggregate_value_range: { ...PERMISSIVE },
+      aggregate_mobility_range: { ...PERMISSIVE },
+      boundSingularActor: 'enemy_moved_piece'
+    }
+    const targetSide = side({ team: Board.BLACK, species_set: new Set([Board.KING]) })
+    const ctx = {
+      singulars: { enemy_moved_piece: enemyMoved },
+      propositions: [],
+      relations: [{ operator: 'shield', subjectSide, targetSide }]
+    }
+    result = satisfyRelations(ctx, initialPieces, controlledRandom(0.99))
+  })
+
+  it('returns a non-null result', () => {
+    expect(result).not.toBeNull()
+  })
+
+  it('makes F7 (the bound singular) a shielder of some black king', () => {
+    const blackKings = [...result.entries()].filter(([, c]) => c === pieceCode(Board.BLACK, Board.KING))
+    const f7IsShielder = blackKings.some(([kPos]) =>
+      shieldingPositions({ board: boardFrom(result), targetPosition: kPos, team: Board.BLACK }).includes(F7)
+    )
+    expect(f7IsShielder).toBe(true)
+  })
+})
+
 describe('satisfyRelations — shield variant: moved-as-attacker', () => {
   let result
   beforeEach(() => {

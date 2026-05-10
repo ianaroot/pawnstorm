@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { pieceCode, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { materializeRegion } from 'editorV2/panels/condition_preview/forward_proposition/materialize_region'
@@ -87,5 +87,61 @@ describe('materializeRegion — related-to target role (group attacks anchor)', 
     expect(result.has(D6)).toBe(true)
     expect(result.has(43 + 8)).toBe(false)  // d7
     expect(result.has(43 + 16)).toBe(false) // d8
+  })
+})
+
+describe('materializeRegion — operator: shield, role: subject (empty board)', () => {
+  let result
+  beforeEach(() => {
+    const singulars = knightAnchorAt(D4)
+    const board = boardWith(new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]]))
+    const region = { kind: 'related-to', actor: 'moved_piece', role: 'subject', operator: 'shield' }
+    result = materializeRegion(region, { singulars, board })
+  })
+
+  it('returns the 27 queen-line squares from D4', () => {
+    expect(result.size).toBe(27)
+  })
+})
+
+describe('materializeRegion — operator: shield, role: target (empty board)', () => {
+  let result
+  beforeEach(() => {
+    const singulars = knightAnchorAt(D4)
+    const board = boardWith(new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]]))
+    const region = { kind: 'related-to', actor: 'moved_piece', role: 'target', operator: 'shield' }
+    result = materializeRegion(region, { singulars, board })
+  })
+
+  it('returns the 27 queen-line squares from D4 (same geometry as role: subject)', () => {
+    expect(result.size).toBe(27)
+  })
+})
+
+describe('materializeRegion — operator: shield ray truncation at first occupant', () => {
+  const D6 = 43
+  const D5 = 35
+  const D7 = 51
+  let result
+  beforeEach(() => {
+    const singulars = knightAnchorAt(D4)
+    const board = boardWith(new Map([
+      [D4, pieceCode(Board.WHITE, Board.NIGHT)],
+      [D6, pieceCode(Board.WHITE, Board.PAWN)]
+    ]))
+    const region = { kind: 'related-to', actor: 'moved_piece', role: 'subject', operator: 'shield' }
+    result = materializeRegion(region, { singulars, board })
+  })
+
+  it('includes the empty square between anchor and the blocker', () => {
+    expect(result.has(D5)).toBe(true)
+  })
+
+  it('includes the blocker itself (matches attack/defend ray semantics)', () => {
+    expect(result.has(D6)).toBe(true)
+  })
+
+  it('excludes squares beyond the blocker', () => {
+    expect(result.has(D7)).toBe(false)
   })
 })

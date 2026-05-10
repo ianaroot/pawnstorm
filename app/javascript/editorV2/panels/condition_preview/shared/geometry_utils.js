@@ -16,7 +16,7 @@ function pawnControlledSquares(position, team) {
   return result.filter(p => Board._inBounds(p))
 }
 
-function sliderControlledSquaresFromBoard(position, steps, board) {
+export function raySquaresFrom(position, steps, board) {
   const squares = []
   for (const step of steps) {
     let current = nextPositionOnRay(position, step)
@@ -42,9 +42,9 @@ export function controlledSquaresForPieceAt(position, board) {
     case Board.PAWN:   return pawnControlledSquares(position, team)
     case Board.NIGHT:  return knightControlledSquares(position)
     case Board.KING:   return kingControlledSquares(position)
-    case Board.BISHOP: return sliderControlledSquaresFromBoard(position, BISHOP_RAY_STEPS, board)
-    case Board.ROOK:   return sliderControlledSquaresFromBoard(position, ROOK_RAY_STEPS, board)
-    case Board.QUEEN:  return sliderControlledSquaresFromBoard(position, QUEEN_RAY_STEPS, board)
+    case Board.BISHOP: return raySquaresFrom(position, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return raySquaresFrom(position, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return raySquaresFrom(position, QUEEN_RAY_STEPS, board)
     default:           return []
   }
 }
@@ -104,9 +104,9 @@ export function attackerCandidatesFor(targetPosition, species, team, board) {
     case Board.PAWN:   return pawnControlledSquares(targetPosition, Board.opposingTeam(team))
     case Board.NIGHT:  return knightControlledSquares(targetPosition)
     case Board.KING:   return kingControlledSquares(targetPosition)
-    case Board.BISHOP: return sliderControlledSquaresFromBoard(targetPosition, BISHOP_RAY_STEPS, board)
-    case Board.ROOK:   return sliderControlledSquaresFromBoard(targetPosition, ROOK_RAY_STEPS, board)
-    case Board.QUEEN:  return sliderControlledSquaresFromBoard(targetPosition, QUEEN_RAY_STEPS, board)
+    case Board.BISHOP: return raySquaresFrom(targetPosition, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return raySquaresFrom(targetPosition, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return raySquaresFrom(targetPosition, QUEEN_RAY_STEPS, board)
     default:           return []
   }
 }
