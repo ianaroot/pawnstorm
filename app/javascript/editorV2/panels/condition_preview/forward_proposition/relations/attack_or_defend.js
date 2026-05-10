@@ -4,31 +4,57 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { controllingPositions } from 'gameplay/board_query_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { matchesSide, candidatesForSide, applyOne, regionAllows } from './relation_helpers'
+import {
+  matchesSide, candidatesForSide, applyOne, regionAllows,
+  requirementsMet, MAX_SATISFY_ITERATIONS
+} from './relation_helpers'
 
 export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
-  if (alreadySatisfied(relation, pieces)) { return pieces }
-  return tryPlace(relation, pieces, random)
+  if (attackOrDefendRequirementsMet(relation, pieces)) { return pieces }
+  let next = pieces
+  for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
+    if (attackOrDefendRequirementsMet(relation, next)) { return next }
+    const placed = tryPlace(relation, next, ctx, random)
+    if (placed === null || placed === next) { return null }
+    next = placed
+  }
+  return attackOrDefendRequirementsMet(relation, next) ? next : null
 }
 
-function alreadySatisfied(relation, pieces) {
+function attackOrDefendRequirementsMet(relation, pieces) {
+  const { activeSubjects, activeTargets } = activeAttackOrDefendSets(relation, pieces)
+  return requirementsMet({
+    subjectSide: relation.subjectSide,
+    targetSide: relation.targetSide,
+    activeSubjects, activeTargets, pieces
+  })
+}
+
+function activeAttackOrDefendSets(relation, pieces) {
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+  const activeSubjects = new Set()
+  const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {
     if (!matchesSide(tPiece, relation.targetSide)) { continue }
     const controllers = controllingPositions({
       board, targetPosition: tPos, team: relation.subjectSide.team
     })
+    let hasMatch = false
     for (const sPos of controllers) {
-      if (matchesSide(pieces.get(sPos), relation.subjectSide)) { return true }
+      if (matchesSide(pieces.get(sPos), relation.subjectSide)) {
+        activeSubjects.add(sPos)
+        hasMatch = true
+      }
     }
+    if (hasMatch) { activeTargets.add(tPos) }
   }
-  return false
+  return { activeSubjects, activeTargets }
 }
 
-function tryPlace(relation, pieces, random) {
+function tryPlace(relation, pieces, ctx, random) {
   const targetCandidates = shuffled(candidatesForSide(relation.targetSide, pieces), random)
   for (const target of targetCandidates) {
-    const piecesWithTarget = applyOne(pieces, target)
+    const piecesWithTarget = applyOne(pieces, target, ctx)
     if (piecesWithTarget === null) { continue }
 
     const board = buildBoardFromLayout(buildLayoutFromPieces(piecesWithTarget))
@@ -37,8 +63,10 @@ function tryPlace(relation, pieces, random) {
       random
     )
     for (const subject of subjectCandidates) {
-      const next = applyOne(piecesWithTarget, subject)
-      if (next !== null) { return next }
+      const next = applyOne(piecesWithTarget, subject, ctx)
+      if (next === null) { continue }
+      if (next.size === pieces.size) { continue }
+      return next
     }
   }
   return null

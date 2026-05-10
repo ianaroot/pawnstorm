@@ -1,7 +1,32 @@
 import {
   ALL_POSITIONS, WEIGHTED_SPECIES_DISTRIBUTION, pieceCode, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+
+// Cap on iterations for relation satisfiers' count/value loops. Covers count_range
+// up to ~10 and aggregate_value up to ~30 (worst-case low-value species).
+// Relation satisfiers do NOT enforce count_range.max or aggregate_value_range.max
+// — only mins. Max enforcement is deferred.
+export const MAX_SATISFY_ITERATIONS = 30
+
+export function requirementsMet({ subjectSide, targetSide, activeSubjects, activeTargets, pieces }) {
+  if (activeSubjects.size < subjectSide.count_range.min) { return false }
+  if (activeTargets.size  < targetSide.count_range.min)  { return false }
+  if (sumValues(activeSubjects, pieces) < subjectSide.aggregate_value_range.min) { return false }
+  if (sumValues(activeTargets,  pieces) < targetSide.aggregate_value_range.min)  { return false }
+  return true
+}
+
+function sumValues(positions, pieces) {
+  let total = 0
+  for (const pos of positions) {
+    const piece = pieces.get(pos)
+    if (piece) { total += materialValue(piece.slice(1)) }
+  }
+  return total
+}
 
 export function matchesSide(piece, side) {
   if (!piece) { return false }
@@ -33,7 +58,8 @@ export function candidatesForSide(side, pieces) {
   return candidates
 }
 
-export function applyOne(pieces, candidate) {
+export function applyOne(pieces, candidate, ctx) {
   if (candidate.kind === 'existing') { return pieces }
+  if (!respectsAllCaps(candidate.team, candidate.species, candidate.position, ctx, pieces)) { return null }
   return placePiece(pieces, candidate.position, pieceCode(candidate.team, candidate.species))
 }
