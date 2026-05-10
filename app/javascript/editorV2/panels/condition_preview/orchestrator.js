@@ -16,6 +16,7 @@ import { collectCastleExamples } from './special_moves/castle'
 import { collectPromotionExamples } from './special_moves/promotion'
 import { collectEnPassantExamples } from './special_moves/en_passant'
 
+const SOFT_TIMEOUT_MS = 5000
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
 const FORWARD_POOL_FRACTION = 0.5
@@ -179,7 +180,7 @@ function emptyPipelineCounter() {
   return counter
 }
 
-function collectAllExamples({ combinedPlan, random, totalMs }) {
+function collectAllExamples({ combinedPlan, random, totalMs, deadline = Infinity }) {
   const seen = new Set()
   const addUnique = makeAdder(seen)
   const standardExamples = []
@@ -215,7 +216,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
       collectForwardPropositionExamples({
         combinedPlan, random,
         maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
-        addUnique, standardExamples, produced
+        addUnique, standardExamples, produced, deadline
       })
     }
   }
@@ -296,7 +297,9 @@ export function generateConditionExamples(payloads, options = {}) {
   const maxExamples = options.maxExamples ?? MAX_DEFAULT_EXAMPLES
   const random = options.random ?? Math.random
   const totalMs = options.maxMs ?? 500
+  const softTimeoutMs = options.softTimeoutMs ?? SOFT_TIMEOUT_MS
   const startTime = Date.now()
+  const deadline = startTime + softTimeoutMs
 
   const payloadArray = Array.isArray(payloads) ? payloads : [payloads]
   const combinedPlan = buildCombinedPlan(payloadArray, options)
@@ -305,11 +308,15 @@ export function generateConditionExamples(payloads, options = {}) {
     return { status: combinedPlan.status, reason: combinedPlan.reason, examples: [], payloadCount: payloadArray.length }
   }
   const { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced } = collectAllExamples({
-    combinedPlan, random, totalMs
+    combinedPlan, random, totalMs, deadline
   })
   const total = standardExamples.length + castleExamples.length + promotionExamples.length + enPassantExamples.length
+  const timedOut = Date.now() > deadline
   if (total === 0) {
     emitStats(options, payloadArray, produced, [], startTime)
+    if (timedOut) {
+      return { status: 'slow', reason: `Generation paused after ${softTimeoutMs}ms — no examples found yet.`, examples: [], payloadCount: payloadArray.length }
+    }
     return { status: 'no_examples', reason: NO_EXAMPLES_REASON, examples: [], payloadCount: payloadArray.length }
   }
   const finalExamples = mergeMoveKindExamples({
@@ -317,9 +324,10 @@ export function generateConditionExamples(payloads, options = {}) {
     combinedPlan, maxExamples, random
   })
   emitStats(options, payloadArray, produced, finalExamples, startTime)
+  const status = timedOut && finalExamples.length < maxExamples ? 'slow' : 'ready'
   return {
-    status: 'ready',
-    reason: null,
+    status,
+    reason: status === 'slow' ? `Generation paused after ${softTimeoutMs}ms — ${finalExamples.length} examples found so far.` : null,
     payloadCount: payloadArray.length,
     examples: shuffled(finalExamples, random)
   }

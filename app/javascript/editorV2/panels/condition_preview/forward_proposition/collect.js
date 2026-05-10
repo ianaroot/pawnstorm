@@ -7,7 +7,7 @@ const DEFAULT_ATTEMPTS = 200
 
 export function collectForwardPropositionExamples({
   combinedPlan, random, maxStandardSize, addUnique, standardExamples, produced,
-  attempts = DEFAULT_ATTEMPTS
+  attempts = DEFAULT_ATTEMPTS, deadline = Infinity
 }) {
   if (combinedPlan.plans.length === 0) { return }
   const verifier = new CandidateVerifier({ combinedPlan })
@@ -15,6 +15,7 @@ export function collectForwardPropositionExamples({
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     if (standardExamples.length >= maxStandardSize) { break }
+    if (Date.now() > deadline) { break }
     const result = buildAttempt(combinedPlan, random)
     if (!result) { continue }
     const candidate = new Candidate({ priorBoard: result.priorBoard, moveObject: result.moveObject })
