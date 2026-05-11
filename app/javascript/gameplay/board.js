@@ -389,6 +389,7 @@ class Board {
 
   positionEmpty(position){
     position = Board.convertPositionFromAlphaNumeric(position)
+    if (!Board._inBounds(position)) { return false }
     let pieceObject = this.pieceObject(position)
     return Board.parseTeam( pieceObject ) === Board.EMPTY
   }
