@@ -42,6 +42,39 @@ export function walkRay(position, step) {
   return positions
 }
 
+// Verifies that a piece of `species` could legally traverse the path from
+// `fromSquare` to `toSquare` on a board described by `pieces` (a Map of
+// position → piece-code). Knights, kings, and pawns return true (no path
+// concept beyond destination legality). Sliders (rook/bishop/queen) verify
+// the path along the slider ray between from and to is empty.
+export function pathClearOnPieces(pieces, fromSquare, toSquare, species) {
+  if (species === Board.NIGHT || species === Board.KING || species === Board.PAWN) {
+    return true
+  }
+  const step = sliderStepBetween(fromSquare, toSquare)
+  if (step === null) { return false }
+  let current = nextPositionOnRay(fromSquare, step)
+  while (current !== null && current !== toSquare) {
+    if (pieces.has(current)) { return false }
+    current = nextPositionOnRay(current, step)
+  }
+  return current === toSquare
+}
+
+// Computes the slider-step direction (rook or bishop offset) between two
+// squares, or null if they aren't on a common slider ray.
+function sliderStepBetween(fromSquare, toSquare) {
+  const fileDiff = (toSquare % 8) - (fromSquare % 8)
+  const rankDiff = Math.floor(toSquare / 8) - Math.floor(fromSquare / 8)
+  if (fileDiff === 0 && rankDiff === 0) { return null }
+  if (fileDiff === 0)            { return rankDiff > 0 ?  8 : -8 }
+  if (rankDiff === 0)            { return fileDiff > 0 ?  1 : -1 }
+  if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
+    return (rankDiff > 0 ? 8 : -8) + (fileDiff > 0 ? 1 : -1)
+  }
+  return null
+}
+
 // Squares the piece at `position` on `board` controls (attacks/defends).
 // Used when a singular actor is the SUBJECT of a relational position
 // constraint — the dependent group-side piece must be placed at a square

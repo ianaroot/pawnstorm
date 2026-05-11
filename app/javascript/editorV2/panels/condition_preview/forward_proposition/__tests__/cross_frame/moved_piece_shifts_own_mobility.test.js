@@ -121,12 +121,18 @@ describe('movedPieceShiftsOwnMobility — apply (direction "-")', () => {
     expect(moved.priorRegion.squares.size).toBe(1)
   })
 
-  it('returns null when no origin satisfies direction', () => {
-    // Knight at D4 with completely open board: mobility = 8. No origin can have higher mobility.
+  it('engineers via active mechanisms when no origin satisfies "-" naturally', () => {
+    // Knight at D4 on open board: max mobility (8). No origin has higher
+    // natural mobility. Active engineering reduces destination mobility
+    // (places blockers around D4) so some origins now have higher prior
+    // mobility — '-' direction now satisfiable.
     const moved = movedPieceSingular(Board.NIGHT)
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
 
-    expect(movedPieceShiftsOwnMobility.apply(entry({ direction: '-', species: Board.NIGHT }), ctx, pieces, () => 0.5)).toBeNull()
+    const result = movedPieceShiftsOwnMobility.apply(entry({ direction: '-', species: Board.NIGHT }), ctx, pieces, () => 0.5)
+
+    expect(result).not.toBeNull()
+    expect(result.size).toBeGreaterThan(pieces.size)
   })
 })

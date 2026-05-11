@@ -9,6 +9,7 @@ import { movedPieceParticipatesShield } from './mechanisms/moved_piece_participa
 import { movedPieceObstructsInAttackOrDefend } from './mechanisms/moved_piece_obstructs_in_attack_or_defend'
 import { movedPieceObstructsShield } from './mechanisms/moved_piece_obstructs_shield'
 import { movedPieceShiftsOwnMobility } from './mechanisms/moved_piece_shifts_own_mobility'
+import { movedPieceShiftsAlliedMobility } from './mechanisms/moved_piece_shifts_allied_mobility'
 
 const MECHANISMS = Object.freeze([
   movedPieceParticipatesInAttackOrDefend,
@@ -16,7 +17,8 @@ const MECHANISMS = Object.freeze([
   movedPieceParticipatesShield,
   movedPieceObstructsInAttackOrDefend,
   movedPieceObstructsShield,
-  movedPieceShiftsOwnMobility
+  movedPieceShiftsOwnMobility,
+  movedPieceShiftsAlliedMobility
 ])
 
 export function satisfyCrossFrame(ctx, pieces, random) {
