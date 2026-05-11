@@ -402,6 +402,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
     expect(crossFrame).toHaveLength(1)
     expect(crossFrame[0]).toEqual({
       source: 'unary',
+      operator: 'count',
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
@@ -482,6 +483,7 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
     expect(crossFrame).toHaveLength(1)
     expect(crossFrame[0]).toEqual({
       source: 'relational',
+      operator: 'attack',
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
@@ -501,5 +503,34 @@ describe('emitConstraintsFromPlan — crossFrame source field', () => {
 
     const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
     expect(crossFrame[0].source).toBe('unary')
+  })
+})
+
+describe('emitConstraintsFromPlan — crossFrame operator field', () => {
+  it('stores the unary operator on crossFrame entries for unary PBS plans', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'unary',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'value', comparator: 'less_than',
+      target: 'prior_board_state'
+    }])
+
+    const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
+    expect(crossFrame[0].operator).toBe('value')
+  })
+
+  it('stores the relational operator on crossFrame entries for relational PBS plans', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state',
+      operator: 'defend',
+      target: 'moved_piece', targetFilter: 'any'
+    }])
+
+    const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
+    expect(crossFrame[0].operator).toBe('defend')
   })
 })

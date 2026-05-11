@@ -9,6 +9,7 @@ import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
 import { satisfyRelations } from './relations/satisfy_relations'
 import { satisfyMobility } from './mobility/satisfy_mobility'
+import { satisfyCrossFrame } from './cross_frame/satisfy_cross_frame'
 import { createBiasState } from './mobility/edge_bias'
 import { synthesizeMove } from './synthesize_move'
 
@@ -33,7 +34,12 @@ export function buildAttempt(combinedPlan, random) {
   pieces = satisfyRelations(ctx, pieces, random)
   if (pieces === null) { return null }
 
-  pieces = satisfyMobility(ctx, pieces, random)
+  const [first, second] = random() < 0.5
+    ? [satisfyMobility, satisfyCrossFrame]
+    : [satisfyCrossFrame, satisfyMobility]
+  pieces = first(ctx, pieces, random)
+  if (pieces === null) { return null }
+  pieces = second(ctx, pieces, random)
   if (pieces === null) { return null }
 
   pieces = placeKingsIfAbsent(pieces, random, ctx)
