@@ -49,6 +49,7 @@ function constraintsFromPbsUnaryOrPositionPlan(plan) {
     propositions: [priorProp, currentProp],
     relations: [],
     crossFrame: [{
+      source: plan.kind,
       metric: metricForOperator(plan.operator, plan.subject),
       direction: COMPARATOR_TO_DIRECTION[plan.comparator] ?? '=',
       priorProposition: priorProp,
@@ -116,6 +117,7 @@ function buildPbsPair(plan, side, otherIsSingular, descriptor) {
     priorProp,
     currentProp,
     crossEntry: {
+      source: 'relational',
       metric: descriptor.metric,
       direction: COMPARATOR_TO_DIRECTION[descriptor.comparator] ?? '=',
       priorProposition: priorProp,

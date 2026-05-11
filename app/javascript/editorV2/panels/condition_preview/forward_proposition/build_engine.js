@@ -4,6 +4,7 @@ import { commitSingularsSpecies } from './commit_singulars_species'
 import { commitSingularsPosition } from './commit_singulars_position'
 import { earlyPlaceConstraintTargets } from './early_placement/place_constraint_targets'
 import { isSatisfiable } from './is_satisfiable'
+import { narrowForCrossFrame } from './narrow_for_crossframe'
 import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
 import { satisfyRelations } from './relations/satisfy_relations'
@@ -16,6 +17,7 @@ export function buildAttempt(combinedPlan, random) {
   ctx.edgeBiasState = createBiasState()
   ctx.pinState = createBiasState()
   ctx.checkState = createBiasState(1)
+  narrowForCrossFrame(ctx)
   if (!isSatisfiable(ctx)) { return null }
 
   commitSingularsSpecies(ctx, random)

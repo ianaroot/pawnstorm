@@ -401,6 +401,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
 
     expect(crossFrame).toHaveLength(1)
     expect(crossFrame[0]).toEqual({
+      source: 'unary',
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
@@ -480,10 +481,25 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
 
     expect(crossFrame).toHaveLength(1)
     expect(crossFrame[0]).toEqual({
+      source: 'relational',
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
       currentProposition: currentProp
     })
+  })
+})
+
+describe('emitConstraintsFromPlan — crossFrame source field', () => {
+  it('tags crossFrame entries from unary PBS plans with source "unary"', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'unary',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'count', comparator: 'less_than',
+      target: 'prior_board_state'
+    }])
+
+    const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
+    expect(crossFrame[0].source).toBe('unary')
   })
 })
