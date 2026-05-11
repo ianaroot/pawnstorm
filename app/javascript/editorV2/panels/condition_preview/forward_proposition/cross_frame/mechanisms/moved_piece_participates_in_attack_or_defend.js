@@ -1,4 +1,3 @@
-import Board from 'gameplay/board'
 import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
@@ -6,9 +5,9 @@ import {
 import {
   attackerCandidatesFor, controlledSquaresForPieceAt, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { intersectRegions } from '../../region'
-import { respectsAllCaps } from '../../respect_caps'
+import {
+  movedPieceRoleIn, singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
+} from './participates_helpers'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
 
@@ -28,19 +27,6 @@ export const movedPieceParticipatesInAttackOrDefend = {
     if (entry.direction === '-') { return applyMinus(entry, role, ctx, pieces, random) }
     return null
   }
-}
-
-function movedPieceRoleIn(entry) {
-  const region = entry.currentProposition?.region
-  if (region?.kind !== 'related-to') { return null }
-  if (region.actor !== 'moved_piece') { return null }
-  return region.role
-}
-
-function singularSquare(singular) {
-  if (singular.region.kind !== 'set') { return null }
-  if (singular.region.squares.size !== 1) { return null }
-  return [...singular.region.squares][0]
 }
 
 function applyPlus(entry, role, ctx, pieces, random) {
@@ -73,11 +59,7 @@ function applyPlusRoleTarget(entry, ctx, pieces, random) {
     const candidates = shuffled(attackerCandidatesFor(destination, species, team, board), random)
     for (const placement of candidates) {
       if (pieces.has(placement)) { continue }
-      if (!respectsAllCaps(team, species, placement, ctx, pieces)) { continue }
-      const result = commitWithPlacement({
-        placement, species, placerTeam: team, ctx, pieces, destination,
-        controllerCheck: piecePosition => piecePosition
-      })
+      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination })
       if (result !== null) { return result }
     }
   }
@@ -102,11 +84,7 @@ function applyPlusRoleSubject(entry, ctx, pieces, random) {
   for (const placement of reachable) {
     if (pieces.has(placement)) { continue }
     for (const species of shuffled(speciesPool, random)) {
-      if (!respectsAllCaps(team, species, placement, ctx, pieces)) { continue }
-      const result = commitWithPlacement({
-        placement, species, placerTeam: team, ctx, pieces, destination,
-        controllerCheck: piecePosition => piecePosition
-      })
+      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination })
       if (result !== null) { return result }
     }
   }
@@ -165,16 +143,6 @@ function applyMinusRoleSubject(entry, ctx, pieces, random) {
   return commitPriorRegion(ctx, candidates, pieces)
 }
 
-function placeableSpecies(speciesSet) {
-  const result = []
-  for (const s of speciesSet) {
-    if (s === null) { continue }
-    if (s === Board.KING) { continue }
-    result.push(s)
-  }
-  return result
-}
-
 function anyTeamPieceControls({ board, pieces, team, speciesSet, square }) {
   for (const [pos, piece] of pieces) {
     if (piece.charAt(0) !== team) { continue }
@@ -204,9 +172,11 @@ function withMovedAt(pieces, fromSquare, toSquare, team, species) {
   return next
 }
 
-function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, destination, controllerCheck }) {
-  const next = placePiece(pieces, placement, pieceCode(placerTeam, species))
-  if (next === null) { return null }
+function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, destination }) {
+  const next = ensureRolePieceAt({
+    pieces, pos: placement, team: placerTeam, speciesSet: new Set([species]), ctx, random: () => 0
+  })
+  if (next === null || next === pieces) { return null }
 
   const hypotheticalBoard = buildBoardFromLayout(buildLayoutFromPieces(next))
   const moved = ctx.singulars.moved_piece
@@ -215,25 +185,9 @@ function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, dest
     .filter(p => p !== destination && !next.has(p))
     .filter(origin => !pieceControlsSquare({
       board: hypotheticalBoard,
-      attackerPosition: controllerCheck(placement),
+      attackerPosition: placement,
       targetPosition: origin
     }))
 
-  if (validOrigins.length === 0) { return null }
-
-  const proposed = { kind: 'set', squares: new Set(validOrigins) }
-  const intersected = intersectRegions(moved.priorRegion, proposed)
-  if (intersected.kind === 'set' && intersected.squares.size === 0) { return null }
-
-  moved.priorRegion = intersected
-  return next
-}
-
-function commitPriorRegion(ctx, candidates, pieces) {
-  const proposed = { kind: 'set', squares: new Set(candidates) }
-  const moved = ctx.singulars.moved_piece
-  const intersected = intersectRegions(moved.priorRegion, proposed)
-  if (intersected.kind === 'set' && intersected.squares.size === 0) { return null }
-  moved.priorRegion = intersected
-  return pieces
+  return commitPriorRegion(ctx, validOrigins, next)
 }
