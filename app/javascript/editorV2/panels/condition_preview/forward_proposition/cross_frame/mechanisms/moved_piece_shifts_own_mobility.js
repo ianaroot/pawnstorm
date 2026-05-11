@@ -1,6 +1,7 @@
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, shuffled
+  buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { pathClearOnPieces } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from '../../mobility/blockers'
@@ -39,6 +40,11 @@ export const movedPieceShiftsOwnMobility = {
     if (destination === null) { return null }
     const movedSpecies = [...moved.species_set][0]
     if (movedSpecies === null) { return null }
+    if (!teamHasKing(pieces, moved.team)) {
+      const placed = placeKingDeliberately(pieces, moved.team, 'current', ctx, random)
+      if (placed === null) { return null }
+      pieces = placed
+    }
 
     const naturalResult = findOriginWithNaturalDelta(entry, ctx, pieces, random, moved, destination, movedSpecies)
     if (naturalResult !== null) { return naturalResult }
@@ -154,23 +160,3 @@ function applyEngineeredBlockers(originalPieces, hypothetical, mechanismResult, 
   return final
 }
 
-function legalOriginCandidates(pieces, destination, team, species) {
-  return originCandidatesForSpecies(destination, species, team)
-    .filter(p => p !== destination && !pieces.has(p))
-    .filter(p => pathClearOnPieces(pieces, p, destination, species))
-}
-
-function hypotheticalMobilityAt(pieces, fromSquare, toSquare, team, species) {
-  const hypo = new Map(pieces)
-  hypo.delete(fromSquare)
-  hypo.set(toSquare, pieceCode(team, species))
-  const board = buildBoardFromLayout(buildLayoutFromPieces(hypo))
-  return mobilityAt(board, toSquare)
-}
-
-function directionSatisfied(direction, afterMobility, priorMobility) {
-  if (direction === '+') { return afterMobility > priorMobility }
-  if (direction === '-') { return afterMobility < priorMobility }
-  if (direction === '=') { return afterMobility === priorMobility }
-  return false
-}

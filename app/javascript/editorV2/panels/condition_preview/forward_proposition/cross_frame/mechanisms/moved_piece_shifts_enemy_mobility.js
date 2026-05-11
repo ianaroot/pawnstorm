@@ -52,6 +52,8 @@ export const movedPieceShiftsEnemyMobility = {
 // where the piece's mobility differs across frames (moved_piece blocks one
 // frame but not the other).
 function tryBlockingEnemyReach({ entry, ctx, pieces, random, moved, destination, movedSpecies }) {
+  pieces = ensureEnemyKingPlaced(pieces, ctx, random)
+  if (pieces === null) { return null }
   const team = entry.currentProposition.team
   const speciesSet = entry.currentProposition.species_set
   const targets = enemyTargets(pieces, team, speciesSet, destination)
