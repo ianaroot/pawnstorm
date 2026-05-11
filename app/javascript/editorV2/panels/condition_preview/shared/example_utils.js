@@ -160,6 +160,24 @@ export function collectLegalReverseMoves({
   return moves
 }
 
+// Reverses an after-state pieces map into the pieces map that existed before
+// the move: moved_piece returns to `origin`, and captured_piece (if committed
+// to a non-null species) reappears at `endPos`.
+export function buildPriorBoard({ pieces, singulars, origin, endPos }) {
+  const moved = singulars.moved_piece
+  const movedSpecies = [...moved.species_set][0]
+  const priorPieces = new Map(pieces)
+  priorPieces.delete(endPos)
+  priorPieces.set(origin, pieceCode(moved.team, movedSpecies))
+
+  const captured = singulars.captured_piece
+  const capturedSpecies = [...captured.species_set][0]
+  if (capturedSpecies !== null) {
+    priorPieces.set(endPos, pieceCode(captured.team, capturedSpecies))
+  }
+  return priorPieces
+}
+
 export function legalPriorTurnState(priorBoard, moveObject) {
   const movedTeam = priorBoard.teamAt(moveObject.startPosition)
   if (!movedTeam) { return false }

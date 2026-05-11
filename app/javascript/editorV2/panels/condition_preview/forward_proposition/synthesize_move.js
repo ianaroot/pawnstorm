@@ -1,7 +1,7 @@
 import Rules from 'gameplay/rules'
-import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode, pickRandom, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildBoardFromLayout, buildLayoutFromPieces, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { buildPriorBoard, buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { regionAllows } from './region'
 
 export function synthesizeMove(ctx, pieces, random) {
@@ -19,7 +19,7 @@ export function synthesizeMove(ctx, pieces, random) {
   const recentMoveContext = recentMoveContextForEnemy(ctx, random)
 
   for (const origin of candidates) {
-    const priorPieces = buildPriorBoard(pieces, ctx.singulars, origin, endPos, species, team)
+    const priorPieces = buildPriorBoard({ pieces, singulars: ctx.singulars, origin, endPos })
     const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), recentMoveContext, team)
     let moveObject
     try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }
@@ -51,13 +51,3 @@ function recentMoveContextForEnemy(ctx, random) {
   })
 }
 
-function buildPriorBoard(pieces, singulars, origin, endPos, movedSpecies, movedTeam) {
-  const priorBoard = new Map(pieces)
-  priorBoard.delete(endPos)
-  priorBoard.set(origin, pieceCode(movedTeam, movedSpecies))
-  const capturedSpecies = [...singulars.captured_piece.species_set][0]
-  if (capturedSpecies !== null) {
-    priorBoard.set(endPos, pieceCode(singulars.captured_piece.team, capturedSpecies))
-  }
-  return priorBoard
-}
