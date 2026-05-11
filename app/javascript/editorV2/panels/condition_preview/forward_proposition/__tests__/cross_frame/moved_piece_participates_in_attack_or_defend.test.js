@@ -154,3 +154,61 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
   })
 })
 
+describe('movedPieceParticipatesInAttackOrDefend — defend operator', () => {
+  it('places a defender (same team as moved_piece) for "allied defend moved_piece" with direction "+"', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    // defender team matches the moved_piece team (white)
+    const e = entry({ operator: 'defend', otherTeam: Board.WHITE, speciesSet: new Set([Board.ROOK]) })
+
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
+
+    expect(result).not.toBeNull()
+    const placedSquare = [...result.keys()].find(p => p !== D4)
+    expect(result.get(placedSquare)).toBe(pieceCode(Board.WHITE, Board.ROOK))
+  })
+})
+
+describe('movedPieceParticipatesInAttackOrDefend — cap respect', () => {
+  it('returns null when placing the attacker would violate a proposition count_range.max cap', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedPieceSingular() },
+      propositions: [{
+        team: Board.BLACK, frame: 'current',
+        species_set: new Set([Board.QUEEN]),
+        region: { kind: 'all' },
+        count_range: { min: 0, max: 0 }, // no black queens allowed on the board
+        aggregate_value_range: { min: 0, max: Infinity },
+        aggregate_mobility_range: { min: 0, max: Infinity }
+      }]
+    })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    // Mechanism wants to place a black queen — but proposition forbids any black queens.
+    const result = movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+
+    expect(result).toBeNull()
+  })
+})
+
+describe('movedPieceParticipatesInAttackOrDefend — priorRegion intersection', () => {
+  it('respects an already-narrowed priorRegion by intersecting rather than overwriting', () => {
+    // B3, F3, B5 are all knight-origins for D4.
+    const B3 = 17, F3 = 21, B5 = 33
+    const moved = movedPieceSingular()
+    moved.priorRegion = { kind: 'set', squares: new Set([B3, F3]) }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+
+    const result = movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+
+    expect(result).not.toBeNull()
+    // Final priorRegion must be a subset of the original {B3, F3} — B5 (excluded
+    // by the prior narrowing) must not appear.
+    expect(moved.priorRegion.kind).toBe('set')
+    expect(moved.priorRegion.squares.has(B5)).toBe(false)
+    for (const sq of moved.priorRegion.squares) {
+      expect([B3, F3]).toContain(sq)
+    }
+  })
+})
+
