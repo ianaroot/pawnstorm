@@ -5,6 +5,7 @@ import { placeKingInCheckmate } from 'editorV2/panels/condition_preview/shared/k
 // stalemate.
 export const checkmateStrategy = {
   name: 'checkmate',
+  constraintKind: 'mobility',
 
   appliesTo(constraint, ctx, pieces, pool) {
     if (ctx.checkState.count >= ctx.checkState.max) { return false }

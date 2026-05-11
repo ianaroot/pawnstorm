@@ -2,7 +2,7 @@ import { placeKingsIfAbsent } from 'editorV2/panels/condition_preview/shared/boa
 import { buildChainCtx } from './chain_ctx'
 import { commitSingularsSpecies } from './commit_singulars_species'
 import { commitSingularsPosition } from './commit_singulars_position'
-import { earlyPlaceMobilityTargets } from './early_placement/place_mobility_targets'
+import { earlyPlaceConstraintTargets } from './early_placement/place_constraint_targets'
 import { isSatisfiable } from './is_satisfiable'
 import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
@@ -19,7 +19,7 @@ export function buildAttempt(combinedPlan, random) {
   if (!isSatisfiable(ctx)) { return null }
 
   commitSingularsSpecies(ctx, random)
-  const earlyPieces = earlyPlaceMobilityTargets(ctx, random)
+  const earlyPieces = earlyPlaceConstraintTargets(ctx, random)
   commitSingularsPosition(ctx, random, earlyPieces)
 
   let pieces = placeSingulars(ctx.singulars, random, earlyPieces)

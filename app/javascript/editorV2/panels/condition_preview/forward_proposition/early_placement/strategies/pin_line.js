@@ -15,6 +15,7 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 // (shared with the pins mechanism).
 export const pinLineStrategy = {
   name: 'pin-line',
+  constraintKind: 'mobility',
 
   appliesTo(constraint, ctx, pieces, pool) {
     if (ctx.pinState.count >= ctx.pinState.max) { return false }

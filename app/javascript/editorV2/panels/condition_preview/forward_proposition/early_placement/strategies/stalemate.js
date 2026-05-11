@@ -14,6 +14,7 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 // arrangement at a time).
 export const stalemateStrategy = {
   name: 'stalemate',
+  constraintKind: 'mobility',
 
   appliesTo(constraint, ctx, pieces, pool) {
     if (ctx.checkState.count >= ctx.checkState.max) { return false }

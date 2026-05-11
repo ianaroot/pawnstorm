@@ -6,6 +6,7 @@ import { placeKingInCheck } from 'editorV2/panels/condition_preview/shared/king_
 // ctx.checkState (one team in check at a time).
 export const checkRestrictionStrategy = {
   name: 'check-restriction',
+  constraintKind: 'mobility',
 
   appliesTo(constraint, ctx, pieces, pool) {
     if (ctx.checkState.count >= ctx.checkState.max) { return false }

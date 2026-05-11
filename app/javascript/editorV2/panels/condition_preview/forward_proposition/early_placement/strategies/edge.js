@@ -8,6 +8,7 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 
 export const edgeStrategy = {
   name: 'edge',
+  constraintKind: 'mobility',
 
   appliesTo(constraint, ctx, pieces, pool) {
     if (ctx.edgeBiasState.count >= ctx.edgeBiasState.max) { return false }

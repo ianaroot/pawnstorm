@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 
-import { earlyPlaceMobilityTargets } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/place_mobility_targets'
+import {
+  earlyPlaceConstraintTargets, constraintsFromCtx
+} from 'editorV2/panels/condition_preview/forward_proposition/early_placement/place_constraint_targets'
+import { edgeStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/edge'
+import { pinLineStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/pin_line'
+import { checkRestrictionStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/check_restriction'
+import { stalemateStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/stalemate'
+import { checkmateStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/checkmate'
 import { isEdgePosition } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
 import { defaultTestCtx } from './_helpers'
 
@@ -37,24 +44,24 @@ function ctxOf(overrides = {}) {
   return defaultTestCtx(overrides)
 }
 
-describe('earlyPlaceMobilityTargets — no mobility constraints', () => {
+describe('earlyPlaceConstraintTargets — no mobility constraints', () => {
   it('returns an empty pieces map when ctx has no propositions', () => {
-    const pieces = earlyPlaceMobilityTargets(ctxOf(), () => 0)
+    const pieces = earlyPlaceConstraintTargets(ctxOf(), () => 0)
     expect(pieces.size).toBe(0)
   })
 
   it('returns an empty pieces map when all propositions have permissive mobility ranges', () => {
     const ctx = ctxOf({ propositions: [permissiveProposition()] })
-    const pieces = earlyPlaceMobilityTargets(ctx, () => 0)
+    const pieces = earlyPlaceConstraintTargets(ctx, () => 0)
     expect(pieces.size).toBe(0)
   })
 })
 
-describe('earlyPlaceMobilityTargets — single mobility constraint, edge applicable', () => {
+describe('earlyPlaceConstraintTargets — single mobility constraint, edge applicable', () => {
   let pieces
   beforeEach(() => {
     const ctx = ctxOf({ propositions: [nonPermissiveProposition()] })
-    pieces = earlyPlaceMobilityTargets(ctx, () => 0)
+    pieces = earlyPlaceConstraintTargets(ctx, () => 0)
   })
 
   it('places at least one piece', () => {
@@ -67,21 +74,45 @@ describe('earlyPlaceMobilityTargets — single mobility constraint, edge applica
   })
 })
 
-describe('earlyPlaceMobilityTargets — strategy bias counter integration', () => {
+describe('earlyPlaceConstraintTargets — strategy bias counter integration', () => {
   it('increments at least one strategy counter when a strategy fires', () => {
     const ctx = ctxOf({ propositions: [nonPermissiveProposition()] })
-    earlyPlaceMobilityTargets(ctx, () => 0)
+    earlyPlaceConstraintTargets(ctx, () => 0)
     expect(ctx.edgeBiasState.count + ctx.pinState.count).toBeGreaterThanOrEqual(1)
   })
 })
 
-describe('earlyPlaceMobilityTargets — non-applicable constraint', () => {
+describe('earlyPlaceConstraintTargets — non-applicable constraint', () => {
   it('returns empty pieces when constraint region is "related-to" (edge declines)', () => {
     const constraint = nonPermissiveProposition({
       region: { kind: 'related-to', actor: 'moved_piece', role: 'subject', operator: 'attack' }
     })
     const ctx = ctxOf({ propositions: [constraint] })
-    const pieces = earlyPlaceMobilityTargets(ctx, () => 0)
+    const pieces = earlyPlaceConstraintTargets(ctx, () => 0)
     expect(pieces.size).toBe(0)
+  })
+})
+
+describe('constraintsFromCtx', () => {
+  it('wraps each non-permissive mobility proposition as { kind: "mobility", proposition }', () => {
+    const proposition = nonPermissiveProposition()
+    const ctx = ctxOf({ propositions: [proposition] })
+
+    expect(constraintsFromCtx(ctx)).toEqual([{ kind: 'mobility', proposition }])
+  })
+
+  it('omits permissive-mobility propositions', () => {
+    const ctx = ctxOf({ propositions: [permissiveProposition()] })
+
+    expect(constraintsFromCtx(ctx)).toEqual([])
+  })
+})
+
+describe('strategies — constraintKind', () => {
+  it('declares "mobility" on every existing strategy', () => {
+    const strategies = [edgeStrategy, pinLineStrategy, checkRestrictionStrategy, stalemateStrategy, checkmateStrategy]
+    for (const strategy of strategies) {
+      expect(strategy.constraintKind).toBe('mobility')
+    }
   })
 })
