@@ -1,4 +1,4 @@
-import { ALL_POSITIONS, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { ALL_POSITIONS, legalPlacementForSpecies, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
 import { applyRelationsToAnchors } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'
@@ -42,6 +42,7 @@ function commitPositionFor(singular, singulars, committed, random, ctx, key, ear
 
   const virtualPieces = virtualPiecesFor(singulars, committed, earlyPieces)
   for (const candidate of ordered) {
+    if (!legalPlacementForSpecies(candidate, species)) { continue }
     if (respectsAllCaps(singular.team, species, candidate, ctx, virtualPieces)) {
       singular.region = { kind: 'set', squares: new Set([candidate]) }
       return

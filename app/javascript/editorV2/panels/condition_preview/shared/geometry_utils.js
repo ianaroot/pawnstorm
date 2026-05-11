@@ -121,7 +121,11 @@ export function originCandidatesForSpecies(endPosition, species, team = Board.WH
       ]
       if (file > 0) { candidates.push(endPosition + 8 * dir - 1) }  // diagonal capture from file - 1
       if (file < 7) { candidates.push(endPosition + 8 * dir + 1) }  // diagonal capture from file + 1
-      return candidates.filter(position => Board._inBounds(position))
+      return candidates.filter(position => {
+        if (!Board._inBounds(position)) { return false }
+        const rank = Math.floor(position / 8)
+        return rank !== 0 && rank !== 7
+      })
     }
     case Board.NIGHT:
       return knightControlledSquares(endPosition)
