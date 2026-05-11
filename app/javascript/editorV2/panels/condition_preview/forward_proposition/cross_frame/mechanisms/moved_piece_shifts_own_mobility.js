@@ -28,10 +28,8 @@ export const movedPieceShiftsOwnMobility = {
   name: 'moved-piece-shifts-own-mobility',
 
   appliesTo(entry, ctx, pieces) {
-    if (entry.source !== 'unary') { return false }
     if (entry.metric !== 'aggregate_mobility') { return false }
-    if (entry.currentProposition?.boundSingularActor !== 'moved_piece') { return false }
-    return true
+    return entryConcernsMovedPiece(entry)
   },
 
   apply(entry, ctx, pieces, random) {
@@ -46,6 +44,20 @@ export const movedPieceShiftsOwnMobility = {
 
     return engineerOriginMobility(entry, ctx, pieces, random, moved, destination, movedSpecies)
   }
+}
+
+// True when the entry's mobility metric concerns moved_piece directly —
+// either as a bound singular on a unary proposition or as a bound side of a
+// relational entry (where the non-bound side's region points back at it).
+function entryConcernsMovedPiece(entry) {
+  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
+  if (entry.subjectProposition === null && regionPointsToMovedPiece(entry.targetProposition?.region)) { return true }
+  if (entry.targetProposition === null && regionPointsToMovedPiece(entry.subjectProposition?.region)) { return true }
+  return false
+}
+
+function regionPointsToMovedPiece(region) {
+  return region?.kind === 'related-to' && region?.actor === 'moved_piece'
 }
 
 function findOriginWithNaturalDelta(entry, ctx, pieces, random, moved, destination, movedSpecies) {
