@@ -487,8 +487,31 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
-      currentProposition: currentProp
+      currentProposition: currentProp,
+      subjectProposition: currentProp,
+      targetProposition: null
     })
+  })
+
+  it('emits a non-bound relational PBS crossFrame entry with both subject and target propositions', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'less_than',
+      subjectComparisonSource: 'prior_board_state',
+      operator: 'attack',
+      target: 'allied', targetFilter: 'king', targetFilterMode: 'include'
+    }])
+
+    const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
+
+    expect(crossFrame).toHaveLength(1)
+    expect(crossFrame[0].source).toBe('relational')
+    expect(crossFrame[0].direction).toBe('-')
+    expect(crossFrame[0].subjectProposition.team).toBe(Board.BLACK)
+    expect(crossFrame[0].targetProposition.team).toBe(Board.WHITE)
+    expect(crossFrame[0].targetProposition.species_set.has(Board.KING)).toBe(true)
   })
 })
 

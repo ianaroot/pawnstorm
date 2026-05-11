@@ -4,7 +4,7 @@ import {
   shuffled, pieceCode, legalPlacementForSpecies, pickWeightedSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { shieldAttackerSpeciesForStep, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS,
   shieldingPositions, nextPositionOnRay
@@ -346,12 +346,3 @@ function singularPosition(ctx, actorKey) {
   return [...singular.region.squares][0]
 }
 
-function walkRay(origin, step) {
-  const positions = []
-  let current = nextPositionOnRay(origin, step)
-  while (current !== null) {
-    positions.push(current)
-    current = nextPositionOnRay(current, step)
-  }
-  return positions
-}

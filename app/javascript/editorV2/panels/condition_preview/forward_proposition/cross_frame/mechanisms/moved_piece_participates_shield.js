@@ -1,10 +1,10 @@
 import Board from 'gameplay/board'
 import {
-  ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS, nextPositionOnRay
+  ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS
 } from 'gameplay/board_query_utils'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
-  originCandidatesForSpecies, shieldAttackerSpeciesForStep
+  originCandidatesForSpecies, shieldAttackerSpeciesForStep, walkRay
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   singularSquare, ensureRolePieceAt, commitPriorRegion
@@ -49,16 +49,6 @@ function roleFor(entry, ctx) {
   if (!SLIDER_SPECIES.has(movedSpecies)) { return null }
   if (moved.team === entry.currentProposition.team) { return null }
   return 'attacker'
-}
-
-function walkRay(origin, step) {
-  const positions = []
-  let current = nextPositionOnRay(origin, step)
-  while (current !== null) {
-    positions.push(current)
-    current = nextPositionOnRay(current, step)
-  }
-  return positions
 }
 
 function stepsForSliderSpecies(species) {

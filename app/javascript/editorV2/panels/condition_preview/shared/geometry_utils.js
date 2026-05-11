@@ -29,6 +29,19 @@ export function raySquaresFrom(position, steps, board) {
   return squares
 }
 
+// Walks a single ray direction from `position` and returns all squares on
+// the ray to the board edge, regardless of occupancy. Use raySquaresFrom
+// when you want to stop at the first occupied square.
+export function walkRay(position, step) {
+  const positions = []
+  let current = nextPositionOnRay(position, step)
+  while (current !== null) {
+    positions.push(current)
+    current = nextPositionOnRay(current, step)
+  }
+  return positions
+}
+
 // Squares the piece at `position` on `board` controls (attacks/defends).
 // Used when a singular actor is the SUBJECT of a relational position
 // constraint — the dependent group-side piece must be placed at a square

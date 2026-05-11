@@ -6,11 +6,15 @@ import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import { movedPieceParticipatesInAttackOrDefend } from './mechanisms/moved_piece_participates_in_attack_or_defend'
 import { movedPieceParticipatesAdjacent } from './mechanisms/moved_piece_participates_adjacent'
 import { movedPieceParticipatesShield } from './mechanisms/moved_piece_participates_shield'
+import { movedPieceObstructsInAttackOrDefend } from './mechanisms/moved_piece_obstructs_in_attack_or_defend'
+import { movedPieceObstructsShield } from './mechanisms/moved_piece_obstructs_shield'
 
 const MECHANISMS = Object.freeze([
   movedPieceParticipatesInAttackOrDefend,
   movedPieceParticipatesAdjacent,
-  movedPieceParticipatesShield
+  movedPieceParticipatesShield,
+  movedPieceObstructsInAttackOrDefend,
+  movedPieceObstructsShield
 ])
 
 export function satisfyCrossFrame(ctx, pieces, random) {

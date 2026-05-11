@@ -79,17 +79,20 @@ function constraintsFromRelationalPlan(plan) {
   const subjectIsSingular = SINGULAR_ACTORS.has(plan.subject)
   const targetIsSingular = SINGULAR_ACTORS.has(plan.target)
 
-  // Shield always emits a relation (not a proposition for the non-singular side)
-  // because shield satisfaction requires placing a third piece — the enemy slider —
-  // and that placement only happens through the relation satisfier (satisfyShield).
+  // Shield always emits a relation (the third-piece slider attacker is placed
+  // by satisfyShield). Shield also emits PBS crossFrame entries when applicable.
   if (plan.operator === 'shield') {
-    return { propositions: [], relations: [buildRelation(plan)], crossFrame: [] }
+    return constraintsFromShieldPlan(plan, subjectIsSingular, targetIsSingular)
   }
 
   if (!subjectIsSingular && !targetIsSingular) {
-    return { propositions: [], relations: [buildRelation(plan)], crossFrame: [] }
+    return constraintsFromNonBoundRelationalPlan(plan)
   }
 
+  return constraintsFromBoundRelationalPlan(plan, subjectIsSingular, targetIsSingular)
+}
+
+function constraintsFromBoundRelationalPlan(plan, subjectIsSingular, targetIsSingular) {
   const propositions = []
   const crossFrame = []
   for (const side of ['subject', 'target']) {
@@ -110,10 +113,62 @@ function constraintsFromRelationalPlan(plan) {
   return { propositions, relations: [], crossFrame }
 }
 
+// Non-bound relational plans (neither subject nor target is a singular
+// actor). The relation is emitted for current-frame satisfaction; if there's
+// a PBS descriptor, we additionally emit a crossFrame entry via buildPbsPair.
+function constraintsFromNonBoundRelationalPlan(plan) {
+  const propositions = []
+  const crossFrame = []
+  const relations = [buildRelation(plan)]
+  for (const side of ['subject', 'target']) {
+    const pbsDescriptor = (plan.comparisonDescriptors ?? []).find(
+      d => d.side === side && d.source === 'prior_board_state'
+    )
+    if (!pbsDescriptor) { continue }
+    const { priorProp, currentProp, crossEntry } = buildPbsPair(plan, side, /* otherIsSingular */ false, pbsDescriptor)
+    propositions.push(priorProp, currentProp)
+    crossFrame.push(crossEntry)
+  }
+  return { propositions, relations, crossFrame }
+}
+
+// Shield: relation always emitted (third-piece attacker handled by
+// satisfyShield). When a PBS descriptor exists, crossFrame entries get
+// emitted so post-pass mechanisms can engineer shield deltas.
+function constraintsFromShieldPlan(plan, subjectIsSingular, targetIsSingular) {
+  const propositions = []
+  const crossFrame = []
+  const relations = [buildRelation(plan)]
+  for (const side of ['subject', 'target']) {
+    const pbsDescriptor = (plan.comparisonDescriptors ?? []).find(
+      d => d.side === side && d.source === 'prior_board_state'
+    )
+    if (!pbsDescriptor) { continue }
+    const sideIsSingular = side === 'subject' ? subjectIsSingular : targetIsSingular
+    if (sideIsSingular) { continue }
+    const otherIsSingular = side === 'subject' ? targetIsSingular : subjectIsSingular
+    const { priorProp, currentProp, crossEntry } = buildPbsPair(plan, side, otherIsSingular, pbsDescriptor)
+    propositions.push(priorProp, currentProp)
+    crossFrame.push(crossEntry)
+  }
+  return { propositions, relations, crossFrame }
+}
+
 function buildPbsPair(plan, side, otherIsSingular, descriptor) {
   const sideShape = relationalSideShape(plan, side, otherIsSingular)
   const priorProp   = { ...sideShape, frame: 'prior',   ...freshRanges() }
   const currentProp = { ...sideShape, frame: 'current', ...freshRanges() }
+
+  // When the other side is bound to a singular, no proposition is emitted
+  // for it — placement comes from the singular. Otherwise we emit a current-
+  // frame proposition for the other side so mechanisms (esp. obstructs) can
+  // engineer toward both teams.
+  let otherProp = null
+  if (!otherIsSingular) {
+    const otherShape = relationalSideShape(plan, side === 'subject' ? 'target' : 'subject', false)
+    otherProp = { ...otherShape, frame: 'current', ...freshRanges() }
+  }
+
   return {
     priorProp,
     currentProp,
@@ -123,7 +178,9 @@ function buildPbsPair(plan, side, otherIsSingular, descriptor) {
       metric: descriptor.metric,
       direction: COMPARATOR_TO_DIRECTION[descriptor.comparator] ?? '=',
       priorProposition: priorProp,
-      currentProposition: currentProp
+      currentProposition: currentProp,
+      subjectProposition: side === 'subject' ? currentProp : otherProp,
+      targetProposition: side === 'target' ? currentProp : otherProp
     }
   }
 }
