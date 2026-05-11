@@ -42,13 +42,22 @@ export function pickPlaceableSpecies(speciesSet, position, random) {
   return pickWeightedSpecies(filtered, random)
 }
 
+// Rate at which mechanisms reject reusing an existing-fitting piece in favor
+// of trying a different position with fresh placement (diversity-driven).
+// Tunable.
+export const EXISTING_REUSE_REJECTION_RATE = 0.25
+
 // Ensures the given square holds a piece compatible with (team, speciesSet).
-// If a compatible piece already exists, returns pieces unchanged. Otherwise
-// places a new one, validating respectsAllCaps. Returns null if no
-// placement is possible.
+// If a compatible piece already exists, returns pieces unchanged most of the
+// time; rejects (returns null) at EXISTING_REUSE_REJECTION_RATE so the
+// caller's iteration tries a different position. Otherwise places a new one,
+// validating respectsAllCaps. Returns null if no placement is possible.
 export function ensureRolePieceAt({ pieces, pos, team, speciesSet, ctx, random }) {
   const existing = pieces.get(pos)
-  if (existing) { return pieces }
+  if (existing) {
+    if (random() < EXISTING_REUSE_REJECTION_RATE) { return null }
+    return pieces
+  }
   const species = pickPlaceableSpecies(speciesSet, pos, random)
   if (species === null) { return null }
   if (!respectsAllCaps(team, species, pos, ctx, pieces)) { return null }
