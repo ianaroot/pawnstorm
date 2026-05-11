@@ -52,10 +52,6 @@ describe('movedPieceShiftsAlliedMobility — appliesTo', () => {
     expect(movedPieceShiftsAlliedMobility.appliesTo(entry({ source: 'relational' }), ctx, new Map())).toBe(true)
   })
 
-  it('returns false when bound to moved_piece (patch 1 owns this)', () => {
-    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceShiftsAlliedMobility.appliesTo(entry({ boundSingularActor: 'moved_piece' }), ctx, new Map())).toBe(false)
-  })
 
   it('returns false for enemy-team mobility', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })

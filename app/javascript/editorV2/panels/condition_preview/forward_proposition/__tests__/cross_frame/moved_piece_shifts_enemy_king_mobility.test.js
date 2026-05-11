@@ -59,10 +59,6 @@ describe('movedPieceShiftsEnemyKingMobility — appliesTo', () => {
     expect(movedPieceShiftsEnemyKingMobility.appliesTo(entry({ team: Board.WHITE }), ctx, new Map())).toBe(false)
   })
 
-  it('returns false when moved_piece is bound on the entry', () => {
-    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceShiftsEnemyKingMobility.appliesTo(entry({ boundSingularActor: 'moved_piece' }), ctx, new Map())).toBe(false)
-  })
 })
 
 describe('movedPieceShiftsEnemyKingMobility — apply', () => {

@@ -1,14 +1,15 @@
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
+  buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import {
-  originCandidatesForSpecies, pathClearOnPieces
-} from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { pathClearOnPieces } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from '../../mobility/blockers'
 import { kingAdjacentControlMechanism } from '../../mobility/king_adjacent_control'
 import { pinsMechanism } from '../../mobility/pins'
 import { singularSquare, commitPriorRegion } from './participates_helpers'
+import {
+  legalOriginCandidates, piecesWithMovedAt, hypotheticalMobilityAt, directionSatisfied
+} from './shifts_mobility_helpers'
 
 const ACTIVE_MECHANISMS = Object.freeze([blockersMechanism, kingAdjacentControlMechanism, pinsMechanism])
 
@@ -136,13 +137,6 @@ function deltaSatisfied(direction, piecesMap, destination, origin, team, species
   const afterMobility = mobilityAt(afterBoard, destination)
   const priorMobility = hypotheticalMobilityAt(piecesMap, destination, origin, team, species)
   return directionSatisfied(direction, afterMobility, priorMobility)
-}
-
-function piecesWithMovedAt(pieces, fromSquare, toSquare, team, species) {
-  const result = new Map(pieces)
-  result.delete(fromSquare)
-  result.set(toSquare, pieceCode(team, species))
-  return result
 }
 
 // Diffs the mechanism's output against the hypothetical input to extract just

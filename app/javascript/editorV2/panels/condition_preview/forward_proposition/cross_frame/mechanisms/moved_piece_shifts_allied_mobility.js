@@ -2,13 +2,13 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, ALL_POSITIONS,
   legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import {
-  originCandidatesForSpecies, pathClearOnPieces
-} from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
 import { respectsAllCaps } from '../../respect_caps'
 import { singularSquare, commitPriorRegion } from './participates_helpers'
+import {
+  legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied
+} from './shifts_mobility_helpers'
 
 // Patch 2 of mobility cross-frame: allied non-moved-piece mobility shift.
 //
@@ -26,7 +26,6 @@ export const movedPieceShiftsAlliedMobility = {
 
   appliesTo(entry, ctx, pieces) {
     if (entry.metric !== 'aggregate_mobility') { return false }
-    if (movedPieceIsBoundOnEntry(entry)) { return false }
     if (entry.currentProposition?.team !== ctx.movingTeam) { return false }
     return true
   },
@@ -43,13 +42,6 @@ export const movedPieceShiftsAlliedMobility = {
 
     return placeFreshXAndCommit(entry, ctx, pieces, random, moved, destination, movedSpecies)
   }
-}
-
-function movedPieceIsBoundOnEntry(entry) {
-  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
-  if (entry.subjectProposition?.boundSingularActor === 'moved_piece') { return true }
-  if (entry.targetProposition?.boundSingularActor === 'moved_piece') { return true }
-  return false
 }
 
 function findNaturalShiftForExistingX(entry, ctx, pieces, random, moved, destination, movedSpecies) {
@@ -108,21 +100,6 @@ function existingTargetPieces(pieces, team, speciesSet, excludeSquare) {
 function deltaSatisfiedForTarget(direction, piecesMap, destination, origin, movedTeam, movedSpecies, targetPos) {
   const afterBoard = buildBoardFromLayout(buildLayoutFromPieces(piecesMap))
   const afterMobility = mobilityAt(afterBoard, targetPos)
-
-  const hypothetical = new Map(piecesMap)
-  hypothetical.delete(destination)
-  hypothetical.set(origin, pieceCode(movedTeam, movedSpecies))
-  const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(hypothetical))
-  const priorMobility = mobilityAt(priorBoard, targetPos)
-
-  if (direction === '+') { return afterMobility > priorMobility }
-  if (direction === '-') { return afterMobility < priorMobility }
-  if (direction === '=') { return afterMobility === priorMobility }
-  return false
-}
-
-function legalOriginCandidates(pieces, destination, team, species) {
-  return originCandidatesForSpecies(destination, species, team)
-    .filter(p => p !== destination && !pieces.has(p))
-    .filter(p => pathClearOnPieces(pieces, p, destination, species))
+  const priorMobility = hypotheticalMobilityAt(piecesMap, destination, origin, movedTeam, movedSpecies, targetPos)
+  return directionSatisfied(direction, afterMobility, priorMobility)
 }

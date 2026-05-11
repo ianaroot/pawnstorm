@@ -1,16 +1,17 @@
 import Board from 'gameplay/board'
 import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, teamHasKing
+  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import {
-  adjacentNeighborPositions, originCandidatesForSpecies, pathClearOnPieces
-} from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
+import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import {
   singularSquare, commitPriorRegion, ensureRolePieceAt
 } from './participates_helpers'
+import {
+  legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied,
+  enemyKingPosition, ensureEnemyKingPlaced
+} from './shifts_mobility_helpers'
 
 // Patch 3 of mobility cross-frame: enemy king mobility shift.
 //
@@ -32,7 +33,6 @@ export const movedPieceShiftsEnemyKingMobility = {
 
   appliesTo(entry, ctx, pieces) {
     if (entry.metric !== 'aggregate_mobility') { return false }
-    if (movedPieceIsBoundOnEntry(entry)) { return false }
     if (entry.currentProposition?.team !== ctx.enemyTeam) { return false }
     if (!entry.currentProposition?.species_set?.has(Board.KING)) { return false }
     return true
@@ -60,32 +60,6 @@ export const movedPieceShiftsEnemyKingMobility = {
     }
     return null
   }
-}
-
-function movedPieceIsBoundOnEntry(entry) {
-  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
-  if (entry.subjectProposition?.boundSingularActor === 'moved_piece') { return true }
-  if (entry.targetProposition?.boundSingularActor === 'moved_piece') { return true }
-  return false
-}
-
-function ensureEnemyKingPlaced(pieces, ctx, random) {
-  if (teamHasKing(pieces, ctx.enemyTeam)) { return pieces }
-  return placeKingDeliberately(pieces, ctx.enemyTeam, 'current', ctx, random)
-}
-
-function enemyKingPosition(pieces, team) {
-  const kingCode = pieceCode(team, Board.KING)
-  for (const [pos, piece] of pieces) {
-    if (piece === kingCode) { return pos }
-  }
-  return null
-}
-
-function legalOriginCandidates(pieces, destination, team, species) {
-  return originCandidatesForSpecies(destination, species, team)
-    .filter(p => p !== destination && !pieces.has(p))
-    .filter(p => pathClearOnPieces(pieces, p, destination, species))
 }
 
 // moved_piece's attack on at least one king-adjacent square exists in one
@@ -205,15 +179,6 @@ function pickAttackerCandidateNear(target, random) {
 function kingMobilitySatisfiesDirection(direction, pieces, destination, origin, movedTeam, movedSpecies, kingPos) {
   const afterBoard = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const afterMobility = mobilityAt(afterBoard, kingPos)
-
-  const hypothetical = new Map(pieces)
-  hypothetical.delete(destination)
-  hypothetical.set(origin, pieceCode(movedTeam, movedSpecies))
-  const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(hypothetical))
-  const priorMobility = mobilityAt(priorBoard, kingPos)
-
-  if (direction === '+') { return afterMobility > priorMobility }
-  if (direction === '-') { return afterMobility < priorMobility }
-  if (direction === '=') { return afterMobility === priorMobility }
-  return false
+  const priorMobility = hypotheticalMobilityAt(pieces, destination, origin, movedTeam, movedSpecies, kingPos)
+  return directionSatisfied(direction, afterMobility, priorMobility)
 }
