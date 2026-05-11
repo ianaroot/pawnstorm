@@ -27,7 +27,7 @@ export function buildSingulars(combinedPlan) {
 function initSingulars(combinedPlan) {
   const { movingTeam, enemyTeam } = combinedPlan
   return {
-    moved_piece:          singular(movingTeam, ALL_SPECIES),
+    moved_piece:          { ...singular(movingTeam, ALL_SPECIES), priorRegion: { kind: 'all' } },
     captured_piece:       singular(enemyTeam,  [null, ...CAPTURABLE_SPECIES]),
     enemy_moved_piece:    singular(enemyTeam,  [null, ...ALL_SPECIES]),
     enemy_captured_piece: singular(movingTeam, [null, ...CAPTURABLE_SPECIES])

@@ -2,6 +2,7 @@ import Rules from 'gameplay/rules'
 import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode, pickRandom, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { regionAllows } from './region'
 
 export function synthesizeMove(ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
@@ -10,7 +11,8 @@ export function synthesizeMove(ctx, pieces, random) {
   const team = moved.team
 
   const candidates = shuffled(
-    originCandidatesForSpecies(endPos, species, team).filter(p => p !== endPos && !pieces.has(p)),
+    originCandidatesForSpecies(endPos, species, team)
+      .filter(p => p !== endPos && !pieces.has(p) && regionAllows(moved.priorRegion, p)),
     random
   )
 

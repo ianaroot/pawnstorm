@@ -94,3 +94,45 @@ describe('synthesizeMove — failure', () => {
     expect(synthesizeMove(ctx, occupied, () => 0.5)).toBeNull()
   })
 })
+
+describe('synthesizeMove — priorRegion', () => {
+  const F3 = 21 // a knight origin for D4
+
+  it('picks an origin within moved_piece.priorRegion when constrained', () => {
+    const ctx = { singulars: singularsWith({
+      moved_piece: {
+        team: Board.WHITE, species_set: new Set([Board.NIGHT]),
+        region: { kind: 'set', squares: new Set([D4]) },
+        priorRegion: { kind: 'set', squares: new Set([F3]) }
+      }
+    }) }
+    const pieces = new Map([
+      [D4, pieceCode(Board.WHITE, Board.NIGHT)],
+      [E1, pieceCode(Board.WHITE, Board.KING)],
+      [E8, pieceCode(Board.BLACK, Board.KING)]
+    ])
+
+    const result = synthesizeMove(ctx, pieces, () => 0.5)
+
+    expect(result).not.toBeNull()
+    expect(findPieceAt(result.priorBoard, pieceCode(Board.WHITE, Board.NIGHT))).toBe(F3)
+  })
+
+  it('returns null when priorRegion excludes all valid origin candidates', () => {
+    const A1 = 0 // not a knight origin for D4
+    const ctx = { singulars: singularsWith({
+      moved_piece: {
+        team: Board.WHITE, species_set: new Set([Board.NIGHT]),
+        region: { kind: 'set', squares: new Set([D4]) },
+        priorRegion: { kind: 'set', squares: new Set([A1]) }
+      }
+    }) }
+    const pieces = new Map([
+      [D4, pieceCode(Board.WHITE, Board.NIGHT)],
+      [E1, pieceCode(Board.WHITE, Board.KING)],
+      [E8, pieceCode(Board.BLACK, Board.KING)]
+    ])
+
+    expect(synthesizeMove(ctx, pieces, () => 0.5)).toBeNull()
+  })
+})

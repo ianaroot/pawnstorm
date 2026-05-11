@@ -53,6 +53,13 @@ describe('buildSingulars — initialization', () => {
       expect(singulars[key].region).toEqual({ kind: 'all' })
     }
   })
+
+  it('initializes moved_piece priorRegion as { kind: "all" }', () => {
+    const combinedPlan = buildCombinedPlan([TRIVIAL_PLAN])
+    const singulars = buildSingulars(combinedPlan)
+
+    expect(singulars.moved_piece.priorRegion).toEqual({ kind: 'all' })
+  })
 })
 
 describe('buildSingulars — position plan narrowing', () => {

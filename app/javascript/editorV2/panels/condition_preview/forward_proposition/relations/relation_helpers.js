@@ -4,6 +4,9 @@ import {
 import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { regionAllows } from '../region'
+
+export { regionAllows }
 
 // Cap on iterations for relation satisfiers' count/value loops. Covers count_range
 // up to ~10 and aggregate_value up to ~30 (worst-case low-value species).
@@ -31,12 +34,6 @@ function sumValues(positions, pieces) {
 export function matchesSide(piece, side) {
   if (!piece) { return false }
   return piece.charAt(0) === side.team && side.species_set.has(piece.slice(1))
-}
-
-export function regionAllows(region, position) {
-  if (region.kind === 'all') { return true }
-  if (region.kind === 'set') { return region.squares.has(position) }
-  return true
 }
 
 export function candidatesForSide(side, pieces) {

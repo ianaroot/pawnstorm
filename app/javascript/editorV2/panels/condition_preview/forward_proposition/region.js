@@ -1,5 +1,12 @@
 import { ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
 
+export function regionAllows(region, position) {
+  if (!region) { return true }
+  if (region.kind === 'all') { return true }
+  if (region.kind === 'set') { return region.squares.has(position) }
+  return true
+}
+
 export function intersectRegions(a, b) {
   if (a.kind === 'all') { return b }
   if (b.kind === 'all') { return a }

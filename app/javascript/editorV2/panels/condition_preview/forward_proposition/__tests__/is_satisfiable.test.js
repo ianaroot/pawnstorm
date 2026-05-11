@@ -34,6 +34,12 @@ describe('isSatisfiable', () => {
     expect(isSatisfiable(ctx)).toBe(false)
   })
 
+  it('returns false when moved_piece has an empty priorRegion (set kind with no squares)', () => {
+    const ctx = defaultCtx()
+    ctx.singulars.moved_piece.priorRegion = { kind: 'set', squares: new Set() }
+    expect(isSatisfiable(ctx)).toBe(false)
+  })
+
   it('returns false when a proposition has count_range with min > max', () => {
     const ctx = defaultCtx({
       propositions: [{
