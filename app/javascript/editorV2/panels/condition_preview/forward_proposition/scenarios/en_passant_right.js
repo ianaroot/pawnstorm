@@ -32,7 +32,8 @@ export const enPassantRightScenario = {
     const aliasedEnemyPawn = {
       team: enemyTeam,
       species_set: new Set([Board.PAWN]),
-      region: { kind: 'set', squares: rankSquares(epCapturedRankIndex(team)) }
+      region: { kind: 'set', squares: rankSquares(epCapturedRankIndex(team)) },
+      relationsToAnchors: [{ otherActor: 'moved_piece', operator: 'pawn-push-origin', myRole: 'target' }]
     }
     return {
       singulars: {
@@ -44,7 +45,8 @@ export const enPassantRightScenario = {
         enemy_moved_piece: aliasedEnemyPawn
       },
       propositions: [
-        ...emptySquareConstraintsRelativeToActor('moved_piece', 'pawn-diag-right-origin')
+        ...emptySquareConstraintsRelativeToActor('moved_piece', 'pawn-diag-right-origin'),
+        ...emptySquareConstraintsRelativeToActor('moved_piece', 'pawn-push-origin')
       ]
     }
   },
