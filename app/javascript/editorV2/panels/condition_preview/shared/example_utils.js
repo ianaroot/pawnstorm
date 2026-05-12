@@ -162,13 +162,22 @@ export function collectLegalReverseMoves({
 
 // Reverses an after-state pieces map into the pieces map that existed before
 // the move: moved_piece returns to `origin`, and captured_piece (if committed
-// to a non-null species) reappears at `endPos`.
-export function buildPriorBoard({ pieces, singulars, origin, endPos }) {
+// to a non-null species) reappears at `endPos`. For kingside castle
+// (pieceNotation === 'O-O'), the rook is also reversed from its after square
+// (file 5 on team home rank) back to its origin (file 7).
+export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team }) {
   const moved = singulars.moved_piece
   const movedSpecies = [...moved.species_set][0]
   const priorPieces = new Map(pieces)
   priorPieces.delete(endPos)
   priorPieces.set(origin, pieceCode(moved.team, movedSpecies))
+
+  if (pieceNotation === 'O-O') {
+    const homeRankStart = team === Board.BLACK ? 56 : 0
+    priorPieces.delete(homeRankStart + 5)
+    priorPieces.set(homeRankStart + 7, pieceCode(team, Board.ROOK))
+    return priorPieces
+  }
 
   const captured = singulars.captured_piece
   const capturedSpecies = [...captured.species_set][0]

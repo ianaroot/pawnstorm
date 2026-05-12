@@ -48,5 +48,5 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   pieces = placeKingsIfAbsent(pieces, random, ctx)
   if (pieces === null) { return null }
 
-  return synthesizeMove(ctx, pieces, random)
+  return synthesizeMove(ctx, pieces, random, scenario)
 }
