@@ -22,7 +22,7 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
   const recentMoveContext = recentMoveContextForEnemy(ctx, random)
 
   for (const origin of origins) {
-    const priorPieces = buildPriorBoard({ pieces, singulars: ctx.singulars, origin, endPos, pieceNotation: overrides.pieceNotation, team })
+    const priorPieces = buildPriorBoard({ pieces, singulars: ctx.singulars, origin, endPos, pieceNotation: overrides.pieceNotation, team, promotionPiece: overrides.promotionPiece })
     const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), recentMoveContext, team)
     let moveObject
     try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }

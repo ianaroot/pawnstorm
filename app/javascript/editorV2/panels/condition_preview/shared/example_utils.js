@@ -164,13 +164,16 @@ export function collectLegalReverseMoves({
 // the move: moved_piece returns to `origin`, and captured_piece (if committed
 // to a non-null species) reappears at `endPos`. For kingside castle
 // (pieceNotation === 'O-O'), the rook is also reversed from its after square
-// (file 5 on team home rank) back to its origin (file 7).
-export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team }) {
+// (file 5 on team home rank) back to its origin (file 7). For promotion
+// (promotionPiece set), the origin is set to PAWN instead of the after-board
+// promoted species; capture-piece logic still applies.
+export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece }) {
   const moved = singulars.moved_piece
   const movedSpecies = [...moved.species_set][0]
   const priorPieces = new Map(pieces)
   priorPieces.delete(endPos)
-  priorPieces.set(origin, pieceCode(moved.team, movedSpecies))
+  const originSpecies = promotionPiece ? Board.PAWN : movedSpecies
+  priorPieces.set(origin, pieceCode(moved.team, originSpecies))
 
   if (pieceNotation === 'O-O' || pieceNotation === 'O-O-O') {
     const homeRankStart = HOME_RANK[team] * 8
