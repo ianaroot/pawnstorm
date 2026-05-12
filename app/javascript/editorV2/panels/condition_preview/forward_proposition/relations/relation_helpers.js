@@ -55,8 +55,8 @@ export function candidatesForSide(side, pieces) {
   return candidates
 }
 
-export function applyOne(pieces, candidate, ctx) {
+export function applyOne(pieces, candidate, ctx, options = {}) {
   if (candidate.kind === 'existing') { return pieces }
-  if (!respectsAllCaps(candidate.team, candidate.species, candidate.position, ctx, pieces)) { return null }
+  if (!respectsAllCaps(candidate.team, candidate.species, candidate.position, ctx, pieces, options)) { return null }
   return placePiece(pieces, candidate.position, pieceCode(candidate.team, candidate.species))
 }

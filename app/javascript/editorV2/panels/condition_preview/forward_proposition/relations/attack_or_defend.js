@@ -1,8 +1,11 @@
+import Board from 'gameplay/board'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled,
   legalPlacementForSpecies, WEIGHTED_SPECIES_DISTRIBUTION
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { controllingPositions } from 'gameplay/board_query_utils'
+import {
+  controllingPositions, pieceControlsSquare, positionsBetween, materialValue
+} from 'gameplay/board_query_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
@@ -10,9 +13,6 @@ import {
 } from './relation_helpers'
 
 export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
-  // Negative-count relations (max=0 on either side) are satisfied by absence —
-  // no pairs to add. Cap enforcement in respectsAllCaps prevents other passes
-  // from creating offending pairs.
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
@@ -68,14 +68,87 @@ function tryPlace(relation, pieces, ctx, random) {
       subjectsControlling(relation.subjectSide, target.position, piecesWithTarget, board),
       random
     )
+
+    const baseline = baselineFor(relation, piecesWithTarget, board)
+
     for (const subject of subjectCandidates) {
-      const next = applyOne(piecesWithTarget, subject, ctx)
+      let next
+      if (subject.kind === 'existing' || baseline.interference.has(subject.position)) {
+        next = applyOne(piecesWithTarget, subject, ctx)
+      } else {
+        if (!subjectFitsRelationCaps(relation, subject, baseline, piecesWithTarget, board)) { continue }
+        next = applyOne(piecesWithTarget, subject, ctx, { skipRelation: relation })
+      }
       if (next === null) { continue }
       if (next.size === pieces.size) { continue }
       return next
     }
   }
   return null
+}
+
+function baselineFor(relation, pieces, board) {
+  const { activeSubjects, activeTargets } = activeAttackOrDefendSets(relation, pieces, board)
+  return {
+    activeSubjects,
+    activeTargets,
+    subjectValue: sumPieceValues(activeSubjects, pieces),
+    targetValue:  sumPieceValues(activeTargets,  pieces),
+    interference: interferenceSquaresFor(activeSubjects, activeTargets, pieces, board)
+  }
+}
+
+function sumPieceValues(positions, pieces) {
+  let total = 0
+  for (const pos of positions) {
+    const piece = pieces.get(pos)
+    if (piece) { total += materialValue(piece.slice(1)) }
+  }
+  return total
+}
+
+function interferenceSquaresFor(activeSubjects, activeTargets, pieces, board) {
+  const result = new Set()
+  for (const subjPos of activeSubjects) {
+    const piece = pieces.get(subjPos)
+    if (!piece) { continue }
+    const species = piece.slice(1)
+    if (species !== Board.BISHOP && species !== Board.ROOK && species !== Board.QUEEN) { continue }
+    for (const tgtPos of activeTargets) {
+      if (!pieceControlsSquare({ board, attackerPosition: subjPos, targetPosition: tgtPos })) { continue }
+      for (const sq of positionsBetween(subjPos, tgtPos)) { result.add(sq) }
+    }
+  }
+  return result
+}
+
+function subjectFitsRelationCaps(relation, subject, baseline, pieces, board) {
+  const subjectIsNewActive = !baseline.activeSubjects.has(subject.position)
+  let newTargetCount = 0
+  let newTargetValue = 0
+  for (const [tp, tpc] of pieces) {
+    if (!matchesSide(tpc, relation.targetSide)) { continue }
+    if (baseline.activeTargets.has(tp)) { continue }
+    if (!candidateAttacks(subject, tp, board)) { continue }
+    newTargetCount += 1
+    newTargetValue += materialValue(tpc.slice(1))
+  }
+  const finalSubjectCount = baseline.activeSubjects.size + (subjectIsNewActive ? 1 : 0)
+  const finalTargetCount  = baseline.activeTargets.size  + newTargetCount
+  const finalSubjectValue = baseline.subjectValue + (subjectIsNewActive ? materialValue(subject.species) : 0)
+  const finalTargetValue  = baseline.targetValue  + newTargetValue
+  if (finalSubjectCount > relation.subjectSide.count_range.max) { return false }
+  if (finalTargetCount  > relation.targetSide.count_range.max)  { return false }
+  if (finalSubjectValue > relation.subjectSide.aggregate_value_range.max) { return false }
+  if (finalTargetValue  > relation.targetSide.aggregate_value_range.max)  { return false }
+  return true
+}
+
+function candidateAttacks(subject, targetPos, board) {
+  for (const ap of attackerCandidatesFor(targetPos, subject.species, subject.team, board)) {
+    if (ap === subject.position) { return true }
+  }
+  return false
 }
 
 function subjectsControlling(side, targetPos, pieces, board) {

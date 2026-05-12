@@ -7,9 +7,9 @@ import { activeAttackOrDefendSets } from 'editorV2/panels/condition_preview/forw
 import { activeShieldSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/shield'
 import { activeAdjacentSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/adjacent'
 
-export function respectsAllCaps(team, species, position, ctx, pieces) {
+export function respectsAllCaps(team, species, position, ctx, pieces, options = {}) {
   if (!propositionCapsRespected(team, species, position, ctx, pieces)) { return false }
-  if (!relationCapsRespected(team, species, position, ctx, pieces)) { return false }
+  if (!relationCapsRespected(team, species, position, ctx, pieces, options.skipRelation ?? null)) { return false }
   return true
 }
 
@@ -37,12 +37,13 @@ function propositionCapsRespected(team, species, position, ctx, pieces) {
   return true
 }
 
-function relationCapsRespected(team, species, position, ctx, pieces) {
+function relationCapsRespected(team, species, position, ctx, pieces, skipRelation = null) {
   const relations = ctx.relations ?? []
   if (relations.length === 0) { return true }
   let hypotheticalPieces = null
   let hypotheticalBoard = null
   for (const relation of relations) {
+    if (relation === skipRelation) { continue }
     if (relationHasNoMaxes(relation)) { continue }
     if (hypotheticalPieces === null) {
       hypotheticalPieces = new Map(pieces)
