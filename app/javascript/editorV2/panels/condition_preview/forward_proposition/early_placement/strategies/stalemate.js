@@ -7,6 +7,7 @@ import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/sh
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 
 // Stalemate strategy: places the constrained team's king in a stalemate
 // configuration (not in check, no legal escape squares). Shares ctx.checkState
@@ -91,7 +92,7 @@ function arrangeCapture(pieces, ctx, random) {
     if (origins.length === 0) { continue }
     if (!respectsAllCaps(moved.team, movedSpecies, x, ctx, pieces)) { continue }
     moved.region = { kind: 'set', squares: new Set([x]) }
-    enemyMoved.region = { kind: 'set', squares: new Set([x]) }
+    commitCapturedPieceRegion(enemyMoved, x)
     ctx.singulars.captured_piece = enemyMoved
     return pieces
   }

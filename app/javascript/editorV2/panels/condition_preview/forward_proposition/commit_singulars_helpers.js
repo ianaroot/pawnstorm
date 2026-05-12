@@ -4,6 +4,10 @@ import {
 import { intersectRegions } from './region'
 import { materializeRegion } from './materialize_region'
 
+export function commitCapturedPieceRegion(singular, square) {
+  singular.region = { kind: 'set', squares: new Set([square]) }
+}
+
 export function applyRelationsToAnchors(singular, singulars, committed, species) {
   for (const r of singular.relationsToAnchors ?? []) {
     if (!committed.has(r.otherActor)) { continue }

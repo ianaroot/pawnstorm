@@ -1,9 +1,11 @@
 import { ALL_POSITIONS, legalPlacementForSpecies, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
-import { applyRelationsToAnchors } from './commit_singulars_helpers'
+import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'
 
-const ACTOR_KEYS = Object.freeze(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+// captured_piece precedes enemy_moved_piece so the `seen` short-circuit catches stalemate-aliased pairs before the latter runs.
+const ACTOR_KEYS = Object.freeze(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
+const CAPTURED_ACTORS = new Set(['captured_piece', 'enemy_captured_piece'])
 
 export function commitSingularsPosition(ctx, random, earlyPieces = new Map()) {
   const singulars = ctx.singulars
@@ -39,6 +41,16 @@ function commitPositionFor(singular, singulars, committed, random, ctx, key, ear
   if (candidates.length === 0) { return }
   const mobilityRange = aggregateMobilityRangeForSingular(singular, ctx.propositions)
   const ordered = edgeBiasedShuffle(candidates, random, mobilityRange, ctx.edgeBiasState)
+
+  if (CAPTURED_ACTORS.has(key)) {
+    for (const candidate of ordered) {
+      if (!legalPlacementForSpecies(candidate, species)) { continue }
+      commitCapturedPieceRegion(singular, candidate)
+      return
+    }
+    singular.region = { kind: 'set', squares: new Set() }
+    return
+  }
 
   const virtualPieces = virtualPiecesFor(singulars, committed, earlyPieces)
   for (const candidate of ordered) {

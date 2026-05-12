@@ -1,7 +1,8 @@
 import { pickWeightedSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { buildSingularSelectionPool, pickFromPool } from './singular_selection'
 
-const ACTOR_KEYS = Object.freeze(['moved_piece', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece'])
+// captured_piece precedes enemy_moved_piece so the `seen` short-circuit catches stalemate-aliased pairs before the latter runs.
+const ACTOR_KEYS = Object.freeze(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
 const POOL_ACTORS = new Set(['moved_piece', 'enemy_moved_piece'])
 
 export function commitSingularsSpecies(ctx, random) {

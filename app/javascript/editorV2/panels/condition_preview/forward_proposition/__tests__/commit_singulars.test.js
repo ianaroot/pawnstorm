@@ -36,6 +36,44 @@ describe('commitSingularsPosition — cap-respecting via virtual pieces', () => 
   })
 })
 
+describe('commitSingularsPosition — captured-piece actors bypass cap checks', () => {
+  it('commits captured_piece even when an after-board cap on its species has max=0', () => {
+    const ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    ctx.propositions = [{
+      team: Board.BLACK,
+      frame: 'current',
+      species_set: new Set([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]),
+      region: { kind: 'all' },
+      count_range: { min: 0, max: 0 },
+      aggregate_value_range: { min: 0, max: Infinity },
+      aggregate_mobility_range: { min: 0, max: Infinity }
+    }]
+    commitSingularsSpecies(ctx, () => 0.999)
+    commitSingularsPosition(ctx, () => 0.5)
+
+    expect(ctx.singulars.captured_piece.region.kind).toBe('set')
+    expect(ctx.singulars.captured_piece.region.squares.size).toBe(1)
+  })
+
+  it('commits enemy_captured_piece even when an after-board cap on its species has max=0', () => {
+    const ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    ctx.propositions = [{
+      team: Board.WHITE,
+      frame: 'current',
+      species_set: new Set([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN]),
+      region: { kind: 'all' },
+      count_range: { min: 0, max: 0 },
+      aggregate_value_range: { min: 0, max: Infinity },
+      aggregate_mobility_range: { min: 0, max: Infinity }
+    }]
+    commitSingularsSpecies(ctx, () => 0.999)
+    commitSingularsPosition(ctx, () => 0.5)
+
+    expect(ctx.singulars.enemy_captured_piece.region.kind).toBe('set')
+    expect(ctx.singulars.enemy_captured_piece.region.squares.size).toBe(1)
+  })
+})
+
 describe('commitSingulars — moved_piece (random 0.0)', () => {
   let ctx
   beforeEach(() => {
