@@ -95,4 +95,75 @@ describe('mergeCtxDelta — aliased singulars in delta produce aliased keys in m
     expect(ctx.singulars.captured_piece).toBe(ctx.singulars.enemy_moved_piece)
     expect(ctx.singulars.captured_piece.species_set).toEqual(new Set([Board.PAWN]))
   })
+
+  it('deletes null from species_set when group has more than one key (matching aliasSingulars)', () => {
+    const ctx = ctxWithSingulars({
+      captured_piece: {
+        team: Board.BLACK, species_set: new Set([null, Board.PAWN, Board.ROOK]), region: { kind: 'all' }
+      },
+      enemy_moved_piece: {
+        team: Board.BLACK, species_set: new Set([null, Board.PAWN, Board.ROOK]), region: { kind: 'all' }
+      }
+    })
+    const shared = { species_set: new Set([null, Board.PAWN, Board.ROOK]) }
+    const delta = {
+      singulars: { captured_piece: shared, enemy_moved_piece: shared }
+    }
+    mergeCtxDelta(ctx, delta)
+    expect(ctx.singulars.captured_piece.species_set.has(null)).toBe(false)
+    expect(ctx.singulars.captured_piece.species_set).toEqual(new Set([Board.PAWN, Board.ROOK]))
+  })
+})
+
+describe('mergeCtxDelta — relationsToAnchors propagation', () => {
+  it('concats delta singular relationsToAnchors onto the target', () => {
+    const ctx = ctxWithSingulars({
+      moved_piece: {
+        team: Board.WHITE, species_set: new Set([Board.KING]),
+        region: { kind: 'all' },
+        relationsToAnchors: []
+      }
+    })
+    const newRelation = { otherActor: 'enemy_moved_piece', operator: 'adjacent', myRole: 'subject' }
+    const delta = {
+      singulars: {
+        moved_piece: { relationsToAnchors: [newRelation] }
+      }
+    }
+    mergeCtxDelta(ctx, delta)
+    expect(ctx.singulars.moved_piece.relationsToAnchors).toEqual([newRelation])
+  })
+
+  it('preserves existing chain relationsToAnchors when delta adds more', () => {
+    const existing = { otherActor: 'captured_piece', operator: 'adjacent', myRole: 'subject' }
+    const ctx = ctxWithSingulars({
+      moved_piece: {
+        team: Board.WHITE, species_set: new Set([Board.KING]),
+        region: { kind: 'all' },
+        relationsToAnchors: [existing]
+      }
+    })
+    const added = { otherActor: 'enemy_moved_piece', operator: 'attack', myRole: 'target' }
+    mergeCtxDelta(ctx, { singulars: { moved_piece: { relationsToAnchors: [added] } } })
+    expect(ctx.singulars.moved_piece.relationsToAnchors).toEqual([existing, added])
+  })
+
+  it('concats relationsToAnchors from all aliased chain singulars into the target', () => {
+    const movedRelation = { otherActor: 'moved_piece', operator: 'attack', myRole: 'target' }
+    const ctx = ctxWithSingulars({
+      captured_piece: {
+        team: Board.BLACK, species_set: new Set([null, Board.PAWN]),
+        region: { kind: 'all' },
+        relationsToAnchors: []
+      },
+      enemy_moved_piece: {
+        team: Board.BLACK, species_set: new Set([null, Board.PAWN]),
+        region: { kind: 'all' },
+        relationsToAnchors: [movedRelation]
+      }
+    })
+    const shared = { species_set: new Set([Board.PAWN]) }
+    mergeCtxDelta(ctx, { singulars: { captured_piece: shared, enemy_moved_piece: shared } })
+    expect(ctx.singulars.captured_piece.relationsToAnchors).toEqual([movedRelation])
+  })
 })
