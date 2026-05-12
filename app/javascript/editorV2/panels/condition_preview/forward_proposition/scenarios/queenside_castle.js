@@ -1,5 +1,6 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { emptySquareConstraints } from './proposition_helpers'
 
 const PERMISSIVE = Object.freeze({ min: 0, max: Infinity })
 
@@ -9,11 +10,14 @@ function squareAt(team, file) {
 
 export const queensideCastleScenario = {
   name: 'queenside_castle',
+  attemptBudget: 20,
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam
+    const kingStart = squareAt(team, 4)
     const kingEnd = squareAt(team, 2)
     const rookEnd = squareAt(team, 3)
+    const rookStart = squareAt(team, 0)
     return {
       singulars: {
         moved_piece: {
@@ -24,15 +28,19 @@ export const queensideCastleScenario = {
           species_set: new Set([null])
         }
       },
-      propositions: [{
-        team,
-        frame: 'current',
-        species_set: new Set([Board.ROOK]),
-        region: { kind: 'set', squares: new Set([rookEnd]) },
-        count_range: { min: 1, max: 1 },
-        aggregate_value_range: { ...PERMISSIVE },
-        aggregate_mobility_range: { ...PERMISSIVE }
-      }]
+      propositions: [
+        {
+          team,
+          frame: 'current',
+          species_set: new Set([Board.ROOK]),
+          region: { kind: 'set', squares: new Set([rookEnd]) },
+          count_range: { min: 1, max: 1 },
+          aggregate_value_range: { ...PERMISSIVE },
+          aggregate_mobility_range: { ...PERMISSIVE }
+        },
+        ...emptySquareConstraints(kingStart),
+        ...emptySquareConstraints(rookStart)
+      ]
     }
   },
 

@@ -42,10 +42,10 @@ describe('kingsideCastleScenario.buildCtxDelta (white)', () => {
   })
 
   it('emits a rook proposition for the moving team at F1', () => {
-    expect(delta.propositions).toHaveLength(1)
-    const rookProp = delta.propositions[0]
-    expect(rookProp.team).toBe(Board.WHITE)
-    expect(rookProp.species_set).toEqual(new Set([Board.ROOK]))
+    const rookProp = delta.propositions.find(p =>
+      p.species_set.has(Board.ROOK) && p.species_set.size === 1 && p.team === Board.WHITE
+    )
+    expect(rookProp).toBeDefined()
     expect(rookProp.region).toEqual({ kind: 'set', squares: new Set([F1]) })
     expect(rookProp.count_range).toEqual({ min: 1, max: 1 })
     expect(rookProp.frame).toBe('current')
