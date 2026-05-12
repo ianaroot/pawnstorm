@@ -7,13 +7,13 @@ function squareAt(team, file) {
   return HOME_RANK[team] * 8 + file
 }
 
-export const kingsideCastleScenario = {
-  name: 'kingside_castle',
+export const queensideCastleScenario = {
+  name: 'queenside_castle',
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam
-    const kingEnd = squareAt(team, 6)
-    const rookEnd = squareAt(team, 5)
+    const kingEnd = squareAt(team, 2)
+    const rookEnd = squareAt(team, 3)
     return {
       singulars: {
         moved_piece: {
@@ -40,8 +40,8 @@ export const kingsideCastleScenario = {
     const team = ctx.movingTeam
     return {
       startPosition: squareAt(team, 4),
-      endPosition: squareAt(team, 6),
-      pieceNotation: 'O-O'
+      endPosition: squareAt(team, 2),
+      pieceNotation: 'O-O-O'
     }
   }
 }

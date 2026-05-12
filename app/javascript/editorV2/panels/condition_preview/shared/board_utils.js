@@ -4,6 +4,8 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 
 export const MAX_PAWNS_PER_TEAM = 8
 
+export const HOME_RANK = Object.freeze({ [Board.WHITE]: 0, [Board.BLACK]: 7 })
+
 export function square(value) {
   return Board.gridCalculatorReverse(value)
 }

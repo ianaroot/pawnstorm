@@ -3,7 +3,7 @@ import Rules from 'gameplay/rules'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   square, clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
-  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS
+  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS, HOME_RANK
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 
 export const MOVE_KIND_STANDARD = 'standard'
@@ -172,10 +172,11 @@ export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotati
   priorPieces.delete(endPos)
   priorPieces.set(origin, pieceCode(moved.team, movedSpecies))
 
-  if (pieceNotation === 'O-O') {
-    const homeRankStart = team === Board.BLACK ? 56 : 0
-    priorPieces.delete(homeRankStart + 5)
-    priorPieces.set(homeRankStart + 7, pieceCode(team, Board.ROOK))
+  if (pieceNotation === 'O-O' || pieceNotation === 'O-O-O') {
+    const homeRankStart = HOME_RANK[team] * 8
+    const [rookAfterFile, rookPriorFile] = pieceNotation === 'O-O' ? [5, 7] : [3, 0]
+    priorPieces.delete(homeRankStart + rookAfterFile)
+    priorPieces.set(homeRankStart + rookPriorFile, pieceCode(team, Board.ROOK))
     return priorPieces
   }
 
