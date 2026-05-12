@@ -96,6 +96,11 @@ function applyPlusRoleSubject(entry, ctx, pieces, random) {
 // uncontrolled by relevant attackers, we just commit priorRegion to origin
 // candidates that ARE controlled by some existing attacker. If the
 // destination is still controlled, this mechanism can't post-engineer.
+//
+// Future extension: when no existing attacker controls a viable origin, this
+// mechanism could place an attacker on a square that controls some origin but
+// not destination — turning a "no usable existing attacker" case into a
+// solvable one. Today the minus path is read-only.
 function applyMinusRoleTarget(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
@@ -119,6 +124,10 @@ function applyMinusRoleTarget(entry, ctx, pieces, random) {
 // targets on after than prior. Commit priorRegion to origin candidates from
 // which moved_piece at origin controls more relevant targets than from
 // destination.
+//
+// Future extension: place a target piece on a square moved_piece's origin
+// controls but its destination does not, widening the set of solvable
+// configurations. Today the minus path is read-only.
 function applyMinusRoleSubject(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)

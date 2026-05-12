@@ -51,6 +51,10 @@ function applyPlus(entry, ctx, pieces, random) {
 // Direction '-': adjacency went down. Destination must NOT be adjacent to
 // any matching piece (otherwise post-pass can't make the count drop). Commit
 // priorRegion to origin candidates that ARE adjacent to a matching piece.
+//
+// Future extension: when no existing matching piece sits adjacent to any
+// valid origin, this mechanism could place one — turning "no usable existing
+// neighbor" cases into solvable ones. Today the minus path is read-only.
 function applyMinus(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
