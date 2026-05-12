@@ -4,6 +4,11 @@ import { blockersMechanism } from './blockers'
 import { kingAdjacentControlMechanism } from './king_adjacent_control'
 import { pinsMechanism } from './pins'
 
+// All three mechanisms only REDUCE mobility (add blockers / attackers / pins).
+// Chains with aggregate_mobility_range.min > 0 ("mobility floor") have no
+// recovery path here — if natural placement falls short of the floor, the
+// example fails CEv2 evaluation. See agents/next/5_10_mobility_mechanism_refinements.md
+// item #11 for the deferred floor-engineering plan.
 const MECHANISMS = Object.freeze([
   blockersMechanism,
   kingAdjacentControlMechanism,
