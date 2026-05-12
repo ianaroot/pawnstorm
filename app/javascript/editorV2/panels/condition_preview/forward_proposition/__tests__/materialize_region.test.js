@@ -118,6 +118,68 @@ describe('materializeRegion — operator: shield, role: target (empty board)', (
   })
 })
 
+function pawnAnchorAt(pos, team = Board.WHITE) {
+  return {
+    moved_piece: {
+      team,
+      species_set: new Set([Board.QUEEN]),
+      region: { kind: 'set', squares: new Set([pos]) }
+    }
+  }
+}
+
+describe('materializeRegion — operator: pawn-push-origin', () => {
+  it('returns the single square one rank back from a white anchor', () => {
+    const D8 = 59
+    const D7 = 51
+    const singulars = pawnAnchorAt(D8, Board.WHITE)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-push-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([D7]))
+  })
+
+  it('returns the single square one rank forward (absolute) from a black anchor', () => {
+    const D1 = 3
+    const D2 = 11
+    const singulars = pawnAnchorAt(D1, Board.BLACK)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-push-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([D2]))
+  })
+})
+
+describe('materializeRegion — operator: pawn-diag-left-origin', () => {
+  it('returns the diag-left square one rank back from a white anchor', () => {
+    const D8 = 59
+    const C7 = 50
+    const singulars = pawnAnchorAt(D8, Board.WHITE)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-left-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([C7]))
+  })
+
+  it('returns empty when anchor is on file 0 (no diag-left)', () => {
+    const A8 = 56
+    const singulars = pawnAnchorAt(A8, Board.WHITE)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-left-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set())
+  })
+})
+
+describe('materializeRegion — operator: pawn-diag-right-origin', () => {
+  it('returns the diag-right square one rank back from a white anchor', () => {
+    const D8 = 59
+    const E7 = 52
+    const singulars = pawnAnchorAt(D8, Board.WHITE)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-right-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([E7]))
+  })
+
+  it('returns empty when anchor is on file 7 (no diag-right)', () => {
+    const H8 = 63
+    const singulars = pawnAnchorAt(H8, Board.WHITE)
+    const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-right-origin' }
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set())
+  })
+})
+
 describe('materializeRegion — operator: shield ray truncation at first occupant', () => {
   const D6 = 43
   const D5 = 35

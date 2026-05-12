@@ -15,3 +15,15 @@ export function emptySquareConstraints(square) {
     aggregate_mobility_range: { ...PERMISSIVE }
   }))
 }
+
+export function emptySquareConstraintsRelativeToActor(actor, operator) {
+  return [Board.WHITE, Board.BLACK].map(team => ({
+    team,
+    frame: 'current',
+    species_set: new Set(ALL_SPECIES),
+    region: { kind: 'related-to', actor, operator },
+    count_range: { ...EMPTY_COUNT },
+    aggregate_value_range: { ...PERMISSIVE },
+    aggregate_mobility_range: { ...PERMISSIVE }
+  }))
+}
