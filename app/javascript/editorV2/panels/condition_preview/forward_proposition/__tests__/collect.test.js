@@ -69,4 +69,30 @@ describe('collectForwardPropositionExamples', () => {
     const castleExamples = standardExamples.filter(e => /^O-O/.test(e.moveObject?.pieceNotation ?? ''))
     expect(castleExamples.length).toBeGreaterThan(0)
   })
+
+  it('produces verified examples for "no enemy attacker on moved_piece" (count=0 relational)', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'enemy', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any',
+      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+    }])
+    const standardExamples = []
+    const produced = { 'forward-proposition': 0 }
+
+    collectForwardPropositionExamples({
+      combinedPlan,
+      random: seededRandom(9101),
+      maxStandardSize: 50,
+      addUnique: makeAdder(),
+      standardExamples,
+      produced,
+      attempts: 200
+    })
+
+    expect(standardExamples.length).toBeGreaterThan(0)
+    expect(produced['forward-proposition']).toBeGreaterThan(0)
+  })
 })
