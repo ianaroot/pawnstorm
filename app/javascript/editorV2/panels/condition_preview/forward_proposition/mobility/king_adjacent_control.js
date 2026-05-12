@@ -24,7 +24,7 @@ export const kingAdjacentControlMechanism = {
     for (const adjacentSquare of adjacents) {
       const occupant = pieces.get(adjacentSquare)
       if (occupant && occupant.charAt(0) === target.team) { continue }
-      const result = tryPlaceEnemyAttacker(adjacentSquare, enemyTeam, board, ctx, pieces, random)
+      const result = tryPlaceEnemyAttacker(adjacentSquare, target.position, enemyTeam, board, ctx, pieces, random)
       if (result !== null) { return result }
     }
     return null
@@ -33,13 +33,19 @@ export const kingAdjacentControlMechanism = {
   isActive() { return false }
 }
 
-function tryPlaceEnemyAttacker(targetSquare, enemyTeam, board, ctx, pieces, random) {
+function tryPlaceEnemyAttacker(targetSquare, kingPosition, enemyTeam, board, ctx, pieces, random) {
   for (const species of shuffled(ENEMY_ATTACKER_SPECIES, random)) {
+    // Reject placements that would also attack the king's own square. Without
+    // this filter a slider on the same line as the king (e.g. rook at a4 to
+    // cover c4 of a king at d4) puts the king in check on the after-board,
+    // illegal since the moving team just moved.
+    const kingAttackerSet = new Set(attackerCandidatesFor(kingPosition, species, enemyTeam, board))
     const attackerPositions = shuffled(
       attackerCandidatesFor(targetSquare, species, enemyTeam, board),
       random
     )
     for (const attackerPos of attackerPositions) {
+      if (kingAttackerSet.has(attackerPos)) { continue }
       if (!respectsAllCaps(enemyTeam, species, attackerPos, ctx, pieces)) { continue }
       const next = placePiece(pieces, attackerPos, pieceCode(enemyTeam, species))
       if (next !== null) { return next }

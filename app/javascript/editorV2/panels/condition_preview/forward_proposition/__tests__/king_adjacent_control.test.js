@@ -3,6 +3,7 @@ import Board from 'gameplay/board'
 
 import { kingAdjacentControlMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/king_adjacent_control'
 import { mobilityAt } from 'gameplay/mobility'
+import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { position } from 'gameplay/__tests__/helpers'
 
@@ -84,6 +85,41 @@ describe('kingAdjacentControlMechanism.apply respecting caps', () => {
     expect(kingAdjacentControlMechanism.apply(target, ctx, 'current', pieces, () => 0)).toBeNull()
   })
 })
+
+describe('kingAdjacentControlMechanism.apply check-safety filter', () => {
+  it('never places an attacker that also controls the king\'s own square', () => {
+    // On a near-empty board many slider placements that control a king-
+    // adjacent square also control the king's own square (e.g. rook at a4
+    // covers c4 of a king at d4 along rank 4 — but also attacks d4). Such
+    // placements would put the moving team in check on the after-board,
+    // illegal since they just moved.
+    const pieces = piecesMap([
+      ['d4', pieceCode(Board.WHITE, Board.KING)],
+      ['d8', pieceCode(Board.BLACK, Board.KING)]
+    ])
+    const target = targetAt('d4', Board.WHITE, Board.KING)
+    const kingPos = position('d4')
+
+    for (let seed = 0; seed < 30; seed += 1) {
+      const random = makeSeededRandom(seed)
+      const next = kingAdjacentControlMechanism.apply(target, EMPTY_CTX, 'current', pieces, random)
+      if (next === null) { continue }
+      const board = boardFrom(next)
+      for (const [square] of next) {
+        if (pieces.has(square)) { continue }
+        expect(pieceControlsSquare({ board, attackerPosition: square, targetPosition: kingPos })).toBe(false)
+      }
+    }
+  })
+})
+
+function makeSeededRandom(seed) {
+  let state = seed + 1
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0
+    return state / 0x100000000
+  }
+}
 
 describe('kingAdjacentControlMechanism.isActive', () => {
   it('is currently a placeholder that returns false', () => {
