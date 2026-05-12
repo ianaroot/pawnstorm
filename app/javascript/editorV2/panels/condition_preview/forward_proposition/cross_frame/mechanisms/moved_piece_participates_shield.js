@@ -25,9 +25,21 @@ export const movedPieceParticipatesShield = {
     const role = roleFor(entry, ctx)
     if (role === null) { return null }
     if (entry.direction !== '+' && entry.direction !== '-') { return null }
-    if (role === 'subject')  { return applyShielder(entry, ctx, pieces, random) }
-    if (role === 'target')   { return applyShielded(entry, ctx, pieces, random) }
-    if (role === 'attacker') { return applyAttacker(entry, ctx, pieces, random) }
+    if (role === 'subject') {
+      return entry.direction === '+'
+        ? applyShielder(entry, ctx, pieces, random)
+        : applyShielderMinus(entry, ctx, pieces, random)
+    }
+    if (role === 'target') {
+      return entry.direction === '+'
+        ? applyShielded(entry, ctx, pieces, random)
+        : applyShieldedMinus(entry, ctx, pieces, random)
+    }
+    if (role === 'attacker') {
+      return entry.direction === '+'
+        ? applyAttacker(entry, ctx, pieces, random)
+        : applyAttackerMinus(entry, ctx, pieces, random)
+    }
     return null
   }
 }
@@ -68,7 +80,7 @@ function applyShielder(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const alliedTeam = entry.currentProposition.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
-  const targetSpeciesSet = entry.currentProposition.species_set
+  const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
     const compatibleSliders = shieldAttackerSpeciesForStep(step)
@@ -80,6 +92,76 @@ function applyShielder(entry, ctx, pieces, random) {
     if (result !== null) { return result }
   }
   return null
+}
+
+// Direction "-" counterpart of applyShielder: moved_piece was the shielder on
+// prior (at origin), not on after. Iterate origin candidates; for each, find a
+// queen-ray through origin that does NOT pass through destination, then place
+// attacker on one side of origin and target on the other.
+function applyShielderMinus(entry, ctx, pieces, random) {
+  const moved = ctx.singulars.moved_piece
+  const destination = singularSquare(moved)
+  if (destination === null) { return null }
+  const movedSpecies = [...moved.species_set][0]
+  const alliedTeam = entry.currentProposition.team
+  const attackerTeam = Board.opposingTeam(alliedTeam)
+  const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
+
+  const origins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+    .filter(p => p !== destination && !pieces.has(p))
+
+  for (const origin of shuffled(origins, random)) {
+    for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
+      const compatibleSliders = shieldAttackerSpeciesForStep(step)
+      if (compatibleSliders.length === 0) { continue }
+      const towardTarget = rayPositionsAvoiding(origin, -step, destination)
+      const towardAttacker = rayPositionsAvoiding(origin, step, destination)
+      if (towardTarget === null || towardAttacker === null) { continue }
+      const result = placeTargetAndAttackerAroundOrigin({
+        origin, towardTarget, towardAttacker, alliedTeam, attackerTeam,
+        compatibleSliders, targetSpeciesSet, ctx, pieces, random
+      })
+      if (result !== null) { return result }
+    }
+  }
+  return null
+}
+
+function placeTargetAndAttackerAroundOrigin({
+  origin, towardTarget, towardAttacker, alliedTeam, attackerTeam,
+  compatibleSliders, targetSpeciesSet, ctx, pieces, random
+}) {
+  for (let tIdx = 0; tIdx < towardTarget.length; tIdx += 1) {
+    const targetPos = towardTarget[tIdx]
+    if (!pathClearOrCompatible(towardTarget, 0, tIdx, pieces, alliedTeam, targetSpeciesSet, targetPos)) { continue }
+    for (let aIdx = 0; aIdx < towardAttacker.length; aIdx += 1) {
+      const attackerPos = towardAttacker[aIdx]
+      if (!pathClearOrCompatible(towardAttacker, 0, aIdx, pieces, attackerTeam, new Set(compatibleSliders), attackerPos)) { continue }
+
+      let next = pieces
+      next = ensureRolePieceAt({ pieces: next, pos: targetPos, team: alliedTeam, speciesSet: targetSpeciesSet, ctx, random })
+      if (next === null) { continue }
+      next = ensureRolePieceAt({ pieces: next, pos: attackerPos, team: attackerTeam, speciesSet: new Set(compatibleSliders), ctx, random })
+      if (next === null) { continue }
+
+      const result = commitPriorRegion(ctx, [origin], next)
+      if (result !== null) { return result }
+    }
+  }
+  return null
+}
+
+// Returns walkRay(start, step) only when `avoid` is on neither half of the
+// line through `start` in the step direction. Used by the direction-"-"
+// branches: placed pieces on one half extend the line through origin and
+// could re-create the relation with `avoid` (destination) on the other half;
+// rejecting both halves prevents that.
+function rayPositionsAvoiding(start, step, avoid) {
+  const positive = walkRay(start, step)
+  if (positive.includes(avoid)) { return null }
+  const negative = walkRay(start, -step)
+  if (negative.includes(avoid)) { return null }
+  return positive
 }
 
 function placeTargetAndAttackerAroundShielder({
@@ -123,7 +205,7 @@ function applyShielded(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const alliedTeam = entry.currentProposition.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
-  const shielderSpeciesSet = entry.currentProposition.species_set
+  const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
     const compatibleSliders = shieldAttackerSpeciesForStep(step)
@@ -133,6 +215,62 @@ function applyShielded(entry, ctx, pieces, random) {
       compatibleSliders, shielderSpeciesSet, ctx, pieces, random
     })
     if (result !== null) { return result }
+  }
+  return null
+}
+
+// Direction "-" counterpart of applyShielded: moved_piece was the shielded
+// (target) on prior at origin, not on after. Iterate origin candidates; for
+// each, walk a queen-ray from origin in some direction that doesn't include
+// destination, place shielder closer to origin and attacker further out.
+function applyShieldedMinus(entry, ctx, pieces, random) {
+  const moved = ctx.singulars.moved_piece
+  const destination = singularSquare(moved)
+  if (destination === null) { return null }
+  const movedSpecies = [...moved.species_set][0]
+  const alliedTeam = entry.currentProposition.team
+  const attackerTeam = Board.opposingTeam(alliedTeam)
+  const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
+
+  const origins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+    .filter(p => p !== destination && !pieces.has(p))
+
+  for (const origin of shuffled(origins, random)) {
+    for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
+      const compatibleSliders = shieldAttackerSpeciesForStep(step)
+      if (compatibleSliders.length === 0) { continue }
+      const lineSquares = rayPositionsAvoiding(origin, step, destination)
+      if (lineSquares === null) { continue }
+      const result = placeShielderAndAttackerAlongRayFromOrigin({
+        origin, lineSquares, alliedTeam, attackerTeam,
+        compatibleSliders, shielderSpeciesSet, ctx, pieces, random
+      })
+      if (result !== null) { return result }
+    }
+  }
+  return null
+}
+
+function placeShielderAndAttackerAlongRayFromOrigin({
+  origin, lineSquares, alliedTeam, attackerTeam, compatibleSliders,
+  shielderSpeciesSet, ctx, pieces, random
+}) {
+  for (let sIdx = 0; sIdx < lineSquares.length - 1; sIdx += 1) {
+    const shielderPos = lineSquares[sIdx]
+    if (!pathClearOrCompatible(lineSquares, 0, sIdx, pieces, alliedTeam, shielderSpeciesSet, shielderPos)) { continue }
+    for (let aIdx = sIdx + 1; aIdx < lineSquares.length; aIdx += 1) {
+      const attackerPos = lineSquares[aIdx]
+      if (!pathClearOrCompatible(lineSquares, sIdx + 1, aIdx, pieces, attackerTeam, new Set(compatibleSliders), attackerPos)) { continue }
+
+      let next = pieces
+      next = ensureRolePieceAt({ pieces: next, pos: shielderPos, team: alliedTeam, speciesSet: shielderSpeciesSet, ctx, random })
+      if (next === null) { continue }
+      next = ensureRolePieceAt({ pieces: next, pos: attackerPos, team: attackerTeam, speciesSet: new Set(compatibleSliders), ctx, random })
+      if (next === null) { continue }
+
+      const result = commitPriorRegion(ctx, [origin], next)
+      if (result !== null) { return result }
+    }
   }
   return null
 }
@@ -173,15 +311,70 @@ function applyAttacker(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const movedSpecies = [...moved.species_set][0]
   const alliedTeam = entry.currentProposition.team
-  const sharedSpeciesSet = entry.currentProposition.species_set
+  const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
+  const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
 
   for (const step of shuffled([...stepsForSliderSpecies(movedSpecies)], random)) {
     const result = placeShielderAndTargetOnAttackerRay({
       destination, step, alliedTeam,
-      shielderSpeciesSet: sharedSpeciesSet, targetSpeciesSet: sharedSpeciesSet,
+      shielderSpeciesSet, targetSpeciesSet,
       ctx, pieces, random
     })
     if (result !== null) { return result }
+  }
+  return null
+}
+
+// Direction "-" counterpart of applyAttacker: moved_piece was the implicit
+// attacker on prior (at origin), not on after. Iterate origin candidates; for
+// each, walk a ray from origin in moved_piece's slider directions that doesn't
+// include destination, and place shielder closer to origin with target further.
+function applyAttackerMinus(entry, ctx, pieces, random) {
+  const moved = ctx.singulars.moved_piece
+  const destination = singularSquare(moved)
+  if (destination === null) { return null }
+  const movedSpecies = [...moved.species_set][0]
+  const alliedTeam = entry.currentProposition.team
+  const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
+  const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
+
+  const origins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+    .filter(p => p !== destination && !pieces.has(p))
+
+  for (const origin of shuffled(origins, random)) {
+    for (const step of shuffled([...stepsForSliderSpecies(movedSpecies)], random)) {
+      const lineSquares = rayPositionsAvoiding(origin, step, destination)
+      if (lineSquares === null) { continue }
+      const result = placeShielderAndTargetAlongRayFromOrigin({
+        origin, lineSquares, alliedTeam,
+        shielderSpeciesSet, targetSpeciesSet, ctx, pieces, random
+      })
+      if (result !== null) { return result }
+    }
+  }
+  return null
+}
+
+function placeShielderAndTargetAlongRayFromOrigin({
+  origin, lineSquares, alliedTeam, shielderSpeciesSet, targetSpeciesSet,
+  ctx, pieces, random
+}) {
+  for (let sIdx = 0; sIdx < lineSquares.length - 1; sIdx += 1) {
+    const shielderPos = lineSquares[sIdx]
+    if (!pathClearOrCompatible(lineSquares, 0, sIdx, pieces, alliedTeam, shielderSpeciesSet, shielderPos)) { continue }
+    for (let tIdx = sIdx + 1; tIdx < lineSquares.length; tIdx += 1) {
+      const targetPos = lineSquares[tIdx]
+      if (!pathClearOrCompatible(lineSquares, sIdx + 1, tIdx, pieces, alliedTeam, targetSpeciesSet, targetPos)) { continue }
+
+      let next = pieces
+      next = ensureRolePieceAt({ pieces: next, pos: shielderPos, team: alliedTeam, speciesSet: shielderSpeciesSet, ctx, random })
+      if (next === null) { continue }
+      next = ensureRolePieceAt({ pieces: next, pos: targetPos, team: alliedTeam, speciesSet: targetSpeciesSet, ctx, random })
+      if (next === null) { continue }
+
+      const result = commitPriorRegion(ctx, [origin], next)
+      if (result !== null) { return result }
+    }
   }
   return null
 }
