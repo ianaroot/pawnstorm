@@ -108,3 +108,24 @@ describe('movedPieceParticipatesAdjacent — apply (direction "-")', () => {
     expect(ctx.singulars.moved_piece.priorRegion.squares.size).toBeGreaterThan(0)
   })
 })
+
+describe('movedPieceParticipatesAdjacent — cap respect', () => {
+  it('returns null when placing the engineered adjacent piece would violate a count_range.max cap on the species', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedPieceSingular() },
+      propositions: [{
+        team: Board.BLACK, frame: 'current',
+        species_set: new Set([Board.PAWN]),
+        region: { kind: 'all' },
+        count_range: { min: 0, max: 0 },
+        aggregate_value_range: { min: 0, max: Infinity },
+        aggregate_mobility_range: { min: 0, max: Infinity }
+      }]
+    })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+
+    const result = movedPieceParticipatesAdjacent.apply(entry(), ctx, pieces, () => 0.5)
+
+    expect(result).toBeNull()
+  })
+})

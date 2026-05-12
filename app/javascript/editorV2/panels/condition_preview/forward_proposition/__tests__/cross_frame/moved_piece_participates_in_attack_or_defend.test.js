@@ -137,6 +137,50 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
   })
 })
 
+describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role "subject")', () => {
+  it('narrows priorRegion to origin candidates that attack more relevant targets than destination does', () => {
+    // moved_piece (white queen) at D4 attacks nothing matching black queen on this board.
+    // A black queen at A8 isn't on any line from D4, but is on lines from queen-origins
+    // for D4 (e.g., A1 via the A1-H8 diagonal continues to A-file → A8; A4 via rank 3 → A-file → A8).
+    const A8 = 56
+    const moved = {
+      team: Board.WHITE, species_set: new Set([Board.QUEEN]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'all' }, relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([
+      [D4, pieceCode(Board.WHITE, Board.QUEEN)],
+      [A8, pieceCode(Board.BLACK, Board.QUEEN)]
+    ])
+
+    const result = movedPieceParticipatesInAttackOrDefend.apply(
+      entry({ direction: '-', movedPieceRole: 'subject' }), ctx, pieces, () => 0.5
+    )
+
+    expect(result).toBe(pieces) // No new pieces placed for '-' direction.
+    expect(ctx.singulars.moved_piece.priorRegion.kind).toBe('set')
+    expect(ctx.singulars.moved_piece.priorRegion.squares.size).toBeGreaterThan(0)
+  })
+
+  it('returns null when no origin attacks strictly more relevant targets than destination', () => {
+    // No black queens on the board — targetsFromDestination=0 and every origin also yields 0.
+    const moved = {
+      team: Board.WHITE, species_set: new Set([Board.QUEEN]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'all' }, relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+
+    const result = movedPieceParticipatesInAttackOrDefend.apply(
+      entry({ direction: '-', movedPieceRole: 'subject' }), ctx, pieces, () => 0.5
+    )
+
+    expect(result).toBeNull()
+  })
+})
+
 describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role "subject")', () => {
   it('places a target on a square moved_piece (at destination) controls', () => {
     const ctx = defaultTestCtx({
