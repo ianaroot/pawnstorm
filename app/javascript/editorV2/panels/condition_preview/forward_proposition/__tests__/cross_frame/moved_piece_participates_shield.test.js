@@ -87,27 +87,96 @@ describe('movedPieceParticipatesShield — appliesTo', () => {
   })
 })
 
-describe('movedPieceParticipatesShield — apply (role "subject", moved_piece is shielder)', () => {
-  it('places an attacker and a target on a ray through moved_piece destination', () => {
-    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular(Board.BISHOP) } })
-    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.BISHOP)]])
+describe('movedPieceParticipatesShield — apply (direction "+", role "subject", moved_piece becomes shielder)', () => {
+  it('commits priorRegion to origins where after shield-count exceeds prior shield-count', () => {
+    const moved = {
+      team: Board.WHITE,
+      species_set: new Set([Board.PAWN]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'all' },
+      relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.PAWN)]])
 
-    const result = movedPieceParticipatesShield.apply(entry({ movedPieceRole: 'subject' }), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesShield.apply(
+      entryWithBothProps({ direction: '+', movedPieceRole: 'subject' }),
+      ctx, pieces, () => 0.5
+    )
 
     expect(result).not.toBeNull()
-    expect(result.size).toBeGreaterThanOrEqual(pieces.size + 1)
+    const priorRegion = ctx.singulars.moved_piece.priorRegion
+    expect(priorRegion.kind).toBe('set')
+    expect(priorRegion.squares.size).toBeGreaterThan(0)
+
+    const afterCount = shieldCountForSubject(result, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+    for (const origin of priorRegion.squares) {
+      const priorPieces = piecesWithMovedAtOrigin(result, D4, origin, Board.WHITE, Board.PAWN)
+      const priorCount = shieldCountForSubject(priorPieces, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+      expect(afterCount).toBeGreaterThan(priorCount)
+    }
   })
 })
 
-describe('movedPieceParticipatesShield — apply (role "target", moved_piece is shielded)', () => {
-  it('places a shielder and an attacker on a ray through moved_piece destination', () => {
-    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular(Board.QUEEN) } })
-    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+describe('movedPieceParticipatesShield — apply (direction "+", role "attacker", moved_piece becomes implicit attacker)', () => {
+  it('commits priorRegion to origins where after shield-count exceeds prior shield-count', () => {
+    const moved = {
+      team: Board.BLACK,
+      species_set: new Set([Board.QUEEN]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'all' },
+      relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.BLACK, Board.QUEEN)]])
 
-    const result = movedPieceParticipatesShield.apply(entry({ movedPieceRole: 'target' }), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesShield.apply(
+      entryWithBothProps({ direction: '+', movedPieceRole: null }),
+      ctx, pieces, () => 0.5
+    )
 
     expect(result).not.toBeNull()
-    expect(result.size).toBeGreaterThanOrEqual(pieces.size + 1)
+    const priorRegion = ctx.singulars.moved_piece.priorRegion
+    expect(priorRegion.kind).toBe('set')
+    expect(priorRegion.squares.size).toBeGreaterThan(0)
+
+    const afterCount = shieldCountForSubject(result, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+    for (const origin of priorRegion.squares) {
+      const priorPieces = piecesWithMovedAtOrigin(result, D4, origin, Board.BLACK, Board.QUEEN)
+      const priorCount = shieldCountForSubject(priorPieces, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+      expect(afterCount).toBeGreaterThan(priorCount)
+    }
+  })
+})
+
+describe('movedPieceParticipatesShield — apply (direction "+", role "target", moved_piece becomes shielded)', () => {
+  it('commits priorRegion to origins where after shield-count exceeds prior shield-count', () => {
+    const moved = {
+      team: Board.WHITE,
+      species_set: new Set([Board.ROOK]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'all' },
+      relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.ROOK)]])
+
+    const result = movedPieceParticipatesShield.apply(
+      entryWithBothProps({ direction: '+', movedPieceRole: 'target' }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).not.toBeNull()
+    const priorRegion = ctx.singulars.moved_piece.priorRegion
+    expect(priorRegion.kind).toBe('set')
+    expect(priorRegion.squares.size).toBeGreaterThan(0)
+
+    const afterCount = shieldCountForSubject(result, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+    for (const origin of priorRegion.squares) {
+      const priorPieces = piecesWithMovedAtOrigin(result, D4, origin, Board.WHITE, Board.ROOK)
+      const priorCount = shieldCountForSubject(priorPieces, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
+      expect(afterCount).toBeGreaterThan(priorCount)
+    }
   })
 })
 
@@ -235,5 +304,48 @@ describe('movedPieceParticipatesShield — apply (direction "-", role "attacker"
       const priorCount = shieldCountForSubject(priorPieces, Board.WHITE, new Set([Board.PAWN]), Board.WHITE, new Set([Board.ROOK]))
       expect(priorCount).toBeGreaterThan(afterCount)
     }
+  })
+})
+
+describe('movedPieceParticipatesShield — apply returns null when priorRegion is constrained to a square no engineering can produce', () => {
+  it('returns null when priorRegion excludes every legal origin', () => {
+    const A2 = 8
+    const moved = {
+      team: Board.WHITE,
+      species_set: new Set([Board.BISHOP]),
+      region: { kind: 'set', squares: new Set([D4]) },
+      priorRegion: { kind: 'set', squares: new Set([A2]) },
+      relationsToAnchors: []
+    }
+    const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.BISHOP)]])
+
+    const result = movedPieceParticipatesShield.apply(
+      entry({ movedPieceRole: 'subject' }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).toBeNull()
+  })
+})
+
+describe('movedPieceParticipatesShield — cap respect', () => {
+  it('returns null when placing the engineered attacker would violate a count_range.max cap on every slider species', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedPieceSingular(Board.BISHOP) },
+      propositions: [{
+        team: Board.BLACK, frame: 'current',
+        species_set: new Set([Board.QUEEN, Board.ROOK, Board.BISHOP]),
+        region: { kind: 'all' },
+        count_range: { min: 0, max: 0 },
+        aggregate_value_range: { min: 0, max: Infinity },
+        aggregate_mobility_range: { min: 0, max: Infinity }
+      }]
+    })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.BISHOP)]])
+
+    const result = movedPieceParticipatesShield.apply(entry({ movedPieceRole: 'subject' }), ctx, pieces, () => 0.5)
+
+    expect(result).toBeNull()
   })
 })

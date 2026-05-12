@@ -280,6 +280,7 @@ function placeShielderAndAttackerThroughTarget({
   shielderSpeciesSet, ctx, pieces, random
 }) {
   const lineSquares = walkRay(destination, step)
+  const oppositeRay = walkRay(destination, -step)
   for (let sIdx = 0; sIdx < lineSquares.length - 1; sIdx += 1) {
     const shielderPos = lineSquares[sIdx]
     if (!pathClearOrCompatible(lineSquares, 0, sIdx, pieces, alliedTeam, shielderSpeciesSet, shielderPos)) { continue }
@@ -293,7 +294,11 @@ function placeShielderAndAttackerThroughTarget({
       next = ensureRolePieceAt({ pieces: next, pos: attackerPos, team: attackerTeam, speciesSet: new Set(compatibleSliders), ctx, random })
       if (next === null) { continue }
 
-      const rayPositions = new Set([destination, ...lineSquares.slice(0, aIdx + 1)])
+      // Excluding both the engineered ray AND the opposite-direction half of
+      // the same line through destination — origins on the opposite half sit
+      // on the line with destination (empty on prior) between them and the
+      // shielder, re-creating the shield on prior and zeroing the delta.
+      const rayPositions = new Set([destination, ...lineSquares.slice(0, aIdx + 1), ...oppositeRay])
       const result = commitPriorRegionExcluding(ctx, next, destination, rayPositions)
       if (result !== null) { return result }
     }
@@ -384,6 +389,7 @@ function placeShielderAndTargetOnAttackerRay({
   ctx, pieces, random
 }) {
   const lineSquares = walkRay(destination, step)
+  const oppositeRay = walkRay(destination, -step)
   for (let sIdx = 0; sIdx < lineSquares.length - 1; sIdx += 1) {
     const shielderPos = lineSquares[sIdx]
     if (!pathClearOrCompatible(lineSquares, 0, sIdx, pieces, alliedTeam, shielderSpeciesSet, shielderPos)) { continue }
@@ -397,7 +403,11 @@ function placeShielderAndTargetOnAttackerRay({
       next = ensureRolePieceAt({ pieces: next, pos: targetPos, team: alliedTeam, speciesSet: targetSpeciesSet, ctx, random })
       if (next === null) { continue }
 
-      const rayPositions = new Set([destination, ...lineSquares.slice(0, tIdx + 1)])
+      // Exclude both the engineered ray AND the opposite-direction half of
+      // the same line — origins there sit on the line with destination
+      // (empty on prior) between them and the shielder, re-creating the
+      // shield on prior with moved_piece-at-origin as the attacker.
+      const rayPositions = new Set([destination, ...lineSquares.slice(0, tIdx + 1), ...oppositeRay])
       const result = commitPriorRegionExcluding(ctx, next, destination, rayPositions)
       if (result !== null) { return result }
     }
