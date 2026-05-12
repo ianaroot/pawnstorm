@@ -19,10 +19,16 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
           .filter(p => p !== endPos && !pieces.has(p) && regionAllows(moved.priorRegion, p)),
         random
       )
-  const recentMoveContext = recentMoveContextForEnemy(ctx, random)
+  const recentMoveContext = scenario.resolveRecentMoveContext?.(ctx, random) ?? recentMoveContextForEnemy(ctx, random)
 
   for (const origin of origins) {
-    const priorPieces = buildPriorBoard({ pieces, singulars: ctx.singulars, origin, endPos, pieceNotation: overrides.pieceNotation, team, promotionPiece: overrides.promotionPiece })
+    const priorPieces = buildPriorBoard({
+      pieces, singulars: ctx.singulars, origin, endPos,
+      pieceNotation: overrides.pieceNotation,
+      team,
+      promotionPiece: overrides.promotionPiece,
+      capturedPiecePosition: overrides.capturedPiecePosition
+    })
     const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), recentMoveContext, team)
     let moveObject
     try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }

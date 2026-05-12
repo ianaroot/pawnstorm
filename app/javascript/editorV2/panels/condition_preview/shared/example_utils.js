@@ -167,7 +167,7 @@ export function collectLegalReverseMoves({
 // (file 5 on team home rank) back to its origin (file 7). For promotion
 // (promotionPiece set), the origin is set to PAWN instead of the after-board
 // promoted species; capture-piece logic still applies.
-export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece }) {
+export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece, capturedPiecePosition }) {
   const moved = singulars.moved_piece
   const movedSpecies = [...moved.species_set][0]
   const priorPieces = new Map(pieces)
@@ -186,7 +186,7 @@ export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotati
   const captured = singulars.captured_piece
   const capturedSpecies = [...captured.species_set][0]
   if (capturedSpecies !== null) {
-    priorPieces.set(endPos, pieceCode(captured.team, capturedSpecies))
+    priorPieces.set(capturedPiecePosition ?? endPos, pieceCode(captured.team, capturedSpecies))
   }
   return priorPieces
 }
