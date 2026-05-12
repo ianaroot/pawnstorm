@@ -25,8 +25,10 @@ function seededRandom(seed = 1) {
 describe('promotionCaptureRightScenario.buildCtxDelta (white)', () => {
   const delta = promotionCaptureRightScenario.buildCtxDelta({ movingTeam: Board.WHITE })
 
-  it('narrows moved_piece region to white\'s last rank excluding file 7', () => {
-    expect(delta.singulars.moved_piece.region.squares).toEqual(new Set([56, 57, 58, 59, 60, 61, 62]))
+  it('narrows moved_piece region to white\'s last rank excluding file 0', () => {
+    // White last rank = positions 56-63. Excluding file 0 (A8 = 56) since
+    // capture-right destination can't be at file 0 (origin would need file -1).
+    expect(delta.singulars.moved_piece.region.squares).toEqual(new Set([57, 58, 59, 60, 61, 62, 63]))
   })
 
   it('narrows captured_piece species_set to CAPTURABLE non-pawn', () => {
@@ -49,7 +51,7 @@ describe('promotionCaptureRightScenario — end-to-end via buildAttempt (white)'
     const endPos = result.moveObject.endPosition
     const startPos = result.moveObject.startPosition
     expect(Math.floor(endPos / 8)).toBe(7)
-    expect(endPos - startPos).toBe(7) // diag-right: file +1, rank +1 (for white)
+    expect(endPos - startPos).toBe(9) // capture-right: pawn moves file +1, rank +1, so origin = endPos -1 -8 = endPos -9 (white)
     expect(result.priorBoard.teamAt(startPos)).toBe(Board.WHITE)
     expect(result.priorBoard.pieceTypeAt(startPos)).toBe(Board.PAWN)
     expect(result.priorBoard.teamAt(endPos)).toBe(Board.BLACK)

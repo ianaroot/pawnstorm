@@ -147,34 +147,34 @@ describe('materializeRegion — operator: pawn-push-origin', () => {
 })
 
 describe('materializeRegion — operator: pawn-diag-left-origin', () => {
-  it('returns the diag-left square one rank back from a white anchor', () => {
+  it('returns the origin square (file +1, rank back) from which a white pawn could have moved diag-left to the anchor', () => {
     const D8 = 59
-    const C7 = 50
+    const E7 = 52
     const singulars = pawnAnchorAt(D8, Board.WHITE)
     const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-left-origin' }
-    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([C7]))
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([E7]))
   })
 
-  it('returns empty when anchor is on file 0 (no diag-left)', () => {
-    const A8 = 56
-    const singulars = pawnAnchorAt(A8, Board.WHITE)
+  it('returns empty when anchor is on file 7 (no pawn can move diag-left from file 8)', () => {
+    const H8 = 63
+    const singulars = pawnAnchorAt(H8, Board.WHITE)
     const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-left-origin' }
     expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set())
   })
 })
 
 describe('materializeRegion — operator: pawn-diag-right-origin', () => {
-  it('returns the diag-right square one rank back from a white anchor', () => {
+  it('returns the origin square (file -1, rank back) from which a white pawn could have moved diag-right to the anchor', () => {
     const D8 = 59
-    const E7 = 52
+    const C7 = 50
     const singulars = pawnAnchorAt(D8, Board.WHITE)
     const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-right-origin' }
-    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([E7]))
+    expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set([C7]))
   })
 
-  it('returns empty when anchor is on file 7 (no diag-right)', () => {
-    const H8 = 63
-    const singulars = pawnAnchorAt(H8, Board.WHITE)
+  it('returns empty when anchor is on file 0 (no pawn can move diag-right from file -1)', () => {
+    const A8 = 56
+    const singulars = pawnAnchorAt(A8, Board.WHITE)
     const region = { kind: 'related-to', actor: 'moved_piece', operator: 'pawn-diag-right-origin' }
     expect(materializeRegion(region, { singulars, board: null })).toEqual(new Set())
   })

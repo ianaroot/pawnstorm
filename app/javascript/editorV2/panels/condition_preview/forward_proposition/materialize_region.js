@@ -28,8 +28,8 @@ function materializeRelatedTo(region, { singulars, board, species, team }) {
     return new Set(raySquaresFrom(anchorPos, QUEEN_RAY_STEPS, board))
   }
   if (region.operator === 'pawn-push-origin')      { return pawnOriginSet(anchorPos, anchor.team, 0) }
-  if (region.operator === 'pawn-diag-left-origin') { return pawnOriginSet(anchorPos, anchor.team, -1) }
-  if (region.operator === 'pawn-diag-right-origin'){ return pawnOriginSet(anchorPos, anchor.team, +1) }
+  if (region.operator === 'pawn-diag-left-origin') { return pawnOriginSet(anchorPos, anchor.team, +1) }
+  if (region.operator === 'pawn-diag-right-origin'){ return pawnOriginSet(anchorPos, anchor.team, -1) }
   if (region.role === 'subject') {
     return new Set(controlledSquaresForPieceAt(anchorPos, board))
   }

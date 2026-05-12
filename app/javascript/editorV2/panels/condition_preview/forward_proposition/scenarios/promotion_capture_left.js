@@ -25,11 +25,11 @@ export const promotionCaptureLeftScenario = {
       singulars: {
         moved_piece: {
           species_set: new Set(PROMOTION_SPECIES),
-          region: { kind: 'set', squares: lastRankSquaresExcludingFile(team, 0) }
+          region: { kind: 'set', squares: lastRankSquaresExcludingFile(team, 7) }
         },
         captured_piece: {
           species_set: new Set(CAPTURABLE_NON_PAWN),
-          region: { kind: 'set', squares: lastRankSquaresExcludingFile(team, 0) }
+          region: { kind: 'set', squares: lastRankSquaresExcludingFile(team, 7) }
         }
       },
       propositions: [
@@ -44,7 +44,7 @@ export const promotionCaptureLeftScenario = {
     const promotedSpecies = [...moved.species_set][0]
     const rankDelta = ctx.movingTeam === Board.BLACK ? 1 : -1
     return {
-      startPosition: endPos + 8 * rankDelta - 1,
+      startPosition: endPos + 8 * rankDelta + 1,
       endPosition: endPos,
       promotionPiece: promotedSpecies
     }
