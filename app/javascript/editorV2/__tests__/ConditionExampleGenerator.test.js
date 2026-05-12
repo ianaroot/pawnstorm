@@ -971,6 +971,34 @@ describe('ConditionExampleGenerator', () => {
     expect(hasTwoMinors).toBe(true)
   })
 
+  it('still produces aggregate_value > 4 target examples satisfied by a single major piece', () => {
+    const payload = {
+      kind: 'relational',
+      subject: 'allied',
+      subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy',
+      targetFilter: 'any',
+      targetComparisonMetric: 'aggregate_value',
+      targetComparator: 'greater_than',
+      targetComparisonSource: 'exact_number',
+      targetComparisonSourceTotal: 4
+    }
+
+    const preview = generateConditionExamples(payload, { random: seededRandom(103), maxExamples: 50 })
+
+    expect(preview.status).toBe('ready')
+    expect(preview.examples.length).toBeGreaterThan(0)
+
+    const majorSpecies = new Set([Board.ROOK, Board.QUEEN])
+    const hasSingleMajor = preview.examples.some(example => {
+      const targetSpecies = example.result.targetPositions.map(pos => example.afterBoard.pieceTypeAt(pos))
+      return targetSpecies.length === 1 && majorSpecies.has(targetSpecies[0])
+    })
+
+    expect(hasSingleMajor).toBe(true)
+  })
+
   it('supports exact-number value comparisons on relational conditions', () => {
     const payload = {
       kind: 'relational',
