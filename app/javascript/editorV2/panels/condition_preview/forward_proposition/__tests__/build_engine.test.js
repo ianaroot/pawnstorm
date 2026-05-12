@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import Board from 'gameplay/board'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { buildAttempt } from 'editorV2/panels/condition_preview/forward_proposition/build_engine'
@@ -191,5 +192,18 @@ describe('buildAttempt — pin chain (enemy_moved_piece shield enemy_king + mobi
 
   it('produces an example that satisfies all conditions per CEv2', () => {
     expect(evaluatesTruthy(PIN_CHAIN_PAYLOADS, result)).toBeTruthy()
+  })
+})
+
+describe('buildAttempt — scenario parameter', () => {
+  it('returns null when the scenario delta narrows moved_piece species_set to an empty intersection', () => {
+    const kingOnlyScenario = {
+      name: 'king-only',
+      buildCtxDelta: () => ({
+        singulars: { moved_piece: { species_set: new Set([Board.KING]) } }
+      })
+    }
+    const result = buildAttempt(buildCombinedPlan([KNIGHT_MOVER_PAYLOAD]), () => 0.1, kingOnlyScenario)
+    expect(result).toBeNull()
   })
 })

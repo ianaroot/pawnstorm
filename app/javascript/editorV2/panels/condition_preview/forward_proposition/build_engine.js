@@ -12,12 +12,15 @@ import { satisfyMobility } from './mobility/satisfy_mobility'
 import { satisfyCrossFrame } from './cross_frame/satisfy_cross_frame'
 import { createBiasState } from './mobility/edge_bias'
 import { synthesizeMove } from './synthesize_move'
+import { mergeCtxDelta } from './scenarios/merge_ctx_delta'
+import { standardScenario } from './scenarios/standard'
 
-export function buildAttempt(combinedPlan, random) {
+export function buildAttempt(combinedPlan, random, scenario = standardScenario) {
   const ctx = buildChainCtx(combinedPlan)
   ctx.edgeBiasState = createBiasState()
   ctx.pinState = createBiasState()
   ctx.checkState = createBiasState(1)
+  mergeCtxDelta(ctx, scenario.buildCtxDelta(combinedPlan))
   narrowForCrossFrame(ctx)
   if (!isSatisfiable(ctx)) { return null }
 
