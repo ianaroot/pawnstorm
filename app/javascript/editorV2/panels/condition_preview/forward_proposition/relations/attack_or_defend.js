@@ -9,7 +9,7 @@ import {
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS
+  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet
 } from './relation_helpers'
 
 const MAX_PLAN_COUNT = 4
@@ -20,12 +20,12 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
-  if (attackOrDefendRequirementsMet(relation, pieces)) { return pieces }
+  if (attackOrDefendRequirementsMet(relation, pieces, ctx)) { return pieces }
 
   if (hasTargetAggregateValueConstraint(relation)) {
     for (let s = 0; s < MAX_PLAN_RESAMPLES; s += 1) {
       const planned = trySatisfyWithPlan(relation, pieces, ctx, random)
-      if (planned !== null && attackOrDefendRequirementsMet(relation, planned)) {
+      if (planned !== null && attackOrDefendRequirementsMet(relation, planned, ctx)) {
         return planned
       }
     }
@@ -33,16 +33,18 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
 
   let next = pieces
   for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (attackOrDefendRequirementsMet(relation, next)) { return next }
+    if (attackOrDefendRequirementsMet(relation, next, ctx)) { return next }
     const placed = tryPlace(relation, next, ctx, random)
     if (placed === null || placed === next) { return null }
     next = placed
   }
-  return attackOrDefendRequirementsMet(relation, next) ? next : null
+  return attackOrDefendRequirementsMet(relation, next, ctx) ? next : null
 }
 
-function attackOrDefendRequirementsMet(relation, pieces) {
+function attackOrDefendRequirementsMet(relation, pieces, ctx) {
   const { activeSubjects, activeTargets } = activeAttackOrDefendSets(relation, pieces)
+  if (!boundSingularInActiveSet(relation.subjectSide, activeSubjects, ctx)) { return false }
+  if (!boundSingularInActiveSet(relation.targetSide, activeTargets, ctx)) { return false }
   return requirementsMet({
     subjectSide: relation.subjectSide,
     targetSide: relation.targetSide,

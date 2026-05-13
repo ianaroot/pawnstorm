@@ -4,26 +4,28 @@ import {
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS
+  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet
 } from './relation_helpers'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
-  if (adjacentRequirementsMet(relation, pieces)) { return pieces }
+  if (adjacentRequirementsMet(relation, pieces, ctx)) { return pieces }
   let next = pieces
   for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (adjacentRequirementsMet(relation, next)) { return next }
+    if (adjacentRequirementsMet(relation, next, ctx)) { return next }
     const placed = tryPlace(relation, next, ctx, random)
     if (placed === null || placed === next) { return null }
     next = placed
   }
-  return adjacentRequirementsMet(relation, next) ? next : null
+  return adjacentRequirementsMet(relation, next, ctx) ? next : null
 }
 
-function adjacentRequirementsMet(relation, pieces) {
+function adjacentRequirementsMet(relation, pieces, ctx) {
   const { activeSubjects, activeTargets } = activeAdjacentSets(relation, pieces)
+  if (!boundSingularInActiveSet(relation.subjectSide, activeSubjects, ctx)) { return false }
+  if (!boundSingularInActiveSet(relation.targetSide, activeTargets, ctx)) { return false }
   return requirementsMet({
     subjectSide: relation.subjectSide,
     targetSide: relation.targetSide,

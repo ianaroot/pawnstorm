@@ -60,3 +60,18 @@ export function applyOne(pieces, candidate, ctx, options = {}) {
   if (!respectsAllCaps(candidate.team, candidate.species, candidate.position, ctx, pieces, options)) { return null }
   return placePiece(pieces, candidate.position, pieceCode(candidate.team, candidate.species))
 }
+
+export function singularPosition(ctx, actorKey) {
+  if (!actorKey) { return null }
+  const singular = ctx?.singulars?.[actorKey]
+  if (!singular) { return null }
+  if (singular.region.kind !== 'set' || singular.region.squares.size !== 1) { return null }
+  return [...singular.region.squares][0]
+}
+
+export function boundSingularInActiveSet(sideObj, activeSet, ctx) {
+  if (!sideObj.boundSingularActor) { return true }
+  const pos = singularPosition(ctx, sideObj.boundSingularActor)
+  if (pos === null) { return false }
+  return activeSet.has(pos)
+}

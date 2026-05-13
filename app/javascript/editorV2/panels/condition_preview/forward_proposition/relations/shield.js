@@ -11,7 +11,8 @@ import {
 } from 'gameplay/board_query_utils'
 import {
   matchesSide, candidatesForSide, applyOne,
-  requirementsMet, MAX_SATISFY_ITERATIONS
+  requirementsMet, MAX_SATISFY_ITERATIONS,
+  boundSingularInActiveSet, singularPosition
 } from './relation_helpers'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
@@ -56,13 +57,6 @@ function shieldRequirementsMet(relation, pieces, ctx) {
     targetSide: relation.targetSide,
     activeSubjects, activeTargets, pieces
   })
-}
-
-function boundSingularInActiveSet(sideObj, activeSet, ctx) {
-  if (!sideObj.boundSingularActor) { return true }
-  const pos = singularPosition(ctx, sideObj.boundSingularActor)
-  if (pos === null) { return false }
-  return activeSet.has(pos)
 }
 
 export function activeShieldSets(relation, pieces, board = null) {
@@ -336,13 +330,5 @@ function stepsForSliderSpecies(species) {
   if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
   if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
   return []
-}
-
-function singularPosition(ctx, actorKey) {
-  if (!actorKey) { return null }
-  const singular = ctx?.singulars?.[actorKey]
-  if (!singular) { return null }
-  if (singular.region.kind !== 'set' || singular.region.squares.size !== 1) { return null }
-  return [...singular.region.squares][0]
 }
 
