@@ -12,7 +12,7 @@ import {
 import {
   matchesSide, candidatesForSide, applyOne,
   requirementsMet, MAX_SATISFY_ITERATIONS,
-  boundSingularInActiveSet, singularPosition
+  boundSingularInActiveSet, singularPosition, sideAllowsPos
 } from './relation_helpers'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
@@ -65,13 +65,14 @@ export function activeShieldSets(relation, pieces, board = null) {
   const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {
     if (!matchesSide(tPiece, relation.targetSide)) { continue }
+    if (!sideAllowsPos(relation.targetSide, tPos)) { continue }
     const shielders = shieldingPositions({ board, targetPosition: tPos, team: relation.targetSide.team })
     let hasMatch = false
     for (const sPos of shielders) {
-      if (matchesSide(pieces.get(sPos), relation.subjectSide)) {
-        activeSubjects.add(sPos)
-        hasMatch = true
-      }
+      if (!matchesSide(pieces.get(sPos), relation.subjectSide)) { continue }
+      if (!sideAllowsPos(relation.subjectSide, sPos)) { continue }
+      activeSubjects.add(sPos)
+      hasMatch = true
     }
     if (hasMatch) { activeTargets.add(tPos) }
   }

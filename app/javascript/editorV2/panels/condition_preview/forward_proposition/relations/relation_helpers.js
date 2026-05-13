@@ -75,3 +75,8 @@ export function boundSingularInActiveSet(sideObj, activeSet, ctx) {
   if (pos === null) { return false }
   return activeSet.has(pos)
 }
+
+export function sideAllowsPos(side, pos) {
+  if (side.region?.kind !== 'set') { return true }
+  return side.region.squares.has(pos)
+}

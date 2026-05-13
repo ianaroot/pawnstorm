@@ -18,11 +18,11 @@ function movedPieceSingular(species = Board.QUEEN, square = D4) {
   }
 }
 
-function capturedPieceSingular(species = Board.QUEEN) {
+function capturedPieceSingular(species = Board.QUEEN, position = D4) {
   return {
     team: Board.BLACK,
     species_set: new Set([species]),
-    region: { kind: 'all' },
+    region: { kind: 'set', squares: new Set([position]) },
     relationsToAnchors: []
   }
 }
@@ -179,6 +179,30 @@ function boundSubjectAttackEntry({ targetSpecies = new Set([Board.QUEEN]) } = {}
     targetProposition: currentProp
   }
 }
+
+describe('movedPieceCapturesRelationParticipant — bound singular honors region (site 3)', () => {
+  it('RED: does not commit when bound singular target attacker delta is zero (decoy creates spurious population delta)', () => {
+    const D8 = 59
+    const ctx = defaultTestCtx({
+      singulars: {
+        moved_piece: movedPieceSingular(Board.NIGHT),
+        captured_piece: {
+          team: Board.BLACK,
+          species_set: new Set([Board.ROOK]),
+          region: { kind: 'set', squares: new Set([D4]) },
+          relationsToAnchors: []
+        }
+      }
+    })
+    const pieces = new Map([
+      [D4, pieceCode(Board.WHITE, Board.NIGHT)],
+      [D8, pieceCode(Board.WHITE, Board.NIGHT)]
+    ])
+
+    const result = movedPieceCapturesRelationParticipant.apply(boundTargetAttackEntry({ subjectSpecies: new Set([Board.ROOK]) }), ctx, pieces, () => 0.5)
+    expect(result).toBeNull()
+  })
+})
 
 describe('movedPieceCapturesRelationParticipant — apply', () => {
   it('commits priorRegion to an origin where capturing an enemy queen drops attack count from 1 to 0', () => {

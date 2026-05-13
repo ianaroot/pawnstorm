@@ -4,7 +4,7 @@ import {
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet
+  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet, sideAllowsPos
 } from './relation_helpers'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
@@ -38,12 +38,13 @@ export function activeAdjacentSets(relation, pieces, _board = null) {
   const activeTargets = new Set()
   for (const [tPos, tPiece] of pieces) {
     if (!matchesSide(tPiece, relation.targetSide)) { continue }
+    if (!sideAllowsPos(relation.targetSide, tPos)) { continue }
     let hasMatch = false
     for (const sPos of adjacentNeighborPositions(tPos)) {
-      if (matchesSide(pieces.get(sPos), relation.subjectSide)) {
-        activeSubjects.add(sPos)
-        hasMatch = true
-      }
+      if (!matchesSide(pieces.get(sPos), relation.subjectSide)) { continue }
+      if (!sideAllowsPos(relation.subjectSide, sPos)) { continue }
+      activeSubjects.add(sPos)
+      hasMatch = true
     }
     if (hasMatch) { activeTargets.add(tPos) }
   }

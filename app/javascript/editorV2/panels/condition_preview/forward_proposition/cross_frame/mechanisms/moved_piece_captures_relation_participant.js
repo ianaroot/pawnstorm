@@ -6,6 +6,7 @@ import {
 import { activeAttackOrDefendSets } from '../../relations/attack_or_defend'
 import { activeAdjacentSets } from '../../relations/adjacent'
 import { activeShieldSets } from '../../relations/shield'
+import { singularPosition } from '../../relations/relation_helpers'
 import { singularSquare, commitPriorRegion } from './participates_helpers'
 import { legalOriginCandidates } from './shifts_mobility_helpers'
 
@@ -43,19 +44,20 @@ export const movedPieceCapturesRelationParticipant = {
     const moved = ctx.singulars.moved_piece
     const captured = ctx.singulars.captured_piece
     const destination = singularSquare(moved)
+    const captureSquare = singularPosition(ctx, 'captured_piece')
     const movedSpecies = [...moved.species_set][0]
     const capturedSpecies = nonNullSpecies(captured.species_set)
-    if (destination === null || movedSpecies === null || capturedSpecies === null) { return null }
+    if (destination === null || captureSquare === null || movedSpecies === null || capturedSpecies === null) { return null }
 
-    const afterCount = pbsCountForFrame(entry, pieces, moved, destination)
+    const afterCount = pbsCountForFrame(entry, pieces, moved, destination, ctx)
 
     for (const origin of shuffled(legalOriginCandidates(pieces, destination, moved.team, movedSpecies), random)) {
       const priorPieces = priorPiecesWithCapture({
-        pieces, destination, origin,
+        pieces, destination, origin, captureSquare,
         movedTeam: moved.team, movedSpecies,
         capturedTeam: captured.team, capturedSpecies
       })
-      const priorCount = pbsCountForFrame(entry, priorPieces, moved, origin)
+      const priorCount = pbsCountForFrame(entry, priorPieces, moved, origin, ctx)
       if (priorCount > afterCount) {
         return commitPriorRegion(ctx, [origin], pieces)
       }
@@ -87,38 +89,47 @@ function nonNullSpecies(speciesSet) {
   return null
 }
 
-function priorPiecesWithCapture({ pieces, destination, origin, movedTeam, movedSpecies, capturedTeam, capturedSpecies }) {
+function priorPiecesWithCapture({ pieces, destination, origin, captureSquare, movedTeam, movedSpecies, capturedTeam, capturedSpecies }) {
   const result = new Map(pieces)
   result.delete(destination)
   result.set(origin, pieceCode(movedTeam, movedSpecies))
-  result.set(destination, pieceCode(capturedTeam, capturedSpecies))
+  result.set(captureSquare, pieceCode(capturedTeam, capturedSpecies))
   return result
 }
 
-function pbsCountForFrame(entry, pieces, moved, movedPos) {
-  const relation = buildRelationForFrame(entry, moved, movedPos)
+function pbsCountForFrame(entry, pieces, moved, movedPos, ctx) {
+  const relation = buildRelationForFrame(entry, moved, movedPos, ctx)
   const sets = activeSetsForOperator(entry.operator, relation, pieces)
   const activeSet = pbsActiveSet(entry, sets)
   return sumMetric(entry.metric, activeSet, pieces)
 }
 
-function buildRelationForFrame(entry, moved, movedPos) {
+function buildRelationForFrame(entry, moved, movedPos, ctx) {
   return {
     operator: entry.operator,
     subjectSide: entry.subjectProposition !== null
-      ? sideFromProposition(entry.subjectProposition)
+      ? sideFromProposition(entry.subjectProposition, ctx)
       : sideFromMoved(moved, movedPos),
     targetSide: entry.targetProposition !== null
-      ? sideFromProposition(entry.targetProposition)
+      ? sideFromProposition(entry.targetProposition, ctx)
       : sideFromMoved(moved, movedPos)
   }
 }
 
-function sideFromProposition(proposition) {
+function sideFromProposition(proposition, ctx) {
+  const region = { kind: 'all' }
+  if (proposition.boundSingularActor && proposition.boundSingularActor !== 'moved_piece') {
+    const pos = singularPosition(ctx, proposition.boundSingularActor)
+    if (pos !== null) {
+      region.kind = 'set'
+      region.squares = new Set([pos])
+    }
+  }
   return {
     team: proposition.team,
     species_set: proposition.species_set,
-    region: { kind: 'all' },
+    region,
+    boundSingularActor: proposition.boundSingularActor ?? null,
     count_range: { min: 0, max: Infinity }
   }
 }
