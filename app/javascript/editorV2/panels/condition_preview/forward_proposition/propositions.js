@@ -63,7 +63,10 @@ function propositionFromUnaryOrPositionPlan(plan) {
   const rangeKey = OPERATOR_TO_RANGE_KEY[plan.operator]
   const ranges = freshRanges()
   if (rangeKey) {
-    ranges[rangeKey] = rangeFromComparator(plan.comparator, plan.targetTotal)
+    const range = rangeFromComparator(plan.comparator, plan.targetTotal)
+    ranges[rangeKey] = SINGULAR_ACTORS.has(plan.subject)
+      ? { min: range.min, max: Infinity }
+      : range
   }
   return {
     team: plan.subjectTeam,
@@ -246,13 +249,16 @@ function rangesForRelationalSide(plan, side) {
   // (e.g. "allied attack enemy_king && enemy mobility = 0").
   const ranges = freshRanges()
   ranges.count_range = { min: 1, max: Infinity }
+  const actor = side === 'subject' ? plan.subject : plan.target
+  const sideIsSingular = SINGULAR_ACTORS.has(actor)
   for (const d of plan.comparisonDescriptors ?? []) {
     if (d.side !== side) { continue }
     if (d.source !== 'exact_number') { continue }
     const total = Number(d.resolvedTotal ?? d.total ?? 0)
     const range = rangeFromComparator(d.comparator, total)
-    if (d.metric === 'count')                  { ranges.count_range = range }
-    else if (d.metric === 'aggregate_value')   { ranges.aggregate_value_range = range }
+    const finalRange = sideIsSingular ? { min: range.min, max: Infinity } : range
+    if (d.metric === 'count')                  { ranges.count_range = finalRange }
+    else if (d.metric === 'aggregate_value')   { ranges.aggregate_value_range = finalRange }
   }
   return ranges
 }
