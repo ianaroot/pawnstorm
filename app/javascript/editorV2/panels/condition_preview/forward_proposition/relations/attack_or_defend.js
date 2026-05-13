@@ -9,7 +9,8 @@ import {
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet, sideAllowsPos
+  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet, sideAllowsPos,
+  singularPosition
 } from './relation_helpers'
 
 const MAX_PLAN_COUNT = 4
@@ -22,9 +23,9 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
   }
   if (attackOrDefendRequirementsMet(relation, pieces, ctx)) { return pieces }
 
-  if (hasTargetAggregateValueConstraint(relation)) {
+  if (hasAggregateValueConstraint(relation)) {
     for (let s = 0; s < MAX_PLAN_RESAMPLES; s += 1) {
-      const planned = trySatisfyWithPlan(relation, pieces, ctx, random)
+      const planned = trySatisfyWithPlans(relation, pieces, ctx, random)
       if (planned !== null && attackOrDefendRequirementsMet(relation, planned, ctx)) {
         return planned
       }
@@ -190,13 +191,26 @@ function subjectsControlling(side, targetPos, pieces, board) {
   return candidates
 }
 
-function hasTargetAggregateValueConstraint(relation) {
-  const v = relation.targetSide.aggregate_value_range
+function hasAggregateValueConstraint(relation) {
+  return hasSideAggregateValueConstraint(relation.subjectSide) ||
+         hasSideAggregateValueConstraint(relation.targetSide)
+}
+
+function hasSideAggregateValueConstraint(side) {
+  const v = side.aggregate_value_range
   return v.min > 0 || v.max !== Infinity
 }
 
-function trySatisfyWithPlan(relation, pieces, ctx, random) {
-  const plan = sampleTargetPlan(relation.targetSide, random)
+function trySatisfyWithPlans(relation, pieces, ctx, random) {
+  const subjectHas = hasSideAggregateValueConstraint(relation.subjectSide)
+  const targetHas = hasSideAggregateValueConstraint(relation.targetSide)
+  if (subjectHas && targetHas) { return trySatisfyWithBothPlans(relation, pieces, ctx, random) }
+  if (subjectHas)              { return trySatisfyWithSubjectPlan(relation, pieces, ctx, random) }
+  return trySatisfyWithTargetPlan(relation, pieces, ctx, random)
+}
+
+function trySatisfyWithTargetPlan(relation, pieces, ctx, random) {
+  const plan = samplePlan(relation.targetSide, random)
   if (plan === null) { return null }
   let next = pieces
   for (const species of plan) {
@@ -207,10 +221,47 @@ function trySatisfyWithPlan(relation, pieces, ctx, random) {
   return next
 }
 
+function trySatisfyWithSubjectPlan(relation, pieces, ctx, random) {
+  const plan = samplePlan(relation.subjectSide, random)
+  if (plan === null) { return null }
+  let next = pieces
+  for (const species of plan) {
+    const placed = placeSubjectSpeciesWithTarget(relation, next, ctx, random, species)
+    if (placed === null) { return null }
+    next = placed
+  }
+  return next
+}
+
+function trySatisfyWithBothPlans(relation, pieces, ctx, random) {
+  const targetPlan = samplePlan(relation.targetSide, random)
+  const subjectPlan = samplePlan(relation.subjectSide, random)
+  if (targetPlan === null || subjectPlan === null) { return null }
+  let next = pieces
+  const placedTargetPositions = []
+  for (const species of targetPlan) {
+    const result = placeTargetOnly(relation, next, ctx, random, species)
+    if (result === null) { return null }
+    next = result.pieces
+    placedTargetPositions.push(result.position)
+  }
+  const board = buildBoardFromLayout(buildLayoutFromPieces(next))
+  for (const species of subjectPlan) {
+    let placed = null
+    for (const hookPos of shuffled(placedTargetPositions, random)) {
+      placed = placeSubjectAttackingHook(relation, next, ctx, random, species, hookPos, board)
+      if (placed !== null) { break }
+    }
+    if (placed === null) { return null }
+    next = placed
+  }
+  return next
+}
+
 function placeTargetSpeciesWithSubject(relation, pieces, ctx, random, targetSpecies) {
   const targetCandidates = shuffled(targetCandidatesOfSpecies(relation.targetSide, pieces, targetSpecies), random)
   for (const target of targetCandidates) {
-    const piecesWithTarget = applyOne(pieces, target, ctx)
+    const piecesWithTarget = applyOne(pieces, target, ctx, { skipRelation: relation })
     if (piecesWithTarget === null) { continue }
     const board = buildBoardFromLayout(buildLayoutFromPieces(piecesWithTarget))
     const subjectCandidates = shuffled(
@@ -218,12 +269,66 @@ function placeTargetSpeciesWithSubject(relation, pieces, ctx, random, targetSpec
       random
     )
     for (const subject of subjectCandidates) {
-      const next = applyOne(piecesWithTarget, subject, ctx)
+      const next = applyOne(piecesWithTarget, subject, ctx, { skipRelation: relation })
       if (next === null) { continue }
       return next
     }
   }
   return null
+}
+
+function placeSubjectSpeciesWithTarget(relation, pieces, ctx, random, subjectSpecies) {
+  const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+  for (const hookPos of shuffled(targetHookPositions(relation.targetSide, pieces, ctx), random)) {
+    const placed = placeSubjectAttackingHook(relation, pieces, ctx, random, subjectSpecies, hookPos, board)
+    if (placed !== null) { return placed }
+  }
+  for (const targetSpecies of shuffled([...relation.targetSide.species_set].filter(s => s !== null), random)) {
+    const targetCandidates = shuffled(targetCandidatesOfSpecies(relation.targetSide, pieces, targetSpecies), random)
+    for (const target of targetCandidates) {
+      const piecesWithTarget = applyOne(pieces, target, ctx, { skipRelation: relation })
+      if (piecesWithTarget === null) { continue }
+      const boardWithTarget = buildBoardFromLayout(buildLayoutFromPieces(piecesWithTarget))
+      const placed = placeSubjectAttackingHook(relation, piecesWithTarget, ctx, random, subjectSpecies, target.position, boardWithTarget)
+      if (placed !== null) { return placed }
+    }
+  }
+  return null
+}
+
+function placeSubjectAttackingHook(relation, pieces, ctx, random, subjectSpecies, hookPos, board) {
+  const positions = shuffled([...attackerCandidatesFor(hookPos, subjectSpecies, relation.subjectSide.team, board)], random)
+  for (const pos of positions) {
+    if (pieces.has(pos)) { continue }
+    if (!legalPlacementForSpecies(pos, subjectSpecies)) { continue }
+    if (!regionAllows(relation.subjectSide.region, pos)) { continue }
+    const candidate = { kind: 'fresh', position: pos, species: subjectSpecies, team: relation.subjectSide.team }
+    const next = applyOne(pieces, candidate, ctx, { skipRelation: relation })
+    if (next !== null) { return next }
+  }
+  return null
+}
+
+function placeTargetOnly(relation, pieces, ctx, random, targetSpecies) {
+  const candidates = shuffled(targetCandidatesOfSpecies(relation.targetSide, pieces, targetSpecies), random)
+  for (const target of candidates) {
+    const piecesWithTarget = applyOne(pieces, target, ctx, { skipRelation: relation })
+    if (piecesWithTarget === null) { continue }
+    return { pieces: piecesWithTarget, position: target.position }
+  }
+  return null
+}
+
+function targetHookPositions(targetSide, pieces, ctx) {
+  const set = new Set()
+  if (targetSide.boundSingularActor) {
+    const pos = singularPosition(ctx, targetSide.boundSingularActor)
+    if (pos !== null) { set.add(pos) }
+  }
+  for (const [pos, piece] of pieces) {
+    if (matchesSide(piece, targetSide)) { set.add(pos) }
+  }
+  return [...set]
 }
 
 function targetCandidatesOfSpecies(side, pieces, species) {
@@ -237,18 +342,18 @@ function targetCandidatesOfSpecies(side, pieces, species) {
   return result
 }
 
-function sampleTargetPlan(side, random) {
-  const byK = targetPlansForSide(side)
+function samplePlan(side, random) {
+  const byK = plansForSide(side)
   if (byK.length === 0) { return null }
   const choices = byK[Math.floor(random() * byK.length)]
   return choices[Math.floor(random() * choices.length)]
 }
 
-function targetPlansForSide(side) {
+function plansForSide(side) {
   const key = planSignature(side)
   const cached = planCache.get(key)
   if (cached) { return cached }
-  const plans = enumerateTargetPlans(side)
+  const plans = enumeratePlans(side)
   planCache.set(key, plans)
   return plans
 }
@@ -260,8 +365,8 @@ function planSignature(side) {
   return `${species}|${c.min}-${c.max}|${v.min}-${v.max}`
 }
 
-function enumerateTargetPlans(side) {
-  const species = [...side.species_set]
+function enumeratePlans(side) {
+  const species = [...side.species_set].filter(s => s !== null)
   const kMin = Math.max(side.count_range.min, 1)
   const kMax = Math.min(side.count_range.max, MAX_PLAN_COUNT)
   const valueMin = side.aggregate_value_range.min
