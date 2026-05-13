@@ -1568,14 +1568,14 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
-  it('generates castle examples for a position count condition on rank >= 1', () => {
+  it('generates castle examples for a chain that does not preclude castle (allied bishop on rank 4 count = 1)', () => {
     const payload = {
       kind: 'position',
       subject: 'allied',
-      subjectFilter: 'any',
+      subjectFilter: 'bishop',
       positionAxis: 'rank',
-      positionComparator: 'greater_than_or_equal_to',
-      positionTarget: 1,
+      positionComparator: 'equal_to',
+      positionTarget: 4,
       operator: 'count',
       comparator: 'equal_to',
       targetTotal: 1
