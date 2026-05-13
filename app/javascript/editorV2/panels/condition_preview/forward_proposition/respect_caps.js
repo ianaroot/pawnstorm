@@ -19,17 +19,28 @@ function propositionCapsRespected(team, species, position, ctx, pieces) {
     if (other.frame !== 'current') { continue }
     if (other.team !== team) { continue }
     if (!other.species_set.has(species)) { continue }
+    if (propositionHasNoMaxes(other)) { continue }
     const board = boardForRegion(other.region, pieces)
-    const region = materializeRegion(other.region, { singulars: ctx.singulars, board, species, team })
-    if (!region.has(position)) { continue }
+    const regionBySpecies = new Map()
+    const getRegion = (s) => {
+      let r = regionBySpecies.get(s)
+      if (r === undefined) {
+        r = materializeRegion(other.region, { singulars: ctx.singulars, board, species: s, team: other.team })
+        regionBySpecies.set(s, r)
+      }
+      return r
+    }
+    if (!getRegion(species).has(position)) { continue }
 
     let count = 0
     let value = 0
     for (const [pos, piece] of pieces.entries()) {
-      if (matches(other, pos, piece, ctx, board)) {
-        count += 1
-        value += materialValue(piece.slice(1))
-      }
+      if (piece.charAt(0) !== other.team) { continue }
+      const pieceSpecies = piece.slice(1)
+      if (!other.species_set.has(pieceSpecies)) { continue }
+      if (!getRegion(pieceSpecies).has(pos)) { continue }
+      count += 1
+      value += materialValue(pieceSpecies)
     }
     if (count + 1 > other.count_range.max) { return false }
     if (value + speciesValue > other.aggregate_value_range.max) { return false }
@@ -58,6 +69,10 @@ function relationCapsRespected(team, species, position, ctx, pieces, skipRelatio
     if (sumValues(sets.activeTargets,  hypotheticalPieces) > relation.targetSide.aggregate_value_range.max)  { return false }
   }
   return true
+}
+
+function propositionHasNoMaxes(prop) {
+  return prop.count_range.max === Infinity && prop.aggregate_value_range.max === Infinity
 }
 
 function relationHasNoMaxes(relation) {
