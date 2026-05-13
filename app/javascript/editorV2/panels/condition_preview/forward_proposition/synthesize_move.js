@@ -29,6 +29,7 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
       promotionPiece: overrides.promotionPiece,
       capturedPiecePosition: overrides.capturedPiecePosition
     })
+    if (priorPieces === null) { continue }
     const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), recentMoveContext, team)
     let moveObject
     try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }

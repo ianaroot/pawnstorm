@@ -58,6 +58,7 @@ function entrySatisfied(entry, ctx, afterPieces) {
   if (origin === null) { return true }
 
   const priorPieces = buildPriorBoard({ pieces: afterPieces, singulars: ctx.singulars, origin, endPos: destination })
+  if (priorPieces === null) { return false }
 
   const afterCount = countParticipants({
     proposition: entry.currentProposition,
