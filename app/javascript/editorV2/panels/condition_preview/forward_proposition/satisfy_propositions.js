@@ -23,9 +23,10 @@ export function satisfyPropositions(ctx, pieces, random) {
 function satisfyOne(prop, pieces, ctx, random) {
   let { count, value } = tallyMatching(prop, pieces, ctx)
 
-  if (shouldUsePlanning(prop, count, value)) {
+  const plans = plansIfMultiple(prop, count, value)
+  if (plans !== null) {
     for (let s = 0; s < MAX_PLAN_RESAMPLES; s += 1) {
-      const planned = trySatisfyOneWithPlan(prop, pieces, ctx, random, count, value)
+      const planned = trySatisfyOneWithPlan(prop, pieces, ctx, random, plans)
       if (planned !== null) { return planned }
     }
   }
@@ -40,7 +41,15 @@ function satisfyOne(prop, pieces, ctx, random) {
   return pieces
 }
 
-function shouldUsePlanning(prop, currentCount, currentValue) {
+function plansIfMultiple(prop, currentCount, currentValue) {
+  if (!planningQualifies(prop, currentCount, currentValue)) { return null }
+  const byK = enumerateProposalPlans(prop, currentCount, currentValue)
+  if (byK.length === 0) { return null }
+  if (byK.length === 1 && byK[0].length === 1) { return null }
+  return byK
+}
+
+function planningQualifies(prop, currentCount, currentValue) {
   const needsCount = currentCount < prop.count_range.min
   const needsValue = currentValue < prop.aggregate_value_range.min
   if (!needsCount && !needsValue) { return false }
@@ -49,8 +58,8 @@ function shouldUsePlanning(prop, currentCount, currentValue) {
          prop.aggregate_value_range.min > 0
 }
 
-function trySatisfyOneWithPlan(prop, pieces, ctx, random, currentCount, currentValue) {
-  const plan = sampleProposalPlan(prop, currentCount, currentValue, random)
+function trySatisfyOneWithPlan(prop, pieces, ctx, random, plans) {
+  const plan = pickFromPlans(plans, random)
   if (plan === null) { return null }
   let next = pieces
   for (const species of plan) {
@@ -63,8 +72,7 @@ function trySatisfyOneWithPlan(prop, pieces, ctx, random, currentCount, currentV
   return next
 }
 
-function sampleProposalPlan(prop, currentCount, currentValue, random) {
-  const byK = enumerateProposalPlans(prop, currentCount, currentValue)
+function pickFromPlans(byK, random) {
   if (byK.length === 0) { return null }
   const choices = byK[Math.floor(random() * byK.length)]
   return choices[Math.floor(random() * choices.length)]

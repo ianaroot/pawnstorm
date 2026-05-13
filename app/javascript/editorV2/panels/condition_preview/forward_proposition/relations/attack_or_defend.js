@@ -202,15 +202,23 @@ function hasSideAggregateValueConstraint(side) {
 }
 
 function trySatisfyWithPlans(relation, pieces, ctx, random) {
-  const subjectHas = hasSideAggregateValueConstraint(relation.subjectSide)
-  const targetHas = hasSideAggregateValueConstraint(relation.targetSide)
-  if (subjectHas && targetHas) { return trySatisfyWithBothPlans(relation, pieces, ctx, random) }
-  if (subjectHas)              { return trySatisfyWithSubjectPlan(relation, pieces, ctx, random) }
-  return trySatisfyWithTargetPlan(relation, pieces, ctx, random)
+  const subjectPlans = hasSideAggregateValueConstraint(relation.subjectSide) ? plansIfMultipleForSide(relation.subjectSide) : null
+  const targetPlans = hasSideAggregateValueConstraint(relation.targetSide) ? plansIfMultipleForSide(relation.targetSide) : null
+  if (!subjectPlans && !targetPlans) { return null }
+  if (subjectPlans && targetPlans) { return trySatisfyWithBothPlans(relation, pieces, ctx, random, subjectPlans, targetPlans) }
+  if (subjectPlans) { return trySatisfyWithSubjectPlan(relation, pieces, ctx, random, subjectPlans) }
+  return trySatisfyWithTargetPlan(relation, pieces, ctx, random, targetPlans)
 }
 
-function trySatisfyWithTargetPlan(relation, pieces, ctx, random) {
-  const plan = samplePlan(relation.targetSide, random)
+function plansIfMultipleForSide(side) {
+  const byK = plansForSide(side)
+  if (byK.length === 0) { return null }
+  if (byK.length === 1 && byK[0].length === 1) { return null }
+  return byK
+}
+
+function trySatisfyWithTargetPlan(relation, pieces, ctx, random, plans) {
+  const plan = pickFromPlans(plans, random)
   if (plan === null) { return null }
   let next = pieces
   for (const species of plan) {
@@ -221,8 +229,8 @@ function trySatisfyWithTargetPlan(relation, pieces, ctx, random) {
   return next
 }
 
-function trySatisfyWithSubjectPlan(relation, pieces, ctx, random) {
-  const plan = samplePlan(relation.subjectSide, random)
+function trySatisfyWithSubjectPlan(relation, pieces, ctx, random, plans) {
+  const plan = pickFromPlans(plans, random)
   if (plan === null) { return null }
   let next = pieces
   for (const species of plan) {
@@ -233,9 +241,9 @@ function trySatisfyWithSubjectPlan(relation, pieces, ctx, random) {
   return next
 }
 
-function trySatisfyWithBothPlans(relation, pieces, ctx, random) {
-  const targetPlan = samplePlan(relation.targetSide, random)
-  const subjectPlan = samplePlan(relation.subjectSide, random)
+function trySatisfyWithBothPlans(relation, pieces, ctx, random, subjectPlans, targetPlans) {
+  const targetPlan = pickFromPlans(targetPlans, random)
+  const subjectPlan = pickFromPlans(subjectPlans, random)
   if (targetPlan === null || subjectPlan === null) { return null }
   let next = pieces
   const placedTargetPositions = []
@@ -256,6 +264,12 @@ function trySatisfyWithBothPlans(relation, pieces, ctx, random) {
     next = placed
   }
   return next
+}
+
+function pickFromPlans(byK, random) {
+  if (byK.length === 0) { return null }
+  const choices = byK[Math.floor(random() * byK.length)]
+  return choices[Math.floor(random() * choices.length)]
 }
 
 function placeTargetSpeciesWithSubject(relation, pieces, ctx, random, targetSpecies) {
@@ -340,13 +354,6 @@ function targetCandidatesOfSpecies(side, pieces, species) {
     result.push({ kind: 'fresh', position: pos, species, team: side.team })
   }
   return result
-}
-
-function samplePlan(side, random) {
-  const byK = plansForSide(side)
-  if (byK.length === 0) { return null }
-  const choices = byK[Math.floor(random() * byK.length)]
-  return choices[Math.floor(random() * choices.length)]
 }
 
 function plansForSide(side) {
