@@ -1922,12 +1922,12 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
-  it('routes a unary count pair chain (captured_piece = moved_piece, capture present) through forward generation (8c-cleanup)', () => {
+  it('routes a unary count pair chain (captured_piece = enemy_moved_piece, capture present) through forward generation (8c-cleanup)', () => {
     const payload = {
       version: 2, kind: 'unary',
       subject: 'captured_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
-      target: 'moved_piece', targetFilter: 'any'
+      target: 'enemy_moved_piece', targetFilter: 'any'
     }
     const preview = generateConditionExamples(payload, { random: seededRandom(8003) })
     expect(preview.status).toBe('ready')
