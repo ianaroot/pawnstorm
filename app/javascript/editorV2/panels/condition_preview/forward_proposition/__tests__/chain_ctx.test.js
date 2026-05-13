@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { buildChainCtx } from 'editorV2/panels/condition_preview/forward_proposition/chain_ctx'
+import { defaultStructuralPropositions } from 'editorV2/panels/condition_preview/forward_proposition/structural_invariants'
 
 const TRIVIAL_PAYLOAD = {
   version: 2, kind: 'unary',
@@ -17,7 +18,8 @@ describe('buildChainCtx — single plan', () => {
     const ctx = buildChainCtx(combinedPlan)
 
     expect(ctx.singulars.moved_piece).toBeDefined()
-    expect(ctx.propositions).toHaveLength(1)
+    const planDerived = ctx.propositions.slice(defaultStructuralPropositions().length)
+    expect(planDerived).toHaveLength(1)
     expect(ctx.relations).toHaveLength(0)
     expect(ctx.crossFrame).toHaveLength(0)
   })

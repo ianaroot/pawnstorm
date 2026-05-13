@@ -14,6 +14,13 @@ export function respectsAllCaps(team, species, position, ctx, pieces, options = 
   return true
 }
 
+export function placeWithCaps(pieces, position, piece, ctx, options = {}) {
+  const team = piece.charAt(0)
+  const species = piece.slice(1)
+  if (!respectsAllCaps(team, species, position, ctx, pieces, options)) { return null }
+  return placePiece(pieces, position, piece)
+}
+
 function propositionCapsRespected(team, species, position, ctx, pieces) {
   const speciesValue = materialValue(species)
   for (const other of ctx.propositions) {
