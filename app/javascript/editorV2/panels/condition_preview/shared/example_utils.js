@@ -161,13 +161,7 @@ export function collectLegalReverseMoves({
   return moves
 }
 
-// Reverses an after-state pieces map into the pieces map that existed before
-// the move: moved_piece returns to `origin`, and captured_piece (if committed
-// to a non-null species) reappears at `endPos`. For kingside castle
-// (pieceNotation === 'O-O'), the rook is also reversed from its after square
-// (file 5 on team home rank) back to its origin (file 7). For promotion
-// (promotionPiece set), the origin is set to PAWN instead of the after-board
-// promoted species; capture-piece logic still applies.
+// Returns null on illegal reverse placement; callers handle per their own semantics.
 export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece, capturedPiecePosition }) {
   const moved = singulars.moved_piece
   const movedSpecies = [...moved.species_set][0]
