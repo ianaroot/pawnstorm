@@ -32,11 +32,7 @@ export function placeKingDeliberately(pieces, team, frame, ctx, random) {
   return null
 }
 
-// Place king on a ray from targetPos in `step` direction. Path between target
-// and king must be clear. If team already has a king on this ray, returns
-// pieces unchanged. If team has a king elsewhere, or path is blocked by a
-// non-king piece, returns null. Otherwise places a new king on an empty square
-// in the ray (subject to standard legality + caps).
+// Place king on a ray from targetPos in `step` direction
 export function placeKingOnRayThroughTarget({ pieces, team, frame, ctx, targetPos, step, random }) {
   const requireOutOfCheck = team === teamThatJustMoved(frame, ctx)
   const ourKingCode = `${team}${Board.KING}`
@@ -80,8 +76,7 @@ function squareAttackedByEnemy(pieces, position, team) {
 }
 
 // Place team's king on a square attacked by an enemy piece, placing the
-// attacker too if needed. If team already has a king, just places an attacker
-// against it. If no attacker placement is possible, returns null.
+// attacker too if needed
 export function placeKingInCheck({ pieces, team, frame, ctx, random }) {
   const enemyTeam = Board.opposingTeam(team)
   const existingKingPos = positionOfKing(pieces, team)
@@ -132,9 +127,7 @@ function placeAttackerControlling({ pieces, kingPos, attackerTeam, ctx, random }
   return null
 }
 
-// Place team's king in stalemate: not in check, no escape squares legal.
-// Constructs by placing the team's king + the opposing king + covering pieces
-// for any unblocked king-adjacent escape squares.
+// Place team's king in stalemate: not in check, no escape squares legal
 export function placeKingInStalemate({ pieces, team, frame, ctx, random }) {
   if (positionOfKing(pieces, team) !== null) { return null }
   if (positionOfKing(pieces, Board.opposingTeam(team)) !== null) { return null }

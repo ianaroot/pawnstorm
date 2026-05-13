@@ -12,7 +12,6 @@ import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_propo
 // Pin-line strategy: places the mobility-constrained target piece on a ray,
 // with own king on one side (the pin anchor) and an enemy slider on the
 // other side (the pinning attacker). Caps simultaneous pins via ctx.pinState
-// (shared with the pins mechanism).
 export const pinLineStrategy = {
   name: 'pin-line',
   constraintKind: 'mobility',

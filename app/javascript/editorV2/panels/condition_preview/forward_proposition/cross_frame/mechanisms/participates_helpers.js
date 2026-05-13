@@ -5,8 +5,6 @@ import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_place
 import { intersectRegions } from '../../region'
 import { respectsAllCaps } from '../../respect_caps'
 
-// moved_piece's role in the relation described by the entry's currentProposition.
-// Returns 'subject' or 'target' when moved_piece is bound there; null otherwise.
 // (Shield's role detection is more involved and lives in its own mechanism.)
 export function movedPieceRoleIn(entry) {
   const region = entry.currentProposition?.region
@@ -21,8 +19,6 @@ export function singularSquare(singular) {
   return [...singular.region.squares][0]
 }
 
-// Filters a species_set down to placeable values: drops null. King stays;
-// any king-related cap is enforced via respectsAllCaps at placement time.
 export function placeableSpecies(speciesSet) {
   const result = []
   for (const s of speciesSet) {
@@ -32,8 +28,6 @@ export function placeableSpecies(speciesSet) {
   return result
 }
 
-// Picks one weighted species from speciesSet that's legally placeable at
-// position. Returns null if no candidate qualifies.
 export function pickPlaceableSpecies(speciesSet, position, random) {
   const filtered = new Set([...speciesSet].filter(
     s => s !== null && legalPlacementForSpecies(position, s)

@@ -9,10 +9,7 @@ import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/k
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 
-// Stalemate strategy: places the constrained team's king in a stalemate
-// configuration (not in check, no legal escape squares). Shares ctx.checkState
-// with checkRestriction (a team is in at most one mobility-restricting king
-// arrangement at a time).
+// Shares ctx.checkStatewith checkRestriction (a team is in at most one mobility-restricting king arrangement at a time).
 export const stalemateStrategy = {
   name: 'stalemate',
   constraintKind: 'mobility',

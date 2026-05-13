@@ -5,9 +5,7 @@ import { kingAdjacentControlMechanism } from './king_adjacent_control'
 import { pinsMechanism } from './pins'
 
 // All three mechanisms only REDUCE mobility (add blockers / attackers / pins).
-// Chains with aggregate_mobility_range.min > 0 ("mobility floor") have no
-// recovery path here — if natural placement falls short of the floor, the
-// example fails CEv2 evaluation. See agents/next/5_10_mobility_mechanism_refinements.md
+// See agents/next/5_10_mobility_mechanism_refinements.md
 // item #11 for the deferred floor-engineering plan.
 const MECHANISMS = Object.freeze([
   blockersMechanism,
@@ -36,8 +34,7 @@ function targetIsConstrained(target, ctx, pieces) {
   return isMobilityConstrained(target.position, target.team, target.species, ctx, satisfied)
 }
 
-// Applies the first successful mechanism from a shuffled eligible list. If
-// every eligible mechanism returns null, returns the input pieces map
+// If every eligible mechanism returns null, returns the input pieces map
 // unchanged — caller treats that as "no progress, stop iterating".
 // Future: precise-reduction-aware selection plugs in here.
 function applyOneMechanism(target, ctx, pieces, random) {

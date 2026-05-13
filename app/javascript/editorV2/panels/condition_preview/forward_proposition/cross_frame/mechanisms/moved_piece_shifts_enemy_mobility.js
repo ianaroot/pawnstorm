@@ -9,20 +9,7 @@ import {
   enemyKingPosition, ensureEnemyKingPlaced
 } from './shifts_mobility_helpers'
 
-// Patch 4 of mobility cross-frame: enemy mobility shift via generic blocker
-// and check-based engineering. Fires for any enemy mobility entry (including
-// king-containing filters — shuffled dispatch lets patch 3 and patch 4 race).
-//
-// Two engineering paths, shuffled per call:
-//   tryBlockingEnemyReach:  moved_piece blocks an enemy piece's slider reach
-//                           in one frame but not the other (natural origin
-//                           selection iterating target pieces).
-//   tryCheckingEnemyKing:   moved_piece's destination attacks enemy king,
-//                           putting king in check on after-board. Non-king
-//                           enemy pieces become severely constrained. For
-//                           direction '-' commit priorRegion to origins
-//                           where moved_piece doesn't attack king; for '+'
-//                           the inverse.
+
 export const movedPieceShiftsEnemyMobility = {
   name: 'moved-piece-shifts-enemy-mobility',
 

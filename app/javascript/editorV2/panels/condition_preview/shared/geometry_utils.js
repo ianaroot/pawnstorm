@@ -29,9 +29,7 @@ export function raySquaresFrom(position, steps, board) {
   return squares
 }
 
-// Walks a single ray direction from `position` and returns all squares on
-// the ray to the board edge, regardless of occupancy. Use raySquaresFrom
-// when you want to stop at the first occupied square.
+// Use raySquaresFrom when you want to stop at the first occupied square.
 export function walkRay(position, step) {
   const positions = []
   let current = nextPositionOnRay(position, step)
@@ -43,10 +41,7 @@ export function walkRay(position, step) {
 }
 
 // Verifies that a piece of `species` could legally traverse the path from
-// `fromSquare` to `toSquare` on a board described by `pieces` (a Map of
-// position → piece-code). Knights, kings, and pawns return true (no path
-// concept beyond destination legality). Sliders (rook/bishop/queen) verify
-// the path along the slider ray between from and to is empty.
+// `fromSquare` to `toSquare` on a board described by `pieces`
 export function pathClearOnPieces(pieces, fromSquare, toSquare, species) {
   if (species === Board.NIGHT || species === Board.KING || species === Board.PAWN) {
     return true
@@ -75,10 +70,7 @@ function sliderStepBetween(fromSquare, toSquare) {
   return null
 }
 
-// Squares the piece at `position` on `board` controls (attacks/defends).
-// Used when a singular actor is the SUBJECT of a relational position
-// constraint — the dependent group-side piece must be placed at a square
-// the singular reaches.
+// Squares the piece at `position` on `board` controls (attacks/defends)
 export function controlledSquaresForPieceAt(position, board) {
   const species = board.pieceTypeAt(position)
   if (!species || species === Board.EMPTY_SQUARE) { return [] }
@@ -105,11 +97,6 @@ export function positionsForSliderOrigins(endPosition, steps) {
   return origins
 }
 
-// Pawn origin candidates depend on team: white pawns came from south of
-// endPosition (rank - 1), black pawns from north (rank + 1). Diagonal capture
-// origins are included so en-passant and regular pawn captures can be
-// reconstructed by Rules.getMoveObject. File-wrap protected so a-file/h-file
-// don't pull in cross-file diagonals.
 export function originCandidatesForSpecies(endPosition, species, team = Board.WHITE) {
   switch (species) {
     case Board.PAWN: {
@@ -143,12 +130,9 @@ export function originCandidatesForSpecies(endPosition, species, team = Board.WH
 }
 
 // Squares from which a hypothetical (team, species) piece could attack
-// targetPosition on `board`. Sibling to board_query_utils' controllingPositions
-// (which finds EXISTING on-board attackers) — this answers the placement
-// question: "where could I put a piece such that it would attack the target?"
+// targetPosition on `board`.
 // For non-pawn species the geometry is symmetric with controlledSquares; for
-// pawn it differs (a white pawn attacks NE/NW, so to attack a target it must
-// stand SW/SE of it — handled via the opposing-team flip on pawnControlledSquares).
+// pawn it differs
 export function attackerCandidatesFor(targetPosition, species, team, board) {
   switch (species) {
     case Board.PAWN:   return pawnControlledSquares(targetPosition, Board.opposingTeam(team))

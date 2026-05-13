@@ -15,13 +15,7 @@ import {
 
 const ACTIVE_MECHANISMS = Object.freeze([blockersMechanism, kingAdjacentControlMechanism, pinsMechanism])
 
-// Patch 1 of mobility cross-frame: moved_piece's own mobility shift.
-//
-// For direction '+': mobility went up. We need an origin where mobility-from-
-// origin < mobility-from-destination.
-// For direction '-': mobility went down. We need mobility-from-origin >
-// mobility-from-destination.
-//
+
 // First pass looks for an origin whose hypothetical mobility already differs
 // from destination's in the right direction (no piece placement needed).
 // Second pass engineers the delta by running the existing mobility mechanisms
@@ -147,10 +141,7 @@ function deltaSatisfied(direction, piecesMap, destination, origin, team, species
   return directionSatisfied(direction, afterMobility, priorMobility)
 }
 
-// Diffs the mechanism's output against the hypothetical input to extract just
-// the engineered placements. Re-applies them onto the original after-board
-// pieces map (moved_piece at destination), skipping any placement that would
-// conflict with moved_piece's destination.
+
 function applyEngineeredBlockers(originalPieces, hypothetical, mechanismResult, destination) {
   let final = new Map(originalPieces)
   for (const [pos, piece] of mechanismResult) {
