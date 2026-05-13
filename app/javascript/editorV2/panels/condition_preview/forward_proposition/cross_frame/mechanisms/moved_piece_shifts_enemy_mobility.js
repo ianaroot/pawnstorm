@@ -84,6 +84,7 @@ function targetMobilityShifts(direction, pieces, destination, origin, movedTeam,
   const afterBoard = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const afterMobility = mobilityAt(afterBoard, targetPos)
   const priorPieces = piecesWithMovedAt(pieces, destination, origin, movedTeam, movedSpecies)
+  if (priorPieces === null) { return false }
   const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces))
   const priorMobility = mobilityAt(priorBoard, targetPos)
   return directionSatisfied(direction, afterMobility, priorMobility)
@@ -112,6 +113,7 @@ function tryCheckingEnemyKing({ entry, ctx, pieces, random, moved, destination, 
 
 function originAttacksKingHypothetically(pieces, origin, destination, team, species, kingPos) {
   const hypo = piecesWithMovedAt(pieces, destination, origin, team, species)
+  if (hypo === null) { return false }
   const board = buildBoardFromLayout(buildLayoutFromPieces(hypo))
   return pieceControlsSquare({ board, attackerPosition: origin, targetPosition: kingPos })
 }

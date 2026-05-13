@@ -2,6 +2,7 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { pathClearOnPieces } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from '../../mobility/blockers'
@@ -103,6 +104,7 @@ function engineerOriginMobility(entry, ctx, pieces, random, moved, destination, 
 function engineerLowerPriorMobility(entry, ctx, pieces, random, moved, destination, movedSpecies) {
   for (const origin of shuffled(legalOriginCandidates(pieces, destination, moved.team, movedSpecies), random)) {
     const hypotheticalPieces = piecesWithMovedAt(pieces, destination, origin, moved.team, movedSpecies)
+    if (hypotheticalPieces === null) { continue }
     const target = { position: origin, team: moved.team, species: movedSpecies }
 
     for (const mechanism of shuffled([...ACTIVE_MECHANISMS], random)) {
@@ -150,12 +152,14 @@ function deltaSatisfied(direction, piecesMap, destination, origin, team, species
 // pieces map (moved_piece at destination), skipping any placement that would
 // conflict with moved_piece's destination.
 function applyEngineeredBlockers(originalPieces, hypothetical, mechanismResult, destination) {
-  const final = new Map(originalPieces)
+  let final = new Map(originalPieces)
   for (const [pos, piece] of mechanismResult) {
     if (hypothetical.has(pos)) { continue }
     if (pos === destination) { continue }
     if (final.has(pos)) { continue }
-    final.set(pos, piece)
+    const next = placePiece(final, pos, piece)
+    if (next === null) { continue }
+    final = next
   }
   return final
 }

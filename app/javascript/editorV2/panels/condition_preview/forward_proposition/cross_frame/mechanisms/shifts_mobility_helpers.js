@@ -2,6 +2,7 @@ import Board from 'gameplay/board'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, teamHasKing
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   originCandidatesForSpecies, pathClearOnPieces
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
@@ -17,26 +18,25 @@ export function legalOriginCandidates(pieces, destination, team, species) {
 }
 
 // Returns a new pieces map with moved_piece relocated from `fromSquare` to
-// `toSquare` (i.e., the hypothetical other-frame board).
+// `toSquare`. Returns null if the relocation would be an illegal placement.
 export function piecesWithMovedAt(pieces, fromSquare, toSquare, team, species) {
   const result = new Map(pieces)
   result.delete(fromSquare)
-  result.set(toSquare, pieceCode(team, species))
-  return result
+  return placePiece(result, toSquare, pieceCode(team, species))
 }
 
 // Mobility-at-queryPos on a hypothetical board where moved_piece has been
-// moved from `fromSquare` to `toSquare`. queryPos defaults to `toSquare` —
-// useful when measuring moved_piece's own mobility at its hypothetical
-// position. Pass an explicit queryPos when measuring a different piece's
-// mobility under the hypothetical move.
+// moved from `fromSquare` to `toSquare`. Returns null if the hypothetical
+// placement is illegal.
 export function hypotheticalMobilityAt(pieces, fromSquare, toSquare, team, species, queryPos = toSquare) {
   const hypo = piecesWithMovedAt(pieces, fromSquare, toSquare, team, species)
+  if (hypo === null) { return null }
   const board = buildBoardFromLayout(buildLayoutFromPieces(hypo))
   return mobilityAt(board, queryPos)
 }
 
 export function directionSatisfied(direction, afterMobility, priorMobility) {
+  if (afterMobility === null || priorMobility === null) { return false }
   if (direction === '+') { return afterMobility > priorMobility }
   if (direction === '-') { return afterMobility < priorMobility }
   if (direction === '=') { return afterMobility === priorMobility }

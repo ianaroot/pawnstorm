@@ -3,6 +3,7 @@ import { mobilityAt } from 'gameplay/mobility'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { activeAttackOrDefendSets } from '../../relations/attack_or_defend'
 import { activeAdjacentSets } from '../../relations/adjacent'
 import { activeShieldSets } from '../../relations/shield'
@@ -57,6 +58,7 @@ export const movedPieceCapturesRelationParticipant = {
         movedTeam: moved.team, movedSpecies,
         capturedTeam: captured.team, capturedSpecies
       })
+      if (priorPieces === null) { continue }
       const priorCount = pbsCountForFrame(entry, priorPieces, moved, origin, ctx)
       if (priorCount > afterCount) {
         return commitPriorRegion(ctx, [origin], pieces)
@@ -90,10 +92,11 @@ function nonNullSpecies(speciesSet) {
 }
 
 function priorPiecesWithCapture({ pieces, destination, origin, captureSquare, movedTeam, movedSpecies, capturedTeam, capturedSpecies }) {
-  const result = new Map(pieces)
+  let result = new Map(pieces)
   result.delete(destination)
-  result.set(origin, pieceCode(movedTeam, movedSpecies))
-  result.set(captureSquare, pieceCode(capturedTeam, capturedSpecies))
+  result = placePiece(result, origin, pieceCode(movedTeam, movedSpecies))
+  if (result === null) { return null }
+  result = placePiece(result, captureSquare, pieceCode(capturedTeam, capturedSpecies))
   return result
 }
 

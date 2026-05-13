@@ -1,4 +1,5 @@
 import { ALL_POSITIONS, legalPlacementForSpecies, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
 import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'
@@ -64,7 +65,7 @@ function commitPositionFor(singular, singulars, committed, random, ctx, key, ear
 }
 
 function virtualPiecesFor(singulars, committed, earlyPieces) {
-  const map = new Map(earlyPieces)
+  let map = new Map(earlyPieces)
   for (const name of committed) {
     const s = singulars[name]
     const species = [...s.species_set][0]
@@ -72,7 +73,9 @@ function virtualPiecesFor(singulars, committed, earlyPieces) {
     const pos = [...s.region.squares][0]
     if (pos === undefined) { continue }
     if (map.has(pos)) { continue }
-    map.set(pos, pieceCode(s.team, species))
+    const next = placePiece(map, pos, pieceCode(s.team, species))
+    if (next === null) { continue }
+    map = next
   }
   return map
 }

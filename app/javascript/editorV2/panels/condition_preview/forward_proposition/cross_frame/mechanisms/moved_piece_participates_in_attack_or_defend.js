@@ -5,6 +5,7 @@ import {
 import {
   attackerCandidatesFor, controlledSquaresForPieceAt, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   movedPieceRoleIn, singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
@@ -143,6 +144,7 @@ function applyMinusRoleSubject(entry, ctx, pieces, random) {
     .filter(p => p !== destination && !pieces.has(p))
     .filter(origin => {
       const probe = withMovedAt(pieces, destination, origin, moved.team, movedSpecies)
+      if (probe === null) { return false }
       const probeBoard = buildBoardFromLayout(buildLayoutFromPieces(probe))
       const targetsFromOrigin = relevantControlledTargets(probeBoard, probe, origin, team, speciesSet)
       return targetsFromOrigin > targetsFromDestination
@@ -177,8 +179,7 @@ function relevantControlledTargets(board, pieces, attackerPosition, targetTeam, 
 function withMovedAt(pieces, fromSquare, toSquare, team, species) {
   const next = new Map(pieces)
   next.delete(fromSquare)
-  next.set(toSquare, pieceCode(team, species))
-  return next
+  return placePiece(next, toSquare, pieceCode(team, species))
 }
 
 function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, destination }) {

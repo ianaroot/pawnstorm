@@ -2,6 +2,7 @@ import { materialValue } from 'gameplay/board_query_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { materializeRegion } from 'editorV2/panels/condition_preview/forward_proposition/materialize_region'
 import { activeAttackOrDefendSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/attack_or_defend'
 import { activeShieldSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/shield'
@@ -57,8 +58,8 @@ function relationCapsRespected(team, species, position, ctx, pieces, skipRelatio
     if (relation === skipRelation) { continue }
     if (relationHasNoMaxes(relation)) { continue }
     if (hypotheticalPieces === null) {
-      hypotheticalPieces = new Map(pieces)
-      hypotheticalPieces.set(position, pieceCode(team, species))
+      hypotheticalPieces = placePiece(new Map(pieces), position, pieceCode(team, species))
+      if (hypotheticalPieces === null) { return false }
       hypotheticalBoard = buildBoardFromLayout(buildLayoutFromPieces(hypotheticalPieces))
     }
     const sets = activeSetsForRelation(relation, hypotheticalPieces, hypotheticalBoard)
