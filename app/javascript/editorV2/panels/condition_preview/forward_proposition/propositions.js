@@ -275,7 +275,7 @@ function regionFromPlan(plan) {
   if (plan.kind === 'position') {
     return {
       kind: 'set',
-      squares: new Set(qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam))
+      squares: new Set(qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam))
     }
   }
   return { kind: 'all' }

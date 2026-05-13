@@ -148,7 +148,7 @@ function narrowSingularByPositionPlan(plan, target) {
   const lowerBound = lowerBoundFromComparator(plan.comparator, total)
   const qualifying = {
     kind: 'set',
-    squares: new Set(qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.subjectTeam))
+    squares: new Set(qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam))
   }
   if (lowerBound !== null && lowerBound > 0) {
     target.region = intersectRegions(target.region, qualifying)
