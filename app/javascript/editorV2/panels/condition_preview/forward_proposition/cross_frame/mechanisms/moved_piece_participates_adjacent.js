@@ -3,7 +3,8 @@ import {
   adjacentNeighborPositions, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
+  singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
+  movedPieceRoleInOrInferred, otherSidePropositionFor
 } from './participates_helpers'
 
 export const movedPieceParticipatesAdjacent = {
@@ -12,11 +13,11 @@ export const movedPieceParticipatesAdjacent = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'adjacent') { return false }
-    return roleFor(entry, ctx) !== null
+    return movedPieceRoleInOrInferred(entry, ctx) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = roleFor(entry, ctx)
+    const role = movedPieceRoleInOrInferred(entry, ctx)
     if (role === null) { return null }
     const otherProposition = otherSidePropositionFor(entry, role)
     if (otherProposition === null) { return null }
@@ -24,33 +25,6 @@ export const movedPieceParticipatesAdjacent = {
     if (entry.direction === '-') { return applyMinus(entry, otherProposition, ctx, pieces, random) }
     return null
   }
-}
-
-function roleFor(entry, ctx) {
-  const moved = ctx?.singulars?.moved_piece
-  if (!moved) { return null }
-  const region = entry.currentProposition?.region
-
-  if (region?.kind === 'related-to' && region.actor === 'moved_piece') {
-    return region.role
-  }
-  if (region?.kind !== 'all') { return null }
-
-  const movedSpecies = [...moved.species_set][0]
-  if (movedSpecies === null || movedSpecies === undefined) { return null }
-  if (matchesProposition(moved, movedSpecies, entry.subjectProposition)) { return 'subject' }
-  if (matchesProposition(moved, movedSpecies, entry.targetProposition)) { return 'target' }
-  return null
-}
-
-function matchesProposition(moved, movedSpecies, proposition) {
-  if (!proposition) { return false }
-  return moved.team === proposition.team && proposition.species_set.has(movedSpecies)
-}
-
-function otherSidePropositionFor(entry, role) {
-  const candidate = role === 'subject' ? entry.targetProposition : entry.subjectProposition
-  return candidate ?? entry.currentProposition ?? null
 }
 
 // Direction '+': place a piece adjacent to moved_piece's destination so the

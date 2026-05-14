@@ -7,7 +7,7 @@ import {
   originCandidatesForSpecies, shieldAttackerSpeciesForStep, walkRay
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  singularSquare, ensureRolePieceAt, commitPriorRegion
+  singularSquare, ensureRolePieceAt, commitPriorRegion, movedPieceRoleIn
 } from './participates_helpers'
 
 const SLIDER_SPECIES = new Set([Board.ROOK, Board.BISHOP, Board.QUEEN])
@@ -48,15 +48,12 @@ export const movedPieceParticipatesShield = {
 // 'target'  = moved_piece bound on shielded side
 // 'attacker' = neither side bound; moved_piece is a slider on the opposing team
 function roleFor(entry, ctx) {
+  const fromRelatedTo = movedPieceRoleIn(entry)
+  if (fromRelatedTo !== null) { return fromRelatedTo }
+  if (entry.currentProposition?.region?.kind !== 'all') { return null }
+
   const moved = ctx?.singulars?.moved_piece
   if (!moved) { return null }
-  const region = entry.currentProposition?.region
-
-  if (region?.kind === 'related-to' && region.actor === 'moved_piece') {
-    return region.role
-  }
-  if (region?.kind !== 'all') { return null }
-
   const movedSpecies = [...moved.species_set][0]
   if (!SLIDER_SPECIES.has(movedSpecies)) { return null }
   if (moved.team === entry.currentProposition.team) { return null }
