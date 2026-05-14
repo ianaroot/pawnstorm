@@ -263,23 +263,38 @@ class CandidateMoveAnalysisV2 {
 
   // ===== Value metric evaluation =====
 
-  evaluateRelationalValueMetrics({
+  evaluateRelationalValueMetrics(args) {
+    const { subjectMetric, targetMetric } = args
+    if (!targetMetric) { return this.dispatchSingleSubjectMetric(args) }
+    if (!subjectMetric) { return this.dispatchSingleTargetMetric(args) }
+    return this.dispatchBothSideMetrics(args)
+  }
+
+  dispatchSingleSubjectMetric({ pairs, subjectMetric, subjectComparator, subjectReference, subjectCoerce = identityCoerce }) {
+    if (subjectMetric === "individual_value") {
+      return this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference).length > 0
+    }
+    if (subjectMetric === "aggregate_value") {
+      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(pairs, "subject")), subjectReference)
+    }
+    throw new Error(`Unsupported single-subject value metric: ${subjectMetric}`)
+  }
+
+  dispatchSingleTargetMetric({ pairs, targetMetric, targetComparator, targetReference, targetCoerce = identityCoerce }) {
+    if (targetMetric === "individual_value") {
+      return this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference).length > 0
+    }
+    if (targetMetric === "aggregate_value") {
+      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(pairs, "target")), targetReference)
+    }
+    throw new Error(`Unsupported single-target value metric: ${targetMetric}`)
+  }
+
+  dispatchBothSideMetrics({
     pairs,
     subjectMetric, subjectComparator, subjectReference, subjectCoerce = identityCoerce,
     targetMetric, targetComparator, targetReference, targetCoerce = identityCoerce
   }) {
-    if (subjectMetric === "individual_value" && !targetMetric) {
-      return this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference).length > 0
-    }
-    if (!subjectMetric && targetMetric === "individual_value") {
-      return this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference).length > 0
-    }
-    if (subjectMetric === "aggregate_value" && !targetMetric) {
-      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(pairs, "subject")), subjectReference)
-    }
-    if (!subjectMetric && targetMetric === "aggregate_value") {
-      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(pairs, "target")), targetReference)
-    }
     if (subjectMetric === "count" && targetMetric === "individual_value") {
       const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
       return compareTotals(subjectComparator, this.uniquePositions(filtered.map(p => p.subjectPosition)).length, subjectReference)
@@ -306,7 +321,7 @@ class CandidateMoveAnalysisV2 {
       const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
       return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(filtered, "subject")), subjectReference)
     }
-    throw new Error(`Unsupported value metric combination: ${subjectMetric} / ${targetMetric}`)
+    throw new Error(`Unsupported two-side value metric combination: ${subjectMetric} / ${targetMetric}`)
   }
 
   relationalFilterPairsByValue(pairs, side, comparator, referenceTotal) {
