@@ -36,7 +36,7 @@ function applyMinus(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const subjectSide = entry.subjectProposition
   const targetSide = entry.targetProposition
-  if (subjectSide === null || targetSide === null) { return null }
+  if (subjectSide == null || targetSide == null) { return null }
   const alliedTeam = subjectSide.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
 
@@ -154,7 +154,7 @@ function applyPlus(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const subjectSide = entry.subjectProposition
   const targetSide = entry.targetProposition
-  if (subjectSide === null || targetSide === null) { return null }
+  if (subjectSide == null || targetSide == null) { return null }
   const alliedTeam = subjectSide.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
   const movedSpecies = [...moved.species_set][0]

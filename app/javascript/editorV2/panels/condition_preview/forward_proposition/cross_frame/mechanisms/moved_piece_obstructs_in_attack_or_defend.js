@@ -37,7 +37,7 @@ function applyMinus(entry, ctx, pieces, random) {
   if (destination === null) { return null }
   const subjectSide = entry.subjectProposition
   const targetSide = entry.targetProposition
-  if (subjectSide === null || targetSide === null) { return null }
+  if (subjectSide == null || targetSide == null) { return null }
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
     const positiveRay = walkRay(destination, step)
@@ -67,7 +67,7 @@ function applyPlus(entry, ctx, pieces, random) {
   const movedSpecies = [...moved.species_set][0]
   const subjectSide = entry.subjectProposition
   const targetSide = entry.targetProposition
-  if (subjectSide === null || targetSide === null) { return null }
+  if (subjectSide == null || targetSide == null) { return null }
 
   const possibleOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
