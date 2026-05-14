@@ -48,7 +48,8 @@ class ConditionEvaluatorV2 {
           operator
         })
         const rightTotal = this.unaryTargetTotal(conditionNode, analysis)
-        return this.compare({ comparator: conditionNode.comparator, leftTotal, rightTotal })
+        const coerceEmpty = conditionNode.target === "prior_board_state"
+        return this.compare({ comparator: conditionNode.comparator, leftTotal, rightTotal }, { coerceEmpty })
       })
     }
 
@@ -83,9 +84,11 @@ class ConditionEvaluatorV2 {
             subjectMetric: subjectComparisonPresent ? subjectMetric : null,
             subjectComparator: conditionNode.subjectComparator,
             subjectReferenceTotal,
+            subjectIsPbs: conditionNode.subjectComparisonSource === "prior_board_state",
             targetMetric: targetComparisonPresent ? targetMetric : null,
             targetComparator: conditionNode.targetComparator,
-            targetReferenceTotal
+            targetReferenceTotal,
+            targetIsPbs: conditionNode.targetComparisonSource === "prior_board_state"
           })
         }
         const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
@@ -155,7 +158,11 @@ class ConditionEvaluatorV2 {
       })
     }
 
-    compare({ comparator, leftTotal, rightTotal }) {
+    compare({ comparator, leftTotal, rightTotal }, { coerceEmpty = false } = {}) {
+      if (coerceEmpty) {
+        leftTotal = leftTotal ?? 0
+        rightTotal = rightTotal ?? 0
+      }
       if (leftTotal === null || rightTotal === null) { return false }
       switch (comparator) {
         case "equal_to":
@@ -171,18 +178,20 @@ class ConditionEvaluatorV2 {
         default:
           throw new Error(`Unknown V2 comparator: ${comparator}`)
       }
-    }    
+    }
     
     evaluateRelationalSubjectComparison(conditionNode, analysis, result) {
       const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions: result.subjectPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal })
+      const coerceEmpty = conditionNode.subjectComparisonSource === "prior_board_state"
+      return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal }, { coerceEmpty })
     }
 
     evaluateRelationalTargetComparison(conditionNode, analysis, result) {
       const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions: result.targetPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal })
+      const coerceEmpty = conditionNode.targetComparisonSource === "prior_board_state"
+      return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal }, { coerceEmpty })
     }
 
     relationalComparisonReferenceTotal({ side, conditionNode, analysis }) {

@@ -3197,4 +3197,89 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
   })
+
+  describe('PBS empty-side coercion', () => {
+    it('compare coerces null to 0 when coerceEmpty is true', () => {
+      const evaluator = new ConditionEvaluatorV2()
+      expect(evaluator.compare({ comparator: 'greater_than', leftTotal: 3, rightTotal: null }, { coerceEmpty: true })).toBe(true)
+      expect(evaluator.compare({ comparator: 'less_than', leftTotal: null, rightTotal: 3 }, { coerceEmpty: true })).toBe(true)
+      expect(evaluator.compare({ comparator: 'equal_to', leftTotal: null, rightTotal: null }, { coerceEmpty: true })).toBe(true)
+      expect(evaluator.compare({ comparator: 'greater_than', leftTotal: 3, rightTotal: null })).toBe(false)
+      expect(evaluator.compare({ comparator: 'equal_to', leftTotal: null, rightTotal: null })).toBe(false)
+    })
+
+    it('unary aggregate_value PBS verifies when after has pieces and prior is empty (promotion)', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', g7: 'wP' } })
+      const moveObject = getMove('g7', 'g8', board, Board.QUEEN)
+      expect(evaluate({
+        version: 2, kind: 'unary',
+        subject: 'allied', subjectFilter: 'queen',
+        operator: 'value', comparator: 'greater_than',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('unary aggregate_value PBS verifies when after is empty and prior has pieces (capture)', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e4: 'wP', d5: 'bN' } })
+      const moveObject = getMove('e4', 'd5', board)
+      expect(evaluate({
+        version: 2, kind: 'unary',
+        subject: 'enemy', subjectFilter: 'knight',
+        operator: 'value', comparator: 'less_than',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('unary aggregate_value PBS equal_to verifies when both frames are empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e2: 'wP' } })
+      const moveObject = getMove('e2', 'e3', board)
+      expect(evaluate({
+        version: 2, kind: 'unary',
+        subject: 'enemy', subjectFilter: 'queen',
+        operator: 'value', comparator: 'equal_to',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('relational aggregate_value PBS verifies when after has pairs and prior is empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a1: 'wN', d4: 'bQ' } })
+      const moveObject = getMove('a1', 'c2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('relational aggregate_value PBS equal_to verifies when both frames have empty pairs', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK' } })
+      const moveObject = getMove('e1', 'e2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('combinatorial PBS (count + aggregate_value) verifies when target prior is empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a1: 'wN', d4: 'bQ' } })
+      const moveObject = getMove('a1', 'c2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'count', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0,
+        targetComparisonMetric: 'aggregate_value', targetComparator: 'greater_than',
+        targetComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+  })
 })

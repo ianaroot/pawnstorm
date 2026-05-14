@@ -1,6 +1,10 @@
 import { materialValue } from "gameplay/board_query_utils"
 
-function compareTotal(comparator, leftTotal, rightTotal) {
+function compareTotal(comparator, leftTotal, rightTotal, { coerceEmpty = false } = {}) {
+  if (coerceEmpty) {
+    leftTotal = leftTotal ?? 0
+    rightTotal = rightTotal ?? 0
+  }
   if (leftTotal === null || rightTotal === null) { return false }
   switch (comparator) {
     case "equal_to": return leftTotal === rightTotal
@@ -34,16 +38,16 @@ function combinatorialMaxSize(comparator, n, totalGroups) {
   }
 }
 
-function searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, startIdx, current) {
+function searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, startIdx, current, { coerceEmpty = false } = {}) {
   if (current.length === size) {
     const sum = current.reduce((acc, group) => acc + group.value, 0)
-    return compareTotal(valueComparator, sum, valueReferenceTotal) ? current.slice() : null
+    return compareTotal(valueComparator, sum, valueReferenceTotal, { coerceEmpty }) ? current.slice() : null
   }
   const remaining = size - current.length
   if (startIdx + remaining > groups.length) { return null }
   for (let i = startIdx; i <= groups.length - remaining; i += 1) {
     current.push(groups[i])
-    const result = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, i + 1, current)
+    const result = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, i + 1, current, { coerceEmpty })
     current.pop()
     if (result) { return result }
   }
@@ -64,7 +68,8 @@ function buildGroups({ pairs, board, groupBySide, valueSide }) {
 export function findCombinatorialQualifyingGroups({
   pairs, board, groupBySide, valueSide,
   valueComparator, valueReferenceTotal,
-  countComparator, countReferenceTotal
+  countComparator, countReferenceTotal,
+  valueIsPbs = false
 }) {
   const groups = buildGroups({ pairs, board, groupBySide, valueSide })
   const totalGroups = groups.length
@@ -72,7 +77,7 @@ export function findCombinatorialQualifyingGroups({
   const maxSize = combinatorialMaxSize(countComparator, countReferenceTotal, totalGroups)
 
   for (let size = minSize; size <= maxSize; size += 1) {
-    const found = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, 0, [])
+    const found = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, 0, [], { coerceEmpty: valueIsPbs })
     if (found) {
       return found.map(group => group.key)
     }
