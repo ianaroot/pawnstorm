@@ -218,6 +218,26 @@ describe('buildSingulars — relationsToAnchors population (cross-singular relat
   })
 })
 
+describe('buildSingulars — relational singular value comparison', () => {
+  it('narrows the higher-priority actor when individual_value is compared against a lower-priority singular source', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparator: 'greater_than',
+      subjectComparisonMetric: 'individual_value',
+      subjectComparisonSource: 'captured_piece'
+    }])
+    const singulars = buildSingulars(combinedPlan)
+
+    expect(singulars.moved_piece.species_set.has(Board.PAWN)).toBe(false)
+    expect(singulars.moved_piece.species_set.has(Board.KING)).toBe(false)
+    expect(singulars.moved_piece.species_set.has(Board.NIGHT)).toBe(true)
+    expect(singulars.moved_piece.species_set.has(Board.QUEEN)).toBe(true)
+  })
+})
+
 describe('buildSingulars — same_piece aliasing', () => {
   it('aliases captured_piece and enemy_moved_piece into the same entry, with null excluded', () => {
     const combinedPlan = buildCombinedPlan([{

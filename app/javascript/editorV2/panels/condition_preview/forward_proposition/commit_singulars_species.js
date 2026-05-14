@@ -23,7 +23,7 @@ export function commitSingularsSpecies(ctx, random) {
 }
 
 function commitSpeciesFor(singular, singulars, committed, ctx, random, key) {
-  applyUnaryComparisonsToAnchors(singular, singulars, committed)
+  applyValueComparisonsToAnchors(singular, singulars, committed)
   // Null in species_set means the chain doesn't constrain this actor — leave
   // it uncommitted half the time so unrelated singulars aren't always placed.
   if (singular.species_set.has(null) && random() < 0.5) {
@@ -40,8 +40,8 @@ function commitSpeciesFor(singular, singulars, committed, ctx, random, key) {
   singular.species_set = new Set([pickWeightedSpecies(singular.species_set, random)])
 }
 
-function applyUnaryComparisonsToAnchors(singular, singulars, committed) {
-  for (const entry of singular.unaryComparisonsToAnchors ?? []) {
+function applyValueComparisonsToAnchors(singular, singulars, committed) {
+  for (const entry of singular.valueComparisonsToAnchors ?? []) {
     if (!committed.has(entry.otherActor)) { continue }
     const other = singulars[entry.otherActor]
     const otherSpecies = [...other.species_set][0]
@@ -50,7 +50,7 @@ function applyUnaryComparisonsToAnchors(singular, singulars, committed) {
     const filtered = new Set()
     for (const s of singular.species_set) {
       if (s === null) { continue }
-      const passes = entry.myRole === 'subject'
+      const passes = entry.lowerSide === 'lhs'
         ? compareValues(materialValue(s), entry.comparator, otherValue)
         : compareValues(otherValue, entry.comparator, materialValue(s))
       if (passes) { filtered.add(s) }

@@ -40,7 +40,7 @@ function singular(team, species) {
     species_set: new Set(species),
     region: { kind: 'all' },
     relationsToAnchors: [],
-    unaryComparisonsToAnchors: []
+    valueComparisonsToAnchors: []
   }
 }
 
@@ -59,6 +59,13 @@ function narrowSingulars(plan, singulars) {
     if (SINGULAR_ACTORS.has(plan.subject) && SINGULAR_ACTORS.has(plan.target)) {
       addRelationToAnchorOnLowerPriority(plan, singulars)
     }
+    for (const d of plan.comparisonDescriptors ?? []) {
+      if (d.metric !== 'individual_value') { continue }
+      const lhsActor = plan[d.side]
+      const rhsActor = d.source
+      if (!SINGULAR_ACTORS.has(lhsActor) || !SINGULAR_ACTORS.has(rhsActor)) { continue }
+      recordSingularValueComparison({ lhsActor, rhsActor, comparator: d.comparator, singulars })
+    }
     return
   }
   if (!SINGULAR_ACTORS.has(plan.subject)) { return }
@@ -67,22 +74,47 @@ function narrowSingulars(plan, singulars) {
   } else if (plan.kind === 'unary') {
     narrowSingularByUnaryPlan(plan, singulars[plan.subject])
     if (plan.operator === 'value' && SINGULAR_ACTORS.has(plan.target)) {
-      addUnaryComparisonToAnchorOnLowerPriority(plan, singulars)
+      recordSingularValueComparison({
+        lhsActor: plan.subject,
+        rhsActor: plan.target,
+        comparator: plan.comparator,
+        singulars
+      })
     }
   }
 }
 
-function addUnaryComparisonToAnchorOnLowerPriority(plan, singulars) {
-  const { subject, target, comparator } = plan
-  const lower = ACTOR_PRIORITY[subject] > ACTOR_PRIORITY[target] ? subject : target
-  const higher = lower === subject ? target : subject
-  const myRole = lower === subject ? 'subject' : 'target'
-  singulars[lower].unaryComparisonsToAnchors.push({
+function recordSingularValueComparison({ lhsActor, rhsActor, comparator, singulars }) {
+  const lower = ACTOR_PRIORITY[lhsActor] > ACTOR_PRIORITY[rhsActor] ? lhsActor : rhsActor
+  const higher = lower === lhsActor ? rhsActor : lhsActor
+  const lowerSide = lower === lhsActor ? 'lhs' : 'rhs'
+  const higherSide = lowerSide === 'lhs' ? 'rhs' : 'lhs'
+  singulars[lower].valueComparisonsToAnchors.push({
     otherActor: higher,
     operator: 'value',
     comparator,
-    myRole
+    lowerSide
   })
+  narrowSingularValueComparison(singulars[higher], singulars[lower], comparator, higherSide)
+}
+
+function narrowSingularValueComparison(higher, lower, comparator, higherSide) {
+  higher.species_set.delete(null)
+  lower.species_set.delete(null)
+  const lowerOptions = [...lower.species_set]
+  if (lowerOptions.length === 0) { return }
+  const filteredHigher = new Set()
+  for (const h of higher.species_set) {
+    const hValue = materialValue(h)
+    const hasCounterpart = lowerOptions.some(l => {
+      const lValue = materialValue(l)
+      return higherSide === 'lhs'
+        ? compareValues(hValue, comparator, lValue)
+        : compareValues(lValue, comparator, hValue)
+    })
+    if (hasCounterpart) { filteredHigher.add(h) }
+  }
+  higher.species_set = filteredHigher
 }
 
 function narrowSingularByFilterPool(target, speciesPool) {
@@ -107,7 +139,7 @@ function aliasSingulars(actorA, actorB, singulars) {
     species_set: intersectedSet(a.species_set, b.species_set),
     region: intersectRegions(a.region, b.region),
     relationsToAnchors: [...(a.relationsToAnchors ?? []), ...(b.relationsToAnchors ?? [])],
-    unaryComparisonsToAnchors: [...(a.unaryComparisonsToAnchors ?? []), ...(b.unaryComparisonsToAnchors ?? [])]
+    valueComparisonsToAnchors: [...(a.valueComparisonsToAnchors ?? []), ...(b.valueComparisonsToAnchors ?? [])]
   }
   merged.species_set.delete(null)
   singulars[actorA] = merged

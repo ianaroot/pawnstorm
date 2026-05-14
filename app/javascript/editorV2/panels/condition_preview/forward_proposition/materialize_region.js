@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import profileCollector from 'gameplay/profile_collector'
 import { ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
   adjacentNeighborPositions, attackerCandidatesFor, controlledSquaresForPieceAt,
@@ -17,7 +18,10 @@ function materializeRelatedTo(region, { singulars, board, species, team }) {
   const anchor = singulars[region.actor]
   // Permissive when the anchor isn't fully committed yet (called during
   // commit_singulars_position before all singulars have a single-square region).
-  if (anchor.region.kind !== 'set' || anchor.region.squares.size !== 1) { return new Set() }
+  if (anchor.region.kind !== 'set' || anchor.region.squares.size !== 1) {
+    profileCollector.increment('diag.materialize_region.empty_anchor')
+    return new Set()
+  }
   const anchorPos = [...anchor.region.squares][0]
   if (region.operator === 'adjacent') {
     return new Set(adjacentNeighborPositions(anchorPos))

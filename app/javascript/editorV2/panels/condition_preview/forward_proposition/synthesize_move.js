@@ -1,4 +1,5 @@
 import Rules from 'gameplay/rules'
+import profileCollector from 'gameplay/profile_collector'
 import { buildBoardFromLayout, buildLayoutFromPieces, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { buildPriorBoard, buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
@@ -29,10 +30,10 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
       promotionPiece: overrides.promotionPiece,
       capturedPiecePosition: overrides.capturedPiecePosition
     })
-    if (priorPieces === null) { continue }
+    if (priorPieces === null) { profileCollector.increment('diag.synthesize_move.prior_board_null'); continue }
     const priorBoard = buildBoardFromLayout(buildLayoutFromPieces(priorPieces), recentMoveContext, team)
     let moveObject
-    try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }
+    try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { profileCollector.increment('diag.synthesize_move.catch_hits'); continue }
     if (moveObject.illegal) { continue }
     if (!legalPriorTurnState(priorBoard, moveObject)) { continue }
     return { priorBoard, moveObject }
