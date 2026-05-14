@@ -3,9 +3,11 @@ import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_place
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
 import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'
+import { ACTOR_PRIORITY } from './singulars'
 
-// captured_piece precedes enemy_moved_piece so the `seen` short-circuit catches stalemate-aliased pairs before the latter runs.
-const ACTOR_KEYS = Object.freeze(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
+const ACTOR_KEYS = Object.freeze(
+  Object.keys(ACTOR_PRIORITY).sort((a, b) => ACTOR_PRIORITY[a] - ACTOR_PRIORITY[b])
+)
 const CAPTURED_ACTORS = new Set(['captured_piece', 'enemy_captured_piece'])
 
 export function commitSingularsPosition(ctx, random, earlyPieces = new Map()) {
