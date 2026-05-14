@@ -27,12 +27,14 @@ function mergeGroup(ctx, keys, deltaSingulars) {
   if (!target) { return }
   const deltaSingular = deltaSingulars[keys[0]]
   const extraRelations = []
+  const extraUnaryComparisons = []
   for (let i = 1; i < keys.length; i += 1) {
     const other = ctx.singulars[keys[i]]
     if (!other) { continue }
     target.species_set = intersectSets(target.species_set, other.species_set)
     target.region = intersectRegions(target.region, other.region)
     extraRelations.push(...(other.relationsToAnchors ?? []))
+    extraUnaryComparisons.push(...(other.unaryComparisonsToAnchors ?? []))
   }
   if (deltaSingular.species_set) {
     target.species_set = intersectSets(target.species_set, deltaSingular.species_set)
@@ -47,6 +49,11 @@ function mergeGroup(ctx, keys, deltaSingulars) {
     ...(target.relationsToAnchors ?? []),
     ...extraRelations,
     ...(deltaSingular.relationsToAnchors ?? [])
+  ]
+  target.unaryComparisonsToAnchors = [
+    ...(target.unaryComparisonsToAnchors ?? []),
+    ...extraUnaryComparisons,
+    ...(deltaSingular.unaryComparisonsToAnchors ?? [])
   ]
   for (const key of keys) {
     ctx.singulars[key] = target

@@ -9,7 +9,7 @@ const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP,
 
 const SINGULAR_ACTORS = new Set(['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'])
 
-const ACTOR_PRIORITY = Object.freeze({
+export const ACTOR_PRIORITY = Object.freeze({
   moved_piece: 0,
   enemy_moved_piece: 1,
   captured_piece: 2,
@@ -39,7 +39,8 @@ function singular(team, species) {
     team,
     species_set: new Set(species),
     region: { kind: 'all' },
-    relationsToAnchors: []
+    relationsToAnchors: [],
+    unaryComparisonsToAnchors: []
   }
 }
 
@@ -65,7 +66,23 @@ function narrowSingulars(plan, singulars) {
     narrowSingularByPositionPlan(plan, singulars[plan.subject])
   } else if (plan.kind === 'unary') {
     narrowSingularByUnaryPlan(plan, singulars[plan.subject])
+    if (plan.operator === 'value' && SINGULAR_ACTORS.has(plan.target)) {
+      addUnaryComparisonToAnchorOnLowerPriority(plan, singulars)
+    }
   }
+}
+
+function addUnaryComparisonToAnchorOnLowerPriority(plan, singulars) {
+  const { subject, target, comparator } = plan
+  const lower = ACTOR_PRIORITY[subject] > ACTOR_PRIORITY[target] ? subject : target
+  const higher = lower === subject ? target : subject
+  const myRole = lower === subject ? 'subject' : 'target'
+  singulars[lower].unaryComparisonsToAnchors.push({
+    otherActor: higher,
+    operator: 'value',
+    comparator,
+    myRole
+  })
 }
 
 function narrowSingularByFilterPool(target, speciesPool) {
@@ -89,7 +106,8 @@ function aliasSingulars(actorA, actorB, singulars) {
     team: a.team,
     species_set: intersectedSet(a.species_set, b.species_set),
     region: intersectRegions(a.region, b.region),
-    relationsToAnchors: [...(a.relationsToAnchors ?? []), ...(b.relationsToAnchors ?? [])]
+    relationsToAnchors: [...(a.relationsToAnchors ?? []), ...(b.relationsToAnchors ?? [])],
+    unaryComparisonsToAnchors: [...(a.unaryComparisonsToAnchors ?? []), ...(b.unaryComparisonsToAnchors ?? [])]
   }
   merged.species_set.delete(null)
   singulars[actorA] = merged
@@ -124,10 +142,11 @@ function narrowSingularByCountPlan(plan, target) {
 }
 
 function narrowSingularByValuePlan(plan, target) {
-  const total = Number(plan.targetTotal ?? 0)
   const filterPool = new Set(plan.subjectSpeciesPool)
-  const valuePool = new Set(ALL_SPECIES.filter(s => compareValues(materialValue(s), plan.comparator, total)))
   intersectSpeciesSet(target.species_set, filterPool)
+  if (plan.target !== 'exact_number') { return }
+  const total = Number(plan.targetTotal ?? 0)
+  const valuePool = new Set(ALL_SPECIES.filter(s => compareValues(materialValue(s), plan.comparator, total)))
   intersectSpeciesSet(target.species_set, valuePool)
 }
 

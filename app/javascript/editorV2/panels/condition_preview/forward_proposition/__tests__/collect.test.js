@@ -126,6 +126,29 @@ describe('collectForwardPropositionExamples', () => {
     })
     expect(enPassantExamples.length).toBeGreaterThan(0)
   })
+
+  it('generates examples for moved_piece value less_than captured_piece', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'unary',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'value', comparator: 'less_than',
+      target: 'captured_piece', targetFilter: 'any'
+    }])
+    const standardExamples = []
+    const produced = { 'forward-proposition': 0 }
+
+    collectForwardPropositionExamples({
+      combinedPlan,
+      random: seededRandom(23),
+      maxStandardSize: 300,
+      addUnique: makeAdder(),
+      standardExamples,
+      produced,
+      attempts: 500
+    })
+
+    expect(produced['forward-proposition']).toBeGreaterThan(0)
+  })
 })
 
 describe('buildScenarioBudgets', () => {
