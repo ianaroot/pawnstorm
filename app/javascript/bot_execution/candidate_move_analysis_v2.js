@@ -14,9 +14,12 @@ import {
 import { positionFilteredPositions, positionMetricTotal } from "bot_execution/position_analysis"
 import { combinatorialQualifyingExists } from "bot_execution/relational_qualifying"
 import { SINGULAR_ACTORS, RELATIONAL_SINGULAR_ACTORS } from "bot_execution/actors"
+import { compareTotals } from "bot_execution/utils"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
+
+const identityCoerce = (value) => value
 
 
 class CandidateMoveAnalysisV2 {
@@ -260,55 +263,59 @@ class CandidateMoveAnalysisV2 {
 
   // ===== Value metric evaluation =====
 
-  evaluateRelationalValueMetrics({ pairs, subjectMetric, subjectComparator, subjectReferenceTotal, subjectIsPbs = false, targetMetric, targetComparator, targetReferenceTotal, targetIsPbs = false }) {
+  evaluateRelationalValueMetrics({
+    pairs,
+    subjectMetric, subjectComparator, subjectReference, subjectCoerce = identityCoerce,
+    targetMetric, targetComparator, targetReference, targetCoerce = identityCoerce
+  }) {
     if (subjectMetric === "individual_value" && !targetMetric) {
-      return this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReferenceTotal, { coerceEmpty: subjectIsPbs }).length > 0
+      return this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference).length > 0
     }
     if (!subjectMetric && targetMetric === "individual_value") {
-      return this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReferenceTotal, { coerceEmpty: targetIsPbs }).length > 0
+      return this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference).length > 0
     }
     if (subjectMetric === "aggregate_value" && !targetMetric) {
-      return this.relationalCompareValues(subjectComparator, this.relationalAggregateValueFromPairs(pairs, "subject"), subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
+      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(pairs, "subject")), subjectReference)
     }
     if (!subjectMetric && targetMetric === "aggregate_value") {
-      return this.relationalCompareValues(targetComparator, this.relationalAggregateValueFromPairs(pairs, "target"), targetReferenceTotal, { coerceEmpty: targetIsPbs })
+      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(pairs, "target")), targetReference)
     }
     if (subjectMetric === "count" && targetMetric === "individual_value") {
-      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReferenceTotal, { coerceEmpty: targetIsPbs })
-      return this.relationalCompareValues(subjectComparator, this.uniquePositions(filtered.map(p => p.subjectPosition)).length, subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
+      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
+      return compareTotals(subjectComparator, this.uniquePositions(filtered.map(p => p.subjectPosition)).length, subjectReference)
     }
     if (subjectMetric === "individual_value" && targetMetric === "count") {
-      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
-      return this.relationalCompareValues(targetComparator, this.uniquePositions(filtered.map(p => p.targetPosition)).length, targetReferenceTotal, { coerceEmpty: targetIsPbs })
+      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return compareTotals(targetComparator, this.uniquePositions(filtered.map(p => p.targetPosition)).length, targetReference)
     }
     if (subjectMetric === "count" && targetMetric === "aggregate_value") {
-      return this.relationalCombinatorial({ pairs, groupBySide: "subject", valueSide: "target", valueComparator: targetComparator, valueReferenceTotal: targetReferenceTotal, countComparator: subjectComparator, countReferenceTotal: subjectReferenceTotal, valueIsPbs: targetIsPbs })
+      return this.relationalCombinatorial({ pairs, groupBySide: "subject", valueSide: "target", valueComparator: targetComparator, valueReferenceTotal: targetReference, countComparator: subjectComparator, countReferenceTotal: subjectReference })
     }
     if (subjectMetric === "aggregate_value" && targetMetric === "count") {
-      return this.relationalCombinatorial({ pairs, groupBySide: "target", valueSide: "subject", valueComparator: subjectComparator, valueReferenceTotal: subjectReferenceTotal, countComparator: targetComparator, countReferenceTotal: targetReferenceTotal, valueIsPbs: subjectIsPbs })
+      return this.relationalCombinatorial({ pairs, groupBySide: "target", valueSide: "subject", valueComparator: subjectComparator, valueReferenceTotal: subjectReference, countComparator: targetComparator, countReferenceTotal: targetReference })
     }
     if (subjectMetric === "individual_value" && targetMetric === "individual_value") {
-      const subjectFiltered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
-      return this.relationalFilterPairsByValue(subjectFiltered, "target", targetComparator, targetReferenceTotal, { coerceEmpty: targetIsPbs }).length > 0
+      const subjectFiltered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return this.relationalFilterPairsByValue(subjectFiltered, "target", targetComparator, targetReference).length > 0
     }
     if (subjectMetric === "individual_value" && targetMetric === "aggregate_value") {
-      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
-      return this.relationalCompareValues(targetComparator, this.relationalAggregateValueFromPairs(filtered, "target"), targetReferenceTotal, { coerceEmpty: targetIsPbs })
+      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(filtered, "target")), targetReference)
     }
     if (subjectMetric === "aggregate_value" && targetMetric === "individual_value") {
-      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReferenceTotal, { coerceEmpty: targetIsPbs })
-      return this.relationalCompareValues(subjectComparator, this.relationalAggregateValueFromPairs(filtered, "subject"), subjectReferenceTotal, { coerceEmpty: subjectIsPbs })
+      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
+      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(filtered, "subject")), subjectReference)
     }
     throw new Error(`Unsupported value metric combination: ${subjectMetric} / ${targetMetric}`)
   }
 
-  relationalFilterPairsByValue(pairs, side, comparator, referenceTotal, { coerceEmpty = false } = {}) {
+  relationalFilterPairsByValue(pairs, side, comparator, referenceTotal) {
     const board = this.afterBoard()
     return pairs.filter(pair => {
       const position = side === "subject" ? pair.subjectPosition : pair.targetPosition
       const value = this.individualComparableValue(board.pieceTypeAt(position))
       if (value === null) { return false }
-      return this.relationalCompareValues(comparator, value, referenceTotal, { coerceEmpty })
+      return compareTotals(comparator, value, referenceTotal)
     })
   }
 
@@ -326,22 +333,6 @@ class CandidateMoveAnalysisV2 {
 
   relationalCombinatorial(args) {
     return combinatorialQualifyingExists({ ...args, board: this.afterBoard() })
-  }
-
-  relationalCompareValues(comparator, left, right, { coerceEmpty = false } = {}) {
-    if (coerceEmpty) {
-      left = left ?? 0
-      right = right ?? 0
-    }
-    if (left === null || right === null) { return false }
-    switch (comparator) {
-      case "equal_to": return left === right
-      case "greater_than": return left > right
-      case "less_than": return left < right
-      case "greater_than_or_equal_to": return left >= right
-      case "less_than_or_equal_to": return left <= right
-      default: throw new Error(`Unknown comparator: ${comparator}`)
-    }
   }
 
   // ===== Delegates =====

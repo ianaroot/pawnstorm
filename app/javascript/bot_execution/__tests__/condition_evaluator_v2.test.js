@@ -3199,15 +3199,6 @@ describe('ConditionEvaluatorV2', () => {
   })
 
   describe('PBS empty-side coercion', () => {
-    it('compare coerces null to 0 when coerceEmpty is true', () => {
-      const evaluator = new ConditionEvaluatorV2()
-      expect(evaluator.compare({ comparator: 'greater_than', leftTotal: 3, rightTotal: null }, { coerceEmpty: true })).toBe(true)
-      expect(evaluator.compare({ comparator: 'less_than', leftTotal: null, rightTotal: 3 }, { coerceEmpty: true })).toBe(true)
-      expect(evaluator.compare({ comparator: 'equal_to', leftTotal: null, rightTotal: null }, { coerceEmpty: true })).toBe(true)
-      expect(evaluator.compare({ comparator: 'greater_than', leftTotal: 3, rightTotal: null })).toBe(false)
-      expect(evaluator.compare({ comparator: 'equal_to', leftTotal: null, rightTotal: null })).toBe(false)
-    })
-
     it('unary aggregate_value PBS verifies when after has pieces and prior is empty (promotion)', () => {
       const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', g7: 'wP' } })
       const moveObject = getMove('g7', 'g8', board, Board.QUEEN)

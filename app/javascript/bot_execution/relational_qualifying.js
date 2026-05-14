@@ -1,20 +1,5 @@
 import { materialValue } from "gameplay/board_query_utils"
-
-function compareTotal(comparator, leftTotal, rightTotal, { coerceEmpty = false } = {}) {
-  if (coerceEmpty) {
-    leftTotal = leftTotal ?? 0
-    rightTotal = rightTotal ?? 0
-  }
-  if (leftTotal === null || rightTotal === null) { return false }
-  switch (comparator) {
-    case "equal_to": return leftTotal === rightTotal
-    case "greater_than": return leftTotal > rightTotal
-    case "less_than": return leftTotal < rightTotal
-    case "greater_than_or_equal_to": return leftTotal >= rightTotal
-    case "less_than_or_equal_to": return leftTotal <= rightTotal
-    default: throw new Error(`Unknown comparator: ${comparator}`)
-  }
-}
+import { compareTotals } from "bot_execution/utils"
 
 function combinatorialMinSize(comparator, n) {
   switch (comparator) {
@@ -38,16 +23,16 @@ function combinatorialMaxSize(comparator, n, totalGroups) {
   }
 }
 
-function searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, startIdx, current, { coerceEmpty = false } = {}) {
+function searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, startIdx, current) {
   if (current.length === size) {
     const sum = current.reduce((acc, group) => acc + group.value, 0)
-    return compareTotal(valueComparator, sum, valueReferenceTotal, { coerceEmpty }) ? current.slice() : null
+    return compareTotals(valueComparator, sum, valueReferenceTotal) ? current.slice() : null
   }
   const remaining = size - current.length
   if (startIdx + remaining > groups.length) { return null }
   for (let i = startIdx; i <= groups.length - remaining; i += 1) {
     current.push(groups[i])
-    const result = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, i + 1, current, { coerceEmpty })
+    const result = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, i + 1, current)
     current.pop()
     if (result) { return result }
   }
@@ -68,8 +53,7 @@ function buildGroups({ pairs, board, groupBySide, valueSide }) {
 export function findCombinatorialQualifyingGroups({
   pairs, board, groupBySide, valueSide,
   valueComparator, valueReferenceTotal,
-  countComparator, countReferenceTotal,
-  valueIsPbs = false
+  countComparator, countReferenceTotal
 }) {
   const groups = buildGroups({ pairs, board, groupBySide, valueSide })
   const totalGroups = groups.length
@@ -77,7 +61,7 @@ export function findCombinatorialQualifyingGroups({
   const maxSize = combinatorialMaxSize(countComparator, countReferenceTotal, totalGroups)
 
   for (let size = minSize; size <= maxSize; size += 1) {
-    const found = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, 0, [], { coerceEmpty: valueIsPbs })
+    const found = searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, 0, [])
     if (found) {
       return found.map(group => group.key)
     }

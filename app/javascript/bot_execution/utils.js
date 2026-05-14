@@ -13,3 +13,8 @@ export function compareValues(value, comparator, target) {
     default:                         throw new Error(`Unknown comparator: ${comparator}`)
   }
 }
+
+export function compareTotals(comparator, left, right) {
+  if (left === null || right === null) { return false }
+  return compareValues(left, comparator, right)
+}

@@ -1335,18 +1335,4 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(shieldResult.targetPositions).toEqual([])
     })
   })
-
-  describe('relationalCompareValues PBS coercion', () => {
-    it('coerces null to 0 when coerceEmpty is true', () => {
-      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK' } })
-      const moveObject = getMove('e1', 'e2', board)
-      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
-
-      expect(analysis.relationalCompareValues('greater_than', 3, null, { coerceEmpty: true })).toBe(true)
-      expect(analysis.relationalCompareValues('less_than', null, 3, { coerceEmpty: true })).toBe(true)
-      expect(analysis.relationalCompareValues('equal_to', null, null, { coerceEmpty: true })).toBe(true)
-      expect(analysis.relationalCompareValues('greater_than', 3, null)).toBe(false)
-      expect(analysis.relationalCompareValues('equal_to', null, null)).toBe(false)
-    })
-  })
 })
