@@ -34,16 +34,15 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   pieces = satisfyPropositions(ctx, pieces, random)
   if (pieces === null) { return null }
 
-  pieces = satisfyRelations(ctx, pieces, random)
-  if (pieces === null) { return null }
-
-  const [first, second] = random() < 0.5
-    ? [satisfyMobility, satisfyCrossFrame]
-    : [satisfyCrossFrame, satisfyMobility]
+  const [first, second] = random() < 0.5 ? [satisfyMobility, satisfyCrossFrame] : [satisfyCrossFrame, satisfyMobility]
   pieces = first(ctx, pieces, random)
   if (pieces === null) { return null }
   pieces = second(ctx, pieces, random)
   if (pieces === null) { return null }
+  
+  pieces = satisfyRelations(ctx, pieces, random)
+  if (pieces === null) { return null }
+
 
   pieces = placeKingsIfAbsent(pieces, random, ctx)
   if (pieces === null) { return null }
