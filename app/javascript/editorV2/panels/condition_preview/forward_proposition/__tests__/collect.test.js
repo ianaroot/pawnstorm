@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { candidateIdentity } from 'editorV2/panels/condition_preview/shared/example_utils'
 import {
@@ -96,6 +97,34 @@ describe('collectForwardPropositionExamples', () => {
 
     expect(standardExamples.length).toBeGreaterThan(0)
     expect(produced['forward-proposition']).toBeGreaterThan(0)
+  })
+
+  it('generates examples for enemy_moved_piece same_piece captured_piece, including en passant', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'enemy_moved_piece', subjectFilter: 'any',
+      operator: 'same_piece',
+      target: 'captured_piece', targetFilter: 'any'
+    }])
+    const standardExamples = []
+    const produced = { 'forward-proposition': 0 }
+
+    collectForwardPropositionExamples({
+      combinedPlan,
+      random: seededRandom(17),
+      maxStandardSize: 500,
+      addUnique: makeAdder(),
+      standardExamples,
+      produced,
+      attempts: 1000
+    })
+
+    expect(produced['forward-proposition']).toBeGreaterThan(0)
+    const enPassantExamples = standardExamples.filter(e => {
+      const endPos = e.moveObject.endPosition
+      return e.priorBoard.pieceTypeAt(endPos) === Board.EMPTY
+    })
+    expect(enPassantExamples.length).toBeGreaterThan(0)
   })
 })
 

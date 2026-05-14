@@ -44,6 +44,16 @@ function commitPositionFor(singular, singulars, committed, random, ctx, key, ear
   const ordered = edgeBiasedShuffle(candidates, random, mobilityRange, ctx.edgeBiasState)
 
   if (CAPTURED_ACTORS.has(key)) {
+    if (key === 'captured_piece' && singular.region.kind === 'all') {
+      const moved = singulars.moved_piece
+      if (moved.region.kind === 'set' && moved.region.squares.size === 1) {
+        const movedDestination = [...moved.region.squares][0]
+        if (legalPlacementForSpecies(movedDestination, species)) {
+          commitCapturedPieceRegion(singular, movedDestination)
+          return
+        }
+      }
+    }
     for (const candidate of ordered) {
       if (!legalPlacementForSpecies(candidate, species)) { continue }
       commitCapturedPieceRegion(singular, candidate)
