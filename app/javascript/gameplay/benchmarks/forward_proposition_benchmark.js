@@ -11,8 +11,13 @@ const PROFILE_LABEL_PREFIXES = [
   "condition.v2."
 ]
 
+// Baseline rates recorded 2026-05-14, N=1000 attempts per payload, seed=1.
+// Use these as a reference when changes to mechanisms or pipeline ordering
+// could plausibly affect pass rates. "Pre-Phase-1" = before attack/defend
+// non-bound roleFor extension landed.
 const PAYLOADS = [
   {
+    // Baseline 2026-05-14: 243/1000 (24.3%)
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -25,6 +30,7 @@ const PAYLOADS = [
     }
   },
   {
+    // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -37,6 +43,7 @@ const PAYLOADS = [
     }
   },
   {
+    // Baseline 2026-05-14: 354/1000 (35.4%)
     name: "adjacent count > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -44,6 +51,59 @@ const PAYLOADS = [
       operator: "adjacent",
       target: "enemy", targetFilter: "any",
       subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
+    name: "attack count > PBS (non-bound)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "attack",
+      target: "enemy", targetFilter: "queen",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-1): 93/1000 (9.3%)
+    name: "defend aggregate_value > PBS (non-bound)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "bishop",
+      operator: "defend",
+      target: "allied", targetFilter: "queen",
+      subjectComparisonMetric: "aggregate_value",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-2): 7/1000 (0.7%)
+    name: "defend count < PBS (non-bound, both-allied)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "defend",
+      target: "allied", targetFilter: "king",
+      subjectComparisonMetric: "count",
+      subjectComparator: "less_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14: 238/1000 (23.8%) — shield's non-bound 'attacker' path
+    // works in both team configurations; recorded as regression check.
+    name: "shield aggregate_value > PBS (non-bound, both-allied)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "pawn", subjectFilterMode: "exclude",
+      operator: "shield",
+      target: "allied", targetFilter: "queen", targetFilterMode: "include",
+      subjectComparisonMetric: "aggregate_value",
       subjectComparator: "greater_than",
       subjectComparisonSource: "prior_board_state"
     }
