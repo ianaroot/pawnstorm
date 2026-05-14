@@ -63,7 +63,7 @@ function applyPlusRoleTarget(otherProposition, ctx, pieces, random) {
     const candidates = shuffled(attackerCandidatesFor(destination, species, team, board), random)
     for (const placement of candidates) {
       if (pieces.has(placement)) { continue }
-      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination })
+      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination, random })
       if (result !== null) { return result }
     }
   }
@@ -88,7 +88,7 @@ function applyPlusRoleSubject(otherProposition, ctx, pieces, random) {
   for (const placement of reachable) {
     if (pieces.has(placement)) { continue }
     for (const species of shuffled(speciesPool, random)) {
-      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination })
+      const result = commitWithPlacement({ placement, species, placerTeam: team, ctx, pieces, destination, random })
       if (result !== null) { return result }
     }
   }
@@ -241,9 +241,9 @@ function withMovedAt(pieces, fromSquare, toSquare, team, species) {
   return placePiece(next, toSquare, pieceCode(team, species))
 }
 
-function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, destination }) {
+function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, destination, random }) {
   const next = ensureRolePieceAt({
-    pieces, pos: placement, team: placerTeam, speciesSet: new Set([species]), ctx, random: () => 0
+    pieces, pos: placement, team: placerTeam, speciesSet: new Set([species]), ctx, random
   })
   if (next === null || next === pieces) { return null }
 
