@@ -163,8 +163,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
     expect(ctx.singulars.moved_piece.priorRegion.squares.size).toBeGreaterThan(0)
   })
 
-  it('returns null when no origin attacks strictly more relevant targets than destination', () => {
-    // No black queens on the board — targetsFromDestination=0 and every origin also yields 0.
+  it('places a new target via place-extension when no existing target supports the delta', () => {
     const moved = {
       team: Board.WHITE, species_set: new Set([Board.QUEEN]),
       region: { kind: 'set', squares: new Set([D4]) },
@@ -177,7 +176,10 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       entry({ direction: '-', movedPieceRole: 'subject' }), ctx, pieces, () => 0.5
     )
 
-    expect(result).toBeNull()
+    expect(result).not.toBeNull()
+    expect(result.size).toBe(pieces.size + 1)
+    const placedSquare = [...result.keys()].find(p => p !== D4)
+    expect(result.get(placedSquare)).toBe(pieceCode(Board.BLACK, Board.QUEEN))
   })
 })
 

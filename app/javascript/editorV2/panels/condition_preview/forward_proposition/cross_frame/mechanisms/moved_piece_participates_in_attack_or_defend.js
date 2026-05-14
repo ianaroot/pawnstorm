@@ -7,7 +7,8 @@ import {
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
-  movedPieceRoleIn, singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
+  singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
+  movedPieceRoleInOrInferred, otherSidePropositionFor
 } from './participates_helpers'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
@@ -18,27 +19,29 @@ export const movedPieceParticipatesInAttackOrDefend = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
-    return movedPieceRoleIn(entry) !== null
+    return movedPieceRoleInOrInferred(entry, ctx) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = movedPieceRoleIn(entry)
+    const role = movedPieceRoleInOrInferred(entry, ctx)
     if (role === null) { return null }
-    if (entry.direction === '+') { return applyPlus(entry, role, ctx, pieces, random) }
-    if (entry.direction === '-') { return applyMinus(entry, role, ctx, pieces, random) }
+    const otherProposition = otherSidePropositionFor(entry, role)
+    if (otherProposition === null) { return null }
+    if (entry.direction === '+') { return applyPlus(role, otherProposition, ctx, pieces, random) }
+    if (entry.direction === '-') { return applyMinus(role, otherProposition, ctx, pieces, random) }
     return null
   }
 }
 
-function applyPlus(entry, role, ctx, pieces, random) {
-  if (role === 'target') { return applyPlusRoleTarget(entry, ctx, pieces, random) }
-  if (role === 'subject') { return applyPlusRoleSubject(entry, ctx, pieces, random) }
+function applyPlus(role, otherProposition, ctx, pieces, random) {
+  if (role === 'target') { return applyPlusRoleTarget(otherProposition, ctx, pieces, random) }
+  if (role === 'subject') { return applyPlusRoleSubject(otherProposition, ctx, pieces, random) }
   return null
 }
 
-function applyMinus(entry, role, ctx, pieces, random) {
-  if (role === 'target') { return applyMinusRoleTarget(entry, ctx, pieces, random) }
-  if (role === 'subject') { return applyMinusRoleSubject(entry, ctx, pieces, random) }
+function applyMinus(role, otherProposition, ctx, pieces, random) {
+  if (role === 'target') { return applyMinusRoleTarget(otherProposition, ctx, pieces, random) }
+  if (role === 'subject') { return applyMinusRoleSubject(otherProposition, ctx, pieces, random) }
   return null
 }
 
@@ -46,13 +49,13 @@ function applyMinus(entry, role, ctx, pieces, random) {
 // that controls moved_piece's destination. priorRegion narrows to origin
 // candidates the new piece does not control — so the count holds on after but
 // not on prior, satisfying the '+' delta.
-function applyPlusRoleTarget(entry, ctx, pieces, random) {
+function applyPlusRoleTarget(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
 
-  const team = entry.currentProposition.team
-  const speciesPool = placeableSpecies(entry.currentProposition.species_set)
+  const team = otherProposition.team
+  const speciesPool = placeableSpecies(otherProposition.species_set)
   if (speciesPool.length === 0) { return null }
 
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
@@ -71,13 +74,13 @@ function applyPlusRoleTarget(entry, ctx, pieces, random) {
 // other team) on a square moved_piece's destination controls. priorRegion
 // narrows to origin candidates from which moved_piece does NOT control that
 // target square.
-function applyPlusRoleSubject(entry, ctx, pieces, random) {
+function applyPlusRoleSubject(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
 
-  const team = entry.currentProposition.team
-  const speciesPool = placeableSpecies(entry.currentProposition.species_set)
+  const team = otherProposition.team
+  const speciesPool = placeableSpecies(otherProposition.species_set)
   if (speciesPool.length === 0) { return null }
 
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
@@ -94,64 +97,120 @@ function applyPlusRoleSubject(entry, ctx, pieces, random) {
 
 // moved_piece is the target. Direction '-' means count of attackers on
 // moved_piece went down. If moved_piece's destination is already
-// uncontrolled by relevant attackers, we just commit priorRegion to origin
-// candidates that ARE controlled by some existing attacker. If the
-// destination is still controlled, this mechanism can't post-engineer.
-//
-// Future extension: when no existing attacker controls a viable origin, this
-// mechanism could place an attacker on a square that controls some origin but
-// not destination — turning a "no usable existing attacker" case into a
-// solvable one. Today the minus path is read-only.
-function applyMinusRoleTarget(entry, ctx, pieces, random) {
+// uncontrolled by relevant attackers, commit priorRegion to origin candidates
+// either (a) already controlled by an existing attacker (read-only path), or
+// (b) controllable by a new attacker we place such that it does not also
+// control destination (place-extension path).
+function applyMinusRoleTarget(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const team = entry.currentProposition.team
-  const speciesSet = entry.currentProposition.species_set
+  const team = otherProposition.team
+  const speciesSet = otherProposition.species_set
 
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   if (anyTeamPieceControls({ board, pieces, team, speciesSet, square: destination })) { return null }
 
   const movedSpecies = [...moved.species_set][0]
-  const candidates = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+  const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
-    .filter(origin => anyTeamPieceControls({ board, pieces, team, speciesSet, square: origin }))
 
-  if (candidates.length === 0) { return null }
-  return commitPriorRegion(ctx, candidates, pieces)
+  const readOnlyOrigins = allOrigins
+    .filter(origin => anyTeamPieceControls({ board, pieces, team, speciesSet, square: origin }))
+  if (readOnlyOrigins.length > 0) {
+    return commitPriorRegion(ctx, readOnlyOrigins, pieces)
+  }
+
+  const speciesPool = placeableSpecies(speciesSet)
+  const placementCandidates = []
+  for (const origin of allOrigins) {
+    for (const species of speciesPool) {
+      for (const placement of attackerCandidatesFor(origin, species, team, board)) {
+        if (placement === destination) { continue }
+        if (pieces.has(placement)) { continue }
+        placementCandidates.push({ origin, placement, species })
+      }
+    }
+  }
+
+  for (const { origin, placement, species } of shuffled(placementCandidates, random)) {
+    const placed = ensureRolePieceAt({ pieces, pos: placement, team, speciesSet: new Set([species]), ctx, random })
+    if (placed === null || placed === pieces) { continue }
+    const newBoard = buildBoardFromLayout(buildLayoutFromPieces(placed))
+    if (pieceControlsSquare({ board: newBoard, attackerPosition: placement, targetPosition: destination })) { continue }
+    if (!pieceControlsSquare({ board: newBoard, attackerPosition: placement, targetPosition: origin })) { continue }
+    const committed = commitPriorRegion(ctx, [origin], placed)
+    if (committed !== null) { return committed }
+  }
+  return null
 }
 
 // moved_piece is the subject. Direction '-' means moved_piece attacks fewer
-// targets on after than prior. Commit priorRegion to origin candidates from
-// which moved_piece at origin controls more relevant targets than from
-// destination.
-//
-// Future extension: place a target piece on a square moved_piece's origin
-// controls but its destination does not, widening the set of solvable
-// configurations. Today the minus path is read-only.
-function applyMinusRoleSubject(entry, ctx, pieces, random) {
+// targets on after than prior. Either (a) commit priorRegion to origin
+// candidates from which moved_piece-at-origin already controls more relevant
+// targets than from destination (read-only path), or (b) place a new target T
+// in (controlled-from-origin minus controlled-from-destination) to bridge the
+// gap (place-extension path).
+function applyMinusRoleSubject(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
   const movedSpecies = [...moved.species_set][0]
-  const team = entry.currentProposition.team
-  const speciesSet = entry.currentProposition.species_set
+  const team = otherProposition.team
+  const speciesSet = otherProposition.species_set
 
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const targetsFromDestination = relevantControlledTargets(board, pieces, destination, team, speciesSet)
+  const controlledFromDestination = new Set(controlledSquaresForPieceAt(destination, board))
 
-  const candidates = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+  const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
-    .filter(origin => {
-      const probe = withMovedAt(pieces, destination, origin, moved.team, movedSpecies)
-      if (probe === null) { return false }
-      const probeBoard = buildBoardFromLayout(buildLayoutFromPieces(probe))
-      const targetsFromOrigin = relevantControlledTargets(probeBoard, probe, origin, team, speciesSet)
-      return targetsFromOrigin > targetsFromDestination
-    })
 
-  if (candidates.length === 0) { return null }
-  return commitPriorRegion(ctx, candidates, pieces)
+  const readOnlyOrigins = allOrigins.filter(origin => {
+    const probe = withMovedAt(pieces, destination, origin, moved.team, movedSpecies)
+    if (probe === null) { return false }
+    const probeBoard = buildBoardFromLayout(buildLayoutFromPieces(probe))
+    const targetsFromOrigin = relevantControlledTargets(probeBoard, probe, origin, team, speciesSet)
+    return targetsFromOrigin > targetsFromDestination
+  })
+
+  if (readOnlyOrigins.length > 0) {
+    return commitPriorRegion(ctx, readOnlyOrigins, pieces)
+  }
+
+  const speciesPool = placeableSpecies(speciesSet)
+  const placementCandidates = []
+  for (const origin of allOrigins) {
+    const probe = withMovedAt(pieces, destination, origin, moved.team, movedSpecies)
+    if (probe === null) { continue }
+    const probeBoard = buildBoardFromLayout(buildLayoutFromPieces(probe))
+    const targetsFromOrigin = relevantControlledTargets(probeBoard, probe, origin, team, speciesSet)
+    // Need targetsFromOrigin + 1 (from new T) > targetsFromDestination.
+    if (targetsFromOrigin < targetsFromDestination) { continue }
+    for (const tSquare of controlledSquaresForPieceAt(origin, probeBoard)) {
+      if (tSquare === destination) { continue }
+      if (pieces.has(tSquare)) { continue }
+      if (controlledFromDestination.has(tSquare)) { continue }
+      for (const species of speciesPool) {
+        placementCandidates.push({ origin, tSquare, species })
+      }
+    }
+  }
+
+  for (const { origin, tSquare, species } of shuffled(placementCandidates, random)) {
+    const placed = ensureRolePieceAt({ pieces, pos: tSquare, team, speciesSet: new Set([species]), ctx, random })
+    if (placed === null || placed === pieces) { continue }
+    const probe = withMovedAt(placed, destination, origin, moved.team, movedSpecies)
+    if (probe === null) { continue }
+    const probeBoard = buildBoardFromLayout(buildLayoutFromPieces(probe))
+    const targetsFromOriginAfter = relevantControlledTargets(probeBoard, probe, origin, team, speciesSet)
+    const afterBoard = buildBoardFromLayout(buildLayoutFromPieces(placed))
+    const targetsFromDestinationAfter = relevantControlledTargets(afterBoard, placed, destination, team, speciesSet)
+    if (targetsFromOriginAfter <= targetsFromDestinationAfter) { continue }
+    const committed = commitPriorRegion(ctx, [origin], placed)
+    if (committed !== null) { return committed }
+  }
+  return null
 }
 
 function anyTeamPieceControls({ board, pieces, team, speciesSet, square }) {
