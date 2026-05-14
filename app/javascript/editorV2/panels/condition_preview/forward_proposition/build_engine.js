@@ -45,7 +45,6 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   pieces = satisfyRelations(ctx, pieces, random)
   if (pieces === null) { return null }
 
-
   pieces = placeKingsIfAbsent(pieces, random, ctx)
   if (pieces === null) { return null }
 
