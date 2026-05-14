@@ -3,7 +3,7 @@ import {
   adjacentNeighborPositions, originCandidatesForSpecies
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  movedPieceRoleIn, singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
+  singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
 
 export const movedPieceParticipatesAdjacent = {
@@ -12,29 +12,58 @@ export const movedPieceParticipatesAdjacent = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'adjacent') { return false }
-    return movedPieceRoleIn(entry) !== null
+    return roleFor(entry, ctx) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = movedPieceRoleIn(entry)
+    const role = roleFor(entry, ctx)
     if (role === null) { return null }
-    if (entry.direction === '+') { return applyPlus(entry, ctx, pieces, random) }
-    if (entry.direction === '-') { return applyMinus(entry, ctx, pieces, random) }
+    const otherProposition = otherSidePropositionFor(entry, role)
+    if (otherProposition === null) { return null }
+    if (entry.direction === '+') { return applyPlus(entry, otherProposition, ctx, pieces, random) }
+    if (entry.direction === '-') { return applyMinus(entry, otherProposition, ctx, pieces, random) }
     return null
   }
+}
+
+function roleFor(entry, ctx) {
+  const moved = ctx?.singulars?.moved_piece
+  if (!moved) { return null }
+  const region = entry.currentProposition?.region
+
+  if (region?.kind === 'related-to' && region.actor === 'moved_piece') {
+    return region.role
+  }
+  if (region?.kind !== 'all') { return null }
+
+  const movedSpecies = [...moved.species_set][0]
+  if (movedSpecies === null || movedSpecies === undefined) { return null }
+  if (matchesProposition(moved, movedSpecies, entry.subjectProposition)) { return 'subject' }
+  if (matchesProposition(moved, movedSpecies, entry.targetProposition)) { return 'target' }
+  return null
+}
+
+function matchesProposition(moved, movedSpecies, proposition) {
+  if (!proposition) { return false }
+  return moved.team === proposition.team && proposition.species_set.has(movedSpecies)
+}
+
+function otherSidePropositionFor(entry, role) {
+  const candidate = role === 'subject' ? entry.targetProposition : entry.subjectProposition
+  return candidate ?? entry.currentProposition ?? null
 }
 
 // Direction '+': place a piece adjacent to moved_piece's destination so the
 // adjacency relation holds on after-board. Commit priorRegion to origin
 // candidates not adjacent to the new piece — so adjacency doesn't hold on
 // prior-board.
-function applyPlus(entry, ctx, pieces, random) {
+function applyPlus(entry, otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
 
-  const team = entry.currentProposition.team
-  const speciesPool = placeableSpecies(entry.currentProposition.species_set)
+  const team = otherProposition.team
+  const speciesPool = placeableSpecies(otherProposition.species_set)
   if (speciesPool.length === 0) { return null }
 
   const adjacentSquares = shuffled(adjacentNeighborPositions(destination), random)
@@ -49,28 +78,44 @@ function applyPlus(entry, ctx, pieces, random) {
 }
 
 // Direction '-': adjacency went down. Destination must NOT be adjacent to
-// any matching piece (otherwise post-pass can't make the count drop). Commit
-// priorRegion to origin candidates that ARE adjacent to a matching piece.
-//
-// Future extension: when no existing matching piece sits adjacent to any
-// valid origin, this mechanism could place one — turning "no usable existing
-// neighbor" cases into solvable ones. Today the minus path is read-only.
-function applyMinus(entry, ctx, pieces, random) {
+// any matching piece (otherwise post-pass can't make the count drop).
+function applyMinus(entry, otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const team = entry.currentProposition.team
-  const speciesSet = entry.currentProposition.species_set
+  const team = otherProposition.team
+  const speciesSet = otherProposition.species_set
 
   if (anyAdjacentMatchingPiece({ pieces, square: destination, team, speciesSet })) { return null }
 
   const movedSpecies = [...moved.species_set][0]
-  const candidates = originCandidatesForSpecies(destination, movedSpecies, moved.team)
+  const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
-    .filter(origin => anyAdjacentMatchingPiece({ pieces, square: origin, team, speciesSet }))
 
-  if (candidates.length === 0) { return null }
-  return commitPriorRegion(ctx, candidates, pieces)
+  const readOnlyOrigins = allOrigins.filter(origin =>
+    anyAdjacentMatchingPiece({ pieces, square: origin, team, speciesSet })
+  )
+  if (readOnlyOrigins.length > 0) {
+    return commitPriorRegion(ctx, readOnlyOrigins, pieces)
+  }
+
+  const adjacentToDestination = new Set(adjacentNeighborPositions(destination))
+  const placementCandidates = []
+  for (const origin of allOrigins) {
+    for (const placement of adjacentNeighborPositions(origin)) {
+      if (placement === destination) { continue }
+      if (pieces.has(placement)) { continue }
+      if (adjacentToDestination.has(placement)) { continue }
+      placementCandidates.push({ origin, placement })
+    }
+  }
+  for (const { origin, placement } of shuffled(placementCandidates, random)) {
+    const placed = ensureRolePieceAt({ pieces, pos: placement, team, speciesSet, ctx, random })
+    if (placed === null || placed === pieces) { continue }
+    const committed = commitPriorRegion(ctx, [origin], placed)
+    if (committed !== null) { return committed }
+  }
+  return null
 }
 
 function anyAdjacentMatchingPiece({ pieces, square, team, speciesSet }) {

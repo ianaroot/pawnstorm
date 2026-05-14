@@ -22,7 +22,7 @@ function makeAdder() {
   }
 }
 
-export function pbsRelationStats(payload, { seeds, attemptsPerSeed }) {
+function pbsRelationStats(payload, { seeds, attemptsPerSeed }) {
   const combinedPlan = buildCombinedPlan([payload])
   if (combinedPlan.status !== 'supported') {
     return { verifiedCount: 0, examples: [], status: combinedPlan.status, reason: combinedPlan.reason }
@@ -129,6 +129,41 @@ describe('PBS relation diversity', () => {
     const stats = pbsRelationStats(payload, { seeds: DEFAULT_SEEDS, attemptsPerSeed: ATTEMPTS_PER_SEED })
     const histogram = deltaHistogram(stats.examples, payload)
     expect(countEmptyPriorDeltas(histogram)).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
+  })
+
+  it('adjacent aggregate_value > PBS produces 0→N deltas', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'knight',
+      operator: 'adjacent',
+      target: 'enemy', targetFilter: 'queen',
+      subjectComparisonMetric: 'aggregate_value',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const stats = pbsRelationStats(payload, { seeds: DEFAULT_SEEDS, attemptsPerSeed: ATTEMPTS_PER_SEED })
+    const histogram = deltaHistogram(stats.examples, payload)
+    expect(countEmptyPriorDeltas(histogram)).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
+  })
+
+  it('adjacent count < PBS produces N→0 deltas with both-allied sides', () => {
+    const payload = {
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'bishop',
+      operator: 'adjacent',
+      target: 'allied', targetFilter: 'queen',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'less_than',
+      subjectComparisonSource: 'prior_board_state'
+    }
+    const stats = pbsRelationStats(payload, { seeds: DEFAULT_SEEDS, attemptsPerSeed: ATTEMPTS_PER_SEED })
+    const histogram = deltaHistogram(stats.examples, payload)
+    let nToZero = 0
+    for (const [key, count] of histogram) {
+      const [prior, after] = key.split('->').map(Number)
+      if (after === 0 && prior >= 1) { nToZero += count }
+    }
+    expect(nToZero).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
   })
 
   it('shield aggregate_value = PBS produces 0=0 examples', () => {
