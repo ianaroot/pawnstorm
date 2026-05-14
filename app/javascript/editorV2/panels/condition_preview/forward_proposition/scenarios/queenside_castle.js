@@ -10,7 +10,7 @@ function squareAt(team, file) {
 
 export const queensideCastleScenario = {
   name: 'queenside_castle',
-  attemptBudget: 20,
+  attemptWeight: 20,
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam

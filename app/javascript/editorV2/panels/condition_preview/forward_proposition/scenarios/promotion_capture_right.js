@@ -17,7 +17,7 @@ function lastRankSquaresExcludingFile(team, excludeFile) {
 
 export const promotionCaptureRightScenario = {
   name: 'promotion_capture_right',
-  attemptBudget: 5,
+  attemptWeight: 5,
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam

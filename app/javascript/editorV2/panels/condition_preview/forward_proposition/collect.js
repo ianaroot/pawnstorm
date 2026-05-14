@@ -37,9 +37,22 @@ export function collectForwardPropositionExamples({
   }
 }
 
-function buildScenarioBudgets(eligibleScenarios, totalAttempts) {
-  const perScenario = eligibleScenarios.map(scenario => ({ scenario, budget: scenario.attemptBudget ?? 0 }))
-  const usedByScenarios = perScenario.reduce((sum, sb) => sum + sb.budget, 0)
-  const standardBudget = Math.max(0, totalAttempts - usedByScenarios)
+const SPECIAL_POOL_FRACTION = 0.12
+
+export function buildScenarioBudgets(eligibleScenarios, totalAttempts) {
+  const specialPool = Math.min(Math.ceil(SPECIAL_POOL_FRACTION * totalAttempts), totalAttempts)
+  const standardBudget = Math.max(0, totalAttempts - specialPool)
+  const eligibleWeightSum = eligibleScenarios
+    .reduce((sum, s) => sum + (s.attemptWeight ?? 0), 0)
+
+  if (eligibleWeightSum === 0) {
+    return [{ scenario: standardScenario, budget: totalAttempts }]
+  }
+
+  const perScenario = eligibleScenarios.map(scenario => ({
+    scenario,
+    budget: Math.ceil(specialPool * ((scenario.attemptWeight ?? 0) / eligibleWeightSum))
+  }))
+
   return [...perScenario, { scenario: standardScenario, budget: standardBudget }]
 }

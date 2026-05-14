@@ -11,7 +11,7 @@ function lastRankSquares(team) {
 
 export const promotionPushScenario = {
   name: 'promotion_push',
-  attemptBudget: 10,
+  attemptWeight: 10,
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam

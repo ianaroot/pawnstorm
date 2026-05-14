@@ -27,7 +27,7 @@ function rankSquares(rankIndex) {
 
 export const enPassantLeftScenario = {
   name: 'en_passant_left',
-  attemptBudget: 10,
+  attemptWeight: 10,
 
   buildCtxDelta(combinedPlan) {
     const team = combinedPlan.movingTeam
