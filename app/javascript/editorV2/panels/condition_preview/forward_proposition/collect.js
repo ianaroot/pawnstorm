@@ -2,6 +2,7 @@ import { Candidate } from '../shared/candidate'
 import { CandidateVerifier } from '../shared/candidate_verifier'
 import { ExampleFactory } from '../shared/example_factory'
 import { buildAttempt } from './build_engine'
+import { clearPlanCache } from './relations/attack_or_defend'
 import { eligibleScenariosFor } from './scenarios/eligibility'
 import { SCENARIO_REGISTRY } from './scenarios/registry'
 import { standardScenario } from './scenarios/standard'
@@ -13,6 +14,7 @@ export function collectForwardPropositionExamples({
   attempts = DEFAULT_ATTEMPTS, deadline = Infinity
 }) {
   if (combinedPlan.plans.length === 0) { return }
+  clearPlanCache()
   const verifier = new CandidateVerifier({ combinedPlan })
   const factory = new ExampleFactory({ combinedPlan })
 

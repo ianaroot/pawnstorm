@@ -1,3 +1,6 @@
+// Empty input returns null (not 0) — distinguishes "no group exists" from
+// "group exists with zero aggregate" for vacuous-truth checks. PBS contexts
+// coerce null → 0 at the comparison boundary.
 export function aggregateOrNull(items, fn) {
   if (items.length === 0) return null
   return items.reduce((sum, item) => sum + fn(item), 0)

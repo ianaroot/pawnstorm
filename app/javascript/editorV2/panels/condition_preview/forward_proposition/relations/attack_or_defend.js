@@ -17,6 +17,10 @@ const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3
 const planCache = new Map()
 
+export function clearPlanCache() {
+  planCache.clear()
+}
+
 export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces

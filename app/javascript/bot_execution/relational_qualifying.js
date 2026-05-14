@@ -50,7 +50,7 @@ function buildGroups({ pairs, board, groupBySide, valueSide }) {
   return Array.from(groupMap.values())
 }
 
-export function findCombinatorialQualifyingGroups({
+export function findCombinatorialQualifyingKeys({
   pairs, board, groupBySide, valueSide,
   valueComparator, valueReferenceTotal,
   countComparator, countReferenceTotal
@@ -70,5 +70,5 @@ export function findCombinatorialQualifyingGroups({
 }
 
 export function combinatorialQualifyingExists(args) {
-  return findCombinatorialQualifyingGroups(args) !== null
+  return findCombinatorialQualifyingKeys(args) !== null
 }
