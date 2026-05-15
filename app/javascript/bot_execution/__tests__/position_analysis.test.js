@@ -116,3 +116,125 @@ describe('position evaluation for captured-type actors', () => {
     ).toBe(true)
   })
 })
+
+describe('position evaluation: mobility operator', () => {
+  function evaluate(conditionNode, board, moveObject) {
+    return new ConditionEvaluatorV2().evaluate(conditionNode, { board, moveObject })
+  }
+
+  it('aggregates mobility across allied positions on the matched rank', () => {
+    const board = buildBoard({
+      pieces: { a4: 'wR', h1: 'wK', h8: 'bK', e2: 'wP' }
+    })
+    const moveObject = getMove('e2', 'e3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'allied', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
+          operator: 'mobility', comparator: 'greater_than', targetTotal: 0
+        },
+        board, moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('is false when a real non-zero allied mobility does not satisfy equal_to 0', () => {
+    const board = buildBoard({
+      pieces: { a4: 'wR', h1: 'wK', h8: 'bK', d2: 'wP' }
+    })
+    const moveObject = getMove('d2', 'd3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'allied', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
+          operator: 'mobility', comparator: 'equal_to', targetTotal: 0
+        },
+        board, moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('is false when no allied position matches the rank (equal_to 0 vacuous-truth)', () => {
+    const board = buildBoard({
+      pieces: { a1: 'wR', h1: 'wK', h8: 'bK', b2: 'wP' }
+    })
+    const moveObject = getMove('b2', 'b3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'allied', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5,
+          operator: 'mobility', comparator: 'equal_to', targetTotal: 0
+        },
+        board, moveObject
+      )
+    ).toBe(false)
+  })
+
+  it('aggregates mobility across enemy positions on the matched rank', () => {
+    const board = buildBoard({
+      pieces: { a4: 'bR', h1: 'wK', h8: 'bK', e2: 'wP' }
+    })
+    const moveObject = getMove('e2', 'e3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'enemy', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
+          operator: 'mobility', comparator: 'greater_than', targetTotal: 0
+        },
+        board, moveObject
+      )
+    ).toBe(true)
+  })
+
+  it('is false when no enemy position matches the rank (vacuous-truth)', () => {
+    const board = buildBoard({
+      pieces: { a1: 'wR', h1: 'wK', h8: 'bK', c2: 'wP' }
+    })
+    const moveObject = getMove('c2', 'c3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'enemy', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 6,
+          operator: 'mobility', comparator: 'equal_to', targetTotal: 0
+        },
+        board, moveObject
+      )
+    ).toBe(false)
+  })
+
+  // Pre-ab35a09, an empty positions list reduced to 0, and `less_than 100` would
+  // have been true. Post-fix, empty → null → comparator returns false.
+  it('does not coerce empty-positions mobility to zero (regression guard for pre-ab35a09 reduce-from-zero)', () => {
+    const board = buildBoard({
+      pieces: { a1: 'wR', h1: 'wK', h8: 'bK', f2: 'wP' }
+    })
+    const moveObject = getMove('f2', 'f3', board)
+
+    expect(
+      evaluate(
+        {
+          version: 2, kind: 'position',
+          subject: 'allied', subjectFilter: 'any',
+          positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5,
+          operator: 'mobility', comparator: 'less_than', targetTotal: 100
+        },
+        board, moveObject
+      )
+    ).toBe(false)
+  })
+})
