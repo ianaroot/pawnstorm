@@ -27,6 +27,11 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   if (!isSatisfiable(ctx)) { return null }
 
   commitSingularsSpecies(ctx, random)
+  // materializeRegion's permissive guard returns empty for 'related-to' regions with uncommitted
+  // anchors. Two consumers depend on this: respectsAllCaps (otherwise silently bypasses caps),
+  // applyRelationsToAnchors (otherwise fails to narrow regions). Don't add placement before
+  // commitSingularsPosition (today only earlyPlaceConstraintTargets), don't reorder ACTOR_KEYS
+  // so dependents commit before anchors.
   const earlyPieces = earlyPlaceConstraintTargets(ctx, random)
   commitSingularsPosition(ctx, random, earlyPieces)
 
