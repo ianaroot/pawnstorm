@@ -1,5 +1,6 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview/orchestrator'
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+import { exampleId } from 'editorV2/utils/example_id'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 
@@ -12,10 +13,6 @@ const HALF_BEAT    = 400
 const PIECE_GLYPHS = {
   WK: '♔', WQ: '♕', WR: '♖', WB: '♗', WN: '♘', WP: '♙',
   BK: '♚', BQ: '♛', BR: '♜', BB: '♝', BN: '♞', BP: '♟'
-}
-
-function exampleId(example) {
-  return example.id ?? `${example.priorBoard?.layOut?.join('') ?? ''}|${example.moveObject?.startPosition ?? ''}-${example.moveObject?.endPosition ?? ''}`
 }
 
 // ── DOM helpers ──────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import generateConditionExamples from 'editorV2/panels/condition_preview/orchest
 import { pipelineStats } from 'editorV2/panels/condition_preview/shared/pipeline_stats'
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/condition_chain_selection'
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+import { exampleId } from 'editorV2/utils/example_id'
 
 const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
 const CLIPBOARD_STORAGE_VERSION = 1
@@ -21,10 +22,6 @@ function mergeExamples(previous, additions) {
     merged.push(example)
   }
   return merged
-}
-
-function exampleId(example) {
-  return example.id ?? `${example.priorBoard?.layOut?.join('') ?? ''}|${example.moveObject?.startPosition ?? ''}-${example.moveObject?.endPosition ?? ''}`
 }
 
 class EditorActions {
