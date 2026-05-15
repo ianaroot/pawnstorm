@@ -226,6 +226,25 @@ describe('movedPieceObstructsInAttackOrDefend — narrows subject species per ra
       expect(isOrthogonalTo(pos, D4)).toBe(true)
     }
   })
+
+  it('direction "+": with bishop-only subject, placed attacker is on a diagonal from placed target', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedPieceSingular(Board.QUEEN, new Set([D4])) }
+    })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+
+    const result = movedPieceObstructsInAttackOrDefend.apply(
+      entry({ direction: '+', subjectSpecies: new Set([Board.BISHOP]) }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).not.toBeNull()
+    const bishopPositions = positionsOfPiece(result, Board.BLACK, Board.BISHOP)
+    expect(bishopPositions.length).toBe(1)
+    const newPositions = [...result.keys()].filter(p => p !== D4 && p !== bishopPositions[0])
+    expect(newPositions.length).toBe(1)
+    expect(isDiagonalTo(bishopPositions[0], newPositions[0])).toBe(true)
+  })
 })
 
 function positionsOfPiece(pieces, team, species) {

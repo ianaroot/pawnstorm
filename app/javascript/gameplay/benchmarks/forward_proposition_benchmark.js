@@ -139,14 +139,15 @@ function benchmarkPayload({ name, payload }, attempts) {
     attempts
   })
   const totalMs = performance.now() - started
+  const snapshot = profileCollector.snapshot()
   return {
     name,
     attempts,
     verified: produced["forward-proposition"],
     total_ms: Number(totalMs.toFixed(2)),
     avg_ms_per_attempt: Number((totalMs / attempts).toFixed(4)),
-    timings: relevantTimings(profileCollector.snapshot()),
-    counters: relevantCounters(profileCollector.snapshot())
+    timings: relevantTimings(snapshot),
+    counters: relevantCounters(snapshot)
   }
 }
 
