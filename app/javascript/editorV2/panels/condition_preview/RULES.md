@@ -81,3 +81,15 @@ listed — changing those is a behavior change, not a tuning operation.
   representative PBS payload; baselines commented inline in
   `forward_proposition_benchmark.js`. Run before/after changes to
   mechanisms or phase ordering.
+
+  To extend the bench with a new diagnostic: call
+  `profileCollector.increment('forward_proposition.<area>.<event>')` at
+  the site you care about. Any counter whose label starts with a
+  `PROFILE_LABEL_PREFIXES` entry in `forward_proposition_benchmark.js`
+  is picked up by `relevantCounters` and printed per payload. Use
+  `profileCollector.measure(label, fn)` for timing instead. Both are
+  no-ops unless `MATCH_PROFILE=1` (set automatically by the bench).
+
+  Run with `npm run bench:forward-proposition -- 1000` (trailing arg
+  is attempts per payload). The output JSON groups timings and counters
+  under each payload.
