@@ -54,6 +54,20 @@ describe('isSatisfiable', () => {
     expect(isSatisfiable(ctx)).toBe(false)
   })
 
+  it('returns false when a proposition has an empty species_set', () => {
+    const ctx = defaultCtx({
+      propositions: [{
+        team: Board.WHITE, frame: 'current',
+        species_set: new Set(),
+        region: { kind: 'all' },
+        count_range: { ...PERMISSIVE },
+        aggregate_value_range: { ...PERMISSIVE },
+        aggregate_mobility_range: { ...PERMISSIVE }
+      }]
+    })
+    expect(isSatisfiable(ctx)).toBe(false)
+  })
+
   it('returns false when a proposition has aggregate_value_range with min > max', () => {
     const ctx = defaultCtx({
       propositions: [{

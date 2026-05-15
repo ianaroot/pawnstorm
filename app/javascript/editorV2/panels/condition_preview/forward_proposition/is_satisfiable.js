@@ -1,5 +1,7 @@
 import { ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
 
+const ALL_POSITIONS_SET = new Set(ALL_POSITIONS)
+
 export function isSatisfiable(ctx) {
   for (const key of Object.keys(ctx.singulars ?? {})) {
     const singular = ctx.singulars[key]
@@ -8,6 +10,7 @@ export function isSatisfiable(ctx) {
     if (regionIsEmpty(singular.priorRegion)) { return false }
   }
   for (const proposition of ctx.propositions ?? []) {
+    if (proposition.species_set.size === 0) { return false }
     if (proposition.count_range.min > proposition.count_range.max) { return false }
     if (proposition.aggregate_value_range.min > proposition.aggregate_value_range.max) { return false }
     if (proposition.aggregate_mobility_range.min > proposition.aggregate_mobility_range.max) { return false }
@@ -50,7 +53,7 @@ function countContradicts(demander, capper, demanderSquares, capperSquares) {
 }
 
 function squaresOf(region) {
-  if (region.kind === 'all') { return new Set(ALL_POSITIONS) }
+  if (region.kind === 'all') { return ALL_POSITIONS_SET }
   if (region.kind === 'set') { return region.squares }
   throw new Error(`isSatisfiable.squaresOf: unsupported region kind '${region.kind}' (expected 'all' or 'set'; 'related-to' should be filtered upstream)`)
 }
