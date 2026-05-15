@@ -29,4 +29,16 @@ export class CandidateVerifier {
   isVerified(candidate) {
     return this.isLegal(candidate) && this.passesEvaluation(candidate)
   }
+
+  rejectionCause(candidate) {
+    if (candidate.moveObject.illegal) { return 'illegal_move' }
+    if (!legalPriorTurnState(candidate.priorBoard, candidate.moveObject)) { return 'illegal_prior_turn' }
+    const input = { board: candidate.priorBoard, moveObject: candidate.moveObject }
+    for (const payload of this.combinedPlan.evaluationPayloads) {
+      if (!this.evaluator.evaluate(payload, input)) {
+        return `evaluation_${payload.kind}`
+      }
+    }
+    return null
+  }
 }

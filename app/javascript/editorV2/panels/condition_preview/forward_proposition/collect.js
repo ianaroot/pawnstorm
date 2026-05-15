@@ -32,8 +32,10 @@ export function collectForwardPropositionExamples({
         continue
       }
       const candidate = new Candidate({ priorBoard: result.priorBoard, moveObject: result.moveObject })
-      if (!verifier.isVerified(candidate)) {
+      const cause = verifier.rejectionCause(candidate)
+      if (cause !== null) {
         profileCollector.increment('forward_proposition.attempt.verifier_rejected')
+        profileCollector.increment(`forward_proposition.attempt.verifier_rejected.${cause}`)
         continue
       }
       profileCollector.increment('forward_proposition.attempt.verifier_passed')
