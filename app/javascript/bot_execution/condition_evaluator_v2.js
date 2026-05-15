@@ -62,7 +62,10 @@ class ConditionEvaluatorV2 {
       return profileCollector.measure('condition.v2.relational', () => {
         const operator = conditionNode.operator
         if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
-        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) { return false }
+        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) {
+          profileCollector.increment('condition.v2.relational.failed.singular_actors')
+          return false
+        }
         const result = analysis.relationalResult({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
@@ -72,7 +75,9 @@ class ConditionEvaluatorV2 {
         const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
         const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
         if (!subjectComparisonPresent && !targetComparisonPresent) {
-          return result.pairs.length > 0
+          const passed = result.pairs.length > 0
+          if (!passed) { profileCollector.increment('condition.v2.relational.failed.no_pairs_no_comparison') }
+          return passed
         }
         const subjectMetric = conditionNode.subjectComparisonMetric
         const targetMetric = conditionNode.targetComparisonMetric
@@ -86,7 +91,7 @@ class ConditionEvaluatorV2 {
           const targetReference = targetComparisonPresent
             ? targetCoerce(this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis }))
             : null
-          return analysis.evaluateRelationalValueMetrics({
+          const passed = analysis.evaluateRelationalValueMetrics({
             pairs: result.pairs,
             subjectMetric: subjectComparisonPresent ? subjectMetric : null,
             subjectComparator: conditionNode.subjectComparator,
@@ -97,10 +102,30 @@ class ConditionEvaluatorV2 {
             targetReference,
             targetCoerce
           })
+          if (!passed) {
+            const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+            profileCollector.increment(`condition.v2.relational.failed.value_metrics.${subCause}`)
+            if (subCause === 'comparison') {
+              const priorPairs = analysis.relationalResult({
+                subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
+                subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+                target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
+                targetFilterMode: conditionNode.targetFilterMode || null,
+                boardScope: 'prior'
+              }).pairs
+              profileCollector.increment(`condition.v2.relational.failed.value_metrics.comparison.prior_pairs_${priorPairs.length === 0 ? 'zero' : 'nonzero'}`)
+            }
+          }
+          return passed
         }
         const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
         const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
-        return subjectPasses && targetPasses
+        const passed = subjectPasses && targetPasses
+        if (!passed) {
+          const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+          profileCollector.increment(`condition.v2.relational.failed.non_value_metrics.${subCause}`)
+        }
+        return passed
       })
     }
 
