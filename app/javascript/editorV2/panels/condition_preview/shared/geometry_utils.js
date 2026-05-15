@@ -16,7 +16,7 @@ function pawnControlledSquares(position, team) {
   return result.filter(p => Board._inBounds(p))
 }
 
-function sliderControlledSquaresFromBoard(position, steps, board) {
+export function raySquaresFrom(position, steps, board) {
   const squares = []
   for (const step of steps) {
     let current = nextPositionOnRay(position, step)
@@ -29,10 +29,48 @@ function sliderControlledSquaresFromBoard(position, steps, board) {
   return squares
 }
 
-// Squares the piece at `position` on `board` controls (attacks/defends).
-// Used when a singular actor is the SUBJECT of a relational position
-// constraint — the dependent group-side piece must be placed at a square
-// the singular reaches.
+// Use raySquaresFrom when you want to stop at the first occupied square.
+export function walkRay(position, step) {
+  const positions = []
+  let current = nextPositionOnRay(position, step)
+  while (current !== null) {
+    positions.push(current)
+    current = nextPositionOnRay(current, step)
+  }
+  return positions
+}
+
+// Verifies that a piece of `species` could legally traverse the path from
+// `fromSquare` to `toSquare` on a board described by `pieces`
+export function pathClearOnPieces(pieces, fromSquare, toSquare, species) {
+  if (species === Board.NIGHT || species === Board.KING || species === Board.PAWN) {
+    return true
+  }
+  const step = sliderStepBetween(fromSquare, toSquare)
+  if (step === null) { return false }
+  let current = nextPositionOnRay(fromSquare, step)
+  while (current !== null && current !== toSquare) {
+    if (pieces.has(current)) { return false }
+    current = nextPositionOnRay(current, step)
+  }
+  return current === toSquare
+}
+
+// Computes the slider-step direction (rook or bishop offset) between two
+// squares, or null if they aren't on a common slider ray.
+function sliderStepBetween(fromSquare, toSquare) {
+  const fileDiff = (toSquare % 8) - (fromSquare % 8)
+  const rankDiff = Math.floor(toSquare / 8) - Math.floor(fromSquare / 8)
+  if (fileDiff === 0 && rankDiff === 0) { return null }
+  if (fileDiff === 0)            { return rankDiff > 0 ?  8 : -8 }
+  if (rankDiff === 0)            { return fileDiff > 0 ?  1 : -1 }
+  if (Math.abs(fileDiff) === Math.abs(rankDiff)) {
+    return (rankDiff > 0 ? 8 : -8) + (fileDiff > 0 ? 1 : -1)
+  }
+  return null
+}
+
+// Squares the piece at `position` on `board` controls (attacks/defends)
 export function controlledSquaresForPieceAt(position, board) {
   const species = board.pieceTypeAt(position)
   if (!species || species === Board.EMPTY_SQUARE) { return [] }
@@ -42,9 +80,9 @@ export function controlledSquaresForPieceAt(position, board) {
     case Board.PAWN:   return pawnControlledSquares(position, team)
     case Board.NIGHT:  return knightControlledSquares(position)
     case Board.KING:   return kingControlledSquares(position)
-    case Board.BISHOP: return sliderControlledSquaresFromBoard(position, BISHOP_RAY_STEPS, board)
-    case Board.ROOK:   return sliderControlledSquaresFromBoard(position, ROOK_RAY_STEPS, board)
-    case Board.QUEEN:  return sliderControlledSquaresFromBoard(position, QUEEN_RAY_STEPS, board)
+    case Board.BISHOP: return raySquaresFrom(position, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return raySquaresFrom(position, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return raySquaresFrom(position, QUEEN_RAY_STEPS, board)
     default:           return []
   }
 }
@@ -59,11 +97,6 @@ export function positionsForSliderOrigins(endPosition, steps) {
   return origins
 }
 
-// Pawn origin candidates depend on team: white pawns came from south of
-// endPosition (rank - 1), black pawns from north (rank + 1). Diagonal capture
-// origins are included so en-passant and regular pawn captures can be
-// reconstructed by Rules.getMoveObject. File-wrap protected so a-file/h-file
-// don't pull in cross-file diagonals.
 export function originCandidatesForSpecies(endPosition, species, team = Board.WHITE) {
   switch (species) {
     case Board.PAWN: {
@@ -75,7 +108,11 @@ export function originCandidatesForSpecies(endPosition, species, team = Board.WH
       ]
       if (file > 0) { candidates.push(endPosition + 8 * dir - 1) }  // diagonal capture from file - 1
       if (file < 7) { candidates.push(endPosition + 8 * dir + 1) }  // diagonal capture from file + 1
-      return candidates.filter(position => Board._inBounds(position))
+      return candidates.filter(position => {
+        if (!Board._inBounds(position)) { return false }
+        const rank = Math.floor(position / 8)
+        return rank !== 0 && rank !== 7
+      })
     }
     case Board.NIGHT:
       return knightControlledSquares(endPosition)
@@ -89,6 +126,22 @@ export function originCandidatesForSpecies(endPosition, species, team = Board.WH
       return kingControlledSquares(endPosition)
     default:
       return []
+  }
+}
+
+// Squares from which a hypothetical (team, species) piece could attack
+// targetPosition on `board`.
+// For non-pawn species the geometry is symmetric with controlledSquares; for
+// pawn it differs
+export function attackerCandidatesFor(targetPosition, species, team, board) {
+  switch (species) {
+    case Board.PAWN:   return pawnControlledSquares(targetPosition, Board.opposingTeam(team))
+    case Board.NIGHT:  return knightControlledSquares(targetPosition)
+    case Board.KING:   return kingControlledSquares(targetPosition)
+    case Board.BISHOP: return raySquaresFrom(targetPosition, BISHOP_RAY_STEPS, board)
+    case Board.ROOK:   return raySquaresFrom(targetPosition, ROOK_RAY_STEPS, board)
+    case Board.QUEEN:  return raySquaresFrom(targetPosition, QUEEN_RAY_STEPS, board)
+    default:           return []
   }
 }
 

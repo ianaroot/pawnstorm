@@ -303,10 +303,12 @@ class Board {
   }
 
   _oneSpaceDownIsEmpty(position){
+    if (position < 8) { return false }
     return this.positionEmpty(position - 8)
   }
 
   _twoSpacesDownIsEmpty(position){
+    if (position < 16) { return false }
     return this.positionEmpty(position - 16)
   }
 
@@ -315,10 +317,12 @@ class Board {
   }
 
   _twoSpacesUpIsEmpty(position){
+    if (position > 47) { return false }
     return this.positionEmpty( position + 16)
   }
 
   _oneSpaceUpIsEmpty(position){
+    if (position > 55) { return false }
     return this.positionEmpty( position + 8)
   }
 

@@ -8,6 +8,7 @@ import { shuffled } from './shared/board_utils'
 import { selectDiverseExamples, uniqueExamples } from './shared/diversity_selection'
 import { collectForwardResolverExamples } from './forward_resolver/collect'
 import { collectForwardPatternExamples } from './forward_pattern/collect'
+import { collectForwardPropositionExamples } from './forward_proposition/collect'
 import { collectReverseRelationalExamples } from './reverse_relational/collect'
 import { collectReverseUnaryExamples } from './reverse_unary/collect'
 import { collectReversePositionExamples } from './reverse_position/collect'
@@ -15,6 +16,7 @@ import { collectCastleExamples } from './special_moves/castle'
 import { collectPromotionExamples } from './special_moves/promotion'
 import { collectEnPassantExamples } from './special_moves/en_passant'
 
+const SOFT_TIMEOUT_MS = 5000
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 120
 const FORWARD_POOL_FRACTION = 0.5
@@ -22,6 +24,7 @@ const MAX_SEEDS_PER_VARIANT = 600
 const SPECIAL_MOVE_MS_CAP = 100
 const FORWARD_RESOLVER_ATTEMPTS = 200
 const FORWARD_PATTERN_ATTEMPTS = 200
+const FORWARD_PROPOSITION_ATTEMPTS = 1200
 const ENRICHMENT_PROBABILITY = 0.5
 const GUARANTEED_SPECIAL_MOVE_EXAMPLES = 2
 
@@ -37,6 +40,7 @@ function computeBudgets(combinedPlan, totalMs) {
     forwardCap: Math.floor(MAX_CANDIDATE_POOL * FORWARD_POOL_FRACTION),
     forwardResolverAttempts: FORWARD_RESOLVER_ATTEMPTS,
     forwardPatternAttempts: FORWARD_PATTERN_ATTEMPTS,
+    forwardPropositionAttempts: FORWARD_PROPOSITION_ATTEMPTS,
     perPlanMs,
     specialMoveMs,
     maxStandardSize: MAX_CANDIDATE_POOL,
@@ -149,6 +153,7 @@ const SPECIAL_MOVE_PIPELINES = Object.freeze([
 
 function collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline, random, produced }) {
   for (const { kind, key, collect } of SPECIAL_MOVE_PIPELINES) {
+    if (!ENABLED_PIPELINES.has(key)) { continue }
     if (!chainVariant.moveKinds.includes(kind)) { continue }
     if (Date.now() > deadline) { break }
     const examples = collect({ combinedPlan: chainVariant, random, maxExamples: MAX_CANDIDATE_POOL })
@@ -158,10 +163,16 @@ function collectSpecialMoveExamples({ chainVariant, addUnique, pools, deadline, 
 }
 
 const PIPELINE_KEYS = Object.freeze([
-  'forward-resolver', 'forward-pattern',
+  'forward-resolver', 'forward-pattern', 'forward-proposition',
   'reverse-relational', 'reverse-unary', 'reverse-position',
   'castle', 'promotion', 'en-passant'
 ])
+
+// const ENABLED_PIPELINES = new Set(PIPELINE_KEYS)
+const ENABLED_PIPELINES = new Set(['forward-proposition'])
+// Diagnostic toggle — comment the line above and uncomment the line below to
+// see forward-proposition coverage in isolation:
+// const ENABLED_PIPELINES = new Set(['forward-proposition'])
 
 function emptyPipelineCounter() {
   const counter = {}
@@ -169,7 +180,7 @@ function emptyPipelineCounter() {
   return counter
 }
 
-function collectAllExamples({ combinedPlan, random, totalMs }) {
+function collectAllExamples({ combinedPlan, random, totalMs, deadline = Infinity }) {
   const seen = new Set()
   const addUnique = makeAdder(seen)
   const standardExamples = []
@@ -187,20 +198,31 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   // ── Forward generation ──────────────────────────────────────────────────
   // Resolver runs first, then pattern picks up under the shared forwardCap.
   if (plans.length > 0) {
-    collectForwardResolverExamples({
-      combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
-      addUnique, standardExamples, produced
-    })
-    collectForwardPatternExamples({
-      combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
-      addUnique, standardExamples, produced
-    })
+    if (ENABLED_PIPELINES.has('forward-resolver')) {
+      collectForwardResolverExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
+        addUnique, standardExamples, produced
+      })
+    }
+    if (ENABLED_PIPELINES.has('forward-pattern')) {
+      collectForwardPatternExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
+        addUnique, standardExamples, produced
+      })
+    }
+    if (ENABLED_PIPELINES.has('forward-proposition')) {
+      collectForwardPropositionExamples({
+        combinedPlan, random,
+        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
+        addUnique, standardExamples, produced, deadline
+      })
+    }
   }
 
   // ── Reverse-relational ──────────────────────────────────────────────────
-  if (relationalPlans.length > 0) {
+  if (relationalPlans.length > 0 && ENABLED_PIPELINES.has('reverse-relational')) {
     const relDeadline = Date.now() + budgets.perPlanMs * relationalPlans.length
     const variants = effectiveVariants(combinedPlan)
     const tuples = []
@@ -217,7 +239,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   }
 
   // ── Reverse-unary ───────────────────────────────────────────────────────
-  if (unaryPlans.length > 0) {
+  if (unaryPlans.length > 0 && ENABLED_PIPELINES.has('reverse-unary')) {
     collectReverseUnaryExamples({
       combinedPlan, unaryPlans, perPlanMs: budgets.perPlanMs, random,
       maxStandardSize: budgets.maxStandardSize,
@@ -226,7 +248,7 @@ function collectAllExamples({ combinedPlan, random, totalMs }) {
   }
 
   // ── Reverse-position ────────────────────────────────────────────────────
-  if (positionPlans.length > 0) {
+  if (positionPlans.length > 0 && ENABLED_PIPELINES.has('reverse-position')) {
     collectReversePositionExamples({
       combinedPlan, positionPlans, perPlanMs: budgets.perPlanMs, random,
       maxStandardSize: budgets.maxStandardSize,
@@ -275,7 +297,9 @@ export function generateConditionExamples(payloads, options = {}) {
   const maxExamples = options.maxExamples ?? MAX_DEFAULT_EXAMPLES
   const random = options.random ?? Math.random
   const totalMs = options.maxMs ?? 500
+  const softTimeoutMs = options.softTimeoutMs ?? SOFT_TIMEOUT_MS
   const startTime = Date.now()
+  const deadline = startTime + softTimeoutMs
 
   const payloadArray = Array.isArray(payloads) ? payloads : [payloads]
   const combinedPlan = buildCombinedPlan(payloadArray, options)
@@ -284,11 +308,15 @@ export function generateConditionExamples(payloads, options = {}) {
     return { status: combinedPlan.status, reason: combinedPlan.reason, examples: [], payloadCount: payloadArray.length }
   }
   const { standardExamples, castleExamples, promotionExamples, enPassantExamples, produced } = collectAllExamples({
-    combinedPlan, random, totalMs
+    combinedPlan, random, totalMs, deadline
   })
   const total = standardExamples.length + castleExamples.length + promotionExamples.length + enPassantExamples.length
+  const timedOut = Date.now() > deadline
   if (total === 0) {
     emitStats(options, payloadArray, produced, [], startTime)
+    if (timedOut) {
+      return { status: 'slow', reason: `Generation paused after ${softTimeoutMs}ms — no examples found yet.`, examples: [], payloadCount: payloadArray.length }
+    }
     return { status: 'no_examples', reason: NO_EXAMPLES_REASON, examples: [], payloadCount: payloadArray.length }
   }
   const finalExamples = mergeMoveKindExamples({
@@ -296,9 +324,10 @@ export function generateConditionExamples(payloads, options = {}) {
     combinedPlan, maxExamples, random
   })
   emitStats(options, payloadArray, produced, finalExamples, startTime)
+  const status = timedOut && finalExamples.length < maxExamples ? 'slow' : 'ready'
   return {
-    status: 'ready',
-    reason: null,
+    status,
+    reason: status === 'slow' ? `Generation paused after ${softTimeoutMs}ms — ${finalExamples.length} examples found so far.` : null,
     payloadCount: payloadArray.length,
     examples: shuffled(finalExamples, random)
   }

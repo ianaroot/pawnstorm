@@ -15,8 +15,6 @@ import {
 const ALL_MOVE_KINDS = Object.freeze([MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT])
 
 // ===== expandRelationalPlanSources =====
-// Moved here from generation_plan.js. Fans a relational plan with variable-value
-// comparison sources into one concrete sub-plan per possible piece value.
 
 const NON_KING_VALUE_SPECIES = Object.freeze(new Map([
   [0, []],
@@ -145,14 +143,11 @@ function positionRequirementsFromPlans(plans) {
     }))
 }
 
-// Chain-level contradiction detectors. Each detector receives the combined plan
-// context and returns a user-facing reason string when it spots an impossibility,
-// or null when its check is satisfied. Adding a new detector means appending to
+// Chain-level contradiction detectors.
+// Adding a new detector means appending to
 // CONTRADICTION_DETECTORS — no other code changes.
-//
-// Discipline: detectors describe WHY the chain is impossible. Generic
-// "couldn't generate" failures stay in the existing fallback path; only
-// definitively impossible chains get specific messages here.
+// Discipline: detectors describe WHY the chain is impossible.
+// only definitively impossible chains get specific messages here.
 
 function detectIncompatibleMoveKinds({ moveKinds }) {
   if (moveKinds.length === 0) {
@@ -280,9 +275,6 @@ function detectSingularActorWithAggregateValue({ plans }) {
   return null
 }
 
-// Mirrors detectSingularActorWithImpossibleCount for unary plans. Comparators
-// that require count > 1 on a singular actor are unsatisfiable since each
-// singular actor is at most one piece.
 function detectSingularActorWithImpossibleUnaryCount({ plans }) {
   for (const plan of plans) {
     if (plan.kind !== 'unary') { continue }
@@ -301,8 +293,6 @@ function detectSingularActorWithImpossibleUnaryCount({ plans }) {
   return null
 }
 
-// moved_piece always exists by definition (a move occurred). A unary
-// constraint demanding moved_piece count = 0 is a contradiction.
 function detectMovedPieceWithCountZero({ plans }) {
   for (const plan of plans) {
     if (plan.kind !== 'unary') { continue }

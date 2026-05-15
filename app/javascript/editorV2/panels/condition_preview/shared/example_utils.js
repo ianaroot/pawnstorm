@@ -3,8 +3,9 @@ import Rules from 'gameplay/rules'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   square, clonePiecesMap, squareIsOccupied, buildLayoutFromPieces, buildBoardFromLayout,
-  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS
+  pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS, HOME_RANK
 } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'
@@ -158,6 +159,34 @@ export function collectLegalReverseMoves({
   }
 
   return moves
+}
+
+// Returns null on illegal reverse placement; callers handle per their own semantics.
+export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece, capturedPiecePosition }) {
+  const moved = singulars.moved_piece
+  const movedSpecies = [...moved.species_set][0]
+  let priorPieces = new Map(pieces)
+  priorPieces.delete(endPos)
+  const originSpecies = promotionPiece ? Board.PAWN : movedSpecies
+  priorPieces = placePiece(priorPieces, origin, pieceCode(moved.team, originSpecies))
+  if (priorPieces === null) { return null }
+
+  if (pieceNotation === 'O-O' || pieceNotation === 'O-O-O') {
+    const homeRankStart = HOME_RANK[team] * 8
+    const [rookAfterFile, rookPriorFile] = pieceNotation === 'O-O' ? [5, 7] : [3, 0]
+    priorPieces.delete(homeRankStart + rookAfterFile)
+    priorPieces = placePiece(priorPieces, homeRankStart + rookPriorFile, pieceCode(team, Board.ROOK))
+    if (priorPieces === null) { return null }
+    return priorPieces
+  }
+
+  const captured = singulars.captured_piece
+  const capturedSpecies = [...captured.species_set][0]
+  if (capturedSpecies !== null) {
+    priorPieces = placePiece(priorPieces, capturedPiecePosition ?? endPos, pieceCode(captured.team, capturedSpecies))
+    if (priorPieces === null) { return null }
+  }
+  return priorPieces
 }
 
 export function legalPriorTurnState(priorBoard, moveObject) {

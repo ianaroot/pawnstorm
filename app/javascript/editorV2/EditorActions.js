@@ -11,6 +11,22 @@ const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
 const CLIPBOARD_STORAGE_VERSION = 1
 const PASTEABLE_NODE_TYPES = new Set(['condition', 'score', 'organizer'])
 
+function mergeExamples(previous, additions) {
+  const seen = new Set(previous.map(exampleId))
+  const merged = [...previous]
+  for (const example of additions) {
+    const id = exampleId(example)
+    if (seen.has(id)) { continue }
+    seen.add(id)
+    merged.push(example)
+  }
+  return merged
+}
+
+function exampleId(example) {
+  return example.id ?? `${example.priorBoard?.layOut?.join('') ?? ''}|${example.moveObject?.startPosition ?? ''}-${example.moveObject?.endPosition ?? ''}`
+}
+
 class EditorActions {
   constructor(store, history, syncManager) {
     this.store = store
@@ -130,11 +146,11 @@ class EditorActions {
     })
   }
 
-  showSelectionPreviewPanel(preview) {
+  showSelectionPreviewPanel(preview, retryHandler = null) {
     if (this.clickHandler?.getEditingNodeId()) {
       this.clickHandler?.editorPanel?.classList.remove('hidden')
     }
-    this.boardStatePreview?.showSelectionPreview(preview)
+    this.boardStatePreview?.showSelectionPreview(preview, retryHandler)
   }
 
   renderSelectionPreview() {
@@ -145,7 +161,10 @@ class EditorActions {
     }
 
     const conditionLabels = chain.payloads.map(p => formatConditionPreview(p).text)
+    this._runChainGeneration({ chain, conditionLabels, previousExamples: [] })
+  }
 
+  _runChainGeneration({ chain, conditionLabels, previousExamples }) {
     this.showSelectionPreviewPanel({ status: 'loading', reason: 'Computing preview…', examples: [] })
     clearTimeout(this._chainPreviewTimer)
     this._chainPreviewTimer = setTimeout(() => {
@@ -155,7 +174,10 @@ class EditorActions {
           stats: { onComplete: pipelineStats.record }
         })
         preview.conditionLabels = conditionLabels
-        this.showSelectionPreviewPanel(preview)
+        const merged = mergeExamples(previousExamples, preview.examples ?? [])
+        preview.examples = merged
+        const retry = () => this._runChainGeneration({ chain, conditionLabels, previousExamples: merged })
+        this.showSelectionPreviewPanel(preview, retry)
       } catch (e) {
         console.error('generateConditionExamples threw:', e)
         this.showSelectionPreviewPanel({ status: 'no_examples', reason: 'An error occurred generating the preview.', examples: [], payloadCount: chain.payloads.length })

@@ -1,7 +1,10 @@
 import Board from 'gameplay/board'
 import { placePiece } from './piece_placement'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 export const MAX_PAWNS_PER_TEAM = 8
+
+export const HOME_RANK = Object.freeze({ [Board.WHITE]: 0, [Board.BLACK]: 7 })
 
 export function square(value) {
   return Board.gridCalculatorReverse(value)
@@ -29,7 +32,7 @@ export function unique(values) {
   return Array.from(new Set(values))
 }
 
-const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
+export const WEIGHTED_SPECIES_DISTRIBUTION = Object.freeze([
   Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
   Board.PAWN, Board.PAWN, Board.PAWN, Board.PAWN,
   Board.ROOK, Board.ROOK,
@@ -55,6 +58,29 @@ export function shuffled(values, random) {
 export function pickRandom(values, random) {
   if (!values || values.length === 0) { return null }
   return values[Math.floor(random() * values.length)]
+}
+
+// Picks one species from speciesSet, weighted by WEIGHTED_SPECIES_DISTRIBUTION.
+// Returns null when the intersection is empty.
+export function pickWeightedSpecies(speciesSet, random) {
+  const pool = WEIGHTED_SPECIES_DISTRIBUTION.filter(s => speciesSet.has(s))
+  if (pool.length === 0) { return null }
+  return pool[Math.floor(random() * pool.length)]
+}
+
+// Returns the unique species in speciesSet ordered by weighted-random.
+// Higher-weight species (e.g. pawns) tend to come earlier.
+export function weightedShuffleSpecies(speciesSet, random) {
+  const pool = WEIGHTED_SPECIES_DISTRIBUTION.filter(s => speciesSet.has(s))
+  const shuffledPool = shuffled(pool, random)
+  const seen = new Set()
+  const result = []
+  for (const s of shuffledPool) {
+    if (seen.has(s)) { continue }
+    seen.add(s)
+    result.push(s)
+  }
+  return result
 }
 
 export function clonePiecesMap(piecesMap) {
@@ -125,7 +151,7 @@ function squaresAreAdjacent(a, b) {
   )
 }
 
-function anyKingIsAdjacentTo(pieces, position) {
+export function anyKingIsAdjacentTo(pieces, position) {
   for (const [sq, piece] of pieces.entries()) {
     if (
       (piece === Board.WHITE_KING || piece === Board.BLACK_KING) &&
@@ -137,7 +163,7 @@ function anyKingIsAdjacentTo(pieces, position) {
   return false
 }
 
-export function placeKingsIfAbsent(pieces, random) {
+export function placeKingsIfAbsent(pieces, random, ctx = { propositions: [] }) {
   let result = pieces
 
   for (const team of [Board.WHITE, Board.BLACK]) {
@@ -151,6 +177,7 @@ export function placeKingsIfAbsent(pieces, random) {
     let placed = false
     for (const pos of candidates) {
       if (anyKingIsAdjacentTo(result, pos)) { continue }
+      if (!respectsAllCaps(team, Board.KING, pos, ctx, result)) { continue }
       const next = placePiece(result, pos, `${team}${Board.KING}`)
       if (next === null) { continue }
       result = next
