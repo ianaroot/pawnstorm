@@ -107,6 +107,41 @@ const PAYLOADS = [
       subjectComparator: "greater_than",
       subjectComparisonSource: "prior_board_state"
     }
+  },
+  {
+    name: "rook mobility < 5 (mobility-constrained)",
+    payload: {
+      version: 2, kind: "unary",
+      subject: "allied", subjectFilter: "rook",
+      operator: "mobility", comparator: "less_than",
+      target: "exact_number", targetTotal: 5
+    }
+  },
+  {
+    // Adversarial: allied bishop at h1 conflicts unconditionally with
+    // kingside castle's rookStart empty constraint. Every castle attempt
+    // should be detectable as wasted.
+    name: "allied bishop at h1 (conflicts with kingside castle)",
+    payload: {
+      version: 2, kind: "position",
+      subject: "allied", subjectFilter: "bishop",
+      positionAxis: "square", positionComparator: "equal_to", positionTarget: 7,
+      operator: "count", comparator: "greater_than",
+      target: "exact_number", targetTotal: 0
+    }
+  },
+  {
+    // Adversarial: allied pawn at e5 conflicts with EP-left only when
+    // moved_piece commits to d6 (diag-left-origin lands on e5). Other
+    // EP destinations are fine. "Sometimes blocks."
+    name: "allied pawn at e5 (sometimes blocks en passant)",
+    payload: {
+      version: 2, kind: "position",
+      subject: "allied", subjectFilter: "pawn",
+      positionAxis: "square", positionComparator: "equal_to", positionTarget: 36,
+      operator: "count", comparator: "greater_than",
+      target: "exact_number", targetTotal: 0
+    }
   }
 ]
 
