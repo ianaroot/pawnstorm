@@ -23,8 +23,9 @@
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { controlledSquares, materialValue } from 'gameplay/board_query_utils'
+import { actorTeam } from 'bot_execution/actor_teams'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, clonePiecesMap,
+  pieceCode, clonePiecesMap,
   ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { candidateSpecies, legalPriorTurnState, speciesMatchesFilter } from 'editorV2/panels/condition_preview/shared/example_utils'
@@ -34,7 +35,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from '../shared/piece_placement'
 import { placeKingsIfAbsent } from '../shared/board_utils'
-import { compileHints, HINT_TYPES, satisfies } from './hint_compiler'
+import { buildLayoutAndBoard, compileHints, HINT_TYPES, satisfies } from './hint_compiler'
 import { buildChainConstraints, narrowPbsHintsByInventory, resolveRegion, ACTOR_TO_VAR_KEY, ALL_SPECIES } from './chain_constraints'
 import { respectsInventoryCaps } from './inventory_protocol'
 import { relationCountStrategy } from './strategies/relation_count'
@@ -51,20 +52,8 @@ import { actorPbsMobilityStrategy } from './strategies/actor_pbs_mobility'
 import { relationSamePieceStrategy } from './strategies/relation_same_piece'
 import { unaryValuePairStrategy } from './strategies/unary_value_pair'
 import { unaryCountPairStrategy } from './strategies/unary_count_pair'
+import { captureExistenceStrategy } from './strategies/capture_existence'
 
-
-
-
-function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
-  return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
-}
-
-function actorTeamOnBoard(actor, movingTeam) {
-  if (actor === 'allied' || actor === 'moved_piece' || actor === 'captured_piece') {
-    return movingTeam
-  }
-  return Board.opposingTeam(movingTeam)
-}
 
 // Apply ACTOR_MOBILITY hint by reducing mobility (today's strategies cover
 // {≤, <, =} comparators via shared "≤ N" mechanics). Strategies:
@@ -148,7 +137,7 @@ function tryCheckPlusBlock(pieces, hint, ctx) {
       if (!withAttacker) { continue }
       let attacks
       try {
-        const board = piecesIntoBoard(withAttacker, hint.team)
+        const board = buildLayoutAndBoard(withAttacker, hint.team)
         attacks = controlledSquares({ board, attackerPosition: attackerPos })
       } catch { continue }
       if (!attacks.includes(kingPos)) { continue }
@@ -157,7 +146,7 @@ function tryCheckPlusBlock(pieces, hint, ctx) {
       let totalMobility = 0
       let valid = true
       try {
-        const board = piecesIntoBoard(withAttacker, hint.team)
+        const board = buildLayoutAndBoard(withAttacker, hint.team)
         for (const [pos, piece] of withAttacker.entries()) {
           if (piece.charAt(0) !== hint.team) { continue }
           if (!speciesMatchesFilter(piece.slice(1), hint.filter, hint.filterMode)) { continue }
@@ -179,7 +168,7 @@ function tryCheckPlusBlock(pieces, hint, ctx) {
 
 function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTeam, random, ctx) {
   const targetTeam = piece.charAt(0)
-  const board = piecesIntoBoard(pieces, targetTeam)
+  const board = buildLayoutAndBoard(pieces, targetTeam)
   const moves = Rules.availableMovesFrom({ board, startPosition: position })
   if (moves.length <= maxMobility) { return pieces }
 
@@ -207,7 +196,7 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
       const next = placePiece(result, dest, pieceCode(trial.team, trial.species))
       if (!next) { continue }
       // Verify mobility actually went down.
-      const verifyBoard = piecesIntoBoard(next, targetTeam)
+      const verifyBoard = buildLayoutAndBoard(next, targetTeam)
       const newMoves = Rules.availableMovesFrom({ board: verifyBoard, startPosition: position })
       if (newMoves.length < moves.length - blockedCount) {
         result = next
@@ -218,7 +207,7 @@ function restrictMobilityForPiece(pieces, position, piece, maxMobility, movingTe
   }
 
   // Final check.
-  const finalBoard = piecesIntoBoard(result, targetTeam)
+  const finalBoard = buildLayoutAndBoard(result, targetTeam)
   const finalMoves = Rules.availableMovesFrom({ board: finalBoard, startPosition: position })
   if (finalMoves.length > maxMobility) { return null }
   return result
@@ -255,7 +244,8 @@ const STRATEGIES = Object.freeze({
   [HINT_TYPES.ACTOR_PBS_MOBILITY]: [actorPbsMobilityStrategy],
   [HINT_TYPES.RELATION_SAME_PIECE]: [relationSamePieceStrategy],
   [HINT_TYPES.UNARY_VALUE_PAIR]: [unaryValuePairStrategy],
-  [HINT_TYPES.UNARY_COUNT_PAIR]: [unaryCountPairStrategy]
+  [HINT_TYPES.UNARY_COUNT_PAIR]: [unaryCountPairStrategy],
+  [HINT_TYPES.CAPTURE_EXISTENCE]: [captureExistenceStrategy]
 })
 
 function applyHint(pieces, hint, ctx) {
@@ -448,7 +438,7 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
         if (candidatePos === targetPos) { continue }
         const trial = placePiece(pieces, candidatePos, pieceCode(subjectTeam, subjectSpecies))
         if (!trial) { continue }
-        const board = piecesIntoBoard(trial, subjectTeam)
+        const board = buildLayoutAndBoard(trial, subjectTeam)
         const reach = reachOf(plan.operator, board, candidatePos)
         if (reach.has(targetPos)) {
           pieces = trial
@@ -476,7 +466,7 @@ function buildMinimumSeed(combinedPlan, chainConstraints, random) {
 
       // Place a piece matching plan.subject's actor + filter so mobility hints have a target.
       if (plan.subject === 'allied' || plan.subject === 'enemy') {
-        const team = actorTeamOnBoard(plan.subject, movingTeam)
+        const team = actorTeam(plan.subject, movingTeam)
         // Narrow pool for unary value < N / <= N so the seeded piece can't
         // already overshoot the constraint (strategies don't reduce values).
         let speciesPool = plan.subjectSpeciesPool
@@ -561,7 +551,7 @@ export function resolveViaHints({ combinedPlan, random }) {
   // engineering a capture that declares the captured piece as the prior turn's
   // enemy moved_piece.
   const ctx = {
-    movingTeam, random, priorPieces, recentMoveContext: null,
+    movingTeam, enemyTeam: chainConstraints.enemyTeam, random, priorPieces, recentMoveContext: null,
     movedPiece: chainConstraints.movedPiece,
     capturedPiece: chainConstraints.capturedPiece,
     enemyMovedPiece: chainConstraints.enemyMovedPiece,
@@ -595,7 +585,7 @@ export function resolveViaHints({ combinedPlan, random }) {
   // picking any moving-team piece and finding an origin.
   const diffMove = priorMatchesCurrent(pieces, ctx.priorPieces) ? null : deriveMoveFromDiff(ctx.priorPieces, pieces, movingTeam)
   if (diffMove !== null) {
-    const priorBoard = piecesIntoBoard(ctx.priorPieces, movingTeam, ctx.recentMoveContext)
+    const priorBoard = buildLayoutAndBoard(ctx.priorPieces, movingTeam, ctx.recentMoveContext)
     let moveObject
     try { moveObject = Rules.getMoveObject(diffMove.origin, diffMove.dest, priorBoard) } catch { return null }
     if (moveObject.illegal) { return null }
@@ -625,7 +615,7 @@ export function resolveViaHints({ combinedPlan, random }) {
       const placed = placePiece(priorPieces, origin, pieceCode(movingTeam, species))
       if (!placed) { continue }
       priorPieces = placed
-      const priorBoard = piecesIntoBoard(priorPieces, movingTeam)
+      const priorBoard = buildLayoutAndBoard(priorPieces, movingTeam)
       let moveObject
       try { moveObject = Rules.getMoveObject(origin, endPos, priorBoard) } catch { continue }
       if (moveObject.illegal) { continue }

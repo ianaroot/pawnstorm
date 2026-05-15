@@ -16,7 +16,7 @@ import {
   pieceCode, clonePiecesMap, ALL_POSITIONS, shuffled, pickRandom
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { piecesIntoBoard, subjectsRelatedToTarget } from '../hint_compiler'
+import { buildLayoutAndBoard, subjectsRelatedToTarget } from '../hint_compiler'
 import { respectsInventoryCaps } from '../inventory_protocol'
 
 // Aggressive bounds. The orchestrator runs the resolver up to ~200 times, so a
@@ -33,7 +33,7 @@ const ATTACKER_PLACEMENT_ATTEMPTS = 15
 // via `operator`. Equivalent to `qualifyingPairs` count but with a single
 // target position.
 function attackersOf({ pieces, operator, targetPos, subjectTeam, movingTeam }) {
-  const board = piecesIntoBoard(pieces, movingTeam)
+  const board = buildLayoutAndBoard(pieces, movingTeam)
   return subjectsRelatedToTarget({
     board, operator, targetPosition: targetPos, subjectTeam
   }).length

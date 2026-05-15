@@ -1,17 +1,13 @@
 import Board from 'gameplay/board'
 import { controlledSquares, shieldedPositions, nextPositionOnRay } from 'gameplay/board_query_utils'
 import { pieceCode, clonePiecesMap, buildLayoutFromPieces, buildBoardFromLayout, legalPlacementForSpecies, ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { RAY_STEPS, adjacentNeighborPositions, raySliderSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 
 function legalSubjectPlacements(subjectSpecies) {
   return ALL_POSITIONS
     .filter(position => legalPlacementForSpecies(position, subjectSpecies))
     .map(position => ({ position, species: subjectSpecies }))
-}
-
-export function teamForActorWithContext(actor, movingTeam = Board.WHITE) {
-  return actor === 'allied' || actor === 'moved_piece' ? movingTeam : Board.opposingTeam(movingTeam)
 }
 
 export function mergeRelationPieces({ basePieces = new Map(), relationPieces, reservedSquares = new Set() }) {
@@ -141,7 +137,7 @@ export function buildShieldSkeletons({ plan, subjectSpecies, targetSpecies, fixe
           }
           if (attackerPosition === null) { continue }
 
-          shieldAttackerSpeciesForStep(step).forEach(attackerSpecies => {
+          raySliderSpeciesForStep(step).forEach(attackerSpecies => {
             const relationPieces = mergeRelationPieces({
               basePieces: fixedPieces,
               relationPieces: new Map([

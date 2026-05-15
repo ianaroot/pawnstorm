@@ -25,8 +25,8 @@ function qualifyingSquaresForHint(hint, movingTeam) {
 }
 
 export function actorAtPositionStrategy(pieces, hint, ctx) {
-  const { random, movingTeam } = ctx
-  const qualifying = qualifyingSquaresForHint(hint, movingTeam)
+  const { random } = ctx
+  const qualifying = qualifyingSquaresForHint(hint, ctx.movingTeam)
   if (qualifying.length === 0) { return null }
 
   const varKey = ACTOR_TO_VAR_KEY[hint.actor]

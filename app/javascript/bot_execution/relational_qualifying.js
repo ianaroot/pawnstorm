@@ -1,16 +1,5 @@
 import { materialValue } from "gameplay/board_query_utils"
-
-function compareTotal(comparator, leftTotal, rightTotal) {
-  if (leftTotal === null || rightTotal === null) { return false }
-  switch (comparator) {
-    case "equal_to": return leftTotal === rightTotal
-    case "greater_than": return leftTotal > rightTotal
-    case "less_than": return leftTotal < rightTotal
-    case "greater_than_or_equal_to": return leftTotal >= rightTotal
-    case "less_than_or_equal_to": return leftTotal <= rightTotal
-    default: throw new Error(`Unknown comparator: ${comparator}`)
-  }
-}
+import { compareTotals } from "bot_execution/utils"
 
 function combinatorialMinSize(comparator, n) {
   switch (comparator) {
@@ -37,7 +26,7 @@ function combinatorialMaxSize(comparator, n, totalGroups) {
 function searchSubsetWithSize(groups, size, valueComparator, valueReferenceTotal, startIdx, current) {
   if (current.length === size) {
     const sum = current.reduce((acc, group) => acc + group.value, 0)
-    return compareTotal(valueComparator, sum, valueReferenceTotal) ? current.slice() : null
+    return compareTotals(valueComparator, sum, valueReferenceTotal) ? current.slice() : null
   }
   const remaining = size - current.length
   if (startIdx + remaining > groups.length) { return null }
@@ -61,7 +50,7 @@ function buildGroups({ pairs, board, groupBySide, valueSide }) {
   return Array.from(groupMap.values())
 }
 
-export function findCombinatorialQualifyingGroups({
+export function findCombinatorialQualifyingKeys({
   pairs, board, groupBySide, valueSide,
   valueComparator, valueReferenceTotal,
   countComparator, countReferenceTotal
@@ -81,5 +70,5 @@ export function findCombinatorialQualifyingGroups({
 }
 
 export function combinatorialQualifyingExists(args) {
-  return findCombinatorialQualifyingGroups(args) !== null
+  return findCombinatorialQualifyingKeys(args) !== null
 }

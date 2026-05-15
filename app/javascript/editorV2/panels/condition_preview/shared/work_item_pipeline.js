@@ -17,7 +17,7 @@ export function runWorkItemPipeline({
 
   for (const plan of plans) {
     const deadline = Date.now() + perPlanMs
-    const workItems = buildWorkItems(plan, random, combinedPlan.movingTeam)
+    const workItems = buildWorkItems(plan, random)
     for (const item of workItems) {
       if (standardExamples.length >= maxStandardSize || Date.now() > deadline) { break }
       const examples = collectExamples({ combinedPlan, plan, item, random, verifier, factory })

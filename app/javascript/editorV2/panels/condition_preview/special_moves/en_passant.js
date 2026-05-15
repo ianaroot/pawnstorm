@@ -20,7 +20,7 @@ export function collectEnPassantExamples({ combinedPlan, random, maxExamples }) 
   const examples = []
   const seen = new Set()
   const movingTeam = combinedPlan.movingTeam
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const enemyTeam = combinedPlan.enemyTeam
   const moverPiece = `${movingTeam}${Board.PAWN}`
   const enemyPawn = `${enemyTeam}${Board.PAWN}`
   const dir = movingTeam === Board.BLACK ? 1 : -1

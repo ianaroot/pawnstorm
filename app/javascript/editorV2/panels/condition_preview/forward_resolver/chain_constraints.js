@@ -24,7 +24,7 @@
 import Board from 'gameplay/board'
 import { attackingPositions, defendingPositions, adjacentPositions, shieldingPositions } from 'gameplay/board_query_utils'
 import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { SINGULAR_ACTORS } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
 import { controlledSquaresForPieceAt } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
@@ -84,8 +84,8 @@ function fullEnemyMovedSpeciesSet() {
   return new Set([null, ...ALL_SPECIES])  // enemy can have moved any piece, OR no recent enemy move (null)
 }
 
-function initSingularActors(movingTeam) {
-  const enemyTeam = Board.opposingTeam(movingTeam)
+function initSingularActors(combinedPlan) {
+  const { movingTeam, enemyTeam } = combinedPlan
   return {
     movedPiece: {
       species_set: fullMovedSpeciesSet(),
@@ -152,8 +152,8 @@ function initFilterCells() {
   return cells
 }
 
-function initInventory(movingTeam) {
-  const enemyTeam = Board.opposingTeam(movingTeam)
+function initInventory(combinedPlan) {
+  const { movingTeam, enemyTeam } = combinedPlan
   return {
     [movingTeam]: { current: initFilterCells(), prior: initFilterCells() },
     [enemyTeam]: { current: initFilterCells(), prior: initFilterCells() }
@@ -750,9 +750,10 @@ function contributePositionPlanToPositionConstraints(plan, vars) {
 }
 
 export function buildChainConstraints(combinedPlan) {
-  const vars = initSingularActors(combinedPlan.movingTeam)
-  vars.inventory = initInventory(combinedPlan.movingTeam)
+  const vars = initSingularActors(combinedPlan)
+  vars.inventory = initInventory(combinedPlan)
   vars.movingTeam = combinedPlan.movingTeam
+  vars.enemyTeam = combinedPlan.enemyTeam
   vars.positionConstraints = []
   for (const plan of combinedPlan.plans) {
     contributePlanConstraints(plan, vars)

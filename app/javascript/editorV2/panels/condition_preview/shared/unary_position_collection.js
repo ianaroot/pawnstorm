@@ -85,11 +85,11 @@ function valueCombinationsForTotal(target, speciesPool) {
   return results
 }
 
-export function qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam) {
+export function qualifyingSquares(positionAxis, positionComparator, positionTarget, team) {
   return ALL_POSITIONS.filter(pos => {
     switch (positionAxis) {
       case 'rank': {
-        const rank = relativeRank(pos, movingTeam)
+        const rank = relativeRank(pos, team)
         return satisfiesComparator(positionComparator, rank, positionTarget)
       }
       case 'file': {
@@ -97,7 +97,7 @@ export function qualifyingSquares(positionAxis, positionComparator, positionTarg
         return satisfiesComparator(positionComparator, file, positionTarget)
       }
       case 'square': {
-        const absoluteTarget = relativeToAbsolutePosition(positionTarget, movingTeam)
+        const absoluteTarget = relativeToAbsolutePosition(positionTarget, team)
         return pos === absoluteTarget
       }
       default:
@@ -158,10 +158,7 @@ function unaryPairTargetItems({ target, subjectValue, comparator, targetSpeciesP
 
 // ===== Work item builders =====
 
-// movingTeam is accepted for signature parity with buildPositionWorkItems
-// (so both can be driven through the same work-item pipeline runner).
-// Currently unused by the unary path.
-export function buildUnaryWorkItems(plan, random, movingTeam) { // eslint-disable-line no-unused-vars
+export function buildUnaryWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, targetSpeciesPool, target, operator, comparator, targetTotal } = plan
   const items = []
   const isPairTarget = target !== EXACT_NUMBER_TARGET && target !== PRIOR_BOARD_TARGET
@@ -312,9 +309,9 @@ export function buildUnaryWorkItems(plan, random, movingTeam) { // eslint-disabl
   return shuffled(items, random)
 }
 
-export function buildPositionWorkItems(plan, random, movingTeam) {
+export function buildPositionWorkItems(plan, random) {
   const { subject, subjectSpeciesPool, operator, comparator, targetTotal, positionAxis, positionComparator, positionTarget } = plan
-  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, movingTeam)
+  const validSquares = qualifyingSquares(positionAxis, positionComparator, positionTarget, plan.movingTeam)
   if (validSquares.length === 0) { return [] }
 
   const items = []
@@ -376,8 +373,7 @@ export function buildPositionWorkItems(plan, random, movingTeam) {
 
 function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random }) {
   const { subject, subjectTeam, targetTeam, target, subjectSpeciesPool, targetSpeciesPool, operator, comparator } = unaryPlan
-  const { movingTeam } = combinedPlan
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { movingTeam, enemyTeam } = combinedPlan
   const isPBS = target === PRIOR_BOARD_TARGET
   const isPBSIncreasing = isPBS && isIncreasingComparator(comparator)
   const isPBSDecreasing = isPBS && !isPBSIncreasing && comparator !== 'equal_to'
@@ -629,8 +625,7 @@ function buildAfterPiecesForUnaryItem({ combinedPlan, unaryPlan, item, random })
 
 function buildAfterPiecesForPositionItem({ combinedPlan, positionPlan, item, validSquares, random }) {
   const { subject, subjectTeam, subjectSpeciesPool, operator, comparator } = positionPlan
-  const { movingTeam } = combinedPlan
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { movingTeam, enemyTeam } = combinedPlan
   const isPBS = positionPlan.target === PRIOR_BOARD_TARGET
   const isPBSIncreasing = isPBS && isIncreasingComparator(comparator)
 
@@ -761,7 +756,7 @@ export function collectUnaryExamples({ combinedPlan, plan, item, random, verifie
 export function collectPositionExamples({ combinedPlan, plan, item, random, verifier, factory, maxResults = 3 }) {
   const validSquares = qualifyingSquares(
     plan.positionAxis, plan.positionComparator, plan.positionTarget,
-    combinedPlan.movingTeam
+    plan.movingTeam
   )
 
   const setup = buildAfterPiecesForPositionItem({ combinedPlan, positionPlan: plan, item, validSquares, random })

@@ -2,7 +2,7 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { findCombinatorialQualifyingGroups } from 'bot_execution/relational_qualifying'
+import { findCombinatorialQualifyingKeys } from 'bot_execution/relational_qualifying'
 import { originCandidatesForSpecies, sortByDistanceFromRelation } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   legalPriorTurnState, moveKindForMoveObject, soundForMove, candidateIdentity,
@@ -60,7 +60,7 @@ function buildEnemyRecentMoveContext(endPosition, species, enemyTeam, capturedSp
 
 function buildComparisonRecentMoveContext({ combinedPlan, seed, random }) {
   const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
-  const enemyTeam = Board.opposingTeam(combinedPlan.movingTeam)
+  const enemyTeam = combinedPlan.enemyTeam
 
   for (let i = 0; i < relationalPlans.length; i++) {
     const plan = relationalPlans[i]
@@ -208,7 +208,7 @@ function applyCombinatorialFilter(plan, result, analysis) {
   const args = combinatorialFilterArgs(plan)
   if (!args) { return result }
 
-  const qualifyingKeys = findCombinatorialQualifyingGroups({
+  const qualifyingKeys = findCombinatorialQualifyingKeys({
     pairs: result.pairs, board: analysis.afterBoard(), ...args
   })
   if (qualifyingKeys === null) { return result }

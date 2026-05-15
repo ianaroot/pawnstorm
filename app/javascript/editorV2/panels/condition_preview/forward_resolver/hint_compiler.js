@@ -37,7 +37,8 @@ import {
 import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { SINGULAR_ACTORS, speciesMatchesFilter } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { speciesMatchesFilter } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { SINGULAR_ACTORS } from 'bot_execution/actors'
 
 export const HINT_TYPES = Object.freeze({
   // Descriptor-less relational fallback — at least one qualifying pair exists.
@@ -74,6 +75,15 @@ export const HINT_TYPES = Object.freeze({
   // the comparator.
   UNARY_VALUE_PAIR: 'unary_value_pair',
   UNARY_COUNT_PAIR: 'unary_count_pair',
+
+  // Capture-event existence (or filtered absence) for captured_piece and
+  // enemy_captured_piece — the two actors whose existence requires a capture
+  // event rather than an after-board piece count. Emitted from count plans
+  // (unary or position) on these actors when the comparator implies existence
+  // (count > 0, count >= 1, count = 1) or filtered absence (count = 0 with
+  // filter ≠ 'any' OR filterMode = 'exclude'). Strategy trusts ctx — picks
+  // captured species from ctx.{actor}.species_set without re-filtering.
+  CAPTURE_EXISTENCE: 'capture_existence',
 
   // Granular unary hints — actor-only constraints.
   ACTOR_COUNT: 'actor_count',
@@ -114,8 +124,12 @@ function mobilityUpperBoundFromComparator(comparator, total) {
 // ===== Filter / actor helpers =====
 // (speciesMatchesFilter lives in shared/example_utils.js — imported below.)
 
-export function piecesIntoBoard(pieces, allowedToMove, recentMoveContext = null) {
+export function buildLayoutAndBoard(pieces, allowedToMove, recentMoveContext = null) {
   return buildBoardFromLayout(buildLayoutFromPieces(pieces), recentMoveContext, allowedToMove)
+}
+
+function boardFromContext(pieces, context) {
+  return piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
 }
 
 // Iterate piece entries matching team + filter. Yields { position, species }.
@@ -168,7 +182,7 @@ export function qualifyingPairs(pieces, board, hint) {
 // Each returns true iff the property the hint claims about the board holds.
 
 function bareRelationSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint.shape)
   if (pairs.length === 0) { return false }
 
@@ -190,7 +204,7 @@ function bareRelationSatisfies(pieces, hint, context) {
 }
 
 function relationCountSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   // count of distinct pieces on the comparison side, not pair count
   const positions = new Set(
@@ -200,7 +214,7 @@ function relationCountSatisfies(pieces, hint, context) {
 }
 
 function relationAggregateValueSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   // sum of distinct piece values on the comparison side
   const seenPositions = new Set()
@@ -216,7 +230,7 @@ function relationAggregateValueSatisfies(pieces, hint, context) {
 }
 
 function relationIndividualValueSatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
   if (pairs.length === 0) { return false }
   const seenPositions = new Set()
@@ -228,6 +242,55 @@ function relationIndividualValueSatisfies(pieces, hint, context) {
     if (!compareValue(materialValue(species), hint.valueOp, hint.value)) { return false }
   }
   return true
+}
+
+// Decide whether a count plan on a captured-actor should route to
+// CAPTURE_EXISTENCE rather than ACTOR_COUNT. The capture actors don't have an
+// after-board presence; ACTOR_COUNT's predicate (which counts board pieces) is
+// the wrong shape. Routing covers existence (count > 0, count >= 1, count = 1)
+// and filtered absence (count = 0 with filter ≠ 'any' OR filterMode = 'exclude').
+// Other count comparators on these actors fall through and produce no examples
+// — they're semantically meaningless for a singular event and will be gated at
+// the grammar level.
+export function shouldRouteToCaptureExistence(actor, countOp, n, filter, filterMode) {
+  if (actor !== 'captured_piece' && actor !== 'enemy_captured_piece') { return false }
+  if (countOp === 'greater_than' && n === 0) { return true }
+  if (countOp === 'greater_than_or_equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 0) {
+    if (filter && filter !== 'any') { return true }
+    if (filterMode === 'exclude') { return true }
+  }
+  return false
+}
+
+function isCaptureExistencePresentPolarity(countOp, n) {
+  if (countOp === 'greater_than' && n === 0) { return true }
+  if (countOp === 'greater_than_or_equal_to' && n === 1) { return true }
+  if (countOp === 'equal_to' && n === 1) { return true }
+  return false
+}
+
+function committedCaptureSpecies(actor, context) {
+  if (actor === 'captured_piece') {
+    return committedSpeciesFromVar(context?.capturedPiece)
+  }
+  if (actor === 'enemy_captured_piece') {
+    return context?.recentMoveContext?.capturedPieceSpecies ?? null
+  }
+  return null
+}
+
+function captureExistenceSatisfies(pieces, hint, context) {
+  const committedSpecies = committedCaptureSpecies(hint.actor, context)
+  if (isCaptureExistencePresentPolarity(hint.countOp, hint.n)) {
+    if (committedSpecies === null) { return false }
+    return speciesMatchesFilter(committedSpecies, hint.filter, hint.filterMode)
+  }
+  // Absent polarity (count = 0 with filter or filterMode = 'exclude'):
+  // pass iff no capture happened OR the captured species fails filter.
+  if (committedSpecies === null) { return true }
+  return !speciesMatchesFilter(committedSpecies, hint.filter, hint.filterMode)
 }
 
 function actorCountSatisfies(pieces, hint /*, context */) {
@@ -254,7 +317,7 @@ function actorIndividualValueSatisfies(pieces, hint /*, context */) {
 }
 
 function actorMobilitySatisfies(pieces, hint, context) {
-  const board = piecesIntoBoard(pieces, context?.movingTeam ?? Board.WHITE)
+  const board = buildLayoutAndBoard(pieces, context.movingTeam)
   let total = 0
   for (const { position } of matchingPieces(pieces, hint.team, hint.filter, hint.filterMode)) {
     const moves = Rules.availableMovesFrom({ board, startPosition: position })
@@ -264,11 +327,10 @@ function actorMobilitySatisfies(pieces, hint, context) {
 }
 
 function actorAtPositionSatisfies(pieces, hint, context) {
-  const movingTeam = context?.movingTeam ?? Board.WHITE
   let any = false
   for (const { position } of matchingPieces(pieces, hint.team, hint.filter, hint.filterMode)) {
     any = true
-    if (!positionMatchesAxis(position, hint, movingTeam)) { return false }
+    if (!positionMatchesAxis(position, hint, context.movingTeam)) { return false }
   }
   return any
 }
@@ -316,7 +378,7 @@ function relationSamePieceSatisfies(pieces, hint, context) {
   if (!priorPieces) { return false }
   const piece = priorPieces.get(rmc.movedPieceEndPosition)
   if (!piece) { return false }
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   return piece.charAt(0) !== movingTeam
 }
 
@@ -326,7 +388,7 @@ function relationSamePieceSatisfies(pieces, hint, context) {
 // enemy_captured_piece). The post-evaluator runs the full chain check; this
 // predicate just confirms structural setup.
 function unaryValuePairSatisfies(pieces, hint, context) {
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   const subjectSpecies = singularActorSpecies(hint.subjectActor, pieces, context, movingTeam)
   const targetSpecies = singularActorSpecies(hint.targetActor, pieces, context, movingTeam)
   if (subjectSpecies === null || targetSpecies === null) { return false }
@@ -334,7 +396,7 @@ function unaryValuePairSatisfies(pieces, hint, context) {
 }
 
 function unaryCountPairSatisfies(pieces, hint, context) {
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
   const subjectCount = singularActorPresence(hint.subjectActor, pieces, context, movingTeam) ? 1 : 0
   const targetCount = singularActorPresence(hint.targetActor, pieces, context, movingTeam) ? 1 : 0
   return compareValue(subjectCount, hint.countOp, targetCount)
@@ -375,10 +437,10 @@ function singularActorPresence(actor, pieces, context, movingTeam) {
 function actorPbsMobilitySatisfies(pieces, hint, context) {
   const priorPieces = context?.priorPieces
   if (!priorPieces) { return false }
-  const movingTeam = context?.movingTeam ?? Board.WHITE
+  const movingTeam = context.movingTeam
 
   function totalMobility(map) {
-    const board = piecesIntoBoard(map, movingTeam)
+    const board = buildLayoutAndBoard(map, movingTeam)
     let total = 0
     for (const { position } of matchingPieces(map, hint.team, hint.filter, hint.filterMode)) {
       const moves = Rules.availableMovesFrom({ board, startPosition: position })
@@ -410,6 +472,7 @@ const PREDICATES = Object.freeze({
   [HINT_TYPES.RELATION_SAME_PIECE]:             relationSamePieceSatisfies,
   [HINT_TYPES.UNARY_VALUE_PAIR]:                unaryValuePairSatisfies,
   [HINT_TYPES.UNARY_COUNT_PAIR]:                unaryCountPairSatisfies,
+  [HINT_TYPES.CAPTURE_EXISTENCE]:               captureExistenceSatisfies,
   [HINT_TYPES.ACTOR_COUNT]:                     actorCountSatisfies,
   [HINT_TYPES.ACTOR_AGGREGATE_VALUE]:           actorAggregateValueSatisfies,
   [HINT_TYPES.ACTOR_INDIVIDUAL_VALUE]:          actorIndividualValueSatisfies,
@@ -717,6 +780,14 @@ function compileUnary(plan, random) {
   }
 
   if (plan.operator === 'count' && target === 'exact_number') {
+    if (shouldRouteToCaptureExistence(actor, plan.comparator, total, filter, filterMode)) {
+      hints.push({
+        type: HINT_TYPES.CAPTURE_EXISTENCE,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: total
+      })
+      return hints
+    }
     hints.push({
       type: HINT_TYPES.ACTOR_COUNT,
       actor, filter, filterMode, team, speciesPool,
@@ -756,11 +827,19 @@ function compilePosition(plan) {
 
   const targetTotal = Number(plan.targetTotal ?? 0)
   if (plan.operator === 'count') {
-    hints.push({
-      type: HINT_TYPES.ACTOR_COUNT,
-      actor, team, filter, filterMode, speciesPool,
-      countOp: plan.comparator, n: targetTotal, frame: 'current'
-    })
+    if (shouldRouteToCaptureExistence(actor, plan.comparator, targetTotal, filter, filterMode)) {
+      hints.push({
+        type: HINT_TYPES.CAPTURE_EXISTENCE,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: targetTotal
+      })
+    } else {
+      hints.push({
+        type: HINT_TYPES.ACTOR_COUNT,
+        actor, team, filter, filterMode, speciesPool,
+        countOp: plan.comparator, n: targetTotal, frame: 'current'
+      })
+    }
   } else if (plan.operator === 'value') {
     hints.push({
       type: HINT_TYPES.ACTOR_AGGREGATE_VALUE,

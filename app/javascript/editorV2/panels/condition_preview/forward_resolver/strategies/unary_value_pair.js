@@ -27,12 +27,13 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { buildRecentMoveContext } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { piecesIntoBoard } from '../hint_compiler'
+import { buildLayoutAndBoard } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 import { respectsInventoryCaps } from '../inventory_protocol'
+import {
+  engineerCaptureScenario, pawnOnStartingRank, MAX_POSITION_CANDIDATES
+} from './capture_engineering'
 
-const MAX_POSITION_CANDIDATES = 8
-const MAX_ORIGIN_CANDIDATES = 12
 const MAX_PAIR_ATTEMPTS = 5
 
 const COMPARATOR_FN = Object.freeze({
@@ -44,13 +45,6 @@ const COMPARATOR_FN = Object.freeze({
 })
 
 
-
-function pawnOnStartingRank(team, position) {
-  const rank = Board.rankIndex(position)
-  if (team === Board.WHITE && rank === 1) { return true }
-  if (team === Board.BLACK && rank === 6) { return true }
-  return false
-}
 
 // Enumerate (subjectSpecies, targetSpecies) pairs from the supplied pools whose
 // material values satisfy the comparator. Returns shuffled pairs; consumer
@@ -74,8 +68,7 @@ function nonNullSpecies(speciesSet) {
 }
 
 export function unaryValuePairStrategy(pieces, hint, ctx) {
-  const { random, movingTeam, priorPieces } = ctx
-  const enemyTeam = Board.opposingTeam(movingTeam)
+  const { random, movingTeam, enemyTeam, priorPieces } = ctx
 
   const subjectVarKey = ACTOR_TO_VAR_KEY[hint.subjectActor]
   const targetVarKey = ACTOR_TO_VAR_KEY[hint.targetActor]
@@ -125,82 +118,6 @@ function engineerScenario({ pieces, actorSpecies, ctx, movingTeam, enemyTeam, pr
   })
 }
 
-function engineerCaptureScenario({ pieces, capturedSpecies, moverSpecies, enemyMovedSpecies, enemyCapturedSpecies, ctx, movingTeam, enemyTeam, priorPieces, random }) {
-  const candidatePositions = shuffled(
-    ALL_POSITIONS.filter(p => !pieces.has(p)), random
-  ).slice(0, MAX_POSITION_CANDIDATES)
-
-  if (!respectsInventoryCaps(enemyTeam, capturedSpecies, priorPieces, ctx, 'prior')) { return null }
-
-  for (const capturedPos of candidatePositions) {
-    if (capturedSpecies === Board.PAWN && pawnOnStartingRank(enemyTeam, capturedPos)) { continue }
-
-    const priorWithCaptured = placePiece(priorPieces, capturedPos, pieceCode(enemyTeam, capturedSpecies))
-    if (!priorWithCaptured) { continue }
-
-    // Mover candidates: bound species if the actor pair includes moved_piece;
-    // otherwise drawn from converged ctx.movedPiece.species_set so sibling
-    // constraints flow through.
-    const moverCandidates = moverSpecies
-      ? [moverSpecies]
-      : shuffled([...ctx.movedPiece.species_set].filter(s => s !== Board.KING), random)
-
-    for (const trialMover of moverCandidates) {
-      if (!respectsInventoryCaps(movingTeam, trialMover, priorWithCaptured, ctx, 'prior')) { continue }
-      if (!respectsInventoryCaps(movingTeam, trialMover, pieces, ctx, 'current')) { continue }
-
-      const originCandidates = shuffled(
-        ALL_POSITIONS.filter(p => p !== capturedPos && !priorWithCaptured.has(p)),
-        random
-      ).slice(0, MAX_ORIGIN_CANDIDATES)
-
-      for (const origin of originCandidates) {
-        const trial = placePiece(priorWithCaptured, origin, pieceCode(movingTeam, trialMover))
-        if (!trial) { continue }
-        let moveObject
-        try {
-          const trialBoard = piecesIntoBoard(trial, movingTeam)
-          moveObject = Rules.getMoveObject(origin, capturedPos, trialBoard)
-        } catch { continue }
-        if (moveObject.illegal || !moveObject.captureNotation) { continue }
-
-        const after = clonePiecesMap(trial)
-        after.delete(capturedPos)
-        after.delete(origin)
-        const placedAfter = placePiece(after, capturedPos, pieceCode(movingTeam, trialMover))
-        if (!placedAfter) { continue }
-
-        priorPieces.clear()
-        for (const [p, piece] of trial.entries()) { priorPieces.set(p, piece) }
-
-        // Narrow ctx species + position sets to the committed singletons.
-        // Both pieces commit to capturedPos: the captured piece sat there on
-        // the prior board, and the mover lands there after the capture.
-        // Enemy_*_piece species commits live in ctx.recentMoveContext.
-        ctx.movedPiece.species_set.clear()
-        ctx.movedPiece.species_set.add(trialMover)
-        ctx.movedPiece.position_set.clear()
-        ctx.movedPiece.position_set.add(capturedPos)
-        ctx.capturedPiece.species_set.clear()
-        ctx.capturedPiece.species_set.add(capturedSpecies)
-        ctx.capturedPiece.position_set.clear()
-        ctx.capturedPiece.position_set.add(capturedPos)
-
-        if (enemyMovedSpecies !== undefined || enemyCapturedSpecies !== undefined) {
-          ctx.recentMoveContext = buildRecentMoveContext({
-            team: enemyTeam,
-            species: enemyMovedSpecies,
-            capturedSpecies: enemyCapturedSpecies,
-            random
-          })
-        }
-        return placedAfter
-      }
-    }
-  }
-  return null
-}
-
 function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, enemyCapturedSpecies, ctx, movingTeam, enemyTeam, priorPieces, random }) {
   const moverCandidates = moverSpecies
     ? [moverSpecies]
@@ -218,7 +135,7 @@ function engineerNonCaptureScenario({ pieces, moverSpecies, enemyMovedSpecies, e
       if (trialMover === Board.PAWN && pawnOnStartingRank(movingTeam, origin)) { continue }
       const trialPrior = placePiece(priorPieces, origin, pieceCode(movingTeam, trialMover))
       if (!trialPrior) { continue }
-      const priorBoard = piecesIntoBoard(trialPrior, movingTeam)
+      const priorBoard = buildLayoutAndBoard(trialPrior, movingTeam)
       let moves
       try { moves = Rules.availableMovesFrom({ board: priorBoard, startPosition: origin }) }
       catch { continue }

@@ -1,5 +1,11 @@
 import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
 import profileCollector from "gameplay/profile_collector"
+import { SINGULAR_ACTORS } from "bot_execution/actors"
+import { compareTotals } from "bot_execution/utils"
+
+const identityCoerce = (value) => value
+const zeroCoerce = (value) => value ?? 0
+const coerceFor = (isPbs) => isPbs ? zeroCoerce : identityCoerce
 
 class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
@@ -47,7 +53,8 @@ class ConditionEvaluatorV2 {
           operator
         })
         const rightTotal = this.unaryTargetTotal(conditionNode, analysis)
-        return this.compare({ comparator: conditionNode.comparator, leftTotal, rightTotal })
+        const coerce = coerceFor(conditionNode.target === "prior_board_state")
+        return compareTotals(conditionNode.comparator, coerce(leftTotal), coerce(rightTotal))
       })
     }
 
@@ -55,7 +62,10 @@ class ConditionEvaluatorV2 {
       return profileCollector.measure('condition.v2.relational', () => {
         const operator = conditionNode.operator
         if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
-        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) { return false }
+        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) {
+          profileCollector.increment('condition.v2.relational.failed.singular_actors')
+          return false
+        }
         const result = analysis.relationalResult({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
@@ -65,36 +75,62 @@ class ConditionEvaluatorV2 {
         const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
         const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
         if (!subjectComparisonPresent && !targetComparisonPresent) {
-          return result.pairs.length > 0
+          const passed = result.pairs.length > 0
+          if (!passed) { profileCollector.increment('condition.v2.relational.failed.no_pairs_no_comparison') }
+          return passed
         }
         const subjectMetric = conditionNode.subjectComparisonMetric
         const targetMetric = conditionNode.targetComparisonMetric
         if (subjectMetric === "individual_value" || subjectMetric === "aggregate_value" ||
             targetMetric === "individual_value" || targetMetric === "aggregate_value") {
-          const subjectReferenceTotal = subjectComparisonPresent
-            ? this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
+          const subjectCoerce = coerceFor(conditionNode.subjectComparisonSource === "prior_board_state")
+          const targetCoerce = coerceFor(conditionNode.targetComparisonSource === "prior_board_state")
+          const subjectReference = subjectComparisonPresent
+            ? subjectCoerce(this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis }))
             : null
-          const targetReferenceTotal = targetComparisonPresent
-            ? this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
+          const targetReference = targetComparisonPresent
+            ? targetCoerce(this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis }))
             : null
-          return analysis.evaluateRelationalValueMetrics({
+          const passed = analysis.evaluateRelationalValueMetrics({
             pairs: result.pairs,
             subjectMetric: subjectComparisonPresent ? subjectMetric : null,
             subjectComparator: conditionNode.subjectComparator,
-            subjectReferenceTotal,
+            subjectReference,
+            subjectCoerce,
             targetMetric: targetComparisonPresent ? targetMetric : null,
             targetComparator: conditionNode.targetComparator,
-            targetReferenceTotal
+            targetReference,
+            targetCoerce
           })
+          if (!passed) {
+            const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+            profileCollector.increment(`condition.v2.relational.failed.value_metrics.${subCause}`)
+            if (subCause === 'comparison') {
+              const priorPairs = analysis.relationalResult({
+                subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
+                subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+                target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
+                targetFilterMode: conditionNode.targetFilterMode || null,
+                boardScope: 'prior'
+              }).pairs
+              profileCollector.increment(`condition.v2.relational.failed.value_metrics.comparison.prior_pairs_${priorPairs.length === 0 ? 'zero' : 'nonzero'}`)
+            }
+          }
+          return passed
         }
         const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
         const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
-        return subjectPasses && targetPasses
+        const passed = subjectPasses && targetPasses
+        if (!passed) {
+          const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+          profileCollector.increment(`condition.v2.relational.failed.non_value_metrics.${subCause}`)
+        }
+        return passed
       })
     }
 
     unarySideCanEvaluate({ actor, filter = "any", filterMode = null, operator, role = "subject" }, analysis) {
-      if (!analysis.singularActor(actor)) { return true }
+      if (!SINGULAR_ACTORS.has(actor)) { return true }
       if (role === "subject" && operator === "count") { return true }
       if (operator === "mobility") {
         return analysis.singularActorPresentForMobility({
@@ -154,34 +190,18 @@ class ConditionEvaluatorV2 {
       })
     }
 
-    compare({ comparator, leftTotal, rightTotal }) {
-      if (leftTotal === null || rightTotal === null) { return false }
-      switch (comparator) {
-        case "equal_to":
-          return leftTotal === rightTotal
-        case "greater_than":
-          return leftTotal > rightTotal
-        case "less_than":
-          return leftTotal < rightTotal
-        case "greater_than_or_equal_to":
-          return leftTotal >= rightTotal
-        case "less_than_or_equal_to":
-          return leftTotal <= rightTotal
-        default:
-          throw new Error(`Unknown V2 comparator: ${comparator}`)
-      }
-    }    
-    
     evaluateRelationalSubjectComparison(conditionNode, analysis, result) {
       const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions: result.subjectPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal })
+      const coerce = coerceFor(conditionNode.subjectComparisonSource === "prior_board_state")
+      return compareTotals(conditionNode.subjectComparator, coerce(subjectTotal), coerce(referenceTotal))
     }
 
     evaluateRelationalTargetComparison(conditionNode, analysis, result) {
       const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions: result.targetPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal })
+      const coerce = coerceFor(conditionNode.targetComparisonSource === "prior_board_state")
+      return compareTotals(conditionNode.targetComparator, coerce(targetTotal), coerce(referenceTotal))
     }
 
     relationalComparisonReferenceTotal({ side, conditionNode, analysis }) {
@@ -238,7 +258,7 @@ class ConditionEvaluatorV2 {
           operator: conditionNode.operator
         })
 
-        return this.compare({ comparator: conditionNode.comparator, leftTotal: metricTotal, rightTotal: conditionNode.targetTotal })
+        return compareTotals(conditionNode.comparator, metricTotal, conditionNode.targetTotal)
       })
     }
 

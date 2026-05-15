@@ -2,7 +2,7 @@ import Board from "gameplay/board"
 import { materialValue, relativeRank, relativeToAbsolutePosition } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
 import { relationalActorPositions } from "bot_execution/actor_positions"
-import { compareValues } from "bot_execution/utils"
+import { aggregateOrNull, compareValues } from "bot_execution/utils"
 
 const AFTER_BOARD = "after"
 
@@ -22,9 +22,9 @@ export function positionMetricTotal(analysis, { positions, operator, boardScope 
       case "count":
         return positions.length
       case "value":
-        return positions.reduce((sum, position) => sum + materialValue(board.pieceTypeAt(position)), 0)
+        return aggregateOrNull(positions, position => materialValue(board.pieceTypeAt(position)))
       case "mobility":
-        return positions.reduce((sum, position) => sum + analysis.positionMobility(position, boardScope), 0)
+        return aggregateOrNull(positions, position => analysis.positionMobility(position, boardScope))
       default:
         throw new Error(`Unsupported position metric operator: ${operator}`)
     }

@@ -17,7 +17,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
-  compareValue, piecesIntoBoard, qualifyingPairs, subjectsRelatedToTarget
+  compareValue, buildLayoutAndBoard, qualifyingPairs, subjectsRelatedToTarget
 } from '../hint_compiler'
 import { ACTOR_TO_VAR_KEY } from '../chain_constraints'
 import { respectsInventoryCaps } from '../inventory_protocol'
@@ -79,7 +79,7 @@ function addQualifyingSubject(pieces, hint, ctx, anchorTargetPositions) {
         if (pieces.has(subjectPos)) { continue }
         const next = placePiece(pieces, subjectPos, pieceCode(hint.subject.team, subjectSpecies))
         if (!next) { continue }
-        const board = piecesIntoBoard(next, movingTeam)
+        const board = buildLayoutAndBoard(next, movingTeam)
         const subjects = subjectsRelatedToTarget({
           board, operator: hint.operator, targetPosition: targetPos,
           subjectTeam: hint.subject.team
@@ -109,7 +109,7 @@ function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
         if (pieces.has(targetPos)) { continue }
         const next = placePiece(pieces, targetPos, pieceCode(hint.target.team, targetSpecies))
         if (!next) { continue }
-        const board = piecesIntoBoard(next, movingTeam)
+        const board = buildLayoutAndBoard(next, movingTeam)
         const subjects = subjectsRelatedToTarget({
           board, operator: hint.operator, targetPosition: targetPos,
           subjectTeam: hint.subject.team
@@ -127,7 +127,7 @@ function addQualifyingTarget(pieces, hint, ctx, anchorSubjectPositions) {
 export function relationCountStrategy(pieces, hint, ctx) {
   if (hint.frame !== 'current') { return null }
 
-  const board = piecesIntoBoard(pieces, ctx.movingTeam)
+  const board = buildLayoutAndBoard(pieces, ctx.movingTeam)
   const pairs = qualifyingPairs(pieces, board, hint)
 
   const positionsOnSide = new Set(

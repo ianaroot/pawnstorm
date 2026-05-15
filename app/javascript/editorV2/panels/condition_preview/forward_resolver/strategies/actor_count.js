@@ -29,6 +29,12 @@ function neededAdditions(countOp, n, current) {
 export function actorCountStrategy(pieces, hint, ctx) {
   if (hint.frame !== 'current') { return null }
 
+  // Capture-event actors should be routed to CAPTURE_EXISTENCE in the compiler;
+  // ACTOR_COUNT's after-board piece-count semantics don't apply to them. Bail
+  // defensively in case a future code path reaches us without going through
+  // the compiler's routing.
+  if (hint.actor === 'captured_piece' || hint.actor === 'enemy_captured_piece') { return null }
+
   let currentCount = 0
   for (const [, piece] of pieces.entries()) {
     if (piece.charAt(0) !== hint.team) { continue }
