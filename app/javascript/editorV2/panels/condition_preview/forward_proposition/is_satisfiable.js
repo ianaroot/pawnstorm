@@ -51,7 +51,8 @@ function countContradicts(demander, capper, demanderSquares, capperSquares) {
 
 function squaresOf(region) {
   if (region.kind === 'all') { return new Set(ALL_POSITIONS) }
-  return region.squares
+  if (region.kind === 'set') { return region.squares }
+  throw new Error(`isSatisfiable.squaresOf: unsupported region kind '${region.kind}' (expected 'all' or 'set'; 'related-to' should be filtered upstream)`)
 }
 
 function setDifferenceSize(a, b) {

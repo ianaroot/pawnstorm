@@ -190,5 +190,15 @@ describe('isSatisfiable', () => {
       })
       expect(isSatisfiable(ctx)).toBe(true)
     })
+
+    it('throws a helpful error when an unsupported region kind reaches the contradiction check', () => {
+      const ctx = defaultCtx({
+        propositions: [
+          prop({ species: [Board.QUEEN], region: { kind: 'mystery' }, countMin: 1 }),
+          prop({ species: ALL_SPECIES, region: { kind: 'set', squares: new Set([H1]) }, countMax: 0 })
+        ]
+      })
+      expect(() => isSatisfiable(ctx)).toThrow(/unsupported region kind 'mystery'/)
+    })
   })
 })
