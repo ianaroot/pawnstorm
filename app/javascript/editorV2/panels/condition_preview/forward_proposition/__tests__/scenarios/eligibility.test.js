@@ -30,4 +30,16 @@ describe('eligibleScenariosFor', () => {
     const eligible = eligibleScenariosFor(plan, [kingsideCastleScenario, queensideCastleScenario])
     expect(eligible).toEqual([])
   })
+
+  it('filters out a castle scenario when chain demands enough queens on the home rank to force overlap with the castle emptiness', () => {
+    const plan = buildCombinedPlan([{
+      version: 2, kind: 'position',
+      subject: 'allied', subjectFilter: 'queen',
+      positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 1,
+      operator: 'count', comparator: 'greater_than_or_equal_to',
+      target: 'exact_number', targetTotal: 8
+    }])
+    const eligible = eligibleScenariosFor(plan, [kingsideCastleScenario, queensideCastleScenario])
+    expect(eligible).toEqual([])
+  })
 })
