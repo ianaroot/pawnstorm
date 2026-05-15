@@ -1,6 +1,8 @@
 import { QUEEN_RAY_STEPS, nextPositionOnRay } from 'gameplay/board_query_utils'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { originCandidatesForSpecies, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import {
+  originCandidatesForSpecies, walkRay, raySliderSpeciesForStep, SLIDER_SPECIES
+} from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   movedPieceRoleIn, singularSquare, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
@@ -15,7 +17,16 @@ export const movedPieceObstructsInAttackOrDefend = {
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
     // Obstructs only fires when moved_piece isn't a relation participant —
     // participates owns the bound-singular case.
-    return movedPieceRoleIn(entry) === null
+    if (movedPieceRoleIn(entry) !== null) { return false }
+    // The mechanism's premise is "A attacks T along a queen-ray, blocked by
+    // moved_piece's position." That premise only holds when A is a ray-
+    // compatible slider. Skip when subject species can't slide at all.
+    const subjectSpecies = entry.subjectProposition?.species_set
+    if (!subjectSpecies) { return false }
+    for (const sp of subjectSpecies) {
+      if (SLIDER_SPECIES.has(sp)) { return true }
+    }
+    return false
   },
 
   apply(entry, ctx, pieces, random) {
@@ -40,16 +51,18 @@ function applyMinus(entry, ctx, pieces, random) {
   if (subjectSide == null || targetSide == null) { return null }
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
+    const narrowedSubject = narrowSubjectForStep(subjectSide, step)
+    if (narrowedSubject === null) { continue }
     const positiveRay = walkRay(destination, step)
     const negativeRay = walkRay(destination, -step)
     const result = tryFlankingPlacement({
       attackerRay: positiveRay, targetRay: negativeRay,
-      subjectSide, targetSide, ctx, pieces, random, destination
+      subjectSide: narrowedSubject, targetSide, ctx, pieces, random, destination
     })
     if (result !== null) { return result }
     const swapped = tryFlankingPlacement({
       attackerRay: negativeRay, targetRay: positiveRay,
-      subjectSide, targetSide, ctx, pieces, random, destination
+      subjectSide: narrowedSubject, targetSide, ctx, pieces, random, destination
     })
     if (swapped !== null) { return swapped }
   }
@@ -74,22 +87,34 @@ function applyPlus(entry, ctx, pieces, random) {
 
   for (const origin of shuffled(possibleOrigins, random)) {
     for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
+      const narrowedSubject = narrowSubjectForStep(subjectSide, step)
+      if (narrowedSubject === null) { continue }
       const positiveRay = walkRayFromOriginAvoidingDestination(origin, step, destination)
       const negativeRay = walkRayFromOriginAvoidingDestination(origin, -step, destination)
       if (positiveRay === null || negativeRay === null) { continue }
       const result = tryFlankingPlacementAroundOrigin({
         origin, attackerRay: positiveRay, targetRay: negativeRay,
-        subjectSide, targetSide, ctx, pieces, random
+        subjectSide: narrowedSubject, targetSide, ctx, pieces, random
       })
       if (result !== null) { return result }
       const swapped = tryFlankingPlacementAroundOrigin({
         origin, attackerRay: negativeRay, targetRay: positiveRay,
-        subjectSide, targetSide, ctx, pieces, random
+        subjectSide: narrowedSubject, targetSide, ctx, pieces, random
       })
       if (swapped !== null) { return swapped }
     }
   }
   return null
+}
+
+function narrowSubjectForStep(subjectSide, step) {
+  const compatible = raySliderSpeciesForStep(step)
+  const narrowed = new Set()
+  for (const sp of compatible) {
+    if (subjectSide.species_set.has(sp)) { narrowed.add(sp) }
+  }
+  if (narrowed.size === 0) { return null }
+  return { ...subjectSide, species_set: narrowed }
 }
 
 // Walk a ray from `origin` in direction `step`, returning null if the ray

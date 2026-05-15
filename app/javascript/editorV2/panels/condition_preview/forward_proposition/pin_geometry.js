@@ -3,7 +3,7 @@ import { nextPositionOnRay } from 'gameplay/board_query_utils'
 import {
   shuffled, pieceCode, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { shieldAttackerSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { raySliderSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { respectsAllCaps } from './respect_caps'
 
@@ -14,7 +14,7 @@ import { respectsAllCaps } from './respect_caps'
 // Otherwise places a new slider on an empty square in the ray (legal +
 // cap-respecting).
 export function placeSliderBeyondTarget({ pieces, attackerTeam, targetPos, step, ctx, random }) {
-  const compatibleSliders = shieldAttackerSpeciesForStep(step)
+  const compatibleSliders = raySliderSpeciesForStep(step)
 
   const candidates = []
   let current = nextPositionOnRay(targetPos, step)

@@ -2,7 +2,7 @@ import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import { nextPositionOnRay, controlledSquares } from 'gameplay/board_query_utils'
 import {
-  RAY_STEPS, shieldAttackerSpeciesForStep, originCandidatesForSpecies,
+  RAY_STEPS, raySliderSpeciesForStep, originCandidatesForSpecies,
   adjacentNeighborPositions
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { candidateSpecies, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
@@ -110,7 +110,7 @@ function generateShieldDecreaseCapture({ driver, combinedPlan, random }) {
     step = pickRandom(stepsForSpecies, random)
   } else {
     step = pickRandom([...RAY_STEPS], random)
-    attackerSpecies = pickRandom(shieldAttackerSpeciesForStep(step), random)
+    attackerSpecies = pickRandom(raySliderSpeciesForStep(step), random)
     if (!attackerSpecies) { return null }
   }
 
