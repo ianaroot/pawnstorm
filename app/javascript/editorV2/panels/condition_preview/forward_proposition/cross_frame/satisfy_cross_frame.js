@@ -1,3 +1,4 @@
+import profileCollector from 'gameplay/profile_collector'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
@@ -32,21 +33,34 @@ export function satisfyCrossFrame(ctx, pieces, random) {
   if (entries.length === 0) { return pieces }
 
   for (const entry of shuffled(entries, random)) {
+    profileCollector.increment(`forward_proposition.cross_frame.entry_seen.${entry.metric}.${entry.operator}`)
     const applicable = MECHANISMS.filter(m => m.appliesTo(entry, ctx, pieces))
+    // Mechanisms chain via `pieces`: a non-null return is kept and the next
+    // mechanism builds on it. entrySatisfied gates the chain — false keeps
+    // iterating, true breaks. Count attack/defend uses chaining (each call
+    // adds one attacker); other operators are one-shot (unconditional true).
     for (const mechanism of shuffled(applicable, random)) {
+      profileCollector.increment(`forward_proposition.cross_frame.mech_applies.${mechanism.name}.${entry.metric}.${entry.operator}`)
       const next = mechanism.apply(entry, ctx, pieces, random)
       if (next === null) { continue }
+      profileCollector.increment(`forward_proposition.cross_frame.mech_applied.${mechanism.name}.${entry.metric}.${entry.operator}`)
       pieces = next
-      if (entrySatisfied(entry, ctx, pieces)) { break }
+      const satisfied = entrySatisfied(entry, ctx, pieces)
+      profileCollector.increment(`forward_proposition.cross_frame.entry_satisfied.${satisfied ? 'true' : 'false'}.${entry.metric}.${entry.operator}`)
+      if (satisfied) {
+        profileCollector.increment(`forward_proposition.cross_frame.mech_won.${mechanism.name}.${entry.metric}.${entry.operator}`)
+        break
+      }
     }
   }
   return pieces
 }
 
-// Direct metric check on (afterPieces, priorPieces). Currently supports
-// count metric on attack/defend relations — the metrics produced by our
-// only mechanism today. Other metrics are treated as "assume satisfied"
-// until a mechanism that needs them lands.
+// Chain-control gate (see satisfyCrossFrame). True breaks the mechanism
+// loop, false keeps it chaining. Only count attack/defend uses a real
+// after-vs-prior count check; one-shot operators (adjacent, shield,
+// aggregate_*) return true unconditionally so the first non-null mechanism
+// wins.
 function entrySatisfied(entry, ctx, afterPieces) {
   if (entry.metric !== 'count') { return true }
   if (entry.operator !== 'attack' && entry.operator !== 'defend') { return true }

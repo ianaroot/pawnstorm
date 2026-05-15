@@ -163,3 +163,104 @@ describe('movedPieceObstructsInAttackOrDefend — apply returns null when priorR
     expect(result).toBeNull()
   })
 })
+
+describe('movedPieceObstructsInAttackOrDefend — appliesTo gates on slider subject species', () => {
+  it('returns false when subject species is knight only', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    expect(movedPieceObstructsInAttackOrDefend.appliesTo(
+      entry({ subjectSpecies: new Set([Board.NIGHT]) }),
+      ctx, new Map()
+    )).toBe(false)
+  })
+
+  it('returns false for pawn-only and king-only subjects', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    expect(movedPieceObstructsInAttackOrDefend.appliesTo(
+      entry({ subjectSpecies: new Set([Board.PAWN]) }), ctx, new Map()
+    )).toBe(false)
+    expect(movedPieceObstructsInAttackOrDefend.appliesTo(
+      entry({ subjectSpecies: new Set([Board.KING]) }), ctx, new Map()
+    )).toBe(false)
+  })
+
+  it('returns true when subject mixes a non-slider with a slider', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    expect(movedPieceObstructsInAttackOrDefend.appliesTo(
+      entry({ subjectSpecies: new Set([Board.NIGHT, Board.QUEEN]) }),
+      ctx, new Map()
+    )).toBe(true)
+  })
+})
+
+describe('movedPieceObstructsInAttackOrDefend — narrows subject species per ray step', () => {
+  it('with bishop-only subject, the placed attacker is diagonally aligned with destination', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+
+    const result = movedPieceObstructsInAttackOrDefend.apply(
+      entry({ direction: '-', subjectSpecies: new Set([Board.BISHOP]) }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).not.toBeNull()
+    const bishopPositions = positionsOfPiece(result, Board.BLACK, Board.BISHOP)
+    expect(bishopPositions.length).toBeGreaterThan(0)
+    for (const pos of bishopPositions) {
+      expect(isDiagonalTo(pos, D4)).toBe(true)
+    }
+  })
+
+  it('with rook-only subject, the placed attacker is orthogonally aligned with destination', () => {
+    const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+
+    const result = movedPieceObstructsInAttackOrDefend.apply(
+      entry({ direction: '-', subjectSpecies: new Set([Board.ROOK]) }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).not.toBeNull()
+    const rookPositions = positionsOfPiece(result, Board.BLACK, Board.ROOK)
+    expect(rookPositions.length).toBeGreaterThan(0)
+    for (const pos of rookPositions) {
+      expect(isOrthogonalTo(pos, D4)).toBe(true)
+    }
+  })
+
+  it('direction "+": with bishop-only subject, placed attacker is on a diagonal from placed target', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedPieceSingular(Board.QUEEN, new Set([D4])) }
+    })
+    const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+
+    const result = movedPieceObstructsInAttackOrDefend.apply(
+      entry({ direction: '+', subjectSpecies: new Set([Board.BISHOP]) }),
+      ctx, pieces, () => 0.5
+    )
+
+    expect(result).not.toBeNull()
+    const bishopPositions = positionsOfPiece(result, Board.BLACK, Board.BISHOP)
+    expect(bishopPositions.length).toBe(1)
+    const newPositions = [...result.keys()].filter(p => p !== D4 && p !== bishopPositions[0])
+    expect(newPositions.length).toBe(1)
+    expect(isDiagonalTo(bishopPositions[0], newPositions[0])).toBe(true)
+  })
+})
+
+function positionsOfPiece(pieces, team, species) {
+  const code = pieceCode(team, species)
+  return [...pieces.entries()].filter(([_, c]) => c === code).map(([pos]) => pos)
+}
+
+function isDiagonalTo(a, b) {
+  const fileDiff = Math.abs((a % 8) - (b % 8))
+  const rankDiff = Math.abs(Math.floor(a / 8) - Math.floor(b / 8))
+  return fileDiff === rankDiff && fileDiff > 0
+}
+
+function isOrthogonalTo(a, b) {
+  if (a === b) { return false }
+  const sameFile = (a % 8) === (b % 8)
+  const sameRank = Math.floor(a / 8) === Math.floor(b / 8)
+  return sameFile || sameRank
+}

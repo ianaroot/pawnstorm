@@ -2,7 +2,7 @@ import Board from 'gameplay/board'
 import { QUEEN_RAY_STEPS } from 'gameplay/board_query_utils'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
-  originCandidatesForSpecies, shieldAttackerSpeciesForStep, walkRay
+  originCandidatesForSpecies, raySliderSpeciesForStep, walkRay
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   movedPieceRoleIn, singularSquare, ensureRolePieceAt, commitPriorRegion
@@ -41,7 +41,7 @@ function applyMinus(entry, ctx, pieces, random) {
   const attackerTeam = Board.opposingTeam(alliedTeam)
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-    const sliders = shieldAttackerSpeciesForStep(step)
+    const sliders = raySliderSpeciesForStep(step)
     if (sliders.length === 0) { continue }
     const aSeg = tryInterceptOnASegment({
       destination, step, attackerTeam, sliders, subjectSide, targetSide, ctx, pieces, random
@@ -164,7 +164,7 @@ function applyPlus(entry, ctx, pieces, random) {
 
   for (const origin of shuffled(origins, random)) {
     for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-      const sliders = shieldAttackerSpeciesForStep(step)
+      const sliders = raySliderSpeciesForStep(step)
       if (sliders.length === 0) { continue }
       const result = tryShieldThroughOrigin({
         origin, step, destination, attackerTeam, sliders,

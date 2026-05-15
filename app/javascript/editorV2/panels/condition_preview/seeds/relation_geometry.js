@@ -5,7 +5,7 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
-  RAY_STEPS, adjacentNeighborPositions, shieldAttackerSpeciesForStep
+  RAY_STEPS, adjacentNeighborPositions, raySliderSpeciesForStep
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { buildCandidateSkeletons } from 'editorV2/panels/condition_preview/seeds/skeleton_builders'
 import { shuffled, ALL_POSITIONS } from '../shared/board_utils'
@@ -81,7 +81,7 @@ function placeAdjacentExtras({ plan, side, extraSpecies, anchorPosition, current
 }
 
 function findShieldAttackerOnRay({ originPosition, step, occupied, random }) {
-  const speciesOptions = shuffled(shieldAttackerSpeciesForStep(step), random)
+  const speciesOptions = shuffled(raySliderSpeciesForStep(step), random)
   for (let distance = 1; distance <= 3; distance += 1) {
     let position = originPosition
     let valid = true

@@ -139,13 +139,15 @@ function benchmarkPayload({ name, payload }, attempts) {
     attempts
   })
   const totalMs = performance.now() - started
+  const snapshot = profileCollector.snapshot()
   return {
     name,
     attempts,
     verified: produced["forward-proposition"],
     total_ms: Number(totalMs.toFixed(2)),
     avg_ms_per_attempt: Number((totalMs / attempts).toFixed(4)),
-    timings: relevantTimings(profileCollector.snapshot())
+    timings: relevantTimings(snapshot),
+    counters: relevantCounters(snapshot)
   }
 }
 
@@ -159,6 +161,16 @@ function relevantTimings(snapshot) {
       total_ms: Number(data.total_ms.toFixed(2)),
       avg_ms: Number((data.total_ms / data.count).toFixed(4))
     }
+  }
+  return result
+}
+
+function relevantCounters(snapshot) {
+  const result = {}
+  if (!snapshot) { return result }
+  for (const [label, value] of Object.entries(snapshot.counters ?? {})) {
+    if (!PROFILE_LABEL_PREFIXES.some(p => label.startsWith(p))) { continue }
+    result[label] = value
   }
   return result
 }

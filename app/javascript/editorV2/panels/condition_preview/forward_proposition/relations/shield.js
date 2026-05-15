@@ -4,7 +4,7 @@ import {
   shuffled, pieceCode, legalPlacementForSpecies, pickWeightedSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { shieldAttackerSpeciesForStep, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { raySliderSpeciesForStep, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS,
   shieldingPositions, nextPositionOnRay
@@ -119,7 +119,7 @@ function tryAsBystander(relation, pieces, ctx, random) {
     if (piecesWithTarget === null) { continue }
 
     for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-      const compatibleSliders = shieldAttackerSpeciesForStep(step)
+      const compatibleSliders = raySliderSpeciesForStep(step)
       const lineSquares = walkRay(target.position, step)
       const placed = tryPlaceShielderAndAttackerFromTarget({
         relation, attackerTeam, compatibleSliders,
@@ -150,7 +150,7 @@ function tryAsTarget(relation, pieces, ctx, random, actorKey) {
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = shieldAttackerSpeciesForStep(step)
+    const compatibleSliders = raySliderSpeciesForStep(step)
     const lineSquares = walkRay(targetPos, step)
     const placed = tryPlaceShielderAndAttackerFromTarget({
       relation, attackerTeam, compatibleSliders,
@@ -167,7 +167,7 @@ function tryAsShielder(relation, pieces, ctx, random, actorKey) {
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = shieldAttackerSpeciesForStep(step)
+    const compatibleSliders = raySliderSpeciesForStep(step)
     const towardTarget = walkRay(shielderPos, -step)
     const towardAttacker = walkRay(shielderPos, step)
     const placed = tryPlaceTargetAndAttackerFromShielder({

@@ -4,13 +4,11 @@ import {
 } from 'gameplay/board_query_utils'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
-  originCandidatesForSpecies, shieldAttackerSpeciesForStep, walkRay
+  originCandidatesForSpecies, raySliderSpeciesForStep, walkRay, SLIDER_SPECIES
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   singularSquare, ensureRolePieceAt, commitPriorRegion, movedPieceRoleIn
 } from './participates_helpers'
-
-const SLIDER_SPECIES = new Set([Board.ROOK, Board.BISHOP, Board.QUEEN])
 
 export const movedPieceParticipatesShield = {
   name: 'moved-piece-participates-shield',
@@ -80,7 +78,7 @@ function applyShielder(entry, ctx, pieces, random) {
   const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-    const compatibleSliders = shieldAttackerSpeciesForStep(step)
+    const compatibleSliders = raySliderSpeciesForStep(step)
     if (compatibleSliders.length === 0) { continue }
     const result = placeTargetAndAttackerAroundShielder({
       destination, step, alliedTeam, attackerTeam,
@@ -109,7 +107,7 @@ function applyShielderMinus(entry, ctx, pieces, random) {
 
   for (const origin of shuffled(origins, random)) {
     for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-      const compatibleSliders = shieldAttackerSpeciesForStep(step)
+      const compatibleSliders = raySliderSpeciesForStep(step)
       if (compatibleSliders.length === 0) { continue }
       const towardTarget = rayPositionsAvoiding(origin, -step, destination)
       const towardAttacker = rayPositionsAvoiding(origin, step, destination)
@@ -205,7 +203,7 @@ function applyShielded(entry, ctx, pieces, random) {
   const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
 
   for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-    const compatibleSliders = shieldAttackerSpeciesForStep(step)
+    const compatibleSliders = raySliderSpeciesForStep(step)
     if (compatibleSliders.length === 0) { continue }
     const result = placeShielderAndAttackerThroughTarget({
       destination, step, alliedTeam, attackerTeam,
@@ -234,7 +232,7 @@ function applyShieldedMinus(entry, ctx, pieces, random) {
 
   for (const origin of shuffled(origins, random)) {
     for (const step of shuffled([...QUEEN_RAY_STEPS], random)) {
-      const compatibleSliders = shieldAttackerSpeciesForStep(step)
+      const compatibleSliders = raySliderSpeciesForStep(step)
       if (compatibleSliders.length === 0) { continue }
       const lineSquares = rayPositionsAvoiding(origin, step, destination)
       if (lineSquares === null) { continue }
