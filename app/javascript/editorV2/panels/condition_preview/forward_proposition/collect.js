@@ -1,3 +1,4 @@
+import profileCollector from 'gameplay/profile_collector'
 import { Candidate } from '../shared/candidate'
 import { CandidateVerifier } from '../shared/candidate_verifier'
 import { ExampleFactory } from '../shared/example_factory'
@@ -26,9 +27,16 @@ export function collectForwardPropositionExamples({
       if (standardExamples.length >= maxStandardSize) { return }
       if (Date.now() > deadline) { return }
       const result = buildAttempt(combinedPlan, random, scenario)
-      if (!result) { continue }
+      if (!result) {
+        profileCollector.increment('forward_proposition.attempt.build_failed')
+        continue
+      }
       const candidate = new Candidate({ priorBoard: result.priorBoard, moveObject: result.moveObject })
-      if (!verifier.isVerified(candidate)) { continue }
+      if (!verifier.isVerified(candidate)) {
+        profileCollector.increment('forward_proposition.attempt.verifier_rejected')
+        continue
+      }
+      profileCollector.increment('forward_proposition.attempt.verifier_passed')
       const example = factory.build(candidate, { generationPath: 'forward-proposition', geometryKey: 'forward' })
       if (!example) { continue }
       produced['forward-proposition'] += 1

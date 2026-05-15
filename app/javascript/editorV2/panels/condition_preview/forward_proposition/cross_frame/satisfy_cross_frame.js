@@ -1,3 +1,4 @@
+import profileCollector from 'gameplay/profile_collector'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
@@ -32,12 +33,20 @@ export function satisfyCrossFrame(ctx, pieces, random) {
   if (entries.length === 0) { return pieces }
 
   for (const entry of shuffled(entries, random)) {
+    profileCollector.increment(`forward_proposition.cross_frame.entry_seen.${entry.metric}.${entry.operator}`)
     const applicable = MECHANISMS.filter(m => m.appliesTo(entry, ctx, pieces))
     for (const mechanism of shuffled(applicable, random)) {
+      profileCollector.increment(`forward_proposition.cross_frame.mech_applies.${mechanism.name}.${entry.metric}.${entry.operator}`)
       const next = mechanism.apply(entry, ctx, pieces, random)
       if (next === null) { continue }
+      profileCollector.increment(`forward_proposition.cross_frame.mech_applied.${mechanism.name}.${entry.metric}.${entry.operator}`)
       pieces = next
-      if (entrySatisfied(entry, ctx, pieces)) { break }
+      const satisfied = entrySatisfied(entry, ctx, pieces)
+      profileCollector.increment(`forward_proposition.cross_frame.entry_satisfied.${satisfied ? 'true' : 'false'}.${entry.metric}.${entry.operator}`)
+      if (satisfied) {
+        profileCollector.increment(`forward_proposition.cross_frame.mech_won.${mechanism.name}.${entry.metric}.${entry.operator}`)
+        break
+      }
     }
   }
   return pieces
