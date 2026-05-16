@@ -11,6 +11,7 @@ import {
   comparisonRequirementsFromDescriptors,
   valueComparisonAllowsEmpty
 } from 'editorV2/panels/condition_preview/plans/comparison_requirements'
+import { valueSourceOptions as kingInclusiveValueSourceOptions } from 'editorV2/panels/condition_preview/plans/value_source_options'
 
 const ALL_MOVE_KINDS = Object.freeze([MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT])
 
@@ -73,7 +74,7 @@ function mergeConstraints(base, extra) {
 function expandDescriptorVariants(descriptors) {
   return descriptors.reduce((variants, descriptor) => {
     const options = isValueMetric(descriptor.metric)
-      ? valueSourceOptions(descriptor)
+      ? kingInclusiveValueSourceOptions(descriptor)
       : [{ resolvedTotal: descriptor.total, constraints: {} }]
 
     const nextVariants = []
@@ -320,7 +321,6 @@ const CONTRADICTION_DETECTORS = [
   detectSingularActorWithImpossibleCount,
   detectSingularActorWithImpossibleUnaryCount,
   detectMovedPieceWithCountZero,
-  detectSingularActorWithAggregateValue,
   detectFilterMatchesNoSpecies
 ]
 

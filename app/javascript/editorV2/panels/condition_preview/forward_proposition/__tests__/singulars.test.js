@@ -147,7 +147,7 @@ describe('buildSingulars — unary value narrowing on singular subject', () => {
     }])
     const singulars = buildSingulars(combinedPlan)
 
-    expect(singulars.moved_piece.species_set).toEqual(new Set([Board.QUEEN]))
+    expect(singulars.moved_piece.species_set).toEqual(new Set([Board.QUEEN, Board.KING]))
   })
 
   it('narrows species_set to species whose materialValue satisfies value = target (exact match)', () => {
@@ -232,8 +232,38 @@ describe('buildSingulars — relational singular value comparison', () => {
     const singulars = buildSingulars(combinedPlan)
 
     expect(singulars.moved_piece.species_set.has(Board.PAWN)).toBe(false)
-    expect(singulars.moved_piece.species_set.has(Board.KING)).toBe(false)
+    expect(singulars.moved_piece.species_set.has(Board.KING)).toBe(true)
     expect(singulars.moved_piece.species_set.has(Board.NIGHT)).toBe(true)
+    expect(singulars.moved_piece.species_set.has(Board.QUEEN)).toBe(true)
+  })
+
+  it('excludes the king from moved_piece when its value must be less than a capturable piece', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparator: 'less_than',
+      subjectComparisonMetric: 'individual_value',
+      subjectComparisonSource: 'captured_piece'
+    }])
+    const singulars = buildSingulars(combinedPlan)
+
+    expect(singulars.moved_piece.species_set.has(Board.KING)).toBe(false)
+  })
+
+  it('keeps the queen in moved_piece when value < enemy_moved_piece, since enemy_moved_piece can be a king', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'moved_piece', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'enemy', targetFilter: 'any',
+      subjectComparator: 'less_than',
+      subjectComparisonMetric: 'individual_value',
+      subjectComparisonSource: 'enemy_moved_piece'
+    }])
+    const singulars = buildSingulars(combinedPlan)
+
     expect(singulars.moved_piece.species_set.has(Board.QUEEN)).toBe(true)
   })
 })

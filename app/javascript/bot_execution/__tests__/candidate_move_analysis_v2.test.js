@@ -136,7 +136,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toBe(4)
     })
 
-    it('keeps king value as zero in aggregate value totals', () => {
+    it('returns Infinity for a king-containing aggregate value total', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -155,7 +155,7 @@ describe('CandidateMoveAnalysisV2', () => {
           filter: 'any',
           operator: 'value'
         })
-      ).toBe(6)
+      ).toBe(Infinity)
     })
   })
 
@@ -1219,6 +1219,26 @@ describe('CandidateMoveAnalysisV2', () => {
 
       it('returns 0 for count when the moved piece does not match the filter', () => {
         expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('individualComparableValue', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns canonical material value for non-king species', () => {
+        expect(analysis.individualComparableValue(Board.PAWN)).toBe(1)
+        expect(analysis.individualComparableValue(Board.ROOK)).toBe(5)
+        expect(analysis.individualComparableValue(Board.QUEEN)).toBe(9)
+      })
+
+      it('returns Infinity for the king', () => {
+        expect(analysis.individualComparableValue(Board.KING)).toBe(Infinity)
       })
     })
 

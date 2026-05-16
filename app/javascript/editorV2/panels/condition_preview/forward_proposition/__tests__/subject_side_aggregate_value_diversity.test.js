@@ -59,7 +59,8 @@ function collect(seed) {
   return standardExamples
 }
 
-describe('enemy aggregate_value < 3 attack moved_piece diversity', () => {
+// Dormant: relational aggregate_value is grammar-gated. Engine retained.
+describe.skip('enemy aggregate_value < 3 attack moved_piece diversity', () => {
   // Seed-brittle: if random-consumption order shifts upstream, seed 7777's output changes and this may fail despite the feature working. Start any failure investigation by checking whether the planning path is firing at all.
   it('produces at least one example with two pawn attackers', () => {
     const examples = collect(7777)

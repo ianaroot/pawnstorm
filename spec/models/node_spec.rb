@@ -223,6 +223,62 @@ RSpec.describe Node, type: :model do
         expect(node).not_to be_valid
         expect(node.errors[:data]).to include('cannot use subject-side comparison when targetComparisonSource is prior_board_state')
       end
+
+      it 'accepts a relational individual_value comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'individual_value',
+          subjectComparator: 'greater_than',
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 0,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(node).to be_valid
+      end
+
+      it 'rejects aggregate_value as a subject relational comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'aggregate_value',
+          subjectComparator: 'greater_than',
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 0,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid subjectComparisonMetric')
+      end
+
+      it 'rejects aggregate_value as a target relational comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any',
+          targetComparisonMetric: 'aggregate_value',
+          targetComparator: 'greater_than',
+          targetComparisonSource: 'exact_number',
+          targetComparisonSourceTotal: 0
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid targetComparisonMetric')
+      end
     end
 
     it 'is valid with prototype action data' do

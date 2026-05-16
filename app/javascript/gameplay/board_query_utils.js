@@ -299,7 +299,7 @@ function pieceValue(species) {
         case Board.QUEEN:
         return 9
         case Board.KING:
-        return 0
+        return Infinity
         default:
         return 0
     }

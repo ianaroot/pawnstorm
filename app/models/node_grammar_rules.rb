@@ -54,8 +54,7 @@ class NodeGrammarRules
 
   COMPARISON_SOURCES_BY_METRIC = {
     'count' => %w[exact_number prior_board_state],
-    'individual_value' => NodeGrammarV2::COMPARISON_SOURCES,
-    'aggregate_value' => NodeGrammarV2::COMPARISON_SOURCES
+    'individual_value' => NodeGrammarV2::COMPARISON_SOURCES
   }.freeze
 
   class << self

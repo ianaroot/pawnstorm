@@ -86,7 +86,8 @@ const ATTEMPTS_PER_SEED = 200
 const MIN_EMPTY_PRIOR_DELTAS = 5
 
 describe('PBS relation diversity', () => {
-  it('shield aggregate_value > PBS produces 0→N deltas', () => {
+  // Dormant: relational aggregate_value is grammar-gated. Engine retained.
+  it.skip('shield aggregate_value > PBS produces 0→N deltas', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'enemy', subjectFilter: 'pawn', subjectFilterMode: 'exclude',
@@ -101,7 +102,7 @@ describe('PBS relation diversity', () => {
     expect(countEmptyPriorDeltas(histogram)).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
   })
 
-  it('attack aggregate_value > PBS produces 0→N deltas', () => {
+  it.skip('attack aggregate_value > PBS produces 0→N deltas', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'allied', subjectFilter: 'knight',
@@ -116,7 +117,7 @@ describe('PBS relation diversity', () => {
     expect(countEmptyPriorDeltas(histogram)).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
   })
 
-  it('defend aggregate_value > PBS produces 0→N deltas', () => {
+  it.skip('defend aggregate_value > PBS produces 0→N deltas', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'allied', subjectFilter: 'knight',
@@ -131,7 +132,7 @@ describe('PBS relation diversity', () => {
     expect(countEmptyPriorDeltas(histogram)).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
   })
 
-  it('adjacent aggregate_value > PBS produces 0→N deltas', () => {
+  it.skip('adjacent aggregate_value > PBS produces 0→N deltas', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'allied', subjectFilter: 'knight',
@@ -166,7 +167,7 @@ describe('PBS relation diversity', () => {
     expect(nToZero).toBeGreaterThanOrEqual(MIN_EMPTY_PRIOR_DELTAS)
   })
 
-  it('shield aggregate_value = PBS produces 0=0 examples', () => {
+  it.skip('shield aggregate_value = PBS produces 0=0 examples', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'enemy', subjectFilter: 'pawn', subjectFilterMode: 'exclude',

@@ -325,7 +325,7 @@ describe('emitConstraintsFromPlan — individual_value descriptor narrowing', ()
     const { propositions } = emitConstraintsFromPlan(plan)
     const [p] = propositions
 
-    expect(p.species_set).toEqual(new Set([Board.QUEEN]))
+    expect(p.species_set).toEqual(new Set([Board.QUEEN, Board.KING]))
   })
 
   it('narrows relation.subjectSide.species_set on a two-group plan when subject side has individual_value descriptor', () => {
@@ -344,7 +344,7 @@ describe('emitConstraintsFromPlan — individual_value descriptor narrowing', ()
     const { relations } = emitConstraintsFromPlan(plan)
     const [r] = relations
 
-    expect(r.subjectSide.species_set).toEqual(new Set([Board.QUEEN]))
+    expect(r.subjectSide.species_set).toEqual(new Set([Board.QUEEN, Board.KING]))
   })
 })
 

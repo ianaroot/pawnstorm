@@ -42,6 +42,24 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allied pawn/s (count > 2) : attack : Enemy bishop/s (value < Prior Board State)')
     })
 
+    it('labels the individual_value relational metric as "value"', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'pawn',
+          subjectComparisonMetric: 'individual_value',
+          subjectComparator: 'greater_than',
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 3,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'bishop'
+        }).text
+      ).toBe('Allied pawn/s (value > 3) : attack : Enemy bishop/s')
+    })
+
     it('formats unary previews in a three-block layout', () => {
       expect(
         formatConditionPreview({
@@ -68,7 +86,7 @@ describe('conditionPreviewFormatter', () => {
           target: 'enemy',
           targetFilter: 'rook'
         }).text
-      ).toBe('Allies any : aggregate value : > Enemy rook/s')
+      ).toBe('Allies any : value : > Enemy rook/s')
     })
 
     it('formats same_piece with the explicit operator phrase', () => {

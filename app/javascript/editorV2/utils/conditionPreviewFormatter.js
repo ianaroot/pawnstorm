@@ -85,7 +85,7 @@ function operatorLabel(operator) {
     case 'mobility':
       return 'mobility'
     case 'value':
-      return 'aggregate value'
+      return 'value'
     default:
       return operator
   }
@@ -102,9 +102,7 @@ function metricLabel(metric) {
     case 'value':
       return 'value'
     case 'individual_value':
-      return 'individual value'
-    case 'aggregate_value':
-      return 'aggregate value'
+      return 'value'
     default:
       return metric
   }
