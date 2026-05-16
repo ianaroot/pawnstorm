@@ -106,7 +106,6 @@ class CandidateMoveAnalysisV2 {
   }
 
   individualComparableValue(species) {
-    if (species === Board.KING) { return null }
     return materialValue(species)
   }
 

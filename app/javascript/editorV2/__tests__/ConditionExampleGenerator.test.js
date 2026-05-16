@@ -474,7 +474,10 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.reason).toMatch(/singular actor/i)
   })
 
-  it('flags contradiction when a singular actor uses aggregate_value', () => {
+  // Dormant: detectSingularActorWithAggregateValue is unregistered from
+  // CONTRADICTION_DETECTORS while aggregate_value is grammar-gated. Re-enable
+  // the detector and this test together.
+  it.skip('flags contradiction when a singular actor uses aggregate_value', () => {
     const payload = {
       version: 2, kind: 'relational',
       subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
@@ -1942,8 +1945,9 @@ describe('ConditionExampleGenerator', () => {
   })
 
   it('flags contradiction when singular actor species conflicts with inventory cap (patch 2b)', () => {
-    // moved_piece value > 5 narrows moved_piece species_set to {queen} via
-    // plan-builder. allied/queen count = 0 narrows inventory.movingTeam.current.queen
+    // moved_piece value == 9 narrows moved_piece species_set to {queen} via
+    // plan-builder (king is Infinity, not 9, so it cannot escape the cap).
+    // allied/queen count = 0 narrows inventory.movingTeam.current.queen
     // count_range to [0, 0]. Singular-actor contribution then raises that
     // count_range.min to 1 (moved_piece is a queen, on the board). Range becomes
     // [1, 0] → unsat.
@@ -1951,8 +1955,8 @@ describe('ConditionExampleGenerator', () => {
       {
         version: 2, kind: 'unary',
         subject: 'moved_piece', subjectFilter: 'any',
-        operator: 'value', comparator: 'greater_than',
-        target: 'exact_number', targetTotal: 5
+        operator: 'value', comparator: 'equal_to',
+        target: 'exact_number', targetTotal: 9
       },
       {
         version: 2, kind: 'unary',

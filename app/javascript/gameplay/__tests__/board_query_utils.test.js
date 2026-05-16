@@ -4,6 +4,7 @@ import Board from 'gameplay/board'
 import {
   controlledSquares,
   controllingPositions,
+  materialValue,
   pawnAttackPositions,
   pieceControlsSquare,
   squareClassification
@@ -12,6 +13,20 @@ import {
 import { buildBoard, position, square } from 'gameplay/__tests__/helpers'
 
 describe('board_query_utils', () => {
+  describe('materialValue', () => {
+    it('returns canonical material values for non-king species', () => {
+      expect(materialValue(Board.PAWN)).toBe(1)
+      expect(materialValue(Board.NIGHT)).toBe(3)
+      expect(materialValue(Board.BISHOP)).toBe(3)
+      expect(materialValue(Board.ROOK)).toBe(5)
+      expect(materialValue(Board.QUEEN)).toBe(9)
+    })
+
+    it('returns Infinity for the king', () => {
+      expect(materialValue(Board.KING)).toBe(Infinity)
+    })
+  })
+
   describe('squareClassification', () => {
     it('classifies empty, teammate, and opponent squares relative to the moving team', () => {
       const board = buildBoard({
