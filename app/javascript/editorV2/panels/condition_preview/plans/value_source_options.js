@@ -16,6 +16,7 @@ const VALUE_TO_SPECIES = (() => {
     if (!map.has(value)) { map.set(value, []) }
     map.get(value).push(species)
   }
+  for (const pool of map.values()) { Object.freeze(pool) }
   return map
 })()
 
