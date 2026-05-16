@@ -56,6 +56,11 @@ RSpec.describe NodeGrammarRules, type: :model do
       expect(described_class.valid_comparison_source_for_metric?(metric: 'value', source: 'moved_piece')).to be(true)
       expect(described_class.valid_comparison_source_for_metric?(metric: 'value', source: 'captured_piece')).to be(true)
     end
+
+    it 'allows distinct piece sources for individual_value but not for aggregate_value' do
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'individual_value', source: 'moved_piece')).to be(true)
+      expect(described_class.valid_comparison_source_for_metric?(metric: 'aggregate_value', source: 'moved_piece')).to be(false)
+    end
   end
 
   describe '.valid_unary_target_for_operator?' do
@@ -73,6 +78,14 @@ RSpec.describe NodeGrammarRules, type: :model do
     it 'rejects captured-piece actor targets for mobility' do
       expect(described_class.valid_unary_target_for_operator?(target: 'captured_piece', operator: 'mobility')).to be(false)
       expect(described_class.valid_unary_target_for_operator?(target: 'enemy_captured_piece', operator: 'mobility')).to be(false)
+    end
+  end
+
+  describe 'NodeGrammarV2.valid_comparison_metric?' do
+    it 'accepts count and individual_value but not aggregate_value' do
+      expect(NodeGrammarV2.valid_comparison_metric?('count')).to be(true)
+      expect(NodeGrammarV2.valid_comparison_metric?('individual_value')).to be(true)
+      expect(NodeGrammarV2.valid_comparison_metric?('aggregate_value')).to be(false)
     end
   end
 end

@@ -34,9 +34,8 @@ class NodeForm
   }.freeze
 
   COMPARISON_METRIC_LABELS = {
-    'count' => 'Count',
-    'individual_value' => 'Individual Value',
-    'aggregate_value' => 'Aggregate Value'
+    'count' => 'count',
+    'individual_value' => 'value'
   }.freeze
 
   COMPARATOR_SYMBOLS = {

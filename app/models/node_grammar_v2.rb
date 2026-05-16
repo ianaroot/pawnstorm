@@ -27,7 +27,7 @@
     POSITION_AXES = %w[rank file square].freeze
     POSITION_MOBILITY_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
 
-    COMPARISON_METRICS = %w[count individual_value aggregate_value].freeze
+    COMPARISON_METRICS = %w[count individual_value].freeze
     COMPARATORS = %w[equal_to greater_than less_than greater_than_or_equal_to less_than_or_equal_to].freeze
     EXACT_COMPARISON_SOURCE = 'exact_number'
     PRIOR_BOARD_COMPARISON_SOURCE = 'prior_board_state'
