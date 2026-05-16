@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildPlan } from 'editorV2/panels/condition_preview/plans/generation_plan'
+import { expandRelationalPlanSources } from 'editorV2/panels/condition_preview/plans/plan'
 
 describe('buildPlan team assignment for captured-type actors', () => {
   const teams = { movingTeam: Board.WHITE, enemyTeam: Board.BLACK }
@@ -59,5 +60,30 @@ describe('buildPlan team assignment for captured-type actors', () => {
     )
     expect(plan.status).toBe('supported')
     expect(plan.targetTeam).toBe(Board.WHITE)
+  })
+})
+
+describe('expandRelationalPlanSources — king as a value source', () => {
+  const teams = { movingTeam: Board.WHITE, enemyTeam: Board.BLACK }
+
+  it('includes the king (value Infinity) among moved_piece value-source variants', () => {
+    const plan = buildPlan(
+      {
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'any',
+        subjectComparisonMetric: 'individual_value',
+        subjectComparator: 'greater_than',
+        subjectComparisonSource: 'moved_piece'
+      },
+      teams
+    )
+    expect(plan.status).toBe('supported')
+
+    const variants = expandRelationalPlanSources(plan)
+    const pools = variants.map(v => v.sourceConstraints?.movedPieceSpeciesPool || [])
+
+    expect(pools.some(pool => pool.includes(Board.KING))).toBe(true)
   })
 })

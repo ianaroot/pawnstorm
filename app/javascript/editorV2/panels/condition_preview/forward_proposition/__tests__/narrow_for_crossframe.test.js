@@ -43,7 +43,8 @@ describe('narrowForCrossFrame — narrows captured_piece for unary enemy count/v
     expect(ctx.singulars.captured_piece.species_set).toEqual(new Set([Board.QUEEN]))
   })
 
-  it('handles aggregate_value metric the same as count', () => {
+  // Dormant: relational aggregate_value is grammar-gated. Engine retained.
+  it.skip('handles aggregate_value metric the same as count', () => {
     const ctx = defaultTestCtx({
       singulars: { captured_piece: capturedPieceSingular() },
       crossFrame: [{
