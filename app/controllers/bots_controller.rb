@@ -15,7 +15,7 @@ class BotsController < ApplicationController
   def create
     @bot = current_user_or_create_guest!.bots.new(bot_params)
     if @bot.save
-      redirect_to edit_bot_path(@bot), notice: 'Bot was successfully created.'
+      redirect_to edit_bot_path(@bot, intro: 1), notice: 'Bot was successfully created.'
     else
       render :new, status: :unprocessable_entity
     end
@@ -25,9 +25,7 @@ class BotsController < ApplicationController
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
     respond_to do |format|
-      format.html do
-        @open_tournaments = Tournament.status_open.visibility_public.where.not(constraints: nil).order(:name)
-      end
+      format.html { @open_tournaments = open_tournaments }
       format.json { render json: { nodes: @nodes, connections: @connections } }
     end
   end
@@ -45,7 +43,10 @@ class BotsController < ApplicationController
           }
         end
       else
-        format.html { render :edit, status: :unprocessable_entity }
+        format.html do
+          @open_tournaments = open_tournaments
+          render :edit, status: :unprocessable_entity
+        end
         format.json { render json: { errors: @bot.errors.full_messages }, status: :unprocessable_entity }
       end
     end
@@ -89,5 +90,9 @@ class BotsController < ApplicationController
 
   def bot_params
     params.require(:bot).permit(:name, :description, :commands)
+  end
+
+  def open_tournaments
+    Tournament.status_open.visibility_public.where.not(constraints: nil).order(:name)
   end
 end

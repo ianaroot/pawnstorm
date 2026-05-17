@@ -1,0 +1,224 @@
+<div id="bot-intro-modal"
+     class="bot-intro-modal hidden"
+     aria-hidden="true"
+     data-bot-intro-target="modal">
+  <div class="bot-intro-modal__backdrop" data-action="click->bot-intro#close"></div>
+
+  <div class="bot-intro-modal__dialog"
+       role="dialog"
+       aria-modal="true"
+       aria-label="How the bot editor works"
+       data-bot-intro-target="dialog"
+       tabindex="-1">
+    <button type="button"
+            class="bot-intro-modal__close"
+            data-action="click->bot-intro#close"
+            aria-label="Close walkthrough">&times;</button>
+
+    <div class="bot-intro-modal__viewport">
+      <%# Slide 1 — How your bot thinks %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide">
+        <h2 class="bot-intro-slide__title">How your bot thinks</h2>
+        <p>Your bot follows a <strong>rulebook you build</strong>.</p>
+        <p>Every turn, it:</p>
+        <ol class="bot-intro-slide__list">
+          <li><strong>Cycles through</strong> every legal move it could make right now.</li>
+          <li><strong>Reads the board state</strong> after the move and evaluates it against your conditions &mdash; e.g. &ldquo;Does this capture a piece?&rdquo;, &ldquo;Am I attacking the King?&rdquo;, &ldquo;Is my queen attacked?&rdquo;</li>
+          <li><strong>Alters the score</strong> for the move based on every scoring node it reaches through a series of TRUE conditions.</li>
+          <li><strong>Plays the highest-scoring move</strong> (ties broken by random selection).</li>
+        </ol>
+        <p class="bot-intro-slide__aside">Your job: write rules that score good moves high and bad moves low.</p>
+        <svg class="bot-intro-diagram" viewBox="0 0 472 80" role="img" aria-label="For each legal move: check conditions, change score, play the best">
+          <defs>
+            <marker id="bid-arrow-head" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" class="bid-arrow-head" />
+            </marker>
+          </defs>
+          <rect class="bid-box" x="4" y="22" width="104" height="36" rx="6" />
+          <text class="bid-label" x="56" y="40">Each move</text>
+          <line class="bid-arrow" x1="108" y1="40" x2="124" y2="40" marker-end="url(#bid-arrow-head)" />
+          <rect class="bid-box" x="124" y="22" width="104" height="36" rx="6" />
+          <text class="bid-label" x="176" y="40">Conditions</text>
+          <line class="bid-arrow" x1="228" y1="40" x2="244" y2="40" marker-end="url(#bid-arrow-head)" />
+          <rect class="bid-box" x="244" y="22" width="104" height="36" rx="6" />
+          <text class="bid-label" x="296" y="40">Score</text>
+          <line class="bid-arrow" x1="348" y1="40" x2="364" y2="40" marker-end="url(#bid-arrow-head)" />
+          <rect class="bid-box bid-box--accent" x="364" y="22" width="104" height="36" rx="6" />
+          <text class="bid-label" x="416" y="40">Play the best</text>
+        </svg>
+      </section>
+
+      <%# Slide 2 — Condition nodes & the form %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide" hidden>
+        <h2 class="bot-intro-slide__title">Condition nodes &amp; the form</h2>
+        <p>A <strong>Condition</strong> node asks one yes/no question about the move being tested. If the answer is yes, the branch below it continues; if no, that branch stops.</p>
+        <p>You build the question left-to-right in the form:</p>
+        <ul class="bot-intro-slide__list">
+          <li><strong>Subject</strong> &mdash; who it&rsquo;s about (Allied, Enemy, Moved Piece, &hellip;), with an optional piece-type <strong>Filter</strong>.</li>
+          <li><strong>Operator</strong> &mdash; what to check: a relationship (attack, defend, &hellip;) or a measurement (count, mobility, value).</li>
+        </ul>
+        <p>The <strong>Current Condition</strong> line shows the sentence your node will evaluate.</p>
+        <svg class="bot-intro-diagram" viewBox="0 0 420 196" role="img" aria-label="The condition form: mode tabs, then Subject, Operator and Target columns, then the current condition sentence">
+          <rect class="bid-panel" x="8" y="6" width="404" height="184" rx="8" />
+
+          <rect class="bid-box" x="20" y="16" width="110" height="24" rx="4" />
+          <text class="bid-label" x="75" y="28">Position</text>
+          <rect class="bid-box bid-box--accent" x="140" y="16" width="150" height="24" rx="4" />
+          <text class="bid-label" x="215" y="28">Attack/Defense</text>
+
+          <line class="bid-edge" x1="16" y1="50" x2="404" y2="50" />
+
+          <text class="bid-caption" x="78" y="64">SUBJECT</text>
+          <text class="bid-caption" x="210" y="64">OPERATOR</text>
+          <text class="bid-caption" x="342" y="64">TARGET</text>
+
+          <rect class="bid-box" x="20" y="70" width="116" height="24" rx="4" />
+          <text class="bid-label" x="78" y="82">Allied &#9662;</text>
+          <rect class="bid-box" x="20" y="102" width="14" height="14" rx="3" />
+          <text class="bid-caption" x="53" y="113">Non-</text>
+          <rect class="bid-box" x="78" y="100" width="58" height="20" rx="4" />
+          <text class="bid-label" x="107" y="110">Any &#9662;</text>
+
+          <rect class="bid-box" x="152" y="70" width="116" height="24" rx="4" />
+          <text class="bid-label" x="210" y="82">Shield &#9662;</text>
+
+          <rect class="bid-box" x="284" y="70" width="116" height="24" rx="4" />
+          <text class="bid-label" x="342" y="82">Enemy &#9662;</text>
+          <rect class="bid-box" x="284" y="102" width="14" height="14" rx="3" />
+          <text class="bid-caption" x="317" y="113">Non-</text>
+          <rect class="bid-box" x="336" y="100" width="64" height="20" rx="4" />
+          <text class="bid-label" x="368" y="110">Queen &#9662;</text>
+
+          <line class="bid-edge" x1="16" y1="138" x2="404" y2="138" />
+
+          <rect class="bid-box bid-box--accent" x="20" y="150" width="380" height="30" rx="4" />
+          <text class="bid-label" x="210" y="165">Current: Allied attack Enemy queen</text>
+        </svg>
+      </section>
+
+      <%# Slide 3 — Walking your graph %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide" hidden>
+        <h2 class="bot-intro-slide__title">Walking your graph</h2>
+        <ul class="bot-intro-slide__list">
+          <li>Connect nodes by dragging from one&rsquo;s output (bottom dot) to another&rsquo;s input.</li>
+          <li>Every move starts at the <strong>Root</strong> and flows down the branches.</li>
+          <li>The bot follows a branch all the way down before the next; sibling branches go <strong>left to right</strong>.</li>
+        </ul>
+        <svg class="bot-intro-diagram" viewBox="0 0 420 232" role="img" aria-label="Depth-first: the left branch and its child are visited before the other siblings">
+          <defs>
+            <marker id="bid-arrow-3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" class="bid-arrow-head" />
+            </marker>
+          </defs>
+          <rect class="bid-box bid-box--root" x="176" y="12" width="68" height="32" rx="6" />
+          <text class="bid-label" x="210" y="28">Root</text>
+          <line class="bid-edge" x1="210" y1="44" x2="82" y2="104" marker-end="url(#bid-arrow-3)" />
+          <line class="bid-edge" x1="210" y1="44" x2="210" y2="104" marker-end="url(#bid-arrow-3)" />
+          <line class="bid-edge" x1="210" y1="44" x2="338" y2="104" marker-end="url(#bid-arrow-3)" />
+          <rect class="bid-box" x="40" y="104" width="84" height="32" rx="6" />
+          <text class="bid-label" x="82" y="120">1st</text>
+          <rect class="bid-box" x="168" y="104" width="84" height="32" rx="6" />
+          <text class="bid-label" x="210" y="120">3rd</text>
+          <rect class="bid-box" x="296" y="104" width="84" height="32" rx="6" />
+          <text class="bid-label" x="338" y="120">4th</text>
+          <line class="bid-edge" x1="82" y1="136" x2="82" y2="176" marker-end="url(#bid-arrow-3)" />
+          <rect class="bid-box bid-box--accent" x="40" y="176" width="84" height="32" rx="6" />
+          <text class="bid-label" x="82" y="192">2nd</text>
+          <path class="bid-orbit" d="M82 54 Q 210 140 338 54" marker-end="url(#bid-arrow-3)" />
+          <text class="bid-caption" x="210" y="222">down a branch fully, then siblings left to right</text>
+        </svg>
+      </section>
+
+      <%# Slide 4 — Score nodes %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide" hidden>
+        <h2 class="bot-intro-slide__title">Score nodes</h2>
+        <p>A <strong>Score</strong> node changes the running score for the move being tested:</p>
+        <ul class="bot-intro-slide__list">
+          <li><strong>Add</strong> / <strong>Subtract</strong> &mdash; nudge the score up or down.</li>
+          <li><strong>Set</strong> &mdash; replace the score with a fixed number.</li>
+          <li><strong>Return</strong> &mdash; set the score and <strong>stop evaluating</strong> this move immediately.</li>
+        </ul>
+        <p>Put score nodes under conditions so points are only applied when the question passed.</p>
+        <svg class="bot-intro-diagram" viewBox="0 0 420 110" role="img" aria-label="A TRUE condition leads to a score node adding ten points">
+          <defs>
+            <marker id="bid-arrow-4" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" class="bid-arrow-head" />
+            </marker>
+          </defs>
+          <rect class="bid-box" x="120" y="10" width="180" height="34" rx="6" />
+          <text class="bid-label" x="210" y="27">Condition: TRUE</text>
+          <line class="bid-arrow" x1="210" y1="44" x2="210" y2="64" marker-end="url(#bid-arrow-4)" />
+          <rect class="bid-box bid-box--accent" x="160" y="64" width="100" height="34" rx="6" />
+          <text class="bid-label" x="210" y="81">Add +10</text>
+        </svg>
+      </section>
+
+      <%# Slide 5 — Organizer nodes %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide" hidden>
+        <h2 class="bot-intro-slide__title">Organizer nodes</h2>
+        <p>An <strong>Organizer</strong> node is for <em>you</em>, not the bot. It groups and labels parts of your graph so a complex rulebook stays readable.</p>
+        <ul class="bot-intro-slide__list">
+          <li>It has <strong>no effect on scoring</strong> &mdash; it doesn&rsquo;t compile into bot behavior.</li>
+          <li>It connects into the graph like any other node; evaluation flows straight through it to its children, like the Root.</li>
+          <li>Use it to title a strategy (&ldquo;Endgame rules&rdquo;, &ldquo;Avoid hanging pieces&rdquo;).</li>
+        </ul>
+        <svg class="bot-intro-diagram" viewBox="0 0 420 210" role="img" aria-label="Organizer is a normal node in the chain between Root and a condition">
+          <defs>
+            <marker id="bid-arrow-5" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" class="bid-arrow-head" />
+            </marker>
+          </defs>
+          <rect class="bid-box bid-box--root" x="150" y="8" width="120" height="32" rx="6" />
+          <text class="bid-label" x="210" y="24">Root</text>
+          <line class="bid-edge" x1="210" y1="40" x2="210" y2="56" marker-end="url(#bid-arrow-5)" />
+          <rect class="bid-box bid-box--organizer" x="114" y="56" width="192" height="32" rx="6" />
+          <text class="bid-label" x="210" y="72">Organizer: Endgame rules</text>
+          <line class="bid-edge" x1="210" y1="88" x2="210" y2="104" marker-end="url(#bid-arrow-5)" />
+          <rect class="bid-box" x="150" y="104" width="120" height="32" rx="6" />
+          <text class="bid-label" x="210" y="120">Condition</text>
+          <line class="bid-edge" x1="210" y1="136" x2="210" y2="152" marker-end="url(#bid-arrow-5)" />
+          <rect class="bid-box bid-box--accent" x="150" y="152" width="120" height="32" rx="6" />
+          <text class="bid-label" x="210" y="168">Score</text>
+        </svg>
+      </section>
+
+      <%# Slide 6 — Editor tips %>
+      <section class="bot-intro-slide" data-bot-intro-target="slide" aria-roledescription="slide" hidden>
+        <h2 class="bot-intro-slide__title">Tips for working faster</h2>
+        <p class="bot-intro-slide__subhead">Selecting &amp; moving nodes</p>
+        <ul class="bot-intro-slide__list">
+          <li><strong>Click</strong> a node to select it; <strong>Shift+click</strong> (or Shift+drag a marquee) to select <strong>multiple</strong> nodes at once.</li>
+          <li>Dragging a node moves its <strong>whole branch</strong> with it. Hold <strong>Option/Alt</strong> while dragging to move <strong>just that node</strong>, leaving its children in place.</li>
+        </ul>
+        <p class="bot-intro-slide__subhead">Keyboard shortcuts</p>
+        <ul class="bot-intro-slide__list">
+          <li><kbd>Ctrl/Cmd+Z</kbd> undo &middot; <kbd>Ctrl/Cmd+Shift+Z</kbd> (or <kbd>Ctrl+Y</kbd>) redo</li>
+          <li><kbd>Ctrl/Cmd+C</kbd> / <kbd>V</kbd> copy &amp; paste selected nodes</li>
+          <li><kbd>Delete</kbd> / <kbd>Backspace</kbd> remove selected nodes</li>
+          <li><kbd>Enter</kbd> save the node you&rsquo;re editing &middot; <kbd>Esc</kbd> close the editor panel</li>
+          <li><kbd>P</kbd> toggle the board-state preview &middot; <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> step through preview examples</li>
+        </ul>
+        <p class="bot-intro-slide__subhead">See how rules evaluate together</p>
+        <p>Select a condition &mdash; or a chain of connected conditions &mdash; and press <kbd>P</kbd>. The bot generates a real example position + move where <em>all</em> the selected conditions hold at once, and animates the board before &rarr; after. Hit <strong>Keep trying</strong> for another example.</p>
+      </section>
+    </div>
+
+    <footer class="bot-intro-modal__footer">
+      <button type="button"
+              class="bot-intro-modal__nav"
+              data-bot-intro-target="prev"
+              data-action="click->bot-intro#prev">Back</button>
+
+      <div class="bot-intro-modal__dots"
+           data-bot-intro-target="dots"
+           aria-label="Walkthrough slides">
+        <%# Dot buttons are generated by bot_intro_controller from the actual slide count %>
+      </div>
+
+      <button type="button"
+              class="bot-intro-modal__nav bot-intro-modal__nav--primary"
+              data-bot-intro-target="next"
+              data-action="click->bot-intro#next">Next</button>
+    </footer>
+  </div>
+</div>
