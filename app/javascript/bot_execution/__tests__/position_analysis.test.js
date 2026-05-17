@@ -25,7 +25,7 @@ describe('position evaluation for captured-type actors', () => {
       evaluate(
         {
           version: 2,
-          kind: 'position',
+          kind: 'census', target: 'exact_number',
           subject: 'captured_piece',
           subjectFilter: 'any',
           positionAxis: 'rank',
@@ -56,7 +56,7 @@ describe('position evaluation for captured-type actors', () => {
       evaluate(
         {
           version: 2,
-          kind: 'position',
+          kind: 'census', target: 'exact_number',
           subject: 'captured_piece',
           subjectFilter: 'any',
           positionAxis: 'rank',
@@ -100,7 +100,7 @@ describe('position evaluation for captured-type actors', () => {
       evaluate(
         {
           version: 2,
-          kind: 'position',
+          kind: 'census', target: 'exact_number',
           subject: 'enemy_captured_piece',
           subjectFilter: 'any',
           positionAxis: 'rank',
@@ -131,7 +131,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'allied', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
           operator: 'mobility', comparator: 'greater_than', targetTotal: 0
@@ -150,7 +150,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'allied', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
           operator: 'mobility', comparator: 'equal_to', targetTotal: 0
@@ -169,7 +169,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'allied', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5,
           operator: 'mobility', comparator: 'equal_to', targetTotal: 0
@@ -188,7 +188,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'enemy', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 4,
           operator: 'mobility', comparator: 'greater_than', targetTotal: 0
@@ -207,7 +207,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'enemy', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 6,
           operator: 'mobility', comparator: 'equal_to', targetTotal: 0
@@ -228,7 +228,7 @@ describe('position evaluation: mobility operator', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'position',
+          version: 2, kind: 'census', target: 'exact_number',
           subject: 'allied', subjectFilter: 'any',
           positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5,
           operator: 'mobility', comparator: 'less_than', targetTotal: 100

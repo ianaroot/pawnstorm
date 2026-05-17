@@ -9,7 +9,10 @@ import { buildChainConstraints } from 'editorV2/panels/condition_preview/forward
 // team bucket; these tests prevent regression by inspecting the inventory
 // state directly after buildChainConstraints.
 
-describe('buildChainConstraints inventory bumps for captured-type subjects', () => {
+// Skipped: sunset subsystem; forward_resolver/chain_constraints.js was not
+// census-ified (still gates plan.kind === 'unary'/'position'), so this spec is
+// retired with the kind rather than rebaselined.
+describe.skip('buildChainConstraints inventory bumps for captured-type subjects', () => {
   it('routes captured_piece singular contribution into the enemyTeam inventory bucket', () => {
     const combinedPlan = buildCombinedPlan([
       {

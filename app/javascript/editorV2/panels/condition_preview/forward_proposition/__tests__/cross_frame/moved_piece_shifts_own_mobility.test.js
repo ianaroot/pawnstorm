@@ -29,7 +29,7 @@ function entry({ direction = '+', boundSingularActor = 'moved_piece', species = 
     aggregate_mobility_range: { min: 0, max: Infinity }
   }
   return {
-    source: 'unary', operator: 'mobility', metric: 'aggregate_mobility', direction,
+    source: 'census', operator: 'mobility', metric: 'aggregate_mobility', direction,
     priorProposition: { ...currentProposition, frame: 'prior' },
     currentProposition,
     subjectProposition: null,
@@ -38,17 +38,17 @@ function entry({ direction = '+', boundSingularActor = 'moved_piece', species = 
 }
 
 describe('movedPieceShiftsOwnMobility — appliesTo', () => {
-  it('returns true for unary mobility entry bound to moved_piece', () => {
+  it('returns true for census mobility entry bound to moved_piece', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     expect(movedPieceShiftsOwnMobility.appliesTo(entry(), ctx, new Map())).toBe(true)
   })
 
-  it('returns false for unary mobility entries bound to other singulars', () => {
+  it('returns false for census mobility entries bound to other singulars', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     expect(movedPieceShiftsOwnMobility.appliesTo(entry({ boundSingularActor: 'enemy_moved_piece' }), ctx, new Map())).toBe(false)
   })
 
-  it('returns false for unary mobility entries not bound to a singular (team-wide)', () => {
+  it('returns false for census mobility entries not bound to a singular (team-wide)', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     expect(movedPieceShiftsOwnMobility.appliesTo(entry({ boundSingularActor: null }), ctx, new Map())).toBe(false)
   })

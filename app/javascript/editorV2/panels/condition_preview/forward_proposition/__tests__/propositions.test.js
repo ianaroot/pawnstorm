@@ -7,7 +7,7 @@ import { emitConstraintsFromPlan } from 'editorV2/panels/condition_preview/forwa
 describe('emitConstraintsFromPlan — unary group count', () => {
   it('emits one proposition with team, frame, species_set, region, and count_range', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       operator: 'count', comparator: 'greater_than_or_equal_to',
       target: 'exact_number', targetTotal: 2
@@ -27,7 +27,7 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 
   it('emits count_range with equal min and max for comparator equal_to', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 3
@@ -42,7 +42,7 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 
   it('emits count_range capped at total - 1 for comparator less_than', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       operator: 'count', comparator: 'less_than',
       target: 'exact_number', targetTotal: 4
@@ -57,7 +57,7 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 
   it('emits species_set as the complement when subjectFilterMode is exclude', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn', subjectFilterMode: 'exclude',
       operator: 'count', comparator: 'greater_than_or_equal_to',
       target: 'exact_number', targetTotal: 1
@@ -72,7 +72,7 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 
   it('emits aggregate_value_range for unary value plans, with permissive default count_range', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than',
       target: 'exact_number', targetTotal: 20
@@ -90,7 +90,7 @@ describe('emitConstraintsFromPlan — unary group count', () => {
 describe('emitConstraintsFromPlan — unary on a singular subject', () => {
   it('tags the proposition with boundSingularActor', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy_moved_piece', subjectFilter: 'any',
       operator: 'mobility', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 0
@@ -103,7 +103,7 @@ describe('emitConstraintsFromPlan — unary on a singular subject', () => {
 
   it('leaves boundSingularActor null on non-singular unary subjects', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'any',
       operator: 'count', comparator: 'greater_than_or_equal_to',
       target: 'exact_number', targetTotal: 1
@@ -118,7 +118,7 @@ describe('emitConstraintsFromPlan — unary on a singular subject', () => {
 describe('emitConstraintsFromPlan — position group', () => {
   it('emits region of qualifying squares for position group count plans', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       positionAxis: 'rank', positionComparator: 'greater_than', positionTarget: 4,
       operator: 'count', comparator: 'greater_than_or_equal_to',
@@ -139,7 +139,7 @@ describe('emitConstraintsFromPlan — position group', () => {
 
   it('emits both region and aggregate_value_range for position group value plans', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'major',
       positionAxis: 'rank', positionComparator: 'greater_than', positionTarget: 4,
       operator: 'value', comparator: 'greater_than_or_equal_to',
@@ -375,10 +375,10 @@ describe('emitConstraintsFromPlan — relational with both group sides', () => {
   })
 })
 
-describe('emitConstraintsFromPlan — PBS unary', () => {
-  it('emits prior+current propositions and a crossFrame entry for unary count plans against prior_board_state', () => {
+describe('emitConstraintsFromPlan — PBS census', () => {
+  it('emits prior+current propositions and a crossFrame entry for census count plans against prior_board_state', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       operator: 'count', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -401,7 +401,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
 
     expect(crossFrame).toHaveLength(1)
     expect(crossFrame[0]).toEqual({
-      source: 'unary',
+      source: 'census',
       operator: 'count',
       metric: 'count',
       direction: '+',
@@ -412,7 +412,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
 
   it('uses metric aggregate_value for unary value plans against prior_board_state', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'any',
       operator: 'value', comparator: 'less_than',
       target: 'prior_board_state'
@@ -427,7 +427,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
 
   it('uses metric individual_value for singular-subject unary value plans against prior_board_state', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -441,7 +441,7 @@ describe('emitConstraintsFromPlan — PBS unary', () => {
 
   it('uses metric aggregate_mobility for unary mobility plans against prior_board_state', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'bishop',
       operator: 'mobility', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -516,23 +516,23 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
 })
 
 describe('emitConstraintsFromPlan — crossFrame source field', () => {
-  it('tags crossFrame entries from unary PBS plans with source "unary"', () => {
+  it('tags crossFrame entries from census PBS plans with source "census"', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy', subjectFilter: 'any',
       operator: 'count', comparator: 'less_than',
       target: 'prior_board_state'
     }])
 
     const { crossFrame } = emitConstraintsFromPlan(combinedPlan.plans[0])
-    expect(crossFrame[0].source).toBe('unary')
+    expect(crossFrame[0].source).toBe('census')
   })
 })
 
 describe('emitConstraintsFromPlan — crossFrame operator field', () => {
-  it('stores the unary operator on crossFrame entries for unary PBS plans', () => {
+  it('stores the census operator on crossFrame entries for census PBS plans', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'any',
       operator: 'value', comparator: 'less_than',
       target: 'prior_board_state'

@@ -9,7 +9,7 @@ describe('buildPlan team assignment for captured-type actors', () => {
   it('assigns subjectTeam = enemyTeam for captured_piece subject', () => {
     const plan = buildPlan(
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'captured_piece', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 1
@@ -23,7 +23,7 @@ describe('buildPlan team assignment for captured-type actors', () => {
   it('assigns subjectTeam = movingTeam for enemy_captured_piece subject', () => {
     const plan = buildPlan(
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy_captured_piece', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 1
@@ -37,7 +37,7 @@ describe('buildPlan team assignment for captured-type actors', () => {
   it('assigns targetTeam = enemyTeam for captured_piece target', () => {
     const plan = buildPlan(
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'any',
         operator: 'value', comparator: 'greater_than',
         target: 'captured_piece', targetFilter: 'any'
@@ -51,7 +51,7 @@ describe('buildPlan team assignment for captured-type actors', () => {
   it('assigns targetTeam = movingTeam for enemy_captured_piece target', () => {
     const plan = buildPlan(
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'any',
         operator: 'value', comparator: 'greater_than',
         target: 'enemy_captured_piece', targetFilter: 'any'

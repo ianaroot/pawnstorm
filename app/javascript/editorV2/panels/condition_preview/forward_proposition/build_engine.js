@@ -5,6 +5,7 @@ import { commitSingularsPosition } from './commit_singulars_position'
 import { earlyPlaceConstraintTargets } from './early_placement/place_constraint_targets'
 import { isSatisfiable } from './is_satisfiable'
 import { narrowForCrossFrame } from './narrow_for_crossframe'
+import { narrowMovedPieceForRegion } from './narrow_moved_piece_for_region'
 import { placeSingulars } from './place_singulars'
 import { satisfyPropositions } from './satisfy_propositions'
 import { satisfyRelations } from './relations/satisfy_relations'
@@ -24,6 +25,7 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   mergeCtxDelta(ctx, scenario.buildCtxDelta(combinedPlan))
   relaxStabilityPbsRelations(ctx, random)
   narrowForCrossFrame(ctx)
+  narrowMovedPieceForRegion(ctx)
   if (!isSatisfiable(ctx)) { return null }
 
   commitSingularsSpecies(ctx, random)

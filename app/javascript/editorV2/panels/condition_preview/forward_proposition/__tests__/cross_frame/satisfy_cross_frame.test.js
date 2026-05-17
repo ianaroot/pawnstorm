@@ -17,7 +17,7 @@ describe('satisfyCrossFrame — gate', () => {
   it('returns the input pieces map unchanged when no mechanisms apply', () => {
     const ctx = defaultTestCtx({
       crossFrame: [{
-        source: 'unary', operator: 'mobility', metric: 'aggregate_mobility',
+        source: 'census', operator: 'mobility', metric: 'aggregate_mobility',
         direction: '+',
         priorProposition: { team: 'w', frame: 'prior', species_set: new Set() },
         currentProposition: { team: 'w', frame: 'current', species_set: new Set() }

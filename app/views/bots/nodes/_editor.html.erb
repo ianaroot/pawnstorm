@@ -4,12 +4,14 @@
     <%= raw json_escape(NodeGrammarRules.editor_config.to_json) %>
   </script>
 
+  <%= render 'shared/condition_sentence_spec' %>
+
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
       <div class="condition-form-mode-picker">
-        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Relational</button>
-        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-measure">Measure</button>
-        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-position">Position</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-census">Positions</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Attack/Defend</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-identity">Identity</button>
       </div>
 
       <div class="condition-form-layout">
@@ -40,8 +42,6 @@
             </div>
           </div>
 
-          <p class="condition-form-note hidden" id="cond-measure-subject-note">Mobility is unavailable for Captured Piece and Enemy Captured Piece.</p>
-
           <div class="condition-form-comparison" id="cond-left-comparison-section">
             <button type="button" class="condition-form-comparison__toggle" id="cond-left-comparison-toggle"></button>
 
@@ -53,13 +53,14 @@
                   <% end %>
                 </select>
 
-                <select id="cond-left-comparator">
-                  <option value="equal_to">=</option>
-                  <option value="greater_than">></option>
-                  <option value="less_than"><</option>
-                  <option value="greater_than_or_equal_to">≥</option>
-                  <option value="less_than_or_equal_to">≤</option>
-                </select>
+                <div class="condition-form-radio-row" id="cond-left-comparator">
+                  <% [['equal_to', '='], ['greater_than', '>'], ['less_than', '<'], ['greater_than_or_equal_to', '≥'], ['less_than_or_equal_to', '≤']].each_with_index do |(value, glyph), i| %>
+                    <label class="condition-form-checkbox">
+                      <input type="radio" name="cond-left-comparator" value="<%= value %>" <%= 'checked' if i.zero? %>>
+                      <span><%= glyph %></span>
+                    </label>
+                  <% end %>
+                </div>
 
                 <div class="condition-form-comparison-source-stack" id="cond-left-comparison-source-stack">
                   <select id="cond-left-comparison-source">
@@ -82,26 +83,7 @@
             <option value="targets">Targets</option>
             <option value="shield">Shield</option>
             <option value="adjacent">Adjacent</option>
-            <option disabled>────────</option>
-            <option value="same_piece">Same-Piece</option>
           </select>
-          <select id="cond-measure-operator" class="hidden">
-            <% NodeForm.condition_form_measure_operator_options.each do |label, value| %>
-              <option value="<%= value %>"><%= label %></option>
-            <% end %>
-          </select>
-
-          <div class="condition-form-comparison hidden" id="cond-unary-comparison-section">
-            <div class="condition-form-field">
-              <select id="cond-unary-comparator">
-                <option value="equal_to">=</option>
-                <option value="greater_than">></option>
-                <option value="less_than"><</option>
-                <option value="greater_than_or_equal_to">≥</option>
-                <option value="less_than_or_equal_to">≤</option>
-              </select>
-            </div>
-          </div>
         </section>
 
         <section class="condition-form-side" id="cond-right-card">
@@ -145,13 +127,14 @@
                     <% end %>
                   </select>
 
-                  <select id="cond-right-comparator">
-                    <option value="equal_to">=</option>
-                    <option value="greater_than">></option>
-                    <option value="less_than"><</option>
-                    <option value="greater_than_or_equal_to">≥</option>
-                    <option value="less_than_or_equal_to">≤</option>
-                  </select>
+                  <div class="condition-form-radio-row" id="cond-right-comparator">
+                    <% [['equal_to', '='], ['greater_than', '>'], ['less_than', '<'], ['greater_than_or_equal_to', '≥'], ['less_than_or_equal_to', '≤']].each_with_index do |(value, glyph), i| %>
+                      <label class="condition-form-checkbox">
+                        <input type="radio" name="cond-right-comparator" value="<%= value %>" <%= 'checked' if i.zero? %>>
+                        <span><%= glyph %></span>
+                      </label>
+                    <% end %>
+                  </div>
 
                   <div class="condition-form-comparison-source-stack" id="cond-right-comparison-source-stack">
                     <select id="cond-right-comparison-source">
@@ -167,57 +150,30 @@
               </div>
             </div>
           </div>
-
-          <div class="condition-form-comparison hidden" id="cond-unary-target-section">
-            <div class="condition-form-field">
-              <label>Target</label>
-              <div class="condition-form-comparison-source-stack" id="cond-unary-target-stack">
-                <select id="cond-unary-target">
-                  <% NodeForm.unary_target_options.each do |label, value| %>
-                    <option value="<%= value %>"><%= label %></option>
-                  <% end %>
-                </select>
-
-                <div class="condition-form-inline-pair" id="cond-unary-target-filter-row">
-                  <label class="condition-form-checkbox">
-                    <input id="cond-unary-target-filter-mode" type="checkbox">
-                    <span>Non-</span>
-                  </label>
-                  <select id="cond-unary-target-filter">
-                    <% NodeForm.filter_options.each do |label, value| %>
-                      <option value="<%= value %>"><%= label %></option>
-                    <% end %>
-                  </select>
-                </div>
-
-                <input id="cond-unary-target-total" type="number" min="0" step="1">
-              </div>
-            </div>
-          </div>
         </section>
       </div>
 
-      <div class="condition-form-layout condition-form-position-layout hidden" id="cond-position-layout">
+      <div class="condition-form-layout condition-form-position-layout hidden" id="cond-census-layout">
         <section class="condition-form-side">
           <div class="condition-form-side__header">
             <span class="condition-form-side__label">Subject</span>
           </div>
 
           <div class="condition-form-field">
-            <select id="cond-position-subject">
-              <% NodeGrammarV2::POSITION_SUBJECTS.each do |value| %>
-                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+            <select id="cond-census-subject">
+              <% NodeForm.editor_subject_options.each do |label, value| %>
+                <option value="<%= value %>"><%= label %></option>
               <% end %>
             </select>
           </div>
 
-          <div class="condition-form-field" id="cond-position-filter-row">
+          <div class="condition-form-field" id="cond-census-filter-row">
             <div class="condition-form-inline-pair">
               <label class="condition-form-checkbox">
-                <input id="cond-position-filter-mode" type="checkbox">
+                <input id="cond-census-filter-mode" type="checkbox">
                 <span>Non-</span>
               </label>
-              <select id="cond-position-filter">
+              <select id="cond-census-filter">
                 <% NodeForm.filter_options.each do |label, value| %>
                   <option value="<%= value %>"><%= label %></option>
                 <% end %>
@@ -225,102 +181,178 @@
             </div>
           </div>
 
-          <div class="condition-form-comparison" id="cond-position-comparison">
-            <button type="button" class="condition-form-comparison__toggle" id="cond-position-comparison-toggle"></button>
+          <div class="condition-form-comparison" id="cond-census-comparison">
+            <button type="button" class="condition-form-comparison__toggle" id="cond-census-comparison-toggle"></button>
 
-            <div class="condition-form-comparison__body hidden" id="cond-position-comparison-body">
-              <div class="condition-form-comparison-grid condition-form-comparison-grid--position">
-                <select id="cond-position-operator">
+            <div class="condition-form-comparison__body hidden" id="cond-census-comparison-body">
+              <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
+                <select id="cond-census-operator">
                   <% NodeForm.condition_form_position_operator_options.each do |label, value| %>
                     <option value="<%= value %>"><%= label %></option>
                   <% end %>
                 </select>
 
-                <select id="cond-position-metric-comparator">
-                  <option value="equal_to">=</option>
-                  <option value="greater_than">></option>
-                  <option value="less_than"><</option>
-                  <option value="greater_than_or_equal_to">≥</option>
-                  <option value="less_than_or_equal_to">≤</option>
-                </select>
+                <div class="condition-form-radio-row" id="cond-census-comparator">
+                  <% [['equal_to', '='], ['greater_than', '>'], ['less_than', '<'], ['greater_than_or_equal_to', '≥'], ['less_than_or_equal_to', '≤']].each_with_index do |(value, glyph), i| %>
+                    <label class="condition-form-checkbox">
+                      <input type="radio" name="cond-census-comparator" value="<%= value %>" <%= 'checked' if i.zero? %>>
+                      <span><%= glyph %></span>
+                    </label>
+                  <% end %>
+                </div>
 
-                <input id="cond-position-target-total" type="number" min="0" step="1" value="0">
+                <div class="condition-form-comparison-source-stack" id="cond-census-target-stack">
+                  <select id="cond-census-target">
+                    <% NodeForm.unary_target_options.each do |label, value| %>
+                      <option value="<%= value %>"><%= label %></option>
+                    <% end %>
+                  </select>
+
+                  <div class="condition-form-inline-pair" id="cond-census-target-filter-row">
+                    <label class="condition-form-checkbox">
+                      <input id="cond-census-target-filter-mode" type="checkbox">
+                      <span>Non-</span>
+                    </label>
+                    <select id="cond-census-target-filter">
+                      <% NodeForm.filter_options.each do |label, value| %>
+                        <option value="<%= value %>"><%= label %></option>
+                      <% end %>
+                    </select>
+                  </div>
+
+                  <input id="cond-census-target-total" type="number" min="0" step="1" value="0">
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         <section class="condition-form-operator">
-          <label>Position</label>
-          <select id="cond-position-axis">
-            <option value="rank">Rank</option>
-            <option value="file">File</option>
-            <option value="square">Square</option>
-          </select>
+          <label>Positions</label>
+          <div class="condition-form-positions-row">
+          <div class="condition-form-scope-toggle" id="cond-census-scope">
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-scope" id="cond-census-scope-whole" value="whole">
+              <span>Whole<br>board</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-scope" id="cond-census-axis-rank" value="rank" checked>
+              <span>Rank</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-scope" id="cond-census-axis-file" value="file">
+              <span>File</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-scope" id="cond-census-axis-square" value="square">
+              <span>Square</span>
+            </label>
+          </div>
 
-          <select id="cond-position-comparator">
-            <option value="equal_to">=</option>
-            <option value="greater_than">></option>
-            <option value="less_than"><</option>
-            <option value="greater_than_or_equal_to">≥</option>
-            <option value="less_than_or_equal_to">≤</option>
-          </select>
+          <div class="condition-form-comparator-toggle" id="cond-census-region-comparator">
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-region-comparator" value="equal_to" checked>
+              <span>=</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-region-comparator" value="greater_than">
+              <span>></span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-region-comparator" value="less_than">
+              <span><</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-region-comparator" value="greater_than_or_equal_to">
+              <span>≥</span>
+            </label>
+            <label class="condition-form-checkbox">
+              <input type="radio" name="cond-census-region-comparator" value="less_than_or_equal_to">
+              <span>≤</span>
+            </label>
+          </div>
+          </div>
+        </section>
+
+        <section class="condition-form-side" id="cond-census-region-target">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Target</span>
+          </div>
+
+          <div class="condition-form-field">
+            <div id="cond-census-rank-input" class="condition-form-radio-list">
+              <% (1..8).each do |n| %>
+                <label class="condition-form-checkbox">
+                  <input type="radio" name="cond-census-rank-input" value="<%= n %>" <%= 'checked' if n == 1 %>>
+                  <span><%= n %></span>
+                </label>
+              <% end %>
+            </div>
+
+            <div id="cond-census-file-input" class="condition-form-radio-list hidden">
+              <% %w[a b c d e f g h].each_with_index do |letter, i| %>
+                <label class="condition-form-checkbox">
+                  <input type="radio" name="cond-census-file-input" value="<%= i + 1 %>" <%= 'checked' if i.zero? %>>
+                  <span><%= letter %></span>
+                </label>
+              <% end %>
+            </div>
+
+            <div id="cond-census-square-inputs" class="condition-form-square-inputs hidden">
+              <div id="cond-census-square-file" class="condition-form-radio-list">
+                <% %w[a b c d e f g h].each_with_index do |letter, i| %>
+                  <label class="condition-form-checkbox">
+                    <input type="radio" name="cond-census-square-file" value="<%= i + 1 %>" <%= 'checked' if i.zero? %>>
+                    <span><%= letter %></span>
+                  </label>
+                <% end %>
+              </div>
+              <div id="cond-census-square-rank" class="condition-form-radio-list">
+                <% (1..8).each do |n| %>
+                  <label class="condition-form-checkbox">
+                    <input type="radio" name="cond-census-square-rank" value="<%= n %>" <%= 'checked' if n == 1 %>>
+                    <span><%= n %></span>
+                  </label>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <p class="condition-form-note condition-form-position-layout__note">Rank is relative to your side (rank 1 = your back rank).</p>
+      </div>
+
+      <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Subject</span>
+          </div>
+          <div class="condition-form-field">
+            <select id="cond-identity-subject">
+              <% NodeGrammarRules::SAME_PIECE_TARGETS.keys.each do |value| %>
+                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+              <% end %>
+            </select>
+          </div>
+        </section>
+
+        <section class="condition-form-operator">
+          <label>Relation</label>
+          <p class="condition-form-identity-relation">is the same piece as</p>
         </section>
 
         <section class="condition-form-side">
           <div class="condition-form-side__header">
             <span class="condition-form-side__label">Target</span>
           </div>
-
           <div class="condition-form-field">
-            <select id="cond-position-rank-input">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
+            <select id="cond-identity-target">
+              <% NodeGrammarRules::SAME_PIECE_TARGETS.values.flatten.uniq.each do |value| %>
+                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+              <% end %>
             </select>
-
-            <select id="cond-position-file-input" class="hidden">
-              <option value="1">a</option>
-              <option value="2">b</option>
-              <option value="3">c</option>
-              <option value="4">d</option>
-              <option value="5">e</option>
-              <option value="6">f</option>
-              <option value="7">g</option>
-              <option value="8">h</option>
-            </select>
-
-            <div id="cond-position-square-inputs" class="condition-form-inline-pair hidden">
-              <select id="cond-position-square-file">
-                <option value="1">a</option>
-                <option value="2">b</option>
-                <option value="3">c</option>
-                <option value="4">d</option>
-                <option value="5">e</option>
-                <option value="6">f</option>
-                <option value="7">g</option>
-                <option value="8">h</option>
-              </select>
-              <select id="cond-position-square-rank">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-              </select>
-            </div>
           </div>
         </section>
-
-        <p class="condition-form-note condition-form-position-layout__note">Rank is relative to your side (rank 1 = your back rank).</p>
       </div>
 
       <div class="condition-form-formulation">

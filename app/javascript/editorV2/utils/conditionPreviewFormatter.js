@@ -172,6 +172,10 @@ function unaryTargetComparisonPreview({ comparator, target, targetFilter, target
   return `${comparatorLabel(comparator)} ${unaryTargetPreview({ target, targetFilter, targetFilterMode, targetTotal })}`
 }
 
+function metricPreview({ operator, comparator, targetTotal }) {
+  return `${operatorLabel(operator)} ${comparatorLabel(comparator)} ${targetTotal}`
+}
+
 function previewText({ left, operator, right }) {
   return `${left} : ${operator} : ${right}`
 }
@@ -194,54 +198,51 @@ function positionAxisPreview(axis, comparator, positionTarget) {
   return axis
 }
 
+let cachedSpecText
+let cachedSpec
+
+function sentenceSpec() {
+  const element = typeof document !== 'undefined' ? document.getElementById('condition-sentence-spec') : null
+  const text = element && element.textContent
+  if (!text || !text.trim()) {
+    throw new Error('#condition-sentence-spec not found — render the shared/condition_sentence_spec partial')
+  }
+  if (text !== cachedSpecText) {
+    cachedSpec = JSON.parse(text)
+    cachedSpecText = text
+  }
+  return cachedSpec
+}
+
+function snakeToCamel(key) {
+  return key.replace(/_([a-z])/g, (_, character) => character.toUpperCase())
+}
+
+function buildSentenceChunk(descriptor, payload) {
+  const chunk = { role: descriptor.role }
+  for (const [chunkKey, payloadKey] of Object.entries(descriptor.fields || {})) {
+    chunk[snakeToCamel(chunkKey)] = payload[payloadKey]
+  }
+  for (const [chunkKey, value] of Object.entries(descriptor.consts || {})) {
+    chunk[snakeToCamel(chunkKey)] = value
+  }
+  return chunk
+}
+
+function sentenceDescriptors(spec, payload) {
+  if (Array.isArray(spec)) { return spec }
+  // Mirrors NodePresenter: positionAxis presence picks region vs whole.
+  return payload.positionAxis != null ? spec.region : spec.whole
+}
+
 export function formatConditionPreview(nodeData = {}) {
-  if (nodeData.kind === 'position') {
-    const preview = {
-      left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
-      operator: positionAxisPreview(nodeData.positionAxis, nodeData.positionComparator, nodeData.positionTarget),
-      right: `${operatorLabel(nodeData.operator)} ${comparatorLabel(nodeData.comparator)} ${nodeData.targetTotal}`
-    }
-    preview.text = previewText(preview)
-    return preview
+  const spec = sentenceSpec()[nodeData.kind]
+  if (!spec) {
+    return { left: '', operator: '', right: '', text: '[invalid condition]' }
   }
-
-  if (nodeData.kind === 'relational') {
-    const preview = {
-      left: sidePreview({
-        subject: nodeData.subject,
-        filter: nodeData.subjectFilter || 'any',
-        filterMode: nodeData.subjectFilterMode || 'include',
-        comparisonMetric: nodeData.subjectComparisonMetric,
-        comparator: nodeData.subjectComparator,
-        comparisonSource: nodeData.subjectComparisonSource,
-        comparisonSourceTotal: nodeData.subjectComparisonSourceTotal
-      }),
-      operator: operatorPreviewText(nodeData.operator),
-      right: sidePreview({
-        subject: nodeData.target,
-        filter: nodeData.targetFilter || 'any',
-        filterMode: nodeData.targetFilterMode || 'include',
-        comparisonMetric: nodeData.targetComparisonMetric,
-        comparator: nodeData.targetComparator,
-        comparisonSource: nodeData.targetComparisonSource,
-        comparisonSourceTotal: nodeData.targetComparisonSourceTotal
-      })
-    }
-    preview.text = previewText(preview)
-    return preview
-  }
-
-  const preview = {
-    left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
-    operator: operatorLabel(nodeData.operator),
-    right: unaryTargetComparisonPreview({
-      comparator: nodeData.comparator,
-      target: nodeData.target,
-      targetFilter: nodeData.targetFilter,
-      targetFilterMode: nodeData.targetFilterMode,
-      targetTotal: nodeData.targetTotal
-    })
-  }
+  const [left, operator, right] = sentenceDescriptors(spec, nodeData)
+    .map(descriptor => formatConditionPreviewChunk(buildSentenceChunk(descriptor, nodeData)))
+  const preview = { left, operator, right }
   preview.text = previewText(preview)
   return preview
 }
@@ -249,11 +250,15 @@ export function formatConditionPreview(nodeData = {}) {
 export function formatConditionPreviewChunk(chunk) {
   switch (chunk.role) {
     case 'side':
-      return sidePreview(chunk)
+      return sidePreview({ ...chunk, filter: chunk.filter || 'any', filterMode: chunk.filterMode || 'include' })
     case 'operator':
       return operatorPreviewText(chunk.operator)
     case 'comparison':
       return unaryTargetComparisonPreview(chunk)
+    case 'region':
+      return positionAxisPreview(chunk.positionAxis, chunk.positionComparator, chunk.positionTarget)
+    case 'metric':
+      return metricPreview(chunk)
     default:
       return chunk.text || ''
   }
@@ -275,6 +280,11 @@ function parseChunkDataset(element) {
     targetFilterMode: dataset.conditionPreviewTargetFilterMode,
     targetTotal: dataset.conditionPreviewTargetTotal,
     operator: dataset.conditionPreviewOperator,
+    positionAxis: dataset.conditionPreviewPositionAxis,
+    positionComparator: dataset.conditionPreviewPositionComparator,
+    positionTarget: dataset.conditionPreviewPositionTarget === undefined
+      ? undefined
+      : Number(dataset.conditionPreviewPositionTarget),
     text: element.textContent
   }
 }

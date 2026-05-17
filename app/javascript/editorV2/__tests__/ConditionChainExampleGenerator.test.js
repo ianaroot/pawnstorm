@@ -53,7 +53,7 @@ describe('ConditionChainExampleGenerator', () => {
 
   it('generates examples for a single unary condition', () => {
     const payload = {
-      kind: 'unary',
+      kind: 'census',
       subject: 'allied',
       subjectFilter: 'any',
       operator: 'count',

@@ -5,7 +5,7 @@ import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unar
 import { buildSingulars } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 
 const TRIVIAL_PLAN = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 1
@@ -65,7 +65,7 @@ describe('buildSingulars — initialization', () => {
 describe('buildSingulars — position plan narrowing', () => {
   it('narrows singular region to qualifying squares when count > 0 on a position plan', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       positionAxis: 'rank', positionComparator: 'greater_than', positionTarget: 4,
       operator: 'count', comparator: 'greater_than',
@@ -81,7 +81,7 @@ describe('buildSingulars — position plan narrowing', () => {
 
   it('also narrows species_set to subjectSpeciesPool when count > 0 on a position plan with a filter', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'major',
       positionAxis: 'rank', positionComparator: 'greater_than', positionTarget: 4,
       operator: 'count', comparator: 'greater_than',
@@ -94,7 +94,7 @@ describe('buildSingulars — position plan narrowing', () => {
 
   it('subtracts qualifying squares from singular region when count = 0 on a position plan', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       positionAxis: 'rank', positionComparator: 'greater_than', positionTarget: 4,
       operator: 'count', comparator: 'equal_to',
@@ -114,7 +114,7 @@ describe('buildSingulars — position plan narrowing', () => {
 describe('buildSingulars — unary plan narrowing', () => {
   it('intersects species_set with subjectSpeciesPool when count > 0 on a unary plan', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'major',
       operator: 'count', comparator: 'greater_than',
       target: 'exact_number', targetTotal: 0
@@ -126,7 +126,7 @@ describe('buildSingulars — unary plan narrowing', () => {
 
   it('subtracts subjectSpeciesPool from species_set when count = 0 on a unary plan, preserving null for optional actors', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'captured_piece', subjectFilter: 'major',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 0
@@ -140,7 +140,7 @@ describe('buildSingulars — unary plan narrowing', () => {
 describe('buildSingulars — unary value narrowing on singular subject', () => {
   it('narrows species_set to species whose materialValue satisfies value > target', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than',
       target: 'exact_number', targetTotal: 5
@@ -152,7 +152,7 @@ describe('buildSingulars — unary value narrowing on singular subject', () => {
 
   it('narrows species_set to species whose materialValue satisfies value = target (exact match)', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 3
@@ -164,7 +164,7 @@ describe('buildSingulars — unary value narrowing on singular subject', () => {
 
   it('respects subjectFilter (major) intersected with value predicate', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'major',
       operator: 'value', comparator: 'greater_than',
       target: 'exact_number', targetTotal: 5
@@ -287,13 +287,13 @@ describe('buildSingulars — multi-plan accumulation', () => {
   it('intersects narrowings across multiple plans on the same singular', () => {
     const combinedPlan = buildCombinedPlan([
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'moved_piece', subjectFilter: 'major',
         operator: 'count', comparator: 'greater_than',
         target: 'exact_number', targetTotal: 0
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'moved_piece', subjectFilter: 'queen',
         operator: 'count', comparator: 'greater_than',
         target: 'exact_number', targetTotal: 0

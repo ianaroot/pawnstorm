@@ -69,9 +69,10 @@ function narrowSingulars(plan, singulars) {
     return
   }
   if (!SINGULAR_ACTORS.has(plan.subject)) { return }
-  if (plan.kind === 'position') {
+  if (plan.kind !== 'census') { return }
+  if (plan.positionAxis != null) {
     narrowSingularByPositionPlan(plan, singulars[plan.subject])
-  } else if (plan.kind === 'unary') {
+  } else {
     narrowSingularByUnaryPlan(plan, singulars[plan.subject])
     if (plan.operator === 'value' && SINGULAR_ACTORS.has(plan.target)) {
       recordSingularValueComparison({

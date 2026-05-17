@@ -132,7 +132,7 @@ function extractMovedPieceSpeciesPool(plans) {
 function positionRequirementsFromPlans(plans) {
   return plans
     .filter(plan => (
-      plan.kind === 'position' &&
+      plan.kind === 'census' &&
       plan.positionAxis === 'square' &&
       plan.positionComparator === 'equal_to' &&
       plan.subjectFilter !== 'any'
@@ -243,7 +243,7 @@ function rankSatisfiesComparator(rank, comparator, target) {
 
 function detectImpossiblePawnPosition({ plans }) {
   for (const plan of plans) {
-    if (plan.kind !== 'position') { continue }
+    if (plan.kind !== 'census') { continue }
     if (plan.subjectFilter !== 'pawn') { continue }
     if (plan.positionAxis !== 'rank') { continue }
     const matching = ALL_RELATIVE_RANKS.filter(r =>
@@ -278,7 +278,7 @@ function detectSingularActorWithAggregateValue({ plans }) {
 
 function detectSingularActorWithImpossibleUnaryCount({ plans }) {
   for (const plan of plans) {
-    if (plan.kind !== 'unary') { continue }
+    if (plan.kind !== 'census') { continue }
     if (!SINGULAR_ACTORS.has(plan.subject)) { continue }
     if (plan.operator !== 'count') { continue }
     if (plan.target !== 'exact_number') { continue }
@@ -296,9 +296,11 @@ function detectSingularActorWithImpossibleUnaryCount({ plans }) {
 
 function detectMovedPieceWithCountZero({ plans }) {
   for (const plan of plans) {
-    if (plan.kind !== 'unary') { continue }
+    if (plan.kind !== 'census') { continue }
     if (plan.subject !== 'moved_piece') { continue }
     if (plan.operator !== 'count') { continue }
+    // Region-restricted census moved_piece count = 0 is satisfiable (piece exists outside the region)
+    if (plan.positionAxis != null) { continue }
     if (plan.target !== 'exact_number') { continue }
     const total = Number(plan.targetTotal ?? 0)
     const requiresZero =

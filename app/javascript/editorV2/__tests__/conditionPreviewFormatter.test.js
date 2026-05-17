@@ -60,11 +60,11 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allied pawn/s (value > 3) : attack : Enemy bishop/s')
     })
 
-    it('formats unary previews in a three-block layout', () => {
+    it('formats a whole-board census preview in a three-block layout', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'mobility',
@@ -74,11 +74,11 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Enemy Moved Piece pawn/s : mobility : < Prior Board State')
     })
 
-    it('formats unary actor targets with filters', () => {
+    it('formats whole-board census actor targets with filters', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'allied',
           subjectFilter: 'any',
           operator: 'value',
@@ -89,16 +89,31 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allies any : value : > Enemy rook/s')
     })
 
-    it('formats same_piece with the explicit operator phrase', () => {
+    it('formats a region census preview with the position-axis block', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'relational',
-          subject: 'enemy_moved_piece',
+          kind: 'census',
+          subject: 'allied',
           subjectFilter: 'any',
-          operator: 'same_piece',
-          target: 'captured_piece',
-          targetFilter: 'any'
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5,
+          operator: 'count',
+          comparator: 'greater_than',
+          target: 'exact_number',
+          targetTotal: 0
+        }).text
+      ).toBe('Allies any : rank = 5 : count > 0')
+    })
+
+    it('formats an identity condition with the explicit same-piece phrase', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'identity',
+          subject: 'enemy_moved_piece',
+          target: 'captured_piece'
         }).text
       ).toBe('Enemy Moved Piece : is same-piece-as : Captured Piece')
     })
@@ -162,6 +177,46 @@ describe('conditionPreviewFormatter', () => {
           targetFilter: 'any'
         })
       ).toBe('= Captured Piece')
+    })
+
+    it('formats a region chunk via the position-axis preview', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'file',
+          positionComparator: 'equal_to',
+          positionTarget: 1
+        })
+      ).toBe('file = a')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than',
+          positionTarget: 5
+        })
+      ).toBe('rank > 5')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'square',
+          positionComparator: 'equal_to',
+          positionTarget: 0
+        })
+      ).toBe('square a1')
+    })
+
+    it('formats a metric chunk as operator comparator total', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'metric',
+          operator: 'count',
+          comparator: 'greater_than',
+          targetTotal: 0
+        })
+      ).toBe('count > 0')
     })
 
     it('formats excluded major and minor filters', () => {

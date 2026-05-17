@@ -8,7 +8,7 @@ const PROMOTION_SPECIES = new Set([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.
 const CAPTURABLE_NON_PAWN = new Set([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
 
 const TRIVIAL_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 0

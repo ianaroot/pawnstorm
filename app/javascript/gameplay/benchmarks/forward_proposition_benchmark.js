@@ -109,9 +109,10 @@ const PAYLOADS = [
     }
   },
   {
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~46% verified.
     name: "rook mobility < 5 (mobility-constrained)",
     payload: {
-      version: 2, kind: "unary",
+      version: 2, kind: "census",
       subject: "allied", subjectFilter: "rook",
       operator: "mobility", comparator: "less_than",
       target: "exact_number", targetTotal: 5
@@ -121,9 +122,10 @@ const PAYLOADS = [
     // Adversarial: allied bishop at h1 conflicts unconditionally with
     // kingside castle's rookStart empty constraint. Every castle attempt
     // should be detectable as wasted.
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~77% verified.
     name: "allied bishop at h1 (conflicts with kingside castle)",
     payload: {
-      version: 2, kind: "position",
+      version: 2, kind: "census",
       subject: "allied", subjectFilter: "bishop",
       positionAxis: "square", positionComparator: "equal_to", positionTarget: 7,
       operator: "count", comparator: "greater_than",
@@ -134,13 +136,41 @@ const PAYLOADS = [
     // Adversarial: allied pawn at e5 conflicts with EP-left only when
     // moved_piece commits to d6 (diag-left-origin lands on e5). Other
     // EP destinations are fine. "Sometimes blocks."
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~81% verified.
     name: "allied pawn at e5 (sometimes blocks en passant)",
     payload: {
-      version: 2, kind: "position",
+      version: 2, kind: "census",
       subject: "allied", subjectFilter: "pawn",
       positionAxis: "square", positionComparator: "equal_to", positionTarget: 36,
       operator: "count", comparator: "greater_than",
       target: "exact_number", targetTotal: 0
+    }
+  },
+  {
+    // Region-restricted PBS census, increasing. Rook chosen so the rank
+    // delta can't arise by luck (a rook may stay on its rank).
+    // Baseline 2026-05-16: 0.4% pre-mechanism (luck) -> 80.9% engineered
+    // (moved_piece species+region narrowing + swing mechanism).
+    name: "census rook count rank=5 > PBS (region, increasing)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "allied", subjectFilter: "rook", subjectFilterMode: "include",
+      positionAxis: "rank", positionComparator: "equal_to", positionTarget: 5,
+      operator: "count", comparator: "greater_than",
+      target: "prior_board_state"
+    }
+  },
+  {
+    // Region-restricted PBS census, decreasing (capture-in-region path).
+    // Baseline 2026-05-16: 9.2% luck -> 76.5% engineered
+    // (moved_piece region narrowing to the capture region + en passant).
+    name: "census enemy count file=4 < PBS (region, decreasing)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "enemy", subjectFilter: "any",
+      positionAxis: "file", positionComparator: "equal_to", positionTarget: 4,
+      operator: "count", comparator: "less_than",
+      target: "prior_board_state"
     }
   }
 ]

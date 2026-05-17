@@ -9,7 +9,7 @@ class NodeForm
   }.freeze
 
   FILTER_LABELS = {
-    'any' => 'Any',
+    'any' => 'Any piece',
     'king' => 'King',
     'queen' => 'Queen',
     'rook' => 'Rook',
@@ -30,12 +30,12 @@ class NodeForm
     'same_piece' => 'Same-Piece',
     'count' => 'Count',
     'mobility' => 'Mobility',
-    'value' => 'Aggregate Value'
+    'value' => 'Value'
   }.freeze
 
   COMPARISON_METRIC_LABELS = {
-    'count' => 'count',
-    'individual_value' => 'value'
+    'count' => 'Count',
+    'individual_value' => 'Value'
   }.freeze
 
   COMPARATOR_SYMBOLS = {
@@ -74,16 +74,12 @@ class NodeForm
       NodeGrammarV2::RELATIONAL_OPERATORS.map { |value| [operator_label(value), value] }
     end
 
-    def special_targeted_operator_options
-      NodeGrammarV2::SPECIAL_TARGETED_OPERATORS.map { |value| [operator_label(value), value] }
-    end
-
     def unary_operator_options
       NodeGrammarV2::UNARY_OPERATORS.map { |value| [operator_label(value), value] }
     end
 
     def condition_form_relational_operator_options
-      [['Targets', 'targets'], ['Shield', 'shield'], ['Adjacent', 'adjacent'], ['Same-Piece', 'same_piece']]
+      [['Targets', 'targets'], ['Shield', 'shield'], ['Adjacent', 'adjacent']]
     end
 
     def condition_form_measure_operator_options

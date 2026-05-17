@@ -4,6 +4,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { buildPriorBoard } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { pieceControlsSquare } from 'gameplay/board_query_utils'
+import { singularPosition } from '../relations/relation_helpers'
 import { movedPieceParticipatesInAttackOrDefend } from './mechanisms/moved_piece_participates_in_attack_or_defend'
 import { movedPieceParticipatesAdjacent } from './mechanisms/moved_piece_participates_adjacent'
 import { movedPieceParticipatesShield } from './mechanisms/moved_piece_participates_shield'
@@ -14,8 +15,10 @@ import { movedPieceShiftsAlliedMobility } from './mechanisms/moved_piece_shifts_
 import { movedPieceShiftsEnemyKingMobility } from './mechanisms/moved_piece_shifts_enemy_king_mobility'
 import { movedPieceShiftsEnemyMobility } from './mechanisms/moved_piece_shifts_enemy_mobility'
 import { movedPieceCapturesRelationParticipant } from './mechanisms/moved_piece_captures_relation_participant'
+import { movedPieceShiftsRegionMembership } from './mechanisms/moved_piece_shifts_region_membership'
 
 const MECHANISMS = Object.freeze([
+  movedPieceShiftsRegionMembership,
   movedPieceParticipatesInAttackOrDefend,
   movedPieceParticipatesAdjacent,
   movedPieceParticipatesShield,
@@ -62,6 +65,11 @@ export function satisfyCrossFrame(ctx, pieces, random) {
 // aggregate_*) return true unconditionally so the first non-null mechanism
 // wins.
 function entrySatisfied(entry, ctx, afterPieces) {
+  if (entry.source === 'census' &&
+      entry.metric === 'count' &&
+      entry.currentProposition?.region?.kind === 'set') {
+    return regionCountDeltaSatisfied(entry, ctx, afterPieces)
+  }
   if (entry.metric !== 'count') { return true }
   if (entry.operator !== 'attack' && entry.operator !== 'defend') { return true }
 
@@ -86,6 +94,39 @@ function entrySatisfied(entry, ctx, afterPieces) {
   })
 
   return compareWithDirection(afterCount, priorCount, entry.direction)
+}
+
+function regionCountDeltaSatisfied(entry, ctx, afterPieces) {
+  const moved = ctx.singulars.moved_piece
+  const destination = singularSquare(moved)
+  if (destination === null) { return true }
+  const origin = firstSquareOf(moved.priorRegion)
+  if (origin === null) { return true }
+
+  const priorPieces = buildPriorBoard({
+    pieces: afterPieces, singulars: ctx.singulars, origin, endPos: destination,
+    capturedPiecePosition: singularPosition(ctx, 'captured_piece') ?? undefined
+  })
+  if (priorPieces === null) { return false }
+
+  // census PBS builds both frames from one identical sideShape, so
+  // currentProposition's team/species/region also describe the prior frame.
+  const prop = entry.currentProposition
+  const region = prop.region.squares
+  const after = countInRegion(prop, afterPieces, region)
+  const prior = countInRegion(prop, priorPieces, region)
+  return compareWithDirection(after, prior, entry.direction)
+}
+
+function countInRegion(proposition, pieces, region) {
+  let count = 0
+  for (const [pos, piece] of pieces) {
+    if (!region.has(pos)) { continue }
+    if (piece.charAt(0) !== proposition.team) { continue }
+    if (!proposition.species_set.has(piece.slice(1))) { continue }
+    count += 1
+  }
+  return count
 }
 
 function countParticipants({ proposition, pieces, movedPieceSquare }) {

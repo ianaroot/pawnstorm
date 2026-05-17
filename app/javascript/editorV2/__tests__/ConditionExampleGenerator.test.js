@@ -439,7 +439,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('uses forward generation for moved_piece mobility < prior_board_state', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'mobility', comparator: 'less_than',
       target: 'prior_board_state'
@@ -518,7 +518,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('flags contradiction when a pawn is required on an illegal rank', () => {
     const payload = {
-      version: 2, kind: 'position',
+      version: 2, kind: 'census', target: 'exact_number',
       subject: 'allied', subjectFilter: 'pawn', operator: 'count',
       positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 0,
       comparator: 'greater_than_or_equal_to', targetTotal: 1
@@ -530,7 +530,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('flags contradiction when a directional rank constraint resolves to only an illegal pawn rank', () => {
     const payload = {
-      version: 2, kind: 'position',
+      version: 2, kind: 'census', target: 'exact_number',
       subject: 'allied', subjectFilter: 'pawn', operator: 'count',
       positionAxis: 'rank', positionComparator: 'less_than', positionTarget: 1,
       comparator: 'greater_than_or_equal_to', targetTotal: 1
@@ -542,7 +542,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('flags contradiction when a unary singular actor has count > 1', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 2
@@ -554,7 +554,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('flags contradiction when moved_piece is required to have count = 0', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 0
@@ -566,7 +566,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('uses forward generation for allied any mobility > prior_board_state via group-mobility-increase pattern', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'any',
       operator: 'mobility', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -578,7 +578,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('falls back to Strategy A direct-blocking when no king is available to put in check', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy', subjectFilter: 'pawn',
       operator: 'mobility', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 0
@@ -606,7 +606,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('builds verified examples via hint resolver for lone enemy mobility = 0', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy', subjectFilter: 'any',
       operator: 'mobility', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 0
@@ -622,7 +622,7 @@ describe('ConditionExampleGenerator', () => {
   it('builds verified examples via hint resolver for the checkmate chain', () => {
     const payloads = [
       { version: 2, kind: 'relational', subject: 'allied', subjectFilter: 'any', operator: 'attack', target: 'enemy', targetFilter: 'king' },
-      { version: 2, kind: 'unary', subject: 'enemy', subjectFilter: 'any', operator: 'mobility', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 }
+      { version: 2, kind: 'census', subject: 'enemy', subjectFilter: 'any', operator: 'mobility', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 }
     ]
     const seeds = [1001, 1002, 1003, 1004, 1005]
     const success = seeds.some(seed => {
@@ -660,7 +660,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('uses forward generation for moved_piece mobility > prior_board_state', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'mobility', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -672,7 +672,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('uses forward generation for moved_piece value > prior_board_state via promotion', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -727,7 +727,7 @@ describe('ConditionExampleGenerator', () => {
   it('builds verified examples for unary captured piece count equal to 1', () => {
     const payload = {
       version: 2,
-      kind: 'unary',
+      kind: 'census',
       subject: 'captured_piece',
       subjectFilter: 'any',
       operator: 'count',
@@ -748,7 +748,7 @@ describe('ConditionExampleGenerator', () => {
   it('builds verified examples for unary captured piece count greater than 0', () => {
     const payload = {
       version: 2,
-      kind: 'unary',
+      kind: 'census',
       subject: 'captured_piece',
       subjectFilter: 'any',
       operator: 'count',
@@ -769,7 +769,7 @@ describe('ConditionExampleGenerator', () => {
   it('builds verified examples for unary enemy_captured_piece count equal to 1', () => {
     const payload = {
       version: 2,
-      kind: 'unary',
+      kind: 'census',
       subject: 'enemy_captured_piece',
       subjectFilter: 'any',
       operator: 'count',
@@ -790,7 +790,7 @@ describe('ConditionExampleGenerator', () => {
   it('builds verified examples for unary enemy_captured_piece count greater than 0', () => {
     const payload = {
       version: 2,
-      kind: 'unary',
+      kind: 'census',
       subject: 'enemy_captured_piece',
       subjectFilter: 'any',
       operator: 'count',
@@ -1131,7 +1131,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('produces en-passant examples for a chain where moved_piece IS the relation subject (involved variant)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 1
@@ -1154,7 +1154,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('produces en-passant examples for a chain where captured_piece (not moved_piece) is the relation subject (separate variant)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'captured_piece', subjectFilter: 'pawn',
       subjectFilterMode: 'include',
       operator: 'count', comparator: 'equal_to',
@@ -1183,10 +1183,9 @@ describe('ConditionExampleGenerator', () => {
     // sets movedPieceEndPosition = capturedSquare, which the samePiece
     // predicate compares against the captured piece's position.
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
 
     const preview = generateConditionExamples(payload, {
@@ -1208,10 +1207,9 @@ describe('ConditionExampleGenerator', () => {
     // Standard reverse-gen path also benefits from the same_piece skip in
     // seed_builder. Restricting moveKinds to 'standard' isolates this path.
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
 
     const preview = generateConditionExamples(payload, {
@@ -1232,10 +1230,9 @@ describe('ConditionExampleGenerator', () => {
     // attack runs through skeleton building.
     const payloads = [
       {
-        version: 2, kind: 'relational',
-        subject: 'enemy_moved_piece', subjectFilter: 'any',
-        operator: 'same_piece',
-        target: 'captured_piece', targetFilter: 'any'
+        version: 2, kind: 'identity',
+        subject: 'enemy_moved_piece',
+        target: 'captured_piece'
       },
       {
         version: 2, kind: 'relational',
@@ -1258,7 +1255,7 @@ describe('ConditionExampleGenerator', () => {
     // The condition is about the enemy king's count — independent of which
     // move occurred. En-passant should still appear in the example mix.
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy', subjectFilter: 'king',
       subjectFilterMode: 'include',
       operator: 'count', comparator: 'equal_to',
@@ -1282,7 +1279,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for a position count condition on rank', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'allied',
       subjectFilter: 'any',
       positionAxis: 'rank',
@@ -1304,7 +1301,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for a position count condition on file', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'enemy',
       subjectFilter: 'any',
       positionAxis: 'file',
@@ -1326,7 +1323,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for a position count condition on moved_piece', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'moved_piece',
       subjectFilter: 'any',
       positionAxis: 'rank',
@@ -1348,7 +1345,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for a position value condition', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'allied',
       subjectFilter: 'any',
       positionAxis: 'rank',
@@ -1370,7 +1367,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for an enemy_moved_piece position condition', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'enemy_moved_piece',
       subjectFilter: 'any',
       positionAxis: 'rank',
@@ -1392,7 +1389,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for a position count condition on square (a1)', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'allied',
       subjectFilter: 'any',
       positionAxis: 'square',
@@ -1414,7 +1411,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates verified examples for an enemy position count condition on square (a1)', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'enemy',
       subjectFilter: 'any',
       positionAxis: 'square',
@@ -1436,7 +1433,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates promotion examples for a position count condition on rank 8', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'moved_piece',
       subjectFilter: 'any',
       positionAxis: 'rank',
@@ -1474,7 +1471,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('generates castle examples for a chain that does not preclude castle (allied bishop on rank 4 count = 1)', () => {
     const payload = {
-      kind: 'position',
+      kind: 'census', target: 'exact_number',
       subject: 'allied',
       subjectFilter: 'bishop',
       positionAxis: 'rank',
@@ -1494,10 +1491,9 @@ describe('ConditionExampleGenerator', () => {
   })
   it('routes a same_piece chain (enemy_moved_piece + captured_piece) through forward generation (8f)', () => {
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
     const preview = generateConditionExamples(payload, { random: seededRandom(2015) })
     expect(preview.status).toBe('ready')
@@ -1546,7 +1542,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a PBS-direction equal mobility chain through forward generation (M8)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
       operator: 'mobility', comparator: 'equal_to',
       target: 'prior_board_state'
@@ -1562,7 +1558,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a PBS-direction less-than mobility chain through forward generation (M8)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
       operator: 'mobility', comparator: 'less_than',
       target: 'prior_board_state'
@@ -1578,7 +1574,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a moved_piece PBS mobility chain through forward generation (M6)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'knight', subjectFilterMode: 'include',
       operator: 'mobility', comparator: 'greater_than',
       target: 'prior_board_state'
@@ -1735,13 +1731,13 @@ describe('ConditionExampleGenerator', () => {
     // unary value hints must be satisfied jointly. Caps at value > 34 per side.
     const payloads = [
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'any',
         operator: 'value', comparator: 'greater_than',
         target: 'exact_number', targetTotal: 34
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'any',
         operator: 'value', comparator: 'greater_than',
         target: 'exact_number', targetTotal: 34
@@ -1781,7 +1777,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a unary value pair chain (captured_piece >= moved_piece) through forward generation (8c-cleanup)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'captured_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than_or_equal_to',
       target: 'moved_piece', targetFilter: 'any'
@@ -1797,7 +1793,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a unary value pair chain (enemy_moved_piece > enemy_captured_piece) through forward generation (8c-cleanup)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'enemy_moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'greater_than',
       target: 'enemy_captured_piece', targetFilter: 'any'
@@ -1812,7 +1808,7 @@ describe('ConditionExampleGenerator', () => {
 
   it('routes a unary count pair chain (captured_piece = enemy_moved_piece, capture present) through forward generation (8c-cleanup)', () => {
     const payload = {
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'captured_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
       target: 'enemy_moved_piece', targetFilter: 'any'
@@ -1833,13 +1829,13 @@ describe('ConditionExampleGenerator', () => {
     // inventory's range arithmetic returning null from buildChainConstraints).
     const payloads = [
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 5
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1855,13 +1851,13 @@ describe('ConditionExampleGenerator', () => {
     // (from bishop), but allied/any count.max = 0. Empty range → unsat.
     const payloads = [
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'bishop',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 2
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1888,7 +1884,7 @@ describe('ConditionExampleGenerator', () => {
         subjectComparisonSource: 'prior_board_state'
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'any',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1913,7 +1909,7 @@ describe('ConditionExampleGenerator', () => {
         subjectComparisonSourceTotal: 3
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'pawn',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1928,13 +1924,13 @@ describe('ConditionExampleGenerator', () => {
     // exist (some at rank ≥ 5). Plan B: allied/pawn count = 0. Range [2, 0] → unsat.
     const payloads = [
       {
-        version: 2, kind: 'position',
+        version: 2, kind: 'census', target: 'exact_number',
         subject: 'allied', subjectFilter: 'pawn',
         positionAxis: 'rank', positionComparator: 'greater_than_or_equal_to', positionTarget: 5,
         operator: 'count', comparator: 'greater_than_or_equal_to', targetTotal: 2
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'pawn',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1953,13 +1949,13 @@ describe('ConditionExampleGenerator', () => {
     // [1, 0] → unsat.
     const payloads = [
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'moved_piece', subjectFilter: 'any',
         operator: 'value', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 9
       },
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'queen',
         operator: 'count', comparator: 'equal_to',
         target: 'exact_number', targetTotal: 0
@@ -1977,7 +1973,7 @@ describe('ConditionExampleGenerator', () => {
     // unary value pair strategy picks from that narrowed set.
     const payloads = [
       {
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'captured_piece', subjectFilter: 'any',
         operator: 'value', comparator: 'greater_than',
         target: 'moved_piece', targetFilter: 'any'
@@ -2028,7 +2024,7 @@ describe('ConditionExampleGenerator', () => {
     // until patch-2 enforcement makes other paths consult the new constraint.
     // For now we just verify the chain stays satisfiable end-to-end.
     const payload = {
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'enemy', subjectFilter: 'pawn', subjectFilterMode: 'include',
       positionAxis: 'rank', positionComparator: 'less_than', positionTarget: 4,
       operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0

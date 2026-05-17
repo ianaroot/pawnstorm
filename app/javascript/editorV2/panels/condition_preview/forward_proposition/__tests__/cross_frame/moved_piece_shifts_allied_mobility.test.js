@@ -21,7 +21,7 @@ function movedPieceSingular(species = Board.NIGHT) {
 
 function entry({
   direction = '-', team = Board.WHITE, species = Board.QUEEN,
-  boundSingularActor = null, source = 'unary'
+  boundSingularActor = null, source = 'census'
 } = {}) {
   const currentProposition = {
     team, frame: 'current',
@@ -42,7 +42,7 @@ function entry({
 }
 
 describe('movedPieceShiftsAlliedMobility — appliesTo', () => {
-  it('returns true for unary mobility on allied team not bound to moved_piece', () => {
+  it('returns true for census mobility on allied team not bound to moved_piece', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     expect(movedPieceShiftsAlliedMobility.appliesTo(entry(), ctx, new Map())).toBe(true)
   })

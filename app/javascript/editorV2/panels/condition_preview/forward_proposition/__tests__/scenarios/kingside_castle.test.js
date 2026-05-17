@@ -10,7 +10,7 @@ const G1 = 6
 const H1 = 7
 
 const TRIVIAL_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 0

@@ -66,7 +66,7 @@ RSpec.describe BotNodesController, type: :request do
           position_y: 200,
           data: {
             version: 2,
-            kind: 'unary',
+            kind: 'census',
             subject: 'moved_piece',
             subjectFilter: 'any',
             subjectFilterMode: 'include',
