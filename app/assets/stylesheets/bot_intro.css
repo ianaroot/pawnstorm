@@ -64,6 +64,10 @@
 
 /* ---- Slides ---- */
 
+.bot-intro-slide[hidden] {
+  display: none;
+}
+
 .bot-intro-slide__title {
   margin: 0 0 14px;
   font-size: 20px;

@@ -189,6 +189,15 @@ RSpec.describe BotsController, type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
+      it 're-renders the editor on the invalid-params path (regression: @open_tournaments must be set)' do
+        patch bot_path(bot), params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        # The edit view reads @open_tournaments; if the update error path
+        # fails to assign it, this render raises and the body is missing.
+        expect(response.body).to include('How it works')
+      end
+
       it 'returns JSON for the editor rename modal' do
         patch bot_path(bot), params: { bot: { name: 'Updated Name', description: 'Updated Description' } }, as: :json
 

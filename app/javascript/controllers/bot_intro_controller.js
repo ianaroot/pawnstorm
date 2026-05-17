@@ -5,14 +5,32 @@ import { Controller } from "@hotwired/stimulus"
 // (bots#create adds ?intro=1, surfaced as the `auto` value). Also reopenable
 // from the "How it works" toolbar button.
 export default class extends Controller {
-  static targets = ["modal", "dialog", "slide", "dot", "prev", "next"]
+  static targets = ["modal", "dialog", "slide", "dots", "dot", "prev", "next"]
   static values = { auto: Boolean }
 
   connect() {
     this.index = 0
     this.boundKeydown = this.handleKeydown.bind(this)
+    this.buildDots()
     this.render()
     if (this.autoValue) { this.open() }
+  }
+
+  // Generate one dot per actual slide so the two can never desync.
+  buildDots() {
+    if (!this.hasDotsTarget) { return }
+    const total = this.slideTargets.length
+    this.dotsTarget.innerHTML = ""
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement("button")
+      dot.type = "button"
+      dot.className = "bot-intro-modal__dot"
+      dot.dataset.botIntroTarget = "dot"
+      dot.dataset.index = String(i)
+      dot.dataset.action = "click->bot-intro#goto"
+      dot.setAttribute("aria-label", `Go to slide ${i + 1} of ${total}`)
+      this.dotsTarget.appendChild(dot)
+    }
   }
 
   disconnect() {
@@ -70,7 +88,11 @@ export default class extends Controller {
     this.dotTargets.forEach((dot, i) => {
       const active = i === this.index
       dot.classList.toggle("bot-intro-modal__dot--active", active)
-      dot.setAttribute("aria-selected", active ? "true" : "false")
+      if (active) {
+        dot.setAttribute("aria-current", "true")
+      } else {
+        dot.removeAttribute("aria-current")
+      }
     })
     if (this.hasPrevTarget) {
       this.prevTarget.disabled = this.index === 0
