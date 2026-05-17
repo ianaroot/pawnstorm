@@ -5,8 +5,8 @@ RSpec.describe NodeForm, type: :model do
     it 'offers count and value (individual_value) but never aggregate_value' do
       options = described_class.comparison_metric_options
 
-      expect(options).to include(['count', 'count'])
-      expect(options).to include(['value', 'individual_value'])
+      expect(options).to include(['Count', 'count'])
+      expect(options).to include(['Value', 'individual_value'])
       expect(options.map(&:last)).not_to include('aggregate_value')
     end
   end

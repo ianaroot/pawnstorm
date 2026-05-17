@@ -195,12 +195,26 @@ function positionAxisPreview(axis, comparator, positionTarget) {
 }
 
 export function formatConditionPreview(nodeData = {}) {
-  if (nodeData.kind === 'position') {
-    const preview = {
-      left: subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include'),
-      operator: positionAxisPreview(nodeData.positionAxis, nodeData.positionComparator, nodeData.positionTarget),
-      right: `${operatorLabel(nodeData.operator)} ${comparatorLabel(nodeData.comparator)} ${nodeData.targetTotal}`
-    }
+  if (nodeData.kind === 'census') {
+    const hasRegion = nodeData.positionAxis !== undefined && nodeData.positionAxis !== null
+    const left = subjectPreview(nodeData.subject, nodeData.subjectFilter || 'any', nodeData.subjectFilterMode || 'include')
+    const preview = hasRegion
+      ? {
+          left,
+          operator: positionAxisPreview(nodeData.positionAxis, nodeData.positionComparator, nodeData.positionTarget),
+          right: `${operatorLabel(nodeData.operator)} ${comparatorLabel(nodeData.comparator)} ${nodeData.targetTotal}`
+        }
+      : {
+          left,
+          operator: operatorLabel(nodeData.operator),
+          right: unaryTargetComparisonPreview({
+            comparator: nodeData.comparator,
+            target: nodeData.target,
+            targetFilter: nodeData.targetFilter,
+            targetFilterMode: nodeData.targetFilterMode,
+            targetTotal: nodeData.targetTotal
+          })
+        }
     preview.text = previewText(preview)
     return preview
   }

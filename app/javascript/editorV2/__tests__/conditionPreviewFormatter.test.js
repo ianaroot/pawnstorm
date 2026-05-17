@@ -60,11 +60,11 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allied pawn/s (value > 3) : attack : Enemy bishop/s')
     })
 
-    it('formats unary previews in a three-block layout', () => {
+    it('formats a whole-board census preview in a three-block layout', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'mobility',
@@ -74,11 +74,11 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Enemy Moved Piece pawn/s : mobility : < Prior Board State')
     })
 
-    it('formats unary actor targets with filters', () => {
+    it('formats whole-board census actor targets with filters', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'allied',
           subjectFilter: 'any',
           operator: 'value',
@@ -87,6 +87,24 @@ describe('conditionPreviewFormatter', () => {
           targetFilter: 'rook'
         }).text
       ).toBe('Allies any : value : > Enemy rook/s')
+    })
+
+    it('formats a region census preview with the position-axis block', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'census',
+          subject: 'allied',
+          subjectFilter: 'any',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5,
+          operator: 'count',
+          comparator: 'greater_than',
+          target: 'exact_number',
+          targetTotal: 0
+        }).text
+      ).toBe('Allies any : rank = 5 : count > 0')
     })
 
     it('formats same_piece with the explicit operator phrase', () => {
