@@ -113,10 +113,20 @@ RSpec.describe BotCompiler do
         })
       end
 
+      let!(:identity_condition) do
+        create(:node, :condition, bot: bot, position_x: 460, position_y: 100, data: {
+          version: 2,
+          kind: 'identity',
+          subject: 'enemy_moved_piece',
+          target: 'captured_piece'
+        })
+      end
+
       before do
         connect_nodes(root, relational_condition)
         connect_nodes(root, unary_condition)
         connect_nodes(root, region_census_condition)
+        connect_nodes(root, identity_condition)
       end
 
       it 'preserves v2 relational condition payloads in compiled output' do
@@ -175,6 +185,19 @@ RSpec.describe BotCompiler do
             positionAxis: 'rank',
             positionComparator: 'equal_to',
             positionTarget: 5
+          }
+        )
+      end
+
+      it 'preserves v2 identity condition payloads in compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][identity_condition.id.to_s][:data]).to eq(
+          {
+            version: 2,
+            kind: 'identity',
+            subject: 'enemy_moved_piece',
+            target: 'captured_piece'
           }
         )
       end
