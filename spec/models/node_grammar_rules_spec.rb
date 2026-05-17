@@ -15,9 +15,9 @@ RSpec.describe NodeGrammarRules, type: :model do
   end
 
   describe '.valid_relational_target_for?' do
-    it 'allows same_piece targets only for the paired subjects' do
-      expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'same_piece', target: 'captured_piece')).to be(true)
-      expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'same_piece', target: 'enemy')).to be(false)
+    it 'rejects same_piece as a relational operator (it is now the identity kind)' do
+      expect(described_class.valid_relational_target_for?(subject: 'enemy_moved_piece', operator: 'same_piece', target: 'captured_piece')).to be(false)
+      expect(NodeGrammarV2.valid_relational_operator?('same_piece')).to be(false)
     end
 
     it 'allows attack targets only across teams' do

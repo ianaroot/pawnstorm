@@ -74,16 +74,12 @@ class NodeForm
       NodeGrammarV2::RELATIONAL_OPERATORS.map { |value| [operator_label(value), value] }
     end
 
-    def special_targeted_operator_options
-      NodeGrammarV2::SPECIAL_TARGETED_OPERATORS.map { |value| [operator_label(value), value] }
-    end
-
     def unary_operator_options
       NodeGrammarV2::UNARY_OPERATORS.map { |value| [operator_label(value), value] }
     end
 
     def condition_form_relational_operator_options
-      [['Targets', 'targets'], ['Shield', 'shield'], ['Adjacent', 'adjacent'], ['Same-Piece', 'same_piece']]
+      [['Targets', 'targets'], ['Shield', 'shield'], ['Adjacent', 'adjacent']]
     end
 
     def condition_form_measure_operator_options

@@ -9,7 +9,13 @@ function option(value, label = value) {
 const subjectOptions = ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
-const relationalOperatorOptions = ['targets', 'shield', 'adjacent', 'same_piece']
+const relationalOperatorOptions = ['targets', 'shield', 'adjacent']
+  .map(value => option(value))
+  .join('')
+const identitySubjectOptions = ['enemy_moved_piece', 'captured_piece']
+  .map(value => option(value))
+  .join('')
+const identityTargetOptions = ['captured_piece', 'enemy_moved_piece']
   .map(value => option(value))
   .join('')
 const censusOperatorOptions = ['count', 'mobility', 'value']
@@ -28,8 +34,9 @@ function buildPanel() {
   const panel = document.createElement('div')
   panel.id = 'node-form-panel'
   panel.innerHTML = `
-    <button type="button" id="cond-mode-relational" class="active">Relational</button>
     <button type="button" id="cond-mode-census">Positions</button>
+    <button type="button" id="cond-mode-relational" class="active">Attack/Defend</button>
+    <button type="button" id="cond-mode-identity">Identity</button>
 
     <div class="condition-form-layout">
       <select id="cond-left-subject">${subjectOptions}</select>
@@ -153,6 +160,11 @@ function buildPanel() {
           <div id="cond-census-square-rank">${radioList('cond-census-square-rank')}</div>
         </div>
       </section>
+    </div>
+
+    <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
+      <select id="cond-identity-subject">${identitySubjectOptions}</select>
+      <select id="cond-identity-target">${identityTargetOptions}</select>
     </div>
 
     <div id="cond-formulation-preview"></div>
@@ -849,5 +861,64 @@ describe('ConditionForm', () => {
     expect(payload).not.toHaveProperty('targetComparisonMetric')
     expect(payload).not.toHaveProperty('targetComparator')
     expect(payload).not.toHaveProperty('targetComparisonSource')
+  })
+
+  describe('identity mode', () => {
+    it('loads an identity node and builds a minimal identity payload', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      form.populate({
+        version: 2,
+        kind: 'identity',
+        subject: 'enemy_moved_piece',
+        target: 'captured_piece'
+      })
+
+      expect(form.state.mode).toBe('identity')
+      expect(panel.querySelector('#cond-identity-layout').classList.contains('hidden')).toBe(false)
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'identity',
+        subject: 'enemy_moved_piece',
+        target: 'captured_piece'
+      })
+    })
+
+    it('switches to identity mode via the mode picker', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-identity').dispatchEvent(new Event('click'))
+
+      expect(form.state.mode).toBe('identity')
+      expect(form.buildPayload()).toMatchObject({ kind: 'identity' })
+    })
+
+    it('reconstrains the target to the subject pairing when the subject changes', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      form.populate({
+        version: 2,
+        kind: 'identity',
+        subject: 'enemy_moved_piece',
+        target: 'captured_piece'
+      })
+
+      const subject = panel.querySelector('#cond-identity-subject')
+      subject.value = 'captured_piece'
+      subject.dispatchEvent(new Event('change'))
+
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'identity',
+        subject: 'captured_piece',
+        target: 'enemy_moved_piece'
+      })
+    })
   })
 })

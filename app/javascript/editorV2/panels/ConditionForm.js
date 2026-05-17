@@ -70,6 +70,11 @@ const DEFAULT_CENSUS_STATE = {
   targetTotal: 0
 }
 
+const DEFAULT_IDENTITY_STATE = {
+  subject: 'enemy_moved_piece',
+  target: 'captured_piece'
+}
+
 const DEFAULT_GRAMMAR_RULES = Object.freeze({
   editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
   positionSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
@@ -106,6 +111,7 @@ class ConditionForm {
     this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
     this.boundHandleModeRelational = () => this.handleModeChange('relational')
     this.boundHandleModeCensus = () => this.handleModeChange('census')
+    this.boundHandleModeIdentity = () => this.handleModeChange('identity')
     this.boundHandleCensusComparisonToggle = this.toggleCensusComparison.bind(this)
   }
 
@@ -113,7 +119,8 @@ class ConditionForm {
     return {
       mode: 'census',
       relational: structuredClone(DEFAULT_RELATIONAL_STATE),
-      census: structuredClone(DEFAULT_CENSUS_STATE)
+      census: structuredClone(DEFAULT_CENSUS_STATE),
+      identity: structuredClone(DEFAULT_IDENTITY_STATE)
     }
   }
 
@@ -135,6 +142,7 @@ class ConditionForm {
     fields.rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.addEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.addEventListener('click', this.boundHandleModeCensus)
+    fields.modeIdentityBtn?.addEventListener('click', this.boundHandleModeIdentity)
     fields.censusComparisonToggle?.addEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
@@ -146,6 +154,7 @@ class ConditionForm {
     fields.rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.removeEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.removeEventListener('click', this.boundHandleModeCensus)
+    fields.modeIdentityBtn?.removeEventListener('click', this.boundHandleModeIdentity)
     fields.censusComparisonToggle?.removeEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
@@ -187,6 +196,8 @@ class ConditionForm {
     const censusFileInput = this.editorPanel.querySelector('#cond-census-file-input')
     const censusSquareFile = this.editorPanel.querySelector('#cond-census-square-file')
     const censusSquareRank = this.editorPanel.querySelector('#cond-census-square-rank')
+    const identitySubject = this.editorPanel.querySelector('#cond-identity-subject')
+    const identityTarget = this.editorPanel.querySelector('#cond-identity-target')
     const censusRankInputs = pillInputs(censusRankInput)
     const censusFileInputs = pillInputs(censusFileInput)
     const censusSquareFileInputs = pillInputs(censusSquareFile)
@@ -235,6 +246,8 @@ class ConditionForm {
       censusFileInputs,
       censusSquareFileInputs,
       censusSquareRankInputs,
+      identitySubject,
+      identityTarget,
       leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
       leftComparisonSourceStack: this.editorPanel.querySelector('#cond-left-comparison-source-stack'),
@@ -251,11 +264,13 @@ class ConditionForm {
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       modeRelationalBtn: this.editorPanel.querySelector('#cond-mode-relational'),
       modeCensusBtn: this.editorPanel.querySelector('#cond-mode-census'),
+      modeIdentityBtn: this.editorPanel.querySelector('#cond-mode-identity'),
       relationalTargetNote: this.editorPanel.querySelector('#cond-relational-target-note'),
       leftAggregateNote: this.editorPanel.querySelector('#cond-left-aggregate-note'),
       rightAggregateNote: this.editorPanel.querySelector('#cond-right-aggregate-note'),
-      mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout)'),
+      mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout):not(.condition-form-identity-layout)'),
       censusLayout: this.editorPanel.querySelector('#cond-census-layout'),
+      identityLayout: this.editorPanel.querySelector('#cond-identity-layout'),
       censusFilterRow: this.editorPanel.querySelector('#cond-census-filter-row'),
       censusFilterModeControl: censusFilterMode?.closest('.condition-form-checkbox'),
       censusComparisonToggle: this.editorPanel.querySelector('#cond-census-comparison-toggle'),
@@ -273,7 +288,8 @@ class ConditionForm {
         censusSubject, censusFilterMode, censusFilter, censusOperator, ...censusComparatorInputs,
         censusTarget, censusTargetFilter, censusTargetFilterMode,
         censusScopeWhole, censusAxisRank, censusAxisFile, censusAxisSquare, ...censusRegionComparatorInputs,
-        ...censusRankInputs, ...censusFileInputs, ...censusSquareFileInputs, ...censusSquareRankInputs
+        ...censusRankInputs, ...censusFileInputs, ...censusSquareFileInputs, ...censusSquareRankInputs,
+        identitySubject, identityTarget
       ],
       numberInputs: [
         leftComparisonSourceTotal,
@@ -291,6 +307,8 @@ class ConditionForm {
     }
     if (this.state.mode === 'census') {
       this.applyCensusCompatibilityRules()
+    } else if (this.state.mode === 'identity') {
+      this.applyIdentityCompatibilityRules()
     } else {
       this.applyRelationalCompatibilityRules()
     }
@@ -298,10 +316,21 @@ class ConditionForm {
   }
 
   isValidV2Node(nodeData = {}) {
-    return nodeData.version === 2 && (nodeData.kind === 'relational' || nodeData.kind === 'census')
+    return nodeData.version === 2 && (nodeData.kind === 'relational' || nodeData.kind === 'census' || nodeData.kind === 'identity')
   }
 
   stateFromNodeData(nodeData) {
+    if (nodeData.kind === 'identity') {
+      return {
+        mode: 'identity',
+        relational: structuredClone(DEFAULT_RELATIONAL_STATE),
+        census: structuredClone(DEFAULT_CENSUS_STATE),
+        identity: {
+          subject: nodeData.subject || DEFAULT_IDENTITY_STATE.subject,
+          target: nodeData.target || DEFAULT_IDENTITY_STATE.target
+        }
+      }
+    }
     if (nodeData.kind === 'census') {
       const hasRegion = nodeData.positionAxis !== undefined && nodeData.positionAxis !== null
       const isSquare = nodeData.positionAxis === 'square'
@@ -310,6 +339,7 @@ class ConditionForm {
       return {
         mode: 'census',
         relational: structuredClone(DEFAULT_RELATIONAL_STATE),
+        identity: structuredClone(DEFAULT_IDENTITY_STATE),
         census: {
           left: {
             subject: nodeData.subject || 'allied',
@@ -336,6 +366,7 @@ class ConditionForm {
       return {
         mode: 'relational',
         census: structuredClone(DEFAULT_CENSUS_STATE),
+        identity: structuredClone(DEFAULT_IDENTITY_STATE),
         relational: {
           left: this.relationalSideState({
             subject: nodeData.subject,
@@ -388,18 +419,23 @@ class ConditionForm {
     const fields = this.fields()
     const isRelational = this.state.mode === 'relational'
     const isCensus = this.state.mode === 'census'
+    const isIdentity = this.state.mode === 'identity'
 
     fields.modeRelationalBtn?.classList.toggle('active', isRelational)
     fields.modeCensusBtn?.classList.toggle('active', isCensus)
+    fields.modeIdentityBtn?.classList.toggle('active', isIdentity)
 
     fields.relationalOperatorSelect?.classList.toggle('hidden', !isRelational)
     fields.rightRelationalFields?.classList.toggle('hidden', !isRelational)
-    fields.leftComparisonSection?.classList.toggle('hidden', !isRelational || this.usesSamePiece())
-    fields.mainLayout?.classList.toggle('hidden', isCensus)
+    fields.leftComparisonSection?.classList.toggle('hidden', !isRelational)
+    fields.mainLayout?.classList.toggle('hidden', !isRelational)
     fields.censusLayout?.classList.toggle('hidden', !isCensus)
+    fields.identityLayout?.classList.toggle('hidden', !isIdentity)
 
     if (isCensus) {
       this.renderCensus(fields)
+    } else if (isIdentity) {
+      this.renderIdentity(fields)
     } else {
       this.renderRelational(fields)
     }
@@ -413,9 +449,8 @@ class ConditionForm {
 
   renderRelational(fields) {
     const rel = this.state.relational
-    const samePieceMode = this.usesSamePiece()
-    const leftComparisonActive = !samePieceMode && rel.ui.leftComparisonOpen
-    const rightComparisonActive = !samePieceMode && rel.ui.rightComparisonOpen
+    const leftComparisonActive = rel.ui.leftComparisonOpen
+    const rightComparisonActive = rel.ui.rightComparisonOpen
     const leftFilterModeAvailable = rel.left.filter !== 'any'
     const rightFilterModeAvailable = rel.right.filter !== 'any'
 
@@ -443,11 +478,11 @@ class ConditionForm {
     fields.leftComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.left.comparisonSource === 'exact_number')
     fields.rightComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.right.comparisonSource === 'exact_number')
 
-    fields.leftFilterRow.classList.toggle('hidden', samePieceMode)
-    fields.rightFilterRow.classList.toggle('hidden', samePieceMode)
+    fields.leftFilterRow.classList.toggle('hidden', false)
+    fields.rightFilterRow.classList.toggle('hidden', false)
     fields.leftFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !leftFilterModeAvailable)
     fields.rightFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !rightFilterModeAvailable)
-    fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', samePieceMode)
+    fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', false)
 
     const leftLocked = this.comparisonLocked('left')
     const rightLocked = this.comparisonLocked('right')
@@ -461,7 +496,7 @@ class ConditionForm {
 
     this.showAllOptions(fields.leftSubject)
     this.showAllOptions(fields.rightSubject)
-    this.disableRelationalSubjectOptions(fields, samePieceMode)
+    this.disableRelationalSubjectOptions(fields)
     this.disableRelationalComparisonSourceOptions(fields)
     this.disableRelationalComparisonMetricOptions(fields)
 
@@ -531,6 +566,20 @@ class ConditionForm {
     this.disableCensusTargetOptions(fields)
   }
 
+  renderIdentity(fields) {
+    const id = this.state.identity
+    if (fields.identitySubject) fields.identitySubject.value = id.subject
+    if (fields.identityTarget) {
+      fields.identityTarget.value = id.target
+      const allowed = this.samePieceTargetsFor(id.subject)
+      this.showAllOptions(fields.identityTarget)
+      this.disableOptions(
+        fields.identityTarget,
+        Array.from(fields.identityTarget.options).map(o => o.value).filter(v => !allowed.includes(v))
+      )
+    }
+  }
+
   toggleLeftComparison() {
     if (this.state.mode !== 'relational') { return }
     if (this.comparisonLocked('left')) { return }
@@ -596,6 +645,10 @@ class ConditionForm {
       this.state.relational.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
       this.state.relational.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
       this.applyRelationalCompatibilityRules()
+    } else if (this.state.mode === 'identity') {
+      this.state.identity.subject = fields.identitySubject?.value || DEFAULT_IDENTITY_STATE.subject
+      this.state.identity.target = fields.identityTarget?.value || DEFAULT_IDENTITY_STATE.target
+      this.applyIdentityCompatibilityRules()
     } else {
       const cen = this.state.census
       cen.left.subject = fields.censusSubject?.value || 'allied'
@@ -659,6 +712,13 @@ class ConditionForm {
         }
       }
       return payload
+    } else if (this.state.mode === 'identity') {
+      return {
+        version: 2,
+        kind: 'identity',
+        subject: this.state.identity.subject,
+        target: this.state.identity.target
+      }
     } else {
       const rel = this.state.relational
       const payload = {
@@ -711,8 +771,16 @@ class ConditionForm {
 
   // -------------------------------- GRAMMAR RULES ----------------------------------
 
-  usesSamePiece() {
-    return this.state.mode === 'relational' && this.state.relational.operator === 'same_piece'
+  applyIdentityCompatibilityRules() {
+    const id = this.state.identity
+    const allowedSubjects = Object.keys(this.grammarRules.samePieceTargets)
+    if (!allowedSubjects.includes(id.subject)) {
+      id.subject = allowedSubjects[0]
+    }
+    const allowedTargets = this.samePieceTargetsFor(id.subject)
+    if (!allowedTargets.includes(id.target)) {
+      id.target = allowedTargets[0]
+    }
   }
 
   clearRelationalComparator(side) {
@@ -725,23 +793,6 @@ class ConditionForm {
 
   applyRelationalCompatibilityRules() {
     const rel = this.state.relational
-
-    if (this.usesSamePiece()) {
-      const allowedLeft = Object.keys(this.grammarRules.samePieceTargets)
-      if (!allowedLeft.includes(rel.left.subject)) {
-        rel.left.subject = allowedLeft[0]
-      }
-      rel.right.subject = this.samePieceTargetsFor(rel.left.subject)[0]
-      rel.left.filter = 'any'
-      rel.left.filterMode = 'include'
-      rel.right.filter = 'any'
-      rel.right.filterMode = 'include'
-      this.clearRelationalComparator('left')
-      this.clearRelationalComparator('right')
-      rel.ui.leftComparisonOpen = false
-      rel.ui.rightComparisonOpen = false
-      return
-    }
 
     if (rel.right.subject === 'captured_piece') {
       rel.right.subject = 'enemy'
@@ -1010,17 +1061,9 @@ class ConditionForm {
     this.disableOptions(select, otherUsesAggregate ? ['aggregate_value'] : [])
   }
 
-  disableRelationalSubjectOptions(fields, samePieceMode) {
+  disableRelationalSubjectOptions(fields) {
     this.enableAllOptions(fields.leftSubject)
     this.enableAllOptions(fields.rightSubject)
-
-    if (samePieceMode) {
-      const leftAllowed = Object.keys(this.grammarRules.samePieceTargets)
-      const rightAllowed = this.samePieceTargetsFor(this.state.relational.left.subject)
-      this.disableOptions(fields.leftSubject, this.editorSubjects().filter(v => !leftAllowed.includes(v)))
-      this.disableOptions(fields.rightSubject, this.editorSubjects().filter(v => !rightAllowed.includes(v)))
-      return
-    }
 
     this.disableOptions(fields.leftSubject, this.editorSubjects().filter(v => !this.regularRelationalSubjects().includes(v)))
     this.disableOptions(fields.rightSubject, this.editorSubjects().filter(v => !this.regularRelationalTargets().includes(v)))

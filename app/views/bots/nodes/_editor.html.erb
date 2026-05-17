@@ -7,8 +7,9 @@
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
       <div class="condition-form-mode-picker">
-        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Relational</button>
         <button type="button" class="condition-form-mode-picker__option" id="cond-mode-census">Positions</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Attack/Defend</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-identity">Identity</button>
       </div>
 
       <div class="condition-form-layout">
@@ -80,8 +81,6 @@
             <option value="targets">Targets</option>
             <option value="shield">Shield</option>
             <option value="adjacent">Adjacent</option>
-            <option disabled>────────</option>
-            <option value="same_piece">Same-Piece</option>
           </select>
         </section>
 
@@ -319,6 +318,39 @@
         </section>
 
         <p class="condition-form-note condition-form-position-layout__note">Rank is relative to your side (rank 1 = your back rank).</p>
+      </div>
+
+      <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Subject</span>
+          </div>
+          <div class="condition-form-field">
+            <select id="cond-identity-subject">
+              <% NodeGrammarRules::SAME_PIECE_TARGETS.keys.each do |value| %>
+                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+              <% end %>
+            </select>
+          </div>
+        </section>
+
+        <section class="condition-form-operator">
+          <label>Relation</label>
+          <p class="condition-form-identity-relation">is the same piece as</p>
+        </section>
+
+        <section class="condition-form-side">
+          <div class="condition-form-side__header">
+            <span class="condition-form-side__label">Target</span>
+          </div>
+          <div class="condition-form-field">
+            <select id="cond-identity-target">
+              <% NodeGrammarRules::SAME_PIECE_TARGETS.values.flatten.uniq.each do |value| %>
+                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+              <% end %>
+            </select>
+          </div>
+        </section>
       </div>
 
       <div class="condition-form-formulation">

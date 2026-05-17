@@ -2259,7 +2259,7 @@ describe('ConditionEvaluatorV2', () => {
     })
   })
 
-  describe('same_piece evaluation', () => {
+  describe('identity evaluation', () => {
     it('returns true when the current move captures the enemy moved piece', () => {
       const board = buildBoard({
         pieces: {
@@ -2281,12 +2281,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -2315,12 +2312,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'captured_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'enemy_moved_piece',
-            targetFilter: 'any'
+            target: 'enemy_moved_piece'
           },
           board,
           moveObject
@@ -2352,12 +2346,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -2386,12 +2377,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -2421,12 +2409,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -2462,12 +2447,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject

@@ -76,10 +76,6 @@ module Nodes
       record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
       record.errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
       record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
-      unless NodeGrammarRules.comparison_allowed_for_relational_operator?(operator)
-        validate_v2_same_piece_relational!
-        return
-      end
       validate_v2_side_comparator!(
         metric_key: 'subjectComparisonMetric',
         comparator_key: 'subjectComparator',
@@ -100,21 +96,6 @@ module Nodes
       end
       if record.data['targetComparisonSource'] == 'prior_board_state' && side_condition_present?('subject')
         record.errors.add(:data, 'cannot use subject-side comparison when targetComparisonSource is prior_board_state')
-      end
-    end
-
-    def validate_v2_same_piece_relational!
-      if record.data['subjectFilter'] != 'any'
-        record.errors.add(:data, 'same_piece requires subjectFilter to be any')
-      end
-      if record.data['targetFilter'] != 'any'
-        record.errors.add(:data, 'same_piece requires targetFilter to be any')
-      end
-      if side_condition_present?('subject')
-        record.errors.add(:data, 'same_piece does not allow subject-side comparison')
-      end
-      if side_condition_present?('target')
-        record.errors.add(:data, 'same_piece does not allow target-side comparison')
       end
     end
 

@@ -61,7 +61,6 @@ class ConditionEvaluatorV2 {
     evaluateRelational(conditionNode, analysis) {
       return profileCollector.measure('condition.v2.relational', () => {
         const operator = conditionNode.operator
-        if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
         if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) {
           profileCollector.increment('condition.v2.relational.failed.singular_actors')
           return false

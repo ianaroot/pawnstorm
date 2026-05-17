@@ -15,8 +15,6 @@
     FILTER_MODES = %w[include exclude].freeze
 
     RELATIONAL_OPERATORS = %w[attack defend cover shield adjacent].freeze
-    SPECIAL_TARGETED_OPERATORS = %w[same_piece].freeze
-    ALL_RELATIONAL_OPERATORS = (RELATIONAL_OPERATORS + SPECIAL_TARGETED_OPERATORS).freeze
 
     UNARY_OPERATORS = %w[count mobility value].freeze
     SPECIAL_UNARY_TARGETS = %w[exact_number prior_board_state].freeze
@@ -49,7 +47,7 @@
       end
 
       def valid_relational_operator?(operator)
-        ALL_RELATIONAL_OPERATORS.include?(operator)
+        RELATIONAL_OPERATORS.include?(operator)
       end
 
       def valid_comparison_metric?(value)

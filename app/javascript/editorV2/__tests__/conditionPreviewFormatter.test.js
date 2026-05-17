@@ -107,16 +107,13 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allies any : rank = 5 : count > 0')
     })
 
-    it('formats same_piece with the explicit operator phrase', () => {
+    it('formats an identity condition with the explicit same-piece phrase', () => {
       expect(
         formatConditionPreview({
           version: 2,
-          kind: 'relational',
+          kind: 'identity',
           subject: 'enemy_moved_piece',
-          subjectFilter: 'any',
-          operator: 'same_piece',
-          target: 'captured_piece',
-          targetFilter: 'any'
+          target: 'captured_piece'
         }).text
       ).toBe('Enemy Moved Piece : is same-piece-as : Captured Piece')
     })

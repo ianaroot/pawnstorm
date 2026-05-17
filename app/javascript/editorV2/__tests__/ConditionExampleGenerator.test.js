@@ -1183,10 +1183,9 @@ describe('ConditionExampleGenerator', () => {
     // sets movedPieceEndPosition = capturedSquare, which the samePiece
     // predicate compares against the captured piece's position.
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
 
     const preview = generateConditionExamples(payload, {
@@ -1208,10 +1207,9 @@ describe('ConditionExampleGenerator', () => {
     // Standard reverse-gen path also benefits from the same_piece skip in
     // seed_builder. Restricting moveKinds to 'standard' isolates this path.
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
 
     const preview = generateConditionExamples(payload, {
@@ -1232,10 +1230,9 @@ describe('ConditionExampleGenerator', () => {
     // attack runs through skeleton building.
     const payloads = [
       {
-        version: 2, kind: 'relational',
-        subject: 'enemy_moved_piece', subjectFilter: 'any',
-        operator: 'same_piece',
-        target: 'captured_piece', targetFilter: 'any'
+        version: 2, kind: 'identity',
+        subject: 'enemy_moved_piece',
+        target: 'captured_piece'
       },
       {
         version: 2, kind: 'relational',
@@ -1494,10 +1491,9 @@ describe('ConditionExampleGenerator', () => {
   })
   it('routes a same_piece chain (enemy_moved_piece + captured_piece) through forward generation (8f)', () => {
     const payload = {
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }
     const preview = generateConditionExamples(payload, { random: seededRandom(2015) })
     expect(preview.status).toBe('ready')

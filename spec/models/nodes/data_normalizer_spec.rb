@@ -140,40 +140,6 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).not_to include('targetTotal', 'targetFilterMode')
     end
 
-    it 'resets relational same_piece filters and removes comparison fields' do
-      normalized = described_class.normalize(node_type: 'condition', data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'enemy_moved_piece',
-        subjectFilter: 'pawn',
-        subjectFilterMode: 'exclude',
-        subjectComparisonMetric: 'count',
-        subjectComparator: 'greater_than',
-        subjectComparisonSource: 'exact_number',
-        subjectComparisonSourceTotal: 0,
-        operator: 'same_piece',
-        target: 'captured_piece',
-        targetFilter: 'pawn',
-        targetFilterMode: 'exclude',
-        targetComparisonMetric: 'count',
-        targetComparator: 'greater_than',
-        targetComparisonSource: 'exact_number',
-        targetComparisonSourceTotal: 0
-      })
-
-      expect(normalized).to eq(
-        {
-          'version' => 2,
-          'kind' => 'relational',
-          'subject' => 'enemy_moved_piece',
-          'subjectFilter' => 'any',
-          'operator' => 'same_piece',
-          'target' => 'captured_piece',
-          'targetFilter' => 'any'
-        }
-      )
-    end
-
     it 'removes blank subject comparison fields for relational conditions' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,

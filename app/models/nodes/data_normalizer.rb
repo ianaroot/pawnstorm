@@ -57,37 +57,22 @@ module Nodes
       if kind == 'relational'
         normalized.delete('comparator')
         normalized.delete('targetTotal')
-        unless NodeGrammarRules.comparison_allowed_for_relational_operator?(normalized['operator'])
+        unless normalized['subjectComparisonMetric'].present?
           normalized.delete('subjectComparisonMetric')
           normalized.delete('subjectComparator')
           normalized.delete('subjectComparisonSource')
           normalized.delete('subjectComparisonSourceTotal')
+        else
+          normalize_relational_comparison_source_shape!(normalized, 'subject')
+        end
+
+        unless normalized['targetComparisonMetric'].present?
           normalized.delete('targetComparisonMetric')
           normalized.delete('targetComparator')
           normalized.delete('targetComparisonSource')
           normalized.delete('targetComparisonSourceTotal')
-          normalized['subjectFilter'] = 'any'
-          normalized.delete('subjectFilterMode')
-          normalized['targetFilter'] = 'any'
-          normalized.delete('targetFilterMode')
         else
-          unless normalized['subjectComparisonMetric'].present?
-            normalized.delete('subjectComparisonMetric')
-            normalized.delete('subjectComparator')
-            normalized.delete('subjectComparisonSource')
-            normalized.delete('subjectComparisonSourceTotal')
-          else
-            normalize_relational_comparison_source_shape!(normalized, 'subject')
-          end
-
-          unless normalized['targetComparisonMetric'].present?
-            normalized.delete('targetComparisonMetric')
-            normalized.delete('targetComparator')
-            normalized.delete('targetComparisonSource')
-            normalized.delete('targetComparisonSourceTotal')
-          else
-            normalize_relational_comparison_source_shape!(normalized, 'target')
-          end
+          normalize_relational_comparison_source_shape!(normalized, 'target')
         end
       elsif kind == 'census'
         normalized['target'] = 'exact_number' if normalized['target'].blank?

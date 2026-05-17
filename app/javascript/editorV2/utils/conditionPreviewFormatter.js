@@ -219,6 +219,16 @@ export function formatConditionPreview(nodeData = {}) {
     return preview
   }
 
+  if (nodeData.kind === 'identity') {
+    const preview = {
+      left: subjectPreview(nodeData.subject, 'any', 'include'),
+      operator: operatorPreviewText('same_piece'),
+      right: subjectPreview(nodeData.target, 'any', 'include')
+    }
+    preview.text = previewText(preview)
+    return preview
+  }
+
   if (nodeData.kind === 'relational') {
     const preview = {
       left: sidePreview({

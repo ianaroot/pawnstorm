@@ -342,5 +342,14 @@ export function buildPlan(payload, options = {}) {
 
   if (payload.kind === 'relational') { return buildRelationalPlan(payload, options, teams) }
   if (payload.kind === 'census') { return buildCensusPlan(payload, options, teams) }
+  if (payload.kind === 'identity') {
+    // Verification still runs the identity payload — CandidateVerifier reads
+    // evaluationPayloads, not this plan.
+    return buildRelationalPlan(
+      { ...payload, kind: 'relational', operator: 'same_piece', subjectFilter: 'any', targetFilter: 'any' },
+      options,
+      teams
+    )
+  }
   return { status: 'unsupported', reason: `${payload.kind} previews are not supported yet.` }
 }

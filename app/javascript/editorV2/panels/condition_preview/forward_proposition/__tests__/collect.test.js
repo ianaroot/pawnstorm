@@ -101,10 +101,9 @@ describe('collectForwardPropositionExamples', () => {
 
   it('generates examples for enemy_moved_piece same_piece captured_piece, including en passant', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'relational',
-      subject: 'enemy_moved_piece', subjectFilter: 'any',
-      operator: 'same_piece',
-      target: 'captured_piece', targetFilter: 'any'
+      version: 2, kind: 'identity',
+      subject: 'enemy_moved_piece',
+      target: 'captured_piece'
     }])
     const standardExamples = []
     const produced = { 'forward-proposition': 0 }
