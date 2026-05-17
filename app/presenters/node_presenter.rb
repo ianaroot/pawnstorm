@@ -1,4 +1,61 @@
 class NodePresenter
+  # Ordered content-chunk descriptors per condition kind: which payload field
+  # feeds each chunk field. Spacers are inserted by the interpreter, not here.
+  # Census is the one variant case (region vs whole), keyed off positionAxis
+  # presence in the interpreter — never branched in this data.
+  SENTENCE_SPEC = {
+    'relational' => [
+      { 'role' => 'side', 'fields' => {
+        'subject' => 'subject', 'filter' => 'subjectFilter', 'filter_mode' => 'subjectFilterMode',
+        'comparison_metric' => 'subjectComparisonMetric', 'comparator' => 'subjectComparator',
+        'comparison_source' => 'subjectComparisonSource', 'comparison_source_total' => 'subjectComparisonSourceTotal' } },
+      { 'role' => 'operator', 'fields' => { 'operator' => 'operator' } },
+      { 'role' => 'side', 'fields' => {
+        'subject' => 'target', 'filter' => 'targetFilter', 'filter_mode' => 'targetFilterMode',
+        'comparison_metric' => 'targetComparisonMetric', 'comparator' => 'targetComparator',
+        'comparison_source' => 'targetComparisonSource', 'comparison_source_total' => 'targetComparisonSourceTotal' } }
+    ],
+    'identity' => [
+      { 'role' => 'side', 'fields' => { 'subject' => 'subject' }, 'consts' => { 'filter' => 'any' } },
+      { 'role' => 'operator', 'consts' => { 'operator' => 'same_piece' } },
+      { 'role' => 'side', 'fields' => { 'subject' => 'target' }, 'consts' => { 'filter' => 'any' } }
+    ],
+    'census' => {
+      'variant_by' => 'position_axis_present',
+      'whole' => [
+        { 'role' => 'side', 'fields' => {
+          'subject' => 'subject', 'filter' => 'subjectFilter', 'filter_mode' => 'subjectFilterMode' } },
+        { 'role' => 'operator', 'fields' => { 'operator' => 'operator' } },
+        { 'role' => 'comparison', 'fields' => {
+          'comparator' => 'comparator', 'target' => 'target', 'target_filter' => 'targetFilter',
+          'target_filter_mode' => 'targetFilterMode', 'target_total' => 'targetTotal' } }
+      ],
+      'region' => [
+        { 'role' => 'side', 'fields' => {
+          'subject' => 'subject', 'filter' => 'subjectFilter', 'filter_mode' => 'subjectFilterMode' } },
+        { 'role' => 'region', 'fields' => {
+          'position_axis' => 'positionAxis', 'position_comparator' => 'positionComparator',
+          'position_target' => 'positionTarget' } },
+        { 'role' => 'metric', 'fields' => {
+          'operator' => 'operator', 'comparator' => 'comparator', 'target_total' => 'targetTotal' } }
+      ]
+    }
+  }.freeze
+
+  # Canonical chunk-field set per role; unmapped fields stay nil so output
+  # shape is stable regardless of which kind produced the chunk.
+  ROLE_KEYS = {
+    'side' => %w[subject filter filter_mode comparison_metric comparator comparison_source comparison_source_total],
+    'operator' => %w[operator],
+    'comparison' => %w[comparator target target_filter target_filter_mode target_total],
+    'region' => %w[position_axis position_comparator position_target],
+    'metric' => %w[operator comparator target_total]
+  }.freeze
+
+  def self.sentence_spec
+    SENTENCE_SPEC
+  end
+
   def initialize(node)
     @node = node
   end
@@ -30,88 +87,32 @@ class NodePresenter
   end
 
   def self.condition_preview_chunks_v2(data)
-    kind = data['kind'] || data[:kind]
-    case kind
-    when 'relational'
-      condition_preview_chunks_v2_relational(data)
-    when 'census'
-      # Whole-board census is unary-shaped; the region axis clause is Phase 2.
-      condition_preview_chunks_v2_unary(data)
-    when 'identity'
-      condition_preview_chunks_v2_identity(data)
-    else
-      ['[invalid condition]']
+    spec = SENTENCE_SPEC[data['kind'] || data[:kind]]
+    return ['[invalid condition]'] unless spec
+
+    descriptors = spec.is_a?(Array) ? spec : census_descriptors(spec, data)
+    descriptors.each_with_index.flat_map do |descriptor, index|
+      chunk = build_sentence_chunk(descriptor, data)
+      index.zero? ? [chunk] : [{ role: 'spacer' }, chunk]
     end
   end
 
-  def self.condition_preview_chunks_v2_identity(data)
-    [
-      v2_side_chunk(subject: data['subject'], filter: 'any', filter_mode: nil),
-      { role: 'spacer' },
-      { role: 'operator', operator: 'same_piece' },
-      { role: 'spacer' },
-      v2_side_chunk(subject: data['target'], filter: 'any', filter_mode: nil)
-    ]
+  # The one variant case: positionAxis presence selects region vs whole.
+  def self.census_descriptors(spec, data)
+    (data['positionAxis'] || data[:positionAxis]).present? ? spec['region'] : spec['whole']
   end
 
-  def self.condition_preview_chunks_v2_relational(data)
-    [
-      v2_side_chunk(
-        subject: data['subject'],
-        filter: data['subjectFilter'],
-        filter_mode: data['subjectFilterMode'],
-        comparison_metric: data['subjectComparisonMetric'],
-        comparator: data['subjectComparator'],
-        comparison_source: data['subjectComparisonSource'],
-        comparison_source_total: data['subjectComparisonSourceTotal']
-      ),
-      { role: 'spacer' },
-      { role: 'operator', operator: data['operator'] },
-      { role: 'spacer' },
-      v2_side_chunk(
-        subject: data['target'],
-        filter: data['targetFilter'],
-        filter_mode: data['targetFilterMode'],
-        comparison_metric: data['targetComparisonMetric'],
-        comparator: data['targetComparator'],
-        comparison_source: data['targetComparisonSource'],
-        comparison_source_total: data['targetComparisonSourceTotal']
-      )
-    ]
-  end
-
-  def self.condition_preview_chunks_v2_unary(data)
-    [
-      v2_side_chunk(
-        subject: data['subject'],
-        filter: data['subjectFilter'],
-        filter_mode: data['subjectFilterMode']
-      ),
-      { role: 'spacer' },
-      { role: 'operator', operator: data['operator'] },
-      { role: 'spacer' },
-      {
-        role: 'comparison',
-        comparator: data['comparator'],
-        target: data['target'],
-        target_filter: data['targetFilter'],
-        target_filter_mode: data['targetFilterMode'],
-        target_total: data['targetTotal']
-      }
-    ]
-  end
-
-  def self.v2_side_chunk(subject:, filter:, filter_mode:, comparison_metric: nil, comparator: nil, comparison_source: nil, comparison_source_total: nil)
-    {
-      role: 'side',
-      subject: subject,
-      filter: filter,
-      filter_mode: filter_mode,
-      comparison_metric: comparison_metric,
-      comparator: comparator,
-      comparison_source: comparison_source,
-      comparison_source_total: comparison_source_total
-    }
+  def self.build_sentence_chunk(descriptor, data)
+    fields = descriptor['fields'] || {}
+    consts = descriptor['consts'] || {}
+    chunk = { role: descriptor['role'] }
+    ROLE_KEYS.fetch(descriptor['role']).each do |key|
+      chunk[key.to_sym] =
+        if consts.key?(key) then consts[key]
+        elsif fields.key?(key) then data[fields[key]]
+        end
+    end
+    chunk
   end
 
   private

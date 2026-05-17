@@ -4,6 +4,8 @@
     <%= raw json_escape(NodeGrammarRules.editor_config.to_json) %>
   </script>
 
+  <%= render 'shared/condition_sentence_spec' %>
+
   <div class="panel-content condition-form-panel__content">
     <div id="condition-form" class="node-form-section hidden">
       <div class="condition-form-mode-picker">

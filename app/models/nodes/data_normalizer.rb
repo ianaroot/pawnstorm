@@ -89,13 +89,7 @@ module Nodes
           normalized['positionComparator'] = 'equal_to'
         end
       elsif kind == 'identity'
-        %w[
-          subjectFilter subjectFilterMode targetFilter targetFilterMode
-          operator comparator targetTotal
-          positionAxis positionComparator positionTarget
-          subjectComparisonMetric subjectComparator subjectComparisonSource subjectComparisonSourceTotal
-          targetComparisonMetric targetComparator targetComparisonSource targetComparisonSourceTotal
-        ].each { |key| normalized.delete(key) }
+        normalized.slice!(*Nodes::DataValidator::CONDITION_V2_IDENTITY_KEYS)
       end
     end
 

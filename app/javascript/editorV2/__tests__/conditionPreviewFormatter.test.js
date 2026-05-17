@@ -179,6 +179,46 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('= Captured Piece')
     })
 
+    it('formats a region chunk via the position-axis preview', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'file',
+          positionComparator: 'equal_to',
+          positionTarget: 1
+        })
+      ).toBe('file = a')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'rank',
+          positionComparator: 'greater_than',
+          positionTarget: 5
+        })
+      ).toBe('rank > 5')
+
+      expect(
+        formatConditionPreviewChunk({
+          role: 'region',
+          positionAxis: 'square',
+          positionComparator: 'equal_to',
+          positionTarget: 0
+        })
+      ).toBe('square a1')
+    })
+
+    it('formats a metric chunk as operator comparator total', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'metric',
+          operator: 'count',
+          comparator: 'greater_than',
+          targetTotal: 0
+        })
+      ).toBe('count > 0')
+    })
+
     it('formats excluded major and minor filters', () => {
       expect(
         formatConditionPreviewChunk({
