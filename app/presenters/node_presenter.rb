@@ -34,11 +34,24 @@ class NodePresenter
     case kind
     when 'relational'
       condition_preview_chunks_v2_relational(data)
-    when 'unary'
+    when 'census'
+      # Whole-board census is unary-shaped; the region axis clause is Phase 2.
       condition_preview_chunks_v2_unary(data)
+    when 'identity'
+      condition_preview_chunks_v2_identity(data)
     else
       ['[invalid condition]']
     end
+  end
+
+  def self.condition_preview_chunks_v2_identity(data)
+    [
+      v2_side_chunk(subject: data['subject'], filter: 'any', filter_mode: nil),
+      { role: 'spacer' },
+      { role: 'operator', operator: 'same_piece' },
+      { role: 'spacer' },
+      v2_side_chunk(subject: data['target'], filter: 'any', filter_mode: nil)
+    ]
   end
 
   def self.condition_preview_chunks_v2_relational(data)

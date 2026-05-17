@@ -51,10 +51,10 @@ RSpec.describe NodePresenter do
       ])
     end
 
-    it 'preserves unary chunk structure' do
+    it 'preserves whole-board census chunk structure (unary-shaped)' do
       node = build(:node, :condition, data: {
         'version' => 2,
-        'kind' => 'unary',
+        'kind' => 'census',
         'subject' => 'enemy_moved_piece',
         'subjectFilter' => 'pawn',
         'subjectFilterMode' => 'include',
@@ -87,6 +87,43 @@ RSpec.describe NodePresenter do
           target_filter: 'any',
           target_filter_mode: nil,
           target_total: nil
+        }
+      ])
+    end
+
+    it 'renders an identity condition as a same-piece sentence' do
+      node = build(:node, :condition, data: {
+        'version' => 2,
+        'kind' => 'identity',
+        'subject' => 'enemy_moved_piece',
+        'target' => 'captured_piece'
+      })
+
+      chunks = described_class.new(node).condition_preview_chunks
+
+      expect(chunks).to eq([
+        {
+          role: 'side',
+          subject: 'enemy_moved_piece',
+          filter: 'any',
+          filter_mode: nil,
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_source: nil,
+          comparison_source_total: nil
+        },
+        { role: 'spacer' },
+        { role: 'operator', operator: 'same_piece' },
+        { role: 'spacer' },
+        {
+          role: 'side',
+          subject: 'captured_piece',
+          filter: 'any',
+          filter_mode: nil,
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_source: nil,
+          comparison_source_total: nil
         }
       ])
     end
