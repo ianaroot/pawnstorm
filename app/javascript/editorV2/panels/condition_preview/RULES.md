@@ -1,5 +1,21 @@
 # condition_preview rules
 
+## Condition kinds
+
+Condition `kind` is `relational | census | identity` only. **`unary` and
+`position` are retired** — no `plan.kind`/`data.kind`/`source` will ever be
+those again; do not reason from or reintroduce them.
+
+- Region vs whole-board is detected by **`positionAxis` presence, not by
+  kind**: census with no spatial keys ≡ the old unary (whole-board; the
+  evaluator delegates to `evaluateUnary`); census with `positionAxis` ≡ the
+  old position (region-restricted).
+- A cross-frame `entry.source` **is `plan.kind`** — so it's `'census'`,
+  never `'unary'`.
+- `forward_resolver/`, `forward_pattern/`, and `reverse_relational/` are
+  **sunset**: not census-ified, gated off the live path. Don't rebaseline,
+  extend, or census-transform their specs — skip/retire instead.
+
 ## Goals
 
 Generate a wide variety of legal chess positions + moves in which the condition(s) are satisfied. Variety means:

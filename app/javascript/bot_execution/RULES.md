@@ -10,6 +10,14 @@
 - `enemyCapturedPiece` is always part of the moving team.
 - Some conditions refer to `prior_board_state` (PBS) in their comparisons. PBS is the board state at the beginning of the moving team's turn. `afterBoard`, the default state conditions query, is the board state after a potential legal move by moving team.
 
-## Discipline
+## Condition evaluation
 
-_Stub. Add bot_execution-specific rules here as they emerge._
+`ConditionEvaluatorV2.evaluate` dispatches `kind ∈ {relational, census,
+identity}`; any other kind throws. `unary`/`position` are retired and never
+reach the evaluator.
+
+- `evaluateCensus`: no spatial keys → delegates to `evaluateUnary` (kept as
+  the whole-board helper). With `positionAxis` it is region-restricted: the
+  **subject** is filtered to the region, but a distinct-actor **target** is
+  read board-wide. `target: 'prior_board_state'` coerces both sides.
+- `evaluateIdentity`: `same_piece` over subject/target only.
