@@ -31,6 +31,7 @@ const PAYLOADS = [
   },
   {
     // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
+    // Peak 2026-05-17 (post-Phase-1): 83/1000 (8.3%)
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -57,6 +58,7 @@ const PAYLOADS = [
   },
   {
     // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
+    // Peak 2026-05-17 (post-Phase-1): 83/1000 (8.3%)
     name: "attack count > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -70,6 +72,7 @@ const PAYLOADS = [
   },
   {
     // Baseline 2026-05-14 (pre-Phase-1): 93/1000 (9.3%)
+    // Peak 2026-05-17 (post-Phase-1): 296/1000 (29.6%)
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -83,6 +86,7 @@ const PAYLOADS = [
   },
   {
     // Baseline 2026-05-14 (pre-Phase-2): 7/1000 (0.7%)
+    // Peak 2026-05-17 (post-Phase-2): 128/1000 (12.8%)
     name: "defend count < PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -240,12 +244,45 @@ function relevantCounters(snapshot) {
   return result
 }
 
+function formatFriendly(results, attempts) {
+  const nameWidth = Math.max(7, ...results.map(r => r.name.length))
+  const pad = (s, w) => String(s).padEnd(w)
+  const padL = (s, w) => String(s).padStart(w)
+
+  const lines = [
+    `forward_proposition — ${attempts} attempts/payload, ${results.length} payloads`,
+    "",
+    `  ${pad("PAYLOAD", nameWidth)}  ${padL("VERIFIED", 12)}  ${padL("RATE", 7)}  ${padL("ms/att", 7)}`
+  ]
+
+  let totalMs = 0
+  for (const r of results) {
+    if (r.status && r.status !== "supported") {
+      lines.push(`  ${pad(r.name, nameWidth)}  ${padL(r.status, 12)}`)
+      continue
+    }
+    totalMs += r.total_ms
+    const verified = `${r.verified}/${r.attempts}`
+    const rate = `${(100 * r.verified / r.attempts).toFixed(1)}%`
+    lines.push(
+      `  ${pad(r.name, nameWidth)}  ${padL(verified, 12)}  ${padL(rate, 7)}  ${padL(r.avg_ms_per_attempt.toFixed(3), 7)}`
+    )
+  }
+
+  lines.push("", `  total: ${results.length} payloads, ${(totalMs / 1000).toFixed(2)}s`)
+  return lines.join("\n")
+}
+
 const attempts = parseInt(process.argv[2] ?? "200", 10)
 const results = PAYLOADS.map(p => benchmarkPayload(p, attempts))
 
-console.log(JSON.stringify({
-  benchmark: "forward_proposition",
-  attempts_per_payload: attempts,
-  payload_count: PAYLOADS.length,
-  payloads: results
-}, null, 2))
+if (process.env.BENCH_JSON) {
+  console.log(JSON.stringify({
+    benchmark: "forward_proposition",
+    attempts_per_payload: attempts,
+    payload_count: PAYLOADS.length,
+    payloads: results
+  }, null, 2))
+} else {
+  console.log(formatFriendly(results, attempts))
+}
