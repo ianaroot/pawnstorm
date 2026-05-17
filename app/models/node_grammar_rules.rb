@@ -54,6 +54,7 @@ class NodeGrammarRules
 
   COMPARISON_SOURCES_BY_METRIC = {
     'count' => %w[exact_number prior_board_state],
+    'value' => NodeGrammarV2::COMPARISON_SOURCES,
     'individual_value' => NodeGrammarV2::COMPARISON_SOURCES
   }.freeze
 
@@ -113,6 +114,10 @@ class NodeGrammarRules
       POSITION_OPERATORS_BY_SUBJECT.fetch(subject, []).include?(operator)
     end
 
+    def valid_identity_pair?(subject:, target:)
+      SAME_PIECE_TARGETS.fetch(subject, []).include?(target)
+    end
+
     def editor_config
       {
         'editorSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
@@ -122,7 +127,14 @@ class NodeGrammarRules
         'samePieceTargets' => SAME_PIECE_TARGETS,
         'teamSubjectGroups' => TEAM_SUBJECT_GROUPS,
         'opposingTeamGroups' => OPPOSING_TEAM_GROUPS,
-        'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS
+        'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
+        'census' => {
+          'regionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
+          'wholeBoardSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
+          'operators' => NodeGrammarV2::POSITION_OPERATORS,
+          'axes' => NodeGrammarV2::POSITION_AXES,
+          'wholeBoardTargets' => NodeGrammarV2::UNARY_TARGETS
+        }
       }
     end
 

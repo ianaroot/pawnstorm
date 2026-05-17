@@ -272,7 +272,7 @@ function freshRanges() {
 }
 
 function regionFromPlan(plan) {
-  if (plan.kind === 'position') {
+  if (plan.positionAxis !== undefined && plan.positionAxis !== null) {
     return {
       kind: 'set',
       squares: new Set(qualifyingSquares(plan.positionAxis, plan.positionComparator, plan.positionTarget, plan.movingTeam))

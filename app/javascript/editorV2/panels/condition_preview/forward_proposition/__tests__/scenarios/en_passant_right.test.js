@@ -5,7 +5,7 @@ import { buildAttempt } from 'editorV2/panels/condition_preview/forward_proposit
 import { enPassantRightScenario } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/en_passant_right'
 
 const TRIVIAL_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 0

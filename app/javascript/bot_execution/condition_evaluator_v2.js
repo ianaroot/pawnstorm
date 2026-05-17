@@ -11,12 +11,12 @@ class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
       const v2Analysis = this.v2AnalysisFor(analysis)
       switch (conditionNode.kind) {
-        case "unary":
-          return this.evaluateUnary(conditionNode, v2Analysis)
         case "relational":
           return this.evaluateRelational(conditionNode, v2Analysis)
-        case "position":
-          return this.evaluatePosition(conditionNode, v2Analysis)
+        case "census":
+          return this.evaluateCensus(conditionNode, v2Analysis)
+        case "identity":
+          return this.evaluateIdentity(conditionNode, v2Analysis)
         default:
           throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
       }
@@ -237,28 +237,64 @@ class ConditionEvaluatorV2 {
       }
     }
 
-    evaluatePosition(conditionNode, analysis) {
-      return profileCollector.measure('condition.v2.position', () => {
+    evaluateCensus(conditionNode, analysis) {
+      const hasRegion = conditionNode.positionAxis !== undefined && conditionNode.positionAxis !== null
+      if (!hasRegion) {
+        return this.evaluateUnary(conditionNode, analysis)
+      }
+      return profileCollector.measure('condition.v2.census', () => {
         if (conditionNode.subject === "enemy_moved_piece") {
           const resolved = analysis.resolvedEnemyMovedPiece()
           if (!resolved || !resolved.presentOnBoard) { return false }
         }
+        if (!this.unaryTargetCanEvaluate(conditionNode, analysis)) { return false }
 
-        const positions = analysis.positionFilteredPositions({
-          actor: conditionNode.subject,
-          filter: conditionNode.subjectFilter || "any",
-          filterMode: conditionNode.subjectFilterMode || null,
-          positionAxis: conditionNode.positionAxis,
-          positionComparator: conditionNode.positionComparator,
-          positionTarget: conditionNode.positionTarget
+        const operator = conditionNode.operator
+        const leftTotal = analysis.positionMetricTotal({
+          positions: this.censusRegionPositions(conditionNode, analysis),
+          operator
         })
+        const rightTotal = this.censusTargetTotal(conditionNode, analysis)
+        const coerce = coerceFor(conditionNode.target === "prior_board_state")
+        return compareTotals(conditionNode.comparator, coerce(leftTotal), coerce(rightTotal))
+      })
+    }
 
-        const metricTotal = analysis.positionMetricTotal({
-          positions,
-          operator: conditionNode.operator
+    censusRegionPositions(conditionNode, analysis, boardScope = "after") {
+      return analysis.positionFilteredPositions({
+        actor: conditionNode.subject,
+        filter: conditionNode.subjectFilter || "any",
+        filterMode: conditionNode.subjectFilterMode || null,
+        positionAxis: conditionNode.positionAxis,
+        positionComparator: conditionNode.positionComparator,
+        positionTarget: conditionNode.positionTarget,
+        boardScope
+      })
+    }
+
+    censusTargetTotal(conditionNode, analysis) {
+      const operator = conditionNode.operator
+      if (conditionNode.target === "exact_number") { return conditionNode.targetTotal }
+      if (conditionNode.target === "prior_board_state") {
+        return analysis.positionMetricTotal({
+          positions: this.censusRegionPositions(conditionNode, analysis, "prior"),
+          operator,
+          boardScope: "prior"
         })
+      }
+      // Distinct-actor target: read board-wide. The region filters the
+      // subject only; the comparison piece lives elsewhere on the board.
+      return analysis.unaryTotal({
+        actor: conditionNode.target,
+        filter: conditionNode.targetFilter || "any",
+        filterMode: conditionNode.targetFilterMode || null,
+        operator
+      })
+    }
 
-        return compareTotals(conditionNode.comparator, metricTotal, conditionNode.targetTotal)
+    evaluateIdentity(conditionNode, analysis) {
+      return profileCollector.measure('condition.v2.identity', () => {
+        return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target })
       })
     }
 

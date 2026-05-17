@@ -8,7 +8,7 @@ const PROMOTION_SPECIES = new Set([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.
 const WHITE_LAST_RANK_SQUARES = new Set([56, 57, 58, 59, 60, 61, 62, 63])
 
 const TRIVIAL_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 0

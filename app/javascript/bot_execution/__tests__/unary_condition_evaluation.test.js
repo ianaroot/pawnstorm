@@ -31,7 +31,7 @@ describe('unary condition evaluation — group mobility aggregation', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'unary',
+          version: 2, kind: 'census',
           subject: 'allied', subjectFilter: 'bishop',
           operator: 'mobility', comparator: 'equal_to',
           target: 'exact_number', targetTotal: 13
@@ -47,7 +47,7 @@ describe('unary condition evaluation — group mobility aggregation', () => {
     expect(
       evaluate(
         {
-          version: 2, kind: 'unary',
+          version: 2, kind: 'census',
           subject: 'allied', subjectFilter: 'bishop',
           operator: 'mobility', comparator: 'equal_to',
           target: 'exact_number', targetTotal: 7

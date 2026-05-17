@@ -34,7 +34,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -63,7 +63,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -91,7 +91,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'king',
           operator: 'value',
@@ -159,7 +159,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
           operator: 'mobility',
@@ -192,7 +192,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'count',
@@ -209,7 +209,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'count',
@@ -244,7 +244,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'value',
@@ -279,7 +279,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'mobility',
@@ -314,7 +314,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'knight',
           subjectFilterMode: 'exclude',
@@ -332,7 +332,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
@@ -364,7 +364,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
@@ -393,7 +393,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'count',
@@ -422,7 +422,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'mobility',
@@ -451,7 +451,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'value',
@@ -480,7 +480,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'count',
@@ -509,7 +509,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -538,7 +538,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -568,7 +568,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -598,7 +598,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -623,7 +623,7 @@ describe('ConditionEvaluatorV2', () => {
       expect(
         evaluate(
           {
-            version: 2, kind: 'unary',
+            version: 2, kind: 'census',
             subject: 'enemy_captured_piece', subjectFilter: 'any',
             operator: 'count', comparator: 'equal_to',
             target: 'exact_number', targetTotal: 0
@@ -644,7 +644,7 @@ describe('ConditionEvaluatorV2', () => {
       expect(
         evaluate(
           {
-            version: 2, kind: 'unary',
+            version: 2, kind: 'census',
             subject: 'enemy_captured_piece', subjectFilter: 'any',
             operator: 'value', comparator: 'equal_to',
             target: 'exact_number', targetTotal: 0
@@ -670,7 +670,7 @@ describe('ConditionEvaluatorV2', () => {
       expect(
         evaluate(
           {
-            version: 2, kind: 'unary',
+            version: 2, kind: 'census',
             subject: 'enemy_captured_piece', subjectFilter: 'queen',
             operator: 'value', comparator: 'equal_to',
             target: 'exact_number', targetTotal: 9
@@ -694,7 +694,7 @@ describe('ConditionEvaluatorV2', () => {
       expect(
         evaluate(
           {
-            version: 2, kind: 'unary',
+            version: 2, kind: 'census',
             subject: 'enemy_captured_piece', subjectFilter: 'queen',
             operator: 'value', comparator: 'equal_to',
             target: 'exact_number', targetTotal: 9
@@ -2493,7 +2493,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2525,7 +2525,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2556,7 +2556,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2587,7 +2587,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'square',
@@ -2617,7 +2617,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2647,7 +2647,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2684,7 +2684,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy_moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2716,7 +2716,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'pawn',
             positionAxis: 'rank',
@@ -2748,7 +2748,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -3275,7 +3275,7 @@ describe('ConditionEvaluatorV2', () => {
       const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', g7: 'wP' } })
       const moveObject = getMove('g7', 'g8', board, Board.QUEEN)
       expect(evaluate({
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'allied', subjectFilter: 'queen',
         operator: 'value', comparator: 'greater_than',
         target: 'prior_board_state'
@@ -3286,7 +3286,7 @@ describe('ConditionEvaluatorV2', () => {
       const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e4: 'wP', d5: 'bN' } })
       const moveObject = getMove('e4', 'd5', board)
       expect(evaluate({
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'knight',
         operator: 'value', comparator: 'less_than',
         target: 'prior_board_state'
@@ -3297,7 +3297,7 @@ describe('ConditionEvaluatorV2', () => {
       const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e2: 'wP' } })
       const moveObject = getMove('e2', 'e3', board)
       expect(evaluate({
-        version: 2, kind: 'unary',
+        version: 2, kind: 'census',
         subject: 'enemy', subjectFilter: 'queen',
         operator: 'value', comparator: 'equal_to',
         target: 'prior_board_state'

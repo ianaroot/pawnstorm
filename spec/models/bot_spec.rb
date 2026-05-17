@@ -226,7 +226,7 @@ RSpec.describe Bot, type: :model do
 
       node.update!(data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'any',
         subjectFilterMode: 'include',

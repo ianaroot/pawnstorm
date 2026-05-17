@@ -27,7 +27,7 @@ function makeAdder() {
 describe('collectForwardPropositionExamples', () => {
   it('produces verified examples for a simple knight-mover chain', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'knight',
       operator: 'count', comparator: 'greater_than',
       target: 'exact_number', targetTotal: 0
@@ -51,7 +51,7 @@ describe('collectForwardPropositionExamples', () => {
 
   it('produces castle examples for a castle-compatible chain', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'pawn',
       operator: 'count', comparator: 'greater_than_or_equal_to',
       target: 'exact_number', targetTotal: 0
@@ -129,7 +129,7 @@ describe('collectForwardPropositionExamples', () => {
 
   it('generates examples for moved_piece value less_than captured_piece', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'value', comparator: 'less_than',
       target: 'captured_piece', targetFilter: 'any'

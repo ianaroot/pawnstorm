@@ -107,6 +107,24 @@ class BotCompiler
           targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
           targetTotal: hash_value(raw, 'targetTotal')
         }.compact
+      when 'census'
+        # Unary shape plus optional region keys; compact drops absent ones.
+        {
+          version: 2,
+          kind: 'census',
+          subject: raw['subject'] || raw[:subject],
+          subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
+          subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
+          operator: raw['operator'] || raw[:operator],
+          comparator: raw['comparator'] || raw[:comparator],
+          target: raw['target'] || raw[:target],
+          targetFilter: raw['targetFilter'] || raw[:targetFilter],
+          targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
+          targetTotal: hash_value(raw, 'targetTotal'),
+          positionAxis: raw['positionAxis'] || raw[:positionAxis],
+          positionComparator: raw['positionComparator'] || raw[:positionComparator],
+          positionTarget: hash_value(raw, 'positionTarget')
+        }.compact
       when 'relational'
         {
           version: 2,

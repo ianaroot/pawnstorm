@@ -5,14 +5,14 @@ import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { buildAttempt } from 'editorV2/panels/condition_preview/forward_proposition/build_engine'
 
 const KNIGHT_MOVER_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'moved_piece', subjectFilter: 'knight',
   operator: 'count', comparator: 'greater_than',
   target: 'exact_number', targetTotal: 0
 }
 
 const ROOK_MOBILITY_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'rook',
   operator: 'mobility', comparator: 'less_than',
   target: 'exact_number', targetTotal: 5
@@ -106,7 +106,7 @@ const PIN_CHAIN_PAYLOADS = [
     target: 'enemy', targetFilter: 'king'
   },
   {
-    version: 2, kind: 'unary',
+    version: 2, kind: 'census',
     subject: 'enemy_moved_piece', subjectFilter: 'any',
     operator: 'mobility', comparator: 'equal_to',
     target: 'exact_number', targetTotal: 0
@@ -138,7 +138,7 @@ const MATE_CHAIN_PAYLOADS = [
     target: 'enemy', targetFilter: 'king'
   },
   {
-    version: 2, kind: 'unary',
+    version: 2, kind: 'census',
     subject: 'enemy', subjectFilter: 'any',
     operator: 'mobility', comparator: 'equal_to',
     target: 'exact_number', targetTotal: 0
@@ -163,7 +163,7 @@ const STALEMATE_CHAIN_PAYLOADS = [
     target: 'enemy', targetFilter: 'king'
   },
   {
-    version: 2, kind: 'unary',
+    version: 2, kind: 'census',
     subject: 'enemy', subjectFilter: 'any',
     operator: 'mobility', comparator: 'equal_to',
     target: 'exact_number', targetTotal: 0

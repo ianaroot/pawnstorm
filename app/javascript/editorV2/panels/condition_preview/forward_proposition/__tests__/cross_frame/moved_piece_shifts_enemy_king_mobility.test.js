@@ -29,7 +29,7 @@ function entry({ direction = '-', team = Board.BLACK, speciesSet = new Set([Boar
     aggregate_mobility_range: { min: 0, max: Infinity }
   }
   return {
-    source: 'unary', operator: 'mobility', metric: 'aggregate_mobility', direction,
+    source: 'census', operator: 'mobility', metric: 'aggregate_mobility', direction,
     priorProposition: { ...currentProposition, frame: 'prior' },
     currentProposition,
     subjectProposition: null,

@@ -25,6 +25,7 @@
     POSITION_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
     POSITION_OPERATORS = %w[count mobility value].freeze
     POSITION_AXES = %w[rank file square].freeze
+    OFF_BOARD_SUBJECTS = %w[captured_piece enemy_captured_piece].freeze
     POSITION_MOBILITY_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
 
     COMPARISON_METRICS = %w[count individual_value].freeze

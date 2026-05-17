@@ -52,7 +52,7 @@ describe('movedPieceParticipatesInAttackOrDefend — appliesTo', () => {
   it('returns false for non-relational entries', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
 
-    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(entry({ source: 'unary' }), ctx, new Map())).toBe(false)
+    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(entry({ source: 'census' }), ctx, new Map())).toBe(false)
   })
 
   it('returns false for shield or adjacent operators', () => {

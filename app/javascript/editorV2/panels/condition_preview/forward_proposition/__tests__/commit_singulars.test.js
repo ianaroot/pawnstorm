@@ -6,7 +6,7 @@ import { commitSingularsSpecies } from 'editorV2/panels/condition_preview/forwar
 import { commitSingularsPosition } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_position'
 
 const TRIVIAL_PLAN = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 1

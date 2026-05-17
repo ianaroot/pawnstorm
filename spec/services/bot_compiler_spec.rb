@@ -12,7 +12,7 @@ RSpec.describe BotCompiler do
       let!(:condition) do
         create(:node, :condition, bot: bot, position_x: 100, position_y: 100, data: {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'any',
           subjectFilterMode: 'include',
@@ -51,7 +51,7 @@ RSpec.describe BotCompiler do
             type: 'condition',
             data: {
               version: 2,
-              kind: 'unary',
+              kind: 'census',
               subject: 'moved_piece',
               subjectFilter: 'any',
               operator: 'value',
@@ -86,7 +86,7 @@ RSpec.describe BotCompiler do
       let!(:unary_condition) do
         create(:node, :condition, bot: bot, position_x: 220, position_y: 100, data: {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'include',
@@ -96,10 +96,27 @@ RSpec.describe BotCompiler do
           targetFilter: 'any'
         })
       end
+      let!(:region_census_condition) do
+        create(:node, :condition, bot: bot, position_x: 340, position_y: 100, data: {
+          version: 2,
+          kind: 'census',
+          subject: 'allied',
+          subjectFilter: 'rook',
+          subjectFilterMode: 'include',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5,
+          operator: 'count',
+          comparator: 'greater_than',
+          target: 'exact_number',
+          targetTotal: 0
+        })
+      end
 
       before do
         connect_nodes(root, relational_condition)
         connect_nodes(root, unary_condition)
+        connect_nodes(root, region_census_condition)
       end
 
       it 'preserves v2 relational condition payloads in compiled output' do
@@ -123,13 +140,13 @@ RSpec.describe BotCompiler do
         )
       end
 
-      it 'preserves v2 unary condition payloads in compiled output' do
+      it 'preserves v2 census condition payloads in compiled output' do
         compiled = described_class.new(bot).compile
 
         expect(compiled[:nodes][unary_condition.id.to_s][:data]).to eq(
           {
             version: 2,
-            kind: 'unary',
+            kind: 'census',
             subject: 'enemy_moved_piece',
             subjectFilter: 'pawn',
             subjectFilterMode: 'include',
@@ -137,6 +154,27 @@ RSpec.describe BotCompiler do
             comparator: 'equal_to',
             target: 'captured_piece',
             targetFilter: 'any'
+          }
+        )
+      end
+
+      it 'preserves region census spatial keys in compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][region_census_condition.id.to_s][:data]).to eq(
+          {
+            version: 2,
+            kind: 'census',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            subjectFilterMode: 'include',
+            operator: 'count',
+            comparator: 'greater_than',
+            target: 'exact_number',
+            targetTotal: 0,
+            positionAxis: 'rank',
+            positionComparator: 'equal_to',
+            positionTarget: 5
           }
         )
       end

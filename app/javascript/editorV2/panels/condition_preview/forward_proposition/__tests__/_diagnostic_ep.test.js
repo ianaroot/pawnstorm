@@ -24,7 +24,7 @@ function makeAdder() {
 describe('DIAGNOSTIC: standard outputs board summary (delete after analysis)', () => {
   it('counts pieces per example', () => {
     const combinedPlan = buildCombinedPlan([{
-      version: 2, kind: 'unary',
+      version: 2, kind: 'census',
       subject: 'moved_piece', subjectFilter: 'any',
       operator: 'count', comparator: 'equal_to',
       target: 'exact_number', targetTotal: 1

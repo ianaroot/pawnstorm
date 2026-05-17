@@ -54,32 +54,7 @@ module Nodes
       if %w[any].include?(normalized['targetFilter'])
         normalized.delete('targetFilterMode')
       end
-      if kind == 'unary'
-        normalized.delete('subjectComparisonMetric')
-        normalized.delete('subjectComparator')
-        normalized.delete('subjectComparisonSource')
-        normalized.delete('subjectComparisonSourceTotal')
-        normalized.delete('targetComparisonMetric')
-        normalized.delete('targetComparator')
-        normalized.delete('targetComparisonSource')
-        normalized.delete('targetComparisonSourceTotal')
-        normalize_unary_target!(normalized)
-      elsif kind == 'position'
-        normalized.delete('target')
-        normalized.delete('targetFilter')
-        normalized.delete('targetFilterMode')
-        normalized.delete('subjectComparisonMetric')
-        normalized.delete('subjectComparator')
-        normalized.delete('subjectComparisonSource')
-        normalized.delete('subjectComparisonSourceTotal')
-        normalized.delete('targetComparisonMetric')
-        normalized.delete('targetComparator')
-        normalized.delete('targetComparisonSource')
-        normalized.delete('targetComparisonSourceTotal')
-        if normalized['positionAxis'] == 'square'
-          normalized['positionComparator'] = 'equal_to'
-        end
-      elsif kind == 'relational'
+      if kind == 'relational'
         normalized.delete('comparator')
         normalized.delete('targetTotal')
         unless NodeGrammarRules.comparison_allowed_for_relational_operator?(normalized['operator'])
@@ -114,6 +89,28 @@ module Nodes
             normalize_relational_comparison_source_shape!(normalized, 'target')
           end
         end
+      elsif kind == 'census'
+        normalized['target'] = 'exact_number' if normalized['target'].blank?
+        normalized.delete('subjectComparisonMetric')
+        normalized.delete('subjectComparator')
+        normalized.delete('subjectComparisonSource')
+        normalized.delete('subjectComparisonSourceTotal')
+        normalized.delete('targetComparisonMetric')
+        normalized.delete('targetComparator')
+        normalized.delete('targetComparisonSource')
+        normalized.delete('targetComparisonSourceTotal')
+        normalize_unary_target!(normalized)
+        if normalized['positionAxis'] == 'square'
+          normalized['positionComparator'] = 'equal_to'
+        end
+      elsif kind == 'identity'
+        %w[
+          subjectFilter subjectFilterMode targetFilter targetFilterMode
+          operator comparator targetTotal
+          positionAxis positionComparator positionTarget
+          subjectComparisonMetric subjectComparator subjectComparisonSource subjectComparisonSourceTotal
+          targetComparisonMetric targetComparator targetComparisonSource targetComparisonSourceTotal
+        ].each { |key| normalized.delete(key) }
       end
     end
 

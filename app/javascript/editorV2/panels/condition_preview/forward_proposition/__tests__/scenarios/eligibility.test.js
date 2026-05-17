@@ -5,14 +5,14 @@ import { kingsideCastleScenario } from 'editorV2/panels/condition_preview/forwar
 import { queensideCastleScenario } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/queenside_castle'
 
 const TRIVIAL_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'allied', subjectFilter: 'pawn',
   operator: 'count', comparator: 'greater_than_or_equal_to',
   target: 'exact_number', targetTotal: 0
 }
 
 const KNIGHT_MOVER_PAYLOAD = {
-  version: 2, kind: 'unary',
+  version: 2, kind: 'census',
   subject: 'moved_piece', subjectFilter: 'knight',
   operator: 'count', comparator: 'greater_than',
   target: 'exact_number', targetTotal: 0
@@ -33,7 +33,7 @@ describe('eligibleScenariosFor', () => {
 
   it('filters out a castle scenario when chain demands enough queens on the home rank to force overlap with the castle emptiness', () => {
     const plan = buildCombinedPlan([{
-      version: 2, kind: 'position',
+      version: 2, kind: 'census',
       subject: 'allied', subjectFilter: 'queen',
       positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 1,
       operator: 'count', comparator: 'greater_than_or_equal_to',

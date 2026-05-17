@@ -275,15 +275,23 @@ function singularActorValuePool(pool, comparator, total) {
   }
 }
 
-function buildUnaryPlan(payload, options = {}, teams = {}) {
-  if (!SUPPORTED_UNARY_ACTORS.has(payload.subject)) {
-    return { status: 'unsupported', reason: `${payload.subject} unary previews are not supported yet.` }
+const SUPPORTED_POSITION_SUBJECTS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
+const SUPPORTED_POSITION_AXES = new Set(['rank', 'file', 'square'])
+
+function buildCensusPlan(payload, options = {}, teams = {}) {
+  const hasRegion = payload.positionAxis !== undefined && payload.positionAxis !== null
+  const supportedSubjects = hasRegion ? SUPPORTED_POSITION_SUBJECTS : SUPPORTED_UNARY_ACTORS
+  if (!supportedSubjects.has(payload.subject)) {
+    return { status: 'unsupported', reason: `${payload.subject} census previews are not supported yet.` }
   }
   if (!SUPPORTED_UNARY_OPERATORS.has(payload.operator)) {
-    return { status: 'unsupported', reason: `${payload.operator} unary previews are not supported yet.` }
+    return { status: 'unsupported', reason: `${payload.operator} census previews are not supported yet.` }
   }
   if (!SUPPORTED_UNARY_TARGETS.has(payload.target)) {
-    return { status: 'unsupported', reason: `${payload.target} unary target previews are not supported yet.` }
+    return { status: 'unsupported', reason: `${payload.target} census target previews are not supported yet.` }
+  }
+  if (hasRegion && !SUPPORTED_POSITION_AXES.has(payload.positionAxis)) {
+    return { status: 'unsupported', reason: `${payload.positionAxis} census axis is not supported yet.` }
   }
 
   const { movingTeam, enemyTeam } = teams
@@ -299,7 +307,7 @@ function buildUnaryPlan(payload, options = {}, teams = {}) {
   return {
     status: 'supported',
     reason: null,
-    kind: 'unary',
+    kind: 'census',
     evaluationPayload: payload,
     subject: payload.subject,
     subjectFilter: payload.subjectFilter || 'any',
@@ -310,55 +318,13 @@ function buildUnaryPlan(payload, options = {}, teams = {}) {
     targetTotal: payload.target === EXACT_NUMBER_COMPARISON_SOURCE ? (payload.targetTotal ?? 0) : null,
     targetFilter: payload.targetFilter || 'any',
     targetFilterMode: payload.targetFilterMode || null,
+    positionAxis: hasRegion ? payload.positionAxis : null,
+    positionComparator: hasRegion ? payload.positionComparator : null,
+    positionTarget: hasRegion ? payload.positionTarget : null,
     subjectSpeciesPool,
     targetSpeciesPool: targetIsActor ? candidateSpecies(payload.targetFilter || 'any', payload.targetFilterMode || null) : [],
     subjectTeam,
     targetTeam,
-    movingTeam,
-    enemyTeam,
-    moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
-  }
-}
-
-const SUPPORTED_POSITION_SUBJECTS = new Set(['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'])
-const SUPPORTED_POSITION_OPERATORS = new Set(['count', 'value', 'mobility'])
-const SUPPORTED_POSITION_AXES = new Set(['rank', 'file', 'square'])
-
-function buildPositionPlan(payload, options = {}, teams = {}) {
-  if (!SUPPORTED_POSITION_SUBJECTS.has(payload.subject)) {
-    return { status: 'unsupported', reason: `${payload.subject} position previews are not supported yet.` }
-  }
-  if (!SUPPORTED_POSITION_OPERATORS.has(payload.operator)) {
-    return { status: 'unsupported', reason: `${payload.operator} position previews are not supported yet.` }
-  }
-  if (!SUPPORTED_POSITION_AXES.has(payload.positionAxis)) {
-    return { status: 'unsupported', reason: `${payload.positionAxis} position axis is not supported yet.` }
-  }
-
-  const { movingTeam, enemyTeam } = teams
-  const subjectTeam = actorTeam(payload.subject, movingTeam)
-
-  return {
-    status: 'supported',
-    reason: null,
-    kind: 'position',
-    evaluationPayload: payload,
-    subject: payload.subject,
-    subjectFilter: payload.subjectFilter || 'any',
-    subjectFilterMode: payload.subjectFilterMode || null,
-    // target is part of the polymorphic plan contract; position plans have no
-    // target actor concept, so it's null. Readers comparing plan.target to an
-    // actor name agnostically read false. Sub-fields (targetTeam, etc.) stay
-    // kind-specific — only access after confirming plan.target is a real actor.
-    target: null,
-    positionAxis: payload.positionAxis,
-    positionComparator: payload.positionComparator,
-    positionTarget: payload.positionTarget,
-    operator: payload.operator,
-    comparator: payload.comparator,
-    targetTotal: payload.targetTotal ?? 0,
-    subjectSpeciesPool: candidateSpecies(payload.subjectFilter || 'any', payload.subjectFilterMode || null),
-    subjectTeam,
     movingTeam,
     enemyTeam,
     moveKinds: [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT]
@@ -374,8 +340,7 @@ export function buildPlan(payload, options = {}) {
   const enemyTeam = Board.opposingTeam(movingTeam)
   const teams = { movingTeam, enemyTeam }
 
-  if (payload.kind === 'unary') { return buildUnaryPlan(payload, options, teams) }
   if (payload.kind === 'relational') { return buildRelationalPlan(payload, options, teams) }
-  if (payload.kind === 'position') { return buildPositionPlan(payload, options, teams) }
+  if (payload.kind === 'census') { return buildCensusPlan(payload, options, teams) }
   return { status: 'unsupported', reason: `${payload.kind} previews are not supported yet.` }
 }

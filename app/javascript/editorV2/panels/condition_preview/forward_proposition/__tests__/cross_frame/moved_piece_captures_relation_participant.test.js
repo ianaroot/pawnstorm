@@ -57,8 +57,8 @@ describe('movedPieceCapturesRelationParticipant — appliesTo', () => {
     expect(movedPieceCapturesRelationParticipant.appliesTo(entry(), ctxWithSingulars(), new Map())).toBe(true)
   })
 
-  it('returns false for unary entries', () => {
-    expect(movedPieceCapturesRelationParticipant.appliesTo(entry({ source: 'unary' }), ctxWithSingulars(), new Map())).toBe(false)
+  it('returns false for census entries', () => {
+    expect(movedPieceCapturesRelationParticipant.appliesTo(entry({ source: 'census' }), ctxWithSingulars(), new Map())).toBe(false)
   })
 
   it('returns false for direction "+"', () => {
