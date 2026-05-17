@@ -73,7 +73,7 @@ RSpec.describe BotsController, type: :request do
 
       expect(guest_user).to be_guest
       expect(guest_user.last_active_at).to be_present
-      expect(response).to redirect_to(edit_bot_path(created_bot))
+      expect(response).to redirect_to(edit_bot_path(created_bot, intro: 1))
     end
 
     it 'signs in the guest who owns the created bot' do
@@ -81,7 +81,7 @@ RSpec.describe BotsController, type: :request do
       created_bot = Bot.find_by!(name: 'Test Bot')
       guest_user = created_bot.user
 
-      expect(response).to redirect_to(edit_bot_path(created_bot))
+      expect(response).to redirect_to(edit_bot_path(created_bot, intro: 1))
       expect(guest_user).to be_guest
 
       get edit_bot_path(created_bot, format: :json)
@@ -101,8 +101,18 @@ RSpec.describe BotsController, type: :request do
           post bots_path, params: valid_params
         }.to change(Bot, :count).by(1)
         created_bot = Bot.find_by!(name: 'Test Bot')
-        expect(response).to redirect_to(edit_bot_path(created_bot))
+        expect(response).to redirect_to(edit_bot_path(created_bot, intro: 1))
         expect(flash[:notice]).to eq('Bot was successfully created.')
+      end
+
+      it 'flags the create redirect with intro=1 so the editor shows the walkthrough once' do
+        post bots_path, params: valid_params
+        created_bot = Bot.find_by!(name: 'Test Bot')
+        expect(response).to redirect_to(edit_bot_path(created_bot, intro: 1))
+
+        patch bot_path(created_bot), params: { bot: { name: 'Renamed Bot' } }
+        expect(response).to redirect_to(edit_bot_path(created_bot))
+        expect(response.location).not_to include('intro')
       end
 
       it 'returns unprocessable entity with invalid params' do

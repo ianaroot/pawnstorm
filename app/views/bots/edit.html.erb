@@ -2,11 +2,12 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-guide"
+     data-controller="editor bot-guide bot-intro"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
-     data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
+     data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>"
+     data-bot-intro-auto-value="<%= params[:intro].present? %>">
   <div class="bot-editor-header">
     <div class="bot-editor-header__name" id="bot-name-display" title="<%= @bot.name %>"><%= @bot.name %></div>
     <button type="button" class="bot-editor-header__rename" data-bot-rename-open>Rename</button>
@@ -28,10 +29,9 @@
       <button
         type="button"
         class="btn-guide"
-        data-bot-guide-target="toggle"
-        data-action="click->bot-guide#toggle"
-        aria-controls="bot-guide-drawer"
-        aria-expanded="false">Guide</button>
+        data-action="click->bot-intro#open"
+        aria-controls="bot-intro-modal"
+        aria-haspopup="dialog">How it works</button>
     </div>
 
     <div class="toolbar-section">
@@ -209,5 +209,7 @@
   </div>
 
   <%= render "bots/nodes/editor" %>
+
+  <%= render "bots/intro_modal" %>
   </div>
 </div>
