@@ -1,79 +1,8 @@
 import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
-
-const PILL_INPUT_CACHE = new WeakMap()
-
-function pillInputs(container) {
-  if (!container) { return [] }
-  let inputs = PILL_INPUT_CACHE.get(container)
-  if (!inputs) {
-    inputs = Array.from(container.querySelectorAll('input[type="radio"]'))
-    PILL_INPUT_CACHE.set(container, inputs)
-  }
-  return inputs
-}
-
-function pillValue(inputs) {
-  return inputs?.find(input => input.checked)?.value
-}
-
-function setPillChecked(inputs, value, numeric = false) {
-  inputs?.forEach(input => {
-    input.checked = (numeric ? Number(input.value) : input.value) === value
-  })
-}
-
-const DEFAULT_RELATIONAL_STATE = {
-  left: {
-    subject: 'allied',
-    filter: 'any',
-    filterMode: 'include',
-    comparisonMetric: '',
-    comparator: 'equal_to',
-    comparisonSource: 'exact_number',
-    comparisonSourceTotal: 1
-  },
-  operator: 'targets',
-  right: {
-    subject: 'enemy',
-    filter: 'any',
-    filterMode: 'include',
-    comparisonMetric: '',
-    comparator: 'equal_to',
-    comparisonSource: 'exact_number',
-    comparisonSourceTotal: 1
-  },
-  ui: {
-    leftComparisonOpen: false,
-    rightComparisonOpen: false,
-  }
-}
-
-const DEFAULT_CENSUS_STATE = {
-  left: {
-    subject: 'allied',
-    filter: 'any',
-    filterMode: 'include'
-  },
-  scope: 'region',
-  positionAxis: 'rank',
-  positionComparator: 'equal_to',
-  positionRankTarget: 1,
-  positionFileTarget: 1,
-  positionSquareFile: 1,
-  positionSquareRank: 1,
-  advanced: false,
-  operator: 'count',
-  comparator: 'greater_than',
-  target: 'exact_number',
-  targetFilter: 'any',
-  targetFilterMode: 'include',
-  targetTotal: 0
-}
-
-const DEFAULT_IDENTITY_STATE = {
-  subject: 'enemy_moved_piece',
-  target: 'captured_piece'
-}
+import { pillInputs } from 'editorV2/panels/condition_form/dom_helpers'
+import RelationalMode from 'editorV2/panels/condition_form/relational_mode'
+import CensusMode from 'editorV2/panels/condition_form/census_mode'
+import IdentityMode from 'editorV2/panels/condition_form/identity_mode'
 
 const DEFAULT_GRAMMAR_RULES = Object.freeze({
   editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
@@ -105,6 +34,11 @@ class ConditionForm {
   constructor(editorPanel) {
     this.editorPanel = editorPanel
     this.grammarRules = this.readGrammarRules()
+    this.modes = {
+      relational: new RelationalMode(this.grammarRules),
+      census: new CensusMode(this.grammarRules),
+      identity: new IdentityMode(this.grammarRules)
+    }
     this.state = this.defaultState()
     this.boundHandleFieldChange = this.handleFieldChange.bind(this)
     this.boundHandleLeftComparisonToggle = this.toggleLeftComparison.bind(this)
@@ -118,9 +52,9 @@ class ConditionForm {
   defaultState() {
     return {
       mode: 'census',
-      relational: structuredClone(DEFAULT_RELATIONAL_STATE),
-      census: structuredClone(DEFAULT_CENSUS_STATE),
-      identity: structuredClone(DEFAULT_IDENTITY_STATE)
+      relational: this.modes.relational.defaultState(),
+      census: this.modes.census.defaultState(),
+      identity: this.modes.identity.defaultState()
     }
   }
 
@@ -213,7 +147,6 @@ class ConditionForm {
       leftComparisonSource,
       leftComparisonSourceTotal,
       relationalOperatorSelect,
-      operatorSelect: this.state.mode === 'relational' ? relationalOperatorSelect : censusOperator,
       rightSubject,
       rightFilterMode,
       rightFilter,
@@ -305,114 +238,24 @@ class ConditionForm {
     } else {
       this.state = this.defaultState()
     }
-    if (this.state.mode === 'census') {
-      this.applyCensusCompatibilityRules()
-    } else if (this.state.mode === 'identity') {
-      this.applyIdentityCompatibilityRules()
-    } else {
-      this.applyRelationalCompatibilityRules()
-    }
+    const mode = this.state.mode
+    this.modes[mode].applyCompatibilityRules(this.state[mode])
     this.render()
   }
 
   isValidV2Node(nodeData = {}) {
-    return nodeData.version === 2 && (nodeData.kind === 'relational' || nodeData.kind === 'census' || nodeData.kind === 'identity')
+    return nodeData.version === 2 && Object.keys(this.modes).includes(nodeData.kind)
   }
 
   stateFromNodeData(nodeData) {
-    if (nodeData.kind === 'identity') {
-      return {
-        mode: 'identity',
-        relational: structuredClone(DEFAULT_RELATIONAL_STATE),
-        census: structuredClone(DEFAULT_CENSUS_STATE),
-        identity: {
-          subject: nodeData.subject || DEFAULT_IDENTITY_STATE.subject,
-          target: nodeData.target || DEFAULT_IDENTITY_STATE.target
-        }
-      }
+    const state = {
+      mode: nodeData.kind,
+      relational: this.modes.relational.defaultState(),
+      census: this.modes.census.defaultState(),
+      identity: this.modes.identity.defaultState()
     }
-    if (nodeData.kind === 'census') {
-      const hasRegion = nodeData.positionAxis !== undefined && nodeData.positionAxis !== null
-      const isSquare = nodeData.positionAxis === 'square'
-      const squareFile = isSquare ? ((nodeData.positionTarget % 8) + 1) : 1
-      const squareRank = isSquare ? (Math.floor(nodeData.positionTarget / 8) + 1) : 1
-      return {
-        mode: 'census',
-        relational: structuredClone(DEFAULT_RELATIONAL_STATE),
-        identity: structuredClone(DEFAULT_IDENTITY_STATE),
-        census: {
-          left: {
-            subject: nodeData.subject || 'allied',
-            filter: nodeData.subjectFilter || 'any',
-            filterMode: nodeData.subjectFilterMode || 'include'
-          },
-          scope: hasRegion ? 'region' : 'whole',
-          positionAxis: nodeData.positionAxis || 'rank',
-          positionComparator: nodeData.positionComparator || 'equal_to',
-          positionRankTarget: nodeData.positionAxis === 'rank' ? (nodeData.positionTarget || 1) : 1,
-          positionFileTarget: nodeData.positionAxis === 'file' ? (nodeData.positionTarget || 1) : 1,
-          positionSquareFile: squareFile,
-          positionSquareRank: squareRank,
-          advanced: Boolean(nodeData.target) && nodeData.target !== 'exact_number',
-          operator: nodeData.operator || 'count',
-          comparator: nodeData.comparator || 'greater_than',
-          target: nodeData.target || 'exact_number',
-          targetFilter: nodeData.targetFilter || 'any',
-          targetFilterMode: nodeData.targetFilterMode || 'include',
-          targetTotal: typeof nodeData.targetTotal === 'number' ? nodeData.targetTotal : 0
-        }
-      }
-    } else {
-      return {
-        mode: 'relational',
-        census: structuredClone(DEFAULT_CENSUS_STATE),
-        identity: structuredClone(DEFAULT_IDENTITY_STATE),
-        relational: {
-          left: this.relationalSideState({
-            subject: nodeData.subject,
-            filter: nodeData.subjectFilter,
-            filterMode: nodeData.subjectFilterMode,
-            comparisonMetric: nodeData.subjectComparisonMetric,
-            comparator: nodeData.subjectComparator,
-            comparisonSource: nodeData.subjectComparisonSource,
-            comparisonSourceTotal: nodeData.subjectComparisonSourceTotal
-          }),
-          operator: this.uiOperatorFromPayload(nodeData.operator),
-          right: this.relationalSideState({
-            subject: nodeData.target,
-            filter: nodeData.targetFilter,
-            filterMode: nodeData.targetFilterMode,
-            comparisonMetric: nodeData.targetComparisonMetric,
-            comparator: nodeData.targetComparator,
-            comparisonSource: nodeData.targetComparisonSource,
-            comparisonSourceTotal: nodeData.targetComparisonSourceTotal
-          }),
-          ui: {
-            leftComparisonOpen: Boolean(nodeData.subjectComparisonMetric),
-            rightComparisonOpen: Boolean(nodeData.targetComparisonMetric),
-          }
-        }
-      }
-    }
-  }
-
-  uiOperatorFromPayload(operator) {
-    if (operator === 'attack' || operator === 'defend') { return 'targets' }
-    if (operator === 'cover') { return 'shield' }
-    return operator || 'targets'
-  }
-
-  relationalSideState({ subject, filter, filterMode, comparisonMetric, comparator, comparisonSource, comparisonSourceTotal }) {
-    const source = comparisonSource || 'exact_number'
-    return {
-      subject: subject || 'allied',
-      filter: filter || 'any',
-      filterMode: filterMode || 'include',
-      comparisonMetric: comparisonMetric || '',
-      comparator: comparator || 'equal_to',
-      comparisonSource: source,
-      comparisonSourceTotal: source === 'exact_number' && typeof comparisonSourceTotal === 'number' ? comparisonSourceTotal : 1
-    }
+    state[nodeData.kind] = this.modes[nodeData.kind].fromNodeData(nodeData)
+    return state
   }
 
   render() {
@@ -432,13 +275,7 @@ class ConditionForm {
     fields.censusLayout?.classList.toggle('hidden', !isCensus)
     fields.identityLayout?.classList.toggle('hidden', !isIdentity)
 
-    if (isCensus) {
-      this.renderCensus(fields)
-    } else if (isIdentity) {
-      this.renderIdentity(fields)
-    } else {
-      this.renderRelational(fields)
-    }
+    this.modes[this.state.mode].render(this.state[this.state.mode], fields)
 
     if (fields.formulationPreview) {
       fields.formulationPreview.textContent = formatConditionPreview(this.buildPayload()).text
@@ -447,176 +284,21 @@ class ConditionForm {
     if (this.onStateChange) { this.onStateChange(this.buildPayload()) }
   }
 
-  renderRelational(fields) {
-    const rel = this.state.relational
-    const leftComparisonActive = rel.ui.leftComparisonOpen
-    const rightComparisonActive = rel.ui.rightComparisonOpen
-    const leftFilterModeAvailable = rel.left.filter !== 'any'
-    const rightFilterModeAvailable = rel.right.filter !== 'any'
-
-    if (fields.relationalOperatorSelect) fields.relationalOperatorSelect.value = rel.operator
-    if (fields.leftSubject) fields.leftSubject.value = rel.left.subject
-    if (fields.leftFilterMode) fields.leftFilterMode.checked = leftFilterModeAvailable && rel.left.filterMode === 'exclude'
-    if (fields.leftFilter) fields.leftFilter.value = rel.left.filter
-    if (fields.leftComparisonMetric) fields.leftComparisonMetric.value = rel.left.comparisonMetric || 'count'
-    setPillChecked(fields.leftComparatorInputs, rel.left.comparator)
-    if (fields.leftComparisonSource) fields.leftComparisonSource.value = rel.left.comparisonSource
-    if (fields.leftComparisonSourceTotal) fields.leftComparisonSourceTotal.value = rel.left.comparisonSourceTotal
-
-    if (fields.rightSubject) fields.rightSubject.value = rel.right.subject
-    if (fields.rightFilterMode) fields.rightFilterMode.checked = rightFilterModeAvailable && rel.right.filterMode === 'exclude'
-    if (fields.rightFilter) fields.rightFilter.value = rel.right.filter
-    if (fields.rightComparisonMetric) fields.rightComparisonMetric.value = rel.right.comparisonMetric || 'count'
-    setPillChecked(fields.rightComparatorInputs, rel.right.comparator)
-    if (fields.rightComparisonSource) fields.rightComparisonSource.value = rel.right.comparisonSource
-    if (fields.rightComparisonSourceTotal) fields.rightComparisonSourceTotal.value = rel.right.comparisonSourceTotal
-
-    fields.leftComparisonBody.classList.toggle('hidden', !rel.ui.leftComparisonOpen)
-    fields.rightComparisonBody.classList.toggle('hidden', !rel.ui.rightComparisonOpen)
-    fields.leftComparisonSourceTotal?.classList.toggle('hidden', rel.left.comparisonSource !== 'exact_number')
-    fields.rightComparisonSourceTotal?.classList.toggle('hidden', rel.right.comparisonSource !== 'exact_number')
-    fields.leftComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.left.comparisonSource === 'exact_number')
-    fields.rightComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.right.comparisonSource === 'exact_number')
-
-    fields.leftFilterRow.classList.toggle('hidden', false)
-    fields.rightFilterRow.classList.toggle('hidden', false)
-    fields.leftFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !leftFilterModeAvailable)
-    fields.rightFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !rightFilterModeAvailable)
-    fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', false)
-
-    const leftLocked = this.comparisonLocked('left')
-    const rightLocked = this.comparisonLocked('right')
-    fields.leftComparisonToggle.disabled = leftLocked
-    fields.rightComparisonToggle.disabled = rightLocked
-    fields.leftComparisonToggle.textContent = leftLocked ? this.comparisonUnavailableText('left') : (rel.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison (advanced)')
-    fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText('right') : (rel.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison (advanced)')
-
-    this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
-    this.setComparisonInputsDisabled('right', fields, !rightComparisonActive)
-
-    this.showAllOptions(fields.leftSubject)
-    this.showAllOptions(fields.rightSubject)
-    this.disableRelationalSubjectOptions(fields)
-    this.disableRelationalComparisonSourceOptions(fields)
-    this.disableRelationalComparisonMetricOptions(fields)
-
-    fields.relationalTargetNote?.classList.toggle('hidden', rel.operator !== 'shield')
-    fields.rightAggregateNote?.classList.toggle('hidden', !this.leftUsesAggregateValue())
-    fields.leftAggregateNote?.classList.toggle('hidden', !this.rightUsesAggregateValue())
-  }
-
-  renderCensus(fields) {
-    const cen = this.state.census
-    const region = cen.scope === 'region'
-    const isSquare = region && cen.positionAxis === 'square'
-    const filterModeAvailable = cen.left.filter !== 'any'
-    const targetUsesActor = this.censusTargetUsesActor()
-    const targetFilterModeAvailable = targetUsesActor && cen.targetFilter !== 'any'
-
-    if (fields.censusSubject) fields.censusSubject.value = cen.left.subject
-    if (fields.censusFilterMode) fields.censusFilterMode.checked = filterModeAvailable && cen.left.filterMode === 'exclude'
-    if (fields.censusFilter) fields.censusFilter.value = cen.left.filter
-    if (fields.censusScopeWhole) fields.censusScopeWhole.checked = !region
-    if (fields.censusAxisRank) fields.censusAxisRank.checked = region && cen.positionAxis === 'rank'
-    if (fields.censusAxisFile) fields.censusAxisFile.checked = region && cen.positionAxis === 'file'
-    if (fields.censusAxisSquare) fields.censusAxisSquare.checked = region && cen.positionAxis === 'square'
-    fields.censusRegionComparatorInputs?.forEach(input => {
-      input.checked = input.value === cen.positionComparator
-      input.disabled = isSquare && input.value !== 'equal_to'
-    })
-    setPillChecked(fields.censusRankInputs, cen.positionRankTarget, true)
-    setPillChecked(fields.censusFileInputs, cen.positionFileTarget, true)
-    setPillChecked(fields.censusSquareFileInputs, cen.positionSquareFile, true)
-    setPillChecked(fields.censusSquareRankInputs, cen.positionSquareRank, true)
-    if (fields.censusOperator) fields.censusOperator.value = cen.operator
-    setPillChecked(fields.censusComparatorInputs, cen.comparator)
-    if (fields.censusTarget) fields.censusTarget.value = cen.target
-    if (fields.censusTargetTotal) fields.censusTargetTotal.value = cen.targetTotal
-    if (fields.censusTargetFilter) fields.censusTargetFilter.value = cen.targetFilter
-    if (fields.censusTargetFilterMode) fields.censusTargetFilterMode.checked = targetFilterModeAvailable && cen.targetFilterMode === 'exclude'
-
-    fields.censusRegionComparator?.classList.toggle('hidden', !region)
-    fields.censusRegionComparator?.classList.toggle('condition-form-comparator-toggle--locked', isSquare)
-    fields.censusRegionTarget?.classList.toggle('hidden', false)
-    fields.censusRankInput?.classList.toggle('hidden', !region || isSquare || cen.positionAxis === 'file')
-    fields.censusFileInput?.classList.toggle('hidden', !region || isSquare || cen.positionAxis === 'rank')
-    fields.censusSquareInputs?.classList.toggle('hidden', region && !isSquare)
-    fields.censusSquareInputs?.classList.toggle('condition-form-radio-list--disabled', !region)
-    const squareTargetInputs = [...(fields.censusSquareFileInputs || []), ...(fields.censusSquareRankInputs || [])]
-    squareTargetInputs.forEach(input => { input.disabled = !region })
-
-    fields.censusTarget?.classList.toggle('hidden', !cen.advanced)
-    fields.censusTargetTotal?.classList.toggle('hidden', cen.target !== 'exact_number')
-    fields.censusTargetFilterRow?.classList.toggle('hidden', !targetUsesActor)
-    fields.censusTargetStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', cen.target === 'exact_number')
-
-    fields.censusComparisonBody?.classList.toggle('hidden', false)
-    fields.censusComparisonToggle?.classList.toggle('hidden', false)
-    if (fields.censusComparisonToggle) {
-      fields.censusComparisonToggle.textContent = cen.advanced ? 'Simplify' : '+ Advanced options'
-    }
-
-    fields.censusFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !filterModeAvailable)
-    fields.censusTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !targetFilterModeAvailable)
-
-    this.showAllOptions(fields.censusSubject)
-    this.showAllOptions(fields.censusTarget)
-    this.disableCensusSubjectOptions(fields)
-    this.disableCensusOperatorOptions(fields)
-    this.disableCensusTargetOptions(fields)
-  }
-
-  renderIdentity(fields) {
-    const id = this.state.identity
-    if (fields.identitySubject) fields.identitySubject.value = id.subject
-    if (fields.identityTarget) {
-      fields.identityTarget.value = id.target
-      const allowed = this.samePieceTargetsFor(id.subject)
-      this.showAllOptions(fields.identityTarget)
-      this.disableOptions(
-        fields.identityTarget,
-        Array.from(fields.identityTarget.options).map(o => o.value).filter(v => !allowed.includes(v))
-      )
-    }
-  }
-
   toggleLeftComparison() {
     if (this.state.mode !== 'relational') { return }
-    if (this.comparisonLocked('left')) { return }
-    const rel = this.state.relational
-
-    if (!rel.ui.leftComparisonOpen && !rel.left.comparisonMetric) {
-      rel.left.comparisonMetric = 'count'
-      rel.left.comparator = 'equal_to'
-      rel.left.comparisonSource = 'exact_number'
-      rel.left.comparisonSourceTotal ||= 1
-    }
-
-    rel.ui.leftComparisonOpen = !rel.ui.leftComparisonOpen
-    this.render()
+    if (this.modes.relational.toggleComparison('left', this.state.relational)) { this.render() }
   }
 
   toggleCensusComparison() {
     if (this.state.mode !== 'census') { return }
-    this.state.census.advanced = !this.state.census.advanced
-    this.applyCensusCompatibilityRules()
+    this.modes.census.toggleAdvanced(this.state.census)
+    this.modes.census.applyCompatibilityRules(this.state.census)
     this.render()
   }
 
   toggleRightComparison() {
     if (this.state.mode !== 'relational') { return }
-    if (this.comparisonLocked('right')) { return }
-    const rel = this.state.relational
-
-    if (!rel.ui.rightComparisonOpen && !rel.right.comparisonMetric) {
-      rel.right.comparisonMetric = 'count'
-      rel.right.comparator = 'equal_to'
-      rel.right.comparisonSource = 'exact_number'
-      rel.right.comparisonSourceTotal ||= 1
-    }
-
-    rel.ui.rightComparisonOpen = !rel.ui.rightComparisonOpen
-    this.render()
+    if (this.modes.relational.toggleComparison('right', this.state.relational)) { this.render() }
   }
 
   handleModeChange(mode) {
@@ -628,456 +310,15 @@ class ConditionForm {
   handleFieldChange() {
     const fields = this.fields()
 
-    if (this.state.mode === 'relational') {
-      this.state.relational.left.subject = fields.leftSubject?.value || 'allied'
-      this.state.relational.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
-      this.state.relational.left.filter = fields.leftFilter?.value || 'any'
-      this.state.relational.left.comparisonMetric = fields.leftComparisonMetric?.value || ''
-      this.state.relational.left.comparator = pillValue(fields.leftComparatorInputs) || 'equal_to'
-      this.state.relational.left.comparisonSource = fields.leftComparisonSource?.value || 'exact_number'
-      this.state.relational.left.comparisonSourceTotal = Number(fields.leftComparisonSourceTotal?.value || 1)
-      this.state.relational.operator = fields.relationalOperatorSelect?.value || 'targets'
-      this.state.relational.right.subject = fields.rightSubject?.value || 'enemy'
-      this.state.relational.right.filterMode = fields.rightFilterMode?.checked ? 'exclude' : 'include'
-      this.state.relational.right.filter = fields.rightFilter?.value || 'any'
-      this.state.relational.right.comparisonMetric = fields.rightComparisonMetric?.value || ''
-      this.state.relational.right.comparator = pillValue(fields.rightComparatorInputs) || 'equal_to'
-      this.state.relational.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
-      this.state.relational.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
-      this.applyRelationalCompatibilityRules()
-    } else if (this.state.mode === 'identity') {
-      this.state.identity.subject = fields.identitySubject?.value || DEFAULT_IDENTITY_STATE.subject
-      this.state.identity.target = fields.identityTarget?.value || DEFAULT_IDENTITY_STATE.target
-      this.applyIdentityCompatibilityRules()
-    } else {
-      const cen = this.state.census
-      cen.left.subject = fields.censusSubject?.value || 'allied'
-      cen.left.filterMode = fields.censusFilterMode?.checked ? 'exclude' : 'include'
-      cen.left.filter = fields.censusFilter?.value || 'any'
-      if (fields.censusScopeWhole?.checked) {
-        cen.scope = 'whole'
-      } else if (fields.censusAxisFile?.checked) {
-        cen.scope = 'region'
-        cen.positionAxis = 'file'
-      } else if (fields.censusAxisSquare?.checked) {
-        cen.scope = 'region'
-        cen.positionAxis = 'square'
-      } else {
-        cen.scope = 'region'
-        cen.positionAxis = 'rank'
-      }
-      cen.positionComparator = pillValue(fields.censusRegionComparatorInputs) || 'equal_to'
-      cen.positionRankTarget = Number(pillValue(fields.censusRankInputs) || 1)
-      cen.positionFileTarget = Number(pillValue(fields.censusFileInputs) || 1)
-      cen.positionSquareFile = Number(pillValue(fields.censusSquareFileInputs) || 1)
-      cen.positionSquareRank = Number(pillValue(fields.censusSquareRankInputs) || 1)
-      cen.operator = fields.censusOperator?.value || 'count'
-      cen.comparator = pillValue(fields.censusComparatorInputs) || 'greater_than'
-      cen.target = fields.censusTarget?.value || 'exact_number'
-      cen.targetFilter = fields.censusTargetFilter?.value || 'any'
-      cen.targetFilterMode = fields.censusTargetFilterMode?.checked ? 'exclude' : 'include'
-      cen.targetTotal = Number(fields.censusTargetTotal?.value || 0)
-      this.applyCensusCompatibilityRules()
-    }
+    const mode = this.state.mode
+    this.modes[mode].readFields(this.state[mode], fields)
+    this.modes[mode].applyCompatibilityRules(this.state[mode])
 
     this.render()
   }
 
   buildPayload() {
-    if (this.state.mode === 'census') {
-      const cen = this.state.census
-      const payload = {
-        version: 2,
-        kind: 'census',
-        subject: cen.left.subject,
-        subjectFilter: cen.left.filter,
-        operator: cen.operator,
-        comparator: cen.comparator
-      }
-      if (cen.left.filter !== 'any') {
-        payload.subjectFilterMode = cen.left.filterMode
-      }
-      if (cen.scope === 'region') {
-        payload.positionAxis = cen.positionAxis
-        payload.positionComparator = cen.positionAxis === 'square' ? 'equal_to' : cen.positionComparator
-        payload.positionTarget = this.resolvedPositionTarget(cen)
-      }
-      payload.target = cen.target
-      if (cen.target === 'exact_number') {
-        payload.targetTotal = cen.targetTotal
-      } else if (this.censusTargetUsesActor()) {
-        payload.targetFilter = cen.targetFilter
-        if (cen.targetFilter !== 'any') {
-          payload.targetFilterMode = cen.targetFilterMode
-        }
-      }
-      return payload
-    } else if (this.state.mode === 'identity') {
-      return {
-        version: 2,
-        kind: 'identity',
-        subject: this.state.identity.subject,
-        target: this.state.identity.target
-      }
-    } else {
-      const rel = this.state.relational
-      const payload = {
-        version: 2,
-        kind: 'relational',
-        subject: rel.left.subject,
-        subjectFilter: rel.left.filter,
-        operator: this.translateTargetsOperator(rel.left.subject, rel.right.subject, rel.operator),
-        target: rel.right.subject,
-        targetFilter: rel.right.filter
-      }
-
-      if (rel.left.filter !== 'any') {
-        payload.subjectFilterMode = rel.left.filterMode
-      }
-
-      if (rel.right.filter !== 'any') {
-        payload.targetFilterMode = rel.right.filterMode
-      }
-
-      if (rel.ui.leftComparisonOpen && rel.left.comparisonMetric) {
-        payload.subjectComparisonMetric = rel.left.comparisonMetric
-        payload.subjectComparator = rel.left.comparator
-        payload.subjectComparisonSource = rel.left.comparisonSource
-        if (rel.left.comparisonSource === 'exact_number') {
-          payload.subjectComparisonSourceTotal = rel.left.comparisonSourceTotal
-        }
-      }
-
-      if (rel.ui.rightComparisonOpen && rel.right.comparisonMetric) {
-        payload.targetComparisonMetric = rel.right.comparisonMetric
-        payload.targetComparator = rel.right.comparator
-        payload.targetComparisonSource = rel.right.comparisonSource
-        if (rel.right.comparisonSource === 'exact_number') {
-          payload.targetComparisonSourceTotal = rel.right.comparisonSourceTotal
-        }
-      }
-
-      return payload
-    }
-  }
-
-  translateTargetsOperator(leftSubject, rightSubject, operator) {
-    if (operator !== 'targets') { return operator }
-    const leftTeam = this.teamGroupForSubject(leftSubject)
-    const rightTeam = this.teamGroupForSubject(rightSubject)
-    return leftTeam === rightTeam ? 'defend' : 'attack'
-  }
-
-
-  // -------------------------------- GRAMMAR RULES ----------------------------------
-
-  applyIdentityCompatibilityRules() {
-    const id = this.state.identity
-    const allowedSubjects = Object.keys(this.grammarRules.samePieceTargets)
-    if (!allowedSubjects.includes(id.subject)) {
-      id.subject = allowedSubjects[0]
-    }
-    const allowedTargets = this.samePieceTargetsFor(id.subject)
-    if (!allowedTargets.includes(id.target)) {
-      id.target = allowedTargets[0]
-    }
-  }
-
-  clearRelationalComparator(side) {
-    const sideState = this.state.relational[side]
-    sideState.comparisonMetric = ''
-    sideState.comparator = 'equal_to'
-    sideState.comparisonSource = 'exact_number'
-    sideState.comparisonSourceTotal = 1
-  }
-
-  applyRelationalCompatibilityRules() {
-    const rel = this.state.relational
-
-    if (rel.right.subject === 'captured_piece') {
-      rel.right.subject = 'enemy'
-    }
-    const allowedLeft = this.regularRelationalSubjects()
-    if (!allowedLeft.includes(rel.left.subject)) {
-      rel.left.subject = 'allied'
-    }
-
-    const allowedRight = this.regularRelationalTargets()
-    if (!allowedRight.includes(rel.right.subject)) {
-      rel.right.subject = allowedRight[0]
-    }
-
-    if (this.leftUsesPriorBoardState()) {
-      this.clearRelationalComparator('right')
-      rel.ui.rightComparisonOpen = false
-    }
-
-    if (this.rightUsesPriorBoardState()) {
-      this.clearRelationalComparator('left')
-      rel.ui.leftComparisonOpen = false
-    }
-
-    if (this.leftUsesAggregateValue() && rel.right.comparisonMetric === 'aggregate_value') {
-      rel.right.comparisonMetric = 'count'
-    }
-
-    this.applyRelationalComparisonSourceCompatibility('left')
-    this.applyRelationalComparisonSourceCompatibility('right')
-    this.applyFilterModeCompatibilityRules()
-  }
-
-  applyRelationalComparisonSourceCompatibility(side) {
-    const sideState = this.state.relational[side]
-    const allowedSources = this.allowedRelationalComparisonSourcesForMetric(sideState.comparisonMetric)
-    if (!allowedSources.includes(sideState.comparisonSource)) {
-      sideState.comparisonSource = 'exact_number'
-      sideState.comparisonSourceTotal ||= 1
-    }
-  }
-
-  leftUsesPriorBoardState() {
-    const rel = this.state.relational
-    return this.state.mode === 'relational' && rel.ui.leftComparisonOpen && rel.left.comparisonSource === 'prior_board_state'
-  }
-
-  rightUsesPriorBoardState() {
-    const rel = this.state.relational
-    return this.state.mode === 'relational' && rel.ui.rightComparisonOpen && rel.right.comparisonSource === 'prior_board_state'
-  }
-
-  leftUsesAggregateValue() {
-    const rel = this.state.relational
-    return this.state.mode === 'relational' && rel.ui.leftComparisonOpen && rel.left.comparisonMetric === 'aggregate_value'
-  }
-
-  rightUsesAggregateValue() {
-    const rel = this.state.relational
-    return this.state.mode === 'relational' && rel.ui.rightComparisonOpen && rel.right.comparisonMetric === 'aggregate_value'
-  }
-
-  comparisonLocked(side) {
-    if (this.state.mode !== 'relational') { return false }
-    return side === 'left' ? this.rightUsesPriorBoardState() : this.leftUsesPriorBoardState()
-  }
-
-  comparisonUnavailableText(side) {
-    if (side === 'left' && this.rightUsesPriorBoardState()) {
-      return '+ comparison unavailable while target uses prior'
-    }
-    if (side === 'right' && this.leftUsesPriorBoardState()) {
-      return '+ comparison unavailable while subject uses prior'
-    }
-    return '+ comparison unavailable'
-  }
-
-  regularRelationalSubjects() {
-    return this.grammarRules.regularRelationalSubjects
-  }
-
-  regularRelationalTargets() {
-    const operator = this.state.relational.operator
-    if (operator === 'targets') { return this.grammarRules.regularRelationalTargets }
-    const targetRule = this.grammarRules.relationalOperatorTargetRules[operator] || 'any_regular'
-    if (targetRule === 'opposing_team') {
-      return this.opposingTeamTargetsFor(this.state.relational.left.subject)
-    } else if (targetRule === 'same_team') {
-      return this.sameTeamTargetsFor(this.state.relational.left.subject)
-    } else {
-      return this.grammarRules.regularRelationalTargets
-    }
-  }
-
-  samePieceTargetsFor(subject) {
-    return this.grammarRules.samePieceTargets[subject] || []
-  }
-
-  sameTeamTargetsFor(subject) {
-    const team = this.teamGroupForSubject(subject)
-    return team ? this.grammarRules.teamSubjectGroups[team] : []
-  }
-
-  opposingTeamTargetsFor(subject) {
-    const team = this.teamGroupForSubject(subject)
-    const opposingTeam = this.grammarRules.opposingTeamGroups[team]
-    return opposingTeam ? this.grammarRules.teamSubjectGroups[opposingTeam] : []
-  }
-
-  teamGroupForSubject(subject) {
-    return Object.keys(this.grammarRules.teamSubjectGroups).find(team => {
-      return this.grammarRules.teamSubjectGroups[team].includes(subject)
-    })
-  }
-
-  allowedCensusOperatorsForSubject(subject) {
-    if (['captured_piece', 'enemy_captured_piece'].includes(subject)) {
-      return ['count', 'value']
-    } else {
-      return ['count', 'mobility', 'value']
-    }
-  }
-
-  censusSubjectsForScope() {
-    const census = this.grammarRules.census || {}
-    if (this.state.census.scope === 'region') {
-      return census.regionSubjects || this.grammarRules.positionSubjects || ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
-    }
-    return census.wholeBoardSubjects || this.editorSubjects()
-  }
-
-  censusTargetUsesActor() {
-    const cen = this.state.census
-    return cen.advanced && !['exact_number', 'prior_board_state'].includes(cen.target)
-  }
-
-  allowedCensusTargetsForOperator(operator) {
-    return [
-      'exact_number',
-      ...this.editorSubjects().filter(subject => this.allowedCensusOperatorsForSubject(subject).includes(operator)),
-      'prior_board_state'
-    ]
-  }
-
-  applyCensusCompatibilityRules() {
-    const cen = this.state.census
-    const allowedSubjects = this.censusSubjectsForScope()
-    if (!allowedSubjects.includes(cen.left.subject)) {
-      cen.left.subject = 'allied'
-    }
-    const allowedOperators = this.allowedCensusOperatorsForSubject(cen.left.subject)
-    if (!allowedOperators.includes(cen.operator)) {
-      cen.operator = 'count'
-    }
-    if (cen.scope === 'region' && cen.positionAxis === 'square') {
-      cen.positionComparator = 'equal_to'
-    }
-    if (!cen.advanced) {
-      cen.target = 'exact_number'
-      cen.targetFilter = 'any'
-      cen.targetFilterMode = 'include'
-    } else {
-      const allowedTargets = this.allowedCensusTargetsForOperator(cen.operator)
-      if (!allowedTargets.includes(cen.target)) {
-        cen.target = 'exact_number'
-        cen.targetFilter = 'any'
-        cen.targetFilterMode = 'include'
-      }
-    }
-    this.applyFilterModeCompatibilityRules()
-  }
-
-  resolvedPositionTarget(pos) {
-    if (pos.positionAxis === 'rank') { return pos.positionRankTarget }
-    if (pos.positionAxis === 'file') { return pos.positionFileTarget }
-    return (pos.positionSquareRank - 1) * 8 + (pos.positionSquareFile - 1)
-  }
-
-  disableCensusSubjectOptions(fields) {
-    const allowed = this.censusSubjectsForScope()
-    this.disableOptions(fields.censusSubject, this.editorSubjects().filter(v => !allowed.includes(v)))
-  }
-
-  disableCensusOperatorOptions(fields) {
-    const allowed = this.allowedCensusOperatorsForSubject(this.state.census.left.subject)
-    const all = Array.from(fields.censusOperator?.options || []).map(o => o.value)
-    this.disableOptions(fields.censusOperator, all.filter(v => !allowed.includes(v)))
-  }
-
-  disableCensusTargetOptions(fields) {
-    if (!fields.censusTarget) { return }
-    const all = Array.from(fields.censusTarget.options).map(o => o.value)
-    const allowed = this.allowedCensusTargetsForOperator(this.state.census.operator)
-    this.disableOptions(fields.censusTarget, all.filter(v => !allowed.includes(v)))
-  }
-
-  applyFilterModeCompatibilityRules() {
-    if (this.state.mode === 'relational') {
-      if (this.state.relational.left.filter === 'any') {
-        this.state.relational.left.filterMode = 'include'
-      }
-      if (this.state.relational.right.filter === 'any') {
-        this.state.relational.right.filterMode = 'include'
-      }
-    } else {
-      if (this.state.census.left.filter === 'any') {
-        this.state.census.left.filterMode = 'include'
-      }
-      if (this.state.census.targetFilter === 'any') {
-        this.state.census.targetFilterMode = 'include'
-      }
-    }
-  }
-
-  disableOptions(select, disallowedValues) {
-    Array.from(select.options).forEach(option => {
-      option.disabled = disallowedValues.includes(option.value)
-    })
-  }
-
-  enableAllOptions(select) {
-    Array.from(select.options).forEach(option => {
-      option.disabled = false
-    })
-  }
-
-  setComparisonInputsDisabled(side, fields, disabled) {
-    const metricKey = side === 'left' ? 'leftComparisonMetric' : 'rightComparisonMetric'
-    const comparatorKey = side === 'left' ? 'leftComparator' : 'rightComparator'
-    const comparatorInputsKey = side === 'left' ? 'leftComparatorInputs' : 'rightComparatorInputs'
-    const sourceKey = side === 'left' ? 'leftComparisonSource' : 'rightComparisonSource'
-    const sourceTotalKey = side === 'left' ? 'leftComparisonSourceTotal' : 'rightComparisonSourceTotal'
-
-    fields[metricKey].disabled = disabled
-    fields[sourceKey].disabled = disabled
-    fields[sourceTotalKey].disabled = disabled
-    fields[comparatorInputsKey]?.forEach(input => { input.disabled = disabled })
-    fields[comparatorKey]?.classList.toggle('condition-form-radio-row--disabled', disabled)
-  }
-
-  allowedRelationalComparisonSourcesForMetric(metric) {
-    if (metric === 'individual_value' || metric === 'aggregate_value') {
-      return ['exact_number', 'prior_board_state', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
-    }
-    return ['exact_number', 'prior_board_state']
-  }
-
-  disableRelationalComparisonSourceOptions(fields) {
-    this.disableRelationalComparisonSourceOptionsForSide('left', fields.leftComparisonSource)
-    this.disableRelationalComparisonSourceOptionsForSide('right', fields.rightComparisonSource)
-  }
-
-  disableRelationalComparisonSourceOptionsForSide(side, select) {
-    const allowedSources = this.allowedRelationalComparisonSourcesForMetric(this.state.relational[side].comparisonMetric || 'count')
-    const allSources = Array.from(select.options).map(option => option.value)
-    this.disableOptions(select, allSources.filter(value => !allowedSources.includes(value)))
-  }
-
-  disableRelationalComparisonMetricOptions(fields) {
-    this.disableRelationalComparisonMetricOptionsForSide('left', fields.leftComparisonMetric)
-    this.disableRelationalComparisonMetricOptionsForSide('right', fields.rightComparisonMetric)
-  }
-
-  disableRelationalComparisonMetricOptionsForSide(side, select) {
-    const otherUsesAggregate = side === 'left' ? this.rightUsesAggregateValue() : this.leftUsesAggregateValue()
-    this.disableOptions(select, otherUsesAggregate ? ['aggregate_value'] : [])
-  }
-
-  disableRelationalSubjectOptions(fields) {
-    this.enableAllOptions(fields.leftSubject)
-    this.enableAllOptions(fields.rightSubject)
-
-    this.disableOptions(fields.leftSubject, this.editorSubjects().filter(v => !this.regularRelationalSubjects().includes(v)))
-    this.disableOptions(fields.rightSubject, this.editorSubjects().filter(v => !this.regularRelationalTargets().includes(v)))
-  }
-
-  showAllOptions(select) {
-    Array.from(select.options).forEach(option => {
-      option.hidden = false
-      option.disabled = false
-    })
-  }
-
-  editorSubjects() {
-    return this.grammarRules.editorSubjects
+    return this.modes[this.state.mode].buildPayload(this.state[this.state.mode])
   }
 
 }
