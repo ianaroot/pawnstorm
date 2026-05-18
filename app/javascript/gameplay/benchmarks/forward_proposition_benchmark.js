@@ -11,12 +11,13 @@ const PROFILE_LABEL_PREFIXES = [
   "condition.v2."
 ]
 
-// Baseline rates recorded 2026-05-18, N=1000 per payload, seed=1 (shuffles +
-// synthesize interposition live). Regression reference when changing
-// mechanisms or pipeline ordering; prior numbers are in git history.
+// Baselines recorded 2026-05-18, N=1000 per payload, seed=1 (deterministic).
+// `baseline:` is the verified count; forward_proposition_baselines.test.js
+// enforces ±20%. Re-record after intended mechanism/ordering changes; prior
+// numbers are in git history.
 const PAYLOADS = [
   {
-    // Baseline 2026-05-18: 426/1000 (42.6%)
+    baseline: 389,
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -29,7 +30,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 103/1000 (10.3%)
+    baseline: 112,
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -42,7 +43,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 382/1000 (38.2%)
+    baseline: 362,
     name: "adjacent count > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -55,7 +56,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 103/1000 (10.3%)
+    baseline: 112,
     name: "attack count > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -68,7 +69,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 396/1000 (39.6%)
+    baseline: 390,
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -81,7 +82,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 120/1000 (12.0%)
+    baseline: 124,
     name: "defend count < PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -94,7 +95,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 357/1000 (35.7%)
+    baseline: 381,
     name: "shield aggregate_value > PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -107,7 +108,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 532/1000 (53.2%)
+    baseline: 533,
     name: "rook mobility < 5 (mobility-constrained)",
     payload: {
       version: 2, kind: "census",
@@ -120,7 +121,7 @@ const PAYLOADS = [
     // Adversarial: allied bishop at h1 conflicts unconditionally with
     // kingside castle's rookStart empty constraint. Every castle attempt
     // should be detectable as wasted.
-    // Baseline 2026-05-18: 824/1000 (82.4%)
+    baseline: 841,
     name: "allied bishop at h1 (conflicts with kingside castle)",
     payload: {
       version: 2, kind: "census",
@@ -134,7 +135,7 @@ const PAYLOADS = [
     // Adversarial: allied pawn at e5 conflicts with EP-left only when
     // moved_piece commits to d6 (diag-left-origin lands on e5). Other
     // EP destinations are fine. "Sometimes blocks."
-    // Baseline 2026-05-18: 821/1000 (82.1%)
+    baseline: 828,
     name: "allied pawn at e5 (sometimes blocks en passant)",
     payload: {
       version: 2, kind: "census",
@@ -147,7 +148,7 @@ const PAYLOADS = [
   {
     // Region-restricted PBS census, increasing. Rook chosen so the rank
     // delta can't arise by luck (a rook may stay on its rank).
-    // Baseline 2026-05-18: 866/1000 (86.6%)
+    baseline: 865,
     name: "census rook count rank=5 > PBS (region, increasing)",
     payload: {
       version: 2, kind: "census",
@@ -159,7 +160,7 @@ const PAYLOADS = [
   },
   {
     // Region-restricted PBS census, decreasing (capture-in-region path).
-    // Baseline 2026-05-18: 762/1000 (76.2%)
+    baseline: 777,
     name: "census enemy count file=4 < PBS (region, decreasing)",
     payload: {
       version: 2, kind: "census",
@@ -174,7 +175,7 @@ const PAYLOADS = [
   // route through cross_frame instead). Added to give the relations path
   // benchmark coverage.
   {
-    // Baseline 2026-05-18: 576/1000 (57.6%)
+    baseline: 591,
     name: "enemy non-pawn shield enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -188,7 +189,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 799/1000 (79.9%)
+    baseline: 802,
     name: "allied pawn defend allied minor",
     payload: {
       version: 2, kind: "relational",
@@ -202,7 +203,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 520/1000 (52.0%)
+    baseline: 528,
     name: "allied any adjacent enemy king",
     payload: {
       version: 2, kind: "relational",
@@ -216,7 +217,7 @@ const PAYLOADS = [
     }
   },
   {
-    // Baseline 2026-05-18: 639/1000 (63.9%)
+    baseline: 617,
     name: "allied non-queen attack enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -234,7 +235,7 @@ const PAYLOADS = [
   // (chain B's shield emits 1 relation). Coverage for chain machinery +
   // propositions/cross-frame on real multi-condition chains.
   {
-    // Baseline 2026-05-18: 593/1000 (59.3%)
+    baseline: 598,
     name: "chain 112415·112413·112412",
     payloads: [
       { version: 2, kind: "relational", subject: "enemy", subjectFilter: "pawn", operator: "attack", target: "moved_piece", targetFilter: "any", subjectFilterMode: "include", subjectComparisonMetric: "count", subjectComparator: "equal_to", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -243,7 +244,7 @@ const PAYLOADS = [
     ]
   },
   {
-    // Baseline 2026-05-18: 411/1000 (41.1%)
+    baseline: 445,
     name: "chain 112421·112419·112418",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "any", operator: "defend", target: "moved_piece", targetFilter: "any" },
@@ -252,7 +253,7 @@ const PAYLOADS = [
     ]
   },
   {
-    // Baseline 2026-05-18: 699/1000 (69.9%)
+    baseline: 689,
     name: "chain 112270·112269·112267",
     payloads: [
       { version: 2, kind: "relational", subject: "enemy", subjectFilter: "any", operator: "attack", target: "moved_piece", targetFilter: "any", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -261,8 +262,9 @@ const PAYLOADS = [
     ]
   },
   {
-    // Baseline 2026-05-18: 52/1000 (5.2%) — two simultaneous PBS deltas on one
-    // moved_piece; hard case, lifted from 0.1% by the interposition work.
+    // Two simultaneous PBS deltas on one moved_piece; hard case, lifted from
+    // ~0.1% by the interposition work.
+    baseline: 41,
     name: "chain 112832·112834·112835 (rook mobility PBS)",
     payloads: [
       { version: 2, kind: "relational", subject: "moved_piece", subjectFilter: "any", operator: "defend", target: "allied", targetFilter: "major", targetFilterMode: "include", targetComparisonMetric: "count", targetComparator: "greater_than", targetComparisonSource: "prior_board_state" },
@@ -274,7 +276,7 @@ const PAYLOADS = [
   // land in ctx.relations. Exists only to exercise the satisfyRelations shuffle
   // (no real bot chain combines ≥2 such relations — see session notes).
   {
-    // Baseline 2026-05-18: 383/1000 (38.3%)
+    baseline: 409,
     name: "chain synthetic 3-relation (attack+defend+shield)",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "queen", subjectFilterMode: "exclude", operator: "attack", target: "enemy", targetFilter: "queen", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -283,7 +285,7 @@ const PAYLOADS = [
     ]
   },
   {
-    // Baseline 2026-05-18: 431/1000 (43.1%)
+    baseline: 415,
     name: "allied queen mobility < PBS (whole-board census)",
     payload: {
       version: 2, kind: "census",
@@ -390,16 +392,22 @@ function formatFriendly(results, attempts) {
   return lines.join("\n")
 }
 
-const attempts = parseInt(process.argv[2] ?? "200", 10)
-const results = PAYLOADS.map(p => benchmarkPayload(p, attempts))
+function runCli() {
+  const attempts = parseInt(process.argv[2] ?? "200", 10)
+  const results = PAYLOADS.map(p => benchmarkPayload(p, attempts))
 
-if (process.env.BENCH_JSON) {
-  console.log(JSON.stringify({
-    benchmark: "forward_proposition",
-    attempts_per_payload: attempts,
-    payload_count: PAYLOADS.length,
-    payloads: results
-  }, null, 2))
-} else {
-  console.log(formatFriendly(results, attempts))
+  if (process.env.BENCH_JSON) {
+    console.log(JSON.stringify({
+      benchmark: "forward_proposition",
+      attempts_per_payload: attempts,
+      payload_count: PAYLOADS.length,
+      payloads: results
+    }, null, 2))
+  } else {
+    console.log(formatFriendly(results, attempts))
+  }
 }
+
+if (!process.env.VITEST) { runCli() }
+
+export { PAYLOADS, benchmarkPayload }
