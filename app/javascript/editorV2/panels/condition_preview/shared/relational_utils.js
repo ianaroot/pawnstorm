@@ -3,6 +3,7 @@ import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import { nextPositionOnRay } from 'gameplay/board_query_utils'
 import { candidateSpecies } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { safeEvaluate } from 'editorV2/panels/condition_preview/shared/safe_evaluate'
 
 function rayStepBetween(fromPosition, toPosition) {
   const fileDiff = Board.fileIndex(toPosition) - Board.fileIndex(fromPosition)
@@ -117,7 +118,7 @@ export function sideSpeciesPool(payload, side) {
 export function evaluateRelationalCandidate({ plan, priorBoard, moveObject }) {
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject }
-  if (!evaluator.evaluate(plan.evaluationPayload, input)) { return null }
+  if (!safeEvaluate(evaluator, plan.evaluationPayload, input)) { return null }
 
   const analysis = new CandidateMoveAnalysisV2(input)
   const result = analysis.relationalResult(plan.relationParams)

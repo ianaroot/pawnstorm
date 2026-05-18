@@ -1,5 +1,6 @@
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import { legalPriorTurnState } from './example_utils'
+import { safeEvaluate } from './safe_evaluate'
 
 // Judges whether a Candidate satisfies a chain. One verifier is created per
 // pipeline call and reused across every candidate the pipeline considers,
@@ -23,7 +24,7 @@ export class CandidateVerifier {
 
   passesEvaluation(candidate) {
     const input = { board: candidate.priorBoard, moveObject: candidate.moveObject }
-    return this.combinedPlan.evaluationPayloads.every(payload => this.evaluator.evaluate(payload, input))
+    return this.combinedPlan.evaluationPayloads.every(payload => safeEvaluate(this.evaluator, payload, input))
   }
 
   isVerified(candidate) {
@@ -35,7 +36,7 @@ export class CandidateVerifier {
     if (!legalPriorTurnState(candidate.priorBoard, candidate.moveObject)) { return 'illegal_prior_turn' }
     const input = { board: candidate.priorBoard, moveObject: candidate.moveObject }
     for (const payload of this.combinedPlan.evaluationPayloads) {
-      if (!this.evaluator.evaluate(payload, input)) {
+      if (!safeEvaluate(this.evaluator, payload, input)) {
         return `evaluation_${payload.kind}`
       }
     }

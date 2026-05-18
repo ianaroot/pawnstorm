@@ -8,6 +8,7 @@ import {
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
+import { safeEvaluate } from './safe_evaluate'
 
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const ENRICHMENT_END_POSITION_WEIGHT = 4
@@ -123,7 +124,7 @@ function deriveVerifiedExample({ combinedPlan, priorBoard, moveObject, baseExamp
 
   const evaluator = new ConditionEvaluatorV2()
   const input = { board: priorBoard, moveObject: recomputedMoveObject }
-  if (!combinedPlan.evaluationPayloads.every(payload => evaluator.evaluate(payload, input))) { return null }
+  if (!combinedPlan.evaluationPayloads.every(payload => safeEvaluate(evaluator, payload, input))) { return null }
 
   const analysis = new CandidateMoveAnalysisV2(input)
   const aggregatedResult = buildAggregatedResult(combinedPlan, analysis)
