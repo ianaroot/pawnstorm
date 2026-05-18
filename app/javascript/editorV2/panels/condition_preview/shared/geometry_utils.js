@@ -3,6 +3,13 @@ import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK
 
 export { QUEEN_RAY_STEPS as RAY_STEPS }
 
+export function stepsForSliderSpecies(species) {
+  if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
+  if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
+  if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
+  return []
+}
+
 export function adjacentNeighborPositions(position) {
   return kingControlledSquares(position)
 }

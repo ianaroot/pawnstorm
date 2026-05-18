@@ -83,6 +83,23 @@ export function weightedShuffleSpecies(speciesSet, random) {
   return result
 }
 
+export function pickBlockerTeam(target, random) {
+  if (target.species === Board.NIGHT || target.species === Board.KING) {
+    return target.team
+  }
+  return random() < 0.5 ? target.team : Board.opposingTeam(target.team)
+}
+
+export function blockerSpeciesFor(position) {
+  return WEIGHTED_SPECIES_DISTRIBUTION.filter(
+    s => s !== Board.KING && legalPlacementForSpecies(position, s)
+  )
+}
+
+export function orderedBlockerSpeciesFor(position, random) {
+  return weightedShuffleSpecies(new Set(blockerSpeciesFor(position)), random)
+}
+
 export function clonePiecesMap(piecesMap) {
   return new Map(piecesMap)
 }

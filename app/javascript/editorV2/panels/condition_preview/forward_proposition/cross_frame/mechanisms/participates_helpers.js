@@ -48,10 +48,37 @@ function matchesProposition(moved, movedSpecies, proposition) {
   return moved.team === proposition.team && proposition.species_set.has(movedSpecies)
 }
 
+// True when the entry's measured subject is moved_piece — bound singular on a
+// unary/census proposition, or a relational side whose region points back at it.
+export function entryConcernsMovedPiece(entry) {
+  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
+  if (entry.subjectProposition === null && regionPointsToMovedPiece(entry.targetProposition?.region)) { return true }
+  if (entry.targetProposition === null && regionPointsToMovedPiece(entry.subjectProposition?.region)) { return true }
+  return false
+}
+
+function regionPointsToMovedPiece(region) {
+  return region?.kind === 'related-to' && region?.actor === 'moved_piece'
+}
+
 export function singularSquare(singular) {
   if (singular.region.kind !== 'set') { return null }
   if (singular.region.squares.size !== 1) { return null }
   return [...singular.region.squares][0]
+}
+
+export function firstSquareOf(region) {
+  if (!region) { return null }
+  if (region.kind !== 'set') { return null }
+  if (region.squares.size === 0) { return null }
+  return [...region.squares][0]
+}
+
+export function compareWithDirection(after, prior, direction) {
+  if (direction === '+') { return after > prior }
+  if (direction === '-') { return after < prior }
+  if (direction === '=') { return after === prior }
+  return false
 }
 
 export function placeableSpecies(speciesSet) {

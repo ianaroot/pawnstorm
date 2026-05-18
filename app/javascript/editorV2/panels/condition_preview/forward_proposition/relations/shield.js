@@ -4,9 +4,9 @@ import {
   shuffled, pieceCode, legalPlacementForSpecies, pickWeightedSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { raySliderSpeciesForStep, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { raySliderSpeciesForStep, walkRay, stepsForSliderSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS,
+  QUEEN_RAY_STEPS,
   shieldingPositions, nextPositionOnRay
 } from 'gameplay/board_query_utils'
 import {
@@ -326,10 +326,4 @@ function pickSpeciesFromSet(speciesSet, position, random) {
   return pickWeightedSpecies(filtered, random)
 }
 
-function stepsForSliderSpecies(species) {
-  if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
-  if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
-  if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
-  return []
-}
 
