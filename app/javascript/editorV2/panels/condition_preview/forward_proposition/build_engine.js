@@ -1,3 +1,4 @@
+import profileCollector from 'gameplay/profile_collector'
 import { placeKingsIfAbsent } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { buildChainCtx } from './chain_ctx'
 import { commitSingularsSpecies } from './commit_singulars_species'
@@ -17,6 +18,13 @@ import { mergeCtxDelta } from './scenarios/merge_ctx_delta'
 import { standardScenario } from './scenarios/standard'
 import { relaxStabilityPbsRelations } from './pbs_relaxation'
 
+// Tags which build stage produced a null so the forward-proposition
+// benchmark can localize generation holes. No-op unless MATCH_PROFILE=1.
+function buildFailed(stage) {
+  profileCollector.increment(`forward_proposition.build_failed.${stage}`)
+  return null
+}
+
 export function buildAttempt(combinedPlan, random, scenario = standardScenario) {
   const ctx = buildChainCtx(combinedPlan)
   ctx.edgeBiasState = createBiasState()
@@ -26,7 +34,7 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   relaxStabilityPbsRelations(ctx, random)
   narrowForCrossFrame(ctx)
   narrowMovedPieceForRegion(ctx)
-  if (!isSatisfiable(ctx)) { return null }
+  if (!isSatisfiable(ctx)) { return buildFailed('not_satisfiable') }
 
   commitSingularsSpecies(ctx, random)
   // materializeRegion's permissive guard returns empty for 'related-to' regions with uncommitted
@@ -38,22 +46,24 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   commitSingularsPosition(ctx, random, earlyPieces)
 
   let pieces = placeSingulars(ctx.singulars, random, earlyPieces)
-  if (pieces === null) { return null }
+  if (pieces === null) { return buildFailed('place_singulars') }
 
   pieces = satisfyPropositions(ctx, pieces, random)
-  if (pieces === null) { return null }
+  if (pieces === null) { return buildFailed('propositions') }
 
   const [first, second] = random() < 0.5 ? [satisfyMobility, satisfyCrossFrame] : [satisfyCrossFrame, satisfyMobility]
   pieces = first(ctx, pieces, random)
-  if (pieces === null) { return null }
+  if (pieces === null) { return buildFailed(first.name) }
   pieces = second(ctx, pieces, random)
-  if (pieces === null) { return null }
-  
+  if (pieces === null) { return buildFailed(second.name) }
+
   pieces = satisfyRelations(ctx, pieces, random)
-  if (pieces === null) { return null }
+  if (pieces === null) { return buildFailed('relations') }
 
   pieces = placeKingsIfAbsent(pieces, random, ctx)
-  if (pieces === null) { return null }
+  if (pieces === null) { return buildFailed('place_kings') }
 
-  return synthesizeMove(ctx, pieces, random, scenario)
+  const move = synthesizeMove(ctx, pieces, random, scenario)
+  if (move === null) { return buildFailed('synthesize_move') }
+  return move
 }
