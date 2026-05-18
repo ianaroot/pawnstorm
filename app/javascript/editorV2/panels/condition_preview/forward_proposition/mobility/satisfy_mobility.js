@@ -17,7 +17,7 @@ const MAX_PER_TARGET_ITERATIONS = 30
 
 export function satisfyMobility(ctx, pieces, random) {
   if (!hasMobilityConstraints(ctx)) { return pieces }
-  for (const target of mobilityConstrainedTargets(pieces, ctx)) {
+  for (const target of shuffled(mobilityConstrainedTargets(pieces, ctx), random)) {
     if (!targetIsConstrained(target, ctx, pieces)) { continue }
     for (let i = 0; i < MAX_PER_TARGET_ITERATIONS; i += 1) {
       if (!targetIsConstrained(target, ctx, pieces)) { break }

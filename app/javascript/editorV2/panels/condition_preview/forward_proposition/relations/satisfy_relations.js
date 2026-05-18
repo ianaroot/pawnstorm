@@ -1,4 +1,5 @@
 import profileCollector from 'gameplay/profile_collector'
+import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { satisfyAttackOrDefend } from './attack_or_defend'
 import { satisfyAdjacent } from './adjacent'
 import { satisfyShield } from './shield'
@@ -11,7 +12,7 @@ const SATISFIERS = {
 }
 
 export function satisfyRelations(ctx, pieces, random) {
-  for (const relation of ctx.relations ?? []) {
+  for (const relation of shuffled(ctx.relations ?? [], random)) {
     if (relation.operator === 'same_piece') { continue }
     const satisfier = SATISFIERS[relation.operator]
     if (!satisfier) { return null }
