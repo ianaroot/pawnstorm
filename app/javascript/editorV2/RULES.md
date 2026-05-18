@@ -21,3 +21,8 @@ branching in the formatter.
 - Wording lives only in the JS formatter (`subjectLabel`,
   `operatorLabel`, `positionAxisPreview`, …). Ruby chunks carry raw
   enum tokens, never display strings.
+- Sentence composition (terse or natural-language) dispatches on the
+  **chunk-role signature**, never on `kind`. `census` alone proves
+  kind ≠ structure — it has two role-shapes (`whole`, `region`) under
+  one kind. A new kind that reuses an existing role-shape must work
+  with no composer change.
