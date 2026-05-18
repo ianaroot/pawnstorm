@@ -1,5 +1,5 @@
 import Board from "gameplay/board"
-import { formatConditionPreview } from "editorV2/utils/conditionPreviewFormatter"
+import { renderConditionSentence } from "editorV2/utils/conditionPreviewFormatter"
 
 class ReplayTraceView {
   constructor({ tracePanelElement, traceSummaryElement, traceBranchesElement }) {
@@ -173,7 +173,11 @@ class ReplayTraceView {
 
     const text = document.createElement('span')
     text.className = 'trace-tree-node__text'
-    text.innerText = this.conditionSummary(node.data)
+    if (Number(node.data?.version || 1) === 2) {
+      renderConditionSentence(text, node.data)
+    } else {
+      text.innerText = this.conditionSummary(node.data)
+    }
     header.appendChild(text)
 
     if (isShared && executionIndex !== null) header.appendChild(this.hitBadge(executionIndex))
@@ -254,7 +258,6 @@ class ReplayTraceView {
   }
 
   conditionSummary(data) {
-    if (Number(data.version || 1) === 2) { return formatConditionPreview(data).text }
     const relationLabel = this.relationLabel(data.relation)
     const relationSpecifier = data.relationSpecifier && data.relationSpecifier !== 'any'
       ? ` ${this.specifierSummary(data.relationSpecifier, data.relationSpecifierMode)}`
