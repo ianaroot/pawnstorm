@@ -93,10 +93,10 @@ listed — changing those is a behavior change, not a tuning operation.
 
 ## Forward-proposition diversity benchmark
 
-  `npm run bench:forward-proposition -- 1000` records pass rates per
-  representative PBS payload; baselines commented inline in
-  `forward_proposition_benchmark.js`. Run before/after changes to
-  mechanisms or phase ordering.
+  `npm run bench:forward-proposition -- 1000` reports per-payload pass
+  rates. The `baseline:` fields in `forward_proposition_benchmark.js` are
+  enforced within ±20% by `forward_proposition_baselines.test.js`;
+  re-record them after intended mechanism or phase-ordering changes.
 
   To extend the bench with a new diagnostic: call
   `profileCollector.increment('forward_proposition.<area>.<event>')` at
