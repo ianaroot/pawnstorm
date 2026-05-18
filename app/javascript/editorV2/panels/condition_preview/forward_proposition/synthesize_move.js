@@ -3,7 +3,7 @@ import Board from 'gameplay/board'
 import profileCollector from 'gameplay/profile_collector'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled,
-  pieceCode, blockerSpeciesFor
+  pieceCode, orderedBlockerSpeciesFor
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { controllingPositions, positionsBetween } from 'gameplay/board_query_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
@@ -66,7 +66,7 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
   }
 
   for (const r of rescuable) {
-    const attempt = { priorPieces: r.priorPieces, ctx, origin: r.origin, endPos, recentMoveContext, moverTeam: team }
+    const attempt = { priorPieces: r.priorPieces, ctx, origin: r.origin, endPos, recentMoveContext, moverTeam: team, random }
     const fixed = r.kind === 'pin'
       ? interposePin(attempt)
       : interposeCheck(attempt, r.priorBoard, r.kingTeam, r.attackerTeam)
@@ -81,20 +81,23 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
 
 const NO_EXCLUSIONS = new Set()
 
-// Deterministic species/team (no shared-RNG draw) keeps the fallback pure-gain.
-function placeBlockerAndRetry(attempt, between, blockerTeam, excluded) {
-  const { priorPieces, ctx, origin, endPos, recentMoveContext, moverTeam } = attempt
+function placeBlockerAndRetry(attempt, between, kingTeam, excluded) {
+  const { priorPieces, ctx, origin, endPos, recentMoveContext, moverTeam, random } = attempt
+  const enemyTeam = Board.opposingTeam(kingTeam)
   for (const sq of between) {
     if (excluded.has(sq) || priorPieces.has(sq)) { continue }
-    for (const sp of blockerSpeciesFor(sq)) {
-      const withBlock = placeWithCaps(priorPieces, sq, pieceCode(blockerTeam, sp), ctx)
-      if (withBlock === null) { continue }
-      const pb = buildBoardFromLayout(buildLayoutFromPieces(withBlock), recentMoveContext, moverTeam)
-      let mo
-      try { mo = Rules.getMoveObject(origin, endPos, pb) } catch { continue }
-      if (mo.illegal) { continue }
-      if (!legalPriorTurnState(pb, mo)) { continue }
-      return { priorBoard: pb, moveObject: mo }
+    for (const team of shuffled([kingTeam, enemyTeam], random)) {
+      for (const sp of orderedBlockerSpeciesFor(sq, random)) {
+        const withBlock = placeWithCaps(priorPieces, sq, pieceCode(team, sp), ctx)
+        if (withBlock === null) { continue }
+        const pb = buildBoardFromLayout(buildLayoutFromPieces(withBlock), recentMoveContext, moverTeam)
+        if (team === enemyTeam && Rules.checkQuery({ board: pb, teamString: kingTeam })) { continue }
+        let mo
+        try { mo = Rules.getMoveObject(origin, endPos, pb) } catch { continue }
+        if (mo.illegal) { continue }
+        if (!legalPriorTurnState(pb, mo)) { continue }
+        return { priorBoard: pb, moveObject: mo }
+      }
     }
   }
   return null
