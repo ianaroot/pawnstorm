@@ -5,6 +5,10 @@ import {
 import { buildPriorBoard } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import { singularPosition } from '../relations/relation_helpers'
+import { mobilityDeltaSatisfied } from './mobility_delta'
+import {
+  singularSquare, firstSquareOf, compareWithDirection
+} from './mechanisms/participates_helpers'
 import { movedPieceParticipatesInAttackOrDefend } from './mechanisms/moved_piece_participates_in_attack_or_defend'
 import { movedPieceParticipatesAdjacent } from './mechanisms/moved_piece_participates_adjacent'
 import { movedPieceParticipatesShield } from './mechanisms/moved_piece_participates_shield'
@@ -59,16 +63,16 @@ export function satisfyCrossFrame(ctx, pieces, random) {
   return pieces
 }
 
-// Chain-control gate (see satisfyCrossFrame). True breaks the mechanism
-// loop, false keeps it chaining. Only count attack/defend uses a real
-// after-vs-prior count check; one-shot operators (adjacent, shield,
-// aggregate_*) return true unconditionally so the first non-null mechanism
-// wins.
+// Chain-control gate: true ends the mechanism loop, false keeps chaining.
+// count + aggregate_mobility get real prior-vs-after checks; others true.
 function entrySatisfied(entry, ctx, afterPieces) {
   if (entry.source === 'census' &&
       entry.metric === 'count' &&
       entry.currentProposition?.region?.kind === 'set') {
     return regionCountDeltaSatisfied(entry, ctx, afterPieces)
+  }
+  if (entry.metric === 'aggregate_mobility') {
+    return mobilityDeltaSatisfied(entry, ctx, afterPieces)
   }
   if (entry.metric !== 'count') { return true }
   if (entry.operator !== 'attack' && entry.operator !== 'defend') { return true }
@@ -158,22 +162,3 @@ function participatesInRelation(otherSidePos, movedPieceRole, movedPieceSquare, 
   return false
 }
 
-function compareWithDirection(afterCount, priorCount, direction) {
-  if (direction === '+') { return afterCount > priorCount }
-  if (direction === '-') { return afterCount < priorCount }
-  if (direction === '=') { return afterCount === priorCount }
-  return false
-}
-
-function singularSquare(singular) {
-  if (singular.region.kind !== 'set') { return null }
-  if (singular.region.squares.size !== 1) { return null }
-  return [...singular.region.squares][0]
-}
-
-function firstSquareOf(region) {
-  if (!region) { return null }
-  if (region.kind !== 'set') { return null }
-  if (region.squares.size === 0) { return null }
-  return [...region.squares][0]
-}

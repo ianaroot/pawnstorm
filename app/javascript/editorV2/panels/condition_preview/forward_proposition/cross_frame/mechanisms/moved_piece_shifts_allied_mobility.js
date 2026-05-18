@@ -6,7 +6,7 @@ import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
 import { respectsAllCaps } from '../../respect_caps'
-import { singularSquare, commitPriorRegion } from './participates_helpers'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './participates_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied
 } from './shifts_mobility_helpers'
@@ -27,6 +27,7 @@ export const movedPieceShiftsAlliedMobility = {
 
   appliesTo(entry, ctx, pieces) {
     if (entry.metric !== 'aggregate_mobility') { return false }
+    if (entryConcernsMovedPiece(entry)) { return false }
     if (entry.currentProposition?.team !== ctx.movingTeam) { return false }
     return true
   },

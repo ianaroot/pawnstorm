@@ -41,7 +41,8 @@ function constraintsFromPbsUnaryOrPositionPlan(plan) {
   const sideShape = {
     team: plan.subjectTeam,
     species_set: new Set(candidateSpecies(plan.subjectFilter, plan.subjectFilterMode)),
-    region: regionFromPlan(plan)
+    region: regionFromPlan(plan),
+    boundSingularActor: SINGULAR_ACTORS.has(plan.subject) ? plan.subject : null
   }
   const priorProp   = { ...sideShape, frame: 'prior',   ...freshRanges() }
   const currentProp = { ...sideShape, frame: 'current', ...freshRanges() }
