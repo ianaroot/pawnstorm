@@ -4,22 +4,50 @@ import {
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet, sideAllowsPos
+  requirementsMet, boundSingularInActiveSet, sideAllowsPos
 } from './relation_helpers'
+import { runAnchoredSatisfier, twoSidedRoles } from './anchored'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
   if (adjacentRequirementsMet(relation, pieces, ctx)) { return pieces }
-  let next = pieces
-  for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (adjacentRequirementsMet(relation, next, ctx)) { return next }
-    const placed = tryPlace(relation, next, ctx, random)
-    if (placed === null || placed === next) { return null }
-    next = placed
+
+  return runAnchoredSatisfier({
+    relation, pieces, ctx, random,
+    roles: twoSidedRoles(relation),
+    requirementsMet: adjacentRequirementsMet,
+    tryAnchored, tryPlace
+  })
+}
+
+function tryAnchored(relation, variant, pieces, ctx, random) {
+  const anchorPos = variant.position
+  if (anchorPos === null || !pieces.has(anchorPos)) { return null }
+
+  if (variant.role === 'target') {
+    // Anchor is the target; place a fresh subject adjacent to it.
+    for (const subject of shuffled(subjectsAdjacentTo(relation.subjectSide, anchorPos, pieces), random)) {
+      if (subject.kind === 'existing') { continue }
+      const placed = applyOne(pieces, subject, ctx)
+      if (placed !== null && placed !== pieces) { return placed }
+    }
+    return null
   }
-  return adjacentRequirementsMet(relation, next, ctx) ? next : null
+
+  // Anchor is the subject (already on the board); place a target on a square
+  // adjacent to it.
+  for (const pos of shuffled(adjacentNeighborPositions(anchorPos), random)) {
+    if (pieces.has(pos)) { continue }
+    for (const species of shuffled([...relation.targetSide.species_set].filter(s => s !== null), random)) {
+      if (!legalPlacementForSpecies(pos, species)) { continue }
+      if (!regionAllows(relation.targetSide.region, pos)) { continue }
+      const placed = applyOne(pieces, { kind: 'fresh', position: pos, species, team: relation.targetSide.team }, ctx)
+      if (placed !== null && placed !== pieces) { return placed }
+    }
+  }
+  return null
 }
 
 function adjacentRequirementsMet(relation, pieces, ctx) {

@@ -15,6 +15,19 @@ const PROFILE_LABEL_PREFIXES = [
 // `baseline:` is the verified count; forward_proposition_baselines.test.js
 // enforces ±20%. Re-record after intended mechanism/ordering changes; prior
 // numbers are in git history.
+//
+// SHIFT LOG — minor within-±20% drifts left at their original baseline (NOT
+// re-recorded) so each regression's cause stays traceable to a commit:
+//  - commit <TBD: Phase 1 step 2 — shield onto chooseRelationVariant helper,
+//    enemy_moved_piece adopted as shield shielder/target/attacker>:
+//      shield aggregate_value > PBS                       389 → 403
+//      shield aggregate_value > PBS (non-bound, both-allied) 381 → 391
+//      enemy non-pawn shield enemy queen                  591 → 593
+//      allied bishop shield allied rook (non-bound, current) 708 → 742
+//      chain 112421·112419·112418                         445 → 403
+//      chain synthetic 3-relation (attack+defend+shield)  409 → 383
+//    Cause: enemy-side shields now recruit enemy_moved_piece (intended
+//    participation gain); chain drifts are the same mechanism downstream.
 const PAYLOADS = [
   {
     baseline: 389,
@@ -224,6 +237,66 @@ const PAYLOADS = [
       subject: "allied", subjectFilter: "queen", subjectFilterMode: "exclude",
       operator: "attack",
       target: "enemy", targetFilter: "queen",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "exact_number",
+      subjectComparisonSourceTotal: 0
+    }
+  },
+  // Phase-1 non-bound current-frame participation repro set (no PBS, no
+  // singular subject/target). Mirrors the control/doublestack experiment:
+  // these are the conditions where moved-piece subject/target recruitment
+  // is measured before/after the relation-variant helper.
+  {
+    baseline: 714,
+    name: "allied bishop attack enemy rook (non-bound, current)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "bishop",
+      operator: "attack",
+      target: "enemy", targetFilter: "rook",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "exact_number",
+      subjectComparisonSourceTotal: 0
+    }
+  },
+  {
+    baseline: 769,
+    name: "allied knight defend allied bishop (non-bound, current)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "defend",
+      target: "allied", targetFilter: "bishop",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "exact_number",
+      subjectComparisonSourceTotal: 0
+    }
+  },
+  {
+    baseline: 663,
+    name: "allied knight adjacent enemy queen (non-bound, current)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "adjacent",
+      target: "enemy", targetFilter: "queen",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "exact_number",
+      subjectComparisonSourceTotal: 0
+    }
+  },
+  {
+    baseline: 708,
+    name: "allied bishop shield allied rook (non-bound, current)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "bishop", subjectFilterMode: "include",
+      operator: "shield",
+      target: "allied", targetFilter: "rook", targetFilterMode: "include",
       subjectComparisonMetric: "count",
       subjectComparator: "greater_than",
       subjectComparisonSource: "exact_number",
