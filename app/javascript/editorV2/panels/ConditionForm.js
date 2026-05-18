@@ -1,4 +1,4 @@
-import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+import { renderConditionSentence } from 'editorV2/utils/conditionPreviewFormatter'
 import { pillInputs } from 'editorV2/panels/condition_form/dom_helpers'
 import RelationalMode from 'editorV2/panels/condition_form/relational_mode'
 import CensusMode from 'editorV2/panels/condition_form/census_mode'
@@ -278,7 +278,7 @@ class ConditionForm {
     this.modes[this.state.mode].render(this.state[this.state.mode], fields)
 
     if (fields.formulationPreview) {
-      fields.formulationPreview.textContent = formatConditionPreview(this.buildPayload()).text
+      renderConditionSentence(fields.formulationPreview, this.buildPayload())
     }
 
     if (this.onStateChange) { this.onStateChange(this.buildPayload()) }

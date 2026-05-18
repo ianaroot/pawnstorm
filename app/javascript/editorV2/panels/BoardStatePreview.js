@@ -1,5 +1,5 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview/orchestrator'
-import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+import { formatConditionSentence, renderSentenceSegments } from 'editorV2/utils/conditionPreviewFormatter'
 import { exampleId } from 'editorV2/utils/example_id'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
@@ -209,7 +209,7 @@ class BoardStatePreview {
     this._applyPreview({ status: 'loading', reason: 'Computing preview…', examples: [] })
     this._generationTimer = setTimeout(() => {
       const preview = generateConditionExamples(payload)
-      preview.conditionLabels = [formatConditionPreview(payload).text]
+      preview.conditionLabels = [formatConditionSentence(payload)]
       this._applyPreview(preview)
     }, 0)
   }
@@ -455,7 +455,7 @@ class BoardStatePreview {
     this.conditionLabels.forEach(label => {
       const item = document.createElement('li')
       item.className = 'board-state-preview__chain-item'
-      item.textContent = label
+      renderSentenceSegments(item, label)
       chain.appendChild(item)
     })
     this.content.appendChild(chain)

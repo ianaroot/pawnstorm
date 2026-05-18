@@ -5,7 +5,11 @@ vi.mock('../panels/condition_preview/orchestrator', () => ({
   default: vi.fn()
 }))
 vi.mock('../utils/conditionPreviewFormatter', () => ({
-  formatConditionPreview: vi.fn()
+  formatConditionSentence: vi.fn(() => [{ text: 'label' }]),
+  renderSentenceSegments: (target, segments) => {
+    target.textContent = segments.map(s => s.text).join('')
+    return target
+  }
 }))
 vi.mock('gameplay/board', () => ({
   default: { squareColor: vi.fn(() => 'light') }
@@ -15,7 +19,7 @@ vi.mock('gameplay/sound', () => ({
 }))
 
 import generateConditionExamples from '../panels/condition_preview/orchestrator.js'
-import { formatConditionPreview } from '../utils/conditionPreviewFormatter.js'
+import { formatConditionSentence } from '../utils/conditionPreviewFormatter.js'
 
 function buildWrap() {
   const wrap = document.createElement('div')
@@ -138,7 +142,7 @@ describe('BoardStatePreview', () => {
     it('shows content and marks isEnabled true when toggling back on in form mode', () => {
       const form = buildConditionFormMock({})
       generateConditionExamples.mockReturnValue({ status: 'no_examples', reason: 'none', examples: [] })
-      formatConditionPreview.mockReturnValue({ text: 'label' })
+      formatConditionSentence.mockReturnValue([{ text: 'label' }])
 
       preview.activate(form)
       preview.toggle()  // off
@@ -153,7 +157,10 @@ describe('BoardStatePreview', () => {
 
   describe('_appendChain', () => {
     it('appends an ordered list with one item per condition label', () => {
-      preview.conditionLabels = ['White pawn advances', 'Black king is in check']
+      preview.conditionLabels = [
+        [{ text: 'White pawn advances' }],
+        [{ text: 'Black king is in check' }]
+      ]
       preview._appendChain()
 
       const chain = preview.content.querySelector('.board-state-preview__chain')
@@ -180,7 +187,7 @@ describe('BoardStatePreview', () => {
     it('calls generateConditionExamples with the payload after debounce and generation timers fire', () => {
       const payload = { subject: 'allied', operator: 'targets' }
       generateConditionExamples.mockReturnValue({ status: 'no_examples', reason: 'none', examples: [] })
-      formatConditionPreview.mockReturnValue({ text: 'label' })
+      formatConditionSentence.mockReturnValue([{ text: 'label' }])
 
       preview._update(payload)
       vi.runAllTimers()
