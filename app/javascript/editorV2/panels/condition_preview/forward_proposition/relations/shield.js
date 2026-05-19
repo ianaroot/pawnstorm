@@ -11,11 +11,12 @@ import {
 } from 'gameplay/board_query_utils'
 import {
   matchesSide, candidatesForSide, applyOne,
-  requirementsMet, MAX_SATISFY_ITERATIONS,
+  requirementsMet,
   boundSingularInActiveSet, singularPosition, sideAllowsPos
 } from './relation_helpers'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { chooseRelationVariant } from './relation_variants'
+import { satisfyLoop } from './anchored'
 
 // Shield invariant: subjectSide.team === targetSide.team. Both are the "ally side"
 // of the shield (shielder + shielded). The attacker is the inferred opposing team.
@@ -28,14 +29,11 @@ export function satisfyShield(relation, pieces, ctx, random) {
   }
   if (shieldRequirementsMet(relation, pieces, ctx)) { return pieces }
   const variant = chooseRelationVariant({ roles: shieldRoles(relation), ctx, random })
-  let next = pieces
-  for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (shieldRequirementsMet(relation, next, ctx)) { return next }
-    const placed = placeOneTriple(variant, relation, next, ctx, random)
-    if (placed === null || placed === next) { return null }
-    next = placed
-  }
-  return shieldRequirementsMet(relation, next, ctx) ? next : null
+  return satisfyLoop({
+    relation, pieces, ctx,
+    requirementsMet: shieldRequirementsMet,
+    step: p => placeOneTriple(variant, relation, p, ctx, random)
+  })
 }
 
 // shielder = subjectSide, target = targetSide, attacker = inferred opposing

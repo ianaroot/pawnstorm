@@ -28,6 +28,22 @@ const PROFILE_LABEL_PREFIXES = [
 //      chain synthetic 3-relation (attack+defend+shield)  409 → 383
 //    Cause: enemy-side shields now recruit enemy_moved_piece (intended
 //    participation gain); chain drifts are the same mechanism downstream.
+//  - commit <TBD: Phase 1 step 3 — anchored moved/enemy geometry in
+//    attack_or_defend.js / adjacent.js>:
+//      attack count > PBS                                 112 → 108
+//      attack aggregate_value > PBS                       112 → 108
+//      adjacent count > PBS                               362 → 352
+//      defend aggregate_value > PBS (non-bound)           390 → 382
+//      defend count < PBS (non-bound, both-allied)        124 → 102  (-17.7%, closest to ±20% gate — watch)
+//      allied pawn defend allied minor                    802 → 797
+//      allied any adjacent enemy king                     528 → 602
+//      allied non-queen attack enemy queen                617 → 624
+//      allied bishop attack enemy rook (non-bound, cur)   714 → 711
+//      allied knight defend allied bishop (non-bound,cur) 769 → 765
+//      allied knight adjacent enemy queen (non-bound,cur) 663 → 654
+//      chain synthetic 3-relation (attack+defend+shield)  409 → 390  (was 383 after step 2 above)
+//    Cause: anchored moved/enemy recruitment shifts placement
+//    distribution across the non-bound relation satisfiers.
 const PAYLOADS = [
   {
     baseline: 389,
