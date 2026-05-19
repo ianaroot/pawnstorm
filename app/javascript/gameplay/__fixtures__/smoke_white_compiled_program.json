@@ -1,0 +1,505 @@
+{
+  "version": 1,
+  "root": "113007",
+  "nodes": {
+    "113010": {
+      "id": "113010",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 10000
+      },
+      "children": []
+    },
+    "113009": {
+      "id": "113009",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "operator": "attack",
+        "target": "enemy",
+        "targetFilter": "king",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113010"
+      ]
+    },
+    "113008": {
+      "id": "113008",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "census",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "operator": "mobility",
+        "comparator": "greater_than",
+        "target": "exact_number",
+        "targetTotal": 0
+      },
+      "children": [
+        "113009"
+      ]
+    },
+    "113012": {
+      "id": "113012",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 100
+      },
+      "children": []
+    },
+    "113011": {
+      "id": "113011",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "census",
+        "subject": "allied",
+        "subjectFilter": "pawn",
+        "subjectFilterMode": "include",
+        "operator": "count",
+        "comparator": "greater_than",
+        "target": "exact_number",
+        "targetTotal": 0,
+        "positionAxis": "rank",
+        "positionComparator": "equal_to",
+        "positionTarget": 7
+      },
+      "children": [
+        "113012"
+      ]
+    },
+    "113128": {
+      "id": "113128",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "identity",
+        "subject": "enemy_moved_piece",
+        "target": "captured_piece"
+      },
+      "children": [
+        "113012"
+      ]
+    },
+    "113026": {
+      "id": "113026",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 400
+      },
+      "children": []
+    },
+    "113015": {
+      "id": "113015",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "census",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "operator": "value",
+        "comparator": "greater_than",
+        "target": "prior_board_state",
+        "positionAxis": "rank",
+        "positionComparator": "equal_to",
+        "positionTarget": 1
+      },
+      "children": [
+        "113026"
+      ]
+    },
+    "113025": {
+      "id": "113025",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113015"
+      ]
+    },
+    "113021": {
+      "id": "113021",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 15
+      },
+      "children": []
+    },
+    "113018": {
+      "id": "113018",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113021"
+      ]
+    },
+    "113019": {
+      "id": "113019",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "operator": "defend",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113021"
+      ]
+    },
+    "113020": {
+      "id": "113020",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "pawn",
+        "subjectFilterMode": "include",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113019"
+      ]
+    },
+    "113017": {
+      "id": "113017",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "operator": "attack",
+        "target": "enemy",
+        "targetFilter": "king",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113018",
+        "113020"
+      ]
+    },
+    "113016": {
+      "id": "113016",
+      "type": "organizer",
+      "data": {
+        "title": "Direct King Pressure"
+      },
+      "children": [
+        "113017"
+      ]
+    },
+    "113082": {
+      "id": "113082",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 15
+      },
+      "children": []
+    },
+    "113084": {
+      "id": "113084",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "pawn",
+        "subjectFilterMode": "exclude",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "greater_than",
+        "subjectComparisonSource": "prior_board_state",
+        "operator": "attack",
+        "target": "enemy",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113082"
+      ]
+    },
+    "113090": {
+      "id": "113090",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 16
+      },
+      "children": []
+    },
+    "113085": {
+      "id": "113085",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "census",
+        "subject": "captured_piece",
+        "subjectFilter": "pawn",
+        "subjectFilterMode": "include",
+        "operator": "count",
+        "comparator": "equal_to",
+        "target": "exact_number",
+        "targetTotal": 1
+      },
+      "children": [
+        "113090"
+      ]
+    },
+    "113088": {
+      "id": "113088",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113084",
+        "113085"
+      ]
+    },
+    "113086": {
+      "id": "113086",
+      "type": "score",
+      "data": {
+        "actionType": "add",
+        "value": 19
+      },
+      "children": []
+    },
+    "113083": {
+      "id": "113083",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "any"
+      },
+      "children": [
+        "113086"
+      ]
+    },
+    "113089": {
+      "id": "113089",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "moved_piece",
+        "subjectFilter": "any",
+        "operator": "attack",
+        "target": "enemy",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113083"
+      ]
+    },
+    "113087": {
+      "id": "113087",
+      "type": "organizer",
+      "data": {
+        "title": "Attack pawns"
+      },
+      "children": [
+        "113088",
+        "113089"
+      ]
+    },
+    "113115": {
+      "id": "113115",
+      "type": "score",
+      "data": {
+        "actionType": "return",
+        "value": 7
+      },
+      "children": []
+    },
+    "113125": {
+      "id": "113125",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "operator": "defend",
+        "target": "moved_piece",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113115"
+      ]
+    },
+    "113122": {
+      "id": "113122",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "allied",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "greater_than",
+        "subjectComparisonSource": "prior_board_state",
+        "operator": "defend",
+        "target": "allied",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113115"
+      ]
+    },
+    "113124": {
+      "id": "113124",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "enemy",
+        "subjectFilter": "any",
+        "subjectComparisonMetric": "count",
+        "subjectComparator": "equal_to",
+        "subjectComparisonSource": "exact_number",
+        "subjectComparisonSourceTotal": 0,
+        "operator": "attack",
+        "target": "moved_piece",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113115"
+      ]
+    },
+    "113120": {
+      "id": "113120",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "moved_piece",
+        "subjectFilter": "king",
+        "subjectFilterMode": "include",
+        "operator": "defend",
+        "target": "allied",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include",
+        "targetComparisonMetric": "count",
+        "targetComparator": "greater_than",
+        "targetComparisonSource": "prior_board_state"
+      },
+      "children": [
+        "113115"
+      ]
+    },
+    "113117": {
+      "id": "113117",
+      "type": "condition",
+      "data": {
+        "version": 2,
+        "kind": "relational",
+        "subject": "moved_piece",
+        "subjectFilter": "pawn",
+        "subjectFilterMode": "include",
+        "operator": "defend",
+        "target": "allied",
+        "targetFilter": "pawn",
+        "targetFilterMode": "include"
+      },
+      "children": [
+        "113115"
+      ]
+    },
+    "113123": {
+      "id": "113123",
+      "type": "organizer",
+      "data": {
+        "title": "push safe pawns"
+      },
+      "children": [
+        "113125",
+        "113122",
+        "113124",
+        "113120",
+        "113117"
+      ]
+    },
+    "113007": {
+      "id": "113007",
+      "type": "root",
+      "data": {
+        "title": ""
+      },
+      "children": [
+        "113008",
+        "113011",
+        "113128",
+        "113025",
+        "113016",
+        "113087",
+        "113123"
+      ]
+    }
+  }
+}

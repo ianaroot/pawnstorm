@@ -21,6 +21,16 @@ class MigrateConditionKindsToCensusAndIdentity < ActiveRecord::Migration[7.1]
       WHERE node_type = 'condition'
         AND data->>'kind' = 'relational'
         AND data->>'operator' = 'same_piece';
+
+      -- Raw SQL bypasses the Node/Connection after_commit hooks that mark a
+      -- bot's compiled_program stale. Without this every bot whose nodes we
+      -- just rewrote keeps serving its pre-migration compiled program -- one
+      -- that still carries the retired 'unary'/'position' kinds the V2
+      -- evaluator now rejects, crashing every match. Invalidate the cache so
+      -- the existing recompile-before-match path regenerates it.
+      UPDATE bots
+      SET compiled_program_stale = true
+      WHERE compiled_program_stale = false;
     SQL
   end
 
