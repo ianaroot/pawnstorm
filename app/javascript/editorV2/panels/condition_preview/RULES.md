@@ -99,10 +99,19 @@ listed — changing those is a behavior change, not a tuning operation.
 
 ## Forward-proposition diversity benchmark
 
-  `npm run bench:forward-proposition -- 1000` reports per-payload pass
-  rates. The `baseline:` fields in `forward_proposition_benchmark.js` are
-  enforced within ±20% by `forward_proposition_baselines.test.js`;
-  re-record them after intended mechanism or phase-ordering changes.
+  `npm run bench:forward-proposition -- 5000` runs each payload and
+  prints VERIFIED (count) / RATE (percent) / BASELINE (percent) / Δ% /
+  ms-per-attempt per payload. The `baseline:` fields in
+  `forward_proposition_benchmark.js` are stored as verified-as-percent
+  (e.g. `baseline: 41.98`), so the gate is N-independent. A leading `!`
+  on Δ% marks payloads outside the ±20% gate enforced by
+  `forward_proposition_baselines.test.js` (which runs at N=5000). Re-record
+  the `baseline:` fields after intended mechanism or phase-ordering
+  changes — the BASELINE column in the friendly output shows what to
+  paste back in.
+
+  `BENCH_JSON=1 npm run bench:forward-proposition -- 5000` switches the
+  output to JSON; timings and counters group under each payload.
 
   To extend the bench with a new diagnostic: call
   `profileCollector.increment('forward_proposition.<area>.<event>')` at
@@ -111,7 +120,3 @@ listed — changing those is a behavior change, not a tuning operation.
   is picked up by `relevantCounters` and printed per payload. Use
   `profileCollector.measure(label, fn)` for timing instead. Both are
   no-ops unless `MATCH_PROFILE=1` (set automatically by the bench).
-
-  Run with `npm run bench:forward-proposition -- 1000` (trailing arg
-  is attempts per payload). The output JSON groups timings and counters
-  under each payload.

@@ -169,13 +169,18 @@ describe('chooseMovedBinding', () => {
       .toEqual(b.assignments.map(x => `${x.sourcePlan.tag}:${x.role}`))
   })
 
-  it('bystander stays reachable as relations compound (random=0 picks bystander)', () => {
+  it('bystander stays reachable as relations compound', () => {
     const ctx = ctxWith(
       relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK),
       relation('defend', Board.ROOK, Board.WHITE, Board.KING, Board.WHITE),
       relation('adjacent', Board.NIGHT, Board.WHITE, Board.PAWN, Board.BLACK)
     )
-    expect(chooseMovedBinding(ctx, () => 0).assignments).toEqual([])
+    let sawBystander = false
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50)
+      if (b.assignments.length === 0) { sawBystander = true; break }
+    }
+    expect(sawBystander).toBe(true)
   })
 
   it('can produce a multi-slot (double-duty) binding when feasible', () => {
@@ -198,12 +203,9 @@ describe('chooseMovedBinding', () => {
 
   it('roleForPlan looks up the bound role for a relation, or null', () => {
     const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
-    const ctx = ctxWith(rel)
-    const b = chooseMovedBinding(ctx, () => 0.99) // drive toward binding, not bystander
-    if (b.assignments.length) {
-      expect(roleForPlan(b, rel.sourcePlan)).toBe('subject')
-    }
-    expect(roleForPlan(b, { tag: 'absent' })).toBe(null)
+    const binding = { assignments: [{ sourcePlan: rel.sourcePlan, role: 'subject' }] }
+    expect(roleForPlan(binding, rel.sourcePlan)).toBe('subject')
+    expect(roleForPlan(binding, { tag: 'absent' })).toBe(null)
   })
 })
 
@@ -336,10 +338,14 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
       propositions: [p],
       relations: [rel]
     })
-    const b = chooseMovedBinding(ctx, () => 0.99)
-    const refs = b.assignments.map(a => a.sourcePlan)
-    expect(refs).toContain(p.sourcePlan)
-    expect(refs).toContain(rel.sourcePlan)
+    let sawLayered = false
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50)
+      const refs = b.assignments.map(a => a.sourcePlan)
+      expect(refs).toContain(p.sourcePlan)
+      if (refs.includes(rel.sourcePlan)) { sawLayered = true }
+    }
+    expect(sawLayered).toBe(true)
   })
 
   it('returns only the forced related-to when no relation slots exist', () => {
@@ -360,6 +366,145 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
     })
     const b = chooseMovedBinding(ctx, () => 0.5)
     expect(roleForPlan(b, planRef)).toBe('target')
+  })
+})
+
+import { bindingComboKey, enumerateFeasibleBindings } from '../moved_binding'
+
+describe('bindingComboKey', () => {
+  it('returns the empty string for an empty (bystander) binding', () => {
+    const plan = { tag: 'p0' }
+    const combinedPlan = { plans: [plan] }
+    expect(bindingComboKey({ assignments: [] }, combinedPlan)).toBe('')
+  })
+
+  it('encodes a single slot as <planIndex>:<role>', () => {
+    const plan = { tag: 'p0' }
+    const combinedPlan = { plans: [plan] }
+    const binding = { assignments: [{ sourcePlan: plan, role: 'subject' }] }
+    expect(bindingComboKey(binding, combinedPlan)).toBe('0:subject')
+  })
+
+  it('joins multiple pairs with "|" in canonical sorted order', () => {
+    const p0 = { tag: 'p0' }
+    const p1 = { tag: 'p1' }
+    const combinedPlan = { plans: [p0, p1] }
+    const binding = { assignments: [
+      { sourcePlan: p1, role: 'subject' },
+      { sourcePlan: p0, role: 'target' }
+    ] }
+    expect(bindingComboKey(binding, combinedPlan)).toBe('0:target|1:subject')
+  })
+
+  it('dedupes pairs: same (plan, role) appears once even if multiple slots back it', () => {
+    // PBS-bound related-to: priorProp and currentProp both surface a slot
+    // for the same plan + role. Shape key collapses them to one pair so the
+    // PBS-bound and non-PBS-bound variants of the same logical relation share
+    // the same shape key.
+    const plan = { tag: 'p0' }
+    const combinedPlan = { plans: [plan] }
+    const binding = { assignments: [
+      { sourcePlan: plan, role: 'target', kind: 'related-to' },
+      { sourcePlan: plan, role: 'target', kind: 'related-to' }
+    ] }
+    expect(bindingComboKey(binding, combinedPlan)).toBe('0:target')
+  })
+
+  it('uses planIndex 0 for the first plan in combinedPlan.plans', () => {
+    const p0 = { tag: 'p0' }
+    const p1 = { tag: 'p1' }
+    const p2 = { tag: 'p2' }
+    const combinedPlan = { plans: [p0, p1, p2] }
+    const binding = { assignments: [{ sourcePlan: p2, role: 'subject' }] }
+    expect(bindingComboKey(binding, combinedPlan)).toBe('2:subject')
+  })
+})
+
+describe('enumerateFeasibleBindings', () => {
+  it('returns just the empty binding when there are no feasible slots', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.PAWN) },
+      relations: [relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    expect(bindings).toHaveLength(1)
+    expect(bindings[0].assignments).toEqual([])
+  })
+
+  it('returns 2 bindings (bystander + single-slot) for one feasible optional slot', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      relations: [relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    expect(bindings.map(b => b.assignments.length).sort()).toEqual([0, 1])
+  })
+
+  it('returns 4 bindings (empty, A, B, AB) for two jointly-feasible optional slots', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular([Board.ROOK]) },
+      relations: [
+        relation('attack', [Board.ROOK, Board.QUEEN], Board.WHITE, Board.PAWN, Board.BLACK),
+        relation('defend', [Board.ROOK, Board.BISHOP], Board.WHITE, Board.KING, Board.WHITE)
+      ]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    // 2 relations × 2 sides each — but only the subject side is moved_piece
+    // eligible (target sides are wrong team or species). So 2 optional slots → 4 subsets.
+    const subjectSlotCounts = bindings.map(b => b.assignments.filter(a => a.role === 'subject').length).sort()
+    expect(subjectSlotCounts).toEqual([0, 1, 1, 2])
+  })
+
+  it('omits the joint binding when slots are mutually infeasible', () => {
+    // moved can be knight OR bishop; slot A demands knight, slot B demands bishop.
+    // Jointly infeasible for one piece → enumerated set is {empty, A, B}, no AB.
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular([Board.NIGHT, Board.BISHOP]) },
+      relations: [
+        relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK),
+        relation('defend', Board.BISHOP, Board.WHITE, Board.ROOK, Board.WHITE)
+      ]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    const lens = bindings.map(b => b.assignments.length).sort()
+    expect(lens).toEqual([0, 1, 1])
+  })
+
+  it('always includes forced related-to slots in every enumerated binding', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p],
+      relations: [rel]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    for (const b of bindings) {
+      expect(b.assignments.map(a => a.sourcePlan)).toContain(p.sourcePlan)
+    }
+  })
+
+  it('returns just the forced binding when no optional relation slots exist', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    expect(bindings).toHaveLength(1)
+    expect(bindings[0].assignments.map(a => a.sourcePlan)).toEqual([p.sourcePlan])
+  })
+
+  it('places the minimum binding (bystander or forced-only) first in the returned list', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular([Board.NIGHT, Board.ROOK]) },
+      relations: [
+        relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK),
+        relation('defend', Board.ROOK, Board.WHITE, Board.KING, Board.WHITE)
+      ]
+    })
+    const bindings = enumerateFeasibleBindings(ctx)
+    expect(bindings[0].assignments).toEqual([])
   })
 })
 
