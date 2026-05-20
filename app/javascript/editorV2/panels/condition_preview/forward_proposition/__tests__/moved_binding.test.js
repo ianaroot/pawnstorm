@@ -227,3 +227,137 @@ describe('movedSpeciesPool', () => {
     expect(movedSpeciesPool(ctx.singulars.moved_piece, ctx)).toEqual(new Set([Board.ROOK]))
   })
 })
+
+import { feasibleRelatedToSlots } from '../moved_binding'
+
+// related-to proposition: emitted for the non-singular side of a bound
+// relational plan; its region points to the singular anchor (moved_piece).
+function relatedToProp(role, counterpart, operator = 'attack') {
+  return {
+    team: counterpart.team,
+    frame: 'current',
+    species_set: new Set(Array.isArray(counterpart.species) ? counterpart.species : [counterpart.species]),
+    region: { kind: 'related-to', actor: 'moved_piece', role, operator },
+    count_range: { min: 1, max: Infinity },
+    aggregate_value_range: { min: 0, max: Infinity },
+    aggregate_mobility_range: { min: 0, max: Infinity }
+  }
+}
+
+describe('feasibleRelatedToSlots', () => {
+  it('returns empty when no related-to proposition anchors on moved_piece', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: []
+    })
+    expect(feasibleRelatedToSlots(ctx)).toEqual([])
+  })
+
+  it('emits a slot for each related-to proposition with region.actor === moved_piece', () => {
+    const p1 = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const p2 = relatedToProp('subject', { team: Board.WHITE, species: Board.ROOK }, 'defend')
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p1, p2]
+    })
+    const slots = feasibleRelatedToSlots(ctx)
+    expect(slots).toHaveLength(2)
+    expect(slots[0].sourcePlan).toBe(p1)
+    expect(slots[0].role).toBe('target')
+    expect(slots[0].kind).toBe('related-to')
+    expect(slots[1].sourcePlan).toBe(p2)
+    expect(slots[1].role).toBe('subject')
+  })
+
+  it('excludes related-to propositions anchored on other actors', () => {
+    const p = {
+      team: Board.WHITE, frame: 'current',
+      species_set: new Set([Board.PAWN]),
+      region: { kind: 'related-to', actor: 'enemy_moved_piece', role: 'target', operator: 'attack' },
+      count_range: { min: 1, max: Infinity },
+      aggregate_value_range: { min: 0, max: Infinity },
+      aggregate_mobility_range: { min: 0, max: Infinity }
+    }
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    expect(feasibleRelatedToSlots(ctx)).toEqual([])
+  })
+
+  it('excludes non-related-to propositions', () => {
+    const p = {
+      team: Board.WHITE, frame: 'current',
+      species_set: new Set([Board.PAWN]),
+      region: { kind: 'all' },
+      count_range: { min: 1, max: Infinity },
+      aggregate_value_range: { min: 0, max: Infinity },
+      aggregate_mobility_range: { min: 0, max: Infinity }
+    }
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    expect(feasibleRelatedToSlots(ctx)).toEqual([])
+  })
+})
+
+describe('chooseMovedBinding — forced related-to bindings', () => {
+  it('always seeds the forced related-to slot regardless of random', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toContain(p)
+    expect(chooseMovedBinding(ctx, () => 0.99).assignments.map(a => a.sourcePlan)).toContain(p)
+  })
+
+  it('layers optional relation slots on top of forced related-to', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p],
+      relations: [rel]
+    })
+    const b = chooseMovedBinding(ctx, () => 0.99)
+    const refs = b.assignments.map(a => a.sourcePlan)
+    expect(refs).toContain(p)
+    expect(refs).toContain(rel.sourcePlan)
+  })
+
+  it('returns only the forced related-to when no relation slots exist', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toEqual([p])
+  })
+})
+
+describe('bindingFeasible — related-to slots', () => {
+  it('treats related-to slots as feasible without narrowing moved_piece species/region', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    const [slot] = feasibleRelatedToSlots(ctx)
+    expect(bindingFeasible([slot], ctx)).toBe(true)
+  })
+
+  it('combines related-to + relation slots without spurious narrowing', () => {
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN })
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p],
+      relations: [rel]
+    })
+    const relSlot = feasibleRelationSlots(ctx).find(s => s.role === 'subject')
+    const relatedSlot = feasibleRelatedToSlots(ctx)[0]
+    expect(bindingFeasible([relatedSlot, relSlot], ctx)).toBe(true)
+  })
+})

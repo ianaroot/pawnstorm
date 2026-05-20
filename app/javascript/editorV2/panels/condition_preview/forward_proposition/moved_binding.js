@@ -38,6 +38,16 @@ function speciesOverlap(a, b) {
   return false
 }
 
+export function feasibleRelatedToSlots(ctx) {
+  const slots = []
+  for (const prop of ctx?.propositions ?? []) {
+    if (prop.region?.kind !== 'related-to') { continue }
+    if (prop.region.actor !== POOL_ACTOR) { continue }
+    slots.push({ sourcePlan: prop, role: prop.region.role, kind: 'related-to' })
+  }
+  return slots
+}
+
 export function feasibleRelationSlots(ctx) {
   const moved = ctx?.singulars?.[POOL_ACTOR]
   if (!moved) { return [] }
@@ -60,6 +70,8 @@ export function bindingFeasible(set, ctx) {
   if (!moved) { return set.length === 0 }
   const probe = cloneSingular(moved)
   for (const slot of set) {
+    // related-to slots constrain the counterpart, not moved_piece — nothing to narrow here
+    if (slot.kind === 'related-to') { continue }
     intersectInto(probe.species_set, slot.side.species_set)
     if (probe.species_set.size === 0) { return false }
     probe.region = intersectRegions(probe.region, slot.side.region)
@@ -72,9 +84,10 @@ export function bindingFeasible(set, ctx) {
 // moved_piece a bystander) is held roughly steady no matter how many
 // relations the chain has, instead of shrinking as more slots appear.
 export function chooseMovedBinding(ctx, random) {
-  const all = feasibleRelationSlots(ctx)
-  const chosen = []
-  const remaining = all.slice()
+  // Related-to slots are structurally forced — moved_piece must anchor them.
+  // They seed the chosen set; optional relation slots greedily layer on top.
+  const chosen = [...feasibleRelatedToSlots(ctx)]
+  const remaining = feasibleRelationSlots(ctx).slice()
   for (;;) {
     const addable = remaining.filter(slot => bindingFeasible([...chosen, slot], ctx))
     if (addable.length === 0) { break }
@@ -92,6 +105,8 @@ export function chooseMovedBinding(ctx, random) {
 export function movedSpeciesPool(singular, ctx) {
   const pool = new Set(singular.species_set)
   for (const a of ctx?.movedBinding?.assignments ?? []) {
+    // related-to slots constrain the counterpart, not moved_piece — nothing to intersect
+    if (a.kind === 'related-to') { continue }
     intersectInto(pool, a.side.species_set)
   }
   return pool.size === 0 ? new Set(singular.species_set) : pool

@@ -1,14 +1,5 @@
-import { MAX_SATISFY_ITERATIONS } from './relation_helpers'
-import { chooseRelationVariant } from './relation_variants'
-
-// Shared subject/target role list for two-sided relations (attack, defend,
-// adjacent). Shield builds its own 3-role list (incl. the inferred attacker).
-export function twoSidedRoles(relation) {
-  return [
-    { name: 'subject', side: relation.subjectSide },
-    { name: 'target', side: relation.targetSide }
-  ]
-}
+import { MAX_SATISFY_ITERATIONS, singularPosition } from './relation_helpers'
+import { roleForPlan } from '../moved_binding'
 
 // The iteration loop common to every relation satisfier. The caller owns its
 // own early guards and `requirementsMet`; `step(pieces)` returns the next
@@ -24,14 +15,17 @@ export function satisfyLoop({ relation, pieces, ctx, requirementsMet, step }) {
   return requirementsMet(relation, next, ctx) ? next : null
 }
 
-// Variant-aware satisfy used by the two-sided satisfiers: pick the role
-// binding once, then loop. A moved/enemy-moved variant anchors geometry via
-// the satisfier's `tryAnchored`; bound/bystander fall back to `tryPlace`.
-// Geometry and requirementsMet stay with the satisfier.
+// Reads the chain-global moved_piece binding for this relation: if it's
+// bound to a role here, anchor geometry via the satisfier's `tryAnchored`;
+// otherwise fall back to `tryPlace`. Geometry and requirementsMet stay with
+// the satisfier.
 export function runAnchoredSatisfier({
-  relation, pieces, ctx, random, roles, requirementsMet, tryAnchored, tryPlace
+  relation, pieces, ctx, random, requirementsMet, tryAnchored, tryPlace
 }) {
-  const variant = chooseRelationVariant({ roles, ctx, random })
+  const role = roleForPlan(ctx.movedBinding ?? { assignments: [] }, relation.sourcePlan)
+  const variant = role
+    ? { kind: 'moved', role, position: singularPosition(ctx, 'moved_piece') }
+    : { kind: 'bystander' }
   return satisfyLoop({
     relation, pieces, ctx, requirementsMet,
     step: p => placeStep(relation, p, ctx, random, variant, tryAnchored, tryPlace)
