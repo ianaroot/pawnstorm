@@ -80,26 +80,9 @@ export function bindingFeasible(set, ctx) {
   return true
 }
 
-// Grows the set one feasible slot at a time. The chance of stopping (leaving
-// moved_piece a bystander) is held roughly steady no matter how many
-// relations the chain has, instead of shrinking as more slots appear.
 export function chooseMovedBinding(ctx, random) {
-  // Related-to slots are structurally forced — moved_piece must anchor them.
-  // They seed the chosen set; optional relation slots greedily layer on top.
-  const chosen = [...feasibleRelatedToSlots(ctx)]
-  const remaining = feasibleRelationSlots(ctx).slice()
-  for (;;) {
-    const addable = remaining.filter(slot => bindingFeasible([...chosen, slot], ctx))
-    if (addable.length === 0) { break }
-    // bystander entries first so random()===0 stops; one per addable slot,
-    // keeping stop and continue evenly balanced each step.
-    const options = [...addable.map(() => null), ...addable]
-    const pick = options[Math.floor(random() * options.length)]
-    if (pick === null) { break }
-    chosen.push(pick)
-    remaining.splice(remaining.indexOf(pick), 1)
-  }
-  return { assignments: chosen }
+  const bindings = enumerateFeasibleBindings(ctx)
+  return bindings[Math.floor(random() * bindings.length)]
 }
 
 export function movedSpeciesPool(singular, ctx) {
@@ -117,4 +100,40 @@ export function roleForPlan(binding, sourcePlan) {
     if (a.sourcePlan === sourcePlan) { return a.role }
   }
   return null
+}
+//Index 0 is the minimum binding (bystander, or forced-only when related-to slots exist).
+export function enumerateFeasibleBindings(ctx) {
+  const forced = feasibleRelatedToSlots(ctx)
+  const optional = feasibleRelationSlots(ctx)
+  const bindings = []
+  for (const subset of subsetsOf(optional)) {
+    const assignments = [...forced, ...subset]
+    if (bindingFeasible(assignments, ctx)) {
+      bindings.push({ assignments })
+    }
+  }
+  return bindings
+}
+
+function subsetsOf(items) {
+  const result = [[]]
+  for (const item of items) {
+    const len = result.length
+    for (let i = 0; i < len; i += 1) {
+      result.push([...result[i], item])
+    }
+  }
+  return result
+}
+
+// Same (plan, role) pair appears once regardless of how many slots back it.
+export function bindingComboKey(binding, combinedPlan) {
+  const plans = combinedPlan.plans
+  const pairs = new Set()
+  for (const a of binding.assignments) {
+    const idx = plans.indexOf(a.sourcePlan)
+    if (idx < 0) { continue }
+    pairs.add(`${idx}:${a.role}`)
+  }
+  return [...pairs].sort().join('|')
 }

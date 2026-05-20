@@ -11,13 +11,22 @@ const PROFILE_LABEL_PREFIXES = [
   "condition.v2."
 ]
 
-// N=1000 per payload, seed=1 (deterministic). `baseline:` is the verified
-// count; forward_proposition_baselines.test.js enforces ±20%. Re-record
-// after intended mechanism/ordering changes — prior values and the why
-// are in git history.
+
+// seed=1 (deterministic). `baseline:` is verified-as-percent-of-attempts
+// (e.g. 41.98 means 41.98% pass rate); forward_proposition_baselines.test.js
+// enforces ±20%. Re-record after intended mechanism/ordering changes —
+// the bench's friendly BASELINE column shows what to paste back in.
+//
+// SHIFT LOG — alongside the chooseMovedBinding rewrite (greedy-add-with-
+// bystander-balance → enumerate-then-uniform-pick over feasible bindings),
+// baselines were re-recorded at seed=1 N=5000 and stored as percent instead
+// of raw count so the gate is N-independent. Old N=1000 baselines were
+// noisy enough that high-variance payloads (e.g. chain 112832) swung ±27%
+// across seeds even without behavior change; the new N reduces noise to
+// ~±12% so the ±20% gate is meaningful.
 const PAYLOADS = [
   {
-    baseline: 484,
+    baseline: 41.98,
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -30,7 +39,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 390,
+    baseline: 39.14,
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -43,7 +52,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 362,
+    baseline: 39.82,
     name: "adjacent count > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -56,7 +65,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 390,
+    baseline: 39.14,
     name: "attack count > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -69,7 +78,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 475,
+    baseline: 39.72,
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -82,7 +91,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 281,
+    baseline: 34.54,
     name: "defend count < PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -95,7 +104,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 460,
+    baseline: 43.72,
     name: "shield aggregate_value > PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -108,7 +117,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 399,
+    baseline: 33.36,
     name: "rook mobility < 5 (mobility-constrained)",
     payload: {
       version: 2, kind: "census",
@@ -121,7 +130,7 @@ const PAYLOADS = [
     // Adversarial: allied bishop at h1 conflicts unconditionally with
     // kingside castle's rookStart empty constraint. Every castle attempt
     // should be detectable as wasted.
-    baseline: 841,
+    baseline: 83.70,
     name: "allied bishop at h1 (conflicts with kingside castle)",
     payload: {
       version: 2, kind: "census",
@@ -135,7 +144,7 @@ const PAYLOADS = [
     // Adversarial: allied pawn at e5 conflicts with EP-left only when
     // moved_piece commits to d6 (diag-left-origin lands on e5). Other
     // EP destinations are fine. "Sometimes blocks."
-    baseline: 828,
+    baseline: 82.58,
     name: "allied pawn at e5 (sometimes blocks en passant)",
     payload: {
       version: 2, kind: "census",
@@ -148,7 +157,7 @@ const PAYLOADS = [
   {
     // Region-restricted PBS census, increasing. Rook chosen so the rank
     // delta can't arise by luck (a rook may stay on its rank).
-    baseline: 865,
+    baseline: 96.52,
     name: "census rook count rank=5 > PBS (region, increasing)",
     payload: {
       version: 2, kind: "census",
@@ -160,7 +169,7 @@ const PAYLOADS = [
   },
   {
     // Region-restricted PBS census, decreasing (capture-in-region path).
-    baseline: 777,
+    baseline: 83.02,
     name: "census enemy count file=4 < PBS (region, decreasing)",
     payload: {
       version: 2, kind: "census",
@@ -175,7 +184,7 @@ const PAYLOADS = [
   // route through cross_frame instead). Added to give the relations path
   // benchmark coverage.
   {
-    baseline: 711,
+    baseline: 61.06,
     name: "enemy non-pawn shield enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -189,7 +198,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 802,
+    baseline: 81.46,
     name: "allied pawn defend allied minor",
     payload: {
       version: 2, kind: "relational",
@@ -203,7 +212,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 707,
+    baseline: 63.56,
     name: "allied any adjacent enemy king",
     payload: {
       version: 2, kind: "relational",
@@ -217,7 +226,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 761,
+    baseline: 66.62,
     name: "allied non-queen attack enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -235,7 +244,7 @@ const PAYLOADS = [
   // these are the conditions where moved-piece subject/target recruitment
   // is measured before/after the relation-variant helper.
   {
-    baseline: 870,
+    baseline: 77.46,
     name: "allied bishop attack enemy rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -249,7 +258,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 769,
+    baseline: 83.00,
     name: "allied knight defend allied bishop (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -263,7 +272,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 891,
+    baseline: 77.04,
     name: "allied knight adjacent enemy queen (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -277,7 +286,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 860,
+    baseline: 77.92,
     name: "allied bishop shield allied rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -295,7 +304,7 @@ const PAYLOADS = [
   // (chain B's shield emits 1 relation). Coverage for chain machinery +
   // propositions/cross-frame on real multi-condition chains.
   {
-    baseline: 598,
+    baseline: 66.02,
     name: "chain 112415·112413·112412",
     payloads: [
       { version: 2, kind: "relational", subject: "enemy", subjectFilter: "pawn", operator: "attack", target: "moved_piece", targetFilter: "any", subjectFilterMode: "include", subjectComparisonMetric: "count", subjectComparator: "equal_to", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -304,7 +313,7 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 445,
+    baseline: 45.82,
     name: "chain 112421·112419·112418",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "any", operator: "defend", target: "moved_piece", targetFilter: "any" },
@@ -313,7 +322,7 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 689,
+    baseline: 75.36,
     name: "chain 112270·112269·112267",
     payloads: [
       { version: 2, kind: "relational", subject: "enemy", subjectFilter: "any", operator: "attack", target: "moved_piece", targetFilter: "any", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -324,7 +333,7 @@ const PAYLOADS = [
   {
     // Two simultaneous PBS deltas on one moved_piece; hard case, lifted from
     // ~0.1% by the interposition work.
-    baseline: 59,
+    baseline: 5.42,
     name: "chain 112832·112834·112835 (rook mobility PBS)",
     payloads: [
       { version: 2, kind: "relational", subject: "moved_piece", subjectFilter: "any", operator: "defend", target: "allied", targetFilter: "major", targetFilterMode: "include", targetComparisonMetric: "count", targetComparator: "greater_than", targetComparisonSource: "prior_board_state" },
@@ -336,7 +345,7 @@ const PAYLOADS = [
   // land in ctx.relations. Exists only to exercise the satisfyRelations shuffle
   // (no real bot chain combines ≥2 such relations — see session notes).
   {
-    baseline: 514,
+    baseline: 42.90,
     name: "chain synthetic 3-relation (attack+defend+shield)",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "queen", subjectFilterMode: "exclude", operator: "attack", target: "enemy", targetFilter: "queen", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -345,7 +354,7 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 502,
+    baseline: 43.42,
     name: "allied queen mobility < PBS (whole-board census)",
     payload: {
       version: 2, kind: "census",
@@ -394,6 +403,7 @@ function benchmarkPayload(entry, attempts) {
   const snapshot = profileCollector.snapshot()
   return {
     name,
+    baseline: entry.baseline,
     attempts,
     verified: produced["forward-proposition"],
     verified_standard: produced["forward-proposition.standard"],
@@ -437,7 +447,7 @@ function formatFriendly(results, attempts) {
   const lines = [
     `forward_proposition — ${attempts} attempts/payload, ${results.length} payloads`,
     "",
-    `  ${pad("PAYLOAD", nameWidth)}  ${padL("VERIFIED", 12)}  ${padL("RATE", 7)}  ${padL("ms/att", 7)}`
+    `  ${pad("PAYLOAD", nameWidth)}  ${padL("VERIFIED", 12)}  ${padL("RATE", 8)}  ${padL("BASELINE", 9)}  ${padL("Δ%", 7)}  ${padL("ms/att", 7)}`
   ]
 
   let totalMs = 0
@@ -448,14 +458,28 @@ function formatFriendly(results, attempts) {
     }
     totalMs += r.total_ms
     const verified = `${r.verified}/${r.attempts}`
-    const rate = `${(100 * r.verified / r.attempts).toFixed(1)}%`
+    const rate = `${(100 * r.verified / r.attempts).toFixed(2)}%`
+    const baseline = r.baseline == null ? "—" : `${r.baseline.toFixed(2)}%`
+    const drift = formatDrift(r.verified, r.baseline, r.attempts)
     lines.push(
-      `  ${pad(r.name, nameWidth)}  ${padL(verified, 12)}  ${padL(rate, 7)}  ${padL(r.avg_ms_per_attempt.toFixed(3), 7)}`
+      `  ${pad(r.name, nameWidth)}  ${padL(verified, 12)}  ${padL(rate, 8)}  ${padL(baseline, 9)}  ${padL(drift, 7)}  ${padL(r.avg_ms_per_attempt.toFixed(3), 7)}`
     )
   }
 
   lines.push("", `  total: ${results.length} payloads, ${(totalMs / 1000).toFixed(2)}s`)
   return lines.join("\n")
+}
+
+// Signed relative drift of the current rate vs the baseline percent. Leading
+// "!" marks drift outside the ±20% gate enforced by
+// forward_proposition_baselines.test.js.
+function formatDrift(verified, baseline, attempts) {
+  if (baseline == null) { return "—" }
+  const currentPct = 100 * verified / attempts
+  const pct = 100 * (currentPct - baseline) / baseline
+  const marker = Math.abs(pct) > 20 ? "!" : " "
+  const sign = pct >= 0 ? "+" : ""
+  return `${marker}${sign}${pct.toFixed(1)}%`
 }
 
 function runCli() {
