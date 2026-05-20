@@ -9,6 +9,7 @@ import {
 import {
   singularSquare, ensureRolePieceAt, commitPriorRegion, movedPieceRoleIn
 } from './participates_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const movedPieceParticipatesShield = {
   name: 'moved-piece-participates-shield',
@@ -52,7 +53,7 @@ function roleFor(entry, ctx) {
 
   const moved = ctx?.singulars?.moved_piece
   if (!moved) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   if (!SLIDER_SPECIES.has(movedSpecies)) { return null }
   if (moved.team === entry.currentProposition.team) { return null }
   return 'attacker'
@@ -97,7 +98,7 @@ function applyShielderMinus(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const alliedTeam = entry.currentProposition.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
   const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
@@ -222,7 +223,7 @@ function applyShieldedMinus(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const alliedTeam = entry.currentProposition.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
   const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
@@ -309,7 +310,7 @@ function applyAttacker(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const alliedTeam = entry.currentProposition.team
   const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
   const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
@@ -333,7 +334,7 @@ function applyAttackerMinus(entry, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const alliedTeam = entry.currentProposition.team
   const shielderSpeciesSet = entry.subjectProposition?.species_set ?? entry.currentProposition.species_set
   const targetSpeciesSet = entry.targetProposition?.species_set ?? entry.currentProposition.species_set
@@ -424,7 +425,7 @@ function pathClearOrCompatible(squares, fromIdx, untilIdx, pieces, team, species
 
 function commitPriorRegionExcluding(ctx, pieces, destination, excludedSquares) {
   const moved = ctx.singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const candidates = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p) && !excludedSquares.has(p))
   return commitPriorRegion(ctx, candidates, pieces)

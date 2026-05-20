@@ -17,6 +17,7 @@ import {
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { chooseRelationVariant } from './relation_variants'
 import { satisfyLoop } from './anchored'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shield invariant: subjectSide.team === targetSide.team. Both are the "ally side"
 // of the shield (shielder + shielded). The attacker is the inferred opposing team.
@@ -175,7 +176,7 @@ function tryAsShielder(relation, pieces, ctx, random, actorKey) {
 function tryAsAttacker(relation, pieces, ctx, random, actorKey) {
   const attackerPos = singularPosition(ctx, actorKey)
   if (attackerPos === null) { return null }
-  const attackerSpecies = [...ctx.singulars[actorKey].species_set][0]
+  const attackerSpecies = committedSpecies(ctx.singulars[actorKey])
   const attackerSteps = stepsForSliderSpecies(attackerSpecies)
 
   for (const step of shuffled(attackerSteps, random)) {

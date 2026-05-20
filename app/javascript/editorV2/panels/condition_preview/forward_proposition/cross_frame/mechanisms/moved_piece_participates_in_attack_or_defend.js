@@ -10,6 +10,7 @@ import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
   movedPieceRoleInOrInferred, otherSidePropositionFor
 } from './participates_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
 
@@ -111,7 +112,7 @@ function applyMinusRoleTarget(otherProposition, ctx, pieces, random) {
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   if (anyTeamPieceControls({ board, pieces, team, speciesSet, square: destination })) { return null }
 
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
 
@@ -155,7 +156,7 @@ function applyMinusRoleSubject(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const team = otherProposition.team
   const speciesSet = otherProposition.species_set
 
@@ -249,7 +250,7 @@ function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, dest
 
   const hypotheticalBoard = buildBoardFromLayout(buildLayoutFromPieces(next))
   const moved = ctx.singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const validOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !next.has(p))
     .filter(origin => !pieceControlsSquare({

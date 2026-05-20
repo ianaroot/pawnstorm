@@ -12,11 +12,12 @@ import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposi
 import { enemyKingPosition } from './cross_frame/mechanisms/shifts_mobility_helpers'
 import { regionPossiblyContains } from './region'
 import { standardScenario } from './scenarios/standard'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export function synthesizeMove(ctx, pieces, random, scenario = standardScenario) {
   const bump = r => profileCollector.increment(`forward_proposition.synthesize_move.${r}`)
   const moved = ctx.singulars.moved_piece
-  const species = [...moved.species_set][0]
+  const species = committedSpecies(moved)
   const team = moved.team
   const overrides = scenario.resolveMoveObjectOverrides?.(ctx, pieces) ?? {}
 
@@ -137,7 +138,7 @@ function recentMoveContextForEnemy(ctx, random) {
   const enemyMoved = ctx.singulars?.enemy_moved_piece
   if (!enemyMoved) { return null }
   if (enemyMoved.region.kind !== 'set' || enemyMoved.region.squares.size !== 1) { return null }
-  const species = [...enemyMoved.species_set][0]
+  const species = committedSpecies(enemyMoved)
   if (species === null || species === undefined) { return null }
 
   const enemyCaptured = ctx.singulars?.enemy_captured_piece

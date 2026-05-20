@@ -8,6 +8,7 @@ import {
   legalOriginCandidates, piecesWithMovedAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced
 } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 
 export const movedPieceShiftsEnemyMobility = {
@@ -23,7 +24,7 @@ export const movedPieceShiftsEnemyMobility = {
     const moved = ctx.singulars.moved_piece
     const destination = singularSquare(moved)
     if (destination === null) { return null }
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     if (movedSpecies === null) { return null }
 
     const paths = shuffled([tryBlockingEnemyReach, tryCheckingEnemyKing], random)

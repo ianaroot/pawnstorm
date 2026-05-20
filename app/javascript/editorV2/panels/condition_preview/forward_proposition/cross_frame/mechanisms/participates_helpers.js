@@ -4,6 +4,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { intersectRegions } from '../../region'
 import { respectsAllCaps } from '../../respect_caps'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Strict: only resolves the explicit related-to role binding.
 // Shield reuses this for its strict path and adds attacker-role inference locally.
@@ -21,7 +22,7 @@ export function movedPieceRoleIn(entry) {
 // inference returns 'attacker'.
 export function inferRoleFromPropositionMatch(entry, moved) {
   if (!moved) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   if (movedSpecies === null || movedSpecies === undefined) { return null }
   if (matchesProposition(moved, movedSpecies, entry.subjectProposition)) { return 'subject' }
   if (matchesProposition(moved, movedSpecies, entry.targetProposition)) { return 'target' }

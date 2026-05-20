@@ -6,6 +6,7 @@ import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
   movedPieceRoleInOrInferred, otherSidePropositionFor
 } from './participates_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const movedPieceParticipatesAdjacent = {
   name: 'moved-piece-participates-adjacent',
@@ -62,7 +63,7 @@ function applyMinus(entry, otherProposition, ctx, pieces, random) {
 
   if (anyAdjacentMatchingPiece({ pieces, square: destination, team, speciesSet })) { return null }
 
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
 
@@ -108,7 +109,7 @@ function placeAdjacentAndCommitPriorRegion({ placement, team, speciesPool, ctx, 
   if (next === null || next === pieces) { return null }
 
   const moved = ctx.singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const adjacentToPlacement = new Set(adjacentNeighborPositions(placement))
   const validOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !next.has(p))

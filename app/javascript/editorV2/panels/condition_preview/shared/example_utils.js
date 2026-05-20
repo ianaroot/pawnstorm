@@ -6,6 +6,7 @@ import {
   pieceCode, pieceSpecies, pieceTeam, shuffled, layoutsMatch, ALL_POSITIONS, HOME_RANK
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const MOVE_KIND_STANDARD = 'standard'
 export const MOVE_KIND_CASTLE = 'castle'
@@ -164,7 +165,7 @@ export function collectLegalReverseMoves({
 // Returns null on illegal reverse placement; callers handle per their own semantics.
 export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotation, team, promotionPiece, capturedPiecePosition }) {
   const moved = singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   let priorPieces = new Map(pieces)
   priorPieces.delete(endPos)
   const originSpecies = promotionPiece ? Board.PAWN : movedSpecies
@@ -181,7 +182,7 @@ export function buildPriorBoard({ pieces, singulars, origin, endPos, pieceNotati
   }
 
   const captured = singulars.captured_piece
-  const capturedSpecies = [...captured.species_set][0]
+  const capturedSpecies = committedSpecies(captured)
   if (capturedSpecies !== null) {
     priorPieces = placePiece(priorPieces, capturedPiecePosition ?? endPos, pieceCode(captured.team, capturedSpecies))
     if (priorPieces === null) { return null }

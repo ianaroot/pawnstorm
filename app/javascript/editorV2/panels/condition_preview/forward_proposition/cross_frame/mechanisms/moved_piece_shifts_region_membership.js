@@ -1,5 +1,6 @@
 import { singularSquare, commitPriorRegion } from './participates_helpers'
 import { legalOriginCandidates } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Engineers a region-restricted PBS count delta by choosing moved_piece's
 // origin so its own region-membership differs prior-vs-after. moved_piece is
@@ -25,7 +26,7 @@ export const movedPieceShiftsRegionMembership = {
     const moved = ctx.singulars.moved_piece
     const destination = singularSquare(moved)
     if (destination === null) { return null }
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     if (movedSpecies === null || movedSpecies === undefined) { return null }
 
     const region = entry.currentProposition.region.squares

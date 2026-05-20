@@ -13,6 +13,7 @@ import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced
 } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Patch 3 of mobility cross-frame: enemy king mobility shift.
 //
@@ -43,7 +44,7 @@ export const movedPieceShiftsEnemyKingMobility = {
     const moved = ctx.singulars.moved_piece
     const destination = singularSquare(moved)
     if (destination === null) { return null }
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     if (movedSpecies === null) { return null }
 
     const piecesWithKing = ensureEnemyKingPlaced(pieces, ctx, random)

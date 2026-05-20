@@ -4,6 +4,7 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { intersectRegions } from './region'
 import { materializeRegion } from './materialize_region'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export function commitCapturedPieceRegion(singular, square) {
   singular.region = { kind: 'set', squares: new Set([square]) }
@@ -26,7 +27,7 @@ function buildBoardFromCommittedSingulars(singulars, committed) {
   let map = new Map()
   for (const name of committed) {
     const s = singulars[name]
-    const species = [...s.species_set][0]
+    const species = committedSpecies(s)
     if (species === null || s.region.kind !== 'set') { continue }
     const pos = [...s.region.squares][0]
     if (pos === undefined) { continue }

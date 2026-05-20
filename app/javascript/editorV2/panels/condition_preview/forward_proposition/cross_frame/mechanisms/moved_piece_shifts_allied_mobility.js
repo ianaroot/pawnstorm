@@ -10,6 +10,7 @@ import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './pa
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied
 } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Patch 2 of mobility cross-frame: allied non-moved-piece mobility shift.
 //
@@ -36,7 +37,7 @@ export const movedPieceShiftsAlliedMobility = {
     const moved = ctx.singulars.moved_piece
     const destination = singularSquare(moved)
     if (destination === null) { return null }
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     if (movedSpecies === null) { return null }
     if (!teamHasKing(pieces, moved.team)) {
       const placed = placeKingDeliberately(pieces, moved.team, 'current', ctx, random)

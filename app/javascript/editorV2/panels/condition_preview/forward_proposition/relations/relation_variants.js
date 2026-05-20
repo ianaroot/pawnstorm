@@ -1,4 +1,5 @@
 import { singularPosition } from './relation_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Pure role-binding selection shared by every relation satisfier. Decides
 // which committed pool singular (if any) should anchor which relation role.
@@ -19,7 +20,7 @@ export function chooseRelationVariant({ roles, ctx, random }) {
   for (const actorKey of POOL_ACTORS) {
     const singular = ctx?.singulars?.[actorKey]
     if (!singular) { continue }
-    const species = [...singular.species_set][0]
+    const species = committedSpecies(singular)
     if (species == null) { continue }
     const position = singularPosition(ctx, actorKey)
     if (position === null) { continue }

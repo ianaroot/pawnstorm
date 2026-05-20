@@ -7,6 +7,7 @@ import {
 import {
   movedPieceRoleIn, singularSquare, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Obstructs-shield is imprecise: depending on filters and teams, intercepting
 // A→S (between attacker and shielder) vs S→T (between shielder and shielded)
@@ -157,7 +158,7 @@ function applyPlus(entry, ctx, pieces, random) {
   if (subjectSide == null || targetSide == null) { return null }
   const alliedTeam = subjectSide.team
   const attackerTeam = Board.opposingTeam(alliedTeam)
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
 
   const origins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
@@ -238,7 +239,7 @@ function squareCompatibleOrEmpty(pieces, pos, team, speciesSet) {
 
 function commitPriorRegionOffRay(ctx, pieces, destination, rayPositions) {
   const moved = ctx.singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const candidates = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p) && !rayPositions.has(p))
   return commitPriorRegion(ctx, candidates, pieces)
