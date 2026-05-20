@@ -8,6 +8,7 @@ import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_place
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
+import { tryNarrowSingularRegion } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkStatewith checkRestriction (a team is in at most one mobility-restricting king arrangement at a time).
 export const stalemateStrategy = {
@@ -57,8 +58,8 @@ function handleEnemyMovedPiece(pieces, ctx, random) {
     if (candidate !== null) {
       const board = buildBoardFromLayout(buildLayoutFromPieces(candidate))
       if (mobilityAt(board, tryPos) === 0) {
-        enemyMoved.region = { kind: 'set', squares: new Set([tryPos]) }
-        return candidate
+        const narrowed = tryNarrowSingularRegion(enemyMoved, tryPos)
+        if (narrowed) { return candidate }
       }
     }
   }
@@ -88,7 +89,10 @@ function arrangeCapture(pieces, ctx, random) {
       .filter(o => !pieces.has(o) && o !== x)
     if (origins.length === 0) { continue }
     if (!respectsAllCaps(moved.team, movedSpecies, x, ctx, pieces)) { continue }
-    moved.region = { kind: 'set', squares: new Set([x]) }
+    const enemySpecies = [...enemyMoved.species_set][0]
+    if (!ctx.singulars.captured_piece.species_set.has(enemySpecies)) { continue }
+    const narrowed = tryNarrowSingularRegion(moved, x)
+    if (!narrowed) { continue }
     commitCapturedPieceRegion(enemyMoved, x)
     ctx.singulars.captured_piece = enemyMoved
     return pieces

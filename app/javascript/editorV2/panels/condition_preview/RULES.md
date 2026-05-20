@@ -60,6 +60,10 @@ All mutations to a pieces `Map<position, pieceCode>` must go through `placePiece
 
 **In-progress transition:** `placeWithCaps` in `forward_proposition/respect_caps.js` is being introduced as the canonical wrapper for ctx-having callers — it does `respectsAllCaps` then `placePiece` in one call. Once all forward_proposition callsites use `placeWithCaps`, `placePiece`'s local guards will be stripped and legality enforcement will live entirely in `ctx.propositions` as structural caps (already seeded by `forward_proposition/structural_invariants.js`). Until the refactor lands, both layers run — `placePiece`'s guards remain authoritative for callers without ctx. New ctx-having callsites should prefer `placeWithCaps`; new ctx-less callsites should continue using `placePiece` directly.
 
+## Singular constraint discipline
+
+`ctx.singulars` is built up in three phases that may write unconditionally: **merge** (`scenarios/merge_ctx_delta.js`), **narrow** (`narrow_for_crossframe.js`, `narrow_moved_piece_for_region.js`), and **commit** (`commit_singulars_species.js`, `commit_singulars_position.js`, `commit_singulars_helpers.js`). Every other writer — early-placement strategies, mate / stalemate patterns, anything downstream of `commitSingulars*` — must go through `shared/singular_constraints.js` (`tryNarrowSpecies` / `tryNarrowSingularRegion` / `tryNarrowSingular`), which intersect with the existing value and return `false` on empty intersection. Scenario deltas establish constraints; downstream code may refuse an attempt but must never overwrite them. Slot reassignments (e.g. `ctx.singulars.captured_piece = enemyMoved`) must verify the incoming singular's committed species is in the existing slot's `species_set` before reassigning.
+
 ## Diversity tuning knobs
 
 Code-side constants that affect generation diversity live at their

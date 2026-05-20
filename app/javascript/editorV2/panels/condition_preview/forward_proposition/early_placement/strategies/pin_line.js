@@ -8,6 +8,7 @@ import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_place
 import { placeKingOnRayThroughTarget } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { placeSliderBeyondTarget } from 'editorV2/panels/condition_preview/forward_proposition/pin_geometry'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { tryNarrowSingularRegion } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Pin-line strategy: places the mobility-constrained target piece on a ray,
 // with own king on one side (the pin anchor) and an enemy slider on the
@@ -104,7 +105,8 @@ function tryAtTargetAndStep(entry, constraint, targetPos, step, ctx, pieces, ran
   if (next === null) { return null }
 
   if (entry.source === 'singular') {
-    ctx.singulars[entry.actorKey].region = { kind: 'set', squares: new Set([targetPos]) }
+    const narrowed = tryNarrowSingularRegion(ctx.singulars[entry.actorKey], targetPos)
+    if (!narrowed) { return null }
   }
   return next
 }

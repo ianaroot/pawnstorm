@@ -8,6 +8,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { tryNarrowSingular } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 const CHECK_ATTACKER_SPECIES = Object.freeze([
@@ -295,9 +296,7 @@ export function placeKingInCheckmate({ pieces, team, frame, ctx, random }) {
 }
 
 function commitMovedPieceTo(ctx, species, position) {
-  const moved = ctx.singulars.moved_piece
-  moved.species_set = new Set([species])
-  moved.region = { kind: 'set', squares: new Set([position]) }
+  return tryNarrowSingular(ctx.singulars.moved_piece, species, position)
 }
 
 // Smother mate: BK in corner, 3 own pieces blocking escapes, WN giving check
@@ -334,7 +333,8 @@ function placeSmotherMate({ pieces, team, ctx, random }) {
         next = placePiece(next, knightPos, pieceCode(enemyTeam, Board.NIGHT))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos: cornerPos })) { continue }
-        commitMovedPieceTo(ctx, Board.NIGHT, knightPos)
+        const committed = commitMovedPieceTo(ctx, Board.NIGHT, knightPos)
+        if (!committed) { continue }
         return next
       }
     }
@@ -394,7 +394,8 @@ function placeBackRankMate({ pieces, team, ctx, random }) {
         next = placePiece(next, rookPos, pieceCode(enemyTeam, Board.ROOK))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos })) { continue }
-        commitMovedPieceTo(ctx, Board.ROOK, rookPos)
+        const committed = commitMovedPieceTo(ctx, Board.ROOK, rookPos)
+        if (!committed) { continue }
         return next
       }
     }
@@ -433,7 +434,8 @@ function placeQueenMate({ pieces, team, ctx, random }) {
         next = placePiece(next, queenPos, pieceCode(enemyTeam, Board.QUEEN))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos })) { continue }
-        commitMovedPieceTo(ctx, Board.QUEEN, queenPos)
+        const committed = commitMovedPieceTo(ctx, Board.QUEEN, queenPos)
+        if (!committed) { continue }
         return next
       }
     }
