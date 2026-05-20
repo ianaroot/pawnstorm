@@ -8,10 +8,6 @@ class BotGuide
       'Pawnstorm bots score chess moves. On each turn, your bot checks every legal move, walks through your graph for that move, changes the move score when conditions match, and then plays one of the highest-scoring moves.'
     end
 
-    def drawer_intro
-      'Use this while you build. Focus on how to read condition nodes, how branch order works, and how replay shows why a move scored the way it did.'
-    end
-
     def sections
       [
         what_your_bot_does,

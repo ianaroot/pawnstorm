@@ -2,7 +2,7 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-guide bot-intro"
+     data-controller="editor bot-intro"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
@@ -107,45 +107,6 @@
       </div>
     </div>
   </div>
-
-  <aside id="bot-guide-drawer" class="bot-guide-drawer hidden" data-bot-guide-target="drawer">
-    <div class="bot-guide-drawer__header">
-      <div>
-        <p class="bot-guide-drawer__eyebrow">In-Editor Guide</p>
-        <h2>Build a Chess Bot</h2>
-      </div>
-
-      <button
-        type="button"
-        class="bot-guide-drawer__close"
-        data-action="click->bot-guide#close"
-        aria-label="Close guide">Close</button>
-    </div>
-
-    <p class="bot-guide-drawer__intro"><%= BotGuide.drawer_intro %></p>
-
-    <nav class="bot-guide-drawer__index" aria-label="Guide sections">
-      <ol>
-        <% BotGuide.sections.each do |section| %>
-          <li>
-            <button
-              type="button"
-              class="bot-guide-drawer__index-link"
-              data-action="click->bot-guide#scrollToSection"
-              data-section-id="<%= section[:id] %>"><%= section[:title] %></button>
-          </li>
-        <% end %>
-      </ol>
-    </nav>
-
-    <div class="bot-guide-drawer__content" data-bot-guide-target="content">
-      <%= render 'shared/bot_guide', sections: BotGuide.sections, mode: :drawer %>
-    </div>
-
-    <div class="bot-guide-drawer__footer">
-      <%= link_to 'Read Full Guide', bot_help_path, class: 'btn-guide-link' %>
-    </div>
-  </aside>
 
   <div id="template-picker-modal" class="template-picker-modal hidden" aria-hidden="true">
     <div class="template-picker-modal__backdrop" data-template-picker-close></div>
