@@ -224,11 +224,11 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'deletes connection via delete button' do
       wait_for_editor
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       delete_connection(node1.id, node2.id)
 
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
       expect(Connection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(0)
       expect_history_count(2)
     end
@@ -365,14 +365,14 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       it 'undoes connection deletion' do
         wait_for_editor
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
 
         delete_connection(node1.id, node2.id)
-        expect(connection_count).to eq(0)
+        expect_connection_count(0)
 
         click_undo
 
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
       end
 
       it 'redoes connection deletion after undo' do
@@ -382,7 +382,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
         click_undo
         click_redo
 
-        expect(connection_count).to eq(0)
+        expect_connection_count(0)
       end
     end
   end
