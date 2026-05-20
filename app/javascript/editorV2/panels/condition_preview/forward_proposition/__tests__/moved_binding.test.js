@@ -232,7 +232,9 @@ import { feasibleRelatedToSlots } from '../moved_binding'
 
 // related-to proposition: emitted for the non-singular side of a bound
 // relational plan; its region points to the singular anchor (moved_piece).
-function relatedToProp(role, counterpart, operator = 'attack') {
+// `sourcePlan` is the originating plan reference (defaults to a fresh object
+// per call so each prop's plan is distinct unless an explicit ref is passed).
+function relatedToProp(role, counterpart, operator = 'attack', sourcePlan = {}) {
   return {
     team: counterpart.team,
     frame: 'current',
@@ -240,7 +242,8 @@ function relatedToProp(role, counterpart, operator = 'attack') {
     region: { kind: 'related-to', actor: 'moved_piece', role, operator },
     count_range: { min: 1, max: Infinity },
     aggregate_value_range: { min: 0, max: Infinity },
-    aggregate_mobility_range: { min: 0, max: Infinity }
+    aggregate_mobility_range: { min: 0, max: Infinity },
+    sourcePlan
   }
 }
 
@@ -262,11 +265,23 @@ describe('feasibleRelatedToSlots', () => {
     })
     const slots = feasibleRelatedToSlots(ctx)
     expect(slots).toHaveLength(2)
-    expect(slots[0].sourcePlan).toBe(p1)
+    expect(slots[0].sourcePlan).toBe(p1.sourcePlan)
     expect(slots[0].role).toBe('target')
     expect(slots[0].kind).toBe('related-to')
-    expect(slots[1].sourcePlan).toBe(p2)
+    expect(slots[1].sourcePlan).toBe(p2.sourcePlan)
     expect(slots[1].role).toBe('subject')
+  })
+
+  it('keys slot.sourcePlan by the proposition\'s sourcePlan (the plan reference)', () => {
+    const planRef = { tag: 'forced-plan' }
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN }, 'attack', planRef)
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    const [slot] = feasibleRelatedToSlots(ctx)
+    expect(slot.sourcePlan).toBe(planRef)
+    expect(slot.sourcePlan).not.toBe(p)
   })
 
   it('excludes related-to propositions anchored on other actors', () => {
@@ -309,8 +324,8 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
       singulars: { moved_piece: movedSingular(Board.NIGHT) },
       propositions: [p]
     })
-    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toContain(p)
-    expect(chooseMovedBinding(ctx, () => 0.99).assignments.map(a => a.sourcePlan)).toContain(p)
+    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toContain(p.sourcePlan)
+    expect(chooseMovedBinding(ctx, () => 0.99).assignments.map(a => a.sourcePlan)).toContain(p.sourcePlan)
   })
 
   it('layers optional relation slots on top of forced related-to', () => {
@@ -323,7 +338,7 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
     })
     const b = chooseMovedBinding(ctx, () => 0.99)
     const refs = b.assignments.map(a => a.sourcePlan)
-    expect(refs).toContain(p)
+    expect(refs).toContain(p.sourcePlan)
     expect(refs).toContain(rel.sourcePlan)
   })
 
@@ -333,7 +348,18 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
       singulars: { moved_piece: movedSingular(Board.NIGHT) },
       propositions: [p]
     })
-    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toEqual([p])
+    expect(chooseMovedBinding(ctx, () => 0).assignments.map(a => a.sourcePlan)).toEqual([p.sourcePlan])
+  })
+
+  it('roleForPlan resolves a forced related-to binding by plan reference', () => {
+    const planRef = { tag: 'forced-plan' }
+    const p = relatedToProp('target', { team: Board.BLACK, species: Board.QUEEN }, 'attack', planRef)
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      propositions: [p]
+    })
+    const b = chooseMovedBinding(ctx, () => 0.5)
+    expect(roleForPlan(b, planRef)).toBe('target')
   })
 })
 

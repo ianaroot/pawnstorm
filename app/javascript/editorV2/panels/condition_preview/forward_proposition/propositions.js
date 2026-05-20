@@ -225,7 +225,8 @@ function relationalSideShape(plan, side, otherIsSingular) {
     species_set: speciesSetForRelationalSide(plan, side),
     region: otherIsSingular
       ? { kind: 'related-to', actor: otherActor, role: side === 'subject' ? 'target' : 'subject', operator: plan.operator }
-      : { kind: 'all' }
+      : { kind: 'all' },
+    sourcePlan: plan
   }
 }
 

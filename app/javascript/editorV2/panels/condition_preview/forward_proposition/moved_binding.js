@@ -43,7 +43,7 @@ export function feasibleRelatedToSlots(ctx) {
   for (const prop of ctx?.propositions ?? []) {
     if (prop.region?.kind !== 'related-to') { continue }
     if (prop.region.actor !== POOL_ACTOR) { continue }
-    slots.push({ sourcePlan: prop, role: prop.region.role, kind: 'related-to' })
+    slots.push({ sourcePlan: prop.sourcePlan, role: prop.region.role, kind: 'related-to' })
   }
   return slots
 }

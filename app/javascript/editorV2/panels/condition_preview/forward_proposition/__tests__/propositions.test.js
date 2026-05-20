@@ -529,6 +529,43 @@ describe('emitConstraintsFromPlan — crossFrame source field', () => {
   })
 })
 
+describe('emitConstraintsFromPlan — proposition.sourcePlan', () => {
+  it('attaches sourcePlan to a related-to proposition emitted via buildRelationalSideProposition', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any'
+    }])
+    const [plan] = combinedPlan.plans
+
+    const { propositions } = emitConstraintsFromPlan(plan)
+    expect(propositions[0].region.kind).toBe('related-to')
+    expect(propositions[0].sourcePlan).toBe(plan)
+  })
+
+  it('attaches sourcePlan to related-to propositions emitted via buildPbsPair', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any'
+    }])
+    const [plan] = combinedPlan.plans
+
+    const { propositions } = emitConstraintsFromPlan(plan)
+    const priorProp = propositions.find(p => p.frame === 'prior')
+    const currentProp = propositions.find(p => p.frame === 'current')
+    expect(priorProp.region.kind).toBe('related-to')
+    expect(currentProp.region.kind).toBe('related-to')
+    expect(priorProp.sourcePlan).toBe(plan)
+    expect(currentProp.sourcePlan).toBe(plan)
+  })
+})
+
 describe('emitConstraintsFromPlan — crossFrame operator field', () => {
   it('stores the census operator on crossFrame entries for census PBS plans', () => {
     const combinedPlan = buildCombinedPlan([{
