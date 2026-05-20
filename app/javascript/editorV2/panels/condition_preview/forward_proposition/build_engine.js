@@ -1,7 +1,8 @@
 import profileCollector from 'gameplay/profile_collector'
 import { placeKingsIfAbsent } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { buildChainCtx } from './chain_ctx'
-import { commitSingularsSpecies } from './commit_singulars_species'
+import { commitSingularsSpecies, applyNullStayCoinFlips } from './commit_singulars_species'
+import { chooseMovedBinding } from './moved_binding'
 import { commitSingularsPosition } from './commit_singulars_position'
 import { earlyPlaceConstraintTargets } from './early_placement/place_constraint_targets'
 import { isSatisfiable } from './is_satisfiable'
@@ -36,13 +37,12 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario) 
   narrowMovedPieceForRegion(ctx)
   if (!isSatisfiable(ctx)) { return buildFailed('not_satisfiable') }
 
-  commitSingularsSpecies(ctx, random)
-  // materializeRegion's permissive guard returns empty for 'related-to' regions with uncommitted
-  // anchors. Two consumers depend on this: respectsAllCaps (otherwise silently bypasses caps),
-  // applyRelationsToAnchors (otherwise fails to narrow regions). Don't add placement before
-  // commitSingularsPosition (today only earlyPlaceConstraintTargets), don't reorder ACTOR_KEYS
-  // so dependents commit before anchors.
+  ctx.movedBinding = chooseMovedBinding(ctx, random)
+  applyNullStayCoinFlips(ctx, random)
+  // Pre-commit so strategies narrow singulars instead of stomping; caps
+  // on related-to regions bypass here, fail downstream at commit.
   const earlyPieces = earlyPlaceConstraintTargets(ctx, random)
+  commitSingularsSpecies(ctx, random)
   commitSingularsPosition(ctx, random, earlyPieces)
 
   let pieces = placeSingulars(ctx.singulars, random, earlyPieces)

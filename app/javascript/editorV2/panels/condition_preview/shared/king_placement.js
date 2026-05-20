@@ -8,7 +8,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { tryNarrowSingular } from 'editorV2/panels/condition_preview/shared/singular_constraints'
+import { tryNarrowMovedPiece } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 const CHECK_ATTACKER_SPECIES = Object.freeze([
@@ -296,7 +296,7 @@ export function placeKingInCheckmate({ pieces, team, frame, ctx, random }) {
 }
 
 function commitMovedPieceTo(ctx, species, position) {
-  return tryNarrowSingular(ctx.singulars.moved_piece, species, position)
+  return tryNarrowMovedPiece(ctx, species, position)
 }
 
 // Smother mate: BK in corner, 3 own pieces blocking escapes, WN giving check

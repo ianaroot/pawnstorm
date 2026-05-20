@@ -146,8 +146,8 @@ const MATE_CHAIN_PAYLOADS = [
 ]
 
 describe('buildAttempt — mate chain (allied attack enemy king + enemy mobility=0)', () => {
-  it('generates at least 5 mate examples across 100 attempts', () => {
-    expect(countSuccesses(MATE_CHAIN_PAYLOADS, 100)).toBeGreaterThanOrEqual(5)
+  it('generates at least 10 mate examples across 100 attempts', () => {
+    expect(countSuccesses(MATE_CHAIN_PAYLOADS, 100)).toBeGreaterThanOrEqual(10)
   })
 })
 

@@ -11,45 +11,10 @@ const PROFILE_LABEL_PREFIXES = [
   "condition.v2."
 ]
 
-// Baselines recorded 2026-05-18, N=1000 per payload, seed=1 (deterministic).
-// `baseline:` is the verified count; forward_proposition_baselines.test.js
-// enforces ±20%. Re-record after intended mechanism/ordering changes; prior
-// numbers are in git history.
-//
-// SHIFT LOG — minor within-±20% drifts left at their original baseline (NOT
-// re-recorded) so each regression's cause stays traceable to a commit:
-//  - commit <TBD: Phase 1 step 2 — shield onto chooseRelationVariant helper,
-//    enemy_moved_piece adopted as shield shielder/target/attacker>:
-//      shield aggregate_value > PBS                       389 → 403
-//      shield aggregate_value > PBS (non-bound, both-allied) 381 → 391
-//      enemy non-pawn shield enemy queen                  591 → 593
-//      allied bishop shield allied rook (non-bound, current) 708 → 742
-//      chain 112421·112419·112418                         445 → 403
-//      chain synthetic 3-relation (attack+defend+shield)  409 → 383
-//    Cause: enemy-side shields now recruit enemy_moved_piece (intended
-//    participation gain); chain drifts are the same mechanism downstream.
-//  - commit <TBD: Phase 1 step 3 — anchored moved/enemy geometry in
-//    attack_or_defend.js / adjacent.js>:
-//      attack count > PBS                                 112 → 108
-//      attack aggregate_value > PBS                       112 → 108
-//      adjacent count > PBS                               362 → 352
-//      defend aggregate_value > PBS (non-bound)           390 → 382
-//      defend count < PBS (non-bound, both-allied)        124 → 102  (-17.7%, closest to ±20% gate — watch)
-//      allied pawn defend allied minor                    802 → 797
-//      allied any adjacent enemy king                     528 → 602
-//      allied non-queen attack enemy queen                617 → 624
-//      allied bishop attack enemy rook (non-bound, cur)   714 → 711
-//      allied knight defend allied bishop (non-bound,cur) 769 → 765
-//      allied knight adjacent enemy queen (non-bound,cur) 663 → 654
-//      chain synthetic 3-relation (attack+defend+shield)  409 → 390  (was 383 after step 2 above)
-//    Cause: anchored moved/enemy recruitment shifts placement
-//    distribution across the non-bound relation satisfiers.
-//  - commit <TBD: independent special/standard shifts + singular-constraint discipline>:
-//    Two collection shifts (special / standard) so neither starves the other,
-//    plus per-group caps so castle / promotion / en_passant share the special
-//    budget. Downstream code can no longer silently overwrite a scenario's
-//    moved_piece commitment — must go through shared/singular_constraints.js.
-//    Verified up across all 26 payloads; 11 baselines re-recorded (outside ±20%).
+// N=1000 per payload, seed=1 (deterministic). `baseline:` is the verified
+// count; forward_proposition_baselines.test.js enforces ±20%. Re-record
+// after intended mechanism/ordering changes — prior values and the why
+// are in git history.
 const PAYLOADS = [
   {
     baseline: 484,
@@ -104,7 +69,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 390,
+    baseline: 475,
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -143,7 +108,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 533,
+    baseline: 399,
     name: "rook mobility < 5 (mobility-constrained)",
     payload: {
       version: 2, kind: "census",
@@ -210,7 +175,7 @@ const PAYLOADS = [
   // route through cross_frame instead). Added to give the relations path
   // benchmark coverage.
   {
-    baseline: 591,
+    baseline: 711,
     name: "enemy non-pawn shield enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -252,7 +217,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 617,
+    baseline: 761,
     name: "allied non-queen attack enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -312,7 +277,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 708,
+    baseline: 860,
     name: "allied bishop shield allied rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
