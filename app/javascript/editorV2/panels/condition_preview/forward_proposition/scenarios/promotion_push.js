@@ -1,5 +1,6 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { MOVE_KIND_PROMOTION } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
 
 const PROMOTION_SPECIES = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT])
@@ -11,6 +12,7 @@ function lastRankSquares(team) {
 
 export const promotionPushScenario = {
   name: 'promotion_push',
+  moveKind: MOVE_KIND_PROMOTION,
   attemptWeight: 10,
 
   buildCtxDelta(combinedPlan) {

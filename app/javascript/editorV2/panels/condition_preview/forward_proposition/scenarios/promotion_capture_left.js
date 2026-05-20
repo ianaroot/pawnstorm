@@ -1,5 +1,6 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { MOVE_KIND_PROMOTION } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
 
 const PROMOTION_SPECIES = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT])
@@ -17,6 +18,7 @@ function lastRankSquaresExcludingFile(team, excludeFile) {
 
 export const promotionCaptureLeftScenario = {
   name: 'promotion_capture_left',
+  moveKind: MOVE_KIND_PROMOTION,
   attemptWeight: 5,
 
   buildCtxDelta(combinedPlan) {

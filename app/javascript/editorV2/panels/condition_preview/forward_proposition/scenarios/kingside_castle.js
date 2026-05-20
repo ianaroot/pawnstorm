@@ -1,5 +1,6 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraints } from './proposition_helpers'
 
 const PERMISSIVE = Object.freeze({ min: 0, max: Infinity })
@@ -10,6 +11,7 @@ function squareAt(team, file) {
 
 export const kingsideCastleScenario = {
   name: 'kingside_castle',
+  moveKind: MOVE_KIND_CASTLE,
   attemptWeight: 20,
 
   buildCtxDelta(combinedPlan) {
