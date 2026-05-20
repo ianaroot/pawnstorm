@@ -5,7 +5,7 @@ import Connection from 'editorV2/models/Connection'
 import generateConditionExamples from 'editorV2/panels/condition_preview/orchestrator'
 import { pipelineStats } from 'editorV2/panels/condition_preview/shared/pipeline_stats'
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/condition_chain_selection'
-import { formatConditionPreview } from 'editorV2/utils/conditionPreviewFormatter'
+import { formatConditionSentence } from 'editorV2/utils/conditionPreviewFormatter'
 import { exampleId } from 'editorV2/utils/example_id'
 
 const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
@@ -157,7 +157,7 @@ class EditorActions {
       return
     }
 
-    const conditionLabels = chain.payloads.map(p => formatConditionPreview(p).text)
+    const conditionLabels = chain.payloads.map(p => formatConditionSentence(p))
     this._runChainGeneration({ chain, conditionLabels, previousExamples: [] })
   }
 
