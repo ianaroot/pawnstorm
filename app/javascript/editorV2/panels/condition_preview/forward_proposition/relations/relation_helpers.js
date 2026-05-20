@@ -4,9 +4,9 @@ import {
 import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { regionAllows } from '../region'
+import { regionPossiblyContains } from '../region'
 
-export { regionAllows }
+export { regionPossiblyContains }
 
 // Cap on iterations for relation satisfiers' count/value loops. Covers count_range
 // up to ~10 and aggregate_value up to ~30 (worst-case low-value species).
@@ -48,7 +48,7 @@ export function candidatesForSide(side, pieces) {
     for (const pos of ALL_POSITIONS) {
       if (pieces.has(pos)) { continue }
       if (!legalPlacementForSpecies(pos, species)) { continue }
-      if (!regionAllows(side.region, pos)) { continue }
+      if (!regionPossiblyContains(side.region, pos)) { continue }
       candidates.push({ kind: 'fresh', position: pos, species, team: side.team })
     }
   }

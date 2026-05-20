@@ -3,15 +3,15 @@ import {
   pieceCode, shuffled, legalPlacementForSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { materialValue } from 'gameplay/board_query_utils'
-import { compareValues } from 'bot_execution/utils'
 import { mobilityAt } from 'gameplay/mobility'
+import { valueComparisonEntryPasses } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 import {
-  tryNarrowSingular, tryNarrowSingularRegion, regionAllows
+  tryNarrowSingular, tryNarrowSingularRegion, regionDefinitelyContains
 } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkState with checkRestriction (one mobility-restricting king arrangement per team).
@@ -100,7 +100,7 @@ function arrangeCapture(pieces, ctx, random) {
         if (origins.length === 0) { continue }
         if (!respectsAllCaps(moved.team, movedSpecies, x, ctx, pieces)) { continue }
         if (!movedFitsBinding(ctx, movedSpecies, x)) { continue }
-        if (!regionAllows(moved.region, x)) { continue }
+        if (!regionDefinitelyContains(moved.region, x)) { continue }
         if (!moved.species_set.has(movedSpecies)) { continue }
         // All checks passed — atomic commit.
         moved.species_set = new Set([movedSpecies])
@@ -118,20 +118,17 @@ function arrangeCapture(pieces, ctx, random) {
 function movedFitsBinding(ctx, species, position) {
   for (const a of ctx?.movedBinding?.assignments ?? []) {
     if (!a.side.species_set.has(species)) { return false }
-    if (!regionAllows(a.side.region, position)) { return false }
+    if (!regionDefinitelyContains(a.side.region, position)) { return false }
   }
   return true
 }
 
 function valueComparisonsPass(singular, otherActorKey, mySpecies, otherSpecies) {
+  const myValue = materialValue(mySpecies)
+  const otherValue = materialValue(otherSpecies)
   for (const entry of singular.valueComparisonsToAnchors ?? []) {
     if (entry.otherActor !== otherActorKey) { continue }
-    const myValue = materialValue(mySpecies)
-    const otherValue = materialValue(otherSpecies)
-    const passes = entry.lowerSide === 'lhs'
-      ? compareValues(myValue, entry.comparator, otherValue)
-      : compareValues(otherValue, entry.comparator, myValue)
-    if (!passes) { return false }
+    if (!valueComparisonEntryPasses(entry, myValue, otherValue)) { return false }
   }
   return true
 }

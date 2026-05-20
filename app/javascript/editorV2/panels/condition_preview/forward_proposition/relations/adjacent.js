@@ -3,10 +3,10 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  matchesSide, candidatesForSide, applyOne, regionAllows,
+  matchesSide, candidatesForSide, applyOne, regionPossiblyContains,
   requirementsMet, boundSingularInActiveSet, sideAllowsPos
 } from './relation_helpers'
-import { runAnchoredSatisfier, twoSidedRoles } from './anchored'
+import { runAnchoredSatisfier } from './anchored'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
@@ -16,7 +16,6 @@ export function satisfyAdjacent(relation, pieces, ctx, random) {
 
   return runAnchoredSatisfier({
     relation, pieces, ctx, random,
-    roles: twoSidedRoles(relation),
     requirementsMet: adjacentRequirementsMet,
     tryAnchored, tryPlace
   })
@@ -42,7 +41,7 @@ function tryAnchored(relation, variant, pieces, ctx, random) {
     if (pieces.has(pos)) { continue }
     for (const species of shuffled([...relation.targetSide.species_set].filter(s => s !== null), random)) {
       if (!legalPlacementForSpecies(pos, species)) { continue }
-      if (!regionAllows(relation.targetSide.region, pos)) { continue }
+      if (!regionPossiblyContains(relation.targetSide.region, pos)) { continue }
       const placed = applyOne(pieces, { kind: 'fresh', position: pos, species, team: relation.targetSide.team }, ctx)
       if (placed !== null && placed !== pieces) { return placed }
     }
@@ -112,7 +111,7 @@ function subjectsAdjacentTo(side, targetPos, pieces) {
     for (const sPos of adjacentNeighborPositions(targetPos)) {
       if (pieces.has(sPos)) { continue }
       if (!legalPlacementForSpecies(sPos, species)) { continue }
-      if (!regionAllows(side.region, sPos)) { continue }
+      if (!regionPossiblyContains(side.region, sPos)) { continue }
       candidates.push({ kind: 'fresh', position: sPos, species, team: side.team })
     }
   }

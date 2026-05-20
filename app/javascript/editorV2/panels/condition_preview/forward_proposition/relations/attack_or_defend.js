@@ -8,11 +8,11 @@ import {
 } from 'gameplay/board_query_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  matchesSide, candidatesForSide, applyOne, regionAllows,
+  matchesSide, candidatesForSide, applyOne, regionPossiblyContains,
   requirementsMet, boundSingularInActiveSet, sideAllowsPos,
   singularPosition
 } from './relation_helpers'
-import { runAnchoredSatisfier, satisfyLoop, twoSidedRoles } from './anchored'
+import { runAnchoredSatisfier, satisfyLoop } from './anchored'
 
 const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3
@@ -46,7 +46,6 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
 
   return runAnchoredSatisfier({
     relation, pieces, ctx, random,
-    roles: twoSidedRoles(relation),
     requirementsMet: attackOrDefendRequirementsMet,
     tryAnchored, tryPlace
   })
@@ -221,7 +220,7 @@ function subjectsControlling(side, targetPos, pieces, board) {
     for (const pos of positions) {
       if (pieces.has(pos)) { continue }
       if (!legalPlacementForSpecies(pos, species)) { continue }
-      if (!regionAllows(side.region, pos)) { continue }
+      if (!regionPossiblyContains(side.region, pos)) { continue }
       candidates.push({ kind: 'fresh', position: pos, species, team: side.team })
     }
   }
@@ -352,7 +351,7 @@ function placeSubjectAttackingHook(relation, pieces, ctx, random, subjectSpecies
   for (const pos of positions) {
     if (pieces.has(pos)) { continue }
     if (!legalPlacementForSpecies(pos, subjectSpecies)) { continue }
-    if (!regionAllows(relation.subjectSide.region, pos)) { continue }
+    if (!regionPossiblyContains(relation.subjectSide.region, pos)) { continue }
     const candidate = { kind: 'fresh', position: pos, species: subjectSpecies, team: relation.subjectSide.team }
     const next = applyOne(pieces, candidate, ctx, { skipRelation: relation })
     if (next !== null) { return next }
@@ -387,7 +386,7 @@ function targetCandidatesOfSpecies(side, pieces, species) {
   for (const pos of ALL_POSITIONS) {
     if (pieces.has(pos)) { continue }
     if (!legalPlacementForSpecies(pos, species)) { continue }
-    if (!regionAllows(side.region, pos)) { continue }
+    if (!regionPossiblyContains(side.region, pos)) { continue }
     result.push({ kind: 'fresh', position: pos, species, team: side.team })
   }
   return result

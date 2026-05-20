@@ -1,8 +1,8 @@
 import { materialValue } from 'gameplay/board_query_utils'
-import { compareValues } from 'bot_execution/utils'
 import { pickWeightedSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { movedSpeciesPool } from './moved_binding'
-import { ACTOR_PRIORITY } from './singulars'
+import { ACTOR_PRIORITY, valueComparisonEntryPasses } from './singulars'
 
 const ACTOR_KEYS = Object.freeze(
   Object.keys(ACTOR_PRIORITY).sort((a, b) => ACTOR_PRIORITY[a] - ACTOR_PRIORITY[b])
@@ -56,17 +56,13 @@ function commitSpeciesFor(singular, singulars, committed, ctx, random, key) {
 function applyValueComparisonsToAnchors(singular, singulars, committed) {
   for (const entry of singular.valueComparisonsToAnchors ?? []) {
     if (!committed.has(entry.otherActor)) { continue }
-    const other = singulars[entry.otherActor]
-    const otherSpecies = [...other.species_set][0]
-    if (otherSpecies === null || otherSpecies === undefined) { continue }
+    const otherSpecies = committedSpecies(singulars[entry.otherActor])
+    if (otherSpecies === null) { continue }
     const otherValue = materialValue(otherSpecies)
     const filtered = new Set()
     for (const s of singular.species_set) {
       if (s === null) { continue }
-      const passes = entry.lowerSide === 'lhs'
-        ? compareValues(materialValue(s), entry.comparator, otherValue)
-        : compareValues(otherValue, entry.comparator, materialValue(s))
-      if (passes) { filtered.add(s) }
+      if (valueComparisonEntryPasses(entry, materialValue(s), otherValue)) { filtered.add(s) }
     }
     singular.species_set = filtered
   }

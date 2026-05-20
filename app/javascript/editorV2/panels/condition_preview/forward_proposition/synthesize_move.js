@@ -10,7 +10,7 @@ import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/sh
 import { buildPriorBoard, buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { enemyKingPosition } from './cross_frame/mechanisms/shifts_mobility_helpers'
-import { regionAllows } from './region'
+import { regionPossiblyContains } from './region'
 import { standardScenario } from './scenarios/standard'
 
 export function synthesizeMove(ctx, pieces, random, scenario = standardScenario) {
@@ -25,7 +25,7 @@ export function synthesizeMove(ctx, pieces, random, scenario = standardScenario)
     ? [overrides.startPosition]
     : shuffled(
         originCandidatesForSpecies(endPos, species, team)
-          .filter(p => p !== endPos && !pieces.has(p) && regionAllows(moved.priorRegion, p)),
+          .filter(p => p !== endPos && !pieces.has(p) && regionPossiblyContains(moved.priorRegion, p)),
         random
       )
   const recentMoveContext = scenario.resolveRecentMoveContext?.(ctx, random) ?? recentMoveContextForEnemy(ctx, random)
