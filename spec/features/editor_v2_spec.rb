@@ -43,6 +43,32 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect_node_count(1)
     end
 
+    describe 'how-it-works walkthrough modal' do
+      it 'opens, navigates between slides, and closes' do
+        trigger = find('button.btn-guide', text: 'How it works')
+        # JS click: the toolbar overlaps the trigger at the feature-test viewport.
+        page.execute_script('arguments[0].click()', trigger)
+
+        expect(page).to have_css('#bot-intro-modal[aria-hidden="false"]')
+        expect(page).to have_css('.bot-intro-modal__dialog[role="dialog"]')
+        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
+        expect(page).to have_button('Back', disabled: true)
+
+        click_button 'Next'
+
+        expect(page).to have_css('.bot-intro-slide__title', text: 'Condition nodes & the form')
+        expect(page).to have_button('Back', disabled: false)
+
+        click_button 'Back'
+
+        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
+
+        find('.bot-intro-modal__close').click
+
+        expect(page).to have_css('#bot-intro-modal[aria-hidden="true"]', visible: :all)
+        expect(page).to have_no_css('.bot-intro-slide__title', text: 'How your bot thinks')
+      end
+    end
   end
 
   # ============================================================
