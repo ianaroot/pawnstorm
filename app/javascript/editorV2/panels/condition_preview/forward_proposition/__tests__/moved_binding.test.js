@@ -371,6 +371,82 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
 
 import { bindingComboKey, enumerateFeasibleBindings } from '../moved_binding'
 
+describe('chooseMovedBinding — coverage-record-driven weighting', () => {
+  function ctxFor(rel) {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.NIGHT) },
+      relations: [rel]
+    })
+    ctx.combinedPlan = { plans: [rel.sourcePlan] }
+    return ctx
+  }
+
+  it('excludes a shape whose coverage weight is 0', () => {
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = ctxFor(rel)
+    const record = {
+      weightFor: (_scenario, key) => key === '' ? 1 : 0  // freeze single-slot, keep bystander
+    }
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50, record, 'standard')
+      expect(b.assignments.length).toBe(0)
+    }
+  })
+
+  it('always picks the only non-zero-weight shape', () => {
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = ctxFor(rel)
+    const record = {
+      weightFor: (_scenario, key) => key === '0:subject' ? 1 : 0
+    }
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50, record, 'standard')
+      expect(b.assignments.length).toBe(1)
+      expect(b.assignments[0].role).toBe('subject')
+    }
+  })
+
+  it('falls back to uniform pick when all weights are 0', () => {
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = ctxFor(rel)
+    const record = { weightFor: () => 0 }
+    let sawBystander = false
+    let sawSingle = false
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50, record, 'standard')
+      if (b.assignments.length === 0) { sawBystander = true }
+      else { sawSingle = true }
+    }
+    expect(sawBystander).toBe(true)
+    expect(sawSingle).toBe(true)
+  })
+
+  it('passes scenarioName through to weightFor', () => {
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = ctxFor(rel)
+    const seen = new Set()
+    const record = {
+      weightFor: (scenario) => { seen.add(scenario); return 1 }
+    }
+    chooseMovedBinding(ctx, () => 0.5, record, 'castle')
+    expect(seen.has('castle')).toBe(true)
+  })
+
+  it('preserves uniform-pick behavior when coverageRecord is null', () => {
+    const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
+    const ctx = ctxFor(rel)
+    let sawBystander = false
+    let sawSingle = false
+    for (let i = 0; i < 50; i += 1) {
+      const b = chooseMovedBinding(ctx, () => (i + 0.5) / 50, null, null)
+      if (b.assignments.length === 0) { sawBystander = true }
+      else { sawSingle = true }
+    }
+    expect(sawBystander).toBe(true)
+    expect(sawSingle).toBe(true)
+  })
+})
+
 describe('bindingComboKey', () => {
   it('returns the empty string for an empty (bystander) binding', () => {
     const plan = { tag: 'p0' }

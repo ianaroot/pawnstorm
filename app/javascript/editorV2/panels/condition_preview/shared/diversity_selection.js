@@ -28,6 +28,10 @@ export function movedPieceSignature(example) {
   return example.afterBoard.pieceTypeAt(example.moveObject.endPosition)
 }
 
+export function bindingComboSignature(example) {
+  return example.bindingComboKey ?? ''
+}
+
 // Sum of material values across a side's pieces. Bucketing by the
 // (subject value sum, target value sum) pair surfaces examples that
 // satisfy the same value condition via different species combinations

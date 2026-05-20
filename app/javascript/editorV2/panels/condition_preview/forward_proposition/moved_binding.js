@@ -80,9 +80,24 @@ export function bindingFeasible(set, ctx) {
   return true
 }
 
-export function chooseMovedBinding(ctx, random) {
+export function chooseMovedBinding(ctx, random, coverageRecord = null, scenarioName = null) {
   const bindings = enumerateFeasibleBindings(ctx)
-  return bindings[Math.floor(random() * bindings.length)]
+  if (!coverageRecord) {
+    return bindings[Math.floor(random() * bindings.length)]
+  }
+  const weights = bindings.map(b =>
+    coverageRecord.weightFor(scenarioName, bindingComboKey(b, ctx.combinedPlan))
+  )
+  const total = weights.reduce((s, w) => s + w, 0)
+  if (total === 0) {
+    return bindings[Math.floor(random() * bindings.length)]
+  }
+  let r = random() * total
+  for (let i = 0; i < bindings.length; i += 1) {
+    r -= weights[i]
+    if (r < 0) { return bindings[i] }
+  }
+  return bindings[bindings.length - 1]
 }
 
 export function movedSpeciesPool(singular, ctx) {

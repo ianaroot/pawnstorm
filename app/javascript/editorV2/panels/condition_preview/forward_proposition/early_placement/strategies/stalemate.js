@@ -117,6 +117,7 @@ function arrangeCapture(pieces, ctx, random) {
 
 function movedFitsBinding(ctx, species, position) {
   for (const a of ctx?.movedBinding?.assignments ?? []) {
+    if (a.kind === 'related-to') { continue }
     if (!a.side.species_set.has(species)) { return false }
     if (!regionDefinitelyContains(a.side.region, position)) { return false }
   }

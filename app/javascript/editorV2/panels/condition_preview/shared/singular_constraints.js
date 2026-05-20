@@ -30,6 +30,7 @@ export function tryNarrowMovedPiece(ctx, species, position) {
   if (!moved.species_set.has(species)) { return false }
   if (!regionDefinitelyContains(moved.region, position)) { return false }
   for (const a of ctx?.movedBinding?.assignments ?? []) {
+    if (a.kind === 'related-to') { continue }
     if (!a.side.species_set.has(species)) { return false }
     if (!regionDefinitelyContains(a.side.region, position)) { return false }
   }

@@ -3,6 +3,7 @@ import { Candidate } from '../shared/candidate'
 import { CandidateVerifier } from '../shared/candidate_verifier'
 import { ExampleFactory } from '../shared/example_factory'
 import { buildAttempt } from './build_engine'
+import { createCoverageRecord, STANDARDS_KEY } from './coverage_record'
 import { clearPlanCache } from './relations/attack_or_defend'
 import { eligibleScenariosFor } from './scenarios/eligibility'
 import { SCENARIO_REGISTRY } from './scenarios/registry'
@@ -19,18 +20,21 @@ function bump(produced, key) {
 
 function runScenario({
   combinedPlan, scenario, budget, random, deadline, verifier, factory,
-  addUnique, standardExamples, produced, poolCap, shiftKey, scenarioCap, counter
+  addUnique, standardExamples, produced, poolCap, shiftKey, scenarioCap, counter,
+  coverageRecord
 }) {
+  const scenarioName = scenario.moveKind ?? STANDARDS_KEY
   for (let i = 0; i < budget; i += 1) {
     if (scenarioCap != null && counter.n >= scenarioCap) { return 'scenario_full' }
     if (standardExamples.length >= poolCap) { return 'pool_full' }
     if (Date.now() > deadline) { return 'deadline' }
-    const result = buildAttempt(combinedPlan, random, scenario)
-    if (!result) {
+    const attempt = buildAttempt(combinedPlan, random, scenario, coverageRecord)
+    if (!attempt) {
       profileCollector.increment('forward_proposition.attempt.build_failed')
       continue
     }
-    const candidate = new Candidate({ priorBoard: result.priorBoard, moveObject: result.moveObject })
+    const { move, binding } = attempt
+    const candidate = new Candidate({ priorBoard: move.priorBoard, moveObject: move.moveObject })
     const cause = verifier.rejectionCause(candidate)
     if (cause !== null) {
       profileCollector.increment('forward_proposition.attempt.verifier_rejected')
@@ -38,12 +42,16 @@ function runScenario({
       continue
     }
     profileCollector.increment('forward_proposition.attempt.verifier_passed')
-    const example = factory.build(candidate, { generationPath: 'forward-proposition', geometryKey: 'forward' })
+    const example = factory.build(candidate, { generationPath: 'forward-proposition', geometryKey: 'forward', binding })
     if (!example) { continue }
     bump(produced, 'forward-proposition')
     bump(produced, shiftKey)
     counter.n += 1
+    const sizeBefore = standardExamples.length
     addUnique(example, standardExamples)
+    if (standardExamples.length > sizeBefore) {
+      coverageRecord.noteVerifiedExample(scenarioName, example.bindingComboKey)
+    }
   }
   return 'budget_exhausted'
 }
@@ -58,6 +66,7 @@ export function collectForwardPropositionExamples({
   clearPlanCache()
   const verifier = new CandidateVerifier({ combinedPlan })
   const factory = new ExampleFactory({ combinedPlan })
+  const coverageRecord = createCoverageRecord()
   const eligible = eligibleScenariosFor(combinedPlan, SCENARIO_REGISTRY)
 
   const eligiblePerGroup = {}
@@ -71,7 +80,7 @@ export function collectForwardPropositionExamples({
       combinedPlan, scenario, budget, random, deadline, verifier, factory,
       addUnique, standardExamples, produced,
       poolCap: maxStandardSize, shiftKey: 'forward-proposition.special',
-      scenarioCap, counter: { n: 0 }
+      scenarioCap, counter: { n: 0 }, coverageRecord
     })
     if (stop === 'pool_full' || stop === 'deadline') { return }
   }
@@ -80,7 +89,7 @@ export function collectForwardPropositionExamples({
     combinedPlan, scenario: standardScenario, budget: attempts, random, deadline,
     verifier, factory, addUnique, standardExamples, produced,
     poolCap: maxStandardSize, shiftKey: 'forward-proposition.standard',
-    scenarioCap: null, counter: { n: 0 }
+    scenarioCap: null, counter: { n: 0 }, coverageRecord
   })
 }
 

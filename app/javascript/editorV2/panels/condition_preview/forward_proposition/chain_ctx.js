@@ -15,6 +15,7 @@ export function buildChainCtx(combinedPlan) {
   }
   return {
     singulars, propositions, relations, crossFrame,
+    combinedPlan,
     movingTeam: combinedPlan.movingTeam,
     enemyTeam: combinedPlan.enemyTeam
   }
