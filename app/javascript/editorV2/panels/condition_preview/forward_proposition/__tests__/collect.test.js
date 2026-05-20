@@ -3,7 +3,7 @@ import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { candidateIdentity } from 'editorV2/panels/condition_preview/shared/example_utils'
 import {
-  collectForwardPropositionExamples, buildScenarioBudgets
+  collectForwardPropositionExamples, specialScenarioBudgets
 } from 'editorV2/panels/condition_preview/forward_proposition/collect'
 
 function seededRandom(seed = 1) {
@@ -150,7 +150,7 @@ describe('collectForwardPropositionExamples', () => {
   })
 })
 
-describe('buildScenarioBudgets', () => {
+describe('specialScenarioBudgets', () => {
   const mockScenario = (name, weight) => ({ name, attemptWeight: weight, buildCtxDelta: () => ({}) })
   const mockA = mockScenario('mock-a', 10)
   const mockB = mockScenario('mock-b', 10)
@@ -161,41 +161,38 @@ describe('buildScenarioBudgets', () => {
     return result.find(r => r.scenario.name === name)?.budget
   }
 
-  it('budgets are proportional to weights (within ceil tolerance)', () => {
-    const result = buildScenarioBudgets(allMocks, 200)
+  it('splits the special budget proportionally to weight', () => {
+    const result = specialScenarioBudgets(allMocks, 200)
     const a = findBudget(result, 'mock-a')
     const b = findBudget(result, 'mock-b')
     const c = findBudget(result, 'mock-c')
-    expect(a).toBe(b)                          // equal weights → equal budgets
-    expect(c).toBeGreaterThanOrEqual(2 * a - 1) // c is 2x a's weight
+    expect(a).toBe(b)
+    expect(c).toBeGreaterThanOrEqual(2 * a - 1)
     expect(c).toBeLessThanOrEqual(2 * a + 1)
   })
 
-  it('ineligible scenarios redistribute their weight to remaining eligibles', () => {
-    const allResult = buildScenarioBudgets(allMocks, 200)
-    const partialResult = buildScenarioBudgets([mockA, mockC], 200)
-    expect(findBudget(partialResult, 'mock-a')).toBeGreaterThan(findBudget(allResult, 'mock-a'))
-    expect(findBudget(partialResult, 'mock-c')).toBeGreaterThan(findBudget(allResult, 'mock-c'))
+  it('redistributes weight of absent scenarios to the remaining eligibles', () => {
+    const all = specialScenarioBudgets(allMocks, 200)
+    const partial = specialScenarioBudgets([mockA, mockC], 200)
+    expect(findBudget(partial, 'mock-a')).toBeGreaterThan(findBudget(all, 'mock-a'))
+    expect(findBudget(partial, 'mock-c')).toBeGreaterThan(findBudget(all, 'mock-c'))
   })
 
-  it('no eligibles: standard takes all attempts; no specials in the result', () => {
-    const result = buildScenarioBudgets([], 200)
-    expect(result).toHaveLength(1)
-    expect(result[0].scenario.name).toBe('standard')
-    expect(result[0].budget).toBe(200)
+  it('returns an empty list with no standard entry when nothing is eligible', () => {
+    expect(specialScenarioBudgets([], 200)).toEqual([])
   })
 
-  it('specialPool scales roughly linearly with totalAttempts', () => {
-    const small = buildScenarioBudgets(allMocks, 100)
-    const large = buildScenarioBudgets(allMocks, 1000)
+  it('scales each scenario’s budget linearly with the special attempt count', () => {
+    const small = specialScenarioBudgets(allMocks, 100)
+    const large = specialScenarioBudgets(allMocks, 1000)
     const smallC = findBudget(small, 'mock-c')
     const largeC = findBudget(large, 'mock-c')
     expect(largeC).toBeGreaterThanOrEqual(10 * smallC - 5)
     expect(largeC).toBeLessThanOrEqual(10 * smallC + 5)
   })
 
-  it('total budget stays at or marginally above totalAttempts (ceil overflow is small)', () => {
-    const result = buildScenarioBudgets(allMocks, 200)
+  it('keeps the total at or marginally above the special attempt count', () => {
+    const result = specialScenarioBudgets(allMocks, 200)
     const total = result.reduce((s, r) => s + r.budget, 0)
     expect(total).toBeGreaterThanOrEqual(200)
     expect(total).toBeLessThanOrEqual(200 + allMocks.length)

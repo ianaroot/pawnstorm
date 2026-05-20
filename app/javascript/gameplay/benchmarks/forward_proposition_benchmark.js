@@ -44,9 +44,15 @@ const PROFILE_LABEL_PREFIXES = [
 //      chain synthetic 3-relation (attack+defend+shield)  409 → 390  (was 383 after step 2 above)
 //    Cause: anchored moved/enemy recruitment shifts placement
 //    distribution across the non-bound relation satisfiers.
+//  - commit <TBD: independent special/standard shifts + singular-constraint discipline>:
+//    Two collection shifts (special / standard) so neither starves the other,
+//    plus per-group caps so castle / promotion / en_passant share the special
+//    budget. Downstream code can no longer silently overwrite a scenario's
+//    moved_piece commitment — must go through shared/singular_constraints.js.
+//    Verified up across all 26 payloads; 11 baselines re-recorded (outside ±20%).
 const PAYLOADS = [
   {
-    baseline: 389,
+    baseline: 484,
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -59,7 +65,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 112,
+    baseline: 390,
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -85,7 +91,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 112,
+    baseline: 390,
     name: "attack count > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -111,7 +117,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 124,
+    baseline: 281,
     name: "defend count < PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -124,7 +130,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 381,
+    baseline: 460,
     name: "shield aggregate_value > PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -232,7 +238,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 528,
+    baseline: 707,
     name: "allied any adjacent enemy king",
     payload: {
       version: 2, kind: "relational",
@@ -264,7 +270,7 @@ const PAYLOADS = [
   // these are the conditions where moved-piece subject/target recruitment
   // is measured before/after the relation-variant helper.
   {
-    baseline: 714,
+    baseline: 870,
     name: "allied bishop attack enemy rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -292,7 +298,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 663,
+    baseline: 891,
     name: "allied knight adjacent enemy queen (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -353,7 +359,7 @@ const PAYLOADS = [
   {
     // Two simultaneous PBS deltas on one moved_piece; hard case, lifted from
     // ~0.1% by the interposition work.
-    baseline: 41,
+    baseline: 59,
     name: "chain 112832·112834·112835 (rook mobility PBS)",
     payloads: [
       { version: 2, kind: "relational", subject: "moved_piece", subjectFilter: "any", operator: "defend", target: "allied", targetFilter: "major", targetFilterMode: "include", targetComparisonMetric: "count", targetComparator: "greater_than", targetComparisonSource: "prior_board_state" },
@@ -365,7 +371,7 @@ const PAYLOADS = [
   // land in ctx.relations. Exists only to exercise the satisfyRelations shuffle
   // (no real bot chain combines ≥2 such relations — see session notes).
   {
-    baseline: 409,
+    baseline: 514,
     name: "chain synthetic 3-relation (attack+defend+shield)",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "queen", subjectFilterMode: "exclude", operator: "attack", target: "enemy", targetFilter: "queen", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
@@ -374,7 +380,7 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 415,
+    baseline: 502,
     name: "allied queen mobility < PBS (whole-board census)",
     payload: {
       version: 2, kind: "census",
@@ -405,7 +411,11 @@ function benchmarkPayload(entry, attempts) {
   profileCollector.reset()
   const started = performance.now()
   const standardExamples = []
-  const produced = { "forward-proposition": 0 }
+  const produced = {
+    "forward-proposition": 0,
+    "forward-proposition.standard": 0,
+    "forward-proposition.special": 0
+  }
   collectForwardPropositionExamples({
     combinedPlan,
     random: seededRandom(1),
@@ -421,6 +431,8 @@ function benchmarkPayload(entry, attempts) {
     name,
     attempts,
     verified: produced["forward-proposition"],
+    verified_standard: produced["forward-proposition.standard"],
+    verified_special: produced["forward-proposition.special"],
     total_ms: Number(totalMs.toFixed(2)),
     avg_ms_per_attempt: Number((totalMs / attempts).toFixed(4)),
     timings: relevantTimings(snapshot),
