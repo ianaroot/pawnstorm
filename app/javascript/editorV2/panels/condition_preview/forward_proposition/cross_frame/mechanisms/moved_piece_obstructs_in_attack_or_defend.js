@@ -4,8 +4,9 @@ import {
   originCandidatesForSpecies, walkRay, raySliderSpeciesForStep, SLIDER_SPECIES
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  movedPieceRoleIn, singularSquare, ensureRolePieceAt, commitPriorRegion
+  singularSquare, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
+import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
@@ -17,8 +18,8 @@ export const movedPieceObstructsInAttackOrDefend = {
     if (entry.source !== 'relational') { return false }
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
     // Obstructs only fires when moved_piece isn't a relation participant —
-    // participates owns the bound-singular case.
-    if (movedPieceRoleIn(entry) !== null) { return false }
+    // participates owns that case.
+    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return false }
     // The mechanism's premise is "A attacks T along a queen-ray, blocked by
     // moved_piece's position." That premise only holds when A is a ray-
     // compatible slider. Skip when subject species can't slide at all.
@@ -31,7 +32,7 @@ export const movedPieceObstructsInAttackOrDefend = {
   },
 
   apply(entry, ctx, pieces, random) {
-    if (movedPieceRoleIn(entry) !== null) { return null }
+    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return null }
     if (entry.direction === '-') { return applyMinus(entry, ctx, pieces, random) }
     if (entry.direction === '+') { return applyPlus(entry, ctx, pieces, random) }
     return null

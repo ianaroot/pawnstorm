@@ -54,8 +54,13 @@ function entry({
     priorProposition: { ...subjectProposition, frame: 'prior' },
     currentProposition: subjectProposition,
     subjectProposition,
-    targetProposition
+    targetProposition,
+    sourcePlan: {}
   }
+}
+
+function bindMovedTo(ctx, entry, role) {
+  ctx.movedBinding = { assignments: [{ sourcePlan: entry.sourcePlan, role, kind: 'related-to' }] }
 }
 
 describe('movedPieceObstructsShield — appliesTo', () => {
@@ -74,10 +79,7 @@ describe('movedPieceObstructsShield — appliesTo', () => {
   it('returns false when moved_piece is bound on a side (participates_shield owns that case)', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry()
-    e.currentProposition = {
-      ...e.currentProposition,
-      region: { kind: 'related-to', actor: 'moved_piece', role: 'subject', operator: 'shield' }
-    }
+    bindMovedTo(ctx, e, 'subject')
     expect(movedPieceObstructsShield.appliesTo(e, ctx, new Map())).toBe(false)
   })
 })

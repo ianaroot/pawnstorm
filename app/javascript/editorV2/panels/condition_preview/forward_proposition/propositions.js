@@ -55,7 +55,8 @@ function constraintsFromPbsUnaryOrPositionPlan(plan) {
       metric: metricForOperator(plan.operator, plan.subject),
       direction: COMPARATOR_TO_DIRECTION[plan.comparator] ?? '=',
       priorProposition: priorProp,
-      currentProposition: currentProp
+      currentProposition: currentProp,
+      sourcePlan: plan
     }]
   }
 }
@@ -184,7 +185,8 @@ function buildPbsPair(plan, side, otherIsSingular, descriptor) {
       priorProposition: priorProp,
       currentProposition: currentProp,
       subjectProposition: side === 'subject' ? currentProp : otherProp,
-      targetProposition: side === 'target' ? currentProp : otherProp
+      targetProposition: side === 'target' ? currentProp : otherProp,
+      sourcePlan: plan
     }
   }
 }

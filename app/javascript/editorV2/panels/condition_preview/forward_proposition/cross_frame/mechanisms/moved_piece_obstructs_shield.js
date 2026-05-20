@@ -5,8 +5,9 @@ import {
   originCandidatesForSpecies, raySliderSpeciesForStep, walkRay
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  movedPieceRoleIn, singularSquare, ensureRolePieceAt, commitPriorRegion
+  singularSquare, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
+import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Obstructs-shield is imprecise: depending on filters and teams, intercepting
@@ -20,11 +21,11 @@ export const movedPieceObstructsShield = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'shield') { return false }
-    return movedPieceRoleIn(entry) === null
+    return roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) === null
   },
 
   apply(entry, ctx, pieces, random) {
-    if (movedPieceRoleIn(entry) !== null) { return null }
+    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return null }
     if (entry.direction === '-') { return applyMinus(entry, ctx, pieces, random) }
     if (entry.direction === '+') { return applyPlus(entry, ctx, pieces, random) }
     return null

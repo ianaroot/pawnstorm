@@ -406,7 +406,8 @@ describe('emitConstraintsFromPlan — PBS census', () => {
       metric: 'count',
       direction: '+',
       priorProposition: priorProp,
-      currentProposition: currentProp
+      currentProposition: currentProp,
+      sourcePlan: plan
     })
   })
 
@@ -489,7 +490,8 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
       priorProposition: priorProp,
       currentProposition: currentProp,
       subjectProposition: currentProp,
-      targetProposition: null
+      targetProposition: null,
+      sourcePlan: plan
     })
   })
 
@@ -512,6 +514,35 @@ describe('emitConstraintsFromPlan — PBS-direction relational descriptor', () =
     expect(crossFrame[0].subjectProposition.team).toBe(Board.BLACK)
     expect(crossFrame[0].targetProposition.team).toBe(Board.WHITE)
     expect(crossFrame[0].targetProposition.species_set.has(Board.KING)).toBe(true)
+  })
+})
+
+describe('emitConstraintsFromPlan — crossFrame entry.sourcePlan', () => {
+  it('attaches sourcePlan to a crossFrame entry built via constraintsFromPbsUnaryOrPositionPlan', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'census',
+      subject: 'allied', subjectFilter: 'pawn',
+      operator: 'count', comparator: 'greater_than',
+      target: 'prior_board_state'
+    }])
+    const [plan] = combinedPlan.plans
+    const { crossFrame } = emitConstraintsFromPlan(plan)
+    expect(crossFrame[0].sourcePlan).toBe(plan)
+  })
+
+  it('attaches sourcePlan to a crossFrame entry built via buildPbsPair', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'relational',
+      subject: 'allied', subjectFilter: 'any',
+      subjectComparisonMetric: 'count',
+      subjectComparator: 'greater_than',
+      subjectComparisonSource: 'prior_board_state',
+      operator: 'attack',
+      target: 'moved_piece', targetFilter: 'any'
+    }])
+    const [plan] = combinedPlan.plans
+    const { crossFrame } = emitConstraintsFromPlan(plan)
+    expect(crossFrame[0].sourcePlan).toBe(plan)
   })
 })
 

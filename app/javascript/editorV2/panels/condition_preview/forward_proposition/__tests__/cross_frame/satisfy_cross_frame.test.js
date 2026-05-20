@@ -57,15 +57,22 @@ describe('satisfyCrossFrame — fires the participates-in-attack-or-defend mecha
     const priorProposition = { ...currentProposition, frame: 'prior' }
     return {
       source: 'relational', operator: 'attack', metric: 'count', direction: '+',
-      priorProposition, currentProposition
+      priorProposition, currentProposition,
+      sourcePlan: {}
     }
   }
 
+  function bindCtxTo(ctx, entry, role) {
+    ctx.movedBinding = { assignments: [{ sourcePlan: entry.sourcePlan, role, kind: 'related-to' }] }
+  }
+
   it('adds a piece that controls moved_piece destination', () => {
+    const entry = attackEntry()
     const ctx = defaultTestCtx({
       singulars: singulars(),
-      crossFrame: [attackEntry()]
+      crossFrame: [entry]
     })
+    bindCtxTo(ctx, entry, 'target')
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
 
     const result = satisfyCrossFrame(ctx, pieces, () => 0.5)
@@ -74,10 +81,12 @@ describe('satisfyCrossFrame — fires the participates-in-attack-or-defend mecha
   })
 
   it('narrows moved_piece priorRegion via the mechanism', () => {
+    const entry = attackEntry()
     const ctx = defaultTestCtx({
       singulars: singulars(),
-      crossFrame: [attackEntry()]
+      crossFrame: [entry]
     })
+    bindCtxTo(ctx, entry, 'target')
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
 
     satisfyCrossFrame(ctx, pieces, () => 0.5)

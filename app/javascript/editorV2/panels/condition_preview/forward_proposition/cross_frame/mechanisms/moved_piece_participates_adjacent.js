@@ -4,8 +4,9 @@ import {
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
-  movedPieceRoleInOrInferred, otherSidePropositionFor
+  otherSidePropositionFor
 } from './participates_helpers'
+import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const movedPieceParticipatesAdjacent = {
@@ -14,11 +15,11 @@ export const movedPieceParticipatesAdjacent = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'adjacent') { return false }
-    return movedPieceRoleInOrInferred(entry, ctx) !== null
+    return roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = movedPieceRoleInOrInferred(entry, ctx)
+    const role = roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan)
     if (role === null) { return null }
     const otherProposition = otherSidePropositionFor(entry, role)
     if (otherProposition === null) { return null }

@@ -8,8 +8,9 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
-  movedPieceRoleInOrInferred, otherSidePropositionFor
+  otherSidePropositionFor
 } from './participates_helpers'
+import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
@@ -20,11 +21,11 @@ export const movedPieceParticipatesInAttackOrDefend = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
-    return movedPieceRoleInOrInferred(entry, ctx) !== null
+    return roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = movedPieceRoleInOrInferred(entry, ctx)
+    const role = roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan)
     if (role === null) { return null }
     const otherProposition = otherSidePropositionFor(entry, role)
     if (otherProposition === null) { return null }
