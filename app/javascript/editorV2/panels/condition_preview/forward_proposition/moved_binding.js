@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import profileCollector from 'gameplay/profile_collector'
 import { intersectRegions } from './region'
 import { SLIDER_SPECIES } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
@@ -111,6 +112,7 @@ export function chooseMovedBinding(ctx, random, coverageRecord = null, scenarioN
   )
   const total = weights.reduce((s, w) => s + w, 0)
   if (total === 0) {
+    profileCollector.increment('forward_proposition.coverage.all_frozen')
     return bindings[Math.floor(random() * bindings.length)]
   }
   let r = random() * total
