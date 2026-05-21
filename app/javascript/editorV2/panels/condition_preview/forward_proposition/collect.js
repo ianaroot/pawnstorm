@@ -3,7 +3,7 @@ import { Candidate } from '../shared/candidate'
 import { CandidateVerifier } from '../shared/candidate_verifier'
 import { ExampleFactory } from '../shared/example_factory'
 import { buildAttempt } from './build_engine'
-import { createCoverageRecord, STANDARDS_KEY } from './coverage_record'
+import { createCoverageRecord, STANDARD_KEY } from './coverage_record'
 import { clearPlanCache } from './relations/attack_or_defend'
 import { eligibleScenariosFor } from './scenarios/eligibility'
 import { SCENARIO_REGISTRY } from './scenarios/registry'
@@ -23,7 +23,7 @@ function runScenario({
   addUnique, standardExamples, produced, poolCap, shiftKey, scenarioCap, counter,
   coverageRecord
 }) {
-  const scenarioName = scenario.moveKind ?? STANDARDS_KEY
+  const scenarioName = scenario.moveKind ?? STANDARD_KEY
   for (let i = 0; i < budget; i += 1) {
     if (scenarioCap != null && counter.n >= scenarioCap) { return 'scenario_full' }
     if (standardExamples.length >= poolCap) { return 'pool_full' }

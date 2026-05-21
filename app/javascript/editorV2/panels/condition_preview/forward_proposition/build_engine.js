@@ -18,7 +18,7 @@ import { synthesizeMove } from './synthesize_move'
 import { mergeCtxDelta } from './scenarios/merge_ctx_delta'
 import { standardScenario } from './scenarios/standard'
 import { relaxStabilityPbsRelations } from './pbs_relaxation'
-import { STANDARDS_KEY } from './coverage_record'
+import { STANDARD_KEY } from './coverage_record'
 
 // Tags which build stage produced a null so the forward-proposition
 // benchmark can localize generation holes. No-op unless MATCH_PROFILE=1.
@@ -38,7 +38,7 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario, 
   narrowMovedPieceForRegion(ctx)
   if (!isSatisfiable(ctx)) { return buildFailed('not_satisfiable') }
 
-  ctx.movedBinding = chooseMovedBinding(ctx, random, coverageRecord, scenario.moveKind ?? STANDARDS_KEY)
+  ctx.movedBinding = chooseMovedBinding(ctx, random, coverageRecord, scenario.moveKind ?? STANDARD_KEY)
   applyNullStayCoinFlips(ctx, random)
   // Pre-commit so strategies narrow singulars instead of stomping; caps
   // on related-to regions bypass here, fail downstream at commit.
