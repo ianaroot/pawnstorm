@@ -93,10 +93,11 @@ class BotCompiler
       kind = raw['kind'] || raw[:kind]
 
       case kind
-      when 'unary'
+      when 'census'
+        # Unary shape plus optional region keys; compact drops absent ones.
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: raw['subject'] || raw[:subject],
           subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
           subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
@@ -105,7 +106,17 @@ class BotCompiler
           target: raw['target'] || raw[:target],
           targetFilter: raw['targetFilter'] || raw[:targetFilter],
           targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
-          targetTotal: hash_value(raw, 'targetTotal')
+          targetTotal: hash_value(raw, 'targetTotal'),
+          positionAxis: raw['positionAxis'] || raw[:positionAxis],
+          positionComparator: raw['positionComparator'] || raw[:positionComparator],
+          positionTarget: hash_value(raw, 'positionTarget')
+        }.compact
+      when 'identity'
+        {
+          version: 2,
+          kind: 'identity',
+          subject: raw['subject'] || raw[:subject],
+          target: raw['target'] || raw[:target]
         }.compact
       when 'relational'
         {

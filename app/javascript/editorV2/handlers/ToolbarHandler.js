@@ -1,6 +1,5 @@
 import TemplatePicker from 'editorV2/templates/TemplatePicker'
 import { findTemplateAnchor } from 'editorV2/templates/TemplatePlacement'
-import { findAnchoredNodePlacement } from 'editorV2/utils/nodePlacement'
 
 
 class ToolbarHandler {
@@ -84,13 +83,7 @@ class ToolbarHandler {
   
   async handleAddNode(e) {
     const type = e.target.dataset.type
-    if (!type) return
-    const position = this.findPlacementPosition(type)
-    try {
-      await this.syncManager.createNode(type, position, {})
-    } catch (err) {
-      console.error('Failed to create node:', err)
-    }
+    if (type) await this.actions?.addNode(type)
   }
 
   attachTemplatePicker() {
@@ -113,61 +106,39 @@ class ToolbarHandler {
     this.templatePicker?.open()
   }
 
-  findPlacementPosition(type) {
-    const recentAnchor = this.store.getRecentPlacementAnchor()
-    const origin = recentAnchor && this.viewport?.isGraphPointVisible?.(recentAnchor)
-      ? recentAnchor
-      : this.viewport?.getVisibleCanvasCenter() || recentAnchor || { x: 200, y: 200 }
-
-    return findAnchoredNodePlacement(this.store, type, origin)
-  }
-
   async undo() {
-    if (!this.history.canUndo()) return
-    if (this.syncManager.isUndoRedoPending) return   
-    await this.syncManager.undo()
+    await this.actions?.undo()
   }
 
   async redo() {
-    if (!this.history.canRedo()) return
-    if (this.syncManager.isUndoRedoPending) return
-    await this.syncManager.redo()
+    await this.actions?.redo()
   }
-  
+
   updateButtons() {
     const undoBtn = document.querySelector('.btn-undo')
     const redoBtn = document.querySelector('.btn-redo')
     if (undoBtn) {
-      undoBtn.disabled = !this.history.canUndo() || this.syncManager.isUndoRedoPending
+      undoBtn.disabled = !this.actions?.canUndo()
       undoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
     }
     if (redoBtn) {
-      redoBtn.disabled = !this.history.canRedo() || this.syncManager.isUndoRedoPending
+      redoBtn.disabled = !this.actions?.canRedo()
       redoBtn.classList.toggle('loading', this.syncManager.isUndoRedoPending)
     }
+    const countDisplay = document.querySelector('.undo-count')
+    if (countDisplay) { countDisplay.textContent = this.history.getHistoryDisplay() }
     this.updateDeleteButton()
     this.updateCompileAction()
   }
   
   handleDeleteClick() {
-    if (this.clickHandler?.deleteSelectedNodes) {
-      this.clickHandler.deleteSelectedNodes()
-      return
-    }
-    this.clickHandler?.deleteSelectedNode?.()
+    this.actions?.deleteSelected()
   }
-  
+
   updateDeleteButton() {
     const deleteBtn = document.querySelector('.btn-delete-node')
     if (!deleteBtn) return
-    const selectedIds = this.clickHandler?.getDeletableSelectedNodeIds?.() || this.store.getSelectedNodeIds().filter(clientId => {
-      const node = this.store.getNode(clientId)
-      return node && node.type !== 'root'
-    })
-
-    // Disable if: no deletable selection
-    const isDisabled = selectedIds.length === 0
-    deleteBtn.disabled = isDisabled
+    deleteBtn.disabled = !this.actions?.canDelete()
   }
 
   isBotStale() {
@@ -312,11 +283,6 @@ class ToolbarHandler {
       this.editorRoot.dataset.editorBotDescriptionValue = description
     }
   }
-  
-
-  // destroy() {
-  //   // Event listeners are on document elements, cleaned up automatically
-  // }
 }
 
 export default ToolbarHandler

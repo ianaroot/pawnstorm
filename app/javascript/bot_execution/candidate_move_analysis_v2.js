@@ -2,6 +2,7 @@ import Board from "gameplay/board"
 import profileCollector from "gameplay/profile_collector"
 import Rules from "gameplay/rules"
 import { materialValue } from "gameplay/board_query_utils"
+import { mobilityFromMoveObjects } from "gameplay/mobility"
 import { unaryTotal, priorComparisonSourceTotal } from "bot_execution/unary_analysis"
 import {
   samePiece,
@@ -11,9 +12,14 @@ import {
   comparisonSourceTotal
 } from "bot_execution/relational_analysis"
 import { positionFilteredPositions, positionMetricTotal } from "bot_execution/position_analysis"
+import { combinatorialQualifyingExists } from "bot_execution/relational_qualifying"
+import { SINGULAR_ACTORS, RELATIONAL_SINGULAR_ACTORS } from "bot_execution/actors"
+import { compareTotals } from "bot_execution/utils"
 
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
+
+const identityCoerce = (value) => value
 
 
 class CandidateMoveAnalysisV2 {
@@ -21,12 +27,38 @@ class CandidateMoveAnalysisV2 {
     this.board = board
     this.moveObject = moveObject
     this._afterBoard = null
-    this._availableMovesCache = new Map()
-    this._positionMobilityCache = new Map()
-    this._relationalResultCache = new Map()
-    this._relationalActorPositionsCache = new Map()
-    this._relatedTargetPositionsCache = new Map()
-    this._boardQueryCache = {}
+    this._caches = {
+      availableMoves: new Map(),
+      positionMobility: new Map(),
+      relationalResult: new Map(),
+      relationalActorPositions: new Map(),
+      relatedTargetPositions: new Map(),
+      boardQuery: {}
+    }
+  }
+
+  _memoize(cacheName, key, fn) {
+    const cache = this._caches[cacheName]
+    if (cache.has(key)) { return cache.get(key) }
+    const value = fn()
+    cache.set(key, value)
+    return value
+  }
+
+  cachedRelationalResult(key, fn) {
+    return this._memoize('relationalResult', key, fn)
+  }
+
+  cachedRelationalActorPositions(key, fn) {
+    return this._memoize('relationalActorPositions', key, fn)
+  }
+
+  cachedRelatedTargetPositions(key, fn) {
+    return this._memoize('relatedTargetPositions', key, fn)
+  }
+
+  boardQueryCache() {
+    return this._caches.boardQuery
   }
 
   afterBoard() {
@@ -54,56 +86,32 @@ class CandidateMoveAnalysisV2 {
 
   availableMovesFrom(position, boardScope = AFTER_BOARD) {
     return profileCollector.measure('cma.v2.available_moves_from', () => {
-      const key = `${boardScope}:${position}`
-      if (this._availableMovesCache.has(key)) { return this._availableMovesCache.get(key) }
-      const board = this.boardForScope(boardScope)
-      const moves = Rules.availableMovesFrom({ board, startPosition: position })
-      this._availableMovesCache.set(key, moves)
-      return moves
+      return this._memoize('availableMoves', `${boardScope}:${position}`, () => {
+        const board = this.boardForScope(boardScope)
+        return Rules.availableMovesFrom({ board, startPosition: position })
+      })
     })
   }
 
   positionMobility(position, boardScope = AFTER_BOARD) {
     return profileCollector.measure('cma.v2.position_mobility', () => {
-      const key = `${boardScope}:${position}`
-      if (this._positionMobilityCache.has(key)) { return this._positionMobilityCache.get(key) }
-      const board = this.boardForScope(boardScope)
-      const pieceType = board.pieceTypeAt(position)
-      const moveObjects = this.availableMovesFrom(position, boardScope)
-      let mobility
-      if (pieceType === Board.PAWN) {
-        const destinations = new Set(moveObjects.map(moveObject => moveObject.endPosition))
-        mobility = destinations.size
-      } else {
-        mobility = moveObjects.length
-      }
-      this._positionMobilityCache.set(key, mobility)
-      return mobility
+      return this._memoize('positionMobility', `${boardScope}:${position}`, () => {
+        const board = this.boardForScope(boardScope)
+        return mobilityFromMoveObjects(
+          board.pieceTypeAt(position),
+          this.availableMovesFrom(position, boardScope)
+        )
+      })
     })
   }
 
   individualComparableValue(species) {
-    if (species === Board.KING) { return null }
     return materialValue(species)
   }
 
-  movedPieceValue(boardScope = AFTER_BOARD) {
-    return this.individualComparableValue(this.resolvedMovedPiece(boardScope).species)
-  }
-
-  capturedPieceValue() {
-    const resolved = this.resolvedCapturedPiece()
-    return resolved ? this.individualComparableValue(resolved.species) : 0
-  }
-
-  enemyMovedPieceValue() {
-    const recentMove = this.board.recentMoveContext
-    return recentMove ? this.individualComparableValue(recentMove.movedPieceSpeciesAfterMove) : 0
-  }
-
-  enemyCapturedPieceValue() {
-    const resolved = this.resolvedEnemyCapturedPiece()
-    return resolved ? this.individualComparableValue(resolved.species) : 0
+  singularActorValue(actor, boardScope = AFTER_BOARD) {
+    const species = this.singularActorSpecies(actor, boardScope)
+    return species === null ? null : this.individualComparableValue(species)
   }
 
   resolvedMovedPiece(boardScope = AFTER_BOARD) {
@@ -121,9 +129,11 @@ class CandidateMoveAnalysisV2 {
   }
 
   resolvedCapturedPiece() {
-    const species = this.capturedPieceSpecies()
+    const position = this.capturedPiecePosition()
+    if (position === null) return null
+    const species = this.board.pieceTypeAt(position)
     if (species === null) return null
-    return { species }
+    return { species, position }
   }
 
   resolvedEnemyMovedPiece(boardScope = AFTER_BOARD) {
@@ -145,21 +155,9 @@ class CandidateMoveAnalysisV2 {
     const recentMove = this.board.recentMoveContext
     if (!recentMove || recentMove.capturedPieceSpecies === null) return null
     return {
-      species: recentMove.capturedPieceSpecies
+      species: recentMove.capturedPieceSpecies,
+      position: recentMove.capturedPiecePosition ?? null
     }
-  }
-
-  singularActor(actor) {
-    return [
-      "moved_piece",
-      "enemy_moved_piece",
-      "captured_piece",
-      "enemy_captured_piece"
-    ].includes(actor)
-  }
-
-  relationalSingularActor(actor) {
-    return ["moved_piece", "enemy_moved_piece"].includes(actor)
   }
 
   singularActorSpecies(actor, boardScope = AFTER_BOARD) {
@@ -207,7 +205,7 @@ class CandidateMoveAnalysisV2 {
   }
 
   relationalSingularActorResolves({ actor, filter = "any", filterMode = null, boardScope = AFTER_BOARD }) {
-    if (!this.relationalSingularActor(actor)) { return true }
+    if (!RELATIONAL_SINGULAR_ACTORS.has(actor)) { return true }
     return relationalActorPositions(this, { actor, filter, filterMode, boardScope }).length > 0
   }
 
@@ -260,6 +258,95 @@ class CandidateMoveAnalysisV2 {
 
   uniquePositions(positions) {
     return Array.from(new Set(positions))
+  }
+
+  // ===== Value metric evaluation =====
+
+  evaluateRelationalValueMetrics(args) {
+    const { subjectMetric, targetMetric } = args
+    if (!targetMetric) { return this.dispatchSingleSubjectMetric(args) }
+    if (!subjectMetric) { return this.dispatchSingleTargetMetric(args) }
+    return this.dispatchBothSideMetrics(args)
+  }
+
+  dispatchSingleSubjectMetric({ pairs, subjectMetric, subjectComparator, subjectReference, subjectCoerce = identityCoerce }) {
+    if (subjectMetric === "individual_value") {
+      return this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference).length > 0
+    }
+    if (subjectMetric === "aggregate_value") {
+      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(pairs, "subject")), subjectReference)
+    }
+    throw new Error(`Unsupported single-subject value metric: ${subjectMetric}`)
+  }
+
+  dispatchSingleTargetMetric({ pairs, targetMetric, targetComparator, targetReference, targetCoerce = identityCoerce }) {
+    if (targetMetric === "individual_value") {
+      return this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference).length > 0
+    }
+    if (targetMetric === "aggregate_value") {
+      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(pairs, "target")), targetReference)
+    }
+    throw new Error(`Unsupported single-target value metric: ${targetMetric}`)
+  }
+
+  dispatchBothSideMetrics({
+    pairs,
+    subjectMetric, subjectComparator, subjectReference, subjectCoerce = identityCoerce,
+    targetMetric, targetComparator, targetReference, targetCoerce = identityCoerce
+  }) {
+    if (subjectMetric === "count" && targetMetric === "individual_value") {
+      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
+      return compareTotals(subjectComparator, this.uniquePositions(filtered.map(p => p.subjectPosition)).length, subjectReference)
+    }
+    if (subjectMetric === "individual_value" && targetMetric === "count") {
+      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return compareTotals(targetComparator, this.uniquePositions(filtered.map(p => p.targetPosition)).length, targetReference)
+    }
+    if (subjectMetric === "count" && targetMetric === "aggregate_value") {
+      return this.relationalCombinatorial({ pairs, groupBySide: "subject", valueSide: "target", valueComparator: targetComparator, valueReferenceTotal: targetReference, countComparator: subjectComparator, countReferenceTotal: subjectReference })
+    }
+    if (subjectMetric === "aggregate_value" && targetMetric === "count") {
+      return this.relationalCombinatorial({ pairs, groupBySide: "target", valueSide: "subject", valueComparator: subjectComparator, valueReferenceTotal: subjectReference, countComparator: targetComparator, countReferenceTotal: targetReference })
+    }
+    if (subjectMetric === "individual_value" && targetMetric === "individual_value") {
+      const subjectFiltered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return this.relationalFilterPairsByValue(subjectFiltered, "target", targetComparator, targetReference).length > 0
+    }
+    if (subjectMetric === "individual_value" && targetMetric === "aggregate_value") {
+      const filtered = this.relationalFilterPairsByValue(pairs, "subject", subjectComparator, subjectReference)
+      return compareTotals(targetComparator, targetCoerce(this.relationalAggregateValueFromPairs(filtered, "target")), targetReference)
+    }
+    if (subjectMetric === "aggregate_value" && targetMetric === "individual_value") {
+      const filtered = this.relationalFilterPairsByValue(pairs, "target", targetComparator, targetReference)
+      return compareTotals(subjectComparator, subjectCoerce(this.relationalAggregateValueFromPairs(filtered, "subject")), subjectReference)
+    }
+    throw new Error(`Unsupported two-side value metric combination: ${subjectMetric} / ${targetMetric}`)
+  }
+
+  relationalFilterPairsByValue(pairs, side, comparator, referenceTotal) {
+    const board = this.afterBoard()
+    return pairs.filter(pair => {
+      const position = side === "subject" ? pair.subjectPosition : pair.targetPosition
+      const value = this.individualComparableValue(board.pieceTypeAt(position))
+      if (value === null) { return false }
+      return compareTotals(comparator, value, referenceTotal)
+    })
+  }
+
+  relationalAggregateValueFromPairs(pairs, side) {
+    if (pairs.length === 0) { return null }
+    const board = this.afterBoard()
+    const positionKey = side === "subject" ? "subjectPosition" : "targetPosition"
+    const uniquePositions = new Set(pairs.map(pair => pair[positionKey]))
+    let sum = 0
+    for (const position of uniquePositions) {
+      sum += materialValue(board.pieceTypeAt(position))
+    }
+    return sum
+  }
+
+  relationalCombinatorial(args) {
+    return combinatorialQualifyingExists({ ...args, board: this.afterBoard() })
   }
 
   // ===== Delegates =====

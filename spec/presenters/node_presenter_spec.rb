@@ -51,10 +51,10 @@ RSpec.describe NodePresenter do
       ])
     end
 
-    it 'preserves unary chunk structure' do
+    it 'preserves whole-board census chunk structure (unary-shaped)' do
       node = build(:node, :condition, data: {
         'version' => 2,
-        'kind' => 'unary',
+        'kind' => 'census',
         'subject' => 'enemy_moved_piece',
         'subjectFilter' => 'pawn',
         'subjectFilterMode' => 'include',
@@ -87,6 +87,79 @@ RSpec.describe NodePresenter do
           target_filter: 'any',
           target_filter_mode: nil,
           target_total: nil
+        }
+      ])
+    end
+
+    it 'renders a region census with the position-axis clause' do
+      node = build(:node, :condition, data: {
+        'version' => 2,
+        'kind' => 'census',
+        'subject' => 'allied',
+        'subjectFilter' => 'rook',
+        'subjectFilterMode' => 'include',
+        'positionAxis' => 'rank',
+        'positionComparator' => 'equal_to',
+        'positionTarget' => 5,
+        'operator' => 'count',
+        'comparator' => 'greater_than',
+        'target' => 'exact_number',
+        'targetTotal' => 0
+      })
+
+      chunks = described_class.new(node).condition_preview_chunks
+
+      expect(chunks).to eq([
+        {
+          role: 'side',
+          subject: 'allied',
+          filter: 'rook',
+          filter_mode: 'include',
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_source: nil,
+          comparison_source_total: nil
+        },
+        { role: 'spacer' },
+        { role: 'region', position_axis: 'rank', position_comparator: 'equal_to', position_target: 5 },
+        { role: 'spacer' },
+        { role: 'metric', operator: 'count', comparator: 'greater_than', target_total: 0 }
+      ])
+    end
+
+    it 'renders an identity condition as a same-piece sentence' do
+      node = build(:node, :condition, data: {
+        'version' => 2,
+        'kind' => 'identity',
+        'subject' => 'enemy_moved_piece',
+        'target' => 'captured_piece'
+      })
+
+      chunks = described_class.new(node).condition_preview_chunks
+
+      expect(chunks).to eq([
+        {
+          role: 'side',
+          subject: 'enemy_moved_piece',
+          filter: 'any',
+          filter_mode: nil,
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_source: nil,
+          comparison_source_total: nil
+        },
+        { role: 'spacer' },
+        { role: 'operator', operator: 'same_piece' },
+        { role: 'spacer' },
+        {
+          role: 'side',
+          subject: 'captured_piece',
+          filter: 'any',
+          filter_mode: nil,
+          comparison_metric: nil,
+          comparator: nil,
+          comparison_source: nil,
+          comparison_source_total: nil
         }
       ])
     end

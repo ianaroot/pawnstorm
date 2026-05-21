@@ -1,3 +1,5 @@
+import { isEditableTarget } from 'editorV2/utils/dom'
+
 class HoverPreviewHandler {
   constructor(viewport = null) {
     this.viewport = viewport
@@ -31,7 +33,7 @@ class HoverPreviewHandler {
   }
 
   handleKeyDown(event) {
-    if (this.isEditableTarget(event.target) || event.repeat) { return }
+    if (isEditableTarget(event.target) || event.repeat) { return }
 
     if (event.key === 'Escape') {
       if (!this.inspectModeActive) { return }
@@ -49,12 +51,6 @@ class HoverPreviewHandler {
     }
 
     this.renderPreview()
-  }
-
-  isEditableTarget(target) {
-    if (!target || !target.tagName) { return false }
-    const tag = target.tagName.toLowerCase()
-    return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable
   }
 
   ensurePreviewElement() {

@@ -60,7 +60,7 @@ RSpec.describe Node, type: :model do
     it 'rejects condition data with invalid keys' do
       node = build(:node, :condition, data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'any',
         subjectFilterMode: 'include',
@@ -93,7 +93,7 @@ RSpec.describe Node, type: :model do
       it 'rejects V2 condition data with unexpected keys' do
         node = build(:node, :condition, data: {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -107,10 +107,10 @@ RSpec.describe Node, type: :model do
         expect(node.errors[:data]).to include('contains invalid keys: script')
       end
 
-      it 'rejects invalid subjectFilterMode for unary V2 conditions' do
+      it 'rejects invalid subjectFilterMode for census V2 conditions' do
         node = build(:node, :condition, data: {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'banana',
@@ -124,10 +124,10 @@ RSpec.describe Node, type: :model do
         expect(node.errors[:data]).to include('has invalid subjectFilterMode')
       end
 
-      it 'rejects captured-piece unary targets for mobility' do
+      it 'rejects captured-piece census targets for mobility' do
         node = build(:node, :condition, data: {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'allied',
           subjectFilter: 'any',
           operator: 'mobility',
@@ -159,7 +159,7 @@ RSpec.describe Node, type: :model do
       it 'delegates data normalization before validation' do
         input_data = {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -171,7 +171,7 @@ RSpec.describe Node, type: :model do
 
         expect(Nodes::DataNormalizer).to receive(:normalize).with(
           node_type: 'condition',
-          data: include('kind' => 'unary', 'subject' => 'moved_piece')
+          data: include('kind' => 'census', 'subject' => 'moved_piece')
         ).and_return(normalized_data)
 
         node = build(:node, :condition, data: input_data)
@@ -222,6 +222,62 @@ RSpec.describe Node, type: :model do
 
         expect(node).not_to be_valid
         expect(node.errors[:data]).to include('cannot use subject-side comparison when targetComparisonSource is prior_board_state')
+      end
+
+      it 'accepts a relational individual_value comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'individual_value',
+          subjectComparator: 'greater_than',
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 0,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(node).to be_valid
+      end
+
+      it 'rejects aggregate_value as a subject relational comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          subjectComparisonMetric: 'aggregate_value',
+          subjectComparator: 'greater_than',
+          subjectComparisonSource: 'exact_number',
+          subjectComparisonSourceTotal: 0,
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any'
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid subjectComparisonMetric')
+      end
+
+      it 'rejects aggregate_value as a target relational comparison metric' do
+        node = build(:node, :condition, data: {
+          version: 2,
+          kind: 'relational',
+          subject: 'allied',
+          subjectFilter: 'any',
+          operator: 'attack',
+          target: 'enemy',
+          targetFilter: 'any',
+          targetComparisonMetric: 'aggregate_value',
+          targetComparator: 'greater_than',
+          targetComparisonSource: 'exact_number',
+          targetComparisonSourceTotal: 0
+        })
+
+        expect(node).not_to be_valid
+        expect(node.errors[:data]).to include('has invalid targetComparisonMetric')
       end
     end
 

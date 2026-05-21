@@ -1,4 +1,6 @@
-import generateConditionExamples from 'editorV2/panels/condition_preview_generation/ConditionExampleGenerator'
+import generateConditionExamples from 'editorV2/panels/condition_preview/orchestrator'
+import { formatConditionSentence, renderSentenceSegments } from 'editorV2/utils/conditionPreviewFormatter'
+import { exampleId } from 'editorV2/utils/example_id'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 
@@ -132,7 +134,7 @@ class BoardStatePreview {
 
     this.toggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation()
-      this.toggle()
+      this.actions?.togglePreview()
     })
     this.mode = 'idle'
     this.selectionPreview = null
@@ -154,12 +156,13 @@ class BoardStatePreview {
     }
   }
 
-  showSelectionPreview(preview) {
+  showSelectionPreview(preview, retryHandler = null) {
     this._stopCycle()
     if (this.conditionForm) { this.conditionForm.onStateChange = null }
     this.conditionForm = null
     this.mode = 'selection'
     this.selectionPreview = preview
+    this._retryHandler = retryHandler
     this.wrap.classList.remove('hidden')
 
     if (this.isEnabled) {
@@ -202,9 +205,37 @@ class BoardStatePreview {
   _update(payload) {
     if (!this.isEnabled) { return }
     this._stopCycle()
+    this._retryHandler = () => this._continueGenerating(() => generateConditionExamples(payload))
     this._applyPreview({ status: 'loading', reason: 'Computing preview…', examples: [] })
     this._generationTimer = setTimeout(() => {
-      this._applyPreview(generateConditionExamples(payload))
+      const preview = generateConditionExamples(payload)
+      preview.conditionLabels = [formatConditionSentence(payload)]
+      this._applyPreview(preview)
+    }, 0)
+  }
+
+  _continueGenerating(generate) {
+    this._stopCycle()
+    const previousExamples = this.examples
+    const previousLabels = this.conditionLabels
+    this._retrying = true
+    this._render()
+    this._generationTimer = setTimeout(() => {
+      const preview = generate()
+      const seen = new Set(previousExamples.map(exampleId))
+      const additions = (preview.examples ?? []).filter(e => {
+        const id = exampleId(e)
+        if (seen.has(id)) { return false }
+        seen.add(id)
+        return true
+      })
+      preview.examples = [...previousExamples, ...additions]
+      preview.conditionLabels = previousLabels
+      // If this round produced new examples, the user got something — drop
+      // the slow state so the Keep Trying prompt goes away.
+      if (additions.length > 0 && preview.status === 'slow') { preview.status = 'ready' }
+      this._retrying = false
+      this._applyPreview(preview)
     }, 0)
   }
 
@@ -249,8 +280,16 @@ class BoardStatePreview {
       return
     }
 
-    if (this.status !== 'ready') {
+    if (this.status === 'slow' && this.examples.length === 0) {
       this.content.appendChild(this.buildMessage())
+      this.content.appendChild(this._buildKeepTryingButton())
+      this._appendChain()
+      return
+    }
+
+    if (this.status !== 'ready' && this.status !== 'slow') {
+      this.content.appendChild(this.buildMessage())
+      this._appendChain()
       return
     }
 
@@ -267,6 +306,12 @@ class BoardStatePreview {
     boardEl.style.transition = `opacity ${BOARD_FADE}ms ease`
     renderLayout(boardEl, example.priorBoard.layOut, example.highlights?.prior || {})
     this._boardEl = boardEl
+
+    const pathBadge = document.createElement('span')
+    pathBadge.className = `mini-board__path-badge mini-board__path-badge--${example.generationPath}`
+    pathBadge.textContent = example.generationPath === 'forward' ? 'F' : 'R'
+    boardEl.appendChild(pathBadge)
+
     left.appendChild(boardEl)
 
     // Right: stacked buttons
@@ -300,7 +345,8 @@ class BoardStatePreview {
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
-    const legendEntries = this.mode === 'selection'
+    const isChain = (this.conditionLabels?.length ?? 0) > 1
+    const legendEntries = this.mode === 'selection' || isChain
       ? [
           { swatchClass: 'mini-board__tile--relation', label: 'Relation piece' },
           { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
@@ -369,17 +415,50 @@ class BoardStatePreview {
     body.appendChild(side)
     this.content.appendChild(body)
 
-    if (this.conditionLabels?.length >= 2) {
-      const chain = document.createElement('ol')
-      chain.className = 'board-state-preview__chain'
-      this.conditionLabels.forEach(label => {
-        const item = document.createElement('li')
-        item.className = 'board-state-preview__chain-item'
-        item.textContent = label
-        chain.appendChild(item)
-      })
-      this.content.appendChild(chain)
+    if (this.status === 'slow') {
+      this.content.appendChild(this._buildKeepTryingButton())
     }
+
+    this._appendChain()
+  }
+
+  _buildKeepTryingButton() {
+    const wrap = document.createElement('div')
+    wrap.className = 'board-state-preview__keep-trying'
+    if (this.reason) {
+      const note = document.createElement('div')
+      note.className = 'board-state-preview__keep-trying-note'
+      note.textContent = this.reason
+      wrap.appendChild(note)
+    }
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'mini-board__nav-btn'
+    if (this._retrying) {
+      btn.textContent = 'Trying…'
+      btn.disabled = true
+    } else {
+      btn.textContent = 'Keep trying'
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (this._retryHandler) { this._retryHandler() }
+      })
+    }
+    wrap.appendChild(btn)
+    return wrap
+  }
+
+  _appendChain() {
+    if (!this.conditionLabels?.length) { return }
+    const chain = document.createElement('ol')
+    chain.className = 'board-state-preview__chain'
+    this.conditionLabels.forEach(label => {
+      const item = document.createElement('li')
+      item.className = 'board-state-preview__chain-item'
+      renderSentenceSegments(item, label)
+      chain.appendChild(item)
+    })
+    this.content.appendChild(chain)
   }
 
   // ── Animation cycle ────────────────────────────────────────────────────────

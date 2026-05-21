@@ -1,8 +1,8 @@
 module Nodes
   class DataValidator
-    CONDITION_V2_UNARY_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator target targetFilter targetFilterMode targetTotal ].freeze
     CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonSource subjectComparisonSourceTotal operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonSource targetComparisonSourceTotal ].freeze
-    CONDITION_V2_POSITION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode positionAxis positionComparator positionTarget operator comparator targetTotal ].freeze
+    CONDITION_V2_CENSUS_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator target targetFilter targetFilterMode targetTotal positionAxis positionComparator positionTarget ].freeze
+    CONDITION_V2_IDENTITY_KEYS = %w[ version kind subject target ].freeze
     ACTION_TYPES = %w[add subtract set return].freeze
     ACTION_KEYS = %w[actionType value].freeze
     ORGANIZER_KEYS = %w[title notes].freeze
@@ -40,45 +40,15 @@ module Nodes
     def validate_condition_data_v2
       kind = record.data['kind'] || record.data[:kind]
       case kind
-      when 'unary'
-        validate_condition_data_v2_unary
       when 'relational'
         validate_condition_data_v2_relational
-      when 'position'
-        validate_condition_data_v2_position
+      when 'census'
+        validate_condition_data_v2_census
+      when 'identity'
+        validate_condition_data_v2_identity
       else
         record.errors.add(:data, "has invalid kind: #{kind}")
       end
-    end
-
-    def validate_condition_data_v2_unary
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - CONDITION_V2_UNARY_KEYS
-      missing_keys = %w[version kind subject subjectFilter operator comparator target] - keys
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
-      if missing_keys.any?
-        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-        return
-      end
-      subject = record.data['subject']
-      subject_filter = record.data['subjectFilter']
-      subject_filter_mode = record.data['subjectFilterMode']
-      operator = record.data['operator']
-      comparator = record.data['comparator']
-      target = record.data['target']
-      target_filter = record.data['targetFilter']
-      target_filter_mode = record.data['targetFilterMode']
-      target_total = record.data['targetTotal']
-
-      record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
-      record.errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
-      record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
-      record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_unary_operator_for_subject?(subject, operator)
-      record.errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, 'has invalid target') unless NodeGrammarRules.valid_unary_target_for_operator?(target:, operator:)
-      validate_unary_target_shape!(target:, target_filter:, target_filter_mode:, target_total:)
     end
 
     def validate_condition_data_v2_relational
@@ -106,10 +76,6 @@ module Nodes
       record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
       record.errors.add(:data, 'has invalid targetFilter') unless NodeGrammarV2.valid_filter?(target_filter)
       record.errors.add(:data, 'has invalid targetFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: target_filter, filter_mode: target_filter_mode)
-      unless NodeGrammarRules.comparison_allowed_for_relational_operator?(operator)
-        validate_v2_same_piece_relational!
-        return
-      end
       validate_v2_side_comparator!(
         metric_key: 'subjectComparisonMetric',
         comparator_key: 'subjectComparator',
@@ -122,6 +88,9 @@ module Nodes
         source_key: 'targetComparisonSource',
         source_total_key: 'targetComparisonSourceTotal'
       )
+      if record.data['subjectComparisonMetric'] == 'aggregate_value' && record.data['targetComparisonMetric'] == 'aggregate_value'
+        record.errors.add(:data, 'aggregate_value cannot be used on both sides simultaneously')
+      end
       if record.data['subjectComparisonSource'] == 'prior_board_state' && side_condition_present?('target')
         record.errors.add(:data, 'cannot use target-side comparison when subjectComparisonSource is prior_board_state')
       end
@@ -130,25 +99,10 @@ module Nodes
       end
     end
 
-    def validate_v2_same_piece_relational!
-      if record.data['subjectFilter'] != 'any'
-        record.errors.add(:data, 'same_piece requires subjectFilter to be any')
-      end
-      if record.data['targetFilter'] != 'any'
-        record.errors.add(:data, 'same_piece requires targetFilter to be any')
-      end
-      if side_condition_present?('subject')
-        record.errors.add(:data, 'same_piece does not allow subject-side comparison')
-      end
-      if side_condition_present?('target')
-        record.errors.add(:data, 'same_piece does not allow target-side comparison')
-      end
-    end
-
-    def validate_condition_data_v2_position
+    def validate_condition_data_v2_census
       keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - CONDITION_V2_POSITION_KEYS
-      missing_keys = %w[version kind subject subjectFilter positionAxis positionComparator positionTarget operator comparator targetTotal] - keys
+      extra_keys = keys - CONDITION_V2_CENSUS_KEYS
+      missing_keys = %w[version kind subject subjectFilter operator comparator target] - keys
       if extra_keys.any?
         record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
       end
@@ -159,16 +113,30 @@ module Nodes
       subject = record.data['subject']
       subject_filter = record.data['subjectFilter']
       subject_filter_mode = record.data['subjectFilterMode']
-      position_axis = record.data['positionAxis']
-      position_comparator = record.data['positionComparator']
-      position_target = record.data['positionTarget']
       operator = record.data['operator']
       comparator = record.data['comparator']
+      target = record.data['target']
+      target_filter = record.data['targetFilter']
+      target_filter_mode = record.data['targetFilterMode']
       target_total = record.data['targetTotal']
+      position_axis = record.data['positionAxis']
 
-      record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_position_subject?(subject)
+      record.errors.add(:data, 'has invalid subject') unless NodeGrammarV2.valid_subject?(subject)
       record.errors.add(:data, 'has invalid subjectFilter') unless NodeGrammarV2.valid_filter?(subject_filter)
       record.errors.add(:data, 'has invalid subjectFilterMode') unless NodeGrammarRules.valid_filter_mode_for_filter?(filter: subject_filter, filter_mode: subject_filter_mode)
+      record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_unary_operator_for_subject?(subject, operator)
+      record.errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
+      record.errors.add(:data, 'has invalid target') unless NodeGrammarRules.valid_unary_target_for_operator?(target:, operator:)
+      validate_unary_target_shape!(target:, target_filter:, target_filter_mode:, target_total:)
+      validate_census_region!(subject:, position_axis:) if position_axis.present?
+    end
+
+    def validate_census_region!(subject:, position_axis:)
+      if NodeGrammarV2::OFF_BOARD_SUBJECTS.include?(subject)
+        record.errors.add(:data, 'off-board subject does not allow spatial keys')
+      end
+      position_comparator = record.data['positionComparator']
+      position_target = record.data['positionTarget']
       record.errors.add(:data, 'has invalid positionAxis') unless NodeGrammarV2.valid_position_axis?(position_axis)
       if position_axis == 'square'
         record.errors.add(:data, 'positionComparator must be equal_to for square axis') unless position_comparator == 'equal_to'
@@ -177,9 +145,24 @@ module Nodes
       end
       valid_target_range = position_axis == 'square' ? (0..63) : (1..8)
       record.errors.add(:data, 'positionTarget is out of range') unless position_target.is_a?(Numeric) && valid_target_range.cover?(position_target)
-      record.errors.add(:data, 'has invalid operator') unless NodeGrammarRules.valid_position_operator_for_subject?(subject, operator)
-      record.errors.add(:data, 'has invalid comparator') unless NodeGrammarV2.valid_comparator?(comparator)
-      record.errors.add(:data, 'targetTotal must be numeric') unless target_total.is_a?(Numeric)
+    end
+
+    def validate_condition_data_v2_identity
+      keys = record.data.keys.map(&:to_s)
+      extra_keys = keys - CONDITION_V2_IDENTITY_KEYS
+      missing_keys = %w[version kind subject target] - keys
+      if extra_keys.any?
+        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
+      end
+      if missing_keys.any?
+        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
+        return
+      end
+      subject = record.data['subject']
+      target = record.data['target']
+      unless NodeGrammarRules.valid_identity_pair?(subject:, target:)
+        record.errors.add(:data, 'has invalid identity subject/target pairing')
+      end
     end
 
     def validate_score_data

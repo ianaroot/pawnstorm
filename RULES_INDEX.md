@@ -1,0 +1,3 @@
+- app/javascript/editorV2/panels/condition_preview/
+- app/javascript/bot_execution/
+- app/models/

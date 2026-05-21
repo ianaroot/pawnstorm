@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./app/javascript/vitest.setup.js'],
     include: [
       'app/javascript/bot_execution/**/*.test.js',
       'app/javascript/editorV2/**/*.test.js',

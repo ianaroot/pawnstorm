@@ -1,0 +1,288 @@
+import profileCollector from "gameplay/profile_collector"
+import { buildCombinedPlan } from "editorV2/panels/condition_preview/plans/plan"
+import { collectForwardPropositionExamples } from "editorV2/panels/condition_preview/forward_proposition/collect"
+
+process.env.MATCH_PROFILE = "1"
+
+const PROFILE_LABEL_PREFIXES = [
+  "forward_proposition.",
+  "board_query.",
+  "cma.v2.",
+  "condition.v2."
+]
+
+// Baseline rates recorded 2026-05-14, N=1000 attempts per payload, seed=1.
+// Use these as a reference when changes to mechanisms or pipeline ordering
+// could plausibly affect pass rates. "Pre-Phase-1" = before attack/defend
+// non-bound roleFor extension landed.
+const PAYLOADS = [
+  {
+    // Baseline 2026-05-14: 243/1000 (24.3%)
+    name: "shield aggregate_value > PBS",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "enemy", subjectFilter: "pawn", subjectFilterMode: "exclude",
+      operator: "shield",
+      target: "enemy", targetFilter: "queen", targetFilterMode: "include",
+      subjectComparisonMetric: "aggregate_value",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
+    // Peak 2026-05-17 (post-Phase-1): 83/1000 (8.3%)
+    name: "attack aggregate_value > PBS",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "attack",
+      target: "enemy", targetFilter: "queen",
+      subjectComparisonMetric: "aggregate_value",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14: 354/1000 (35.4%)
+    name: "adjacent count > PBS",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "any",
+      operator: "adjacent",
+      target: "enemy", targetFilter: "any",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-1): 6/1000 (0.6%)
+    // Peak 2026-05-17 (post-Phase-1): 83/1000 (8.3%)
+    name: "attack count > PBS (non-bound)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "attack",
+      target: "enemy", targetFilter: "queen",
+      subjectComparisonMetric: "count",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-1): 93/1000 (9.3%)
+    // Peak 2026-05-17 (post-Phase-1): 296/1000 (29.6%)
+    name: "defend aggregate_value > PBS (non-bound)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "bishop",
+      operator: "defend",
+      target: "allied", targetFilter: "queen",
+      subjectComparisonMetric: "aggregate_value",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14 (pre-Phase-2): 7/1000 (0.7%)
+    // Peak 2026-05-17 (post-Phase-2): 128/1000 (12.8%)
+    name: "defend count < PBS (non-bound, both-allied)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "knight",
+      operator: "defend",
+      target: "allied", targetFilter: "king",
+      subjectComparisonMetric: "count",
+      subjectComparator: "less_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-14: 238/1000 (23.8%) — shield's non-bound 'attacker' path
+    // works in both team configurations; recorded as regression check.
+    name: "shield aggregate_value > PBS (non-bound, both-allied)",
+    payload: {
+      version: 2, kind: "relational",
+      subject: "allied", subjectFilter: "pawn", subjectFilterMode: "exclude",
+      operator: "shield",
+      target: "allied", targetFilter: "queen", targetFilterMode: "include",
+      subjectComparisonMetric: "aggregate_value",
+      subjectComparator: "greater_than",
+      subjectComparisonSource: "prior_board_state"
+    }
+  },
+  {
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~46% verified.
+    name: "rook mobility < 5 (mobility-constrained)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "allied", subjectFilter: "rook",
+      operator: "mobility", comparator: "less_than",
+      target: "exact_number", targetTotal: 5
+    }
+  },
+  {
+    // Adversarial: allied bishop at h1 conflicts unconditionally with
+    // kingside castle's rookStart empty constraint. Every castle attempt
+    // should be detectable as wasted.
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~77% verified.
+    name: "allied bishop at h1 (conflicts with kingside castle)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "allied", subjectFilter: "bishop",
+      positionAxis: "square", positionComparator: "equal_to", positionTarget: 7,
+      operator: "count", comparator: "greater_than",
+      target: "exact_number", targetTotal: 0
+    }
+  },
+  {
+    // Adversarial: allied pawn at e5 conflicts with EP-left only when
+    // moved_piece commits to d6 (diag-left-origin lands on e5). Other
+    // EP destinations are fine. "Sometimes blocks."
+    // Baseline 2026-05-16 (post kind-retirement, now census): ~81% verified.
+    name: "allied pawn at e5 (sometimes blocks en passant)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "allied", subjectFilter: "pawn",
+      positionAxis: "square", positionComparator: "equal_to", positionTarget: 36,
+      operator: "count", comparator: "greater_than",
+      target: "exact_number", targetTotal: 0
+    }
+  },
+  {
+    // Region-restricted PBS census, increasing. Rook chosen so the rank
+    // delta can't arise by luck (a rook may stay on its rank).
+    // Baseline 2026-05-16: 0.4% pre-mechanism (luck) -> 80.9% engineered
+    // (moved_piece species+region narrowing + swing mechanism).
+    name: "census rook count rank=5 > PBS (region, increasing)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "allied", subjectFilter: "rook", subjectFilterMode: "include",
+      positionAxis: "rank", positionComparator: "equal_to", positionTarget: 5,
+      operator: "count", comparator: "greater_than",
+      target: "prior_board_state"
+    }
+  },
+  {
+    // Region-restricted PBS census, decreasing (capture-in-region path).
+    // Baseline 2026-05-16: 9.2% luck -> 76.5% engineered
+    // (moved_piece region narrowing to the capture region + en passant).
+    name: "census enemy count file=4 < PBS (region, decreasing)",
+    payload: {
+      version: 2, kind: "census",
+      subject: "enemy", subjectFilter: "any",
+      positionAxis: "file", positionComparator: "equal_to", positionTarget: 4,
+      operator: "count", comparator: "less_than",
+      target: "prior_board_state"
+    }
+  }
+]
+
+function seededRandom(seed = 42) {
+  let state = seed >>> 0
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0
+    return state / 0x100000000
+  }
+}
+
+function noopAddUnique(example, pool) { pool.push(example) }
+
+function benchmarkPayload({ name, payload }, attempts) {
+  const combinedPlan = buildCombinedPlan([payload])
+  if (combinedPlan.status !== "supported") {
+    return { name, status: combinedPlan.status }
+  }
+  profileCollector.reset()
+  const started = performance.now()
+  const standardExamples = []
+  const produced = { "forward-proposition": 0 }
+  collectForwardPropositionExamples({
+    combinedPlan,
+    random: seededRandom(1),
+    maxStandardSize: 10000,
+    addUnique: noopAddUnique,
+    standardExamples,
+    produced,
+    attempts
+  })
+  const totalMs = performance.now() - started
+  const snapshot = profileCollector.snapshot()
+  return {
+    name,
+    attempts,
+    verified: produced["forward-proposition"],
+    total_ms: Number(totalMs.toFixed(2)),
+    avg_ms_per_attempt: Number((totalMs / attempts).toFixed(4)),
+    timings: relevantTimings(snapshot),
+    counters: relevantCounters(snapshot)
+  }
+}
+
+function relevantTimings(snapshot) {
+  const result = {}
+  if (!snapshot) { return result }
+  for (const [label, data] of Object.entries(snapshot.timings ?? {})) {
+    if (!PROFILE_LABEL_PREFIXES.some(p => label.startsWith(p))) { continue }
+    result[label] = {
+      count: data.count,
+      total_ms: Number(data.total_ms.toFixed(2)),
+      avg_ms: Number((data.total_ms / data.count).toFixed(4))
+    }
+  }
+  return result
+}
+
+function relevantCounters(snapshot) {
+  const result = {}
+  if (!snapshot) { return result }
+  for (const [label, value] of Object.entries(snapshot.counters ?? {})) {
+    if (!PROFILE_LABEL_PREFIXES.some(p => label.startsWith(p))) { continue }
+    result[label] = value
+  }
+  return result
+}
+
+function formatFriendly(results, attempts) {
+  const nameWidth = Math.max(7, ...results.map(r => r.name.length))
+  const pad = (s, w) => String(s).padEnd(w)
+  const padL = (s, w) => String(s).padStart(w)
+
+  const lines = [
+    `forward_proposition — ${attempts} attempts/payload, ${results.length} payloads`,
+    "",
+    `  ${pad("PAYLOAD", nameWidth)}  ${padL("VERIFIED", 12)}  ${padL("RATE", 7)}  ${padL("ms/att", 7)}`
+  ]
+
+  let totalMs = 0
+  for (const r of results) {
+    if (r.status && r.status !== "supported") {
+      lines.push(`  ${pad(r.name, nameWidth)}  ${padL(r.status, 12)}`)
+      continue
+    }
+    totalMs += r.total_ms
+    const verified = `${r.verified}/${r.attempts}`
+    const rate = `${(100 * r.verified / r.attempts).toFixed(1)}%`
+    lines.push(
+      `  ${pad(r.name, nameWidth)}  ${padL(verified, 12)}  ${padL(rate, 7)}  ${padL(r.avg_ms_per_attempt.toFixed(3), 7)}`
+    )
+  }
+
+  lines.push("", `  total: ${results.length} payloads, ${(totalMs / 1000).toFixed(2)}s`)
+  return lines.join("\n")
+}
+
+const attempts = parseInt(process.argv[2] ?? "200", 10)
+const results = PAYLOADS.map(p => benchmarkPayload(p, attempts))
+
+if (process.env.BENCH_JSON) {
+  console.log(JSON.stringify({
+    benchmark: "forward_proposition",
+    attempts_per_payload: attempts,
+    payload_count: PAYLOADS.length,
+    payloads: results
+  }, null, 2))
+} else {
+  console.log(formatFriendly(results, attempts))
+}

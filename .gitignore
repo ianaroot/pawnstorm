@@ -42,3 +42,12 @@
 
 
 .DS_Store
+# Added by code-review-graph
+.code-review-graph/
+
+# Local IDE / AI assistant config
+/.claire/
+/.claude/
+/.cursor/
+/.mcp.json
+/.opencode.json

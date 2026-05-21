@@ -4,34 +4,7 @@ import Board from 'gameplay/board'
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 
 import { buildBoard, getMove, playMoveSequence, position, square } from 'gameplay/__tests__/helpers'
-
-function buildEnemyKnightRecentMoveContext() {
-  return {
-    moveObject: { startPosition: position('b8'), endPosition: position('c6') },
-    movingTeam: Board.BLACK,
-    movedPieceStartPosition: position('b8'),
-    movedPieceEndPosition: position('c6'),
-    movedPieceSpeciesBeforeMove: Board.NIGHT,
-    movedPieceSpeciesAfterMove: Board.NIGHT,
-    capturedPiecePosition: null,
-    capturedPieceTeam: null,
-    capturedPieceSpecies: null
-  }
-}
-
-function buildEnemyCapturedPieceContext() {
-  return {
-    moveObject: { startPosition: position('h4'), endPosition: position('e4') },
-    movingTeam: Board.BLACK,
-    movedPieceStartPosition: position('h4'),
-    movedPieceEndPosition: position('e4'),
-    movedPieceSpeciesBeforeMove: Board.QUEEN,
-    movedPieceSpeciesAfterMove: Board.QUEEN,
-    capturedPiecePosition: position('e4'),
-    capturedPieceTeam: Board.WHITE,
-    capturedPieceSpecies: Board.BISHOP
-  }
-}
+import { buildEnemyMoveContext } from 'bot_execution/__tests__/helpers'
 
 function pairSquares(result) {
   return result.pairs
@@ -163,7 +136,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toBe(4)
     })
 
-    it('keeps king value as zero in aggregate value totals', () => {
+    it('returns Infinity for a king-containing aggregate value total', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -182,7 +155,7 @@ describe('CandidateMoveAnalysisV2', () => {
           filter: 'any',
           operator: 'value'
         })
-      ).toBe(6)
+      ).toBe(Infinity)
     })
   })
 
@@ -327,7 +300,7 @@ describe('CandidateMoveAnalysisV2', () => {
           c6: 'bN'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -400,6 +373,13 @@ describe('CandidateMoveAnalysisV2', () => {
         })
       ).toBe(1)
 
+      // Mobility returns 0 when the enemy moved piece was captured (presentOnBoard = false).
+      // It is unclear whether 0 or null is more correct here:
+      // - 0 treats capture as "mobility is zero because the piece has no squares" — allows
+      //   conditions like "enemy moved piece mobility = 0" to match captures, which may be useful.
+      // - null would treat the off-board piece as undefined — consistent with the absent-actor
+      //   null semantics, and would make "mobility < X" conditions fail when the piece was taken.
+      // Currently returns 0. If this causes vacuous-truth problems in practice, revisit.
       expect(
         analysis.unaryTotal({
           actor: 'enemy_moved_piece',
@@ -435,7 +415,10 @@ describe('CandidateMoveAnalysisV2', () => {
           a2: 'wP'
         }
       })
-      board.recentMoveContext = buildEnemyCapturedPieceContext()
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverSpecies: Board.QUEEN, moverFrom: 'h4', moverTo: 'e4',
+        captured: { species: Board.BISHOP }
+      })
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -524,7 +507,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual(['c4'])
     })
 
-    it('filters enemy positions on rank using enemy team perspective (white moving)', () => {
+    it('filters enemy positions on rank using moving team perspective (white moving)', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -544,10 +527,10 @@ describe('CandidateMoveAnalysisV2', () => {
           positionComparator: 'greater_than_or_equal_to',
           positionTarget: 4
         }))
-      ).toEqual(['c5'])
+      ).toEqual(['c5', 'c7', 'e8'])
     })
 
-    it('filters enemy positions on rank using enemy team perspective (black moving)', () => {
+    it('filters enemy positions on rank using moving team perspective (black moving)', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -568,7 +551,7 @@ describe('CandidateMoveAnalysisV2', () => {
           positionComparator: 'greater_than_or_equal_to',
           positionTarget: 4
         }))
-      ).toEqual(['c4'])
+      ).toEqual(['c2', 'c4', 'e1'])
     })
 
     it('filters allied positions on square using moving team perspective', () => {
@@ -593,7 +576,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual(['a1'])
     })
 
-    it('filters enemy positions on square using enemy team perspective', () => {
+    it('filters enemy positions on square using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -610,7 +593,7 @@ describe('CandidateMoveAnalysisV2', () => {
           actor: 'enemy',
           positionAxis: 'square',
           positionComparator: 'equal_to',
-          positionTarget: 0
+          positionTarget: 56
         }))
       ).toEqual(['a8'])
     })
@@ -689,7 +672,7 @@ describe('CandidateMoveAnalysisV2', () => {
       ).toEqual([])
     })
 
-    it('filters enemy_moved_piece on rank using enemy team perspective', () => {
+    it('filters enemy_moved_piece on rank using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -698,7 +681,7 @@ describe('CandidateMoveAnalysisV2', () => {
           c6: 'bN'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -708,7 +691,7 @@ describe('CandidateMoveAnalysisV2', () => {
           actor: 'enemy_moved_piece',
           positionAxis: 'rank',
           positionComparator: 'equal_to',
-          positionTarget: 3
+          positionTarget: 6
         }))
       ).toEqual(['c6'])
     })
@@ -739,6 +722,53 @@ describe('CandidateMoveAnalysisV2', () => {
           positionTarget: 1
         })
       ).toEqual([])
+    })
+
+    it('filters enemy_captured_piece on rank using moving team perspective (white moving)', () => {
+      // Enemy black knight captured allied rook on d5 (absolute rank 5);
+      // from white's moving perspective, that rank is 5.
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.ROOK }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy_captured_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5
+        }))
+      ).toEqual(['d5'])
+    })
+
+    it('filters enemy_captured_piece on rank using moving team perspective (black moving)', () => {
+      // Enemy white knight captured allied (black) rook on d5 (absolute rank
+      // 5); from black's moving perspective, that rank is 4 (9 - 5).
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a7: 'bP', d5: 'wN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        enemyTeam: Board.WHITE,
+        moverFrom: 'b4', moverTo: 'd5',
+        captured: { species: Board.ROOK }
+      })
+      const moveObject = getMove('a7', 'a6', board)
+      const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+
+      expect(
+        squaresFor(analysis.positionFilteredPositions({
+          actor: 'enemy_captured_piece',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 4
+        }))
+      ).toEqual(['d5'])
     })
 
     it('computes count and value metrics over filtered positions', () => {
@@ -936,7 +966,7 @@ describe('CandidateMoveAnalysisV2', () => {
           a2: 'wP'
         }
       })
-      board.recentMoveContext = buildEnemyKnightRecentMoveContext()
+      board.recentMoveContext = buildEnemyMoveContext()
 
       const moveObject = getMove('a2', 'a3', board)
       const analysis = new CandidateMoveAnalysisV2({ board, moveObject })
@@ -1063,6 +1093,171 @@ describe('CandidateMoveAnalysisV2', () => {
       expect(pairSquares(shieldResult)).toEqual([])
       expect(shieldResult.subjectPositions).toEqual([])
       expect(shieldResult.targetPositions).toEqual([])
+    })
+  })
+
+  describe('null semantics for absent actors and empty groups', () => {
+    describe('unaryTotal — empty group (no pieces match filter)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy', filter: 'queen', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('positionMetricTotal — empty positions', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.positionMetricTotal({ positions: [], operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('captured_piece — absent (non-capture move)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'captured_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'captured_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('enemy_moved_piece — absent (no prior move context)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_moved_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('enemy_captured_piece — absent (enemy made no capture)', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' } })
+        board.recentMoveContext = buildEnemyMoveContext()
+        const moveObject = getMove('a2', 'a3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_captured_piece', filter: 'any', operator: 'value' })).toBeNull()
+      })
+
+      it('returns 0 for count', () => {
+        expect(analysis.unaryTotal({ actor: 'enemy_captured_piece', filter: 'any', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('moved_piece — filter miss', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null for value when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'value' })).toBeNull()
+      })
+
+      it('returns null for mobility when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'mobility' })).toBeNull()
+      })
+
+      it('returns 0 for count when the moved piece does not match the filter', () => {
+        expect(analysis.unaryTotal({ actor: 'moved_piece', filter: 'queen', operator: 'count' })).toBe(0)
+      })
+    })
+
+    describe('individualComparableValue', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns canonical material value for non-king species', () => {
+        expect(analysis.individualComparableValue(Board.PAWN)).toBe(1)
+        expect(analysis.individualComparableValue(Board.ROOK)).toBe(5)
+        expect(analysis.individualComparableValue(Board.QUEEN)).toBe(9)
+      })
+
+      it('returns Infinity for the king', () => {
+        expect(analysis.individualComparableValue(Board.KING)).toBe(Infinity)
+      })
+    })
+
+    describe('singularActorValue — absent actor', () => {
+      let analysis
+
+      beforeEach(() => {
+        const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', h2: 'wP' } })
+        const moveObject = getMove('h2', 'h3', board)
+        analysis = new CandidateMoveAnalysisV2({ board, moveObject })
+      })
+
+      it('returns null when no piece was captured', () => {
+        expect(analysis.singularActorValue('captured_piece')).toBeNull()
+      })
+
+      it('returns null when there is no prior enemy move', () => {
+        expect(analysis.singularActorValue('enemy_moved_piece')).toBeNull()
+      })
     })
   })
 
