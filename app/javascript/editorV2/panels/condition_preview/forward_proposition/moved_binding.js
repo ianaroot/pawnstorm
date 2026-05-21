@@ -165,13 +165,24 @@ function subsetsOf(items) {
   return result
 }
 
+const planIndexCache = new WeakMap()
+
+function planIndexFor(combinedPlan) {
+  const cached = planIndexCache.get(combinedPlan)
+  if (cached) { return cached }
+  const map = new Map()
+  combinedPlan.plans.forEach((plan, idx) => map.set(plan, idx))
+  planIndexCache.set(combinedPlan, map)
+  return map
+}
+
 // Same (plan, role) pair appears once regardless of how many slots back it.
 export function bindingComboKey(binding, combinedPlan) {
-  const plans = combinedPlan.plans
+  const planIndex = planIndexFor(combinedPlan)
   const pairs = new Set()
   for (const a of binding.assignments) {
-    const idx = plans.indexOf(a.sourcePlan)
-    if (idx < 0) { continue }
+    const idx = planIndex.get(a.sourcePlan)
+    if (idx === undefined) { continue }
     pairs.add(`${idx}:${a.role}`)
   }
   return [...pairs].sort().join('|')

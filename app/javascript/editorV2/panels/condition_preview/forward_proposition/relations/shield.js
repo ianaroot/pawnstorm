@@ -3,7 +3,6 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces,
   shuffled, pieceCode, pickPlaceableSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { raySliderSpeciesForStep, walkRay, stepsForSliderSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { QUEEN_RAY_STEPS, shieldingPositions } from 'gameplay/board_query_utils'
 import { pairsOnLine, pairsAcrossRays } from 'editorV2/panels/condition_preview/shared/line_pairs'
@@ -12,7 +11,7 @@ import {
   requirementsMet,
   boundSingularInActiveSet, singularPosition, sideAllowsPos
 } from './relation_helpers'
-import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { satisfyLoop } from './anchored'
 import { roleForPlan } from '../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
@@ -189,8 +188,7 @@ function placeBothStrict({ nearPos, farPos, near, far, pieces, ctx, random }) {
 function placeAt({ team, speciesSet, pos, ctx, pieces, random }) {
   const species = pickPlaceableSpecies(speciesSet, pos, random)
   if (species === null) { return null }
-  if (!respectsAllCaps(team, species, pos, ctx, pieces)) { return null }
-  return placePiece(pieces, pos, pieceCode(team, species))
+  return placeWithCaps(pieces, pos, pieceCode(team, species), ctx)
 }
 
 function sideAsDescriptor(side) {
