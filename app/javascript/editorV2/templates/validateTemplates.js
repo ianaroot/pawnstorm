@@ -5,44 +5,22 @@ import {
 import { TEMPLATE_CATEGORY_ORDER } from 'editorV2/templates/TemplateCategories'
 
 const ALLOWED_NODE_TYPES = Object.freeze(['organizer', 'condition', 'score'])
-const CONDITION_UNARY_REQUIRED_KEYS = Object.freeze([
-  'version',
-  'kind',
-  'subject',
-  'subjectFilter',
-  'operator',
-  'comparator',
-  'target'
-])
-const CONDITION_UNARY_ALLOWED_KEYS = Object.freeze([
-  ...CONDITION_UNARY_REQUIRED_KEYS,
-  'subjectFilterMode',
-  'targetFilter',
-  'targetFilterMode',
-  'targetTotal'
-])
-const CONDITION_RELATIONAL_REQUIRED_KEYS = Object.freeze([
-  'version',
-  'kind',
-  'subject',
-  'subjectFilter',
-  'operator',
-  'target',
-  'targetFilter'
-])
-const CONDITION_RELATIONAL_ALLOWED_KEYS = Object.freeze([
-  ...CONDITION_RELATIONAL_REQUIRED_KEYS,
-  'subjectFilterMode',
-  'subjectComparisonMetric',
-  'subjectComparator',
-  'subjectComparisonSource',
-  'subjectComparisonSourceTotal',
-  'targetFilterMode',
-  'targetComparisonMetric',
-  'targetComparator',
-  'targetComparisonSource',
-  'targetComparisonSourceTotal'
-])
+
+function makeSchema(required, optional = []) {
+  return { required, allowed: [...required, ...optional] }
+}
+
+const CONDITION_KIND_SCHEMAS = Object.freeze({
+  census: makeSchema(
+    ['version', 'kind', 'subject', 'subjectFilter', 'operator', 'comparator', 'target'],
+    ['subjectFilterMode', 'targetFilter', 'targetFilterMode', 'targetTotal', 'positionAxis', 'positionComparator', 'positionTarget']
+  ),
+  relational: makeSchema(
+    ['version', 'kind', 'subject', 'subjectFilter', 'operator', 'target', 'targetFilter'],
+    ['subjectFilterMode', 'subjectComparisonMetric', 'subjectComparator', 'subjectComparisonSource', 'subjectComparisonSourceTotal', 'targetFilterMode', 'targetComparisonMetric', 'targetComparator', 'targetComparisonSource', 'targetComparisonSourceTotal']
+  ),
+  identity: makeSchema(['version', 'kind', 'subject', 'target'])
+})
 
 function assert(condition, message) {
   if (!condition) {
@@ -76,16 +54,15 @@ function validateDataShape(template, node) {
 
 function validateConditionDataShape(template, node, keys) {
   const kind = node.data?.kind
-  const allowedKeys = kind === 'unary' ? CONDITION_UNARY_ALLOWED_KEYS : CONDITION_RELATIONAL_ALLOWED_KEYS
-  const requiredKeys = kind === 'unary' ? CONDITION_UNARY_REQUIRED_KEYS : CONDITION_RELATIONAL_REQUIRED_KEYS
+  const schema = CONDITION_KIND_SCHEMAS[kind]
 
   assert(
-    kind === 'unary' || kind === 'relational',
+    schema !== undefined,
     `Template "${template.id}" condition node "${node.key}" must define a valid V2 condition kind`
   )
 
-  const extraKeys = keys.filter(key => !allowedKeys.includes(key))
-  const missingKeys = requiredKeys.filter(key => !keys.includes(key))
+  const extraKeys = keys.filter(key => !schema.allowed.includes(key))
+  const missingKeys = schema.required.filter(key => !keys.includes(key))
 
   assert(
     extraKeys.length === 0 && missingKeys.length === 0,

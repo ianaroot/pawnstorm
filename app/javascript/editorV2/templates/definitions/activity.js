@@ -2,131 +2,130 @@ import { TEMPLATE_CATEGORIES } from 'editorV2/templates/TemplateCategories'
 
 export const ACTIVITY_TEMPLATES = [
   {
-    id: "queen-pressure",
-    name: "Queen Pressure",
-    category: TEMPLATE_CATEGORIES.ACTIVITY,
-    description: "Reward active queen pressure without treating it as a king-net template.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
+    "id": "queen-safety",
+    "name": "Queen Safety",
+    "category": TEMPLATE_CATEGORIES.ACTIVITY,
+    "description": "Discourage early queen movement or exposed queen placement.",
+    "nodes": [
+      {
+        "key": "organizer",
+        "type": "organizer",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "title": "Queen Safety",
+          "notes": ""
+        }
       },
-      data: {
-        title: "Queen Pressure",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110663",
-      type: "condition",
-      position: {
-        x: 22.4375,
-        y: 190.6875
+      {
+        "key": "condition_113747",
+        "type": "condition",
+        "position": {
+          "x": -105.1875,
+          "y": 213.8438
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "queen",
+          "targetFilterMode": "include"
+        }
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "captured_piece",
-        subjectFilter: "any",
-        operator: "count",
-        comparator: "equal_to",
-        target: "exact_number",
-        targetTotal: 1
-      }
-    },
-    {
-      key: "condition_110664",
-      type: "condition",
-      position: {
-        x: 21.609375,
-        y: 391.484375
+      {
+        "key": "condition_113563",
+        "type": "condition",
+        "position": {
+          "x": 149.6321,
+          "y": 215.5401
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "less_than",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "queen",
+          "targetFilterMode": "include"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "shield",
-        target: "enemy",
-        targetFilter: "queen",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "less_than",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110709",
-      type: "condition",
-      position: {
-        x: 22.609375,
-        y: 590.75
+      {
+        "key": "action_113940",
+        "type": "score",
+        "position": {
+          "x": -110.375,
+          "y": 469.0313
+        },
+        "data": {
+          "actionType": "subtract",
+          "value": 20
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "queen",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectFilterMode: "include"
-      }
-    },
-    {
-      key: "condition_110710",
-      type: "condition",
-      position: {
-        x: 23.28125,
-        y: 798.984375
+      {
+        "key": "condition_113565",
+        "type": "condition",
+        "position": {
+          "x": 149.6634,
+          "y": 425.837
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "queen",
+          "targetFilterMode": "include"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "allied",
-        subjectFilter: "any",
-        operator: "defend",
-        target: "moved_piece",
-        targetFilter: "any"
+      {
+        "key": "action_113946",
+        "type": "score",
+        "position": {
+          "x": 146.804,
+          "y": 624.1964
+        },
+        "data": {
+          "actionType": "add",
+          "value": 150
+        }
       }
-    },
-    {
-      key: "action_110667",
-      type: "score",
-      position: {
-        x: 18.890625,
-        y: 998.5
+    ],
+    "connections": [
+      {
+        "source": "organizer",
+        "target": "condition_113563"
       },
-      data: {
-        actionType: "add",
-        value: 25
+      {
+        "source": "condition_113563",
+        "target": "condition_113565"
+      },
+      {
+        "source": "organizer",
+        "target": "condition_113747"
+      },
+      {
+        "source": "condition_113747",
+        "target": "action_113940"
+      },
+      {
+        "source": "condition_113565",
+        "target": "action_113946"
       }
-    }
-  ],
-    connections: [
-    {
-      source: "organizer",
-      target: "condition_110663"
-    },
-    {
-      source: "condition_110663",
-      target: "condition_110664"
-    },
-    {
-      source: "condition_110664",
-      target: "condition_110709"
-    },
-    {
-      source: "condition_110709",
-      target: "condition_110710"
-    },
-    {
-      source: "condition_110710",
-      target: "action_110667"
-    }
-  ]
+    ]
   }
 ]
