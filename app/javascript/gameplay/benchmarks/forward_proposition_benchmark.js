@@ -18,7 +18,7 @@ const PROFILE_LABEL_PREFIXES = [
 // BASELINE column shows what to paste back in; shift causes are in git log.
 const PAYLOADS = [
   {
-    baseline: 55.90,
+    baseline: 52.64,
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -70,7 +70,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 60.38,
+    baseline: 58.52,
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -96,7 +96,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 60.50,
+    baseline: 58.86,
     name: "shield aggregate_value > PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -176,7 +176,7 @@ const PAYLOADS = [
   // route through cross_frame instead). Added to give the relations path
   // benchmark coverage.
   {
-    baseline: 61.06,
+    baseline: 66.52,
     name: "enemy non-pawn shield enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -190,7 +190,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 81.46,
+    baseline: 80.72,
     name: "allied pawn defend allied minor",
     payload: {
       version: 2, kind: "relational",
@@ -204,7 +204,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 63.56,
+    baseline: 63.86,
     name: "allied any adjacent enemy king",
     payload: {
       version: 2, kind: "relational",
@@ -218,7 +218,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 66.62,
+    baseline: 65.42,
     name: "allied non-queen attack enemy queen",
     payload: {
       version: 2, kind: "relational",
@@ -236,7 +236,7 @@ const PAYLOADS = [
   // these are the conditions where moved-piece subject/target recruitment
   // is measured before/after the relation-variant helper.
   {
-    baseline: 77.46,
+    baseline: 76.88,
     name: "allied bishop attack enemy rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -250,7 +250,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 83.00,
+    baseline: 82.60,
     name: "allied knight defend allied bishop (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -264,7 +264,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 77.04,
+    baseline: 76.52,
     name: "allied knight adjacent enemy queen (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -278,7 +278,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 77.92,
+    baseline: 73.26,
     name: "allied bishop shield allied rook (non-bound, current)",
     payload: {
       version: 2, kind: "relational",
@@ -305,7 +305,7 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 34.28,
+    baseline: 33.58,
     name: "allied defends moved + no pawn attacks moved + enemy rook (>moved value) shields enemy non-pawn",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "any", operator: "defend", target: "moved_piece", targetFilter: "any" },
@@ -337,7 +337,7 @@ const PAYLOADS = [
   // land in ctx.relations. Exists only to exercise the satisfyRelations shuffle
   // (no real bot chain combines ≥2 such relations — see session notes).
   {
-    baseline: 42.90,
+    baseline: 40.26,
     name: "chain synthetic 3-relation (attack+defend+shield)",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "queen", subjectFilterMode: "exclude", operator: "attack", target: "enemy", targetFilter: "queen", subjectComparisonMetric: "count", subjectComparator: "greater_than", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },
