@@ -4,7 +4,7 @@ import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
   movedPieceParticipatesInAttackOrDefend
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_participates_in_attack_or_defend'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -38,17 +38,12 @@ function entry({
   }
 }
 
-function bindMovedToEntry(ctx, entry) {
-  ctx.movedBinding = {
-    assignments: [{ sourcePlan: entry.sourcePlan, role: entry.movedPieceRole, kind: 'related-to' }]
-  }
-}
 
 describe('movedPieceParticipatesInAttackOrDefend — appliesTo', () => {
   it('returns true for a relational attack entry with moved_piece bound on the target side', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry()
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(true)
   })
@@ -56,7 +51,7 @@ describe('movedPieceParticipatesInAttackOrDefend — appliesTo', () => {
   it('returns true for relational defend entries', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry({ operator: 'defend' })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(true)
   })
@@ -87,7 +82,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     const e = entry()
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -103,7 +98,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     const e = entry()
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -115,7 +110,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     const e = entry({ speciesSet: new Set([]) })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)).toBeNull()
   })
@@ -131,7 +126,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       [D8, pieceCode(Board.BLACK, Board.QUEEN)]
     ])
     const e = entry({ direction: '-' })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)).toBeNull()
   })
@@ -145,7 +140,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       [H1, pieceCode(Board.BLACK, Board.QUEEN)]
     ])
     const e = entry({ direction: '-' })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -173,7 +168,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
     ])
 
     const e = entry({ direction: '-', movedPieceRole: 'subject' })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBe(pieces) // No new pieces placed for '-' direction.
@@ -190,7 +185,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
     const e = entry({ direction: '-', movedPieceRole: 'subject' })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -208,7 +203,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
     const e = entry({ movedPieceRole: 'subject', speciesSet: new Set([Board.PAWN]) })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -225,7 +220,7 @@ describe('movedPieceParticipatesInAttackOrDefend — defend operator', () => {
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     // defender team matches the moved_piece team (white)
     const e = entry({ operator: 'defend', otherTeam: Board.WHITE, speciesSet: new Set([Board.ROOK]) })
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -251,7 +246,7 @@ describe('movedPieceParticipatesInAttackOrDefend — cap respect', () => {
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     // Mechanism wants to place a black queen — but proposition forbids any black queens.
     const e = entry()
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBeNull()
@@ -267,7 +262,7 @@ describe('movedPieceParticipatesInAttackOrDefend — priorRegion intersection', 
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     const e = entry()
-    bindMovedToEntry(ctx, e)
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 

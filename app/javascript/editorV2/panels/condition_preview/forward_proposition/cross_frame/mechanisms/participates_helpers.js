@@ -4,37 +4,6 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { intersectRegions } from '../../region'
 import { respectsAllCaps } from '../../respect_caps'
-import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
-
-// Strict: only resolves the explicit related-to role binding.
-// Shield reuses this for its strict path and adds attacker-role inference locally.
-export function movedPieceRoleIn(entry) {
-  const region = entry.currentProposition?.region
-  if (region?.kind !== 'related-to') { return null }
-  if (region.actor !== 'moved_piece') { return null }
-  return region.role
-}
-
-// For region.kind === 'all', infers role from moved_piece's team+species
-// matching subjectProposition or targetProposition. Two-role mechanisms
-// (adjacent, attack/defend) compose this with movedPieceRoleIn via
-// movedPieceRoleInOrInferred. Shield does not use this — its non-bound
-// inference returns 'attacker'.
-export function inferRoleFromPropositionMatch(entry, moved) {
-  if (!moved) { return null }
-  const movedSpecies = committedSpecies(moved)
-  if (movedSpecies === null || movedSpecies === undefined) { return null }
-  if (matchesProposition(moved, movedSpecies, entry.subjectProposition)) { return 'subject' }
-  if (matchesProposition(moved, movedSpecies, entry.targetProposition)) { return 'target' }
-  return null
-}
-
-export function movedPieceRoleInOrInferred(entry, ctx) {
-  const fromRelatedTo = movedPieceRoleIn(entry)
-  if (fromRelatedTo !== null) { return fromRelatedTo }
-  if (entry.currentProposition?.region?.kind !== 'all') { return null }
-  return inferRoleFromPropositionMatch(entry, ctx?.singulars?.moved_piece)
-}
 
 // Returns the proposition on the side OPPOSITE moved_piece's role.
 // Falls back to currentProposition (which, for related-to entries, IS
@@ -42,11 +11,6 @@ export function movedPieceRoleInOrInferred(entry, ctx) {
 export function otherSidePropositionFor(entry, role) {
   const candidate = role === 'subject' ? entry.targetProposition : entry.subjectProposition
   return candidate ?? entry.currentProposition ?? null
-}
-
-function matchesProposition(moved, movedSpecies, proposition) {
-  if (!proposition) { return false }
-  return moved.team === proposition.team && proposition.species_set.has(movedSpecies)
 }
 
 // True when the entry's measured subject is moved_piece — bound singular on a

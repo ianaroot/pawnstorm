@@ -5,71 +5,37 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { raySliderSpeciesForStep, walkRay, stepsForSliderSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import {
-  QUEEN_RAY_STEPS,
-  shieldingPositions, nextPositionOnRay
-} from 'gameplay/board_query_utils'
+import { QUEEN_RAY_STEPS, shieldingPositions } from 'gameplay/board_query_utils'
 import {
   matchesSide, candidatesForSide, applyOne,
   requirementsMet,
   boundSingularInActiveSet, singularPosition, sideAllowsPos
 } from './relation_helpers'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { chooseRelationVariant } from './relation_variants'
 import { satisfyLoop } from './anchored'
+import { roleForPlan } from '../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shield invariant: subjectSide.team === targetSide.team. Both are the "ally side"
 // of the shield (shielder + shielded). The attacker is the inferred opposing team.
-
-const SLIDER_SPECIES = new Set([Board.ROOK, Board.BISHOP, Board.QUEEN])
 
 export function satisfyShield(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
   if (shieldRequirementsMet(relation, pieces, ctx)) { return pieces }
-  const variant = chooseRelationVariant({ roles: shieldRoles(relation), ctx, random })
+  const role = roleForPlan(ctx, relation.sourcePlan)
   return satisfyLoop({
     relation, pieces, ctx,
     requirementsMet: shieldRequirementsMet,
-    step: p => placeOneTriple(variant, relation, p, ctx, random)
+    step: p => placeOneTriple(role, relation, p, ctx, random)
   })
 }
 
-// shielder = subjectSide, target = targetSide, attacker = inferred opposing
-// team (slider). The attacker is never a bound singular.
-function shieldRoles(relation) {
-  return [
-    { name: 'shielder', side: relation.subjectSide },
-    { name: 'target', side: relation.targetSide },
-    {
-      name: 'attacker',
-      side: {
-        team: Board.opposingTeam(relation.subjectSide.team),
-        species_set: SLIDER_SPECIES,
-        boundSingularActor: null
-      }
-    }
-  ]
-}
-
-function placeOneTriple(variant, relation, pieces, ctx, random) {
-  if (variant.kind === 'bound') {
-    // Subject-before-target priority (shield's historical tiebreak); the
-    // other bound side is enforced by shieldRequirementsMet.
-    const binding = variant.bindings.find(b => b.role === 'shielder')
-      ?? variant.bindings.find(b => b.role === 'target')
-    if (!binding) { return null }
-    return binding.role === 'shielder'
-      ? tryAsShielder(relation, pieces, ctx, random, binding.actorKey)
-      : tryAsTarget(relation, pieces, ctx, random, binding.actorKey)
-  }
-  if (variant.kind === 'moved' || variant.kind === 'enemy-moved') {
-    if (variant.role === 'shielder') { return tryAsShielder(relation, pieces, ctx, random, variant.actorKey) }
-    if (variant.role === 'target')   { return tryAsTarget(relation, pieces, ctx, random, variant.actorKey) }
-    return tryAsAttacker(relation, pieces, ctx, random, variant.actorKey)
-  }
+function placeOneTriple(role, relation, pieces, ctx, random) {
+  if (role === 'subject')  { return tryAsShielder(relation, pieces, ctx, random, 'moved_piece') }
+  if (role === 'target')   { return tryAsTarget(relation, pieces, ctx, random, 'moved_piece') }
+  if (role === 'attacker') { return tryAsAttacker(relation, pieces, ctx, random, 'moved_piece') }
   return tryAsBystander(relation, pieces, ctx, random)
 }
 

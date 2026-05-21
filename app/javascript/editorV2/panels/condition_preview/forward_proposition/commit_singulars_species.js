@@ -47,7 +47,7 @@ function commitSpeciesFor(singular, singulars, committed, ctx, random, key) {
   }
   if (singular.species_set.size === 1) { return }
   if (key === 'moved_piece') {
-    singular.species_set = new Set([pickWeightedSpecies(movedSpeciesPool(singular, ctx), random)])
+    singular.species_set = new Set([pickWeightedSpecies(movedSpeciesPool(ctx), random)])
     return
   }
   singular.species_set = new Set([pickWeightedSpecies(singular.species_set, random)])

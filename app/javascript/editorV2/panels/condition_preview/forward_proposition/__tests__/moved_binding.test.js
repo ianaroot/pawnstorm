@@ -76,6 +76,84 @@ describe('feasibleRelationSlots', () => {
   })
 })
 
+describe('feasibleRelationSlots — shield attacker slot', () => {
+  it('emits an attacker slot for a shield relation when moved_piece is opposing-team and slider', () => {
+    // shield subject is allied (white), so attacker is black; moved_piece is black queen.
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: { ...movedSingular(Board.QUEEN), team: Board.BLACK } },
+      relations: [{
+        operator: 'shield',
+        subjectSide: { team: Board.WHITE, species_set: new Set([Board.BISHOP]), region: { kind: 'all' } },
+        targetSide: { team: Board.WHITE, species_set: new Set([Board.KING]), region: { kind: 'all' } },
+        sourcePlan: { tag: 'shield-plan' }
+      }]
+    })
+    const slots = feasibleRelationSlots(ctx)
+    const attackerSlot = slots.find(s => s.role === 'attacker')
+    expect(attackerSlot).toBeDefined()
+    expect(attackerSlot.sourcePlan).toEqual({ tag: 'shield-plan' })
+    expect(attackerSlot.side.team).toBe(Board.BLACK)
+    expect(attackerSlot.side.species_set.has(Board.QUEEN)).toBe(true)
+    expect(attackerSlot.side.species_set.has(Board.ROOK)).toBe(true)
+    expect(attackerSlot.side.species_set.has(Board.BISHOP)).toBe(true)
+    expect(attackerSlot.side.species_set.has(Board.NIGHT)).toBe(false)
+  })
+
+  it('does not emit an attacker slot for a shield relation when moved_piece is on the shielder team', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: movedSingular(Board.QUEEN) }, // white queen
+      relations: [{
+        operator: 'shield',
+        subjectSide: { team: Board.WHITE, species_set: new Set([Board.BISHOP]), region: { kind: 'all' } },
+        targetSide: { team: Board.WHITE, species_set: new Set([Board.KING]), region: { kind: 'all' } },
+        sourcePlan: { tag: 'shield-plan' }
+      }]
+    })
+    const slots = feasibleRelationSlots(ctx)
+    expect(slots.find(s => s.role === 'attacker')).toBeUndefined()
+  })
+
+  it('does not emit an attacker slot when moved_piece species_set contains no sliders', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: { ...movedSingular(Board.NIGHT), team: Board.BLACK } },
+      relations: [{
+        operator: 'shield',
+        subjectSide: { team: Board.WHITE, species_set: new Set([Board.BISHOP]), region: { kind: 'all' } },
+        targetSide: { team: Board.WHITE, species_set: new Set([Board.KING]), region: { kind: 'all' } },
+        sourcePlan: { tag: 'shield-plan' }
+      }]
+    })
+    const slots = feasibleRelationSlots(ctx)
+    expect(slots.find(s => s.role === 'attacker')).toBeUndefined()
+  })
+
+  it('does not emit an attacker slot for non-shield relations', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: { ...movedSingular(Board.QUEEN), team: Board.BLACK } },
+      relations: [relation('attack', Board.QUEEN, Board.WHITE, Board.PAWN, Board.BLACK)]
+    })
+    const slots = feasibleRelationSlots(ctx)
+    expect(slots.find(s => s.role === 'attacker')).toBeUndefined()
+  })
+})
+
+describe('bindingFeasible — attacker slot', () => {
+  it('narrows moved_piece species_set to slider species when attacker slot is in the set', () => {
+    const ctx = defaultTestCtx({
+      singulars: { moved_piece: { ...movedSingular([Board.QUEEN, Board.NIGHT]), team: Board.BLACK } },
+      relations: [{
+        operator: 'shield',
+        subjectSide: { team: Board.WHITE, species_set: new Set([Board.BISHOP]), region: { kind: 'all' } },
+        targetSide: { team: Board.WHITE, species_set: new Set([Board.KING]), region: { kind: 'all' } },
+        sourcePlan: { tag: 'shield-plan' }
+      }]
+    })
+    const slots = feasibleRelationSlots(ctx)
+    const attackerSlot = slots.find(s => s.role === 'attacker')
+    expect(bindingFeasible([attackerSlot], ctx)).toBe(true)
+  })
+})
+
 describe('bindingFeasible (Tier-1 oracle)', () => {
   it('true for a single slot whose species/region intersect the narrowed moved singular', () => {
     const ctx = defaultTestCtx({
@@ -203,9 +281,9 @@ describe('chooseMovedBinding', () => {
 
   it('roleForPlan looks up the bound role for a relation, or null', () => {
     const rel = relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK)
-    const binding = { assignments: [{ sourcePlan: rel.sourcePlan, role: 'subject' }] }
-    expect(roleForPlan(binding, rel.sourcePlan)).toBe('subject')
-    expect(roleForPlan(binding, { tag: 'absent' })).toBe(null)
+    const ctx = { movedBinding: { assignments: [{ sourcePlan: rel.sourcePlan, role: 'subject' }] } }
+    expect(roleForPlan(ctx, rel.sourcePlan)).toBe('subject')
+    expect(roleForPlan(ctx, { tag: 'absent' })).toBe(null)
   })
 })
 
@@ -215,7 +293,7 @@ describe('movedSpeciesPool', () => {
   it('returns the singular species_set unchanged when there is no binding', () => {
     const ctx = ctxWith(relation('attack', Board.NIGHT, Board.WHITE, Board.QUEEN, Board.BLACK))
     ctx.movedBinding = { assignments: [] }
-    const pool = movedSpeciesPool(ctx.singulars.moved_piece, ctx)
+    const pool = movedSpeciesPool(ctx)
     expect(pool).toEqual(new Set([Board.NIGHT, Board.ROOK]))
   })
 
@@ -226,7 +304,7 @@ describe('movedSpeciesPool', () => {
     })
     const slot = feasibleRelationSlots(ctx).find(s => s.role === 'subject')
     ctx.movedBinding = { assignments: [slot] }
-    expect(movedSpeciesPool(ctx.singulars.moved_piece, ctx)).toEqual(new Set([Board.ROOK]))
+    expect(movedSpeciesPool(ctx)).toEqual(new Set([Board.ROOK]))
   })
 })
 
@@ -364,8 +442,8 @@ describe('chooseMovedBinding — forced related-to bindings', () => {
       singulars: { moved_piece: movedSingular(Board.NIGHT) },
       propositions: [p]
     })
-    const b = chooseMovedBinding(ctx, () => 0.5)
-    expect(roleForPlan(b, planRef)).toBe('target')
+    ctx.movedBinding = chooseMovedBinding(ctx, () => 0.5)
+    expect(roleForPlan(ctx, planRef)).toBe('target')
   })
 })
 

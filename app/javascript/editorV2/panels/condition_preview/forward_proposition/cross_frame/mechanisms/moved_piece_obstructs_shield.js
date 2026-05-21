@@ -21,11 +21,11 @@ export const movedPieceObstructsShield = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'shield') { return false }
-    return roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) === null
+    return roleForPlan(ctx, entry.sourcePlan) === null
   },
 
   apply(entry, ctx, pieces, random) {
-    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return null }
+    if (roleForPlan(ctx, entry.sourcePlan) !== null) { return null }
     if (entry.direction === '-') { return applyMinus(entry, ctx, pieces, random) }
     if (entry.direction === '+') { return applyPlus(entry, ctx, pieces, random) }
     return null

@@ -1,14 +1,13 @@
 import Board from 'gameplay/board'
-import {
-  ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS
-} from 'gameplay/board_query_utils'
+import { QUEEN_RAY_STEPS } from 'gameplay/board_query_utils'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
-  originCandidatesForSpecies, raySliderSpeciesForStep, walkRay, SLIDER_SPECIES
+  originCandidatesForSpecies, raySliderSpeciesForStep, walkRay, stepsForSliderSpecies
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  singularSquare, ensureRolePieceAt, commitPriorRegion, movedPieceRoleIn
+  singularSquare, ensureRolePieceAt, commitPriorRegion
 } from './participates_helpers'
+import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const movedPieceParticipatesShield = {
@@ -17,11 +16,11 @@ export const movedPieceParticipatesShield = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'shield') { return false }
-    return roleFor(entry, ctx) !== null
+    return roleForPlan(ctx, entry.sourcePlan) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = roleFor(entry, ctx)
+    const role = roleForPlan(ctx, entry.sourcePlan)
     if (role === null) { return null }
     if (entry.direction !== '+' && entry.direction !== '-') { return null }
     if (role === 'subject') {
@@ -41,29 +40,6 @@ export const movedPieceParticipatesShield = {
     }
     return null
   }
-}
-
-// 'subject' = moved_piece bound on shielder side
-// 'target'  = moved_piece bound on shielded side
-// 'attacker' = neither side bound; moved_piece is a slider on the opposing team
-function roleFor(entry, ctx) {
-  const fromRelatedTo = movedPieceRoleIn(entry)
-  if (fromRelatedTo !== null) { return fromRelatedTo }
-  if (entry.currentProposition?.region?.kind !== 'all') { return null }
-
-  const moved = ctx?.singulars?.moved_piece
-  if (!moved) { return null }
-  const movedSpecies = committedSpecies(moved)
-  if (!SLIDER_SPECIES.has(movedSpecies)) { return null }
-  if (moved.team === entry.currentProposition.team) { return null }
-  return 'attacker'
-}
-
-function stepsForSliderSpecies(species) {
-  if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
-  if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
-  if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
-  return []
 }
 
 // moved_piece is the shielder. Place a target on one side and an attacker on

@@ -22,7 +22,7 @@ export function satisfyLoop({ relation, pieces, ctx, requirementsMet, step }) {
 export function runAnchoredSatisfier({
   relation, pieces, ctx, random, requirementsMet, tryAnchored, tryPlace
 }) {
-  const role = roleForPlan(ctx.movedBinding ?? { assignments: [] }, relation.sourcePlan)
+  const role = roleForPlan(ctx, relation.sourcePlan)
   const variant = role
     ? { kind: 'moved', role, position: singularPosition(ctx, 'moved_piece') }
     : { kind: 'bystander' }

@@ -12,21 +12,13 @@ const PROFILE_LABEL_PREFIXES = [
 ]
 
 
-// seed=1 (deterministic). `baseline:` is verified-as-percent-of-attempts
-// (e.g. 41.98 means 41.98% pass rate); forward_proposition_baselines.test.js
-// enforces ±20%. Re-record after intended mechanism/ordering changes —
-// the bench's friendly BASELINE column shows what to paste back in.
-//
-// SHIFT LOG — alongside the chooseMovedBinding rewrite (greedy-add-with-
-// bystander-balance → enumerate-then-uniform-pick over feasible bindings),
-// baselines were re-recorded at seed=1 N=5000 and stored as percent instead
-// of raw count so the gate is N-independent. Old N=1000 baselines were
-// noisy enough that high-variance payloads (e.g. chain 112832) swung ±27%
-// across seeds even without behavior change; the new N reduces noise to
-// ~±12% so the ±20% gate is meaningful.
+// seed=1 N=5000 deterministic; `baseline:` is verified-as-percent-of-attempts
+// (e.g. 41.98 means 41.98%). forward_proposition_baselines.test.js enforces
+// ±20%. Re-record after intended behavior changes — the bench's friendly
+// BASELINE column shows what to paste back in; shift causes are in git log.
 const PAYLOADS = [
   {
-    baseline: 41.98,
+    baseline: 55.90,
     name: "shield aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -39,7 +31,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 39.14,
+    baseline: 10.54,
     name: "attack aggregate_value > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -52,7 +44,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 39.82,
+    baseline: 23.30,
     name: "adjacent count > PBS",
     payload: {
       version: 2, kind: "relational",
@@ -65,7 +57,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 39.14,
+    baseline: 10.54,
     name: "attack count > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -78,7 +70,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 39.72,
+    baseline: 60.38,
     name: "defend aggregate_value > PBS (non-bound)",
     payload: {
       version: 2, kind: "relational",
@@ -91,7 +83,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 34.54,
+    baseline: 18.74,
     name: "defend count < PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -104,7 +96,7 @@ const PAYLOADS = [
     }
   },
   {
-    baseline: 43.72,
+    baseline: 60.50,
     name: "shield aggregate_value > PBS (non-bound, both-allied)",
     payload: {
       version: 2, kind: "relational",
@@ -313,8 +305,8 @@ const PAYLOADS = [
     ]
   },
   {
-    baseline: 45.82,
-    name: "chain 112421·112419·112418",
+    baseline: 34.28,
+    name: "allied defends moved + no pawn attacks moved + enemy rook (>moved value) shields enemy non-pawn",
     payloads: [
       { version: 2, kind: "relational", subject: "allied", subjectFilter: "any", operator: "defend", target: "moved_piece", targetFilter: "any" },
       { version: 2, kind: "relational", subject: "enemy", subjectFilter: "pawn", operator: "attack", target: "moved_piece", targetFilter: "any", subjectFilterMode: "include", subjectComparisonMetric: "count", subjectComparator: "equal_to", subjectComparisonSource: "exact_number", subjectComparisonSourceTotal: 0 },

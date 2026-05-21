@@ -19,7 +19,7 @@ export const movedPieceObstructsInAttackOrDefend = {
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
     // Obstructs only fires when moved_piece isn't a relation participant —
     // participates owns that case.
-    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return false }
+    if (roleForPlan(ctx, entry.sourcePlan) !== null) { return false }
     // The mechanism's premise is "A attacks T along a queen-ray, blocked by
     // moved_piece's position." That premise only holds when A is a ray-
     // compatible slider. Skip when subject species can't slide at all.
@@ -32,7 +32,7 @@ export const movedPieceObstructsInAttackOrDefend = {
   },
 
   apply(entry, ctx, pieces, random) {
-    if (roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null) { return null }
+    if (roleForPlan(ctx, entry.sourcePlan) !== null) { return null }
     if (entry.direction === '-') { return applyMinus(entry, ctx, pieces, random) }
     if (entry.direction === '+') { return applyPlus(entry, ctx, pieces, random) }
     return null

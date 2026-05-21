@@ -15,11 +15,11 @@ export const movedPieceParticipatesAdjacent = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (entry.operator !== 'adjacent') { return false }
-    return roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan) !== null
+    return roleForPlan(ctx, entry.sourcePlan) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = roleForPlan(ctx?.movedBinding ?? { assignments: [] }, entry.sourcePlan)
+    const role = roleForPlan(ctx, entry.sourcePlan)
     if (role === null) { return null }
     const otherProposition = otherSidePropositionFor(entry, role)
     if (otherProposition === null) { return null }

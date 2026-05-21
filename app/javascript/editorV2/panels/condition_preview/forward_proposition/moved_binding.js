@@ -1,10 +1,10 @@
+import Board from 'gameplay/board'
 import { intersectRegions } from './region'
+import { SLIDER_SPECIES } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 // Decides which relation roles moved_piece fills this attempt (possibly
 // none). The same decision drives the species commit and the relation
 // satisfiers, so they agree.
-
-const POOL_ACTOR = 'moved_piece'
 
 export function cloneSingular(singular) {
   return {
@@ -42,14 +42,14 @@ export function feasibleRelatedToSlots(ctx) {
   const slots = []
   for (const prop of ctx?.propositions ?? []) {
     if (prop.region?.kind !== 'related-to') { continue }
-    if (prop.region.actor !== POOL_ACTOR) { continue }
+    if (prop.region.actor !== 'moved_piece') { continue }
     slots.push({ sourcePlan: prop.sourcePlan, role: prop.region.role, kind: 'related-to' })
   }
   return slots
 }
 
 export function feasibleRelationSlots(ctx) {
-  const moved = ctx?.singulars?.[POOL_ACTOR]
+  const moved = ctx?.singulars?.moved_piece
   if (!moved) { return [] }
   const slots = []
   for (const relation of ctx.relations ?? []) {
@@ -59,14 +59,30 @@ export function feasibleRelationSlots(ctx) {
       if (!speciesOverlap(side.species_set, moved.species_set)) { continue }
       slots.push({ sourcePlan: relation.sourcePlan, role, side })
     }
+    if (relation.operator === 'shield') {
+      const attackerSide = shieldAttackerSide(relation)
+      if (attackerSide.team === moved.team && speciesOverlap(attackerSide.species_set, moved.species_set)) {
+        slots.push({ sourcePlan: relation.sourcePlan, role: 'attacker', side: attackerSide })
+      }
+    }
   }
   return slots
+}
+
+// The implicit attacker role of a shield relation. Opposing team from the
+// shielder, slider species, no region constraint.
+function shieldAttackerSide(shieldRelation) {
+  return {
+    team: Board.opposingTeam(shieldRelation.subjectSide.team),
+    species_set: SLIDER_SPECIES,
+    region: { kind: 'all' }
+  }
 }
 
 // Whether a single moved_piece could satisfy every slot in `set` at once,
 // judged only on species/region overlap (not placement geometry).
 export function bindingFeasible(set, ctx) {
-  const moved = ctx?.singulars?.[POOL_ACTOR]
+  const moved = ctx?.singulars?.moved_piece
   if (!moved) { return set.length === 0 }
   const probe = cloneSingular(moved)
   for (const slot of set) {
@@ -100,23 +116,26 @@ export function chooseMovedBinding(ctx, random, coverageRecord = null, scenarioN
   return bindings[bindings.length - 1]
 }
 
-export function movedSpeciesPool(singular, ctx) {
-  const pool = new Set(singular.species_set)
+export function movedSpeciesPool(ctx) {
+  const moved = ctx?.singulars?.moved_piece
+  if (!moved) { return new Set() }
+  const pool = new Set(moved.species_set)
   for (const a of ctx?.movedBinding?.assignments ?? []) {
     // related-to slots constrain the counterpart, not moved_piece — nothing to intersect
     if (a.kind === 'related-to') { continue }
     intersectInto(pool, a.side.species_set)
   }
-  return pool.size === 0 ? new Set(singular.species_set) : pool
+  return pool.size === 0 ? new Set(moved.species_set) : pool
 }
 
-export function roleForPlan(binding, sourcePlan) {
-  for (const a of binding.assignments) {
+export function roleForPlan(ctx, sourcePlan) {
+  for (const a of ctx?.movedBinding?.assignments ?? []) {
     if (a.sourcePlan === sourcePlan) { return a.role }
   }
   return null
 }
-//Index 0 is the minimum binding (bystander, or forced-only when related-to slots exist).
+
+// Index 0 is the minimum binding (bystander, or forced-only when related-to slots exist).
 export function enumerateFeasibleBindings(ctx) {
   const forced = feasibleRelatedToSlots(ctx)
   const optional = feasibleRelationSlots(ctx)

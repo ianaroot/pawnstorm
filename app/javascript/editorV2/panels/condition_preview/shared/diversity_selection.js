@@ -32,6 +32,14 @@ export function bindingComboSignature(example) {
   return example.bindingComboKey ?? ''
 }
 
+export function variantSignature(example) {
+  return example.variantType
+}
+
+export function geometrySignature(example) {
+  return example.geometryKey ?? ''
+}
+
 // Sum of material values across a side's pieces. Bucketing by the
 // (subject value sum, target value sum) pair surfaces examples that
 // satisfy the same value condition via different species combinations
@@ -101,55 +109,34 @@ export function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenI
   return added
 }
 
+// Diversity dimensions in round-robin priority order. Each dimension's
+// buckets are filled greedily before the next dimension takes a turn.
+const DIVERSITY_DIMENSIONS = [
+  bindingComboSignature,
+  movedPieceSignature,
+  subjectSpeciesSignature,
+  targetSpeciesSignature,
+  speciesPairSignature,
+  valueComboSignature,
+  variantSignature,
+  geometrySignature
+]
+
 export function selectDiverseExamples(candidates, maxExamples) {
   if (candidates.length <= maxExamples) { return [...candidates] }
 
   const selected = []
   const seenIdentities = new Set()
-  const subjectBuckets = new Map()
-  const targetBuckets = new Map()
-  const pairBuckets = new Map()
-  const variantBuckets = new Map()
-  const movedPieceBuckets = new Map()
-  const geometryBuckets = new Map()
-  const valueComboBuckets = new Map()
 
-  candidates.forEach(candidate => {
-    const subjectKey = subjectSpeciesSignature(candidate)
-    const targetKey = targetSpeciesSignature(candidate)
-    const pairKey = speciesPairSignature(candidate)
-    const variantKey = candidate.variantType
-    const movedKey = movedPieceSignature(candidate)
-    const geometryKey = candidate.geometryKey ?? ''
-    const valueComboKey = valueComboSignature(candidate)
-
-    if (!subjectBuckets.has(subjectKey)) { subjectBuckets.set(subjectKey, []) }
-    if (!targetBuckets.has(targetKey)) { targetBuckets.set(targetKey, []) }
-    if (!pairBuckets.has(pairKey)) { pairBuckets.set(pairKey, []) }
-    if (!variantBuckets.has(variantKey)) { variantBuckets.set(variantKey, []) }
-    if (!movedPieceBuckets.has(movedKey)) { movedPieceBuckets.set(movedKey, []) }
-    if (!geometryBuckets.has(geometryKey)) { geometryBuckets.set(geometryKey, []) }
-    if (!valueComboBuckets.has(valueComboKey)) { valueComboBuckets.set(valueComboKey, []) }
-
-    subjectBuckets.get(subjectKey).push(candidate)
-    targetBuckets.get(targetKey).push(candidate)
-    pairBuckets.get(pairKey).push(candidate)
-    variantBuckets.get(variantKey).push(candidate)
-    movedPieceBuckets.get(movedKey).push(candidate)
-    geometryBuckets.get(geometryKey).push(candidate)
-    valueComboBuckets.get(valueComboKey).push(candidate)
-  })
-
-  roundRobinAppend({ selected, candidatesByKey: movedPieceBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: subjectBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: targetBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: pairBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: valueComboBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: variantBuckets, maxExamples, seenIdentities })
-  roundRobinAppend({ selected, candidatesByKey: geometryBuckets, maxExamples, seenIdentities })
-
-  if (selected.length >= maxExamples) {
-    return selected.slice(0, maxExamples)
+  for (const signature of DIVERSITY_DIMENSIONS) {
+    const buckets = new Map()
+    for (const candidate of candidates) {
+      const key = signature(candidate)
+      if (!buckets.has(key)) { buckets.set(key, []) }
+      buckets.get(key).push(candidate)
+    }
+    roundRobinAppend({ selected, candidatesByKey: buckets, maxExamples, seenIdentities })
+    if (selected.length >= maxExamples) { return selected.slice(0, maxExamples) }
   }
 
   const remaining = candidates.filter(candidate => !seenIdentities.has(candidateIdentity(candidate)))
