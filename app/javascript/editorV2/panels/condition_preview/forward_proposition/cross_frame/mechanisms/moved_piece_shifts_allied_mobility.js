@@ -6,7 +6,7 @@ import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
 import { respectsAllCaps } from '../../respect_caps'
-import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './cross_frame_helpers'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece, placeableSpecies } from './cross_frame_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied
 } from './shifts_mobility_helpers'
@@ -72,12 +72,11 @@ function findNaturalShiftForExistingX(entry, ctx, pieces, random, moved, destina
 function placeFreshXAndCommit(entry, ctx, pieces, random, moved, destination, movedSpecies) {
   const team = entry.currentProposition.team
   const speciesSet = entry.currentProposition.species_set
-  const placeableSpecies = [...speciesSet].filter(s => s !== null)
   const origins = legalOriginCandidates(pieces, destination, moved.team, movedSpecies)
   const emptySquares = ALL_POSITIONS.filter(p => !pieces.has(p) && p !== destination)
 
   for (const xPos of shuffled(emptySquares, random)) {
-    for (const species of shuffled(placeableSpecies, random)) {
+    for (const species of shuffled(placeableSpecies(speciesSet), random)) {
       if (!legalPlacementForSpecies(xPos, species)) { continue }
       if (!respectsAllCaps(team, species, xPos, ctx, pieces)) { continue }
       const withX = placePiece(pieces, xPos, pieceCode(team, species))
