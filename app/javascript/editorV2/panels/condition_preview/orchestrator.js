@@ -1,29 +1,14 @@
-import { buildCombinedPlan, expandRelationalPlanSources } from './plans/plan'
+import { buildCombinedPlan } from './plans/plan'
 import { candidateIdentity } from './shared/example_utils'
-import { usesZeroRelationPath } from './plans/comparison_requirements'
 import { assembleWithSpecialQuota } from './shared/example_assembly'
 import { collectForwardPropositionExamples } from './forward_proposition/collect'
 
 const SOFT_TIMEOUT_MS = 10000
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 400
-const MAX_SEEDS_PER_VARIANT = 600
 const FORWARD_PROPOSITION_ATTEMPTS = 1200
 
 const NO_EXAMPLES_REASON = "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work."
-
-// Single source of truth for per-pipeline budget knobs. Today's allocation is
-// uniform across chain shapes; chain-shape-aware weighting adds branches here.
-function computeBudgets(combinedPlan, totalMs) {
-  const planCount = Math.max(combinedPlan.plans.length, 1)
-  return {
-    forwardCap: MAX_CANDIDATE_POOL,
-    forwardPropositionAttempts: FORWARD_PROPOSITION_ATTEMPTS,
-    perPlanMs: totalMs / planCount,
-    maxStandardSize: MAX_CANDIDATE_POOL,
-    maxSeedsPerVariant: MAX_SEEDS_PER_VARIANT
-  }
-}
 
 function makeAdder(seen) {
   return function addUnique(example, pool) {
@@ -34,53 +19,11 @@ function makeAdder(seen) {
   }
 }
 
-function effectiveVariants(combinedPlan) {
-  const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
-  if (relationalPlans.length === 0) { return [] }
-  const hasRequired = relationalPlans.some(p =>
-    !usesZeroRelationPath(p.requirements) &&
-    p.variants?.some(v => v.type === 'required')
-  )
-  if (hasRequired) { return [{ type: 'required' }] }
-  const hasAllied = relationalPlans.some(p => p.subject === 'allied' || p.target === 'allied')
-  if (!hasAllied) { return [{ type: 'separate' }] }
-
-  return [{ type: 'involved' }, { type: 'separate' }]
-}
-
-function buildChainVariants(combinedPlan) {
-  const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
-  if (relationalPlans.length === 0) { return [combinedPlan] }
-
-  const expansions = relationalPlans.map(p => expandRelationalPlanSources(p))
-
-  let combinations = [[]]
-  for (const expansion of expansions) {
-    const next = []
-    for (const combo of combinations) {
-      for (const exp of expansion) {
-        next.push([...combo, exp])
-      }
-    }
-    combinations = next
-  }
-
-  return combinations.map(expandedRelPlans => {
-    let planIndex = 0
-    return {
-      ...combinedPlan,
-      plans: combinedPlan.plans.map(p => p.kind === 'relational' ? expandedRelPlans[planIndex++] : p)
-    }
-  })
-}
-
 const PIPELINE_KEYS = Object.freeze([
-  'forward-resolver', 'forward-pattern', 'forward-proposition',
-  'forward-proposition.standard', 'forward-proposition.special',
-  'reverse-relational', 'reverse-unary', 'reverse-position'
+  'forward-proposition',
+  'forward-proposition.standard',
+  'forward-proposition.special'
 ])
-
-const ENABLED_PIPELINES = new Set(['forward-proposition'])
 
 function emptyPipelineCounter() {
   const counter = {}
@@ -88,24 +31,16 @@ function emptyPipelineCounter() {
   return counter
 }
 
-function collectAllExamples({ combinedPlan, random, totalMs, deadline = Infinity }) {
+function collectAllExamples({ combinedPlan, random, deadline = Infinity }) {
   const seen = new Set()
   const addUnique = makeAdder(seen)
   const standardExamples = []
   const produced = emptyPipelineCounter()
 
-  const budgets = computeBudgets(combinedPlan, totalMs)
-  const plans = combinedPlan.plans
-  const relationalPlans = plans.filter(p => p.kind === 'relational')
-  const unaryPlans = plans.filter(p => p.kind === 'unary')
-  const positionPlans = plans.filter(p => p.kind === 'position')
-
-  const chainVariants = buildChainVariants(combinedPlan)
-
-  if (plans.length > 0 && ENABLED_PIPELINES.has('forward-proposition')) {
+  if (combinedPlan.plans.length > 0) {
     collectForwardPropositionExamples({
       combinedPlan, random,
-      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
+      maxStandardSize: MAX_CANDIDATE_POOL, attempts: FORWARD_PROPOSITION_ATTEMPTS,
       addUnique, standardExamples, produced, deadline
     })
   }
@@ -137,7 +72,6 @@ function emitStats(options, payloadArray, produced, finalExamples, startTime) {
 export function generateConditionExamples(payloads, options = {}) {
   const maxExamples = options.maxExamples ?? MAX_DEFAULT_EXAMPLES
   const random = options.random ?? Math.random
-  const totalMs = options.maxMs ?? 500
   const softTimeoutMs = options.softTimeoutMs ?? SOFT_TIMEOUT_MS
   const startTime = Date.now()
   const deadline = startTime + softTimeoutMs
@@ -148,9 +82,7 @@ export function generateConditionExamples(payloads, options = {}) {
   if (combinedPlan.status !== 'supported') {
     return { status: combinedPlan.status, reason: combinedPlan.reason, examples: [], payloadCount: payloadArray.length }
   }
-  const { standardExamples, produced } = collectAllExamples({
-    combinedPlan, random, totalMs, deadline
-  })
+  const { standardExamples, produced } = collectAllExamples({ combinedPlan, random, deadline })
   const timedOut = Date.now() > deadline
   if (standardExamples.length === 0) {
     emitStats(options, payloadArray, produced, [], startTime)
