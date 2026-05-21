@@ -2,1012 +2,656 @@ import { TEMPLATE_CATEGORIES } from 'editorV2/templates/TemplateCategories'
 
 export const OPENING_TEMPLATES = [
   {
-    id: "opening-game-condition",
-    name: "Opening Game Condition",
-    category: TEMPLATE_CATEGORIES.OPENING,
-    description: "Detect an early opening state by checking that both sides still have high material.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
+    "id": "opening-game-condition",
+    "name": "Opening Game Condition",
+    "category": TEMPLATE_CATEGORIES.OPENING,
+    "description": "Detect an early opening state by checking that both sides still have high material.",
+    "nodes": [
+      {
+        "key": "organizer",
+        "type": "organizer",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "title": "Opening Game Condition",
+          "notes": ""
+        }
       },
-      data: {
-        title: "Opening Game Condition",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110771",
-      type: "condition",
-      position: {
-        x: 20.475150769315405,
-        y: 266.70397787031743
+      {
+        "key": "condition_113731",
+        "type": "condition",
+        "position": {
+          "x": 20.4752,
+          "y": 266.704
+        },
+        "data": {
+          "version": 2,
+          "kind": "census",
+          "subject": "allied",
+          "subjectFilter": "king",
+          "subjectFilterMode": "exclude",
+          "operator": "value",
+          "comparator": "greater_than",
+          "target": "exact_number",
+          "targetTotal": 34
+        }
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "allied",
-        subjectFilter: "any",
-        operator: "value",
-        comparator: "greater_than",
-        target: "exact_number",
-        targetTotal: 34
+      {
+        "key": "condition_113850",
+        "type": "condition",
+        "position": {
+          "x": 21.3426,
+          "y": 483.8646
+        },
+        "data": {
+          "version": 2,
+          "kind": "census",
+          "subject": "enemy",
+          "subjectFilter": "king",
+          "subjectFilterMode": "exclude",
+          "operator": "value",
+          "comparator": "greater_than",
+          "target": "exact_number",
+          "targetTotal": 34
+        }
       }
-    },
-    {
-      key: "condition_110772",
-      type: "condition",
-      position: {
-        x: 21.342648741015182,
-        y: 483.86459223170186
+    ],
+    "connections": [
+      {
+        "source": "organizer",
+        "target": "condition_113731"
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "value",
-        comparator: "greater_than",
-        target: "exact_number",
-        targetTotal: 34
+      {
+        "source": "condition_113731",
+        "target": "condition_113850"
       }
-    }
-  ],
-    connections: [
-    {
-      source: "organizer",
-      target: "condition_110771"
-    },
-    {
-      source: "condition_110771",
-      target: "condition_110772"
-    }
-  ]
+    ]
   },
   {
-    id: "safe-knight-development",
-    name: "Safe Knight Development",
-    category: TEMPLATE_CATEGORIES.OPENING,
-    description: "Reward knight development that improves the moved knight without walking into danger.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
+    "id": "safe-bishop-development",
+    "name": "Safe Bishop Development",
+    "category": TEMPLATE_CATEGORIES.OPENING,
+    "description": "Reward bishop development that improves the moved bishop without walking into danger.",
+    "nodes": [
+      {
+        "key": "organizer",
+        "type": "organizer",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "title": "Safe Bishop Development",
+          "notes": ""
+        }
       },
-      data: {
-        title: "Safe Knight Development",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110636",
-      type: "condition",
-      position: {
-        x: 3.116999160173691,
-        y: 200.87959846118065
+      {
+        "key": "condition_113783",
+        "type": "condition",
+        "position": {
+          "x": 19.082,
+          "y": 197.8409
+        },
+        "data": {
+          "version": 2,
+          "kind": "census",
+          "subject": "moved_piece",
+          "subjectFilter": "bishop",
+          "subjectFilterMode": "include",
+          "operator": "mobility",
+          "comparator": "greater_than",
+          "target": "prior_board_state"
+        }
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "moved_piece",
-        subjectFilter: "knight",
-        subjectFilterMode: "include",
-        operator: "mobility",
-        comparator: "greater_than",
-        target: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110682",
-      type: "condition",
-      position: {
-        x: -2.890862089779148,
-        y: 402.27505117977535
+      {
+        "key": "condition_113786",
+        "type": "condition",
+        "position": {
+          "x": 13.0741,
+          "y": 399.2364
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "allied",
+          "subjectFilter": "any",
+          "operator": "defend",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "allied",
-        subjectFilter: "any",
-        operator: "defend",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectComparisonMetric: "count",
-        subjectComparator: "greater_than",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 1
-      }
-    },
-    {
-      key: "condition_110659",
-      type: "condition",
-      position: {
-        x: -119.76975788830987,
-        y: 585.2489986790724
+      {
+        "key": "condition_113788",
+        "type": "condition",
+        "position": {
+          "x": -103.8048,
+          "y": 582.2103
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "pawn",
+          "subjectFilterMode": "exclude",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "less_than_or_equal_to",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "pawn",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectFilterMode: "exclude"
-      }
-    },
-    {
-      key: "condition_110763",
-      type: "condition",
-      position: {
-        x: 89.98940280496026,
-        y: 695.1651124102991
+      {
+        "key": "condition_113789",
+        "type": "condition",
+        "position": {
+          "x": 105.9544,
+          "y": 692.1264
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110670",
-      type: "condition",
-      position: {
-        x: -121.64862462576639,
-        y: 790.6824672451867
+      {
+        "key": "condition_113791",
+        "type": "condition",
+        "position": {
+          "x": -105.6836,
+          "y": 787.6438
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "pawn",
+          "subjectFilterMode": "include",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "pawn",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
+      {
+        "key": "action_113915",
+        "type": "score",
+        "position": {
+          "x": 5.5924,
+          "y": 980.7595
+        },
+        "data": {
+          "actionType": "add",
+          "value": 10
+        }
       }
-    },
-    {
-      key: "action_110671",
-      type: "score",
-      position: {
-        x: -10.372618585035525,
-        y: 983.7982075999153
+    ],
+    "connections": [
+      {
+        "source": "organizer",
+        "target": "condition_113783"
       },
-      data: {
-        actionType: "add",
-        value: 10
+      {
+        "source": "condition_113783",
+        "target": "condition_113786"
+      },
+      {
+        "source": "condition_113786",
+        "target": "condition_113788"
+      },
+      {
+        "source": "condition_113786",
+        "target": "condition_113789"
+      },
+      {
+        "source": "condition_113788",
+        "target": "condition_113791"
+      },
+      {
+        "source": "condition_113789",
+        "target": "action_113915"
+      },
+      {
+        "source": "condition_113791",
+        "target": "action_113915"
       }
-    }
-  ],
-    connections: [
-    {
-      source: "condition_110636",
-      target: "condition_110682"
-    },
-    {
-      source: "condition_110659",
-      target: "condition_110670"
-    },
-    {
-      source: "condition_110670",
-      target: "action_110671"
-    },
-    {
-      source: "organizer",
-      target: "condition_110636"
-    },
-    {
-      source: "condition_110682",
-      target: "condition_110659"
-    },
-    {
-      source: "condition_110682",
-      target: "condition_110763"
-    },
-    {
-      source: "condition_110763",
-      target: "action_110671"
-    }
-  ]
+    ]
   },
   {
-    id: "safe-bishop-development",
-    name: "Safe Bishop Development",
-    category: TEMPLATE_CATEGORIES.OPENING,
-    description: "Reward bishop development that improves the moved bishop without walking into danger.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
+    "id": "castling",
+    "name": "Castling",
+    "category": TEMPLATE_CATEGORIES.OPENING,
+    "description": "Approximate castling intent by rewarding king movement toward allied rook structure.",
+    "nodes": [
+      {
+        "key": "organizer",
+        "type": "organizer",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "title": "Castling",
+          "notes": ""
+        }
       },
-      data: {
-        title: "Safe Bishop Development",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110768",
-      type: "condition",
-      position: {
-        x: 19.081999032612202,
-        y: 197.84092953871004
+      {
+        "key": "condition_113894",
+        "type": "condition",
+        "position": {
+          "x": 443.1015,
+          "y": 156.1025
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "moved_piece",
+          "subjectFilter": "king",
+          "subjectFilterMode": "include",
+          "operator": "adjacent",
+          "target": "allied",
+          "targetFilter": "rook",
+          "targetFilterMode": "include",
+          "targetComparisonMetric": "count",
+          "targetComparator": "equal_to",
+          "targetComparisonSource": "exact_number",
+          "targetComparisonSourceTotal": 1
+        }
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "moved_piece",
-        subjectFilter: "bishop",
-        operator: "mobility",
-        comparator: "greater_than",
-        subjectFilterMode: "include",
-        target: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110767",
-      type: "condition",
-      position: {
-        x: 13.074137782659363,
-        y: 399.23638225730474
+      {
+        "key": "condition_113895",
+        "type": "condition",
+        "position": {
+          "x": 19.5818,
+          "y": 200.3123
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "allied",
-        subjectFilter: "any",
-        operator: "defend",
-        target: "moved_piece",
-        targetFilter: "any"
-      }
-    },
-    {
-      key: "condition_110765",
-      type: "condition",
-      position: {
-        x: -103.8047580158709,
-        y: 582.2103297566018
+      {
+        "key": "condition_113591",
+        "type": "condition",
+        "position": {
+          "x": 445.3897,
+          "y": 336.8934
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "allied",
+          "subjectFilter": "rook",
+          "subjectFilterMode": "include",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "defend",
+          "target": "moved_piece",
+          "targetFilter": "king",
+          "targetFilterMode": "include"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "pawn",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectFilterMode: "exclude",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110770",
-      type: "condition",
-      position: {
-        x: 105.95440267739878,
-        y: 692.1264434878285
+      {
+        "key": "condition_113587",
+        "type": "condition",
+        "position": {
+          "x": 21.4684,
+          "y": 386.2719
+        },
+        "data": {
+          "version": 2,
+          "kind": "census",
+          "subject": "moved_piece",
+          "subjectFilter": "any",
+          "operator": "mobility",
+          "comparator": "greater_than",
+          "target": "prior_board_state"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110769",
-      type: "condition",
-      position: {
-        x: -105.68362475332697,
-        y: 787.6437983227161
+      {
+        "key": "condition_113660",
+        "type": "condition",
+        "position": {
+          "x": 443.7111,
+          "y": 555.7283
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "king",
+          "targetFilterMode": "include"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "pawn",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectFilterMode: "include",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "action_110766",
-      type: "score",
-      position: {
-        x: 5.592381287402986,
-        y: 980.7595386774447
+      {
+        "key": "condition_113661",
+        "type": "condition",
+        "position": {
+          "x": -95.5041,
+          "y": 569.8024
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "moved_piece",
+          "subjectFilter": "bishop",
+          "subjectFilterMode": "include",
+          "operator": "adjacent",
+          "target": "allied",
+          "targetFilter": "king",
+          "targetFilterMode": "include",
+          "targetComparisonMetric": "count",
+          "targetComparator": "less_than",
+          "targetComparisonSource": "prior_board_state"
+        }
       },
-      data: {
-        actionType: "add",
-        value: 10
+      {
+        "key": "condition_113911",
+        "type": "condition",
+        "position": {
+          "x": 110.081,
+          "y": 584.3178
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "moved_piece",
+          "subjectFilter": "knight",
+          "subjectFilterMode": "include",
+          "operator": "adjacent",
+          "target": "allied",
+          "targetFilter": "rook",
+          "targetFilterMode": "include",
+          "targetComparisonMetric": "count",
+          "targetComparator": "less_than",
+          "targetComparisonSource": "prior_board_state"
+        }
+      },
+      {
+        "key": "condition_113619",
+        "type": "condition",
+        "position": {
+          "x": 388.5236,
+          "y": 774.0877
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "allied",
+          "targetFilter": "rook",
+          "targetFilterMode": "include"
+        }
+      },
+      {
+        "key": "action_113914",
+        "type": "score",
+        "position": {
+          "x": 8.4839,
+          "y": 780.2582
+        },
+        "data": {
+          "actionType": "add",
+          "value": 10
+        }
+      },
+      {
+        "key": "action_113794",
+        "type": "score",
+        "position": {
+          "x": 384.1486,
+          "y": 1002.7908
+        },
+        "data": {
+          "actionType": "add",
+          "value": 12
+        }
       }
-    }
-  ],
-    connections: [
-    {
-      source: "organizer",
-      target: "condition_110768"
-    },
-    {
-      source: "condition_110765",
-      target: "condition_110769"
-    },
-    {
-      source: "condition_110767",
-      target: "condition_110765"
-    },
-    {
-      source: "condition_110767",
-      target: "condition_110770"
-    },
-    {
-      source: "condition_110768",
-      target: "condition_110767"
-    },
-    {
-      source: "condition_110769",
-      target: "action_110766"
-    },
-    {
-      source: "condition_110770",
-      target: "action_110766"
-    }
-  ]
+    ],
+    "connections": [
+      {
+        "source": "condition_113895",
+        "target": "condition_113587"
+      },
+      {
+        "source": "condition_113894",
+        "target": "condition_113591"
+      },
+      {
+        "source": "condition_113660",
+        "target": "condition_113619"
+      },
+      {
+        "source": "condition_113591",
+        "target": "condition_113660"
+      },
+      {
+        "source": "condition_113587",
+        "target": "condition_113661"
+      },
+      {
+        "source": "condition_113619",
+        "target": "action_113794"
+      },
+      {
+        "source": "organizer",
+        "target": "condition_113894"
+      },
+      {
+        "source": "organizer",
+        "target": "condition_113895"
+      },
+      {
+        "source": "condition_113587",
+        "target": "condition_113911"
+      },
+      {
+        "source": "condition_113661",
+        "target": "action_113914"
+      },
+      {
+        "source": "condition_113911",
+        "target": "action_113914"
+      }
+    ]
   },
   {
-    id: "castling",
-    name: "Castling",
-    category: TEMPLATE_CATEGORIES.OPENING,
-    description: "Approximate castling intent by rewarding king movement toward allied rook structure.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
+    "id": "safe-knight-development",
+    "name": "Safe Knight Development",
+    "category": TEMPLATE_CATEGORIES.OPENING,
+    "description": "Reward knight development that improves the moved knight without walking into danger.",
+    "nodes": [
+      {
+        "key": "organizer",
+        "type": "organizer",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "title": "Safe Knight Development",
+          "notes": ""
+        }
       },
-      data: {
-        title: "Castling",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110757",
-      type: "condition",
-      position: {
-        x: -215.46761122930684,
-        y: 152.08950430719233
+      {
+        "key": "condition_113893",
+        "type": "condition",
+        "position": {
+          "x": 3.117,
+          "y": 200.8796
+        },
+        "data": {
+          "version": 2,
+          "kind": "census",
+          "subject": "moved_piece",
+          "subjectFilter": "knight",
+          "subjectFilterMode": "include",
+          "operator": "mobility",
+          "comparator": "greater_than",
+          "target": "prior_board_state"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "king",
-        operator: "adjacent",
-        target: "allied",
-        targetFilter: "rook",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "equal_to",
-        targetComparisonSource: "exact_number",
-        targetComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110750",
-      type: "condition",
-      position: {
-        x: 303.8514763525395,
-        y: 156.1024742572381
+      {
+        "key": "condition_113785",
+        "type": "condition",
+        "position": {
+          "x": -2.8909,
+          "y": 402.2751
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "allied",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "greater_than",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "defend",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "king",
-        operator: "adjacent",
-        target: "allied",
-        targetFilter: "rook",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "equal_to",
-        targetComparisonSource: "exact_number",
-        targetComparisonSourceTotal: 1
-      }
-    },
-    {
-      key: "condition_110751",
-      type: "condition",
-      position: {
-        x: 19.58179756772961,
-        y: 200.3122850180289
+      {
+        "key": "condition_113659",
+        "type": "condition",
+        "position": {
+          "x": -119.7698,
+          "y": 585.249
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "pawn",
+          "subjectFilterMode": "exclude",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "less_than_or_equal_to",
+          "subjectComparisonSource": "prior_board_state",
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110756",
-      type: "condition",
-      position: {
-        x: 306.13969391472483,
-        y: 336.89341031984486
+      {
+        "key": "condition_113787",
+        "type": "condition",
+        "position": {
+          "x": 89.9894,
+          "y": 695.1651
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "any",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "allied",
-        subjectFilter: "rook",
-        operator: "defend",
-        target: "moved_piece",
-        targetFilter: "king",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "action_110758",
-      type: "score",
-      position: {
-        x: -218.51500578220612,
-        y: 379.0384788864885
+      {
+        "key": "condition_113790",
+        "type": "condition",
+        "position": {
+          "x": -121.6486,
+          "y": 790.6825
+        },
+        "data": {
+          "version": 2,
+          "kind": "relational",
+          "subject": "enemy",
+          "subjectFilter": "pawn",
+          "subjectFilterMode": "include",
+          "subjectComparisonMetric": "count",
+          "subjectComparator": "equal_to",
+          "subjectComparisonSource": "exact_number",
+          "subjectComparisonSourceTotal": 0,
+          "operator": "attack",
+          "target": "moved_piece",
+          "targetFilter": "any"
+        }
       },
-      data: {
-        actionType: "subtract",
-        value: 5
+      {
+        "key": "action_113913",
+        "type": "score",
+        "position": {
+          "x": -10.3726,
+          "y": 983.7982
+        },
+        "data": {
+          "actionType": "add",
+          "value": 10
+        }
       }
-    },
-    {
-      key: "condition_110754",
-      type: "condition",
-      position: {
-        x: 21.468435469421365,
-        y: 386.2718946038917
+    ],
+    "connections": [
+      {
+        "source": "condition_113785",
+        "target": "condition_113659"
       },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "moved_piece",
-        subjectFilter: "any",
-        operator: "mobility",
-        comparator: "greater_than",
-        target: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110617",
-      type: "condition",
-      position: {
-        x: 312.1016930594833,
-        y: 542.3532827740723
+      {
+        "source": "condition_113893",
+        "target": "condition_113785"
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "king",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "king",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110755",
-      type: "condition",
-      position: {
-        x: 17.565097153736133,
-        y: 604.7997879707154
+      {
+        "source": "condition_113785",
+        "target": "condition_113787"
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "bishop",
-        operator: "adjacent",
-        target: "allied",
-        targetFilter: "queen",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "less_than",
-        targetComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110749",
-      type: "condition",
-      position: {
-        x: -121.691649983959,
-        y: 606.0367371777534
+      {
+        "source": "condition_113659",
+        "target": "condition_113790"
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "bishop",
-        operator: "adjacent",
-        target: "allied",
-        targetFilter: "king",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "less_than",
-        targetComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110753",
-      type: "condition",
-      position: {
-        x: 149.4091005182845,
-        y: 609.6615504172032
+      {
+        "source": "organizer",
+        "target": "condition_113893"
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "knight",
-        operator: "adjacent",
-        target: "allied",
-        targetFilter: "rook",
-        subjectFilterMode: "include",
-        targetFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "less_than",
-        targetComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110622",
-      type: "condition",
-      position: {
-        x: 311.7579430594833,
-        y: 732.3845327740723
+      {
+        "source": "condition_113787",
+        "target": "action_113913"
       },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "allied",
-        targetFilter: "rook",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
+      {
+        "source": "condition_113790",
+        "target": "action_113913"
       }
-    },
-    {
-      key: "action_110752",
-      type: "score",
-      position: {
-        x: 14.82761609744739,
-        y: 828.0238368787527
-      },
-      data: {
-        actionType: "add",
-        value: 10
-      }
-    },
-    {
-      key: "action_110624",
-      type: "score",
-      position: {
-        x: 307.3829430594833,
-        y: 961.0876577740723
-      },
-      data: {
-        actionType: "add",
-        value: 12
-      }
-    }
-  ],
-    connections: [
-    {
-      source: "condition_110617",
-      target: "condition_110622"
-    },
-    {
-      source: "condition_110622",
-      target: "action_110624"
-    },
-    {
-      source: "organizer",
-      target: "condition_110751"
-    },
-    {
-      source: "organizer",
-      target: "condition_110750"
-    },
-    {
-      source: "organizer",
-      target: "condition_110757"
-    },
-    {
-      source: "condition_110749",
-      target: "action_110752"
-    },
-    {
-      source: "condition_110750",
-      target: "condition_110756"
-    },
-    {
-      source: "condition_110751",
-      target: "condition_110754"
-    },
-    {
-      source: "condition_110753",
-      target: "action_110752"
-    },
-    {
-      source: "condition_110754",
-      target: "condition_110749"
-    },
-    {
-      source: "condition_110754",
-      target: "condition_110753"
-    },
-    {
-      source: "condition_110754",
-      target: "condition_110755"
-    },
-    {
-      source: "condition_110755",
-      target: "action_110752"
-    },
-    {
-      source: "condition_110756",
-      target: "condition_110617"
-    },
-    {
-      source: "condition_110757",
-      target: "action_110758"
-    }
-  ]
-  },
-  {
-    id: "queen-safety",
-    name: "Queen Safety",
-    category: TEMPLATE_CATEGORIES.OPENING,
-    description: "Discourage early queen movement or exposed queen placement.",
-    nodes: [
-    {
-      key: "organizer",
-      type: "organizer",
-      position: {
-        x: 0.0,
-        y: 0.0
-      },
-      data: {
-        title: "Queen Safety",
-        notes: ""
-      }
-    },
-    {
-      key: "condition_110653",
-      type: "condition",
-      position: {
-        x: -189.96875,
-        y: 263.3125
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "queen",
-        operator: "attack",
-        target: "enemy",
-        targetFilter: "any",
-        subjectFilterMode: "include",
-        targetComparisonMetric: "count",
-        targetComparator: "equal_to",
-        targetComparisonSource: "exact_number",
-        targetComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110655",
-      type: "condition",
-      position: {
-        x: 192.89772727272725,
-        y: 269.805752840909
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "queen",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "less_than",
-        subjectComparisonSource: "prior_board_state"
-      }
-    },
-    {
-      key: "condition_110747",
-      type: "condition",
-      position: {
-        x: 378.17897727272725,
-        y: 282.78799715909076
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "moved_piece",
-        subjectFilter: "queen",
-        operator: "attack",
-        target: "enemy",
-        targetFilter: "king",
-        subjectFilterMode: "include",
-        targetFilterMode: "include"
-      }
-    },
-    {
-      key: "condition_110648",
-      type: "condition",
-      position: {
-        x: 25.578125,
-        y: 285.0
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "queen",
-        targetFilterMode: "include"
-      }
-    },
-    {
-      key: "condition_110656",
-      type: "condition",
-      position: {
-        x: 192.92897727272725,
-        y: 480.102627840909
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "any",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "queen",
-        targetFilterMode: "include",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110654",
-      type: "condition",
-      position: {
-        x: -195.765625,
-        y: 480.71875
-      },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "captured_piece",
-        subjectFilter: "any",
-        operator: "count",
-        comparator: "equal_to",
-        target: "exact_number",
-        targetTotal: 0
-      }
-    },
-    {
-      key: "condition_110735",
-      type: "condition",
-      position: {
-        x: 368.85085227272725,
-        y: 487.28373579545473
-      },
-      data: {
-        version: 2,
-        kind: "unary",
-        subject: "captured_piece",
-        subjectFilter: "any",
-        operator: "count",
-        comparator: "greater_than",
-        target: "exact_number",
-        targetTotal: 0
-      }
-    },
-    {
-      key: "action_110634",
-      type: "score",
-      position: {
-        x: 15.703125,
-        y: 639.984375
-      },
-      data: {
-        actionType: "subtract",
-        value: 20
-      }
-    },
-    {
-      key: "action_110657",
-      type: "score",
-      position: {
-        x: 190.06960227272725,
-        y: 678.462002840909
-      },
-      data: {
-        actionType: "add",
-        value: 150
-      }
-    },
-    {
-      key: "condition_110738",
-      type: "condition",
-      position: {
-        x: 374.752840909091,
-        y: 682.6587357954547
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "enemy",
-        subjectFilter: "king",
-        operator: "attack",
-        target: "moved_piece",
-        targetFilter: "any",
-        subjectFilterMode: "exclude",
-        subjectComparisonMetric: "count",
-        subjectComparator: "equal_to",
-        subjectComparisonSource: "exact_number",
-        subjectComparisonSourceTotal: 0
-      }
-    },
-    {
-      key: "condition_110741",
-      type: "condition",
-      position: {
-        x: 370.5923295454545,
-        y: 881.2453835227275
-      },
-      data: {
-        version: 2,
-        kind: "relational",
-        subject: "allied",
-        subjectFilter: "any",
-        operator: "defend",
-        target: "moved_piece",
-        targetFilter: "any"
-      }
-    },
-    {
-      key: "action_110743",
-      type: "score",
-      position: {
-        x: 376.3948863636365,
-        y: 1079.2368607954545
-      },
-      data: {
-        actionType: "add",
-        value: 60
-      }
-    }
-  ],
-    connections: [
-    {
-      source: "condition_110648",
-      target: "action_110634"
-    },
-    {
-      source: "organizer",
-      target: "condition_110653"
-    },
-    {
-      source: "organizer",
-      target: "condition_110648"
-    },
-    {
-      source: "organizer",
-      target: "condition_110655"
-    },
-    {
-      source: "organizer",
-      target: "condition_110747"
-    },
-    {
-      source: "condition_110653",
-      target: "condition_110654"
-    },
-    {
-      source: "condition_110654",
-      target: "action_110634"
-    },
-    {
-      source: "condition_110655",
-      target: "condition_110656"
-    },
-    {
-      source: "condition_110656",
-      target: "action_110657"
-    },
-    {
-      source: "condition_110735",
-      target: "condition_110738"
-    },
-    {
-      source: "condition_110738",
-      target: "condition_110741"
-    },
-    {
-      source: "condition_110741",
-      target: "action_110743"
-    },
-    {
-      source: "condition_110747",
-      target: "condition_110735"
-    }
-  ]
+    ]
   }
 ]
