@@ -89,13 +89,16 @@ Semantic sets (`RELAXABLE_PBS_COMPARATORS`, etc.) and performance knobs
 (plan-cache size, plan-count caps, timeouts) are intentionally not
 listed — changing those is a behavior change, not a tuning operation.
 
- ## Cross-frame mechanism role detection
+## Cross-frame mechanism role detection
 
-  For mechanisms in `forward_proposition/cross_frame/mechanisms/`: use
-  `movedPieceRoleInOrInferred(entry, ctx)` unless your non-bound semantics
-  differ from "moved_piece is one of the two relation participants."
-  Shield is the exception — it resolves `'attacker'` and calls
-  `movedPieceRoleIn` (strict) locally.
+Mechanisms in `forward_proposition/cross_frame/mechanisms/` read
+moved_piece's role from the chain-global binding via
+`roleForPlan(ctx, entry.sourcePlan)` from `moved_binding`. The return is
+`'subject'`, `'target'`, `'attacker'` (shield only), or `null` (moved_piece
+is not bound to this plan — bystander).
+
+`participates_*` mechanisms fire when role is non-null; `obstructs_*`
+mechanisms fire when role is null.
 
 ## Forward-proposition diversity benchmark
 
