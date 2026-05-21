@@ -8,7 +8,7 @@ import { singularPosition } from '../relations/relation_helpers'
 import { mobilityDeltaSatisfied } from './mobility_delta'
 import {
   singularSquare, firstSquareOf, compareWithDirection
-} from './mechanisms/participates_helpers'
+} from './mechanisms/cross_frame_helpers'
 import { movedPieceParticipatesInAttackOrDefend } from './mechanisms/moved_piece_participates_in_attack_or_defend'
 import { movedPieceParticipatesAdjacent } from './mechanisms/moved_piece_participates_adjacent'
 import { movedPieceParticipatesShield } from './mechanisms/moved_piece_participates_shield'

@@ -14,7 +14,7 @@ import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from '../../mobility/blockers'
 import { kingAdjacentControlMechanism } from '../../mobility/king_adjacent_control'
 import { pinsMechanism } from '../../mobility/pins'
-import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './participates_helpers'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, hypotheticalMobilityAt, directionSatisfied
 } from './shifts_mobility_helpers'

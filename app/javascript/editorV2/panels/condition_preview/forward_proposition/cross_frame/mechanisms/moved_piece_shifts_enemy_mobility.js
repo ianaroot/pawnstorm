@@ -3,7 +3,7 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { mobilityAt } from 'gameplay/mobility'
-import { singularSquare, commitPriorRegion } from './participates_helpers'
+import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced

@@ -7,7 +7,7 @@ import MovesCalculator from 'gameplay/moves_calculator'
 import { singularPosition } from '../relations/relation_helpers'
 import {
   singularSquare, firstSquareOf, compareWithDirection
-} from './mechanisms/participates_helpers'
+} from './mechanisms/cross_frame_helpers'
 
 export function mobilityDeltaSatisfied(entry, ctx, afterPieces) {
   const moved = ctx.singulars.moved_piece

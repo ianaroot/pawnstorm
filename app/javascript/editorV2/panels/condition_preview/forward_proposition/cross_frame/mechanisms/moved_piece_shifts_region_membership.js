@@ -1,4 +1,4 @@
-import { singularSquare, commitPriorRegion } from './participates_helpers'
+import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
 import { legalOriginCandidates } from './shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 

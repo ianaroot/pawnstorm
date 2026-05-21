@@ -5,7 +5,7 @@ import {
 import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
   otherSidePropositionFor
-} from './participates_helpers'
+} from './cross_frame_helpers'
 import { roleForPlan } from '../../moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 

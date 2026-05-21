@@ -8,7 +8,7 @@ import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/sha
 import { mobilityAt } from 'gameplay/mobility'
 import {
   singularSquare, commitPriorRegion, ensureRolePieceAt
-} from './participates_helpers'
+} from './cross_frame_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced
