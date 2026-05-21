@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { satisfyCrossFrame } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/satisfy_cross_frame'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -57,15 +57,18 @@ describe('satisfyCrossFrame — fires the participates-in-attack-or-defend mecha
     const priorProposition = { ...currentProposition, frame: 'prior' }
     return {
       source: 'relational', operator: 'attack', metric: 'count', direction: '+',
-      priorProposition, currentProposition
+      priorProposition, currentProposition,
+      sourcePlan: {}
     }
   }
 
   it('adds a piece that controls moved_piece destination', () => {
+    const entry = attackEntry()
     const ctx = defaultTestCtx({
       singulars: singulars(),
-      crossFrame: [attackEntry()]
+      crossFrame: [entry]
     })
+    bindMoved(ctx, entry.sourcePlan, 'target')
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
 
     const result = satisfyCrossFrame(ctx, pieces, () => 0.5)
@@ -74,10 +77,12 @@ describe('satisfyCrossFrame — fires the participates-in-attack-or-defend mecha
   })
 
   it('narrows moved_piece priorRegion via the mechanism', () => {
+    const entry = attackEntry()
     const ctx = defaultTestCtx({
       singulars: singulars(),
-      crossFrame: [attackEntry()]
+      crossFrame: [entry]
     })
+    bindMoved(ctx, entry.sourcePlan, 'target')
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
 
     satisfyCrossFrame(ctx, pieces, () => 0.5)

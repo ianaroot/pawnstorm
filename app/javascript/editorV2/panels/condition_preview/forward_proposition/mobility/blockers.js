@@ -1,9 +1,7 @@
-import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces,
-  legalPlacementForSpecies, weightedShuffleSpecies, pieceCode,
-  shuffled, teamHasKing, WEIGHTED_SPECIES_DISTRIBUTION
+  buildBoardFromLayout, buildLayoutFromPieces, pieceCode,
+  shuffled, teamHasKing, pickBlockerTeam, orderedBlockerSpeciesFor
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
@@ -35,13 +33,6 @@ export const blockersMechanism = {
   isActive() { return false }
 }
 
-function pickBlockerTeam(target, random) {
-  if (target.species === Board.NIGHT || target.species === Board.KING) {
-    return target.team
-  }
-  return random() < 0.5 ? target.team : Board.opposingTeam(target.team)
-}
-
 function emptyReachableSquares(target, pieces) {
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   const moves = Rules.availableMovesFrom({ board, startPosition: target.position })
@@ -56,12 +47,3 @@ function emptyReachableSquares(target, pieces) {
   return unique
 }
 
-function orderedBlockerSpeciesFor(position, random) {
-  const eligible = new Set()
-  for (const species of WEIGHTED_SPECIES_DISTRIBUTION) {
-    if (species === Board.KING) { continue }
-    if (!legalPlacementForSpecies(position, species)) { continue }
-    eligible.add(species)
-  }
-  return weightedShuffleSpecies(eligible, random)
-}

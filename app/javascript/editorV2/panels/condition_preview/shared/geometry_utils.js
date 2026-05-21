@@ -3,6 +3,13 @@ import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK
 
 export { QUEEN_RAY_STEPS as RAY_STEPS }
 
+export function stepsForSliderSpecies(species) {
+  if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
+  if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
+  if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
+  return []
+}
+
 export function adjacentNeighborPositions(position) {
   return kingControlledSquares(position)
 }
@@ -148,7 +155,7 @@ export function attackerCandidatesFor(targetPosition, species, team, board) {
 export const SLIDER_SPECIES = Object.freeze(new Set([Board.ROOK, Board.BISHOP, Board.QUEEN]))
 
 export function raySliderSpeciesForStep(step) {
-  return ROOK_RAY_STEPS.includes(step) ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
+  return ROOK_RAY_STEPS.includes(step) ? new Set([Board.ROOK, Board.QUEEN]) : new Set([Board.BISHOP, Board.QUEEN])
 }
 
 export function relationSquareDistance(subjectPosition, targetPosition) {

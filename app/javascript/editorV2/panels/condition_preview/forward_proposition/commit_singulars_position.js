@@ -4,6 +4,7 @@ import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility
 import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'
 import { ACTOR_PRIORITY } from './singulars'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const ACTOR_KEYS = Object.freeze(
   Object.keys(ACTOR_PRIORITY).sort((a, b) => ACTOR_PRIORITY[a] - ACTOR_PRIORITY[b])
@@ -35,7 +36,7 @@ function isAlreadyPositioned(singular) {
 }
 
 function commitPositionFor(singular, singulars, committed, random, ctx, key, earlyPieces) {
-  const species = [...singular.species_set][0]
+  const species = committedSpecies(singular)
   if (species === null) { return }
 
   applyRelationsToAnchors(singular, singulars, committed, species)
@@ -80,7 +81,7 @@ function virtualPiecesFor(singulars, committed, earlyPieces) {
   let map = new Map(earlyPieces)
   for (const name of committed) {
     const s = singulars[name]
-    const species = [...s.species_set][0]
+    const species = committedSpecies(s)
     if (species === null || s.region.kind !== 'set') { continue }
     const pos = [...s.region.squares][0]
     if (pos === undefined) { continue }

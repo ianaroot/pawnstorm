@@ -43,13 +43,31 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect_node_count(1)
     end
 
-    it 'opens the in-editor guide drawer' do
-      click_button 'Guide'
+    describe 'how-it-works walkthrough modal' do
+      it 'opens, navigates between slides, and closes' do
+        trigger = find('button.btn-guide', text: 'How it works')
+        # JS click: the toolbar overlaps the trigger at the feature-test viewport.
+        page.execute_script('arguments[0].click()', trigger)
 
-      expect(page).to have_css('#bot-guide-drawer', visible: true)
-      expect(page).to have_css('.bot-guide-drawer__eyebrow', text: /In-Editor Guide/i)
-      expect(page).to have_link('Read Full Guide', href: bot_help_path)
-      expect(page).to have_button('What Your Bot Does')
+        expect(page).to have_css('#bot-intro-modal[aria-hidden="false"]')
+        expect(page).to have_css('.bot-intro-modal__dialog[role="dialog"]')
+        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
+        expect(page).to have_button('Back', disabled: true)
+
+        click_button 'Next'
+
+        expect(page).to have_css('.bot-intro-slide__title', text: 'Condition nodes & the form')
+        expect(page).to have_button('Back', disabled: false)
+
+        click_button 'Back'
+
+        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
+
+        find('.bot-intro-modal__close').click
+
+        expect(page).to have_css('#bot-intro-modal[aria-hidden="true"]', visible: :all)
+        expect(page).to have_no_css('.bot-intro-slide__title', text: 'How your bot thinks')
+      end
     end
   end
 
@@ -206,11 +224,11 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
     it 'deletes connection via delete button' do
       wait_for_editor
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       delete_connection(node1.id, node2.id)
 
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
       expect(Connection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(0)
       expect_history_count(2)
     end
@@ -347,14 +365,14 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       it 'undoes connection deletion' do
         wait_for_editor
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
 
         delete_connection(node1.id, node2.id)
-        expect(connection_count).to eq(0)
+        expect_connection_count(0)
 
         click_undo
 
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
       end
 
       it 'redoes connection deletion after undo' do
@@ -364,7 +382,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
         click_undo
         click_redo
 
-        expect(connection_count).to eq(0)
+        expect_connection_count(0)
       end
     end
   end

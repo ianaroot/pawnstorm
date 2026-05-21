@@ -8,8 +8,9 @@ import { activeAttackOrDefendSets } from '../../relations/attack_or_defend'
 import { activeAdjacentSets } from '../../relations/adjacent'
 import { activeShieldSets } from '../../relations/shield'
 import { singularPosition } from '../../relations/relation_helpers'
-import { singularSquare, commitPriorRegion } from './participates_helpers'
+import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
 import { legalOriginCandidates } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Cross-frame mechanism: engineer a relational PBS direction "-" delta by
 // arranging for captured_piece to have been a relation participant on the
@@ -46,7 +47,7 @@ export const movedPieceCapturesRelationParticipant = {
     const captured = ctx.singulars.captured_piece
     const destination = singularSquare(moved)
     const captureSquare = singularPosition(ctx, 'captured_piece')
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     const capturedSpecies = nonNullSpecies(captured.species_set)
     if (destination === null || captureSquare === null || movedSpecies === null || capturedSpecies === null) { return null }
 

@@ -4,7 +4,7 @@ import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
   movedPieceParticipatesInAttackOrDefend
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_participates_in_attack_or_defend'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -32,21 +32,28 @@ function entry({
   const priorProposition = { ...currentProposition, frame: 'prior' }
   return {
     source, operator, metric: 'count', direction,
-    priorProposition, currentProposition
+    priorProposition, currentProposition,
+    sourcePlan: {},
+    movedPieceRole
   }
 }
+
 
 describe('movedPieceParticipatesInAttackOrDefend — appliesTo', () => {
   it('returns true for a relational attack entry with moved_piece bound on the target side', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(entry(), ctx, new Map())).toBe(true)
+    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
   it('returns true for relational defend entries', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
+    const e = entry({ operator: 'defend' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(entry({ operator: 'defend' }), ctx, new Map())).toBe(true)
+    expect(movedPieceParticipatesInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
   it('returns false for non-relational entries', () => {
@@ -65,8 +72,7 @@ describe('movedPieceParticipatesInAttackOrDefend — appliesTo', () => {
   it('returns false when moved_piece is not bound on either side of the relation', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry()
-    e.currentProposition = { ...e.currentProposition, region: { kind: 'all' } }
-
+    // No bindMovedToEntry — ctx.movedBinding stays unset → roleForPlan returns null.
     expect(movedPieceParticipatesInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(false)
   })
 })
@@ -75,8 +81,10 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
   it('places an attacker that controls moved_piece destination', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     // One new piece was added.
@@ -89,8 +97,10 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
   it('narrows moved_piece priorRegion to squares the new attacker does not control', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+    movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(ctx.singulars.moved_piece.priorRegion.kind).toBe('set')
     expect(ctx.singulars.moved_piece.priorRegion.squares.size).toBeGreaterThan(0)
@@ -100,6 +110,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     const e = entry({ speciesSet: new Set([]) })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)).toBeNull()
   })
@@ -115,6 +126,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       [D8, pieceCode(Board.BLACK, Board.QUEEN)]
     ])
     const e = entry({ direction: '-' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     expect(movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)).toBeNull()
   })
@@ -128,6 +140,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       [H1, pieceCode(Board.BLACK, Board.QUEEN)]
     ])
     const e = entry({ direction: '-' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -154,9 +167,9 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
       [A8, pieceCode(Board.BLACK, Board.QUEEN)]
     ])
 
-    const result = movedPieceParticipatesInAttackOrDefend.apply(
-      entry({ direction: '-', movedPieceRole: 'subject' }), ctx, pieces, () => 0.5
-    )
+    const e = entry({ direction: '-', movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBe(pieces) // No new pieces placed for '-' direction.
     expect(ctx.singulars.moved_piece.priorRegion.kind).toBe('set')
@@ -171,10 +184,10 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "-", role 
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+    const e = entry({ direction: '-', movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesInAttackOrDefend.apply(
-      entry({ direction: '-', movedPieceRole: 'subject' }), ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     expect(result.size).toBe(pieces.size + 1)
@@ -190,6 +203,7 @@ describe('movedPieceParticipatesInAttackOrDefend — apply (direction "+", role 
     })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
     const e = entry({ movedPieceRole: 'subject', speciesSet: new Set([Board.PAWN]) })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -206,6 +220,7 @@ describe('movedPieceParticipatesInAttackOrDefend — defend operator', () => {
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     // defender team matches the moved_piece team (white)
     const e = entry({ operator: 'defend', otherTeam: Board.WHITE, speciesSet: new Set([Board.ROOK]) })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
     const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
@@ -230,7 +245,9 @@ describe('movedPieceParticipatesInAttackOrDefend — cap respect', () => {
     })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
     // Mechanism wants to place a black queen — but proposition forbids any black queens.
-    const result = movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBeNull()
   })
@@ -244,8 +261,10 @@ describe('movedPieceParticipatesInAttackOrDefend — priorRegion intersection', 
     moved.priorRegion = { kind: 'set', squares: new Set([B3, F3]) }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesInAttackOrDefend.apply(entry(), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesInAttackOrDefend.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     // Final priorRegion must be a subset of the original {B3, F3} — B5 (excluded

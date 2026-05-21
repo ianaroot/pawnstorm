@@ -60,6 +60,12 @@ All mutations to a pieces `Map<position, pieceCode>` must go through `placePiece
 
 **In-progress transition:** `placeWithCaps` in `forward_proposition/respect_caps.js` is being introduced as the canonical wrapper for ctx-having callers — it does `respectsAllCaps` then `placePiece` in one call. Once all forward_proposition callsites use `placeWithCaps`, `placePiece`'s local guards will be stripped and legality enforcement will live entirely in `ctx.propositions` as structural caps (already seeded by `forward_proposition/structural_invariants.js`). Until the refactor lands, both layers run — `placePiece`'s guards remain authoritative for callers without ctx. New ctx-having callsites should prefer `placeWithCaps`; new ctx-less callsites should continue using `placePiece` directly.
 
+## Singular constraint discipline
+
+`ctx.singulars` is built up in three phases that may write unconditionally: **merge** (`scenarios/merge_ctx_delta.js`), **narrow** (`narrow_for_crossframe.js`, `narrow_moved_piece_for_region.js`), and **commit** (`commit_singulars_species.js`, `commit_singulars_position.js`, `commit_singulars_helpers.js`). Every other writer — early-placement strategies, mate / stalemate patterns, anything downstream of `commitSingulars*` — must go through `shared/singular_constraints.js` (`tryNarrowSingularRegion` / `tryNarrowSingular` / `tryNarrowMovedPiece`), which intersect with the existing value and return `false` on empty intersection. Scenario deltas establish constraints; downstream code may refuse an attempt but must never overwrite them. Slot reassignments (e.g. `ctx.singulars.captured_piece = enemyMoved`) must verify the incoming singular's committed species is in the existing slot's `species_set` before reassigning.
+
+To read a singular's committed species, use `committedSpecies(singular)` from `shared/singular_constraints.js` — it throws on non-singleton sets. The bare `[...singular.species_set][0]` pattern silently returns iteration-order garbage when called pre-commit (e.g. `null` for actors whose initial set is `[null, …species]`).
+
 ## Diversity tuning knobs
 
 Code-side constants that affect generation diversity live at their
@@ -83,20 +89,32 @@ Semantic sets (`RELAXABLE_PBS_COMPARATORS`, etc.) and performance knobs
 (plan-cache size, plan-count caps, timeouts) are intentionally not
 listed — changing those is a behavior change, not a tuning operation.
 
- ## Cross-frame mechanism role detection
+## Cross-frame mechanism role detection
 
-  For mechanisms in `forward_proposition/cross_frame/mechanisms/`: use
-  `movedPieceRoleInOrInferred(entry, ctx)` unless your non-bound semantics
-  differ from "moved_piece is one of the two relation participants."
-  Shield is the exception — it resolves `'attacker'` and calls
-  `movedPieceRoleIn` (strict) locally.
+Mechanisms in `forward_proposition/cross_frame/mechanisms/` read
+moved_piece's role from the chain-global binding via
+`roleForPlan(ctx, entry.sourcePlan)` from `moved_binding`. The return is
+`'subject'`, `'target'`, `'attacker'` (shield only), or `null` (moved_piece
+is not bound to this plan — bystander).
+
+`participates_*` mechanisms fire when role is non-null; `obstructs_*`
+mechanisms fire when role is null.
 
 ## Forward-proposition diversity benchmark
 
-  `npm run bench:forward-proposition -- 1000` records pass rates per
-  representative PBS payload; baselines commented inline in
-  `forward_proposition_benchmark.js`. Run before/after changes to
-  mechanisms or phase ordering.
+  `npm run bench:forward-proposition -- 5000` runs each payload and
+  prints VERIFIED (count) / RATE (percent) / BASELINE (percent) / Δ% /
+  ms-per-attempt per payload. The `baseline:` fields in
+  `forward_proposition_benchmark.js` are stored as verified-as-percent
+  (e.g. `baseline: 41.98`), so the gate is N-independent. A leading `!`
+  on Δ% marks payloads outside the ±20% gate enforced by
+  `forward_proposition_baselines.test.js` (which runs at N=5000). Re-record
+  the `baseline:` fields after intended mechanism or phase-ordering
+  changes — the BASELINE column in the friendly output shows what to
+  paste back in.
+
+  `BENCH_JSON=1 npm run bench:forward-proposition -- 5000` switches the
+  output to JSON; timings and counters group under each payload.
 
   To extend the bench with a new diagnostic: call
   `profileCollector.increment('forward_proposition.<area>.<event>')` at
@@ -105,7 +123,3 @@ listed — changing those is a behavior change, not a tuning operation.
   is picked up by `relevantCounters` and printed per payload. Use
   `profileCollector.measure(label, fn)` for timing instead. Both are
   no-ops unless `MATCH_PROFILE=1` (set automatically by the bench).
-
-  Run with `npm run bench:forward-proposition -- 1000` (trailing arg
-  is attempts per payload). The output JSON groups timings and counters
-  under each payload.

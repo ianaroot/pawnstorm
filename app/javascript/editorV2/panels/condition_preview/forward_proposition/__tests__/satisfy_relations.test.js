@@ -3,6 +3,7 @@ import Board from 'gameplay/board'
 import { controllingPositions, materialValue, shieldingPositions } from 'gameplay/board_query_utils'
 import { pieceCode, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { satisfyRelations } from 'editorV2/panels/condition_preview/forward_proposition/relations/satisfy_relations'
+import { bindMoved } from './_helpers'
 
 const PERMISSIVE = Object.freeze({ min: 0, max: Infinity })
 
@@ -21,7 +22,8 @@ function relation(operator, { subjectTeam, subjectSpecies, targetTeam, targetSpe
   return {
     operator,
     subjectSide: side({ team: subjectTeam, species_set: new Set(subjectSpecies) }),
-    targetSide: side({ team: targetTeam, species_set: new Set(targetSpecies) })
+    targetSide: side({ team: targetTeam, species_set: new Set(targetSpecies) }),
+    sourcePlan: {}
   }
 }
 
@@ -293,14 +295,16 @@ describe('satisfyRelations — shield variant: moved-as-target', () => {
       region: { kind: 'set', squares: new Set([D4]) }
     }
     const initialPieces = new Map([[D4, pieceCode(Board.WHITE, Board.QUEEN)]])
+    const shieldRel = relation('shield', {
+      subjectTeam: Board.WHITE, subjectSpecies: [Board.PAWN],
+      targetTeam:  Board.WHITE, targetSpecies:  [Board.QUEEN]
+    })
     const ctx = {
       singulars: { moved_piece: movedPiece },
       propositions: [],
-      relations: [relation('shield', {
-        subjectTeam: Board.WHITE, subjectSpecies: [Board.PAWN],
-        targetTeam:  Board.WHITE, targetSpecies:  [Board.QUEEN]
-      })]
+      relations: [shieldRel]
     }
+    bindMoved(ctx, shieldRel.sourcePlan, 'target')
     result = satisfyRelations(ctx, initialPieces, controlledRandom(0.99))
   })
 
@@ -326,14 +330,16 @@ describe('satisfyRelations — shield variant: moved-as-shielder', () => {
       region: { kind: 'set', squares: new Set([D4]) }
     }
     const initialPieces = new Map([[D4, pieceCode(Board.WHITE, Board.PAWN)]])
+    const shieldRel = relation('shield', {
+      subjectTeam: Board.WHITE, subjectSpecies: [Board.PAWN],
+      targetTeam:  Board.WHITE, targetSpecies:  [Board.QUEEN]
+    })
     const ctx = {
       singulars: { moved_piece: movedPiece },
       propositions: [],
-      relations: [relation('shield', {
-        subjectTeam: Board.WHITE, subjectSpecies: [Board.PAWN],
-        targetTeam:  Board.WHITE, targetSpecies:  [Board.QUEEN]
-      })]
+      relations: [shieldRel]
     }
+    bindMoved(ctx, shieldRel.sourcePlan, 'subject')
     result = satisfyRelations(ctx, initialPieces, controlledRandom(0.99))
   })
 

@@ -8,10 +8,11 @@ import {
 } from 'gameplay/board_query_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
-  matchesSide, candidatesForSide, applyOne, regionAllows,
-  requirementsMet, MAX_SATISFY_ITERATIONS, boundSingularInActiveSet, sideAllowsPos,
+  matchesSide, candidatesForSide, applyOne, regionPossiblyContains,
+  requirementsMet, boundSingularInActiveSet, sideAllowsPos,
   singularPosition
 } from './relation_helpers'
+import { runAnchoredSatisfier, satisfyLoop } from './anchored'
 
 const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3
@@ -27,6 +28,8 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
   }
   if (attackOrDefendRequirementsMet(relation, pieces, ctx)) { return pieces }
 
+  // Aggregate-value relations keep the plan path then fall back to the plain
+  // loop (no moved-piece anchoring — out of Phase 1 scope by design).
   if (hasAggregateValueConstraint(relation)) {
     for (let s = 0; s < MAX_PLAN_RESAMPLES; s += 1) {
       const planned = trySatisfyWithPlans(relation, pieces, ctx, random)
@@ -34,16 +37,45 @@ export function satisfyAttackOrDefend(relation, pieces, ctx, random) {
         return planned
       }
     }
+    return satisfyLoop({
+      relation, pieces, ctx,
+      requirementsMet: attackOrDefendRequirementsMet,
+      step: p => tryPlace(relation, p, ctx, random)
+    })
   }
 
-  let next = pieces
-  for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (attackOrDefendRequirementsMet(relation, next, ctx)) { return next }
-    const placed = tryPlace(relation, next, ctx, random)
-    if (placed === null || placed === next) { return null }
-    next = placed
+  return runAnchoredSatisfier({
+    relation, pieces, ctx, random,
+    requirementsMet: attackOrDefendRequirementsMet,
+    tryAnchored, tryPlace
+  })
+}
+
+function tryAnchored(relation, variant, pieces, ctx, random) {
+  const anchorPos = variant.position
+  if (anchorPos === null || !pieces.has(anchorPos)) { return null }
+  const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
+
+  if (variant.role === 'target') {
+    // Anchor is the target; place a fresh subject that controls it.
+    for (const subject of shuffled(subjectsControlling(relation.subjectSide, anchorPos, pieces, board), random)) {
+      if (subject.kind === 'existing') { continue }
+      const placed = applyOne(pieces, subject, ctx, { skipRelation: relation })
+      if (placed !== null && placed !== pieces) { return placed }
+    }
+    return null
   }
-  return attackOrDefendRequirementsMet(relation, next, ctx) ? next : null
+
+  // Anchor is the subject (already on the board); place a target on a square
+  // it controls.
+  for (const species of shuffled([...relation.targetSide.species_set].filter(s => s !== null), random)) {
+    for (const cand of shuffled(targetCandidatesOfSpecies(relation.targetSide, pieces, species), random)) {
+      if (!pieceControlsSquare({ board, attackerPosition: anchorPos, targetPosition: cand.position })) { continue }
+      const placed = applyOne(pieces, cand, ctx, { skipRelation: relation })
+      if (placed !== null && placed !== pieces) { return placed }
+    }
+  }
+  return null
 }
 
 function attackOrDefendRequirementsMet(relation, pieces, ctx) {
@@ -188,7 +220,7 @@ function subjectsControlling(side, targetPos, pieces, board) {
     for (const pos of positions) {
       if (pieces.has(pos)) { continue }
       if (!legalPlacementForSpecies(pos, species)) { continue }
-      if (!regionAllows(side.region, pos)) { continue }
+      if (!regionPossiblyContains(side.region, pos)) { continue }
       candidates.push({ kind: 'fresh', position: pos, species, team: side.team })
     }
   }
@@ -319,7 +351,7 @@ function placeSubjectAttackingHook(relation, pieces, ctx, random, subjectSpecies
   for (const pos of positions) {
     if (pieces.has(pos)) { continue }
     if (!legalPlacementForSpecies(pos, subjectSpecies)) { continue }
-    if (!regionAllows(relation.subjectSide.region, pos)) { continue }
+    if (!regionPossiblyContains(relation.subjectSide.region, pos)) { continue }
     const candidate = { kind: 'fresh', position: pos, species: subjectSpecies, team: relation.subjectSide.team }
     const next = applyOne(pieces, candidate, ctx, { skipRelation: relation })
     if (next !== null) { return next }
@@ -354,7 +386,7 @@ function targetCandidatesOfSpecies(side, pieces, species) {
   for (const pos of ALL_POSITIONS) {
     if (pieces.has(pos)) { continue }
     if (!legalPlacementForSpecies(pos, species)) { continue }
-    if (!regionAllows(side.region, pos)) { continue }
+    if (!regionPossiblyContains(side.region, pos)) { continue }
     result.push({ kind: 'fresh', position: pos, species, team: side.team })
   }
   return result

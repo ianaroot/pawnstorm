@@ -5,7 +5,7 @@ import { activeShieldSets } from 'editorV2/panels/condition_preview/forward_prop
 import {
   movedPieceParticipatesShield
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_participates_shield'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -49,27 +49,34 @@ function entry({
   return {
     source: 'relational', operator: 'shield', metric: 'count', direction,
     priorProposition: { ...currentProposition, frame: 'prior' },
-    currentProposition
+    currentProposition,
+    sourcePlan: {}
   }
 }
+
 
 describe('movedPieceParticipatesShield — appliesTo', () => {
   it('returns true when moved_piece is bound on the target side', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceParticipatesShield.appliesTo(entry(), ctx, new Map())).toBe(true)
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, 'target')
+    expect(movedPieceParticipatesShield.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
   it('returns true when moved_piece is bound on the subject (shielder) side', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceParticipatesShield.appliesTo(entry({ movedPieceRole: 'subject' }), ctx, new Map())).toBe(true)
+    const e = entry({ movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, 'subject')
+    expect(movedPieceParticipatesShield.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
-  it('returns true when neither side is bound but moved_piece is a slider on the opposing team', () => {
+  it('returns true when moved_piece is bound as the implicit attacker', () => {
     const ctx = defaultTestCtx({
       singulars: { moved_piece: { ...movedPieceSingular(Board.QUEEN), team: Board.BLACK } }
     })
-    // Allied team WHITE, moved_piece BLACK with slider — can be implicit attacker.
-    expect(movedPieceParticipatesShield.appliesTo(entry({ movedPieceRole: null }), ctx, new Map())).toBe(true)
+    const e = entry({ movedPieceRole: null })
+    bindMoved(ctx, e.sourcePlan, 'attacker')
+    expect(movedPieceParticipatesShield.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
   it('returns false for non-shield operators', () => {
@@ -79,10 +86,11 @@ describe('movedPieceParticipatesShield — appliesTo', () => {
     expect(movedPieceParticipatesShield.appliesTo(e, ctx, new Map())).toBe(false)
   })
 
-  it('returns false when neither side is bound and moved_piece is not a slider', () => {
+  it('returns false when the binding has no role for this entry', () => {
     const ctx = defaultTestCtx({
       singulars: { moved_piece: { ...movedPieceSingular(Board.NIGHT), team: Board.BLACK } }
     })
+    // No bindMovedToEntry — binding is empty.
     expect(movedPieceParticipatesShield.appliesTo(entry({ movedPieceRole: null }), ctx, new Map())).toBe(false)
   })
 })
@@ -98,11 +106,10 @@ describe('movedPieceParticipatesShield — apply (direction "+", role "subject",
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.PAWN)]])
+    const e = entryWithBothProps({ direction: '+', movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, 'subject')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '+', movedPieceRole: 'subject' }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -129,11 +136,10 @@ describe('movedPieceParticipatesShield — apply (direction "+", role "attacker"
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.BLACK, Board.QUEEN)]])
+    const e = entryWithBothProps({ direction: '+', movedPieceRole: null })
+    bindMoved(ctx, e.sourcePlan, 'attacker')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '+', movedPieceRole: null }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -160,11 +166,10 @@ describe('movedPieceParticipatesShield — apply (direction "+", role "target", 
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.ROOK)]])
+    const e = entryWithBothProps({ direction: '+', movedPieceRole: 'target' })
+    bindMoved(ctx, e.sourcePlan, 'target')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '+', movedPieceRole: 'target' }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -210,7 +215,8 @@ function entryWithBothProps({
     priorProposition: { ...pbsSide, frame: 'prior' },
     currentProposition: pbsSide,
     subjectProposition,
-    targetProposition
+    targetProposition,
+    sourcePlan: {}
   }
 }
 
@@ -225,11 +231,10 @@ describe('movedPieceParticipatesShield — apply (direction "-", role "subject",
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.PAWN)]])
+    const e = entryWithBothProps({ direction: '-', movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, 'subject')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '-', movedPieceRole: 'subject' }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -256,11 +261,10 @@ describe('movedPieceParticipatesShield — apply (direction "-", role "target", 
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.ROOK)]])
+    const e = entryWithBothProps({ direction: '-', movedPieceRole: 'target' })
+    bindMoved(ctx, e.sourcePlan, 'target')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '-', movedPieceRole: 'target' }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -287,11 +291,10 @@ describe('movedPieceParticipatesShield — apply (direction "-", role "attacker"
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.BLACK, Board.QUEEN)]])
+    const e = entryWithBothProps({ direction: '-', movedPieceRole: null })
+    bindMoved(ctx, e.sourcePlan, 'attacker')
 
-    const result = movedPieceParticipatesShield.apply(
-      entryWithBothProps({ direction: '-', movedPieceRole: null }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     const priorRegion = ctx.singulars.moved_piece.priorRegion
@@ -319,11 +322,10 @@ describe('movedPieceParticipatesShield — apply returns null when priorRegion i
     }
     const ctx = defaultTestCtx({ singulars: { moved_piece: moved } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.BISHOP)]])
+    const e = entry({ movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, 'subject')
 
-    const result = movedPieceParticipatesShield.apply(
-      entry({ movedPieceRole: 'subject' }),
-      ctx, pieces, () => 0.5
-    )
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBeNull()
   })
@@ -343,8 +345,10 @@ describe('movedPieceParticipatesShield — cap respect', () => {
       }]
     })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.BISHOP)]])
+    const e = entry({ movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, 'subject')
 
-    const result = movedPieceParticipatesShield.apply(entry({ movedPieceRole: 'subject' }), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesShield.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBeNull()
   })

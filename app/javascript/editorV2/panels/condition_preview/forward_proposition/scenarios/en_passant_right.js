@@ -1,4 +1,5 @@
 import Board from 'gameplay/board'
+import { MOVE_KIND_EN_PASSANT } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
 
 function epTargetRankIndex(team) {
@@ -24,6 +25,7 @@ function rankSquares(rankIndex) {
 
 export const enPassantRightScenario = {
   name: 'en_passant_right',
+  moveKind: MOVE_KIND_EN_PASSANT,
   attemptWeight: 10,
 
   buildCtxDelta(combinedPlan) {

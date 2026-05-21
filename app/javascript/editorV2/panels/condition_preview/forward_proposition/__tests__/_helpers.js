@@ -16,3 +16,8 @@ export function defaultTestCtx(overrides = {}) {
     ...overrides
   }
 }
+
+export function bindMoved(ctx, sourcePlan, role) {
+  ctx.movedBinding = { assignments: [{ sourcePlan, role }] }
+  return ctx
+}

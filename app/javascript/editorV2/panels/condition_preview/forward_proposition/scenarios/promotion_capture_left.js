@@ -1,6 +1,8 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { MOVE_KIND_PROMOTION } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const PROMOTION_SPECIES = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT])
 const CAPTURABLE_NON_PAWN = Object.freeze([Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])
@@ -17,6 +19,7 @@ function lastRankSquaresExcludingFile(team, excludeFile) {
 
 export const promotionCaptureLeftScenario = {
   name: 'promotion_capture_left',
+  moveKind: MOVE_KIND_PROMOTION,
   attemptWeight: 5,
 
   buildCtxDelta(combinedPlan) {
@@ -41,7 +44,7 @@ export const promotionCaptureLeftScenario = {
   resolveMoveObjectOverrides(ctx) {
     const moved = ctx.singulars.moved_piece
     const endPos = [...moved.region.squares][0]
-    const promotedSpecies = [...moved.species_set][0]
+    const promotedSpecies = committedSpecies(moved)
     const rankDelta = ctx.movingTeam === Board.BLACK ? 1 : -1
     return {
       startPosition: endPos + 8 * rankDelta + 1,

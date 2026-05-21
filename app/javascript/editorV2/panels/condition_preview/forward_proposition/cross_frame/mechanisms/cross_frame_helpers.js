@@ -1,39 +1,7 @@
-import {
-  pieceCode, legalPlacementForSpecies, pickWeightedSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { pieceCode, pickPlaceableSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { intersectRegions } from '../../region'
 import { respectsAllCaps } from '../../respect_caps'
-
-// Strict: only resolves the explicit related-to role binding.
-// Shield reuses this for its strict path and adds attacker-role inference locally.
-export function movedPieceRoleIn(entry) {
-  const region = entry.currentProposition?.region
-  if (region?.kind !== 'related-to') { return null }
-  if (region.actor !== 'moved_piece') { return null }
-  return region.role
-}
-
-// For region.kind === 'all', infers role from moved_piece's team+species
-// matching subjectProposition or targetProposition. Two-role mechanisms
-// (adjacent, attack/defend) compose this with movedPieceRoleIn via
-// movedPieceRoleInOrInferred. Shield does not use this — its non-bound
-// inference returns 'attacker'.
-export function inferRoleFromPropositionMatch(entry, moved) {
-  if (!moved) { return null }
-  const movedSpecies = [...moved.species_set][0]
-  if (movedSpecies === null || movedSpecies === undefined) { return null }
-  if (matchesProposition(moved, movedSpecies, entry.subjectProposition)) { return 'subject' }
-  if (matchesProposition(moved, movedSpecies, entry.targetProposition)) { return 'target' }
-  return null
-}
-
-export function movedPieceRoleInOrInferred(entry, ctx) {
-  const fromRelatedTo = movedPieceRoleIn(entry)
-  if (fromRelatedTo !== null) { return fromRelatedTo }
-  if (entry.currentProposition?.region?.kind !== 'all') { return null }
-  return inferRoleFromPropositionMatch(entry, ctx?.singulars?.moved_piece)
-}
 
 // Returns the proposition on the side OPPOSITE moved_piece's role.
 // Falls back to currentProposition (which, for related-to entries, IS
@@ -43,15 +11,37 @@ export function otherSidePropositionFor(entry, role) {
   return candidate ?? entry.currentProposition ?? null
 }
 
-function matchesProposition(moved, movedSpecies, proposition) {
-  if (!proposition) { return false }
-  return moved.team === proposition.team && proposition.species_set.has(movedSpecies)
+// True when the entry's measured subject is moved_piece — bound singular on a
+// unary/census proposition, or a relational side whose region points back at it.
+export function entryConcernsMovedPiece(entry) {
+  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
+  if (entry.subjectProposition === null && regionPointsToMovedPiece(entry.targetProposition?.region)) { return true }
+  if (entry.targetProposition === null && regionPointsToMovedPiece(entry.subjectProposition?.region)) { return true }
+  return false
+}
+
+function regionPointsToMovedPiece(region) {
+  return region?.kind === 'related-to' && region?.actor === 'moved_piece'
 }
 
 export function singularSquare(singular) {
   if (singular.region.kind !== 'set') { return null }
   if (singular.region.squares.size !== 1) { return null }
   return [...singular.region.squares][0]
+}
+
+export function firstSquareOf(region) {
+  if (!region) { return null }
+  if (region.kind !== 'set') { return null }
+  if (region.squares.size === 0) { return null }
+  return [...region.squares][0]
+}
+
+export function compareWithDirection(after, prior, direction) {
+  if (direction === '+') { return after > prior }
+  if (direction === '-') { return after < prior }
+  if (direction === '=') { return after === prior }
+  return false
 }
 
 export function placeableSpecies(speciesSet) {
@@ -61,14 +51,6 @@ export function placeableSpecies(speciesSet) {
     result.push(s)
   }
   return result
-}
-
-export function pickPlaceableSpecies(speciesSet, position, random) {
-  const filtered = new Set([...speciesSet].filter(
-    s => s !== null && legalPlacementForSpecies(position, s)
-  ))
-  if (filtered.size === 0) { return null }
-  return pickWeightedSpecies(filtered, random)
 }
 
 // Rate at which mechanisms reject reusing an existing-fitting piece in favor

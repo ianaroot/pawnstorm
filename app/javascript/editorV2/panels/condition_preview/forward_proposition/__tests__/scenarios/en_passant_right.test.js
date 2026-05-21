@@ -37,7 +37,7 @@ describe('enPassantRightScenario — end-to-end via buildAttempt (white)', () =>
     let result = null
     for (let i = 0; i < 100; i += 1) {
       const attempt = buildAttempt(buildCombinedPlan([TRIVIAL_PAYLOAD]), random, enPassantRightScenario)
-      if (attempt) { result = attempt; break }
+      if (attempt) { result = attempt.move; break }
     }
     expect(result).not.toBeNull()
     expect(result.moveObject.illegal).toBeFalsy()

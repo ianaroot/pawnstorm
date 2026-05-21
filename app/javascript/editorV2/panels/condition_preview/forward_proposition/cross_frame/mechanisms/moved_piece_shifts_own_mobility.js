@@ -1,17 +1,24 @@
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing
+  buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing,
+  pieceCode, pickBlockerTeam, orderedBlockerSpeciesFor
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { pathClearOnPieces } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import {
+  pathClearOnPieces, walkRay, stepsForSliderSpecies, SLIDER_SPECIES
+} from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { sliderStep } from 'gameplay/board_query_utils'
+import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { mobilityDeltaForOrigin } from '../mobility_delta'
 import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from '../../mobility/blockers'
 import { kingAdjacentControlMechanism } from '../../mobility/king_adjacent_control'
 import { pinsMechanism } from '../../mobility/pins'
-import { singularSquare, commitPriorRegion } from './participates_helpers'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, hypotheticalMobilityAt, directionSatisfied
 } from './shifts_mobility_helpers'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const ACTIVE_MECHANISMS = Object.freeze([blockersMechanism, kingAdjacentControlMechanism, pinsMechanism])
 
@@ -33,7 +40,7 @@ export const movedPieceShiftsOwnMobility = {
     const moved = ctx.singulars.moved_piece
     const destination = singularSquare(moved)
     if (destination === null) { return null }
-    const movedSpecies = [...moved.species_set][0]
+    const movedSpecies = committedSpecies(moved)
     if (movedSpecies === null) { return null }
     if (!teamHasKing(pieces, moved.team)) {
       const placed = placeKingDeliberately(pieces, moved.team, 'current', ctx, random)
@@ -44,22 +51,49 @@ export const movedPieceShiftsOwnMobility = {
     const naturalResult = findOriginWithNaturalDelta(entry, ctx, pieces, random, moved, destination, movedSpecies)
     if (naturalResult !== null) { return naturalResult }
 
+    const constructed = engineerSliderPerpendicularDelta(entry, ctx, pieces, random, moved, destination, movedSpecies)
+    if (constructed !== null) { return constructed }
+
     return engineerOriginMobility(entry, ctx, pieces, random, moved, destination, movedSpecies)
   }
 }
 
-// True when the entry's mobility metric concerns moved_piece directly —
-// either as a bound singular on a unary proposition or as a bound side of a
-// relational entry (where the non-bound side's region points back at it).
-function entryConcernsMovedPiece(entry) {
-  if (entry.currentProposition?.boundSingularActor === 'moved_piece') { return true }
-  if (entry.subjectProposition === null && regionPointsToMovedPiece(entry.targetProposition?.region)) { return true }
-  if (entry.targetProposition === null && regionPointsToMovedPiece(entry.subjectProposition?.region)) { return true }
-  return false
+// '+' chokes origin's perpendicular arms, '-' chokes destination; '=' → natural pass.
+function engineerSliderPerpendicularDelta(entry, ctx, pieces, random, moved, destination, movedSpecies) {
+  if (entry.direction !== '+' && entry.direction !== '-') { return null }
+  if (!SLIDER_SPECIES.has(movedSpecies)) { return null }
+
+  for (const origin of shuffled(legalOriginCandidates(pieces, destination, moved.team, movedSpecies), random)) {
+    const moveStep = sliderStep(origin, destination)
+    if (moveStep === null) { continue }
+    const nonMoveSteps = stepsForSliderSpecies(movedSpecies)
+      .filter(step => step !== moveStep && step !== -moveStep)
+    const chokeAt = entry.direction === '+' ? origin : destination
+
+    let candidate = pieces
+    for (const step of shuffled([...nonMoveSteps], random)) {
+      candidate = chokeArm(candidate, chokeAt, step, moved, movedSpecies, ctx, random)
+    }
+    if (candidate === pieces) { continue }
+    if (!pathClearOnPieces(candidate, origin, destination, movedSpecies)) { continue }
+    if (!mobilityDeltaForOrigin(entry, ctx, candidate, origin, destination)) { continue }
+
+    const result = commitPriorRegion(ctx, [origin], candidate)
+    if (result !== null) { return result }
+  }
+  return null
 }
 
-function regionPointsToMovedPiece(region) {
-  return region?.kind === 'related-to' && region?.actor === 'moved_piece'
+function chokeArm(pieces, square, step, moved, movedSpecies, ctx, random) {
+  const blockerTeam = pickBlockerTeam({ team: moved.team, species: movedSpecies }, random)
+  for (const pos of walkRay(square, step)) {
+    if (pieces.has(pos)) { return pieces }
+    for (const species of orderedBlockerSpeciesFor(pos, random)) {
+      const next = placeWithCaps(pieces, pos, pieceCode(blockerTeam, species), ctx)
+      if (next !== null) { return next }
+    }
+  }
+  return pieces
 }
 
 function findOriginWithNaturalDelta(entry, ctx, pieces, random, moved, destination, movedSpecies) {

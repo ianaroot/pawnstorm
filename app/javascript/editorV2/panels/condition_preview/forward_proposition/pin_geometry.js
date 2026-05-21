@@ -23,7 +23,7 @@ export function placeSliderBeyondTarget({ pieces, attackerTeam, targetPos, step,
     if (occupant) {
       const team = Board.parseTeam(occupant)
       const species = Board.parseSpecies(occupant)
-      if (team === attackerTeam && compatibleSliders.includes(species)) { return pieces }
+      if (team === attackerTeam && compatibleSliders.has(species)) { return pieces }
       return null
     }
     candidates.push(current)

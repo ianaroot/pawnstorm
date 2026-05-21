@@ -5,7 +5,7 @@ import { activeShieldSets } from 'editorV2/panels/condition_preview/forward_prop
 import {
   movedPieceObstructsShield
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_obstructs_shield'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -54,9 +54,11 @@ function entry({
     priorProposition: { ...subjectProposition, frame: 'prior' },
     currentProposition: subjectProposition,
     subjectProposition,
-    targetProposition
+    targetProposition,
+    sourcePlan: {}
   }
 }
+
 
 describe('movedPieceObstructsShield — appliesTo', () => {
   it('returns true for relational shield entries when moved_piece is not bound', () => {
@@ -74,10 +76,7 @@ describe('movedPieceObstructsShield — appliesTo', () => {
   it('returns false when moved_piece is bound on a side (participates_shield owns that case)', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry()
-    e.currentProposition = {
-      ...e.currentProposition,
-      region: { kind: 'related-to', actor: 'moved_piece', role: 'subject', operator: 'shield' }
-    }
+    bindMoved(ctx, e.sourcePlan, 'subject')
     expect(movedPieceObstructsShield.appliesTo(e, ctx, new Map())).toBe(false)
   })
 })

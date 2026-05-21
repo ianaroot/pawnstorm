@@ -356,7 +356,7 @@ RSpec.describe BotEligibilityChecker do
         expect(result[:eligible]).to be true
       end
 
-      it "adds a violation for each score node using a banned type" do
+      it "aggregates one violation per banned action type with a node count" do
         prog = program(
           root("r", children: ["c1", "c2"]),
           condition("c1", children: ["s1"]),
@@ -365,7 +365,9 @@ RSpec.describe BotEligibilityChecker do
           score("s2", action_type: "return")
         )
         result = check(prog, { "score_node_restrictions" => { "banned_action_types" => ["return"] } })
-        expect(result[:violations].count { |v| v[:type] == "score_node_action_type" }).to eq(2)
+        violations = result[:violations].select { |v| v[:type] == "score_node_action_type" }
+        expect(violations.size).to eq(1)
+        expect(violations.first[:message]).to include("return").and include("2 nodes")
       end
 
       it "is eligible with no banned types set" do

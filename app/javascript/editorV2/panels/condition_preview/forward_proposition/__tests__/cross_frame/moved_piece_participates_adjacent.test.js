@@ -4,7 +4,7 @@ import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
   movedPieceParticipatesAdjacent
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_participates_adjacent'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27
 
@@ -31,14 +31,19 @@ function entry({
   return {
     source: 'relational', operator: 'adjacent', metric: 'count', direction,
     priorProposition: { ...currentProposition, frame: 'prior' },
-    currentProposition
+    currentProposition,
+    sourcePlan: {},
+    movedPieceRole
   }
 }
+
 
 describe('movedPieceParticipatesAdjacent — appliesTo', () => {
   it('returns true for a relational adjacent entry with moved_piece bound', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceParticipatesAdjacent.appliesTo(entry(), ctx, new Map())).toBe(true)
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
+    expect(movedPieceParticipatesAdjacent.appliesTo(e, ctx, new Map())).toBe(true)
   })
 
   it('returns false for non-adjacent operators', () => {
@@ -50,7 +55,9 @@ describe('movedPieceParticipatesAdjacent — appliesTo', () => {
 
   it('returns true regardless of which side moved_piece is on (adjacency is mutual)', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
-    expect(movedPieceParticipatesAdjacent.appliesTo(entry({ movedPieceRole: 'subject' }), ctx, new Map())).toBe(true)
+    const e = entry({ movedPieceRole: 'subject' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
+    expect(movedPieceParticipatesAdjacent.appliesTo(e, ctx, new Map())).toBe(true)
   })
 })
 
@@ -58,8 +65,10 @@ describe('movedPieceParticipatesAdjacent — apply (direction "+")', () => {
   it('places a piece adjacent to moved_piece destination', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesAdjacent.apply(entry(), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesAdjacent.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).not.toBeNull()
     expect(result.size).toBe(pieces.size + 1)
@@ -70,8 +79,10 @@ describe('movedPieceParticipatesAdjacent — apply (direction "+")', () => {
   it('narrows priorRegion to origin candidates not adjacent to the placed piece', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    movedPieceParticipatesAdjacent.apply(entry(), ctx, pieces, () => 0.5)
+    movedPieceParticipatesAdjacent.apply(e, ctx, pieces, () => 0.5)
 
     expect(ctx.singulars.moved_piece.priorRegion.kind).toBe('set')
     expect(ctx.singulars.moved_piece.priorRegion.squares.size).toBeGreaterThan(0)
@@ -87,8 +98,10 @@ describe('movedPieceParticipatesAdjacent — apply (direction "-")', () => {
       [D4, pieceCode(Board.WHITE, Board.NIGHT)],
       [C5, pieceCode(Board.BLACK, Board.PAWN)]
     ])
+    const e = entry({ direction: '-' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    expect(movedPieceParticipatesAdjacent.apply(entry({ direction: '-' }), ctx, pieces, () => 0.5)).toBeNull()
+    expect(movedPieceParticipatesAdjacent.apply(e, ctx, pieces, () => 0.5)).toBeNull()
   })
 
   it('commits priorRegion to origins adjacent to relevant piece when destination is not', () => {
@@ -100,8 +113,10 @@ describe('movedPieceParticipatesAdjacent — apply (direction "-")', () => {
       [D4, pieceCode(Board.WHITE, Board.NIGHT)],
       [A4, pieceCode(Board.BLACK, Board.PAWN)]
     ])
+    const e = entry({ direction: '-' })
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesAdjacent.apply(entry({ direction: '-' }), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesAdjacent.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBe(pieces) // No new pieces placed for '-'.
     expect(ctx.singulars.moved_piece.priorRegion.kind).toBe('set')
@@ -123,8 +138,10 @@ describe('movedPieceParticipatesAdjacent — cap respect', () => {
       }]
     })
     const pieces = new Map([[D4, pieceCode(Board.WHITE, Board.NIGHT)]])
+    const e = entry()
+    bindMoved(ctx, e.sourcePlan, e.movedPieceRole)
 
-    const result = movedPieceParticipatesAdjacent.apply(entry(), ctx, pieces, () => 0.5)
+    const result = movedPieceParticipatesAdjacent.apply(e, ctx, pieces, () => 0.5)
 
     expect(result).toBeNull()
   })

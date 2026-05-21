@@ -4,7 +4,7 @@ import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import {
   movedPieceObstructsInAttackOrDefend
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/moved_piece_obstructs_in_attack_or_defend'
-import { defaultTestCtx } from '../_helpers'
+import { defaultTestCtx, bindMoved } from '../_helpers'
 
 const D4 = 27 // file 3, rank 3
 
@@ -42,9 +42,11 @@ function entry({
     priorProposition: { ...subjectProposition, frame: 'prior' },
     currentProposition: subjectProposition,
     subjectProposition,
-    targetProposition
+    targetProposition,
+    sourcePlan: {}
   }
 }
+
 
 describe('movedPieceObstructsInAttackOrDefend — appliesTo', () => {
   it('returns true for relational attack entries where moved_piece is not bound on either side', () => {
@@ -60,10 +62,7 @@ describe('movedPieceObstructsInAttackOrDefend — appliesTo', () => {
   it('returns false when moved_piece is bound on a side (participates mechanism owns that case)', () => {
     const ctx = defaultTestCtx({ singulars: { moved_piece: movedPieceSingular() } })
     const e = entry()
-    e.currentProposition = {
-      ...e.currentProposition,
-      region: { kind: 'related-to', actor: 'moved_piece', role: 'target', operator: 'attack' }
-    }
+    bindMoved(ctx, e.sourcePlan, 'target')
     expect(movedPieceObstructsInAttackOrDefend.appliesTo(e, ctx, new Map())).toBe(false)
   })
 

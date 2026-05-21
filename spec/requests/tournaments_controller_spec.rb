@@ -32,10 +32,9 @@ RSpec.describe TournamentsController, type: :request do
       get new_tournament_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include('Name')
-      expect(response.body).to include('Visibility')
-      expect(response.body).to include('Entries Per User')
-      expect(response.body).to include('Games Per Pairing')
+      %w[name visibility entries_per_user games_per_pair].each do |field|
+        expect(response.body).to include(%(name="tournament[#{field}]"))
+      end
     end
   end
 
@@ -46,7 +45,7 @@ RSpec.describe TournamentsController, type: :request do
       sign_in user
     end
 
-    it 'creates an open tournament shell without entries or matches' do
+    it 'creates a draft tournament shell without entries or matches' do
       expect do
         post tournaments_path, params: {
           tournament: {
@@ -63,7 +62,7 @@ RSpec.describe TournamentsController, type: :request do
         .and change(Match, :count).by(0)
 
       tournament = Tournament.order(:created_at).last
-      expect(response).to redirect_to(public_tournament_path(tournament))
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
       expect(tournament.creator).to eq(user)
       expect(tournament).to have_attributes(
         name: 'Spring Open',
@@ -72,7 +71,7 @@ RSpec.describe TournamentsController, type: :request do
         entries_per_user: 'unlimited',
         max_entries: 12,
         games_per_pair: 14,
-        status: 'open'
+        status: 'draft'
       )
       expect(ComputeMatchJob).not_to have_been_enqueued
     end
@@ -125,20 +124,33 @@ RSpec.describe TournamentsController, type: :request do
   describe 'GET #show' do
     let(:user) { create(:user) }
 
-    it 'shows standings, progress, and pairing detail with match links' do
-      skip 'tournament show expectations are outdated after the standings/matrix UI overhaul'
-
-      tournament = create(:tournament, creator: user, visibility: :public)
+    it 'renders standings and progress, and the matrix links through to per-match detail' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :completed)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
-      create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
-
+      entry_a = create(
+        :tournament_entry,
+        tournament:,
+        bot: bot_a,
+        display_name: bot_a.name,
+        compiled_program_snapshot: bot_a.compiled_program,
+        seed_order: 0
+      )
+      entry_b = create(
+        :tournament_entry,
+        tournament:,
+        bot: bot_b,
+        display_name: bot_b.name,
+        compiled_program_snapshot: bot_b.compiled_program,
+        seed_order: 1
+      )
       match = Match.create!(
-        tournament: tournament,
+        tournament:,
         creator: user,
         white_player: bot_a,
         black_player: bot_b,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
         status: :completed,
         result: :white_win,
         allowed_to_move: 'W',
@@ -152,9 +164,14 @@ RSpec.describe TournamentsController, type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Standings')
-      expect(response.body).to include('Pairings')
+      expect(response.body).to include('Progress')
       expect(response.body).to include('Alpha')
       expect(response.body).to include('Beta')
+      expect(response.body).to include(pairing_public_tournament_path(tournament, entry_a, entry_b))
+
+      get pairing_public_tournament_path(tournament, entry_a, entry_b)
+
+      expect(response).to have_http_status(:success)
       expect(response.body).to include("Match #{match.id}")
       expect(response.body).to include(match_path(match))
     end

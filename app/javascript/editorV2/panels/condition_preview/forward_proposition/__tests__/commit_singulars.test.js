@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
 import { buildSingulars } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
-import { commitSingularsSpecies } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_species'
+import { commitSingularsSpecies, applyNullStayCoinFlips } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_species'
 import { commitSingularsPosition } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_position'
 
 const TRIVIAL_PLAN = {
@@ -99,6 +99,7 @@ describe('commitSingulars — optional actors (random 0.0 selects null)', () => 
   let ctx
   beforeEach(() => {
     ctx = ctxFor(buildCombinedPlan([TRIVIAL_PLAN]))
+    applyNullStayCoinFlips(ctx, () => 0.0)
     commitSingularsSpecies(ctx, () => 0.0)
     commitSingularsPosition(ctx, () => 0.0)
   })

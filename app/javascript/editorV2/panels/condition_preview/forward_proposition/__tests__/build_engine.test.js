@@ -27,7 +27,7 @@ function seededRandom(seed = 12345) {
 }
 
 function buildResult(payload) {
-  return buildAttempt(buildCombinedPlan([payload]), () => 0.1)
+  return buildAttempt(buildCombinedPlan([payload]), () => 0.1)?.move ?? null
 }
 
 function buildResultRetrying(payloadOrPayloads, seedBase = 1, maxAttempts = 200) {
@@ -36,8 +36,9 @@ function buildResultRetrying(payloadOrPayloads, seedBase = 1, maxAttempts = 200)
   const random = seededRandom(seedBase)
   const evaluator = new ConditionEvaluatorV2()
   for (let i = 0; i < maxAttempts; i += 1) {
-    const result = buildAttempt(combinedPlan, random)
-    if (result === null) { continue }
+    const attempt = buildAttempt(combinedPlan, random)
+    if (attempt === null) { continue }
+    const result = attempt.move
     const passes = payloads.every(p => evaluator.evaluate(p, {
       board: result.priorBoard,
       moveObject: result.moveObject
@@ -119,8 +120,9 @@ function countSuccesses(payloads, attempts = 100, seedBase = 1) {
   let count = 0
   for (let i = 0; i < attempts; i += 1) {
     const random = seededRandom(seedBase + i)
-    const result = buildAttempt(combinedPlan, random)
-    if (result === null) { continue }
+    const attempt = buildAttempt(combinedPlan, random)
+    if (attempt === null) { continue }
+    const result = attempt.move
     const passes = payloads.every(p => evaluator.evaluate(p, {
       board: result.priorBoard,
       moveObject: result.moveObject
@@ -192,6 +194,31 @@ describe('buildAttempt — pin chain (enemy_moved_piece shield enemy_king + mobi
 
   it('produces an example that satisfies all conditions per CEv2', () => {
     expect(evaluatesTruthy(PIN_CHAIN_PAYLOADS, result)).toBeTruthy()
+  })
+})
+
+describe('buildAttempt — forced related-to slot meets early-placement strategy', () => {
+  const RELATED_TO_PAYLOAD = {
+    version: 2, kind: 'relational',
+    subject: 'allied', subjectFilter: 'bishop',
+    operator: 'attack',
+    target: 'moved_piece', targetFilter: 'any'
+  }
+
+  it('does not throw when stalemate strategy meets a related-to-in-binding', () => {
+    const combinedPlan = buildCombinedPlan([RELATED_TO_PAYLOAD, ...STALEMATE_CHAIN_PAYLOADS])
+    for (let i = 0; i < 50; i += 1) {
+      const random = seededRandom(i + 1)
+      expect(() => buildAttempt(combinedPlan, random)).not.toThrow()
+    }
+  })
+
+  it('does not throw when checkmate strategy meets a related-to-in-binding', () => {
+    const combinedPlan = buildCombinedPlan([RELATED_TO_PAYLOAD, ...MATE_CHAIN_PAYLOADS])
+    for (let i = 0; i < 50; i += 1) {
+      const random = seededRandom(i + 1)
+      expect(() => buildAttempt(combinedPlan, random)).not.toThrow()
+    }
   })
 })
 

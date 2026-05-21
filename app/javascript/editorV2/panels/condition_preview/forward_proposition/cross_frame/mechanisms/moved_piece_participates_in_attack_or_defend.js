@@ -8,8 +8,10 @@ import {
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
-  movedPieceRoleInOrInferred, otherSidePropositionFor
-} from './participates_helpers'
+  otherSidePropositionFor
+} from './cross_frame_helpers'
+import { roleForPlan } from '../../moved_binding'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])
 
@@ -19,11 +21,11 @@ export const movedPieceParticipatesInAttackOrDefend = {
   appliesTo(entry, ctx, pieces) {
     if (entry.source !== 'relational') { return false }
     if (!RELEVANT_OPERATORS.has(entry.operator)) { return false }
-    return movedPieceRoleInOrInferred(entry, ctx) !== null
+    return roleForPlan(ctx, entry.sourcePlan) !== null
   },
 
   apply(entry, ctx, pieces, random) {
-    const role = movedPieceRoleInOrInferred(entry, ctx)
+    const role = roleForPlan(ctx, entry.sourcePlan)
     if (role === null) { return null }
     const otherProposition = otherSidePropositionFor(entry, role)
     if (otherProposition === null) { return null }
@@ -111,7 +113,7 @@ function applyMinusRoleTarget(otherProposition, ctx, pieces, random) {
   const board = buildBoardFromLayout(buildLayoutFromPieces(pieces))
   if (anyTeamPieceControls({ board, pieces, team, speciesSet, square: destination })) { return null }
 
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const allOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !pieces.has(p))
 
@@ -155,7 +157,7 @@ function applyMinusRoleSubject(otherProposition, ctx, pieces, random) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return null }
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const team = otherProposition.team
   const speciesSet = otherProposition.species_set
 
@@ -249,7 +251,7 @@ function commitWithPlacement({ placement, species, placerTeam, ctx, pieces, dest
 
   const hypotheticalBoard = buildBoardFromLayout(buildLayoutFromPieces(next))
   const moved = ctx.singulars.moved_piece
-  const movedSpecies = [...moved.species_set][0]
+  const movedSpecies = committedSpecies(moved)
   const validOrigins = originCandidatesForSpecies(destination, movedSpecies, moved.team)
     .filter(p => p !== destination && !next.has(p))
     .filter(origin => !pieceControlsSquare({

@@ -41,7 +41,8 @@ function constraintsFromPbsUnaryOrPositionPlan(plan) {
   const sideShape = {
     team: plan.subjectTeam,
     species_set: new Set(candidateSpecies(plan.subjectFilter, plan.subjectFilterMode)),
-    region: regionFromPlan(plan)
+    region: regionFromPlan(plan),
+    boundSingularActor: SINGULAR_ACTORS.has(plan.subject) ? plan.subject : null
   }
   const priorProp   = { ...sideShape, frame: 'prior',   ...freshRanges() }
   const currentProp = { ...sideShape, frame: 'current', ...freshRanges() }
@@ -54,7 +55,8 @@ function constraintsFromPbsUnaryOrPositionPlan(plan) {
       metric: metricForOperator(plan.operator, plan.subject),
       direction: COMPARATOR_TO_DIRECTION[plan.comparator] ?? '=',
       priorProposition: priorProp,
-      currentProposition: currentProp
+      currentProposition: currentProp,
+      sourcePlan: plan
     }]
   }
 }
@@ -183,7 +185,8 @@ function buildPbsPair(plan, side, otherIsSingular, descriptor) {
       priorProposition: priorProp,
       currentProposition: currentProp,
       subjectProposition: side === 'subject' ? currentProp : otherProp,
-      targetProposition: side === 'target' ? currentProp : otherProp
+      targetProposition: side === 'target' ? currentProp : otherProp,
+      sourcePlan: plan
     }
   }
 }
@@ -224,7 +227,8 @@ function relationalSideShape(plan, side, otherIsSingular) {
     species_set: speciesSetForRelationalSide(plan, side),
     region: otherIsSingular
       ? { kind: 'related-to', actor: otherActor, role: side === 'subject' ? 'target' : 'subject', operator: plan.operator }
-      : { kind: 'all' }
+      : { kind: 'all' },
+    sourcePlan: plan
   }
 }
 

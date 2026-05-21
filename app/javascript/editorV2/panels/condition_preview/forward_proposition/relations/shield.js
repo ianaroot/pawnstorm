@@ -1,51 +1,42 @@
 import Board from 'gameplay/board'
 import {
   buildBoardFromLayout, buildLayoutFromPieces,
-  shuffled, pieceCode, legalPlacementForSpecies, pickWeightedSpecies
+  shuffled, pieceCode, pickPlaceableSpecies
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { raySliderSpeciesForStep, walkRay } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import {
-  ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS,
-  shieldingPositions, nextPositionOnRay
-} from 'gameplay/board_query_utils'
+import { raySliderSpeciesForStep, walkRay, stepsForSliderSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
+import { QUEEN_RAY_STEPS, shieldingPositions } from 'gameplay/board_query_utils'
+import { pairsOnLine, pairsAcrossRays } from 'editorV2/panels/condition_preview/shared/line_pairs'
 import {
   matchesSide, candidatesForSide, applyOne,
-  requirementsMet, MAX_SATISFY_ITERATIONS,
+  requirementsMet,
   boundSingularInActiveSet, singularPosition, sideAllowsPos
 } from './relation_helpers'
-import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { satisfyLoop } from './anchored'
+import { roleForPlan } from '../moved_binding'
+import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shield invariant: subjectSide.team === targetSide.team. Both are the "ally side"
 // of the shield (shielder + shielded). The attacker is the inferred opposing team.
-
-const SLIDER_SPECIES = new Set([Board.ROOK, Board.BISHOP, Board.QUEEN])
 
 export function satisfyShield(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {
     return pieces
   }
   if (shieldRequirementsMet(relation, pieces, ctx)) { return pieces }
-  const variant = pickVariant(relation, ctx, random)
-  let next = pieces
-  for (let i = 0; i < MAX_SATISFY_ITERATIONS; i += 1) {
-    if (shieldRequirementsMet(relation, next, ctx)) { return next }
-    const placed = placeOneTriple(variant, relation, next, ctx, random)
-    if (placed === null || placed === next) { return null }
-    next = placed
-  }
-  return shieldRequirementsMet(relation, next, ctx) ? next : null
+  const role = roleForPlan(ctx, relation.sourcePlan)
+  return satisfyLoop({
+    relation, pieces, ctx,
+    requirementsMet: shieldRequirementsMet,
+    step: p => placeOneTriple(role, relation, p, ctx, random)
+  })
 }
 
-function placeOneTriple(variant, relation, pieces, ctx, random) {
-  switch (variant) {
-    case 'bound-as-target':   return tryAsTarget(relation, pieces, ctx, random, relation.targetSide.boundSingularActor)
-    case 'bound-as-shielder': return tryAsShielder(relation, pieces, ctx, random, relation.subjectSide.boundSingularActor)
-    case 'moved-as-target':   return tryAsTarget(relation, pieces, ctx, random, 'moved_piece')
-    case 'moved-as-shielder': return tryAsShielder(relation, pieces, ctx, random, 'moved_piece')
-    case 'moved-as-attacker': return tryAsAttacker(relation, pieces, ctx, random)
-    default:                  return tryAsBystander(relation, pieces, ctx, random)
-  }
+function placeOneTriple(role, relation, pieces, ctx, random) {
+  if (role === 'subject')  { return tryAsShielder(relation, pieces, ctx, random) }
+  if (role === 'target')   { return tryAsTarget(relation, pieces, ctx, random) }
+  if (role === 'attacker') { return tryAsAttacker(relation, pieces, ctx, random) }
+  return tryAsBystander(relation, pieces, ctx, random)
 }
 
 function shieldRequirementsMet(relation, pieces, ctx) {
@@ -79,39 +70,9 @@ export function activeShieldSets(relation, pieces, board = null) {
   return { activeSubjects, activeTargets }
 }
 
-function pickVariant(relation, ctx, random) {
-  // Bound-singular variants are forced — the relation REQUIRES the bound singular
-  // play that role (its position is committed elsewhere). No bystander fallback.
-  if (relation.subjectSide.boundSingularActor && singularPosition(ctx, relation.subjectSide.boundSingularActor) !== null) {
-    return 'bound-as-shielder'
-  }
-  if (relation.targetSide.boundSingularActor && singularPosition(ctx, relation.targetSide.boundSingularActor) !== null) {
-    return 'bound-as-target'
-  }
-
-  // Non-bound: existing moved_piece-bias dispatch for variety.
-  const eligible = ['bystander']
-  const movedPiece = ctx?.singulars?.moved_piece
-  if (!movedPiece) { return 'bystander' }
-  const movedSpecies = [...movedPiece.species_set][0]
-  if (movedSpecies === null || movedSpecies === undefined) { return 'bystander' }
-
-  const movedTeam = movedPiece.team
-  const allySide = relation.subjectSide.team
-  const enemySide = Board.opposingTeam(allySide)
-
-  if (movedTeam === allySide) {
-    if (relation.targetSide.species_set.has(movedSpecies))  { eligible.push('moved-as-target') }
-    if (relation.subjectSide.species_set.has(movedSpecies)) { eligible.push('moved-as-shielder') }
-  }
-  if (movedTeam === enemySide && SLIDER_SPECIES.has(movedSpecies)) {
-    eligible.push('moved-as-attacker')
-  }
-  return eligible[Math.floor(random() * eligible.length)]
-}
-
 function tryAsBystander(relation, pieces, ctx, random) {
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
+  const shielder = sideAsDescriptor(relation.subjectSide)
   const targetCandidates = orderedTargetCandidates(relation, pieces, random)
 
   for (const target of targetCandidates) {
@@ -119,11 +80,11 @@ function tryAsBystander(relation, pieces, ctx, random) {
     if (piecesWithTarget === null) { continue }
 
     for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-      const compatibleSliders = raySliderSpeciesForStep(step)
-      const lineSquares = walkRay(target.position, step)
-      const placed = tryPlaceShielderAndAttackerFromTarget({
-        relation, attackerTeam, compatibleSliders,
-        lineSquares, pieces: piecesWithTarget, ctx, random
+      const attacker = { team: attackerTeam, speciesSet: raySliderSpeciesForStep(step) }
+      const line = walkRay(target.position, step)
+      const placed = tryFirstShufflePlacement({
+        pairs: pairsOnLine({ line, near: shielder, far: attacker, pieces: piecesWithTarget }),
+        near: shielder, far: attacker, pieces: piecesWithTarget, ctx, random
       })
       if (placed !== null) { return placed }
     }
@@ -144,35 +105,37 @@ function orderedTargetCandidates(relation, pieces, random) {
   return [...shuffled(fresh, random), ...shuffled(existing, random)]
 }
 
-function tryAsTarget(relation, pieces, ctx, random, actorKey) {
-  const targetPos = singularPosition(ctx, actorKey)
+function tryAsTarget(relation, pieces, ctx, random) {
+  const targetPos = singularPosition(ctx, 'moved_piece')
   if (targetPos === null) { return null }
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
+  const shielder = sideAsDescriptor(relation.subjectSide)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = raySliderSpeciesForStep(step)
-    const lineSquares = walkRay(targetPos, step)
-    const placed = tryPlaceShielderAndAttackerFromTarget({
-      relation, attackerTeam, compatibleSliders,
-      lineSquares, pieces, ctx, random
+    const attacker = { team: attackerTeam, speciesSet: raySliderSpeciesForStep(step) }
+    const line = walkRay(targetPos, step)
+    const placed = tryFirstShufflePlacement({
+      pairs: pairsOnLine({ line, near: shielder, far: attacker, pieces }),
+      near: shielder, far: attacker, pieces, ctx, random
     })
     if (placed !== null) { return placed }
   }
   return null
 }
 
-function tryAsShielder(relation, pieces, ctx, random, actorKey) {
-  const shielderPos = singularPosition(ctx, actorKey)
+function tryAsShielder(relation, pieces, ctx, random) {
+  const shielderPos = singularPosition(ctx, 'moved_piece')
   if (shielderPos === null) { return null }
   const attackerTeam = Board.opposingTeam(relation.targetSide.team)
+  const target = sideAsDescriptor(relation.targetSide)
 
   for (const step of shuffled(QUEEN_RAY_STEPS, random)) {
-    const compatibleSliders = raySliderSpeciesForStep(step)
-    const towardTarget = walkRay(shielderPos, -step)
-    const towardAttacker = walkRay(shielderPos, step)
-    const placed = tryPlaceTargetAndAttackerFromShielder({
-      relation, attackerTeam, compatibleSliders,
-      towardTarget, towardAttacker, pieces, ctx, random
+    const attacker = { team: attackerTeam, speciesSet: raySliderSpeciesForStep(step) }
+    const nearRay = walkRay(shielderPos, -step)
+    const farRay = walkRay(shielderPos, step)
+    const placed = tryFirstShufflePlacement({
+      pairs: pairsAcrossRays({ nearRay, farRay, near: target, far: attacker, pieces }),
+      near: target, far: attacker, pieces, ctx, random
     })
     if (placed !== null) { return placed }
   }
@@ -182,154 +145,52 @@ function tryAsShielder(relation, pieces, ctx, random, actorKey) {
 function tryAsAttacker(relation, pieces, ctx, random) {
   const attackerPos = singularPosition(ctx, 'moved_piece')
   if (attackerPos === null) { return null }
-  const movedSpecies = [...ctx.singulars.moved_piece.species_set][0]
-  const attackerSteps = stepsForSliderSpecies(movedSpecies)
+  const attackerSpecies = committedSpecies(ctx.singulars.moved_piece)
+  const shielder = sideAsDescriptor(relation.subjectSide)
+  const target = sideAsDescriptor(relation.targetSide)
 
-  for (const step of shuffled(attackerSteps, random)) {
-    const lineSquares = walkRay(attackerPos, step)
-    const placed = tryPlaceShielderAndTargetFromAttacker({
-      relation, lineSquares, pieces, ctx, random
+  for (const step of shuffled(stepsForSliderSpecies(attackerSpecies), random)) {
+    const line = walkRay(attackerPos, step)
+    const placed = tryFirstShufflePlacement({
+      pairs: pairsOnLine({ line, near: shielder, far: target, pieces }),
+      near: shielder, far: target, pieces, ctx, random
     })
     if (placed !== null) { return placed }
   }
   return null
 }
 
-function tryPlaceShielderAndAttackerFromTarget({
-  relation, attackerTeam, compatibleSliders, lineSquares, pieces, ctx, random
-}) {
-  for (let shielderIdx = 0; shielderIdx < lineSquares.length - 1; shielderIdx += 1) {
-    if (!squaresEmpty(lineSquares, 0, shielderIdx, pieces)) { continue }
-
-    const shielderPos = lineSquares[shielderIdx]
-    const existingShielder = pieces.get(shielderPos)
-    if (existingShielder && !matchesSide(existingShielder, relation.subjectSide)) { continue }
-
-    for (let attackerIdx = shielderIdx + 1; attackerIdx < lineSquares.length; attackerIdx += 1) {
-      if (!squaresEmpty(lineSquares, shielderIdx + 1, attackerIdx, pieces)) { continue }
-
-      const attackerPos = lineSquares[attackerIdx]
-      const existingAttacker = pieces.get(attackerPos)
-      if (existingAttacker && !validAttacker(existingAttacker, attackerTeam, compatibleSliders)) {
-        continue
-      }
-
-      let next = pieces
-      if (!existingShielder) {
-        next = placeForRole({ side: relation.subjectSide, pos: shielderPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (!existingAttacker) {
-        next = placeForAttacker({ team: attackerTeam, sliders: compatibleSliders, pos: attackerPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (next === pieces) { continue }
-      return next
-    }
+function tryFirstShufflePlacement({ pairs, near, far, pieces, ctx, random }) {
+  for (const { nearPos, farPos } of shuffled(pairs, random)) {
+    const placed = placeBothStrict({ nearPos, farPos, near, far, pieces, ctx, random })
+    if (placed !== null) { return placed }
   }
   return null
 }
 
-function tryPlaceTargetAndAttackerFromShielder({
-  relation, attackerTeam, compatibleSliders, towardTarget, towardAttacker, pieces, ctx, random
-}) {
-  for (let targetIdx = 0; targetIdx < towardTarget.length; targetIdx += 1) {
-    if (!squaresEmpty(towardTarget, 0, targetIdx, pieces)) { continue }
-    const targetPos = towardTarget[targetIdx]
-    const existingTarget = pieces.get(targetPos)
-    if (existingTarget && !matchesSide(existingTarget, relation.targetSide)) { continue }
-
-    for (let attackerIdx = 0; attackerIdx < towardAttacker.length; attackerIdx += 1) {
-      if (!squaresEmpty(towardAttacker, 0, attackerIdx, pieces)) { continue }
-      const attackerPos = towardAttacker[attackerIdx]
-      const existingAttacker = pieces.get(attackerPos)
-      if (existingAttacker && !validAttacker(existingAttacker, attackerTeam, compatibleSliders)) {
-        continue
-      }
-
-      let next = pieces
-      if (!existingTarget) {
-        next = placeForRole({ side: relation.targetSide, pos: targetPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (!existingAttacker) {
-        next = placeForAttacker({ team: attackerTeam, sliders: compatibleSliders, pos: attackerPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (next === pieces) { continue }
-      return next
-    }
+// Places `near` at nearPos and `far` at farPos if those squares are empty;
+// reuses existing pieces if already there. Returns null if neither placement
+// added a new piece (no progress) or if any required placement failed.
+function placeBothStrict({ nearPos, farPos, near, far, pieces, ctx, random }) {
+  let next = pieces
+  if (!pieces.has(nearPos)) {
+    next = placeAt({ team: near.team, speciesSet: near.speciesSet, pos: nearPos, ctx, pieces: next, random })
+    if (next === null) { return null }
   }
-  return null
+  if (!pieces.has(farPos)) {
+    next = placeAt({ team: far.team, speciesSet: far.speciesSet, pos: farPos, ctx, pieces: next, random })
+    if (next === null) { return null }
+  }
+  if (next === pieces) { return null }
+  return next
 }
 
-function tryPlaceShielderAndTargetFromAttacker({
-  relation, lineSquares, pieces, ctx, random
-}) {
-  for (let shielderIdx = 0; shielderIdx < lineSquares.length - 1; shielderIdx += 1) {
-    if (!squaresEmpty(lineSquares, 0, shielderIdx, pieces)) { continue }
-
-    const shielderPos = lineSquares[shielderIdx]
-    const existingShielder = pieces.get(shielderPos)
-    if (existingShielder && !matchesSide(existingShielder, relation.subjectSide)) { continue }
-
-    for (let targetIdx = shielderIdx + 1; targetIdx < lineSquares.length; targetIdx += 1) {
-      if (!squaresEmpty(lineSquares, shielderIdx + 1, targetIdx, pieces)) { continue }
-      const targetPos = lineSquares[targetIdx]
-      const existingTarget = pieces.get(targetPos)
-      if (existingTarget && !matchesSide(existingTarget, relation.targetSide)) { continue }
-
-      let next = pieces
-      if (!existingShielder) {
-        next = placeForRole({ side: relation.subjectSide, pos: shielderPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (!existingTarget) {
-        next = placeForRole({ side: relation.targetSide, pos: targetPos, ctx, pieces: next, random })
-        if (next === null) { continue }
-      }
-      if (next === pieces) { continue }
-      return next
-    }
-  }
-  return null
-}
-
-function placeForRole({ side, pos, ctx, pieces, random }) {
-  const species = pickSpeciesFromSet(side.species_set, pos, random)
+function placeAt({ team, speciesSet, pos, ctx, pieces, random }) {
+  const species = pickPlaceableSpecies(speciesSet, pos, random)
   if (species === null) { return null }
-  if (!respectsAllCaps(side.team, species, pos, ctx, pieces)) { return null }
-  return placePiece(pieces, pos, pieceCode(side.team, species))
+  return placeWithCaps(pieces, pos, pieceCode(team, species), ctx)
 }
 
-function placeForAttacker({ team, sliders, pos, ctx, pieces, random }) {
-  const species = pickSpeciesFromSet(new Set(sliders), pos, random)
-  if (species === null) { return null }
-  if (!respectsAllCaps(team, species, pos, ctx, pieces)) { return null }
-  return placePiece(pieces, pos, pieceCode(team, species))
+function sideAsDescriptor(side) {
+  return { team: side.team, speciesSet: side.species_set }
 }
-
-function squaresEmpty(squares, fromIdx, untilIdx, pieces) {
-  for (let i = fromIdx; i < untilIdx; i += 1) {
-    if (pieces.has(squares[i])) { return false }
-  }
-  return true
-}
-
-function validAttacker(piece, attackerTeam, compatibleSliders) {
-  return Board.parseTeam(piece) === attackerTeam && compatibleSliders.includes(Board.parseSpecies(piece))
-}
-
-function pickSpeciesFromSet(speciesSet, position, random) {
-  const filtered = new Set([...speciesSet].filter(s => s !== null && legalPlacementForSpecies(position, s)))
-  if (filtered.size === 0) { return null }
-  return pickWeightedSpecies(filtered, random)
-}
-
-function stepsForSliderSpecies(species) {
-  if (species === Board.ROOK)   { return ROOK_RAY_STEPS }
-  if (species === Board.BISHOP) { return BISHOP_RAY_STEPS }
-  if (species === Board.QUEEN)  { return QUEEN_RAY_STEPS }
-  return []
-}
-

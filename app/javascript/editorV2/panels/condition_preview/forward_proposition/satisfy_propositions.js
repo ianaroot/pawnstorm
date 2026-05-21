@@ -1,5 +1,5 @@
 import {
-  pieceCode, weightedShuffleSpecies
+  pieceCode, weightedShuffleSpecies, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
@@ -11,7 +11,7 @@ const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3
 
 export function satisfyPropositions(ctx, pieces, random) {
-  for (const prop of ctx.propositions) {
+  for (const prop of shuffled(ctx.propositions, random)) {
     if (prop.frame !== 'current') { continue }
     const next = satisfyOne(prop, pieces, ctx, random)
     if (next === null) { return null }

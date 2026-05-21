@@ -99,6 +99,12 @@ function recordSingularValueComparison({ lhsActor, rhsActor, comparator, singula
   narrowSingularValueComparison(singulars[higher], singulars[lower], comparator, higherSide)
 }
 
+export function valueComparisonEntryPasses(entry, myValue, otherValue) {
+  return entry.lowerSide === 'lhs'
+    ? compareValues(myValue, entry.comparator, otherValue)
+    : compareValues(otherValue, entry.comparator, myValue)
+}
+
 function narrowSingularValueComparison(higher, lower, comparator, higherSide) {
   higher.species_set.delete(null)
   lower.species_set.delete(null)
