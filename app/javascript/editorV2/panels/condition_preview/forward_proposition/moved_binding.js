@@ -28,13 +28,13 @@ function regionEmpty(region) {
 }
 
 function intersectInto(speciesSet, other) {
-  for (const s of [...speciesSet]) {
-    if (!other.has(s)) { speciesSet.delete(s) }
+  for (const species of [...speciesSet]) {
+    if (!other.has(species)) { speciesSet.delete(species) }
   }
 }
 
 function speciesOverlap(a, b) {
-  for (const s of a) { if (b.has(s)) { return true } }
+  for (const species of a) { if (b.has(species)) { return true } }
   return false
 }
 
@@ -98,6 +98,11 @@ export function bindingFeasible(set, ctx) {
 
 export function chooseMovedBinding(ctx, random, coverageRecord = null, scenarioName = null) {
   const bindings = enumerateFeasibleBindings(ctx)
+  // Bystander is `{ assignments: [] }` — `enumerateFeasibleBindings` always
+  // includes it. Empty list means ctx.singulars.moved_piece is missing upstream.
+  if (bindings.length === 0) {
+    throw new Error('enumerateFeasibleBindings returned empty')
+  }
   if (!coverageRecord) {
     return bindings[Math.floor(random() * bindings.length)]
   }
