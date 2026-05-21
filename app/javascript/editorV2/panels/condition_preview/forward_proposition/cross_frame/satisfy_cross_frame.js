@@ -66,17 +66,23 @@ export function satisfyCrossFrame(ctx, pieces, random) {
 // Chain-control gate: true ends the mechanism loop, false keeps chaining.
 // count + aggregate_mobility get real prior-vs-after checks; others true.
 function entrySatisfied(entry, ctx, afterPieces) {
-  if (entry.source === 'census' &&
-      entry.metric === 'count' &&
-      entry.currentProposition?.region?.kind === 'set') {
-    return regionCountDeltaSatisfied(entry, ctx, afterPieces)
-  }
-  if (entry.metric === 'aggregate_mobility') {
-    return mobilityDeltaSatisfied(entry, ctx, afterPieces)
-  }
-  if (entry.metric !== 'count') { return true }
-  if (entry.operator !== 'attack' && entry.operator !== 'defend') { return true }
+  if (isCensusRegionCount(entry)) { return regionCountDeltaSatisfied(entry, ctx, afterPieces) }
+  if (entry.metric === 'aggregate_mobility') { return mobilityDeltaSatisfied(entry, ctx, afterPieces) }
+  if (isAttackOrDefendCount(entry)) { return attackOrDefendCountDeltaSatisfied(entry, ctx, afterPieces) }
+  return true
+}
 
+function isCensusRegionCount(entry) {
+  return entry.source === 'census' &&
+    entry.metric === 'count' &&
+    entry.currentProposition?.region?.kind === 'set'
+}
+
+function isAttackOrDefendCount(entry) {
+  return entry.metric === 'count' && (entry.operator === 'attack' || entry.operator === 'defend')
+}
+
+function attackOrDefendCountDeltaSatisfied(entry, ctx, afterPieces) {
   const moved = ctx.singulars.moved_piece
   const destination = singularSquare(moved)
   if (destination === null) { return true }
