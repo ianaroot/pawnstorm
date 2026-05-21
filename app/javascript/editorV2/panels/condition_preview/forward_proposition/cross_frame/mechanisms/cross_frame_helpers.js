@@ -1,6 +1,4 @@
-import {
-  pieceCode, legalPlacementForSpecies, pickWeightedSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { pieceCode, pickPlaceableSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { intersectRegions } from '../../region'
 import { respectsAllCaps } from '../../respect_caps'
@@ -53,14 +51,6 @@ export function placeableSpecies(speciesSet) {
     result.push(s)
   }
   return result
-}
-
-export function pickPlaceableSpecies(speciesSet, position, random) {
-  const filtered = new Set([...speciesSet].filter(
-    s => s !== null && legalPlacementForSpecies(position, s)
-  ))
-  if (filtered.size === 0) { return null }
-  return pickWeightedSpecies(filtered, random)
 }
 
 // Rate at which mechanisms reject reusing an existing-fitting piece in favor

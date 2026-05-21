@@ -155,7 +155,7 @@ export function attackerCandidatesFor(targetPosition, species, team, board) {
 export const SLIDER_SPECIES = Object.freeze(new Set([Board.ROOK, Board.BISHOP, Board.QUEEN]))
 
 export function raySliderSpeciesForStep(step) {
-  return ROOK_RAY_STEPS.includes(step) ? [Board.ROOK, Board.QUEEN] : [Board.BISHOP, Board.QUEEN]
+  return ROOK_RAY_STEPS.includes(step) ? new Set([Board.ROOK, Board.QUEEN]) : new Set([Board.BISHOP, Board.QUEEN])
 }
 
 export function relationSquareDistance(subjectPosition, targetPosition) {

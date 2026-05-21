@@ -68,6 +68,17 @@ export function pickWeightedSpecies(speciesSet, random) {
   return pool[Math.floor(random() * pool.length)]
 }
 
+export function pickPlaceableSpecies(speciesSet, position, random) {
+  const placeable = new Set()
+  for (const species of speciesSet) {
+    if (species === null) { continue }
+    if (!legalPlacementForSpecies(position, species)) { continue }
+    placeable.add(species)
+  }
+  if (placeable.size === 0) { return null }
+  return pickWeightedSpecies(placeable, random)
+}
+
 // Returns the unique species in speciesSet ordered by weighted-random.
 // Higher-weight species (e.g. pawns) tend to come earlier.
 export function weightedShuffleSpecies(speciesSet, random) {
@@ -106,6 +117,20 @@ export function clonePiecesMap(piecesMap) {
 
 export function squareIsOccupied(pieces, position) {
   return pieces.has(position)
+}
+
+export function pathClear(squares, fromIdx, untilIdx, pieces) {
+  for (let i = fromIdx; i < untilIdx; i += 1) {
+    if (pieces.has(squares[i])) { return false }
+  }
+  return true
+}
+
+export function squareCompatibleOrEmpty(pieces, pos, team, speciesSet) {
+  const existing = pieces.get(pos)
+  if (!existing) { return true }
+  if (existing.charAt(0) !== team) { return false }
+  return speciesSet.has(existing.slice(1))
 }
 
 export function buildLayoutFromPieces(pieces) {
