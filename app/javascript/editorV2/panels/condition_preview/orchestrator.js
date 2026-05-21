@@ -2,19 +2,12 @@ import { buildCombinedPlan, expandRelationalPlanSources } from './plans/plan'
 import { candidateIdentity } from './shared/example_utils'
 import { usesZeroRelationPath } from './plans/comparison_requirements'
 import { assembleWithSpecialQuota } from './shared/example_assembly'
-import { collectForwardResolverExamples } from './forward_resolver/collect'
-import { collectForwardPatternExamples } from './forward_pattern/collect'
 import { collectForwardPropositionExamples } from './forward_proposition/collect'
-import { collectReverseRelationalExamples } from './reverse_relational/collect'
-import { collectReverseUnaryExamples } from './reverse_unary/collect'
-import { collectReversePositionExamples } from './reverse_position/collect'
 
 const SOFT_TIMEOUT_MS = 10000
 const MAX_DEFAULT_EXAMPLES = 30
 const MAX_CANDIDATE_POOL = 400
 const MAX_SEEDS_PER_VARIANT = 600
-const FORWARD_RESOLVER_ATTEMPTS = 200
-const FORWARD_PATTERN_ATTEMPTS = 200
 const FORWARD_PROPOSITION_ATTEMPTS = 1200
 
 const NO_EXAMPLES_REASON = "Couldn't build a verified example for this condition yet. This may mean the condition is unsatisfiable, or that the preview generator still needs work."
@@ -25,8 +18,6 @@ function computeBudgets(combinedPlan, totalMs) {
   const planCount = Math.max(combinedPlan.plans.length, 1)
   return {
     forwardCap: MAX_CANDIDATE_POOL,
-    forwardResolverAttempts: FORWARD_RESOLVER_ATTEMPTS,
-    forwardPatternAttempts: FORWARD_PATTERN_ATTEMPTS,
     forwardPropositionAttempts: FORWARD_PROPOSITION_ATTEMPTS,
     perPlanMs: totalMs / planCount,
     maxStandardSize: MAX_CANDIDATE_POOL,
@@ -111,59 +102,11 @@ function collectAllExamples({ combinedPlan, random, totalMs, deadline = Infinity
 
   const chainVariants = buildChainVariants(combinedPlan)
 
-  if (plans.length > 0) {
-    if (ENABLED_PIPELINES.has('forward-resolver')) {
-      collectForwardResolverExamples({
-        combinedPlan, random,
-        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardResolverAttempts,
-        addUnique, standardExamples, produced
-      })
-    }
-    if (ENABLED_PIPELINES.has('forward-pattern')) {
-      collectForwardPatternExamples({
-        combinedPlan, random,
-        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPatternAttempts,
-        addUnique, standardExamples, produced
-      })
-    }
-    if (ENABLED_PIPELINES.has('forward-proposition')) {
-      collectForwardPropositionExamples({
-        combinedPlan, random,
-        maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
-        addUnique, standardExamples, produced, deadline
-      })
-    }
-  }
-
-  if (relationalPlans.length > 0 && ENABLED_PIPELINES.has('reverse-relational')) {
-    const relDeadline = Date.now() + budgets.perPlanMs * relationalPlans.length
-    const variants = effectiveVariants(combinedPlan)
-    const tuples = []
-    for (const chainVariant of chainVariants) {
-      for (const variant of variants) {
-        tuples.push({ chainVariant, variant })
-      }
-    }
-    collectReverseRelationalExamples({
-      tuples, relDeadline, random,
-      maxStandardSize: budgets.maxStandardSize, maxRounds: budgets.maxSeedsPerVariant,
-      addUnique, standardExamples, produced
-    })
-  }
-
-  if (unaryPlans.length > 0 && ENABLED_PIPELINES.has('reverse-unary')) {
-    collectReverseUnaryExamples({
-      combinedPlan, unaryPlans, perPlanMs: budgets.perPlanMs, random,
-      maxStandardSize: budgets.maxStandardSize,
-      addUnique, standardExamples, produced
-    })
-  }
-
-  if (positionPlans.length > 0 && ENABLED_PIPELINES.has('reverse-position')) {
-    collectReversePositionExamples({
-      combinedPlan, positionPlans, perPlanMs: budgets.perPlanMs, random,
-      maxStandardSize: budgets.maxStandardSize,
-      addUnique, standardExamples, produced
+  if (plans.length > 0 && ENABLED_PIPELINES.has('forward-proposition')) {
+    collectForwardPropositionExamples({
+      combinedPlan, random,
+      maxStandardSize: budgets.forwardCap, attempts: budgets.forwardPropositionAttempts,
+      addUnique, standardExamples, produced, deadline
     })
   }
 
