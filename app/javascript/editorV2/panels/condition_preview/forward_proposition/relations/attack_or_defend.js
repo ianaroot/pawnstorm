@@ -1,8 +1,6 @@
 import Board from 'gameplay/board'
-import {
-  ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, shuffled,
-  legalPlacementForSpecies, WEIGHTED_SPECIES_DISTRIBUTION
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, shuffled, WEIGHTED_SPECIES_DISTRIBUTION } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   controllingPositions, pieceControlsSquare, positionsBetween, materialValue
 } from 'gameplay/board_query_utils'

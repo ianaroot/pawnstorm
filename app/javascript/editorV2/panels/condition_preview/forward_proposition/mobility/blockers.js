@@ -1,9 +1,6 @@
 import Rules from 'gameplay/rules'
-import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode,
-  shuffled, teamHasKing, pickBlockerTeam, orderedBlockerSpeciesFor
-} from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, pickBlockerTeam, orderedBlockerSpeciesFor } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 

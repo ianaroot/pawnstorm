@@ -1,5 +1,5 @@
 import profileCollector from 'gameplay/profile_collector'
-import { placeKingsIfAbsent } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placeKingsIfAbsent } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { buildChainCtx } from './chain_ctx'
 import { commitSingularsSpecies, applyNullStayCoinFlips } from './commit_singulars_species'
 import { chooseMovedBinding } from './moved_binding'

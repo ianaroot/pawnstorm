@@ -1,8 +1,5 @@
-import {
-  ALL_POSITIONS, pieceCode, pickWeightedSpecies, shuffled,
-  legalPlacementForSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { ALL_POSITIONS, pieceCode, pickWeightedSpecies, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { isEdgePosition } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { tryNarrowSingularRegion } from 'editorV2/panels/condition_preview/shared/singular_constraints'

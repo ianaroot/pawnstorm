@@ -1,10 +1,7 @@
 import Board from 'gameplay/board'
 import { QUEEN_RAY_STEPS } from 'gameplay/board_query_utils'
-import {
-  ALL_POSITIONS, shuffled, pieceCode,
-  legalPlacementForSpecies, pickWeightedSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { ALL_POSITIONS, shuffled, pieceCode, pickWeightedSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingOnRayThroughTarget } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { placeSliderBeyondTarget } from 'editorV2/panels/condition_preview/forward_proposition/pin_geometry'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'

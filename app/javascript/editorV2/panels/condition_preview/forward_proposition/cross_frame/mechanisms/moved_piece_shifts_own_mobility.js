@@ -1,11 +1,8 @@
-import {
-  buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing,
-  pieceCode, pickBlockerTeam, orderedBlockerSpeciesFor
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildBoardFromLayout, buildLayoutFromPieces, shuffled, pieceCode, pickBlockerTeam, orderedBlockerSpeciesFor } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
-  pathClearOnPieces, walkRay, stepsForSliderSpecies, SLIDER_SPECIES
+  sliderPathClear, walkRay, stepsForSliderSpecies, SLIDER_SPECIES
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { sliderStep } from 'gameplay/board_query_utils'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
@@ -75,7 +72,7 @@ function engineerSliderPerpendicularDelta(entry, ctx, pieces, random, moved, des
       candidate = chokeArm(candidate, chokeAt, step, moved, movedSpecies, ctx, random)
     }
     if (candidate === pieces) { continue }
-    if (!pathClearOnPieces(candidate, origin, destination, movedSpecies)) { continue }
+    if (!sliderPathClear(candidate, origin, destination, movedSpecies)) { continue }
     if (!mobilityDeltaForOrigin(entry, ctx, candidate, origin, destination)) { continue }
 
     const result = commitPriorRegion(ctx, [origin], candidate)
@@ -141,7 +138,7 @@ function engineerLowerPriorMobility(entry, ctx, pieces, random, moved, destinati
       if (mechResult === null || mechResult === hypotheticalPieces) { continue }
 
       const finalPieces = applyEngineeredBlockers(pieces, hypotheticalPieces, mechResult, destination)
-      if (!pathClearOnPieces(finalPieces, origin, destination, movedSpecies)) { continue }
+      if (!sliderPathClear(finalPieces, origin, destination, movedSpecies)) { continue }
 
       if (!deltaSatisfied(entry.direction, finalPieces, destination, origin, moved.team, movedSpecies)) { continue }
 

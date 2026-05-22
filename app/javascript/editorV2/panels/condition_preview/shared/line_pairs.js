@@ -1,4 +1,4 @@
-import { pathClear, squareCompatibleOrEmpty } from './board_utils'
+import { pathClear, squareCompatibleOrEmpty } from './geometry_utils'
 
 // near, far, slot: { team, speciesSet }
 

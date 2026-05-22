@@ -1,5 +1,5 @@
-import { ALL_POSITIONS, legalPlacementForSpecies, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { ALL_POSITIONS, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
 import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
 import { respectsAllCaps } from './respect_caps'

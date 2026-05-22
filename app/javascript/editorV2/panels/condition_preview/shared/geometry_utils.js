@@ -49,7 +49,7 @@ export function walkRay(position, step) {
 
 // Verifies that a piece of `species` could legally traverse the path from
 // `fromSquare` to `toSquare` on a board described by `pieces`
-export function pathClearOnPieces(pieces, fromSquare, toSquare, species) {
+export function sliderPathClear(pieces, fromSquare, toSquare, species) {
   if (species === Board.NIGHT || species === Board.KING || species === Board.PAWN) {
     return true
   }
@@ -159,7 +159,7 @@ function satisfiesComparator(comparator, value, target) {
     case 'greater_than_or_equal_to': return value >= target
     case 'less_than':                return value < target
     case 'less_than_or_equal_to':    return value <= target
-    default:                         return value === target
+    default: throw new Error(`qualifyingSquares: unknown positionComparator '${comparator}'`)
   }
 }
 
@@ -179,10 +179,22 @@ export function qualifyingSquares(positionAxis, positionComparator, positionTarg
   return result
 }
 
+export function pathClear(squares, fromIdx, untilIdx, pieces) {
+  for (let i = fromIdx; i < untilIdx; i += 1) {
+    if (pieces.has(squares[i])) { return false }
+  }
+  return true
+}
+
+export function squareCompatibleOrEmpty(pieces, pos, team, speciesSet) {
+  const existing = pieces.get(pos)
+  if (!existing) { return true }
+  if (existing.charAt(0) !== team) { return false }
+  return speciesSet.has(existing.slice(1))
+}
+
 export const SLIDER_SPECIES = Object.freeze(new Set([Board.ROOK, Board.BISHOP, Board.QUEEN]))
 
 export function raySliderSpeciesForStep(step) {
   return ROOK_RAY_STEPS.includes(step) ? new Set([Board.ROOK, Board.QUEEN]) : new Set([Board.BISHOP, Board.QUEEN])
 }
-
-

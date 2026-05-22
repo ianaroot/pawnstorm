@@ -1,5 +1,4 @@
 export const COUNT_COMPARISON_METRIC = 'count'
-export const VALUE_COMPARISON_METRIC = 'value'
 export const INDIVIDUAL_VALUE_METRIC = 'individual_value'
 export const AGGREGATE_VALUE_METRIC = 'aggregate_value'
 

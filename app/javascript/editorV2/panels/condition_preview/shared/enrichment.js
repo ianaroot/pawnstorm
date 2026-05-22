@@ -2,7 +2,8 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { legalPlacementForSpecies, shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from './board_utils'
+import { shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from './board_utils'
+import { legalPlacementForSpecies } from './piece_placement'
 import {
   moveKindForMoveObject, soundForMove, legalPriorTurnState,
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT

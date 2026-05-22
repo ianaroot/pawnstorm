@@ -1,6 +1,5 @@
-import {
-  buildBoardFromLayout, buildLayoutFromPieces, teamHasKing
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { buildPriorBoard } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { mobilityAt, mobilityFromMoveObjects } from 'gameplay/mobility'
 import MovesCalculator from 'gameplay/moves_calculator'

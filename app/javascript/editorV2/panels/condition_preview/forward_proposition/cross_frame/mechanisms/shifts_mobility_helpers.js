@@ -1,10 +1,8 @@
 import Board from 'gameplay/board'
+import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { placePiece, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, teamHasKing
-} from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import {
-  originCandidatesForSpecies, pathClearOnPieces
+  originCandidatesForSpecies, sliderPathClear
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { mobilityAt } from 'gameplay/mobility'
@@ -14,7 +12,7 @@ import { mobilityAt } from 'gameplay/mobility'
 export function legalOriginCandidates(pieces, destination, team, species) {
   return originCandidatesForSpecies(destination, species, team)
     .filter(p => p !== destination && !pieces.has(p))
-    .filter(p => pathClearOnPieces(pieces, p, destination, species))
+    .filter(p => sliderPathClear(pieces, p, destination, species))
 }
 
 // Returns a new pieces map with moved_piece relocated from `fromSquare` to
