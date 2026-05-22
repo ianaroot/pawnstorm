@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS } from 'gameplay/board_query_utils'
+import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS, relativeRank, relativeToAbsolutePosition } from 'gameplay/board_query_utils'
 
 export { QUEEN_RAY_STEPS as RAY_STEPS }
 
@@ -49,7 +49,7 @@ export function walkRay(position, step) {
 
 // Verifies that a piece of `species` could legally traverse the path from
 // `fromSquare` to `toSquare` on a board described by `pieces`
-export function pathClearOnPieces(pieces, fromSquare, toSquare, species) {
+export function sliderPathClear(pieces, fromSquare, toSquare, species) {
   if (species === Board.NIGHT || species === Board.KING || species === Board.PAWN) {
     return true
   }
@@ -152,27 +152,49 @@ export function attackerCandidatesFor(targetPosition, species, team, board) {
   }
 }
 
+function satisfiesComparator(comparator, value, target) {
+  switch (comparator) {
+    case 'equal_to':                 return value === target
+    case 'greater_than':             return value > target
+    case 'greater_than_or_equal_to': return value >= target
+    case 'less_than':                return value < target
+    case 'less_than_or_equal_to':    return value <= target
+    default: throw new Error(`qualifyingSquares: unknown positionComparator '${comparator}'`)
+  }
+}
+
+// Squares whose rank/file/square matches (positionComparator, positionTarget),
+// from `team`'s relative orientation.
+export function qualifyingSquares(positionAxis, positionComparator, positionTarget, team) {
+  const result = []
+  for (let pos = 0; pos < 64; pos += 1) {
+    if (positionAxis === 'rank') {
+      if (satisfiesComparator(positionComparator, relativeRank(pos, team), positionTarget)) { result.push(pos) }
+    } else if (positionAxis === 'file') {
+      if (satisfiesComparator(positionComparator, Board.fileIndex(pos) + 1, positionTarget)) { result.push(pos) }
+    } else if (positionAxis === 'square') {
+      if (pos === relativeToAbsolutePosition(positionTarget, team)) { result.push(pos) }
+    }
+  }
+  return result
+}
+
+export function pathClear(squares, fromIdx, untilIdx, pieces) {
+  for (let i = fromIdx; i < untilIdx; i += 1) {
+    if (pieces.has(squares[i])) { return false }
+  }
+  return true
+}
+
+export function squareCompatibleOrEmpty(pieces, pos, team, speciesSet) {
+  const existing = pieces.get(pos)
+  if (!existing) { return true }
+  if (existing.charAt(0) !== team) { return false }
+  return speciesSet.has(existing.slice(1))
+}
+
 export const SLIDER_SPECIES = Object.freeze(new Set([Board.ROOK, Board.BISHOP, Board.QUEEN]))
 
 export function raySliderSpeciesForStep(step) {
   return ROOK_RAY_STEPS.includes(step) ? new Set([Board.ROOK, Board.QUEEN]) : new Set([Board.BISHOP, Board.QUEEN])
-}
-
-export function relationSquareDistance(subjectPosition, targetPosition) {
-  if (subjectPosition === undefined || targetPosition === undefined) {
-    return Number.POSITIVE_INFINITY
-  }
-  const fileDiff = Math.abs(Board.fileIndex(subjectPosition) - Board.fileIndex(targetPosition))
-  const rankDiff = Math.abs(Board.rankIndex(subjectPosition) - Board.rankIndex(targetPosition))
-  return fileDiff + rankDiff
-}
-
-export function sortByDistanceFromRelation(positions, relationPositions) {
-  const distanceFor = (position) => relationPositions.reduce((best, relatedPosition) => {
-    const fileDiff = Math.abs(Board.fileIndex(position) - Board.fileIndex(relatedPosition))
-    const rankDiff = Math.abs(Board.rankIndex(position) - Board.rankIndex(relatedPosition))
-    return Math.min(best, fileDiff + rankDiff)
-  }, Number.POSITIVE_INFINITY)
-
-  return [...positions].sort((left, right) => distanceFor(right) - distanceFor(left))
 }

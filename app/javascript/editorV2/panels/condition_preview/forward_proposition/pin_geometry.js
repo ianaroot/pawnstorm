@@ -1,10 +1,8 @@
 import Board from 'gameplay/board'
 import { nextPositionOnRay } from 'gameplay/board_query_utils'
-import {
-  shuffled, pieceCode, legalPlacementForSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { shuffled, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { raySliderSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { respectsAllCaps } from './respect_caps'
 
 // Place a slider on a ray from targetPos in `step` direction (the side the

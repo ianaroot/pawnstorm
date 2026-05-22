@@ -1,13 +1,8 @@
 import Board from 'gameplay/board'
 import { controllingPositions, nextPositionOnRay } from 'gameplay/board_query_utils'
-import {
-  ALL_POSITIONS, anyKingIsAdjacentTo,
-  buildBoardFromLayout, buildLayoutFromPieces,
-  legalPlacementForSpecies, pieceCode,
-  shuffled, teamHasKing
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, teamHasKing, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { tryNarrowMovedPiece } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
@@ -478,4 +473,51 @@ function isCheckmate({ pieces, team, kingPos }) {
     if (escapeIsLegal({ pieces, escape, team, kingPos })) { return false }
   }
   return true
+}
+
+function squaresAreAdjacent(a, b) {
+  return (
+    Math.abs(Board.rankIndex(a) - Board.rankIndex(b)) <= 1 &&
+    Math.abs(Board.fileIndex(a) - Board.fileIndex(b)) <= 1 &&
+    a !== b
+  )
+}
+
+export function anyKingIsAdjacentTo(pieces, position) {
+  for (const [sq, piece] of pieces.entries()) {
+    if (
+      (piece === Board.WHITE_KING || piece === Board.BLACK_KING) &&
+      squaresAreAdjacent(sq, position)
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
+export function placeKingsIfAbsent(pieces, random, ctx = { propositions: [] }) {
+  let result = pieces
+
+  for (const team of [Board.WHITE, Board.BLACK]) {
+    if (teamHasKing(result, team)) { continue }
+
+    const candidates = shuffled(
+      ALL_POSITIONS.filter(pos => !result.has(pos)),
+      random
+    )
+
+    let placed = false
+    for (const pos of candidates) {
+      if (anyKingIsAdjacentTo(result, pos)) { continue }
+      if (!respectsAllCaps(team, Board.KING, pos, ctx, result)) { continue }
+      const next = placePiece(result, pos, `${team}${Board.KING}`)
+      if (next === null) { continue }
+      result = next
+      placed = true
+      break
+    }
+    if (!placed) { return null }
+  }
+
+  return result
 }

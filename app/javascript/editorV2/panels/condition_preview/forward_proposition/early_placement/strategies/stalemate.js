@@ -1,17 +1,14 @@
-import {
-  ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces,
-  pieceCode, shuffled, legalPlacementForSpecies
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { materialValue } from 'gameplay/board_query_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import { valueComparisonEntryPasses } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 import {
-  tryNarrowSingular, tryNarrowSingularRegion, regionDefinitelyContains
+  tryNarrowSingular, regionDefinitelyContains
 } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkState with checkRestriction (one mobility-restricting king arrangement per team).

@@ -1,4 +1,3 @@
-import Board from 'gameplay/board'
 import { placeKingInCheck } from 'editorV2/panels/condition_preview/shared/king_placement'
 
 // Check-restriction strategy: places the constrained team's king in check,

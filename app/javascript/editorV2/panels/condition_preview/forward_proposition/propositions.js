@@ -1,7 +1,7 @@
 import { materialValue } from 'gameplay/board_query_utils'
 import { compareValues } from 'bot_execution/utils'
 import { candidateSpecies } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
+import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 const PERMISSIVE = Object.freeze({ min: 0, max: Infinity })
 

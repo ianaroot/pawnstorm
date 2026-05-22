@@ -1,6 +1,5 @@
-import {
-  shuffled, legalPlacementForSpecies, WEIGHTED_SPECIES_DISTRIBUTION
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { shuffled, WEIGHTED_SPECIES_DISTRIBUTION } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import {
   matchesSide, candidatesForSide, applyOne, regionPossiblyContains,

@@ -1,5 +1,4 @@
 export const COUNT_COMPARISON_METRIC = 'count'
-export const VALUE_COMPARISON_METRIC = 'value'
 export const INDIVIDUAL_VALUE_METRIC = 'individual_value'
 export const AGGREGATE_VALUE_METRIC = 'aggregate_value'
 
@@ -70,10 +69,6 @@ export function comparisonRequirementsFromDescriptors(descriptors) {
   })
 
   return requirements
-}
-
-export function usesZeroRelationPath(requirements) {
-  return requirements.countComparisonsPresent && (requirements.subject === 0 || requirements.target === 0)
 }
 
 function descriptorAllowsZeroValue(descriptor) {

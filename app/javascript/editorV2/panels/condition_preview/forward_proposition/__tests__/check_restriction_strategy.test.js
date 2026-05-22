@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { controllingPositions } from 'gameplay/board_query_utils'
-import {
-  pieceCode, buildBoardFromLayout, buildLayoutFromPieces, teamHasKing
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { pieceCode, buildBoardFromLayout, buildLayoutFromPieces } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { checkRestrictionStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/check_restriction'
 import { defaultTestCtx } from './_helpers'
 

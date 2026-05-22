@@ -42,38 +42,3 @@ export function placePiece(pieces, position, piece) {
   return result
 }
 
-export function removePiece(pieces, position) {
-  if (!pieces.has(position)) { return pieces }
-  const result = new Map(pieces)
-  result.delete(position)
-  return result
-}
-
-export function placePieces(pieces, placements) {
-  let result = pieces
-  for (const { position, piece } of placements) {
-    result = placePiece(result, position, piece)
-    if (result === null) { return null }
-  }
-  return result
-}
-
-export function piecesSatisfyInvariants(pieces) {
-  const teamPawnCounts = new Map()
-  const teamKingPresence = new Map()
-  for (const [position, piece] of pieces.entries()) {
-    const species = speciesOf(piece)
-    const team = teamOf(piece)
-    if (!legalPlacementForSpecies(position, species)) { return false }
-    if (species === Board.KING) {
-      if (teamKingPresence.get(team)) { return false }
-      teamKingPresence.set(team, true)
-    }
-    if (species === Board.PAWN) {
-      const next = (teamPawnCounts.get(team) ?? 0) + 1
-      if (next > PAWN_CAP_PER_TEAM) { return false }
-      teamPawnCounts.set(team, next)
-    }
-  }
-  return true
-}

@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
 import { compareValues } from 'bot_execution/utils'
-import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
+import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { intersectRegions, subtractRegions } from './region'
 
 const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])

@@ -1,9 +1,6 @@
-import {
-  buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, ALL_POSITIONS,
-  legalPlacementForSpecies, teamHasKing
-} from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, legalPlacementForSpecies, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
 import { respectsAllCaps } from '../../respect_caps'
 import { singularSquare, commitPriorRegion, entryConcernsMovedPiece, placeableSpecies } from './cross_frame_helpers'

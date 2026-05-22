@@ -1,4 +1,5 @@
-import { buildBoardFromLayout, buildLayoutFromPieces, shuffled, teamHasKing } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { buildBoardFromLayout, buildLayoutFromPieces, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
 import { blockersMechanism } from './blockers'
 import { kingAdjacentControlMechanism } from './king_adjacent_control'

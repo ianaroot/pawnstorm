@@ -1,5 +1,4 @@
 import Board from 'gameplay/board'
-import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { MOVE_KIND_EN_PASSANT } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
 
