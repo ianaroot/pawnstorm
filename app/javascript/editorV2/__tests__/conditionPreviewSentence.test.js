@@ -453,6 +453,47 @@ describe('formatConditionSentence', () => {
     })
   })
 
+  describe("relational — adjacent never falls back to attack's verb forms", () => {
+    it('subject value direct: "adjacent to", not "attacking"', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 5,
+        operator: 'adjacent', target: 'enemy', targetFilter: 'any'
+      })))
+        .toBe('my pieces adjacent to enemy pieces are **more valuable** than 5')
+    })
+    it('subject value = PBS (passive frame): "adjacent to", not "attacked by"', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'equal_to',
+        subjectComparisonSource: pbs,
+        operator: 'adjacent', target: 'enemy', targetFilter: 'queen'
+      })))
+        .toBe('enemy queens are adjacent to my pieces **equally valuable** as before')
+    })
+    it('target value (passive clause): "adjacent to", not "attacked by"', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        operator: 'adjacent', target: 'enemy', targetFilter: 'queen',
+        targetComparisonMetric: 'aggregate_value', targetComparator: 'greater_than',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 5
+      })))
+        .toBe('enemy queens adjacent to my pieces are **more valuable** than 5')
+    })
+    it('integrated continuous: "are adjacent to", not "are attacking"', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 5,
+        operator: 'adjacent', target: 'enemy_moved_piece', targetFilter: 'any',
+        targetComparisonMetric: 'count', targetComparator: 'equal_to',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 1
+      })))
+        .toBe("my pieces, **more valuable** than 5, are adjacent to enemy's just-moved piece")
+    })
+  })
+
   describe('identity — degenerate same_piece pairs covered', () => {
     it('captured_piece same_piece enemy_captured_piece', () => {
       expect(s({ version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_captured_piece' }))

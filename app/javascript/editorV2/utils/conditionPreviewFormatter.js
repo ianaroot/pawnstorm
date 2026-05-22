@@ -316,11 +316,16 @@ const OPERATORS = {
   cover:    { active: ['covers', 'cover'],                   passive: 'covered',   gerund: 'covering' },
   shield:   { active: ['shields', 'shield'],                 passive: 'shielded',  gerund: 'shielding' },
   targets:  { active: ['targets', 'target'],                 passive: 'targeted',  gerund: 'targeting' },
-  adjacent: { active: ['is adjacent to', 'are adjacent to'] }
+  adjacent: { active: ['is adjacent to', 'are adjacent to'], gerund: 'adjacent to' }
 }
 
 function opForm(operator, form) {
   return OPERATORS[operator]?.[form] || OPERATORS.attack[form]
+}
+
+// "attacked by" for directional verbs; the symmetric "adjacent to" takes no agent marker.
+function passiveBy(operator) {
+  return operator === 'adjacent' ? 'adjacent to' : `${opForm(operator, 'passive')} by`
 }
 
 function noun(filter, filterMode, plural) {
@@ -477,9 +482,8 @@ function composeRelationalValuePBS(d) {
   const target = actorNP(d.target, d.targetFilter, d.targetFilterMode, { plural: true })
   const subject = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
   const be = areIs(target.plural)
-  const passive = opForm(d.operator, 'passive')
   return [
-    { text: `${target.text} ${be} ${passive} by ${subject.text} ` },
+    { text: `${target.text} ${be} ${passiveBy(d.operator)} ${subject.text} ` },
     ...valueModifierSegments(d.subjectComparator, 'prior_board_state', undefined)
   ]
 }
@@ -498,8 +502,7 @@ function composeRelationalValueDirect(d) {
 function composeRelationalTargetValueClause(d, { includePassive = true } = {}) {
   const target = actorNP(d.target, d.targetFilter, d.targetFilterMode, { plural: true })
   const subject = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
-  const passive = opForm(d.operator, 'passive')
-  const passivePart = includePassive ? ` ${passive} by ${subject.text}` : ''
+  const passivePart = includePassive ? ` ${passiveBy(d.operator)} ${subject.text}` : ''
   const be = areIs(target.plural)
   return [
     { text: `${target.text}${passivePart} ${be} ` },
