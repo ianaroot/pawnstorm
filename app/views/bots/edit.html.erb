@@ -24,7 +24,6 @@
     
     <div class="toolbar-section">
       <h3>Tool</h3>
-      <button type="button" class="tool-select active" data-tool="select">Select</button>
       <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
       <button
         type="button"
@@ -36,10 +35,11 @@
 
     <div class="toolbar-section">
       <h3>View</h3>
+      <button type="button" class="btn-toggle-preview-mode" aria-pressed="true"
+        title="Show condition previews as plain-language sentences or terse chunks (reopen a panel to apply)">Sentences: on</button>
       <button type="button" id="zoom-out" class="btn-zoom">-</button>
       <span id="zoom-level">100%</span>
       <button type="button" id="zoom-in" class="btn-zoom">+</button>
-      <button type="button" id="zoom-reset" class="btn-zoom-reset">Reset</button>
     </div>
 
     <div class="toolbar-section">

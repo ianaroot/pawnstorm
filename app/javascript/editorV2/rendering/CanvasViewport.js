@@ -30,12 +30,10 @@ class CanvasViewport {
     this.rafId = null
     this.zoomInButton = document.getElementById('zoom-in')
     this.zoomOutButton = document.getElementById('zoom-out')
-    this.zoomResetButton = document.getElementById('zoom-reset')
 
     this.boundHandleResize = this.handleResize.bind(this)
     this.boundZoomIn = this.zoomIn.bind(this)
     this.boundZoomOut = this.zoomOut.bind(this)
-    this.boundZoomReset = this.zoomReset.bind(this)
     this.unsubscribe = this.store.subscribe(this.handleStoreChange.bind(this))
 
     if (typeof ResizeObserver !== 'undefined') {
@@ -53,7 +51,6 @@ class CanvasViewport {
   attachControls() {
     this.zoomInButton?.addEventListener('click', this.boundZoomIn)
     this.zoomOutButton?.addEventListener('click', this.boundZoomOut)
-    this.zoomResetButton?.addEventListener('click', this.boundZoomReset)
   }
 
   handleResize() {
@@ -411,10 +408,6 @@ class CanvasViewport {
     this.zoomBy(-ZOOM_STEP)
   }
 
-  zoomReset() {
-    this.fitToGraph()
-  }
-
   destroy() {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId)
@@ -422,7 +415,6 @@ class CanvasViewport {
 
     this.zoomInButton?.removeEventListener('click', this.boundZoomIn)
     this.zoomOutButton?.removeEventListener('click', this.boundZoomOut)
-    this.zoomResetButton?.removeEventListener('click', this.boundZoomReset)
 
     this.unsubscribe()
 
