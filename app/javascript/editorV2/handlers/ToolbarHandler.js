@@ -62,7 +62,6 @@ class ToolbarHandler {
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => this.handleDeleteClick())
     }
-    // Condition-preview mode toggle (sentences ↔ chunks)
     const previewModeBtn = document.querySelector('.btn-toggle-preview-mode')
     if (previewModeBtn) {
       this.syncPreviewModeButton(previewModeBtn)

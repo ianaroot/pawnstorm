@@ -171,8 +171,8 @@ describe('formatConditionSentence', () => {
       expect(s(census({ subject: 'allied', subjectFilter: 'pawn', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 3 })))
         .toBe('I have **exactly 3** pawns')
     })
-    it('captured_piece count > 0 (singular existence)', () => {
-      expect(s(census({ subject: 'captured_piece', subjectFilter: 'any', operator: 'count', comparator: 'greater_than', target: 'exact_number', targetTotal: 0 })))
+    it('captured_piece count = 1 (singular existence)', () => {
+      expect(s(census({ subject: 'captured_piece', subjectFilter: 'any', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
         .toBe('I **capture** a piece')
     })
     it('captured_piece count = 0', () => {
@@ -187,9 +187,13 @@ describe('formatConditionSentence', () => {
       expect(s(census({ subject: 'captured_piece', subjectFilter: 'pawn', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
         .toBe('my capture **is** a pawn')
     })
-    it('moved_piece knight count >= 1', () => {
-      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', operator: 'count', comparator: 'greater_than_or_equal_to', target: 'exact_number', targetTotal: 1 })))
+    it('moved_piece knight count = 1', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
         .toBe('my moved piece **is** a knight')
+    })
+    it('moved_piece knight count > 0 (disallowed comparator warns)', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', operator: 'count', comparator: 'greater_than', target: 'exact_number', targetTotal: 0 })))
+        .toBe("my moved piece ⚠ couldn't render count comparison")
     })
     it('moved_piece knight mobility > PBS', () => {
       expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', operator: 'mobility', comparator: 'greater_than', target: pbs })))
@@ -280,6 +284,26 @@ describe('formatConditionSentence', () => {
       expect(s(census({ subject: 'allied', subjectFilter: 'rook', positionAxis: 'file', positionComparator: 'equal_to', positionTarget: 3, operator: 'count', comparator: 'greater_than', target: 'exact_number', targetTotal: 0 })))
         .toBe('I have at least one rook on the **c-file**')
     })
+    it('singular subject count = 1, no filter: existence in region', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'any', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
+        .toBe('my moved piece **is** on rank 5')
+    })
+    it('singular subject count = 1, with filter: existence + species in region', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
+        .toBe('my moved piece **is** a knight on rank 5')
+    })
+    it('singular subject count = 0, no filter: negated existence in region', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'any', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 })))
+        .toBe('my moved piece is **not** on rank 5')
+    })
+    it('singular subject count = 0, with filter: negated existence + species in region', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 })))
+        .toBe('my moved piece is **not** a knight on rank 5')
+    })
+    it('singular subject count, disallowed comparator warns', () => {
+      expect(s(census({ subject: 'moved_piece', subjectFilter: 'knight', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'count', comparator: 'greater_than', target: 'exact_number', targetTotal: 0 })))
+        .toBe("my moved piece ⚠ couldn't render count comparison")
+    })
     it('value + region + PBS: "value of X on rank Y is higher than before"', () => {
       expect(s(census({ subject: 'allied', subjectFilter: 'rook', positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 5, operator: 'value', comparator: 'greater_than', target: pbs })))
         .toBe('my rooks on rank 5 are **more valuable** than before')
@@ -350,6 +374,82 @@ describe('formatConditionSentence', () => {
         targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 0
       })))
         .toBe("my pieces attack my moved piece ⚠ couldn't render target's count comparison")
+    })
+  })
+
+  describe('relational — singular-actor count is existence (=1 omit, =0 negate)', () => {
+    it('moved_piece count = 1 attack enemy: count omitted, affirmative', () => {
+      expect(s(rel({
+        subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+        target: 'enemy', targetFilter: 'any',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 1
+      })))
+        .toBe('my moved piece attacks enemy pieces')
+    })
+    it('moved_piece count = 0 attack enemy: negated', () => {
+      expect(s(rel({
+        subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+        target: 'enemy', targetFilter: 'any',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+      })))
+        .toBe('my moved piece does not attack enemy pieces')
+    })
+    it('moved_piece count = 1 + target value: integrated, count omitted', () => {
+      expect(s(rel({
+        subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+        target: 'enemy', targetFilter: 'any',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 1,
+        targetComparisonMetric: 'aggregate_value', targetComparator: 'greater_than',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 5
+      })))
+        .toBe('my moved piece attacks enemy pieces **more valuable** than 5')
+    })
+    it('moved_piece count = 0 + target value: integrated, negated', () => {
+      expect(s(rel({
+        subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
+        target: 'enemy', targetFilter: 'any',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0,
+        targetComparisonMetric: 'aggregate_value', targetComparator: 'greater_than',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 5
+      })))
+        .toBe('my moved piece does not attack enemy pieces **more valuable** than 5')
+    })
+    it('subject value + enemy_moved_piece count = 1: integrated continuous, affirmative', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 5,
+        operator: 'attack',
+        target: 'enemy_moved_piece', targetFilter: 'any',
+        targetComparisonMetric: 'count', targetComparator: 'equal_to',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 1
+      })))
+        .toBe("my pieces, **more valuable** than 5, are attacking enemy's just-moved piece")
+    })
+    it('subject value + enemy_moved_piece count = 0: integrated continuous, negated', () => {
+      expect(s(rel({
+        subject: 'allied', subjectFilter: 'any',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 5,
+        operator: 'attack',
+        target: 'enemy_moved_piece', targetFilter: 'any',
+        targetComparisonMetric: 'count', targetComparator: 'equal_to',
+        targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 0
+      })))
+        .toBe("my pieces, **more valuable** than 5, are not attacking enemy's just-moved piece")
+    })
+    it('moved_piece count = 0 adjacent allied knight: "is not adjacent to"', () => {
+      expect(s(rel({
+        subject: 'moved_piece', subjectFilter: 'any', operator: 'adjacent',
+        target: 'allied', targetFilter: 'knight', targetFilterMode: 'include',
+        subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0
+      })))
+        .toBe('my moved piece is not adjacent to my knight')
     })
   })
 

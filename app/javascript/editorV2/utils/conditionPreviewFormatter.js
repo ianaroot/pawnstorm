@@ -329,19 +329,30 @@ function noun(filter, filterMode, plural) {
     if (filter === 'major' || filter === 'minor') { return `non-${filter} ${plural ? 'pieces' : 'piece'}` }
     return plural ? `non-${filter}s` : `non-${filter}`
   }
-  const base = SPECIES[filter] || filter
+  const base = speciesNoun(filter)
   return plural ? `${base}s` : base
+}
+
+function speciesNoun(filter) { return SPECIES[filter] || filter }
+function haveHas(plural) { return plural ? 'have' : 'has' }
+function areIs(plural) { return plural ? 'are' : 'is' }
+function teamHas(subject) { return subject === 'enemy' ? 'enemy has' : 'I have' }
+
+// Comparator → bare delta word, for "X more/fewer than before" and "vs a singular actor".
+function deltaCountWord(comparator) {
+  switch (comparator) {
+    case 'greater_than': return 'more'
+    case 'less_than': return 'fewer'
+    case 'greater_than_or_equal_to': return 'no fewer'
+    case 'less_than_or_equal_to': return 'no more'
+    default: return 'same number'
+  }
 }
 
 function quantifyCount({ comparator, source, total }) {
   if (source === 'prior_board_state') {
-    switch (comparator) {
-      case 'greater_than': return { q: 'more', delta: true }
-      case 'less_than': return { q: 'fewer', delta: true }
-      case 'greater_than_or_equal_to': return { q: 'no fewer', delta: true }
-      case 'less_than_or_equal_to': return { q: 'no more', delta: true }
-      default: return { q: 'same number', delta: true, same: true }
-    }
+    const q = deltaCountWord(comparator)
+    return { q, delta: true, same: q === 'same number' }
   }
   const n = Number(total)
   switch (comparator) {
@@ -397,7 +408,7 @@ function actorNP(token, filter, filterMode, { plural: forcePlural = false } = {}
   if (SINGULAR_ACTOR[token]) {
     const base = SINGULAR_ACTOR[token]
     if (filter && filter !== 'any') {
-      const sp = SPECIES[filter] || filter
+      const sp = speciesNoun(filter)
       if (base.endsWith('piece')) return { text: base.replace(/piece$/, sp), plural: false }
       if (token === 'captured_piece') return { text: `my captured ${sp}`, plural: false }
     }
@@ -415,8 +426,7 @@ function relationalSideNP(token, filter, filterMode, info) {
     return {
       segments: [{ text: np.text }],
       info: null,
-      plural: np.plural,
-      droppedInfo: !!(info && SINGULAR_ACTOR[token])
+      plural: np.plural
     }
   }
   const body = token === 'allied'
@@ -425,8 +435,7 @@ function relationalSideNP(token, filter, filterMode, info) {
   return {
     segments: [{ text: info.q, emphasis: true }, { text: ` ${body}` }],
     info,
-    plural: !info.atLeastOne,
-    droppedInfo: false
+    plural: !info.atLeastOne
   }
 }
 
@@ -435,10 +444,39 @@ function tail(info) {
   return info.same ? ' as before' : ' than before'
 }
 
+// Singular actors carry count only as existence: =1 participates (count omitted),
+// =0 negates. Other comparisons can't be rendered (gating prevents them).
+function countExistenceSense(comparator, total) {
+  if (comparator === 'equal_to' && Number(total) === 0) { return 'negate' }
+  if (comparator === 'equal_to' && Number(total) === 1) { return 'affirm' }
+  return 'warn'
+}
+
+function singularCountSense(d, side) {
+  const token = side === 'subject' ? d.subject : d.target
+  const metric = side === 'subject' ? d.subjectComparisonMetric : d.targetComparisonMetric
+  if (!SINGULAR_ACTOR[token] || metric !== 'count') { return null }
+  const comparator = side === 'subject' ? d.subjectComparator : d.targetComparator
+  const total = side === 'subject' ? d.subjectComparisonSourceTotal : d.targetComparisonSourceTotal
+  return countExistenceSense(comparator, total)
+}
+
+function negatedVerb(operator, plural) {
+  if (operator === 'adjacent') { return plural ? 'are not adjacent to' : 'is not adjacent to' }
+  return `${plural ? 'do' : 'does'} not ${opForm(operator, 'active')[1]}`
+}
+
+function appendCountWarnings(result, subjectSense, targetSense) {
+  const warnings = []
+  if (subjectSense === 'warn') { warnings.push("subject's count comparison") }
+  if (targetSense === 'warn') { warnings.push("target's count comparison") }
+  if (warnings.length) { result.push({ text: ` ⚠ couldn't render ${warnings.join(' and ')}` }) }
+}
+
 function composeRelationalValuePBS(d) {
   const target = actorNP(d.target, d.targetFilter, d.targetFilterMode, { plural: true })
   const subject = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
-  const be = target.plural ? 'are' : 'is'
+  const be = areIs(target.plural)
   const passive = opForm(d.operator, 'passive')
   return [
     { text: `${target.text} ${be} ${passive} by ${subject.text} ` },
@@ -450,7 +488,7 @@ function composeRelationalValueDirect(d) {
   const subject = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
   const target = actorNP(d.target, d.targetFilter, d.targetFilterMode, { plural: true })
   const gerund = opForm(d.operator, 'gerund')
-  const be = subject.plural ? 'are' : 'is'
+  const be = areIs(subject.plural)
   return [
     { text: `${subject.text} ${gerund} ${target.text} ${be} ` },
     ...valueModifierSegments(d.subjectComparator, d.subjectComparisonSource, d.subjectComparisonSourceTotal)
@@ -462,7 +500,7 @@ function composeRelationalTargetValueClause(d, { includePassive = true } = {}) {
   const subject = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
   const passive = opForm(d.operator, 'passive')
   const passivePart = includePassive ? ` ${passive} by ${subject.text}` : ''
-  const be = target.plural ? 'are' : 'is'
+  const be = areIs(target.plural)
   return [
     { text: `${target.text}${passivePart} ${be} ` },
     ...valueModifierSegments(d.targetComparator, d.targetComparisonSource, d.targetComparisonSourceTotal)
@@ -511,20 +549,30 @@ function composeRelational(d) {
 }
 
 function composeRelationalIntegrated(d) {
+  // relational_mode locks the opposing comparison when one side uses prior_board_state, so neither side here is a prior_board_state source.
   const subjectSide = renderRelationalSideWithMetric(d, 'subject')
   const targetSide = renderRelationalSideWithMetric(d, 'target')
   const verbPair = opForm(d.operator, 'active')
   const gerund = opForm(d.operator, 'gerund')
+  const subjectSense = singularCountSense(d, 'subject')
+  const targetSense = singularCountSense(d, 'target')
+  const negate = subjectSense === 'negate' || targetSense === 'negate'
   // Verb: continuous when subject NP has a value modifier (parenthetical),
   // simple when subject NP has a count quantifier or no modifier.
-  const verb = subjectSide.hasValueModifier
-    ? `${subjectSide.plural ? 'are' : 'is'} ${gerund}`
-    : (subjectSide.plural ? verbPair[1] : verbPair[0])
-  return [
+  let verb
+  if (subjectSide.hasValueModifier) {
+    const be = areIs(subjectSide.plural)
+    verb = negate ? `${be} not ${gerund}` : `${be} ${gerund}`
+  } else {
+    verb = negate ? negatedVerb(d.operator, subjectSide.plural) : (subjectSide.plural ? verbPair[1] : verbPair[0])
+  }
+  const result = [
     ...subjectSide.segments,
     { text: ` ${verb} ` },
     ...targetSide.segments
   ]
+  appendCountWarnings(result, subjectSense, targetSense)
+  return result
 }
 
 function renderRelationalSideWithMetric(d, side) {
@@ -542,7 +590,6 @@ function renderRelationalSideWithMetric(d, side) {
     return { segments: np.segments, plural: np.plural, hasValueModifier: false }
   }
   if (metric) {
-    // value metric — postpositive modifier; commas on subject side, none on target side
     const np = actorNP(token, filter, filterMode, { plural: true })
     const valSegs = valueModifierSegments(comparator, source, total)
     if (side === 'subject') {
@@ -558,7 +605,6 @@ function renderRelationalSideWithMetric(d, side) {
       hasValueModifier: true
     }
   }
-  // No metric — plain NP
   const np = actorNP(token, filter, filterMode, { plural: side === 'target' })
   return { segments: [{ text: np.text }], plural: np.plural, hasValueModifier: false }
 }
@@ -598,11 +644,10 @@ function composeRelationalCountBranch(d) {
 
   const subjectNP = relationalSideNP(d.subject, d.subjectFilter, d.subjectFilterMode, effectiveSubjectInfo)
   const targetNP = relationalSideNP(d.target, d.targetFilter, d.targetFilterMode, targetInfo)
-  const verb = subjectNP.plural ? verbPair[1] : verbPair[0]
-
-  const warnings = []
-  if (subjectNP.droppedInfo) warnings.push("subject's count comparison")
-  if (targetNP.droppedInfo) warnings.push("target's count comparison")
+  const subjectSense = singularCountSense(d, 'subject')
+  const targetSense = singularCountSense(d, 'target')
+  const negate = subjectSense === 'negate' || targetSense === 'negate'
+  const verb = negate ? negatedVerb(d.operator, subjectNP.plural) : (subjectNP.plural ? verbPair[1] : verbPair[0])
 
   const result = [
     ...subjectNP.segments,
@@ -610,9 +655,7 @@ function composeRelationalCountBranch(d) {
     ...targetNP.segments,
     { text: tail(subjectInfo) || tail(targetInfo) }
   ]
-  if (warnings.length) {
-    result.push({ text: ` ⚠ couldn't render ${warnings.join(' and ')}` })
-  }
+  appendCountWarnings(result, subjectSense, targetSense)
   return result
 }
 
@@ -642,7 +685,7 @@ function composeCensusMobility(d) {
   const np = collection && !filtered
     ? { text: d.subject === 'enemy' ? 'enemy' : 'my pieces', plural: d.subject === 'allied' }
     : actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: collection })
-  const verb = np.plural ? 'have' : 'has'
+  const verb = haveHas(np.plural)
   const info = quantifyCount({ comparator: d.comparator, source: d.target, total: d.targetTotal })
   return [
     { text: `${np.text} ${verb} ` },
@@ -702,7 +745,7 @@ function censusValueCollectionNP(d) {
 
 function composeCensusValueCollection(d) {
   const np = censusValueCollectionNP(d)
-  const be = np.plural ? 'are' : 'is'
+  const be = areIs(np.plural)
   return [
     { text: `${np.text} ${be} ` },
     ...valueModifierSegments(d.comparator, d.target, undefined)
@@ -711,7 +754,7 @@ function composeCensusValueCollection(d) {
 
 function composeCensusValueCollectionExact(d) {
   const np = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
-  const verb = np.plural ? 'have' : 'has'
+  const verb = haveHas(np.plural)
   return [
     { text: `${np.text} ${verb} ` },
     { text: valueClause(d.comparator, Number(d.targetTotal)), emphasis: true },
@@ -724,34 +767,34 @@ function composeCensusCount(d) {
   return composeCensusCountCollection(d)
 }
 
-function singularActorExists(comparator, total) {
-  const n = Number(total)
-  switch (comparator) {
-    case 'equal_to': return n === 1
-    case 'greater_than': return n >= 0
-    case 'greater_than_or_equal_to': return n >= 1
-    case 'less_than_or_equal_to': return n >= 1
-    default: return false
-  }
+// Singular-actor existence (=1/=0). `warn` for any other (gated-out) comparator.
+function existenceWarn(d) {
+  return [{ text: `${SINGULAR_ACTOR[d.subject]} ` }, { text: "⚠ couldn't render count comparison" }]
+}
+
+// "{actor} is {predicate}" (affirm) / "{actor} is not {predicate}" (negate)
+function existenceSegments(actor, affirm, predicate) {
+  return affirm
+    ? [{ text: `${actor} ` }, { text: 'is', emphasis: true }, { text: ` ${predicate}` }]
+    : [{ text: `${actor} is ` }, { text: 'not', emphasis: true }, { text: ` ${predicate}` }]
 }
 
 function composeCensusCountSingularSubject(d) {
-  const exists = singularActorExists(d.comparator, d.targetTotal)
+  const sense = countExistenceSense(d.comparator, d.targetTotal)
+  if (sense === 'warn') { return existenceWarn(d) }
   if (d.subjectFilter && d.subjectFilter !== 'any') {
-    const sp = SPECIES[d.subjectFilter] || d.subjectFilter
-    return exists
-      ? [{ text: `${SINGULAR_ACTOR[d.subject]} ` }, { text: 'is', emphasis: true }, { text: ` a ${sp}` }]
-      : [{ text: `${SINGULAR_ACTOR[d.subject]} is ` }, { text: 'not', emphasis: true }, { text: ` a ${sp}` }]
+    return existenceSegments(SINGULAR_ACTOR[d.subject], sense === 'affirm', `a ${speciesNoun(d.subjectFilter)}`)
   }
-  if (exists) return [{ text: 'I ' }, { text: 'capture', emphasis: true }, { text: ' a piece' }]
-  return [{ text: 'this move ' }, { text: 'captures nothing', emphasis: true }]
+  return sense === 'affirm'
+    ? [{ text: 'I ' }, { text: 'capture', emphasis: true }, { text: ' a piece' }]
+    : [{ text: 'this move ' }, { text: 'captures nothing', emphasis: true }]
 }
 
 function composeCensusCountCollection(d) {
   const info = quantifyCount({ comparator: d.comparator, source: d.target, total: d.targetTotal })
   const n = noun(d.subjectFilter, d.subjectFilterMode, !info.atLeastOne)
   return [
-    { text: d.subject === 'enemy' ? 'enemy has ' : 'I have ' },
+    { text: `${teamHas(d.subject)} ` },
     { text: info.q, emphasis: true },
     { text: ` ${n}` }
   ]
@@ -783,18 +826,36 @@ function composeCensusRegion(d) {
   return composeCensusRegionCount(d)
 }
 
-// Count word for region comparisons against a singular actor.
-function regionCountWord(comparator) {
-  switch (comparator) {
-    case 'greater_than': return 'more'
-    case 'less_than': return 'fewer'
-    case 'greater_than_or_equal_to': return 'no fewer'
-    case 'less_than_or_equal_to': return 'no more'
-    default: return 'same number'
+function regionText(region) { return `${region.prefix}${region.bound}` }
+
+// "{lead} the **same number** of {unit} as {ref}" (equal_to)
+// "{lead} **{deltaWord}** {unit} than {ref}"        (otherwise)
+function comparisonVsSingular(lead, comparator, unit, ref) {
+  if (comparator === 'equal_to') {
+    return [
+      { text: `${lead} the ` },
+      { text: 'same number', emphasis: true },
+      { text: ` of ${unit} as ${ref}` }
+    ]
   }
+  return [
+    { text: `${lead} ` },
+    { text: deltaCountWord(comparator), emphasis: true },
+    { text: ` ${unit} than ${ref}` }
+  ]
+}
+
+function composeCensusRegionCountSingularSubject(d) {
+  const sense = countExistenceSense(d.comparator, d.targetTotal)
+  if (sense === 'warn') { return existenceWarn(d) }
+  const where = regionText(regionPhrase(d))
+  const filtered = d.subjectFilter && d.subjectFilter !== 'any'
+  const predicate = filtered ? `a ${speciesNoun(d.subjectFilter)} ${where}` : where
+  return existenceSegments(SINGULAR_ACTOR[d.subject], sense === 'affirm', predicate)
 }
 
 function composeCensusRegionCount(d) {
+  if (SINGULAR_ACTOR[d.subject]) { return composeCensusRegionCountSingularSubject(d) }
   const region = regionPhrase(d)
   if (SINGULAR_ACTOR[d.target]) { return composeCensusRegionCountVsSingular(d) }
   if (d.target === 'prior_board_state') {
@@ -804,90 +865,59 @@ function composeCensusRegionCount(d) {
       : `enemy ${noun(d.subjectFilter, d.subjectFilterMode, true)}`
     return [
       { text: info.q, emphasis: true },
-      { text: ` ${group} are ${region.prefix}${region.bound} than before` }
+      { text: ` ${group} are ${regionText(region)} than before` }
     ]
   }
   const info = quantifyCount({ comparator: d.comparator, source: d.target, total: d.targetTotal })
   const n = noun(d.subjectFilter, d.subjectFilterMode, !info.atLeastOne)
-  const lead = d.subject === 'enemy' ? 'enemy has ' : 'I have '
   return [
-    { text: `${lead}${info.q} ${n} ${region.prefix}` },
+    { text: `${teamHas(d.subject)} ${info.q} ${n} ${region.prefix}` },
     { text: region.bound, emphasis: true }
   ]
 }
 
 function composeCensusRegionCountVsSingular(d) {
-  const region = regionPhrase(d)
-  const lead = d.subject === 'enemy' ? 'enemy has' : 'I have'
-  const n = noun(d.subjectFilter, d.subjectFilterMode, true)
-  const ref = SINGULAR_ACTOR[d.target]
-  if (d.comparator === 'equal_to') {
-    return [
-      { text: `${lead} the ` },
-      { text: 'same number', emphasis: true },
-      { text: ` of ${n} ${region.prefix}${region.bound} as ${ref}` }
-    ]
-  }
-  return [
-    { text: `${lead} ` },
-    { text: regionCountWord(d.comparator), emphasis: true },
-    { text: ` ${n} ${region.prefix}${region.bound} than ${ref}` }
-  ]
+  const unit = `${noun(d.subjectFilter, d.subjectFilterMode, true)} ${regionText(regionPhrase(d))}`
+  return comparisonVsSingular(teamHas(d.subject), d.comparator, unit, SINGULAR_ACTOR[d.target])
 }
 
 function composeCensusRegionMobility(d) {
   const region = regionPhrase(d)
   if (SINGULAR_ACTOR[d.target]) { return composeCensusRegionMobilityVsSingular(d) }
   const np = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
-  const verb = np.plural ? 'have' : 'has'
+  const verb = haveHas(np.plural)
   const info = quantifyCount({ comparator: d.comparator, source: d.target, total: d.targetTotal })
   return [
-    { text: `${np.text} ${region.prefix}${region.bound} ${verb} ` },
+    { text: `${np.text} ${regionText(region)} ${verb} ` },
     { text: info.q, emphasis: true },
     { text: ` legal moves${tail(info)}` }
   ]
 }
 
 function composeCensusRegionMobilityVsSingular(d) {
-  const region = regionPhrase(d)
   const np = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
-  const verb = np.plural ? 'have' : 'has'
-  const ref = SINGULAR_ACTOR[d.target]
-  if (d.comparator === 'equal_to') {
-    return [
-      { text: `${np.text} ${region.prefix}${region.bound} ${verb} the ` },
-      { text: 'same number', emphasis: true },
-      { text: ` of legal moves as ${ref}` }
-    ]
-  }
-  return [
-    { text: `${np.text} ${region.prefix}${region.bound} ${verb} ` },
-    { text: regionCountWord(d.comparator), emphasis: true },
-    { text: ` legal moves than ${ref}` }
-  ]
+  const lead = `${np.text} ${regionText(regionPhrase(d))} ${haveHas(np.plural)}`
+  return comparisonVsSingular(lead, d.comparator, 'legal moves', SINGULAR_ACTOR[d.target])
 }
 
 function composeCensusRegionValue(d) {
   const region = regionPhrase(d)
   const np = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode, { plural: true })
   if (d.target === 'prior_board_state') {
-    const be = np.plural ? 'are' : 'is'
     return [
-      { text: `${np.text} ${region.prefix}${region.bound} ${be} ` },
+      { text: `${np.text} ${regionText(region)} ${areIs(np.plural)} ` },
       ...valueModifierSegments(d.comparator, 'prior_board_state', undefined)
     ]
   }
   if (SINGULAR_ACTOR[d.target]) {
-    const lead = d.subject === 'enemy' ? 'enemy has' : 'I have'
     const n = noun(d.subjectFilter, d.subjectFilterMode, false)
     return [
-      { text: `${lead} at least one ${n} ${region.prefix}${region.bound} ` },
+      { text: `${teamHas(d.subject)} at least one ${n} ${regionText(region)} ` },
       ...valueModifierSegments(d.comparator, d.target, undefined)
     ]
   }
-  const verb = np.plural ? 'have' : 'has'
   return [
-    { text: `${np.text} ${region.prefix}${region.bound} ${verb} ` },
+    { text: `${np.text} ${regionText(region)} ${haveHas(np.plural)} ` },
     { text: valueClause(d.comparator, Number(d.targetTotal)), emphasis: true },
     { text: ' total value' }
   ]
