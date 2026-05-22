@@ -11,7 +11,7 @@ import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/k
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 import {
-  tryNarrowSingular, tryNarrowSingularRegion, regionDefinitelyContains
+  tryNarrowSingular, regionDefinitelyContains
 } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkState with checkRestriction (one mobility-restricting king arrangement per team).

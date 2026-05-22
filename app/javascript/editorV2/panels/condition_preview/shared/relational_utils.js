@@ -1,9 +1,6 @@
-import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
-import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import { nextPositionOnRay } from 'gameplay/board_query_utils'
 import { candidateSpecies } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { safeEvaluate } from 'editorV2/panels/condition_preview/shared/safe_evaluate'
 
 function rayStepBetween(fromPosition, toPosition) {
   const fileDiff = Board.fileIndex(toPosition) - Board.fileIndex(fromPosition)
@@ -41,14 +38,6 @@ export function relationalTeamForActor(actor) {
 
 export function roleRequiresMovedPiece(actor) {
   return actor === 'moved_piece'
-}
-
-export function roleRequiresEnemyMovedPiece(actor) {
-  return actor === 'enemy_moved_piece'
-}
-
-export function relationalActorRequiresPresence(actor) {
-  return roleRequiresMovedPiece(actor) || roleRequiresEnemyMovedPiece(actor)
 }
 
 export function relationParams(payload) {
@@ -115,14 +104,3 @@ export function sideSpeciesPool(payload, side) {
   return candidateSpecies(filter, filterMode)
 }
 
-export function evaluateRelationalCandidate({ plan, priorBoard, moveObject }) {
-  const evaluator = new ConditionEvaluatorV2()
-  const input = { board: priorBoard, moveObject }
-  if (!safeEvaluate(evaluator, plan.evaluationPayload, input)) { return null }
-
-  const analysis = new CandidateMoveAnalysisV2(input)
-  const result = analysis.relationalResult(plan.relationParams)
-  if (result.pairs.length === 0) { return null }
-
-  return result
-}

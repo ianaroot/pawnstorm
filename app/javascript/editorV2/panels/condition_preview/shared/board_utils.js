@@ -55,11 +55,6 @@ export function shuffled(values, random) {
   return copy
 }
 
-export function pickRandom(values, random) {
-  if (!values || values.length === 0) { return null }
-  return values[Math.floor(random() * values.length)]
-}
-
 // Picks one species from speciesSet, weighted by WEIGHTED_SPECIES_DISTRIBUTION.
 // Returns null when the intersection is empty.
 export function pickWeightedSpecies(speciesSet, random) {
@@ -109,14 +104,6 @@ export function blockerSpeciesFor(position) {
 
 export function orderedBlockerSpeciesFor(position, random) {
   return weightedShuffleSpecies(new Set(blockerSpeciesFor(position)), random)
-}
-
-export function clonePiecesMap(piecesMap) {
-  return new Map(piecesMap)
-}
-
-export function squareIsOccupied(pieces, position) {
-  return pieces.has(position)
 }
 
 export function pathClear(squares, fromIdx, untilIdx, pieces) {

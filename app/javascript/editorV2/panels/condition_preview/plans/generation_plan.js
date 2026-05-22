@@ -7,7 +7,7 @@ import {
   relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/shared/relational_utils'
 import {
-  COUNT_COMPARISON_METRIC, VALUE_COMPARISON_METRIC, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC, isValueMetric,
+  COUNT_COMPARISON_METRIC, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC, isValueMetric,
   EXACT_NUMBER_COMPARISON_SOURCE, PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonDescriptors, comparisonRequirements, comparisonRequirementsFromDescriptors
 } from 'editorV2/panels/condition_preview/plans/comparison_requirements'

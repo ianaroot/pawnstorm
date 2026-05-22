@@ -5,7 +5,7 @@ import {
 } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import {
-  VALUE_COMPARISON_METRIC, isValueMetric,
+  isValueMetric,
   EXACT_NUMBER_COMPARISON_SOURCE,
   PRIOR_BOARD_COMPARISON_SOURCE,
   comparisonRequirementsFromDescriptors,

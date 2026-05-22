@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import Board from 'gameplay/board'
 import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
-import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/unary_position_collection'
+import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { buildSingulars } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 
 const TRIVIAL_PLAN = {

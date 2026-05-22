@@ -1,5 +1,5 @@
 load Rails.root.join('db/seeds/seed_bot.rb')
-puts "Dentist seeded"
+puts "Seed bot seeded"
 
 # load Rails.root.join('db/seeds/cyclops_dump.rb')
 # puts 'cyclops dump seeded'

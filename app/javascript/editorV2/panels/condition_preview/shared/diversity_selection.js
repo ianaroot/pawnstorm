@@ -15,15 +15,6 @@ export function speciesPairSignature(example) {
   return `${subjectSpeciesSignature(example)}=>${targetSpeciesSignature(example)}`
 }
 
-export function varietySignature(example) {
-  return [
-    example.variantType,
-    subjectSpeciesSignature(example),
-    targetSpeciesSignature(example),
-    example.geometryKey
-  ].join(':')
-}
-
 export function movedPieceSignature(example) {
   return example.afterBoard.pieceTypeAt(example.moveObject.endPosition)
 }
@@ -59,14 +50,6 @@ export function valueComboSignature(example) {
   const subjectTotal = sideValueTotal(example.result?.subjectPositions, example.afterBoard)
   const targetTotal = sideValueTotal(example.result?.targetPositions, example.afterBoard)
   return `${subjectTotal}=>${targetTotal}`
-}
-
-export function bucketKeyForExample(example) {
-  return [
-    subjectSpeciesSignature(example),
-    targetSpeciesSignature(example),
-    example.variantType
-  ].join('|')
 }
 
 export function uniqueExamples(examples) {

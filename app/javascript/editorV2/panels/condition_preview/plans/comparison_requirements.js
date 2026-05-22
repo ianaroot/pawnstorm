@@ -72,10 +72,6 @@ export function comparisonRequirementsFromDescriptors(descriptors) {
   return requirements
 }
 
-export function usesZeroRelationPath(requirements) {
-  return requirements.countComparisonsPresent && (requirements.subject === 0 || requirements.target === 0)
-}
-
 function descriptorAllowsZeroValue(descriptor) {
   if (!isValueMetric(descriptor.metric)) { return false }
   const total = Number((descriptor.resolvedTotal ?? descriptor.total) || 0)
