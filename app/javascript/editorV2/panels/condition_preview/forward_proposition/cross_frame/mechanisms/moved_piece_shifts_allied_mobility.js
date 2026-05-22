@@ -2,11 +2,11 @@ import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled, ALL_P
 import { placeKingDeliberately } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { placePiece, legalPlacementForSpecies, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
-import { respectsAllCaps } from '../../respect_caps'
-import { singularSquare, commitPriorRegion, entryConcernsMovedPiece, placeableSpecies } from './cross_frame_helpers'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece, placeableSpecies } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied
-} from './shifts_mobility_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Patch 2 of mobility cross-frame: allied non-moved-piece mobility shift.

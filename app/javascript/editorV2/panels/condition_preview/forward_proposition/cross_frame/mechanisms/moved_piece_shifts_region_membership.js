@@ -1,5 +1,5 @@
-import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
-import { legalOriginCandidates } from './shifts_mobility_helpers'
+import { singularSquare, commitPriorRegion } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
+import { legalOriginCandidates } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Engineers a region-restricted PBS count delta by choosing moved_piece's

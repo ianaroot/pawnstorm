@@ -9,8 +9,8 @@ import {
   matchesSide, candidatesForSide, applyOne, regionPossiblyContains,
   requirementsMet, boundSingularInActiveSet, sideAllowsPos,
   singularPosition
-} from './relation_helpers'
-import { runAnchoredSatisfier, satisfyLoop } from './anchored'
+} from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
+import { runAnchoredSatisfier, satisfyLoop } from 'editorV2/panels/condition_preview/forward_proposition/relations/anchored'
 
 const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3

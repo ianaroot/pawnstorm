@@ -2,7 +2,7 @@ import Board from 'gameplay/board'
 import { materialValue } from 'gameplay/board_query_utils'
 import { compareValues } from 'bot_execution/utils'
 import { qualifyingSquares } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { intersectRegions, subtractRegions } from './region'
+import { intersectRegions, subtractRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
 
 const ALL_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 const CAPTURABLE_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN])

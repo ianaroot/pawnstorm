@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { MOVE_KIND_PROMOTION } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
+import { emptySquareConstraintsRelativeToActor } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/proposition_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const PROMOTION_SPECIES = Object.freeze([Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT])

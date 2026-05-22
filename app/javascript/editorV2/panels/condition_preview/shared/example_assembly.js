@@ -1,10 +1,10 @@
-import { enrichExample } from './enrichment'
-import { selectDiverseExamples, uniqueExamples } from './diversity_selection'
+import { enrichExample } from 'editorV2/panels/condition_preview/shared/enrichment'
+import { selectDiverseExamples, uniqueExamples } from 'editorV2/panels/condition_preview/shared/diversity_selection'
 import {
   candidateIdentity,
   MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT
-} from './example_utils'
-import { shuffled } from './board_utils'
+} from 'editorV2/panels/condition_preview/shared/example_utils'
+import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 
 const ENRICHMENT_PROBABILITY = 0.5
 const SPECIAL_DISPLAY_CEILING = 12

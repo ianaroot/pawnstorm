@@ -4,8 +4,8 @@ import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/sha
 import {
   matchesSide, candidatesForSide, applyOne, regionPossiblyContains,
   requirementsMet, boundSingularInActiveSet, sideAllowsPos
-} from './relation_helpers'
-import { runAnchoredSatisfier } from './anchored'
+} from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
+import { runAnchoredSatisfier } from 'editorV2/panels/condition_preview/forward_proposition/relations/anchored'
 
 export function satisfyAdjacent(relation, pieces, ctx, random) {
   if (relation.subjectSide.count_range.max === 0 || relation.targetSide.count_range.max === 0) {

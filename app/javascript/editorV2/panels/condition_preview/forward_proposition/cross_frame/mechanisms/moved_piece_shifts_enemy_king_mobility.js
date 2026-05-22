@@ -8,11 +8,11 @@ import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/sha
 import { mobilityAt } from 'gameplay/mobility'
 import {
   singularSquare, commitPriorRegion, ensureRolePieceAt
-} from './cross_frame_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced
-} from './shifts_mobility_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Patch 3 of mobility cross-frame: enemy king mobility shift.

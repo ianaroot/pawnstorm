@@ -9,8 +9,8 @@ import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_place
 import {
   singularSquare, placeableSpecies, ensureRolePieceAt, commitPriorRegion,
   otherSidePropositionFor
-} from './cross_frame_helpers'
-import { roleForPlan } from '../../moved_binding'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
+import { roleForPlan } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const RELEVANT_OPERATORS = new Set(['attack', 'defend'])

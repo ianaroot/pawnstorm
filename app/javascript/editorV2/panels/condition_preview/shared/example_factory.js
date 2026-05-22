@@ -1,5 +1,5 @@
-import { soundForMove, moveKindForMoveObject } from './example_utils'
-import { buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
+import { soundForMove, moveKindForMoveObject } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { buildAggregatedResult, buildAggregatedHighlights } from 'editorV2/panels/condition_preview/shared/move_collection'
 import { bindingComboKey } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
 
 // Packages a verified Candidate into the example object that downstream

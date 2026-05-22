@@ -3,10 +3,10 @@ import { teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_plac
 import { buildPriorBoard } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { mobilityAt, mobilityFromMoveObjects } from 'gameplay/mobility'
 import MovesCalculator from 'gameplay/moves_calculator'
-import { singularPosition } from '../relations/relation_helpers'
+import { singularPosition } from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
 import {
   singularSquare, firstSquareOf, compareWithDirection
-} from './mechanisms/cross_frame_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 
 export function mobilityDeltaSatisfied(entry, ctx, afterPieces) {
   const moved = ctx.singulars.moved_piece

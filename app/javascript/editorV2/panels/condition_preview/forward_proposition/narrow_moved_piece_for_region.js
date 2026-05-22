@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import { relativeRank } from 'gameplay/board_query_utils'
-import { intersectRegions } from './region'
+import { intersectRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
 
 // Region census is only satisfiable via moved_piece: entering the region as a
 // subject (+), or capturing an in-region enemy (-).

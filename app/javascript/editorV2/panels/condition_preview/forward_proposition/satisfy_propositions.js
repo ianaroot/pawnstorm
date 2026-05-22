@@ -5,7 +5,7 @@ import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { materializeRegion } from 'editorV2/panels/condition_preview/forward_proposition/materialize_region'
 import { edgeBiasedShuffle } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
-import { respectsAllCaps, matches, boardForRegion } from './respect_caps'
+import { respectsAllCaps, matches, boardForRegion } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 const MAX_PLAN_COUNT = 4
 const MAX_PLAN_RESAMPLES = 3

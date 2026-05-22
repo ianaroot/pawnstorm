@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import profileCollector from 'gameplay/profile_collector'
-import { intersectRegions } from './region'
+import { intersectRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
 import { SLIDER_SPECIES } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 // Decides which relation roles moved_piece fills this attempt (possibly

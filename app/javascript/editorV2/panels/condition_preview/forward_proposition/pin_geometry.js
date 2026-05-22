@@ -3,7 +3,7 @@ import { nextPositionOnRay } from 'gameplay/board_query_utils'
 import { shuffled, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { raySliderSpeciesForStep } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { respectsAllCaps } from './respect_caps'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 // Place a slider on a ray from targetPos in `step` direction (the side the
 // pinning attacker should be on). Path between target and slider must be

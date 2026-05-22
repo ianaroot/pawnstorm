@@ -1,9 +1,9 @@
 import profileCollector from 'gameplay/profile_collector'
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { satisfyAttackOrDefend, activeAttackOrDefendSets } from './attack_or_defend'
-import { satisfyAdjacent, activeAdjacentSets } from './adjacent'
-import { satisfyShield, activeShieldSets } from './shield'
-import { singularPosition } from './relation_helpers'
+import { satisfyAttackOrDefend, activeAttackOrDefendSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/attack_or_defend'
+import { satisfyAdjacent, activeAdjacentSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/adjacent'
+import { satisfyShield, activeShieldSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/shield'
+import { singularPosition } from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
 
 const SATISFIERS = {
   attack: satisfyAttackOrDefend,

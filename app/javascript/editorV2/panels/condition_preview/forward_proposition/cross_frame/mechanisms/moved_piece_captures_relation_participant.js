@@ -4,12 +4,12 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { activeAttackOrDefendSets } from '../../relations/attack_or_defend'
-import { activeAdjacentSets } from '../../relations/adjacent'
-import { activeShieldSets } from '../../relations/shield'
-import { singularPosition } from '../../relations/relation_helpers'
-import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
-import { legalOriginCandidates } from './shifts_mobility_helpers'
+import { activeAttackOrDefendSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/attack_or_defend'
+import { activeAdjacentSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/adjacent'
+import { activeShieldSets } from 'editorV2/panels/condition_preview/forward_proposition/relations/shield'
+import { singularPosition } from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
+import { singularSquare, commitPriorRegion } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
+import { legalOriginCandidates } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Cross-frame mechanism: engineer a relational PBS direction "-" delta by

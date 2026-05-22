@@ -1,6 +1,6 @@
 import Board from 'gameplay/board'
 import { MOVE_KIND_EN_PASSANT } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { emptySquareConstraintsRelativeToActor } from './proposition_helpers'
+import { emptySquareConstraintsRelativeToActor } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/proposition_helpers'
 
 function epTargetRankIndex(team) {
   return team === Board.BLACK ? 2 : 5

@@ -1,6 +1,6 @@
-import { buildSingulars } from './singulars'
-import { emitConstraintsFromPlan } from './propositions'
-import { defaultStructuralPropositions } from './structural_invariants'
+import { buildSingulars } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
+import { emitConstraintsFromPlan } from 'editorV2/panels/condition_preview/forward_proposition/propositions'
+import { defaultStructuralPropositions } from 'editorV2/panels/condition_preview/forward_proposition/structural_invariants'
 
 export function buildChainCtx(combinedPlan) {
   const singulars = buildSingulars(combinedPlan)

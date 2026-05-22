@@ -1,9 +1,9 @@
 import { buildBoardFromLayout, buildLayoutFromPieces, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { mobilityAt } from 'gameplay/mobility'
-import { blockersMechanism } from './blockers'
-import { kingAdjacentControlMechanism } from './king_adjacent_control'
-import { pinsMechanism } from './pins'
+import { blockersMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/blockers'
+import { kingAdjacentControlMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/king_adjacent_control'
+import { pinsMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/pins'
 
 // All three mechanisms only REDUCE mobility (add blockers / attackers / pins).
 // See agents/next/5_10_mobility_mechanism_refinements.md

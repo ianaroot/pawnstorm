@@ -1,7 +1,7 @@
-import { buildCombinedPlan } from './plans/plan'
-import { candidateIdentity } from './shared/example_utils'
-import { assembleWithSpecialQuota } from './shared/example_assembly'
-import { collectForwardPropositionExamples } from './forward_proposition/collect'
+import { buildCombinedPlan } from 'editorV2/panels/condition_preview/plans/plan'
+import { candidateIdentity } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { assembleWithSpecialQuota } from 'editorV2/panels/condition_preview/shared/example_assembly'
+import { collectForwardPropositionExamples } from 'editorV2/panels/condition_preview/forward_proposition/collect'
 
 const SOFT_TIMEOUT_MS = 10000
 const MAX_DEFAULT_EXAMPLES = 30

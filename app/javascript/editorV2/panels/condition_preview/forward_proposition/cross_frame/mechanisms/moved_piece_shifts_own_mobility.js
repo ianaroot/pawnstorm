@@ -6,15 +6,15 @@ import {
 } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { sliderStep } from 'gameplay/board_query_utils'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { mobilityDeltaForOrigin } from '../mobility_delta'
+import { mobilityDeltaForOrigin } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mobility_delta'
 import { mobilityAt } from 'gameplay/mobility'
-import { blockersMechanism } from '../../mobility/blockers'
-import { kingAdjacentControlMechanism } from '../../mobility/king_adjacent_control'
-import { pinsMechanism } from '../../mobility/pins'
-import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from './cross_frame_helpers'
+import { blockersMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/blockers'
+import { kingAdjacentControlMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/king_adjacent_control'
+import { pinsMechanism } from 'editorV2/panels/condition_preview/forward_proposition/mobility/pins'
+import { singularSquare, commitPriorRegion, entryConcernsMovedPiece } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, hypotheticalMobilityAt, directionSatisfied
-} from './shifts_mobility_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const ACTIVE_MECHANISMS = Object.freeze([blockersMechanism, kingAdjacentControlMechanism, pinsMechanism])

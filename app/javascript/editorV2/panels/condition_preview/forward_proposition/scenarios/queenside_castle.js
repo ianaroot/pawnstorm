@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import { HOME_RANK } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { MOVE_KIND_CASTLE } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { emptySquareConstraints } from './proposition_helpers'
+import { emptySquareConstraints } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/proposition_helpers'
 
 const PERMISSIVE = Object.freeze({ min: 0, max: Infinity })
 

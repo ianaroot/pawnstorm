@@ -1,6 +1,6 @@
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import { legalPriorTurnState } from './example_utils'
-import { safeEvaluate } from './safe_evaluate'
+import { legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { safeEvaluate } from 'editorV2/panels/condition_preview/shared/safe_evaluate'
 
 // Judges whether a Candidate satisfies a chain. One verifier is created per
 // pipeline call and reused across every candidate the pipeline considers,

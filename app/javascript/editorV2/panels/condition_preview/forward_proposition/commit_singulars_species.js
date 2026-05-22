@@ -1,8 +1,8 @@
 import { materialValue } from 'gameplay/board_query_utils'
 import { pickWeightedSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
-import { movedSpeciesPool } from './moved_binding'
-import { ACTOR_PRIORITY, valueComparisonEntryPasses } from './singulars'
+import { movedSpeciesPool } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
+import { ACTOR_PRIORITY, valueComparisonEntryPasses } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 
 const ACTOR_KEYS = Object.freeze(
   Object.keys(ACTOR_PRIORITY).sort((a, b) => ACTOR_PRIORITY[a] - ACTOR_PRIORITY[b])

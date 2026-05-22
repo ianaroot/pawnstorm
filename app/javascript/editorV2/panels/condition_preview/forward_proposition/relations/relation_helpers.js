@@ -2,7 +2,7 @@ import { ALL_POSITIONS, WEIGHTED_SPECIES_DISTRIBUTION, pieceCode } from 'editorV
 import { materialValue } from 'gameplay/board_query_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { regionPossiblyContains } from '../region'
+import { regionPossiblyContains } from 'editorV2/panels/condition_preview/forward_proposition/region'
 
 export { regionPossiblyContains }
 

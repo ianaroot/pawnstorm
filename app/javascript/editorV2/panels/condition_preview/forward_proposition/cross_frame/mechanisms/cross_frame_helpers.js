@@ -1,7 +1,7 @@
 import { pieceCode, pickPlaceableSpecies } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { intersectRegions } from '../../region'
-import { respectsAllCaps } from '../../respect_caps'
+import { intersectRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 // Returns the proposition on the side OPPOSITE moved_piece's role.
 // Falls back to currentProposition (which, for related-to entries, IS

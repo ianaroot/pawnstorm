@@ -1,13 +1,13 @@
 import profileCollector from 'gameplay/profile_collector'
-import { Candidate } from '../shared/candidate'
-import { CandidateVerifier } from '../shared/candidate_verifier'
-import { ExampleFactory } from '../shared/example_factory'
-import { buildAttempt } from './build_engine'
-import { createCoverageRecord, STANDARD_KEY } from './coverage_record'
-import { clearPlanCache } from './relations/attack_or_defend'
-import { eligibleScenariosFor } from './scenarios/eligibility'
-import { SCENARIO_REGISTRY } from './scenarios/registry'
-import { standardScenario } from './scenarios/standard'
+import { Candidate } from 'editorV2/panels/condition_preview/shared/candidate'
+import { CandidateVerifier } from 'editorV2/panels/condition_preview/shared/candidate_verifier'
+import { ExampleFactory } from 'editorV2/panels/condition_preview/shared/example_factory'
+import { buildAttempt } from 'editorV2/panels/condition_preview/forward_proposition/build_engine'
+import { createCoverageRecord, STANDARD_KEY } from 'editorV2/panels/condition_preview/forward_proposition/coverage_record'
+import { clearPlanCache } from 'editorV2/panels/condition_preview/forward_proposition/relations/attack_or_defend'
+import { eligibleScenariosFor } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/eligibility'
+import { SCENARIO_REGISTRY } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/registry'
+import { standardScenario } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/standard'
 
 const DEFAULT_ATTEMPTS = 200
 const SPECIAL_SHIFT_ATTEMPTS = 400

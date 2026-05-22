@@ -1,5 +1,5 @@
 import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
-import { layoutsMatch } from './board_utils'
+import { layoutsMatch } from 'editorV2/panels/condition_preview/shared/board_utils'
 
 // A move (priorBoard + moveObject) being considered for an example. Pure
 // state plus two memoized derivations: the after-board (priorBoard advanced

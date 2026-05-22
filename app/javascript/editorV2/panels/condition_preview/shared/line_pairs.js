@@ -1,4 +1,4 @@
-import { pathClear, squareCompatibleOrEmpty } from './geometry_utils'
+import { pathClear, squareCompatibleOrEmpty } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 
 // near, far, slot: { team, speciesSet }
 

@@ -1,10 +1,10 @@
 import { shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { buildEligiblePool } from './eligible_pool'
-import { edgeStrategy } from './strategies/edge'
-import { pinLineStrategy } from './strategies/pin_line'
-import { checkRestrictionStrategy } from './strategies/check_restriction'
-import { stalemateStrategy } from './strategies/stalemate'
-import { checkmateStrategy } from './strategies/checkmate'
+import { buildEligiblePool } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/eligible_pool'
+import { edgeStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/edge'
+import { pinLineStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/pin_line'
+import { checkRestrictionStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/check_restriction'
+import { stalemateStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/stalemate'
+import { checkmateStrategy } from 'editorV2/panels/condition_preview/forward_proposition/early_placement/strategies/checkmate'
 
 const STRATEGIES = Object.freeze([
   edgeStrategy, pinLineStrategy, checkRestrictionStrategy, stalemateStrategy, checkmateStrategy

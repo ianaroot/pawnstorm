@@ -1,9 +1,9 @@
 import { ALL_POSITIONS, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from './mobility/edge_bias'
-import { applyRelationsToAnchors, commitCapturedPieceRegion } from './commit_singulars_helpers'
-import { respectsAllCaps } from './respect_caps'
-import { ACTOR_PRIORITY } from './singulars'
+import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
+import { applyRelationsToAnchors, commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
+import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
+import { ACTOR_PRIORITY } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 const ACTOR_KEYS = Object.freeze(

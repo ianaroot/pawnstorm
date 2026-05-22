@@ -1,6 +1,6 @@
-import { buildChainCtx } from '../chain_ctx'
-import { isSatisfiable } from '../is_satisfiable'
-import { mergeCtxDelta } from './merge_ctx_delta'
+import { buildChainCtx } from 'editorV2/panels/condition_preview/forward_proposition/chain_ctx'
+import { isSatisfiable } from 'editorV2/panels/condition_preview/forward_proposition/is_satisfiable'
+import { mergeCtxDelta } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/merge_ctx_delta'
 
 export function eligibleScenariosFor(combinedPlan, scenarios) {
   return scenarios.filter(scenario => {

@@ -2,14 +2,14 @@ import CandidateMoveAnalysisV2 from 'bot_execution/candidate_move_analysis_v2'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 import Board from 'gameplay/board'
 import Rules from 'gameplay/rules'
-import { shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from './board_utils'
-import { legalPlacementForSpecies } from './piece_placement'
+import { shuffled, legalEnrichmentSpecies, ALL_POSITIONS } from 'editorV2/panels/condition_preview/shared/board_utils'
+import { legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
   moveKindForMoveObject, soundForMove, legalPriorTurnState,
   MOVE_KIND_CASTLE, MOVE_KIND_EN_PASSANT
 } from 'editorV2/panels/condition_preview/shared/example_utils'
-import { buildAggregatedResult, buildAggregatedHighlights } from './move_collection'
-import { safeEvaluate } from './safe_evaluate'
+import { buildAggregatedResult, buildAggregatedHighlights } from 'editorV2/panels/condition_preview/shared/move_collection'
+import { safeEvaluate } from 'editorV2/panels/condition_preview/shared/safe_evaluate'
 
 const MAX_ENRICHED_EXTRA_PIECES = 10
 const ENRICHMENT_END_POSITION_WEIGHT = 4

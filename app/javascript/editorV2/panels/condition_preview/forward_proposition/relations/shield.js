@@ -10,10 +10,10 @@ import {
   matchesSide, candidatesForSide, applyOne,
   requirementsMet,
   boundSingularInActiveSet, singularPosition, sideAllowsPos
-} from './relation_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { satisfyLoop } from './anchored'
-import { roleForPlan } from '../moved_binding'
+import { satisfyLoop } from 'editorV2/panels/condition_preview/forward_proposition/relations/anchored'
+import { roleForPlan } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shield invariant: subjectSide.team === targetSide.team. Both are the "ally side"

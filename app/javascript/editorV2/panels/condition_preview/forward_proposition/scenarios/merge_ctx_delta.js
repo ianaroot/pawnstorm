@@ -1,5 +1,5 @@
 import profileCollector from 'gameplay/profile_collector'
-import { intersectRegions } from '../region'
+import { intersectRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
 
 export function mergeCtxDelta(ctx, delta) {
   if (delta.singulars) {

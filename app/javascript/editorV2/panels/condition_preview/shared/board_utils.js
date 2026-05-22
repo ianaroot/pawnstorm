@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { legalPlacementForSpecies, pawnCount, PAWN_CAP_PER_TEAM } from './piece_placement'
+import { legalPlacementForSpecies, pawnCount, PAWN_CAP_PER_TEAM } from 'editorV2/panels/condition_preview/shared/piece_placement'
 
 export const HOME_RANK = Object.freeze({ [Board.WHITE]: 0, [Board.BLACK]: 7 })
 

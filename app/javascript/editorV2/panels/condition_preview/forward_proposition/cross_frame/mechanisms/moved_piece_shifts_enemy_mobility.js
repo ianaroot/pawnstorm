@@ -3,11 +3,11 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { mobilityAt } from 'gameplay/mobility'
-import { singularSquare, commitPriorRegion } from './cross_frame_helpers'
+import { singularSquare, commitPriorRegion } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, directionSatisfied,
   enemyKingPosition, ensureEnemyKingPlaced
-} from './shifts_mobility_helpers'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 

@@ -7,8 +7,8 @@ import {
 import { singletonsOnLine, pairsOnLine } from 'editorV2/panels/condition_preview/shared/line_pairs'
 import {
   singularSquare, ensureRolePieceAt, commitPriorRegion
-} from './cross_frame_helpers'
-import { roleForPlan } from '../../moved_binding'
+} from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
+import { roleForPlan } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Obstructs-shield is imprecise: depending on filters and teams, intercepting

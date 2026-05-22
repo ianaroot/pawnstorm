@@ -9,9 +9,9 @@ import { controllingPositions, positionsBetween } from 'gameplay/board_query_uti
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { buildPriorBoard, buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { enemyKingPosition } from './cross_frame/mechanisms/shifts_mobility_helpers'
-import { regionPossiblyContains } from './region'
-import { standardScenario } from './scenarios/standard'
+import { enemyKingPosition } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
+import { regionPossiblyContains } from 'editorV2/panels/condition_preview/forward_proposition/region'
+import { standardScenario } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/standard'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export function synthesizeMove(ctx, pieces, random, scenario = standardScenario) {

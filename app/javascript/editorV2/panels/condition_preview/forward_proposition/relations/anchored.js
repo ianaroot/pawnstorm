@@ -1,5 +1,5 @@
-import { MAX_SATISFY_ITERATIONS, singularPosition } from './relation_helpers'
-import { roleForPlan } from '../moved_binding'
+import { MAX_SATISFY_ITERATIONS, singularPosition } from 'editorV2/panels/condition_preview/forward_proposition/relations/relation_helpers'
+import { roleForPlan } from 'editorV2/panels/condition_preview/forward_proposition/moved_binding'
 
 // The iteration loop common to every relation satisfier. The caller owns its
 // own early guards and `requirementsMet`; `step(pieces)` returns the next
