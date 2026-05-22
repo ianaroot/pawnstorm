@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ToolbarHandler from '../handlers/ToolbarHandler.js'
 import Store from '../state/Store.js'
+import { setConditionPreviewMode } from '../utils/conditionPreviewFormatter.js'
 
 describe('ToolbarHandler', () => {
   let store
@@ -36,6 +37,21 @@ describe('ToolbarHandler', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     document.body.innerHTML = ''
+  })
+
+  it('syncPreviewModeButton reflects the current preview mode', () => {
+    const btn = document.createElement('button')
+    setConditionPreviewMode('sentence')
+    toolbarHandler.syncPreviewModeButton(btn)
+    expect(btn.textContent).toBe('Sentences: on')
+    expect(btn.getAttribute('aria-pressed')).toBe('true')
+
+    setConditionPreviewMode('chunks')
+    toolbarHandler.syncPreviewModeButton(btn)
+    expect(btn.textContent).toBe('Sentences: off')
+    expect(btn.getAttribute('aria-pressed')).toBe('false')
+
+    setConditionPreviewMode('sentence')
   })
 
   it('enables the delete button when actions.canDelete() returns true', () => {

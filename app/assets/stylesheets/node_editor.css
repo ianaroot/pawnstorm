@@ -98,11 +98,6 @@
   white-space: nowrap;
 }
 
-.toolbar-section button.active {
-  background: #A855F7;
-  color: #1a1815;
-}
-
 .btn-add-node {
   background: #1a1815;
   color: #A855F7;
@@ -189,19 +184,6 @@
 .btn-zoom:hover {
   background: #252220;
   border-color: #7a7670;
-}
-
-.btn-zoom-reset {
-  background: #1a1815;
-  color: #9CA3AF;
-  font-size: 11px;
-  padding: 6px 10px;
-  border: 1px solid #3d3a35;
-}
-
-.btn-zoom-reset:hover {
-  background: #252220;
-  color: #E5E5E5;
 }
 
 #zoom-level {

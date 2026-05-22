@@ -37,7 +37,7 @@ class NodePresenter
           'position_axis' => 'positionAxis', 'position_comparator' => 'positionComparator',
           'position_target' => 'positionTarget' } },
         { 'role' => 'metric', 'fields' => {
-          'operator' => 'operator', 'comparator' => 'comparator', 'target_total' => 'targetTotal' } }
+          'operator' => 'operator', 'comparator' => 'comparator', 'target' => 'target', 'target_total' => 'targetTotal' } }
       ]
     }
   }.freeze
@@ -49,7 +49,7 @@ class NodePresenter
     'operator' => %w[operator],
     'comparison' => %w[comparator target target_filter target_filter_mode target_total],
     'region' => %w[position_axis position_comparator position_target],
-    'metric' => %w[operator comparator target_total]
+    'metric' => %w[operator comparator target target_total]
   }.freeze
 
   def self.sentence_spec

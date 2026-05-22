@@ -123,7 +123,7 @@ RSpec.describe NodePresenter do
         { role: 'spacer' },
         { role: 'region', position_axis: 'rank', position_comparator: 'equal_to', position_target: 5 },
         { role: 'spacer' },
-        { role: 'metric', operator: 'count', comparator: 'greater_than', target_total: 0 }
+        { role: 'metric', operator: 'count', comparator: 'greater_than', target: 'exact_number', target_total: 0 }
       ])
     end
 
