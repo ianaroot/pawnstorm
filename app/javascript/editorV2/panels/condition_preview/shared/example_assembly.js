@@ -16,7 +16,7 @@ const SPECIAL_GROUPS = Object.freeze([
   { key: 'promotion', moveKind: MOVE_KIND_PROMOTION }
 ])
 
-export function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
+function finalizeExamples(baseExamples, combinedPlan, maxExamples, random) {
   const enrichedCandidates = []
   baseExamples.forEach(example => {
     if (random() >= ENRICHMENT_PROBABILITY) { return }

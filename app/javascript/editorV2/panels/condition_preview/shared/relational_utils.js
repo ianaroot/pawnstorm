@@ -36,7 +36,7 @@ export function relationalTeamForActor(actor) {
   return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
 }
 
-export function roleRequiresMovedPiece(actor) {
+function roleRequiresMovedPiece(actor) {
   return actor === 'moved_piece'
 }
 

@@ -483,7 +483,7 @@ function squaresAreAdjacent(a, b) {
   )
 }
 
-export function anyKingIsAdjacentTo(pieces, position) {
+function anyKingIsAdjacentTo(pieces, position) {
   for (const [sq, piece] of pieces.entries()) {
     if (
       (piece === Board.WHITE_KING || piece === Board.BLACK_KING) &&

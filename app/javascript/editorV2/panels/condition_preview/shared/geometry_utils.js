@@ -94,7 +94,7 @@ export function controlledSquaresForPieceAt(position, board) {
   }
 }
 
-export function positionsForSliderOrigins(endPosition, steps) {
+function positionsForSliderOrigins(endPosition, steps) {
   const origins = []
   steps.forEach(step => {
     for (let current = nextPositionOnRay(endPosition, step); current !== null; current = nextPositionOnRay(current, step)) {

@@ -1,33 +1,33 @@
 import { materialValue } from 'gameplay/board_query_utils'
 import { candidateIdentity } from 'editorV2/panels/condition_preview/shared/example_utils'
 
-export function subjectSpeciesSignature(example) {
+function subjectSpeciesSignature(example) {
   const positions = example.result?.subjectPositions ?? []
   if (positions.length === 0) { return example.geometryKey ?? '' }
   return positions.map(position => example.afterBoard.pieceTypeAt(position)).join(',')
 }
 
-export function targetSpeciesSignature(example) {
+function targetSpeciesSignature(example) {
   return example.result?.targetPositions?.map(position => example.afterBoard.pieceTypeAt(position)).join(',') ?? ''
 }
 
-export function speciesPairSignature(example) {
+function speciesPairSignature(example) {
   return `${subjectSpeciesSignature(example)}=>${targetSpeciesSignature(example)}`
 }
 
-export function movedPieceSignature(example) {
+function movedPieceSignature(example) {
   return example.afterBoard.pieceTypeAt(example.moveObject.endPosition)
 }
 
-export function bindingComboSignature(example) {
+function bindingComboSignature(example) {
   return example.bindingComboKey ?? ''
 }
 
-export function variantSignature(example) {
+function variantSignature(example) {
   return example.variantType
 }
 
-export function geometrySignature(example) {
+function geometrySignature(example) {
   return example.geometryKey ?? ''
 }
 
@@ -46,7 +46,7 @@ function sideValueTotal(positions, board) {
   return total
 }
 
-export function valueComboSignature(example) {
+function valueComboSignature(example) {
   const subjectTotal = sideValueTotal(example.result?.subjectPositions, example.afterBoard)
   const targetTotal = sideValueTotal(example.result?.targetPositions, example.afterBoard)
   return `${subjectTotal}=>${targetTotal}`
@@ -62,7 +62,7 @@ export function uniqueExamples(examples) {
   })
 }
 
-export function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenIdentities }) {
+function roundRobinAppend({ selected, candidatesByKey, maxExamples, seenIdentities }) {
   const queue = Array.from(candidatesByKey.entries()).map(([key, candidates]) => ({
     key,
     candidates: [...candidates]

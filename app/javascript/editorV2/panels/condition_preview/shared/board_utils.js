@@ -83,7 +83,7 @@ export function pickBlockerTeam(target, random) {
   return random() < 0.5 ? target.team : Board.opposingTeam(target.team)
 }
 
-export function blockerSpeciesFor(position) {
+function blockerSpeciesFor(position) {
   return WEIGHTED_SPECIES_DISTRIBUTION.filter(
     s => s !== Board.KING && legalPlacementForSpecies(position, s)
   )

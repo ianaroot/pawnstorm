@@ -12,7 +12,7 @@ export const MOVE_KIND_EN_PASSANT = 'en_passant'
 
 const DISPLAY_SPECIES = Object.freeze([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK, Board.QUEEN, Board.KING])
 
-export function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
+function speciesMatchesFilter(species, filter = 'any', filterMode = null) {
   if (filter === 'any') { return true }
 
   let matches

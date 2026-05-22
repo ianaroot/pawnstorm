@@ -28,7 +28,7 @@ export function comparisonDescriptors(payload) {
   ].filter(descriptor => descriptor.metric && descriptor.comparator && (descriptor.source || descriptor.total !== undefined))
 }
 
-export function desiredCountForComparison(descriptor) {
+function desiredCountForComparison(descriptor) {
   const total = Number(descriptor.total || 0)
   switch (descriptor.comparator) {
     case 'equal_to':
@@ -50,7 +50,7 @@ export function comparisonRequirements(payload) {
   return comparisonRequirementsFromDescriptors(comparisonDescriptors(payload))
 }
 
-export function comparisonRequirementsFromDescriptors(descriptors) {
+function comparisonRequirementsFromDescriptors(descriptors) {
   const requirements = {
     subject: 1,
     target: 1,

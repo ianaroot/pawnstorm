@@ -56,7 +56,7 @@ export function placeableSpecies(speciesSet) {
 // Rate at which mechanisms reject reusing an existing-fitting piece in favor
 // of trying a different position with fresh placement (diversity-driven).
 // Tunable.
-export const EXISTING_REUSE_REJECTION_RATE = 0.25
+const EXISTING_REUSE_REJECTION_RATE = 0.25
 
 // Ensures the given square holds a piece compatible with (team, speciesSet).
 // If a compatible piece already exists, returns pieces unchanged most of the
