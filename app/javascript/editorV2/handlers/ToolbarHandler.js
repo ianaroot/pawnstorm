@@ -1,5 +1,6 @@
 import TemplatePicker from 'editorV2/templates/TemplatePicker'
 import { findTemplateAnchor } from 'editorV2/templates/TemplatePlacement'
+import { getConditionPreviewMode, setConditionPreviewMode } from 'editorV2/utils/conditionPreviewFormatter'
 
 
 class ToolbarHandler {
@@ -61,6 +62,15 @@ class ToolbarHandler {
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => this.handleDeleteClick())
     }
+    // Condition-preview mode toggle (sentences ↔ chunks)
+    const previewModeBtn = document.querySelector('.btn-toggle-preview-mode')
+    if (previewModeBtn) {
+      this.syncPreviewModeButton(previewModeBtn)
+      previewModeBtn.addEventListener('click', () => {
+        setConditionPreviewMode(getConditionPreviewMode() === 'chunks' ? 'sentence' : 'chunks')
+        this.syncPreviewModeButton(previewModeBtn)
+      })
+    }
     if (this.renameButton) {
       this.renameButton.addEventListener('click', this.boundHandleRenameOpen)
     }
@@ -81,6 +91,12 @@ class ToolbarHandler {
     this.attachTemplatePicker()
   }
   
+  syncPreviewModeButton(button) {
+    const sentences = getConditionPreviewMode() !== 'chunks'
+    button.setAttribute('aria-pressed', String(sentences))
+    button.textContent = `Sentences: ${sentences ? 'on' : 'off'}`
+  }
+
   async handleAddNode(e) {
     const type = e.target.dataset.type
     if (type) await this.actions?.addNode(type)

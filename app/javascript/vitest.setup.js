@@ -36,7 +36,7 @@ const SENTENCE_SPEC = {
       { role: 'region', fields: {
         position_axis: 'positionAxis', position_comparator: 'positionComparator',
         position_target: 'positionTarget' } },
-      { role: 'metric', fields: { operator: 'operator', comparator: 'comparator', target_total: 'targetTotal' } }
+      { role: 'metric', fields: { operator: 'operator', comparator: 'comparator', target: 'target', target_total: 'targetTotal' } }
     ]
   }
 }

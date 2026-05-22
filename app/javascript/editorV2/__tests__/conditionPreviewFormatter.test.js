@@ -107,6 +107,23 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('Allies any : rank = 5 : count > 0')
     })
 
+    it('formats a region census preview with PBS target (no "undefined")', () => {
+      expect(
+        formatConditionPreview({
+          version: 2,
+          kind: 'census',
+          subject: 'allied',
+          subjectFilter: 'rook',
+          positionAxis: 'rank',
+          positionComparator: 'equal_to',
+          positionTarget: 5,
+          operator: 'count',
+          comparator: 'greater_than',
+          target: 'prior_board_state'
+        }).text
+      ).toBe('Allied rook/s : rank = 5 : count > Prior Board State')
+    })
+
     it('formats an identity condition with the explicit same-piece phrase', () => {
       expect(
         formatConditionPreview({
@@ -208,15 +225,27 @@ describe('conditionPreviewFormatter', () => {
       ).toBe('square a1')
     })
 
-    it('formats a metric chunk as operator comparator total', () => {
+    it('formats a metric chunk as operator comparator total (exact_number)', () => {
       expect(
         formatConditionPreviewChunk({
           role: 'metric',
           operator: 'count',
           comparator: 'greater_than',
+          target: 'exact_number',
           targetTotal: 0
         })
       ).toBe('count > 0')
+    })
+
+    it('formats a metric chunk against prior_board_state', () => {
+      expect(
+        formatConditionPreviewChunk({
+          role: 'metric',
+          operator: 'count',
+          comparator: 'greater_than',
+          target: 'prior_board_state'
+        })
+      ).toBe('count > Prior Board State')
     })
 
     it('formats excluded major and minor filters', () => {
