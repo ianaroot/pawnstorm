@@ -54,7 +54,8 @@ class NodeGrammarRules
 
   COMPARISON_SOURCES_BY_METRIC = {
     'count' => %w[exact_number prior_board_state],
-    'value' => NodeGrammarV2::COMPARISON_SOURCES
+    'value' => NodeGrammarV2::COMPARISON_SOURCES,
+    'individual_value' => NodeGrammarV2::COMPARISON_SOURCES
   }.freeze
 
   class << self
@@ -83,22 +84,14 @@ class NodeGrammarRules
       return false unless NodeGrammarV2.valid_subject?(subject)
       return false unless NodeGrammarV2.valid_relational_operator?(operator)
 
-      if operator == 'same_piece'
-        SAME_PIECE_TARGETS.key?(subject)
-      else
-        REGULAR_RELATIONAL_SUBJECTS.include?(subject)
-      end
+      REGULAR_RELATIONAL_SUBJECTS.include?(subject)
     end
 
     def valid_relational_target_for?(subject:, operator:, target:)
       return false unless NodeGrammarV2.valid_subject?(target)
       return false unless valid_relational_operator_for_subject?(subject:, operator:)
 
-      if operator == 'same_piece'
-        SAME_PIECE_TARGETS.fetch(subject, []).include?(target)
-      else
-        regular_relational_targets_for(subject:, operator:).include?(target)
-      end
+      regular_relational_targets_for(subject:, operator:).include?(target)
     end
 
     def regular_relational_targets_for(subject:, operator:)
@@ -113,6 +106,10 @@ class NodeGrammarRules
       POSITION_OPERATORS_BY_SUBJECT.fetch(subject, []).include?(operator)
     end
 
+    def valid_identity_pair?(subject:, target:)
+      SAME_PIECE_TARGETS.fetch(subject, []).include?(target)
+    end
+
     def editor_config
       {
         'editorSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
@@ -122,12 +119,15 @@ class NodeGrammarRules
         'samePieceTargets' => SAME_PIECE_TARGETS,
         'teamSubjectGroups' => TEAM_SUBJECT_GROUPS,
         'opposingTeamGroups' => OPPOSING_TEAM_GROUPS,
-        'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS
+        'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
+        'census' => {
+          'regionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
+          'wholeBoardSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
+          'operators' => NodeGrammarV2::POSITION_OPERATORS,
+          'axes' => NodeGrammarV2::POSITION_AXES,
+          'wholeBoardTargets' => NodeGrammarV2::UNARY_TARGETS
+        }
       }
-    end
-
-    def comparison_allowed_for_relational_operator?(operator)
-      NodeGrammarV2::RELATIONAL_OPERATORS.include?(operator)
     end
 
     def comparison_sources_for_metric(metric)

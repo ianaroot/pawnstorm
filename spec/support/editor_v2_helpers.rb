@@ -4,9 +4,10 @@
 # Provides utilities for finding nodes by server ID via client ID mapping,
 # and common editor operations.
 
+require "timeout"
+
 # Timing constants for async operations
 ASYNC_WAIT = 0.5  # Wait for async server sync operations
-HOVER_WAIT = 0.2  # Wait for hover reveal
 SELECTION_WAIT = 0.1  # Wait for selection animation
 MOUSE_CLICK_OFFSET = 5  # Offset from element edge for drag simulation
 
@@ -81,6 +82,17 @@ module EditorV2Helpers
     page.evaluate_script('window.editorAPI.store.getConnections().length')
   end
 
+  # Poll the connection store until it reaches the expected size.
+  def expect_connection_count(expected_count)
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      sleep 0.05 until connection_count == expected_count
+    end
+  rescue Timeout::Error
+    nil
+  ensure
+    expect(connection_count).to eq(expected_count)
+  end
+
   # Check if undo button is enabled
   # Uses Capybara's built-in waiting for async state changes
   # @return [Boolean] true if enabled, false if disabled
@@ -150,26 +162,26 @@ module EditorV2Helpers
     sleep 0.3 # Wait for connection to be created
   end
 
-  # Delete a connection via its delete button
-  # Mimics user interaction: hover on hitArea to reveal button, then click via JS
+  # Delete a connection via its delete button.
+  # The button is always mounted at the connection midpoint but CSS-hidden
+  # until hover, so locate it with visible: :all and click via JS.
   # @param source_server_id [Integer] The database ID of the source node
   # @param target_server_id [Integer] The database ID of the target node
   def delete_connection(source_server_id, target_server_id)
     source_client = find_node_client_id(source_server_id)
     target_client = find_node_client_id(target_server_id)
-    
-    # Find the hitArea line (transparent stroke, used for mouse interactions)
-    # The visible line has stroke='#4CAF50', the hitArea has stroke='transparent'
-    hitArea = find("line[data-source-id='#{source_client}'][data-target-id='#{target_client}'][stroke='transparent']", visible: :all)
-    
-    # Hover to reveal the delete button (mimics user behavior)
-    hitArea.hover
-    sleep HOVER_WAIT
-    
-    # Find button (allow hidden) and click via JS (more reliable for hover-triggered visibility)
-    delete_btn = find(".connection-delete-btn[data-source-id='#{source_client}'][data-target-id='#{target_client}']", visible: :all)
+
+    delete_btn = find(
+      ".connection-delete-btn[data-source-id='#{source_client}'][data-target-id='#{target_client}']",
+      visible: :all
+    )
     page.execute_script('arguments[0].click()', delete_btn)
-    sleep ASYNC_WAIT
+
+    expect(page).to have_no_css(
+      "line.connection-line[data-source-id='#{source_client}'][data-target-id='#{target_client}']",
+      visible: :all,
+      wait: 5
+    )
   end
 
   # Find a node in the database by its properties

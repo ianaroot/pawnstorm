@@ -1,16 +1,22 @@
 import CandidateMoveAnalysisV2 from "bot_execution/candidate_move_analysis_v2"
 import profileCollector from "gameplay/profile_collector"
+import { SINGULAR_ACTORS } from "bot_execution/actors"
+import { compareTotals } from "bot_execution/utils"
+
+const identityCoerce = (value) => value
+const zeroCoerce = (value) => value ?? 0
+const coerceFor = (isPbs) => isPbs ? zeroCoerce : identityCoerce
 
 class ConditionEvaluatorV2 {
     evaluate(conditionNode, analysis) {
       const v2Analysis = this.v2AnalysisFor(analysis)
       switch (conditionNode.kind) {
-        case "unary":
-          return this.evaluateUnary(conditionNode, v2Analysis)
         case "relational":
           return this.evaluateRelational(conditionNode, v2Analysis)
-        case "position":
-          return this.evaluatePosition(conditionNode, v2Analysis)
+        case "census":
+          return this.evaluateCensus(conditionNode, v2Analysis)
+        case "identity":
+          return this.evaluateIdentity(conditionNode, v2Analysis)
         default:
           throw new Error(`Unknown V2 condition kind: ${conditionNode.kind}`)
       }
@@ -47,15 +53,18 @@ class ConditionEvaluatorV2 {
           operator
         })
         const rightTotal = this.unaryTargetTotal(conditionNode, analysis)
-        return this.compare({ comparator: conditionNode.comparator, leftTotal, rightTotal })
+        const coerce = coerceFor(conditionNode.target === "prior_board_state")
+        return compareTotals(conditionNode.comparator, coerce(leftTotal), coerce(rightTotal))
       })
     }
 
     evaluateRelational(conditionNode, analysis) {
       return profileCollector.measure('condition.v2.relational', () => {
         const operator = conditionNode.operator
-        if (operator === "same_piece") { return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target }) }
-        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) { return false }
+        if (!this.relationalSingularActorsCanEvaluate(conditionNode, analysis)) {
+          profileCollector.increment('condition.v2.relational.failed.singular_actors')
+          return false
+        }
         const result = analysis.relationalResult({
           subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
           subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
@@ -64,18 +73,63 @@ class ConditionEvaluatorV2 {
         })
         const subjectComparisonPresent = this.relationalComparisonPresent(conditionNode, "subject")
         const targetComparisonPresent = this.relationalComparisonPresent(conditionNode, "target")
-        if (!subjectComparisonPresent && !targetComparisonPresent) { 
-          return result.pairs.length > 0 
-        } else { 
-          const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
-          const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
-          return subjectPasses && targetPasses
+        if (!subjectComparisonPresent && !targetComparisonPresent) {
+          const passed = result.pairs.length > 0
+          if (!passed) { profileCollector.increment('condition.v2.relational.failed.no_pairs_no_comparison') }
+          return passed
         }
+        const subjectMetric = conditionNode.subjectComparisonMetric
+        const targetMetric = conditionNode.targetComparisonMetric
+        if (subjectMetric === "individual_value" || subjectMetric === "aggregate_value" ||
+            targetMetric === "individual_value" || targetMetric === "aggregate_value") {
+          const subjectCoerce = coerceFor(conditionNode.subjectComparisonSource === "prior_board_state")
+          const targetCoerce = coerceFor(conditionNode.targetComparisonSource === "prior_board_state")
+          const subjectReference = subjectComparisonPresent
+            ? subjectCoerce(this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis }))
+            : null
+          const targetReference = targetComparisonPresent
+            ? targetCoerce(this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis }))
+            : null
+          const passed = analysis.evaluateRelationalValueMetrics({
+            pairs: result.pairs,
+            subjectMetric: subjectComparisonPresent ? subjectMetric : null,
+            subjectComparator: conditionNode.subjectComparator,
+            subjectReference,
+            subjectCoerce,
+            targetMetric: targetComparisonPresent ? targetMetric : null,
+            targetComparator: conditionNode.targetComparator,
+            targetReference,
+            targetCoerce
+          })
+          if (!passed) {
+            const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+            profileCollector.increment(`condition.v2.relational.failed.value_metrics.${subCause}`)
+            if (subCause === 'comparison') {
+              const priorPairs = analysis.relationalResult({
+                subject: conditionNode.subject, subjectFilter: conditionNode.subjectFilter || "any",
+                subjectFilterMode: conditionNode.subjectFilterMode || null, operator,
+                target: conditionNode.target, targetFilter: conditionNode.targetFilter || "any",
+                targetFilterMode: conditionNode.targetFilterMode || null,
+                boardScope: 'prior'
+              }).pairs
+              profileCollector.increment(`condition.v2.relational.failed.value_metrics.comparison.prior_pairs_${priorPairs.length === 0 ? 'zero' : 'nonzero'}`)
+            }
+          }
+          return passed
+        }
+        const subjectPasses = subjectComparisonPresent ? this.evaluateRelationalSubjectComparison(conditionNode, analysis, result) : true
+        const targetPasses = targetComparisonPresent ? this.evaluateRelationalTargetComparison(conditionNode, analysis, result) : true
+        const passed = subjectPasses && targetPasses
+        if (!passed) {
+          const subCause = result.pairs.length === 0 ? 'no_pairs' : 'comparison'
+          profileCollector.increment(`condition.v2.relational.failed.non_value_metrics.${subCause}`)
+        }
+        return passed
       })
     }
 
     unarySideCanEvaluate({ actor, filter = "any", filterMode = null, operator, role = "subject" }, analysis) {
-      if (!analysis.singularActor(actor)) { return true }
+      if (!SINGULAR_ACTORS.has(actor)) { return true }
       if (role === "subject" && operator === "count") { return true }
       if (operator === "mobility") {
         return analysis.singularActorPresentForMobility({
@@ -135,50 +189,18 @@ class ConditionEvaluatorV2 {
       })
     }
 
-    compare({ comparator, leftTotal, rightTotal }) {
-      if (leftTotal === null || rightTotal === null) { return false }
-      switch (comparator) {
-        case "equal_to":
-          return leftTotal === rightTotal
-        case "greater_than":
-          return leftTotal > rightTotal
-        case "less_than":
-          return leftTotal < rightTotal
-        case "greater_than_or_equal_to":
-          return leftTotal >= rightTotal
-        case "less_than_or_equal_to":
-          return leftTotal <= rightTotal
-        default:
-          throw new Error(`Unknown V2 comparator: ${comparator}`)
-      }
-    }    
-    
-    relationalValuePositions(conditionNode, analysis, result, side) {
-      const actor = side === "subject" ? conditionNode.subject : conditionNode.target
-      if (!analysis.singularActor(actor)) {
-        return side === "subject" ? result.subjectPositions : result.targetPositions
-      }
-      const filter = side === "subject" ? (conditionNode.subjectFilter || "any") : (conditionNode.targetFilter || "any")
-      const filterMode = side === "subject" ? (conditionNode.subjectFilterMode || null) : (conditionNode.targetFilterMode || null)
-      return analysis.relationalActorPositions({ actor, filter, filterMode })
-    }
-
     evaluateRelationalSubjectComparison(conditionNode, analysis, result) {
-      const positions = conditionNode.subjectComparisonMetric === "value"
-        ? this.relationalValuePositions(conditionNode, analysis, result, "subject")
-        : result.subjectPositions
-      const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions })
+      const subjectTotal = analysis.metricForPositions({ metric: conditionNode.subjectComparisonMetric, positions: result.subjectPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "subject", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.subjectComparator, leftTotal: subjectTotal, rightTotal: referenceTotal })
+      const coerce = coerceFor(conditionNode.subjectComparisonSource === "prior_board_state")
+      return compareTotals(conditionNode.subjectComparator, coerce(subjectTotal), coerce(referenceTotal))
     }
 
     evaluateRelationalTargetComparison(conditionNode, analysis, result) {
-      const positions = conditionNode.targetComparisonMetric === "value"
-        ? this.relationalValuePositions(conditionNode, analysis, result, "target")
-        : result.targetPositions
-      const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions })
+      const targetTotal = analysis.metricForPositions({ metric: conditionNode.targetComparisonMetric, positions: result.targetPositions })
       const referenceTotal = this.relationalComparisonReferenceTotal({ side: "target", conditionNode, analysis })
-      return this.compare({ comparator: conditionNode.targetComparator, leftTotal: targetTotal, rightTotal: referenceTotal })
+      const coerce = coerceFor(conditionNode.targetComparisonSource === "prior_board_state")
+      return compareTotals(conditionNode.targetComparator, coerce(targetTotal), coerce(referenceTotal))
     }
 
     relationalComparisonReferenceTotal({ side, conditionNode, analysis }) {
@@ -214,28 +236,64 @@ class ConditionEvaluatorV2 {
       }
     }
 
-    evaluatePosition(conditionNode, analysis) {
-      return profileCollector.measure('condition.v2.position', () => {
+    evaluateCensus(conditionNode, analysis) {
+      const hasRegion = conditionNode.positionAxis !== undefined && conditionNode.positionAxis !== null
+      if (!hasRegion) {
+        return this.evaluateUnary(conditionNode, analysis)
+      }
+      return profileCollector.measure('condition.v2.census', () => {
         if (conditionNode.subject === "enemy_moved_piece") {
           const resolved = analysis.resolvedEnemyMovedPiece()
           if (!resolved || !resolved.presentOnBoard) { return false }
         }
+        if (!this.unaryTargetCanEvaluate(conditionNode, analysis)) { return false }
 
-        const positions = analysis.positionFilteredPositions({
-          actor: conditionNode.subject,
-          filter: conditionNode.subjectFilter || "any",
-          filterMode: conditionNode.subjectFilterMode || null,
-          positionAxis: conditionNode.positionAxis,
-          positionComparator: conditionNode.positionComparator,
-          positionTarget: conditionNode.positionTarget
+        const operator = conditionNode.operator
+        const leftTotal = analysis.positionMetricTotal({
+          positions: this.censusRegionPositions(conditionNode, analysis),
+          operator
         })
+        const rightTotal = this.censusTargetTotal(conditionNode, analysis)
+        const coerce = coerceFor(conditionNode.target === "prior_board_state")
+        return compareTotals(conditionNode.comparator, coerce(leftTotal), coerce(rightTotal))
+      })
+    }
 
-        const metricTotal = analysis.positionMetricTotal({
-          positions,
-          operator: conditionNode.operator
+    censusRegionPositions(conditionNode, analysis, boardScope = "after") {
+      return analysis.positionFilteredPositions({
+        actor: conditionNode.subject,
+        filter: conditionNode.subjectFilter || "any",
+        filterMode: conditionNode.subjectFilterMode || null,
+        positionAxis: conditionNode.positionAxis,
+        positionComparator: conditionNode.positionComparator,
+        positionTarget: conditionNode.positionTarget,
+        boardScope
+      })
+    }
+
+    censusTargetTotal(conditionNode, analysis) {
+      const operator = conditionNode.operator
+      if (conditionNode.target === "exact_number") { return conditionNode.targetTotal }
+      if (conditionNode.target === "prior_board_state") {
+        return analysis.positionMetricTotal({
+          positions: this.censusRegionPositions(conditionNode, analysis, "prior"),
+          operator,
+          boardScope: "prior"
         })
+      }
+      // Distinct-actor target: read board-wide. The region filters the
+      // subject only; the comparison piece lives elsewhere on the board.
+      return analysis.unaryTotal({
+        actor: conditionNode.target,
+        filter: conditionNode.targetFilter || "any",
+        filterMode: conditionNode.targetFilterMode || null,
+        operator
+      })
+    }
 
-        return this.compare({ comparator: conditionNode.comparator, leftTotal: metricTotal, rightTotal: conditionNode.targetTotal })
+    evaluateIdentity(conditionNode, analysis) {
+      return profileCollector.measure('condition.v2.identity', () => {
+        return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target })
       })
     }
 

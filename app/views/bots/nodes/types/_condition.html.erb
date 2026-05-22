@@ -24,6 +24,10 @@
           <% value = chunk.key?(:target_total) ? chunk[:target_total] : chunk['target_total'] %>
           <% unless value.nil? %>data-condition-preview-target-total="<%= value %>"<% end %>
           <% if (value = chunk[:operator] || chunk['operator']).present? %>data-condition-preview-operator="<%= value %>"<% end %>
+          <% if (value = chunk[:position_axis] || chunk['position_axis']).present? %>data-condition-preview-position-axis="<%= value %>"<% end %>
+          <% if (value = chunk[:position_comparator] || chunk['position_comparator']).present? %>data-condition-preview-position-comparator="<%= value %>"<% end %>
+          <% value = chunk.key?(:position_target) ? chunk[:position_target] : chunk['position_target'] %>
+          <% unless value.nil? %>data-condition-preview-position-target="<%= value %>"<% end %>
         ></div>
       <% end %>
     <% elsif chunk == "" %>

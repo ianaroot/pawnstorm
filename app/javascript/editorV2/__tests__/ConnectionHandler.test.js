@@ -165,6 +165,19 @@ describe('ConnectionHandler', () => {
     expect(source.connector.releasePointerCapture).toHaveBeenCalledWith(1)
   })
 
+  it('creates a connection when released on the node body rather than directly on the input connector', () => {
+    document.elementFromPoint.mockReturnValue(target.node)
+
+    connectionHandler.startConnection(
+      buildPointerEvent({ target: source.connector }),
+      'source',
+      source.connector
+    )
+    connectionHandler.handlePointerUp(buildPointerEvent({ clientX: 200, clientY: 200 }))
+
+    expect(syncManager.createConnection).toHaveBeenCalledWith('source', 'target')
+  })
+
   it('does not create a connection when released away from an input connector', () => {
     document.elementFromPoint.mockReturnValue(document.body)
 

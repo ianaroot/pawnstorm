@@ -41,7 +41,7 @@ function rookControlsSquare({ board, attackerPosition, targetPosition }) {
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
-function squaresBetweenClear({ board, attackerPosition, targetPosition, step }) {
+export function squaresBetweenClear({ board, attackerPosition, targetPosition, step }) {
     for (let current = attackerPosition + step; current !== targetPosition; current += step) {
         if (!board.positionEmpty(current)) {
         return false
@@ -65,7 +65,7 @@ function bishopControlsSquare({ board, attackerPosition, targetPosition }) {
     return squaresBetweenClear({ board, attackerPosition, targetPosition, step })
 }
 
-function sliderStep(attackerPosition, targetPosition) {
+export function sliderStep(attackerPosition, targetPosition) {
     const fileDiff = Board.fileIndex(targetPosition) - Board.fileIndex(attackerPosition)
     const rankDiff = Board.rankIndex(targetPosition) - Board.rankIndex(attackerPosition)
     if (fileDiff === 0 && rankDiff !== 0) { return rankDiff > 0 ? 8 : -8 }
@@ -92,7 +92,7 @@ function sliderCouldAttackAlongLine({ board, attackerPosition, targetPosition })
     return false
 }
 
-function positionsBetween(attackerPosition, targetPosition) {
+export function positionsBetween(attackerPosition, targetPosition) {
     const step = sliderStep(attackerPosition, targetPosition)
     if (step === null) { return [] }
     const between = []
@@ -129,7 +129,7 @@ function compatibleSliderOnRay({ board, position, step, opposingTeam }) {
     return false
 }
 
-function firstOccupiedOnRay({ board, startPosition, step }) {
+export function firstOccupiedOnRay({ board, startPosition, step }) {
     for (let current = nextPositionOnRay(startPosition, step); current !== null; current = nextPositionOnRay(current, step)) {
         if (!board.positionEmpty(current)) { return current }
     }
@@ -299,7 +299,7 @@ function pieceValue(species) {
         case Board.QUEEN:
         return 9
         case Board.KING:
-        return 0
+        return Infinity
         default:
         return 0
     }

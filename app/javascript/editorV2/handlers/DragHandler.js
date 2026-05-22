@@ -7,6 +7,7 @@ import {
   DRAG_START_THRESHOLD,
   NODE_DIMENSIONS
 } from 'editorV2/constants'
+import { isEditableTarget } from 'editorV2/utils/dom'
 
 const TOUCH_LONG_PRESS_MS = 450
 const SPACE_PAN_ACTIVE_CLASS = 'editor-space-pan-active'
@@ -258,7 +259,7 @@ class DragHandler {
   }
 
   handleKeyDown(event) {
-    if (!this.isSpaceKey(event) || this.isEditableTarget(event.target)) { return }
+    if (!this.isSpaceKey(event) || isEditableTarget(event.target)) { return }
 
     this.spacePanKeyActive = true
     this.updateSpacePanMode()
@@ -817,12 +818,6 @@ class DragHandler {
 
   isSpaceKey(event) {
     return event?.code === 'Space' || event?.key === ' ' || event?.key === 'Spacebar'
-  }
-
-  isEditableTarget(target) {
-    if (!target || !target.tagName) { return false }
-    const tag = target.tagName.toLowerCase()
-    return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable
   }
 
   isSpacePanActive() {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
-import generateConditionExamples from '../panels/condition_preview_generation/ConditionExampleGenerator'
+import generateConditionExamples from '../panels/condition_preview/orchestrator'
 
 function seededRandom(seed = 12345) {
   let current = seed >>> 0
@@ -53,7 +53,7 @@ describe('ConditionChainExampleGenerator', () => {
 
   it('generates examples for a single unary condition', () => {
     const payload = {
-      kind: 'unary',
+      kind: 'census',
       subject: 'allied',
       subjectFilter: 'any',
       operator: 'count',

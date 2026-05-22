@@ -14,6 +14,7 @@ import { EVENTS, MAX_HISTORY } from 'editorV2/constants'
 import { showError } from 'editorV2/utils/errors'
 import ToolbarHandler from 'editorV2/handlers/ToolbarHandler'
 import BoardStatePreview from 'editorV2/panels/BoardStatePreview'
+import EditorActions from 'editorV2/EditorActions'
 
 export async function initEditor(botId, container, svgContainer, editorPanel = null) {
   if (!container) { throw new Error('Container element is required') }
@@ -42,6 +43,7 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   const nodeRenderer = new NodeRenderer(container, store, api)
   const connectionRenderer = new ConnectionRenderer(svgContainer, store, canvasViewport)
   connectionRenderer.container = container
+  connectionRenderer.attachHoverTracking()
   
   // 3. Initialize Handlers
   const dragHandler = new DragHandler(store, syncManager, canvasViewport)
@@ -69,12 +71,19 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   
   // 6. Attach Global UI handlers
   const boardStatePreviewWrap = document.getElementById('board-state-preview-wrap')
-  if (boardStatePreviewWrap) {
-    const boardStatePreview = new BoardStatePreview(boardStatePreviewWrap)
+  const boardStatePreview = boardStatePreviewWrap ? new BoardStatePreview(boardStatePreviewWrap) : null
+  if (boardStatePreview) {
     clickHandler.setBoardStatePreview(boardStatePreview)
   }
-  clickHandler.setSyncManager(syncManager)
-  const keyboardHandler = new KeyboardHandler(store, history, syncManager, clickHandler)
+  const editorActions = new EditorActions(store, history, syncManager)
+  editorActions.clickHandler = clickHandler
+  editorActions.boardStatePreview = boardStatePreview
+  editorActions.viewport = canvasViewport
+  const keyboardHandler = new KeyboardHandler()
+  keyboardHandler.actions = editorActions
+  toolbarHandler.actions = editorActions
+  clickHandler.actions = editorActions
+  if (boardStatePreview) { boardStatePreview.actions = editorActions }
   clickHandler.setupGlobalHandlers()
   keyboardHandler.attach()
   hoverPreviewHandler.attach()
@@ -91,10 +100,10 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
 
   // 7. Initialize Undo/Redo UI Callbacks
   history.setUpdateUICallback(() => {
-    updateUndoRedoUI(history)
+    toolbarHandler.updateButtons()
   })
-  
-  updateUndoRedoUI(history)
+
+  toolbarHandler.updateButtons()
   requestAnimationFrame(() => {
     canvasViewport.fitToGraph()
   })
@@ -122,17 +131,17 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
     deleteConnection: (clientId) => syncManager.deleteConnection(clientId),
     updateNodeData: (clientId, data) => syncManager.updateNodeData(clientId, data),
     
-    // Undo/redo - async because they sync with server
+    // Undo/redo - delegate to EditorActions so all callers share one code path
     undo: async () => {
-      await syncManager.undo()
-      updateUndoRedoUI(history)
+      await editorActions.undo()
+      toolbarHandler.updateButtons()
     },
     redo: async () => {
-      await syncManager.redo()
-      updateUndoRedoUI(history)
+      await editorActions.redo()
+      toolbarHandler.updateButtons()
     },
-    canUndo: () => history.canUndo() && !syncManager.isUndoRedoPending,
-    canRedo: () => history.canRedo() && !syncManager.isUndoRedoPending,
+    canUndo: () => editorActions.canUndo(),
+    canRedo: () => editorActions.canRedo(),
     
     // Selection
     getSelectedNode: () => clickHandler.getSelectedNodeId(),
@@ -154,12 +163,3 @@ export async function initEditor(botId, container, svgContainer, editorPanel = n
   }
 }
 
-function updateUndoRedoUI(history) {
-  const undoBtn = document.querySelector('.btn-undo')
-  const redoBtn = document.querySelector('.btn-redo')
-  const countDisplay = document.querySelector('.undo-count')
-  
-  if (undoBtn)      { undoBtn.disabled = !history.canUndo() }
-  if (redoBtn)      { redoBtn.disabled = !history.canRedo() }
-  if (countDisplay) { countDisplay.textContent = history.getHistoryDisplay() }
-}

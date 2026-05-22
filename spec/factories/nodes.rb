@@ -8,7 +8,7 @@ FactoryBot.define do
       when "condition"
         {
           version: 2,
-          kind: "unary",
+          kind: "census",
           subject: "moved_piece",
           subjectFilter: "any",
           subjectFilterMode: "include",
@@ -38,7 +38,7 @@ FactoryBot.define do
       data do
         {
           version: 2,
-          kind: "unary",
+          kind: "census",
           subject: "moved_piece",
           subjectFilter: "any",
           subjectFilterMode: "include",

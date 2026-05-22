@@ -6,6 +6,7 @@ import ConditionEvaluator from 'gameplay/condition_evaluator'
 import ConditionEvaluatorV2 from 'bot_execution/condition_evaluator_v2'
 
 import { buildBoard, getMove, playMoveSequence } from 'gameplay/__tests__/helpers'
+import { buildEnemyMoveContext } from 'bot_execution/__tests__/helpers'
 
 describe('ConditionEvaluatorV2', () => {
   function evaluate(conditionNode, board, moveObject) {
@@ -33,7 +34,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -62,7 +63,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -90,7 +91,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'king',
           operator: 'value',
@@ -126,7 +127,7 @@ describe('ConditionEvaluatorV2', () => {
           operator: 'attack',
           target: 'enemy',
           targetFilter: 'any',
-          targetComparisonMetric: 'value',
+          targetComparisonMetric: 'individual_value',
           targetComparator: 'greater_than_or_equal_to',
           targetComparisonSource: 'moved_piece'
         },
@@ -158,7 +159,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'any',
           operator: 'mobility',
@@ -191,7 +192,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'count',
@@ -208,7 +209,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'count',
@@ -243,7 +244,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'value',
@@ -278,7 +279,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           operator: 'mobility',
@@ -313,7 +314,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'knight',
           subjectFilterMode: 'exclude',
@@ -331,7 +332,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'enemy_moved_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
@@ -363,7 +364,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluator.evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'pawn',
           subjectFilterMode: 'exclude',
@@ -392,7 +393,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'count',
@@ -421,7 +422,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'mobility',
@@ -450,7 +451,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'moved_piece',
           subjectFilter: 'knight',
           operator: 'value',
@@ -479,7 +480,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'count',
@@ -493,7 +494,7 @@ describe('ConditionEvaluatorV2', () => {
     ).toBe(true)
   })
 
-  it('allows unfiltered captured piece value queries to return zero when no piece was captured', () => {
+  it('fails unfiltered captured piece value = 0 when no piece was captured', () => {
     const board = buildBoard({
       pieces: {
         e1: 'wK',
@@ -508,7 +509,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'any',
           operator: 'value',
@@ -519,7 +520,7 @@ describe('ConditionEvaluatorV2', () => {
         board,
         moveObject
       )
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('fails filtered captured piece value queries when no matching piece was captured', () => {
@@ -537,7 +538,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -567,7 +568,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -597,7 +598,7 @@ describe('ConditionEvaluatorV2', () => {
       evaluate(
         {
           version: 2,
-          kind: 'unary',
+          kind: 'census',
           subject: 'captured_piece',
           subjectFilter: 'queen',
           operator: 'value',
@@ -609,6 +610,100 @@ describe('ConditionEvaluatorV2', () => {
         moveObject
       )
     ).toBe(false)
+  })
+
+  describe('enemy_captured_piece as unary subject', () => {
+    it('passes count = 0 when the prior enemy move was a non-capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext()
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'census',
+            subject: 'enemy_captured_piece', subjectFilter: 'any',
+            operator: 'count', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails value = 0 unfiltered when the prior enemy move was a non-capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', c6: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext()
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'census',
+            subject: 'enemy_captured_piece', subjectFilter: 'any',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 0
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('passes filtered value queries when the enemy captured a matching ally species', () => {
+      // Enemy black knight captured allied queen at d5; mover sits on the
+      // captured square in afterBoard.
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.QUEEN }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'census',
+            subject: 'enemy_captured_piece', subjectFilter: 'queen',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('fails filtered value queries when the enemy captured a different ally species', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', a2: 'wP', d5: 'bN' }
+      })
+      board.recentMoveContext = buildEnemyMoveContext({
+        moverFrom: 'b6', moverTo: 'd5',
+        captured: { species: Board.NIGHT }
+      })
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2, kind: 'census',
+            subject: 'enemy_captured_piece', subjectFilter: 'queen',
+            operator: 'value', comparator: 'equal_to',
+            target: 'exact_number', targetTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
   })
 
   describe('relational evaluation', () => {
@@ -928,7 +1023,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('keeps king value as zero inside relation-side aggregate value totals', () => {
+    it('excludes king from individual_value pair filter leaving only pawn pairs', () => {
       const board = buildBoard({
         pieces: {
           e4: 'wK',
@@ -948,7 +1043,7 @@ describe('ConditionEvaluatorV2', () => {
             kind: 'relational',
             subject: 'allied',
             subjectFilter: 'any',
-            subjectComparisonMetric: 'value',
+            subjectComparisonMetric: 'individual_value',
             subjectComparator: 'equal_to',
             subjectComparisonSource: 'exact_number',
             subjectComparisonSourceTotal: 1,
@@ -960,6 +1055,76 @@ describe('ConditionEvaluatorV2', () => {
           moveObject
         )
       ).toBe(true)
+    })
+
+    // wK e4 attacks bN e5. King value (Infinity) > 9 qualifies the king→knight pair.
+    it('includes a king participant at Infinity in the individual_value pair filter', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wK',
+          h8: 'bK',
+          d4: 'wP',
+          h2: 'wP',
+          e5: 'bN'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'king',
+            subjectComparisonMetric: 'individual_value',
+            subjectComparator: 'greater_than',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 9,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'knight'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    // King reads as Infinity, never a finite total: king == 9 must be false.
+    it('does not let a king participant satisfy a finite individual_value equality', () => {
+      const board = buildBoard({
+        pieces: {
+          e4: 'wK',
+          h8: 'bK',
+          d4: 'wP',
+          h2: 'wP',
+          e5: 'bN'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'king',
+            subjectComparisonMetric: 'individual_value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 9,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'knight'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
     })
 
     it('uses a subject-only comparison block as the full truth condition when it fails', () => {
@@ -1016,7 +1181,7 @@ describe('ConditionEvaluatorV2', () => {
             kind: 'relational',
             subject: 'moved_piece',
             subjectFilter: 'any',
-            subjectComparisonMetric: 'value',
+            subjectComparisonMetric: 'individual_value',
             subjectComparator: 'less_than',
             subjectComparisonSource: 'captured_piece',
             operator: 'attack',
@@ -1199,10 +1364,10 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('returns true when enemy pawns only attack allied pieces with value >= 9 and count=0 is on the subject side with a value<9 comparison on the target', () => {
-      // "enemy pawn count=0 attacks allied value<9"
-      // Only enemy pawn attacks the allied queen (value=9), which is excluded by value<9.
-      // Under joint-filter semantics: 0 (enemy pawn, allied value<9) pairs → count==0 → true.
+    it('returns true when enemy pawns only attack allied pieces with individual_value >= 9 and count=0 with individual_value<9 on target', () => {
+      // "enemy pawn count=0 attacks allied individual_value<9"
+      // bP on e5 attacks wQ on d4 (value=9). individual_value<9 excludes the queen.
+      // Filtered pairs = [] → count of enemy pawns = 0 → 0==0 → true.
       const board = buildBoard({
         pieces: {
           g1: 'wK',
@@ -1228,12 +1393,445 @@ describe('ConditionEvaluatorV2', () => {
             subjectComparisonSourceTotal: 0,
             operator: 'attack',
             target: 'allied',
-            targetFilter: 'queen'
+            targetFilter: 'any',
+            targetComparisonMetric: 'individual_value',
+            targetComparator: 'less_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 9
           },
           board,
           moveObject
         )
       ).toBe(true)
+    })
+
+    it('returns false for count=0 individual_value<9 when enemy pawn attacks an allied piece with value<9', () => {
+      const board = buildBoard({
+        pieces: {
+          g1: 'wK',
+          g8: 'bK',
+          e5: 'bP',
+          d4: 'wR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'enemy',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 0,
+            operator: 'attack',
+            target: 'allied',
+            targetFilter: 'any',
+            targetComparisonMetric: 'individual_value',
+            targetComparator: 'less_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 9
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    // Dormant: relational aggregate_value is grammar-gated. The evaluation
+    // engine is retained; re-enable these together with the metric.
+    it.skip('returns true for aggregate_value when sum of attacked pieces exceeds threshold', () => {
+      // wR on d4 attacks bQ on d7 (9) and bN on g4 (3). Sum = 12 > 8.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wR',
+          d7: 'bQ',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 8
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it.skip('returns false for aggregate_value when sum of attacked pieces does not exceed threshold', () => {
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wR',
+          d7: 'bQ',
+          g4: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'rook',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 15
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it.skip('does not double-count a single subject that participates in multiple pairs when computing subject aggregate_value', () => {
+      // wP e4 attacks bN d5 and bB f5 — one pawn, two enemies. Pairs: (e4,d5), (e4,f5).
+      // Aggregate over unique subject positions = value(wP) = 1, not 1+1=2.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          e4: 'wP',
+          d5: 'bN',
+          f5: 'bB',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'aggregate_value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it.skip('counts each unique subject once when multiple pairs share subjects with multiple targets', () => {
+      // wP a4 attacks bR b5; wP e4 attacks bN d5 and bB f5.
+      // Pairs: (a4,b5), (e4,d5), (e4,f5). Unique subjects: {a4, e4}. Aggregate = 1+1 = 2.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          a4: 'wP',
+          b5: 'bR',
+          e4: 'wP',
+          d5: 'bN',
+          f5: 'bB',
+          h2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('h2', 'h3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'aggregate_value',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any'
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it.skip('does not double-count a single target that is attacked by multiple subjects when computing target aggregate_value', () => {
+      // wP c4 and wP e4 both attack bN d5. Pairs: (c4,d5), (e4,d5).
+      // Aggregate over unique target positions = value(bN) = 3, not 3+3=6.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          c4: 'wP',
+          e4: 'wP',
+          d5: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'equal_to',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 3
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it.skip('returns true for count+aggregate_value combinatorial when two pawns combined attacked value exceeds threshold', () => {
+      // wP c5 attacks bR d6 (5), wP f5 attacks bR e6 (5). Both groups sum 5.
+      // Find 2 groups with combined sum > 8: 5+5=10 > 8 → true.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          c5: 'wP',
+          f5: 'wP',
+          d6: 'bR',
+          e6: 'bR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 8
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it.skip('returns false for count+aggregate_value combinatorial when no two groups combined exceed threshold', () => {
+      // wP c5 attacks bN d6 (3), wP f5 attacks bN e6 (3). Best 2: 3+3=6, not > 8.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          h8: 'bK',
+          c5: 'wP',
+          f5: 'wP',
+          d6: 'bN',
+          e6: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 8
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it.skip('returns true for count+aggregate_value when a valid 2-group subset exists even if full set does not', () => {
+      // wP b5→bN c6(3), wP e5→bR d6(5), wP g5→bR h6(5).
+      // b5+e5=8 (not >8), b5+g5=8 (not >8), e5+g5=10 >8 → true.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          a8: 'bK',
+          b5: 'wP',
+          e5: 'wP',
+          g5: 'wP',
+          c6: 'bN',
+          d6: 'bR',
+          h6: 'bR',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'pawn',
+            subjectComparisonMetric: 'count',
+            subjectComparator: 'equal_to',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 2,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'aggregate_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 8
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns true for individual_value+individual_value when a pair satisfies both filters', () => {
+      // wP (value=1) attacks bN (value=3). subject individual_value<3 and target individual_value>2 both pass.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wP',
+          e5: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'individual_value',
+            subjectComparator: 'less_than',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 3,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'individual_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
+
+    it('returns false for individual_value+individual_value when no pair satisfies both filters', () => {
+      // wR (value=5) attacks bN (value=3). subject individual_value<3 fails for the rook.
+      const board = buildBoard({
+        pieces: {
+          e1: 'wK',
+          e8: 'bK',
+          d4: 'wR',
+          d7: 'bN',
+          a2: 'wP'
+        }
+      })
+
+      const moveObject = getMove('a2', 'a3', board)
+
+      expect(
+        evaluate(
+          {
+            version: 2,
+            kind: 'relational',
+            subject: 'allied',
+            subjectFilter: 'any',
+            subjectComparisonMetric: 'individual_value',
+            subjectComparator: 'less_than',
+            subjectComparisonSource: 'exact_number',
+            subjectComparisonSourceTotal: 3,
+            operator: 'attack',
+            target: 'enemy',
+            targetFilter: 'any',
+            targetComparisonMetric: 'individual_value',
+            targetComparator: 'greater_than',
+            targetComparisonSource: 'exact_number',
+            targetComparisonSourceTotal: 2
+          },
+          board,
+          moveObject
+        )
+      ).toBe(false)
     })
 
     it('lets a target-only zero comparison fail on an empty relation when the comparator demands more', () => {
@@ -1661,7 +2259,7 @@ describe('ConditionEvaluatorV2', () => {
     })
   })
 
-  describe('same_piece evaluation', () => {
+  describe('identity evaluation', () => {
     it('returns true when the current move captures the enemy moved piece', () => {
       const board = buildBoard({
         pieces: {
@@ -1683,12 +2281,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -1717,12 +2312,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'captured_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'enemy_moved_piece',
-            targetFilter: 'any'
+            target: 'enemy_moved_piece'
           },
           board,
           moveObject
@@ -1754,12 +2346,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -1788,12 +2377,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -1823,12 +2409,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -1864,12 +2447,9 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'relational',
+            kind: 'identity',
             subject: 'enemy_moved_piece',
-            subjectFilter: 'any',
-            operator: 'same_piece',
-            target: 'captured_piece',
-            targetFilter: 'any'
+            target: 'captured_piece'
           },
           board,
           moveObject
@@ -1895,7 +2475,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -1911,7 +2491,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes enemy count on rank using enemy team perspective', () => {
+    it('passes enemy count on rank using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -1927,7 +2507,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -1935,7 +2515,7 @@ describe('ConditionEvaluatorV2', () => {
             positionTarget: 4,
             operator: 'count',
             comparator: 'equal_to',
-            targetTotal: 1
+            targetTotal: 3
           },
           board,
           moveObject
@@ -1943,7 +2523,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes zero enemy count on rank when no enemy piece occupies the rank from enemy perspective', () => {
+    it('passes zero enemy count on rank when no enemy piece occupies the rank from moving perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -1958,12 +2538,12 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'rank',
             positionComparator: 'equal_to',
-            positionTarget: 5,
+            positionTarget: 4,
             operator: 'count',
             comparator: 'equal_to',
             targetTotal: 0
@@ -1974,7 +2554,7 @@ describe('ConditionEvaluatorV2', () => {
       ).toBe(true)
     })
 
-    it('passes enemy count on square using enemy team perspective', () => {
+    it('passes enemy count on square using moving team perspective', () => {
       const board = buildBoard({
         pieces: {
           e1: 'wK',
@@ -1989,12 +2569,12 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy',
             subjectFilter: 'any',
             positionAxis: 'square',
             positionComparator: 'equal_to',
-            positionTarget: 0,
+            positionTarget: 56,
             operator: 'count',
             comparator: 'equal_to',
             targetTotal: 1
@@ -2019,7 +2599,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2049,7 +2629,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2086,7 +2666,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'enemy_moved_piece',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2118,7 +2698,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'pawn',
             positionAxis: 'rank',
@@ -2150,7 +2730,7 @@ describe('ConditionEvaluatorV2', () => {
         evaluate(
           {
             version: 2,
-            kind: 'position',
+            kind: 'census', target: 'exact_number',
             subject: 'allied',
             subjectFilter: 'any',
             positionAxis: 'rank',
@@ -2669,6 +3249,83 @@ describe('ConditionEvaluatorV2', () => {
           moveObject
         )
       ).toBe(true)
+    })
+  })
+
+  describe('PBS empty-side coercion', () => {
+    it('unary value PBS verifies when after has pieces and prior is empty (promotion)', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', g7: 'wP' } })
+      const moveObject = getMove('g7', 'g8', board, Board.QUEEN)
+      expect(evaluate({
+        version: 2, kind: 'census',
+        subject: 'allied', subjectFilter: 'queen',
+        operator: 'value', comparator: 'greater_than',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('unary value PBS verifies when after is empty and prior has pieces (capture)', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e4: 'wP', d5: 'bN' } })
+      const moveObject = getMove('e4', 'd5', board)
+      expect(evaluate({
+        version: 2, kind: 'census',
+        subject: 'enemy', subjectFilter: 'knight',
+        operator: 'value', comparator: 'less_than',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it('unary value PBS equal_to verifies when both frames are empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', e2: 'wP' } })
+      const moveObject = getMove('e2', 'e3', board)
+      expect(evaluate({
+        version: 2, kind: 'census',
+        subject: 'enemy', subjectFilter: 'queen',
+        operator: 'value', comparator: 'equal_to',
+        target: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    // Dormant: relational aggregate_value is grammar-gated. Engine retained.
+    it.skip('relational aggregate_value PBS verifies when after has pairs and prior is empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a1: 'wN', d4: 'bQ' } })
+      const moveObject = getMove('a1', 'c2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it.skip('relational aggregate_value PBS equal_to verifies when both frames have empty pairs', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK' } })
+      const moveObject = getMove('e1', 'e2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'aggregate_value', subjectComparator: 'equal_to',
+        subjectComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
+    })
+
+    it.skip('combinatorial PBS (count + aggregate_value) verifies when target prior is empty', () => {
+      const board = buildBoard({ pieces: { e1: 'wK', e8: 'bK', a1: 'wN', d4: 'bQ' } })
+      const moveObject = getMove('a1', 'c2', board)
+      expect(evaluate({
+        version: 2, kind: 'relational',
+        subject: 'allied', subjectFilter: 'knight',
+        operator: 'attack',
+        target: 'enemy', targetFilter: 'queen',
+        subjectComparisonMetric: 'count', subjectComparator: 'greater_than',
+        subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 0,
+        targetComparisonMetric: 'aggregate_value', targetComparator: 'greater_than',
+        targetComparisonSource: 'prior_board_state'
+      }, board, moveObject)).toBe(true)
     })
   })
 })

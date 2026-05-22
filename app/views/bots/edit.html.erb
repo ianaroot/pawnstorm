@@ -2,11 +2,12 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-guide"
+     data-controller="editor bot-intro"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
-     data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>">
+     data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>"
+     data-bot-intro-auto-value="<%= params[:intro].present? %>">
   <div class="bot-editor-header">
     <div class="bot-editor-header__name" id="bot-name-display" title="<%= @bot.name %>"><%= @bot.name %></div>
     <button type="button" class="bot-editor-header__rename" data-bot-rename-open>Rename</button>
@@ -23,23 +24,22 @@
     
     <div class="toolbar-section">
       <h3>Tool</h3>
-      <button type="button" class="tool-select active" data-tool="select">Select</button>
       <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
       <button
         type="button"
         class="btn-guide"
-        data-bot-guide-target="toggle"
-        data-action="click->bot-guide#toggle"
-        aria-controls="bot-guide-drawer"
-        aria-expanded="false">Guide</button>
+        data-action="click->bot-intro#open"
+        aria-controls="bot-intro-modal"
+        aria-haspopup="dialog">How it works</button>
     </div>
 
     <div class="toolbar-section">
       <h3>View</h3>
+      <button type="button" class="btn-toggle-preview-mode" aria-pressed="true"
+        title="Show condition previews as plain-language sentences or terse chunks (reopen a panel to apply)">Sentences: on</button>
       <button type="button" id="zoom-out" class="btn-zoom">-</button>
       <span id="zoom-level">100%</span>
       <button type="button" id="zoom-in" class="btn-zoom">+</button>
-      <button type="button" id="zoom-reset" class="btn-zoom-reset">Reset</button>
     </div>
 
     <div class="toolbar-section">
@@ -108,45 +108,6 @@
     </div>
   </div>
 
-  <aside id="bot-guide-drawer" class="bot-guide-drawer hidden" data-bot-guide-target="drawer">
-    <div class="bot-guide-drawer__header">
-      <div>
-        <p class="bot-guide-drawer__eyebrow">In-Editor Guide</p>
-        <h2>Build a Chess Bot</h2>
-      </div>
-
-      <button
-        type="button"
-        class="bot-guide-drawer__close"
-        data-action="click->bot-guide#close"
-        aria-label="Close guide">Close</button>
-    </div>
-
-    <p class="bot-guide-drawer__intro"><%= BotGuide.drawer_intro %></p>
-
-    <nav class="bot-guide-drawer__index" aria-label="Guide sections">
-      <ol>
-        <% BotGuide.sections.each do |section| %>
-          <li>
-            <button
-              type="button"
-              class="bot-guide-drawer__index-link"
-              data-action="click->bot-guide#scrollToSection"
-              data-section-id="<%= section[:id] %>"><%= section[:title] %></button>
-          </li>
-        <% end %>
-      </ol>
-    </nav>
-
-    <div class="bot-guide-drawer__content" data-bot-guide-target="content">
-      <%= render 'shared/bot_guide', sections: BotGuide.sections, mode: :drawer %>
-    </div>
-
-    <div class="bot-guide-drawer__footer">
-      <%= link_to 'Read Full Guide', bot_help_path, class: 'btn-guide-link' %>
-    </div>
-  </aside>
-
   <div id="template-picker-modal" class="template-picker-modal hidden" aria-hidden="true">
     <div class="template-picker-modal__backdrop" data-template-picker-close></div>
 
@@ -209,5 +170,7 @@
   </div>
 
   <%= render "bots/nodes/editor" %>
+
+  <%= render "bots/intro_modal" %>
   </div>
 </div>

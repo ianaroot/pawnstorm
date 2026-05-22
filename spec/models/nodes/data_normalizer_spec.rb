@@ -5,7 +5,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
     it 'stringifies condition keys' do
       input = {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'pawn',
         subjectFilterMode: 'include',
@@ -20,7 +20,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).to eq(
         {
           'version' => 2,
-          'kind' => 'unary',
+          'kind' => 'census',
           'subject' => 'moved_piece',
           'subjectFilter' => 'pawn',
           'subjectFilterMode' => 'include',
@@ -32,7 +32,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       )
       expect(input).to eq(
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'pawn',
         subjectFilterMode: 'include',
@@ -43,10 +43,10 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       )
     end
 
-    it 'removes unary relational-only fields' do
+    it 'removes census relational-only fields' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'any',
         subjectFilterMode: 'include',
@@ -69,7 +69,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).to eq(
         {
           'version' => 2,
-          'kind' => 'unary',
+          'kind' => 'census',
           'subject' => 'moved_piece',
           'subjectFilter' => 'any',
           'operator' => 'value',
@@ -80,10 +80,10 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       )
     end
 
-    it 'removes target actor fields from exact-number unary targets' do
+    it 'removes target actor fields from exact-number census targets' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'allied',
         subjectFilter: 'any',
         operator: 'value',
@@ -101,10 +101,10 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).not_to include('targetFilter', 'targetFilterMode')
     end
 
-    it 'removes actor and numeric target fields from prior-board unary targets' do
+    it 'removes actor and numeric target fields from prior-board census targets' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'allied',
         subjectFilter: 'any',
         operator: 'mobility',
@@ -119,10 +119,10 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).not_to include('targetTotal', 'targetFilter', 'targetFilterMode')
     end
 
-    it 'removes numeric and unnecessary filter-mode fields from actor unary targets' do
+    it 'removes numeric and unnecessary filter-mode fields from actor census targets' do
       normalized = described_class.normalize(node_type: 'condition', data: {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'allied',
         subjectFilter: 'any',
         operator: 'value',
@@ -138,40 +138,6 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
         'targetFilter' => 'any'
       )
       expect(normalized).not_to include('targetTotal', 'targetFilterMode')
-    end
-
-    it 'resets relational same_piece filters and removes comparison fields' do
-      normalized = described_class.normalize(node_type: 'condition', data: {
-        version: 2,
-        kind: 'relational',
-        subject: 'enemy_moved_piece',
-        subjectFilter: 'pawn',
-        subjectFilterMode: 'exclude',
-        subjectComparisonMetric: 'count',
-        subjectComparator: 'greater_than',
-        subjectComparisonSource: 'exact_number',
-        subjectComparisonSourceTotal: 0,
-        operator: 'same_piece',
-        target: 'captured_piece',
-        targetFilter: 'pawn',
-        targetFilterMode: 'exclude',
-        targetComparisonMetric: 'count',
-        targetComparator: 'greater_than',
-        targetComparisonSource: 'exact_number',
-        targetComparisonSourceTotal: 0
-      })
-
-      expect(normalized).to eq(
-        {
-          'version' => 2,
-          'kind' => 'relational',
-          'subject' => 'enemy_moved_piece',
-          'subjectFilter' => 'any',
-          'operator' => 'same_piece',
-          'target' => 'captured_piece',
-          'targetFilter' => 'any'
-        }
-      )
     end
 
     it 'removes blank subject comparison fields for relational conditions' do
@@ -292,7 +258,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
     it 'returns a copy and does not mutate the original hash' do
       input = {
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'pawn',
         subjectFilterMode: 'include',
@@ -307,7 +273,7 @@ RSpec.describe Nodes::DataNormalizer, type: :model do
       expect(normalized).not_to be(input)
       expect(input).to eq(
         version: 2,
-        kind: 'unary',
+        kind: 'census',
         subject: 'moved_piece',
         subjectFilter: 'pawn',
         subjectFilterMode: 'include',
