@@ -157,6 +157,26 @@
   line-height: 1;
 }
 
+#chess-board.flipped {
+  transform: rotate(180deg);
+}
+
+#chess-board.flipped .board-piece-glyph {
+  transform: rotate(180deg);
+}
+
+.board-player-name {
+  margin: 8px auto;
+  text-align: center;
+  font-weight: bold;
+  color: #E5E5E5;
+}
+
+.board-player-name--active {
+  color: #d8c160;
+  text-shadow: 0 0 6px rgba(216, 193, 96, 0.7), 0 0 14px rgba(216, 193, 96, 0.4);
+}
+
 #W-captures {
   /* White's captured pieces - above board */
 }

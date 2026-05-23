@@ -11,7 +11,7 @@ const BOARD_FADE   = 250
 const HALF_BEAT    = 400
 
 const PIECE_GLYPHS = {
-  WK: '♔', WQ: '♕', WR: '♖', WB: '♗', WN: '♘', WP: '♙',
+  WK: '♚', WQ: '♛', WR: '♜', WB: '♝', WN: '♞', WP: '♟',
   BK: '♚', BQ: '♛', BR: '♜', BB: '♝', BN: '♞', BP: '♟'
 }
 
@@ -29,6 +29,8 @@ function buildMiniBoardEl() {
       const td = document.createElement('td')
       td.className = `mini-board__tile mini-board__tile--${Board.squareColor(index)}`
       td.dataset.index = index
+      td.dataset.fileLetter = 'abcdefgh'[file]
+      td.dataset.rankNumber = rank + 1
       tr.appendChild(td)
     }
     table.appendChild(tr)
@@ -56,6 +58,7 @@ function renderLayout(boardEl, layout, highlights) {
     if (piece && PIECE_GLYPHS[piece]) {
       const span = document.createElement('span')
       span.className = `mini-piece mini-piece--${piece[0]}`
+      span.dataset.piece = piece
       span.textContent = PIECE_GLYPHS[piece]
       tile.appendChild(span)
     }
@@ -67,6 +70,7 @@ function renderPieceIntoTile(tile, piece) {
   if (piece && PIECE_GLYPHS[piece]) {
     const span = document.createElement('span')
     span.className = `mini-piece mini-piece--${piece[0]}`
+    span.dataset.piece = piece
     span.textContent = PIECE_GLYPHS[piece]
     tile.appendChild(span)
   }
@@ -76,10 +80,10 @@ function syncBoardToLayout(boardEl, layout) {
   boardEl.querySelectorAll('[data-index]').forEach(tile => {
     const index = parseInt(tile.dataset.index, 10)
     const expectedPiece = layout[index]
-    const currentPiece = tile.querySelector('.mini-piece')?.textContent || null
-    const expectedGlyph = PIECE_GLYPHS[expectedPiece] || null
+    const currentPiece = tile.querySelector('.mini-piece')?.dataset.piece || null
+    const expectedPieceCode = PIECE_GLYPHS[expectedPiece] ? expectedPiece : null
 
-    if (currentPiece === expectedGlyph) { return }
+    if (currentPiece === expectedPieceCode) { return }
     renderPieceIntoTile(tile, expectedPiece)
   })
 }
@@ -449,6 +453,7 @@ class BoardStatePreview {
   }
 
   _appendChain() {
+    if (this.mode === 'form') { return }
     if (!this.conditionLabels?.length) { return }
     const chain = document.createElement('ol')
     chain.className = 'board-state-preview__chain'

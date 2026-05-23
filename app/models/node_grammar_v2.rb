@@ -1,10 +1,10 @@
   class NodeGrammarV2
     SUBJECTS = %w[
+      moved_piece
       allied
       enemy
-      moved_piece
-      captured_piece
       enemy_moved_piece
+      captured_piece
       enemy_captured_piece
     ].freeze
 
@@ -18,7 +18,7 @@
 
     UNARY_OPERATORS = %w[count mobility value].freeze
     SPECIAL_UNARY_TARGETS = %w[exact_number prior_board_state].freeze
-    UNARY_TARGETS = (%w[exact_number] + SUBJECTS + %w[prior_board_state]).freeze
+    UNARY_TARGETS = (SPECIAL_UNARY_TARGETS + SUBJECTS).freeze
 
     POSITION_SUBJECTS = %w[allied enemy moved_piece enemy_moved_piece].freeze
     POSITION_OPERATORS = %w[count mobility value].freeze

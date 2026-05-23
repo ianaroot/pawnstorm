@@ -1,5 +1,6 @@
 import Board from "gameplay/board"
 import LiveView from "gameplay/live_view"
+import { applyBoardOrientation } from "gameplay/board_orientation"
 import Api	from "gameplay/api"
 import BotRunner from "gameplay/bot_runner"
 import Rules from "gameplay/rules"
@@ -15,6 +16,7 @@ class GameController {
 		this.view = new LiveView(this);
 		this._paused = false
 		this._completionSubmitted = false
+		this.applyOrientation()
 		this.view.displayLayOut({board: this.board, alert: ""})
 		this.view.setTileClickListener()
 		// this.view.setUndoClickListener(this)
@@ -23,6 +25,15 @@ class GameController {
 		this.configurePlayBots()
 		this.updateLiveMatchStatus()
 		if(this._whiteBot && !this._paused){ this.queryNextBotMove()}
+	}
+
+	applyOrientation(){
+		const humanPlaysBlack = this.playConfig?.humanTeam === Board.BLACK
+		applyBoardOrientation(this.rootElement?.querySelector('#arena'), {
+			flipped: humanPlaysBlack,
+			whiteName: this.rootElement?.dataset.whiteName,
+			blackName: this.rootElement?.dataset.blackName
+		})
 	}
 
 	buildPlayConfig(){
@@ -226,23 +237,7 @@ class GameController {
 
 	updateLiveMatchStatus(){
 		if (!this.playConfig) { return }
-		this.updateParticipantLabels()
 		this.updateTurnStatus()
-	}
-
-	updateParticipantLabels(){
-		const humanSide = this.rootElement?.querySelector('[data-human-side-label]')
-		const botName = this.rootElement?.querySelector('[data-bot-name-label]')
-		const botSide = this.rootElement?.querySelector('[data-bot-side-label]')
-		if (humanSide) {
-			humanSide.textContent = this.teamLabel(this.playConfig.humanTeam)
-		}
-		if (botName) {
-			botName.textContent = this.playConfig.botName || 'Bot'
-		}
-		if (botSide) {
-			botSide.textContent = this.teamLabel(this.playConfig.botTeam)
-		}
 	}
 
 	updateTurnStatus(){
@@ -259,9 +254,6 @@ class GameController {
 		this.updatePlayStatus("Bot's turn.", 'bot')
 	}
 
-	teamLabel(team){
-		return team === Board.WHITE ? 'White' : 'Black'
-	}
 }
 
 export default GameController

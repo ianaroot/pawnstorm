@@ -15,28 +15,32 @@
 
   <div class="editor-toolbar">
     <div class="toolbar-section">
-      <h3>Add Node</h3>
+      <div class="toolbar-section__heading">
+        <h3>Add Node</h3>
+        <button
+          type="button"
+          class="btn-guide"
+          data-action="click->bot-intro#open"
+          aria-controls="bot-intro-modal"
+          aria-haspopup="dialog">How it works</button>
+        <button type="button" class="btn-open-templates">Templates</button>
+      </div>
       <button type="button" class="btn-add-node" data-type="condition">+ Condition</button>
       <button type="button" class="btn-add-node" data-type="score">+ Score</button>
       <button type="button" class="btn-add-node" data-type="organizer">+ Organizer</button>
-      <button type="button" class="btn-open-templates">Templates</button>
-    </div>
-    
-    <div class="toolbar-section">
-      <h3>Tool</h3>
-      <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
-      <button
-        type="button"
-        class="btn-guide"
-        data-action="click->bot-intro#open"
-        aria-controls="bot-intro-modal"
-        aria-haspopup="dialog">How it works</button>
     </div>
 
     <div class="toolbar-section">
-      <h3>View</h3>
-      <button type="button" class="btn-toggle-preview-mode" aria-pressed="true"
-        title="Show condition previews as plain-language sentences or terse chunks (reopen a panel to apply)">Sentences: on</button>
+      <h3>Tool</h3>
+      <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
+    </div>
+
+    <div class="toolbar-section">
+      <div class="toolbar-section__heading">
+        <h3>View</h3>
+        <button type="button" class="btn-toggle-preview-mode" aria-pressed="true"
+          title="Show condition previews as plain-language sentences or terse chunks (reopen a panel to apply)">Sentences: on</button>
+      </div>
       <button type="button" id="zoom-out" class="btn-zoom">-</button>
       <span id="zoom-level">100%</span>
       <button type="button" id="zoom-in" class="btn-zoom">+</button>
@@ -52,7 +56,7 @@
       </button>
     </div>
 
-    <div class="toolbar-section toolbar-section--push-right toolbar-right-group">
+    <div class="toolbar-section toolbar-right-group">
       <div class="toolbar-right-group__top">
         <%= link_to 'compile bot',
             compile_bot_path(@bot),

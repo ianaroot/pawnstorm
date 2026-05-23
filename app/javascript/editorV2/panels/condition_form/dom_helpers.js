@@ -23,9 +23,13 @@ export function setPillChecked(inputs, value, numeric = false) {
   })
 }
 
-export function disableOptions(select, disallowedValues) {
-  Array.from(select.options).forEach(option => {
-    option.disabled = disallowedValues.includes(option.value)
+export function disableOptions(control, disallowedValues) {
+  if (!control) { return }
+  const choices = control.options
+    ? Array.from(control.options)
+    : Array.from(control.querySelectorAll('input[type="radio"]'))
+  choices.forEach(choice => {
+    choice.disabled = disallowedValues.includes(choice.value)
   })
 }
 

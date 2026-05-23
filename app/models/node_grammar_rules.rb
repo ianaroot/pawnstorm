@@ -9,16 +9,16 @@ class NodeGrammarRules
   }.freeze
 
   REGULAR_RELATIONAL_SUBJECTS = %w[
+    moved_piece
     allied
     enemy
-    moved_piece
     enemy_moved_piece
   ].freeze
 
   REGULAR_RELATIONAL_TARGETS = %w[
+    moved_piece
     allied
     enemy
-    moved_piece
     enemy_moved_piece
   ].freeze
 
@@ -122,7 +122,9 @@ class NodeGrammarRules
         'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
         'census' => {
           'regionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
-          'wholeBoardSubjects' => NodeGrammarV2::EDITOR_SUBJECTS,
+          # TEMPORARY: captured pieces live in census whole-board until they
+          # move to identity. Drop OFF_BOARD_SUBJECTS here once relocated.
+          'wholeBoardSubjects' => NodeGrammarV2::POSITION_SUBJECTS + NodeGrammarV2::OFF_BOARD_SUBJECTS,
           'operators' => NodeGrammarV2::POSITION_OPERATORS,
           'axes' => NodeGrammarV2::POSITION_AXES,
           'wholeBoardTargets' => NodeGrammarV2::UNARY_TARGETS
