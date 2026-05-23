@@ -97,8 +97,8 @@ class ConditionForm {
     const leftFilterMode = this.editorPanel.querySelector('#cond-left-filter-mode')
     const leftFilter = this.editorPanel.querySelector('#cond-left-filter')
     const leftComparisonMetric = this.editorPanel.querySelector('#cond-left-comparison-metric')
+    const leftComparisonMetricInputs = pillInputs(leftComparisonMetric)
     const leftComparator = this.editorPanel.querySelector('#cond-left-comparator')
-    const leftComparatorInputs = pillInputs(leftComparator)
     const leftComparisonSource = this.editorPanel.querySelector('#cond-left-comparison-source')
     const leftComparisonSourceTotal = this.editorPanel.querySelector('#cond-left-comparison-source-total')
     const relationalOperatorSelect = this.editorPanel.querySelector('#cond-relational-operator')
@@ -106,16 +106,16 @@ class ConditionForm {
     const rightFilterMode = this.editorPanel.querySelector('#cond-right-filter-mode')
     const rightFilter = this.editorPanel.querySelector('#cond-right-filter')
     const rightComparisonMetric = this.editorPanel.querySelector('#cond-right-comparison-metric')
+    const rightComparisonMetricInputs = pillInputs(rightComparisonMetric)
     const rightComparator = this.editorPanel.querySelector('#cond-right-comparator')
-    const rightComparatorInputs = pillInputs(rightComparator)
     const rightComparisonSource = this.editorPanel.querySelector('#cond-right-comparison-source')
     const rightComparisonSourceTotal = this.editorPanel.querySelector('#cond-right-comparison-source-total')
     const censusSubject = this.editorPanel.querySelector('#cond-census-subject')
     const censusFilterMode = this.editorPanel.querySelector('#cond-census-filter-mode')
     const censusFilter = this.editorPanel.querySelector('#cond-census-filter')
     const censusOperator = this.editorPanel.querySelector('#cond-census-operator')
+    const censusOperatorInputs = pillInputs(censusOperator)
     const censusComparator = this.editorPanel.querySelector('#cond-census-comparator')
-    const censusComparatorInputs = pillInputs(censusComparator)
     const censusTarget = this.editorPanel.querySelector('#cond-census-target')
     const censusTargetTotal = this.editorPanel.querySelector('#cond-census-target-total')
     const censusTargetFilter = this.editorPanel.querySelector('#cond-census-target-filter')
@@ -142,8 +142,8 @@ class ConditionForm {
       leftFilterMode,
       leftFilter,
       leftComparisonMetric,
+      leftComparisonMetricInputs,
       leftComparator,
-      leftComparatorInputs,
       leftComparisonSource,
       leftComparisonSourceTotal,
       relationalOperatorSelect,
@@ -151,16 +151,16 @@ class ConditionForm {
       rightFilterMode,
       rightFilter,
       rightComparisonMetric,
+      rightComparisonMetricInputs,
       rightComparator,
-      rightComparatorInputs,
       rightComparisonSource,
       rightComparisonSourceTotal,
       censusSubject,
       censusFilterMode,
       censusFilter,
       censusOperator,
+      censusOperatorInputs,
       censusComparator,
-      censusComparatorInputs,
       censusTarget,
       censusTargetTotal,
       censusTargetFilter,
@@ -214,11 +214,12 @@ class ConditionForm {
       censusScope: this.editorPanel.querySelector('#cond-census-scope'),
       censusSquareInputs: this.editorPanel.querySelector('#cond-census-square-inputs'),
       censusRegionTarget: this.editorPanel.querySelector('#cond-census-region-target'),
+      censusRankNote: this.editorPanel.querySelector('#cond-census-rank-note'),
       all: [
-        leftSubject, leftFilterMode, leftFilter, leftComparisonMetric, ...leftComparatorInputs, leftComparisonSource,
+        leftSubject, leftFilterMode, leftFilter, ...leftComparisonMetricInputs, leftComparator, leftComparisonSource,
         relationalOperatorSelect,
-        rightSubject, rightFilterMode, rightFilter, rightComparisonMetric, ...rightComparatorInputs, rightComparisonSource,
-        censusSubject, censusFilterMode, censusFilter, censusOperator, ...censusComparatorInputs,
+        rightSubject, rightFilterMode, rightFilter, ...rightComparisonMetricInputs, rightComparator, rightComparisonSource,
+        censusSubject, censusFilterMode, censusFilter, ...censusOperatorInputs, censusComparator,
         censusTarget, censusTargetFilter, censusTargetFilterMode,
         censusScopeWhole, censusAxisRank, censusAxisFile, censusAxisSquare, ...censusRegionComparatorInputs,
         ...censusRankInputs, ...censusFileInputs, ...censusSquareFileInputs, ...censusSquareRankInputs,

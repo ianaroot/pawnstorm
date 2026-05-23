@@ -1261,6 +1261,13 @@
   border-top: none;
 }
 
+.condition-form-radio-row input[type="radio"]:not(:checked) + span,
+.condition-form-scope-toggle input[type="radio"]:not(:checked) + span,
+.condition-form-radio-list input[type="radio"]:not(:checked) + span,
+.condition-form-comparator-toggle input[type="radio"]:not(:checked) + span {
+  color: #6b7280;
+}
+
 .condition-form-radio-row input[type="radio"]:not(:checked) + span:hover,
 .condition-form-scope-toggle input[type="radio"]:not(:checked) + span:hover,
 .condition-form-radio-list input[type="radio"]:not(:checked) + span:hover,
@@ -1273,7 +1280,7 @@
 .condition-form-radio-list input[type="radio"]:checked + span,
 .condition-form-comparator-toggle input[type="radio"]:checked + span {
   background: #A855F7;
-  color: #1a1815;
+  color: #fff;
   font-weight: 700;
 }
 
@@ -1281,8 +1288,12 @@
   pointer-events: none;
 }
 
-.condition-form-comparator-toggle--locked label:not(:first-child) {
+.condition-form-comparator-toggle--locked label:not(:has(input[value="equal_to"])) {
   display: none;
+}
+
+.condition-form-comparator-toggle--locked label:has(input[value="equal_to"]) span {
+  border-top: none;
 }
 
 .condition-form-scope-toggle span {
@@ -1322,6 +1333,14 @@
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: 4px;
+}
+
+/* Center the metric/operator pills + comparator so the middle of the pill
+   group lines up with the comparator. */
+#cond-left-comparison-body .condition-form-comparison-grid,
+#cond-right-comparison-body .condition-form-comparison-grid,
+#cond-census-comparison-body .condition-form-comparison-grid {
+  align-items: center;
 }
 
 .condition-form-comparison-grid--relational select {
@@ -1443,18 +1462,16 @@
 .condition-form-comparison__body {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #3d3a35;
 }
 
-#cond-census-comparison {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #3d3a35;
+.condition-form-comparison {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #3d3a35;
 }
 
 #cond-census-comparison .condition-form-comparison__body {
   padding-top: 0;
-  border-top: none;
 }
 
 #cond-census-target-filter-row {
@@ -1566,7 +1583,7 @@
 
 .condition-form-position-layout__note {
   grid-column: 1 / -1;
-  margin-top: 0;
+  margin: 0;
 }
 
 
@@ -1578,6 +1595,10 @@
   text-align: center;
 }
 
+.condition-form-formulation {
+  margin-top: 12px;
+}
+
 .condition-form-formulation label {
   display: block;
   margin-bottom: 6px;
@@ -1586,15 +1607,21 @@
 }
 
 .condition-form-formulation__text {
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: #14120f;
   border: 1px solid #3d3a35;
   border-radius: 8px;
-  color: #E5E5E5;
-  font-size: 12px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.45;
   white-space: pre-wrap;
+  text-decoration: underline;
+  text-decoration-color: #d8c160;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
+
 
 .condition-preview__chunk--spacer {
   font-size: 0;

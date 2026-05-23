@@ -1,7 +1,7 @@
 class NodeForm
   SUBJECT_LABELS = {
-    'allied' => 'Allied',
-    'enemy' => 'Enemy',
+    'allied' => 'My Pieces',
+    'enemy' => 'Enemy Pieces',
     'moved_piece' => 'Moved Piece',
     'captured_piece' => 'Captured Piece',
     'enemy_moved_piece' => 'Enemy Moved Piece',
@@ -44,6 +44,14 @@ class NodeForm
     'less_than' => '<'
   }.freeze
 
+  COMPARATOR_OPTIONS = [
+    ['greater than', 'greater_than'],
+    ['at least', 'greater_than_or_equal_to'],
+    ['equals', 'equal_to'],
+    ['at most', 'less_than_or_equal_to'],
+    ['less than', 'less_than']
+  ].freeze
+
   COMPARISON_SOURCE_LABELS = {
     'moved_piece' => 'Moved Piece',
     'captured_piece' => 'Captured Piece',
@@ -64,6 +72,14 @@ class NodeForm
 
     def editor_subject_options
       NodeGrammarV2::EDITOR_SUBJECTS.map { |value| [subject_label(value), value] }
+    end
+
+    def relational_subject_options
+      NodeGrammarRules::REGULAR_RELATIONAL_SUBJECTS.map { |value| [subject_label(value), value] }
+    end
+
+    def relational_target_options
+      NodeGrammarRules::REGULAR_RELATIONAL_TARGETS.map { |value| [subject_label(value), value] }
     end
 
     def filter_options
@@ -95,7 +111,9 @@ class NodeForm
     end
 
     def comparison_source_options
-      NodeGrammarV2::COMPARISON_SOURCES.reject { |value| value == NodeGrammarV2::EXACT_COMPARISON_SOURCE }.map { |value| [comparison_source_label(value), value] }
+      ordered = [NodeGrammarV2::PRIOR_BOARD_COMPARISON_SOURCE] +
+                (NodeGrammarV2::COMPARISON_SOURCES - [NodeGrammarV2::EXACT_COMPARISON_SOURCE, NodeGrammarV2::PRIOR_BOARD_COMPARISON_SOURCE])
+      ordered.map { |value| [comparison_source_label(value), value] }
     end
 
     def unary_target_options

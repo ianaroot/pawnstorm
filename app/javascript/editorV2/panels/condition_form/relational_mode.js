@@ -90,16 +90,16 @@ export default class RelationalMode {
     rel.left.subject = fields.leftSubject?.value || 'allied'
     rel.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
     rel.left.filter = fields.leftFilter?.value || 'any'
-    rel.left.comparisonMetric = fields.leftComparisonMetric?.value || ''
-    rel.left.comparator = pillValue(fields.leftComparatorInputs) || 'equal_to'
+    rel.left.comparisonMetric = pillValue(fields.leftComparisonMetricInputs) || ''
+    rel.left.comparator = fields.leftComparator?.value || 'equal_to'
     rel.left.comparisonSource = fields.leftComparisonSource?.value || 'exact_number'
     rel.left.comparisonSourceTotal = Number(fields.leftComparisonSourceTotal?.value || 1)
     rel.operator = fields.relationalOperatorSelect?.value || 'targets'
     rel.right.subject = fields.rightSubject?.value || 'enemy'
     rel.right.filterMode = fields.rightFilterMode?.checked ? 'exclude' : 'include'
     rel.right.filter = fields.rightFilter?.value || 'any'
-    rel.right.comparisonMetric = fields.rightComparisonMetric?.value || ''
-    rel.right.comparator = pillValue(fields.rightComparatorInputs) || 'equal_to'
+    rel.right.comparisonMetric = pillValue(fields.rightComparisonMetricInputs) || ''
+    rel.right.comparator = fields.rightComparator?.value || 'equal_to'
     rel.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
     rel.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
   }
@@ -170,16 +170,16 @@ export default class RelationalMode {
     if (fields.leftSubject) fields.leftSubject.value = rel.left.subject
     if (fields.leftFilterMode) fields.leftFilterMode.checked = leftFilterModeAvailable && rel.left.filterMode === 'exclude'
     if (fields.leftFilter) fields.leftFilter.value = rel.left.filter
-    if (fields.leftComparisonMetric) fields.leftComparisonMetric.value = rel.left.comparisonMetric || 'count'
-    setPillChecked(fields.leftComparatorInputs, rel.left.comparator)
+    setPillChecked(fields.leftComparisonMetricInputs, rel.left.comparisonMetric || 'count')
+    if (fields.leftComparator) fields.leftComparator.value = rel.left.comparator
     if (fields.leftComparisonSource) fields.leftComparisonSource.value = rel.left.comparisonSource
     if (fields.leftComparisonSourceTotal) fields.leftComparisonSourceTotal.value = rel.left.comparisonSourceTotal
 
     if (fields.rightSubject) fields.rightSubject.value = rel.right.subject
     if (fields.rightFilterMode) fields.rightFilterMode.checked = rightFilterModeAvailable && rel.right.filterMode === 'exclude'
     if (fields.rightFilter) fields.rightFilter.value = rel.right.filter
-    if (fields.rightComparisonMetric) fields.rightComparisonMetric.value = rel.right.comparisonMetric || 'count'
-    setPillChecked(fields.rightComparatorInputs, rel.right.comparator)
+    setPillChecked(fields.rightComparisonMetricInputs, rel.right.comparisonMetric || 'count')
+    if (fields.rightComparator) fields.rightComparator.value = rel.right.comparator
     if (fields.rightComparisonSource) fields.rightComparisonSource.value = rel.right.comparisonSource
     if (fields.rightComparisonSourceTotal) fields.rightComparisonSourceTotal.value = rel.right.comparisonSourceTotal
 
@@ -351,17 +351,15 @@ export default class RelationalMode {
   }
 
   setComparisonInputsDisabled(side, fields, disabled) {
-    const metricKey = side === 'left' ? 'leftComparisonMetric' : 'rightComparisonMetric'
+    const metricInputsKey = side === 'left' ? 'leftComparisonMetricInputs' : 'rightComparisonMetricInputs'
     const comparatorKey = side === 'left' ? 'leftComparator' : 'rightComparator'
-    const comparatorInputsKey = side === 'left' ? 'leftComparatorInputs' : 'rightComparatorInputs'
     const sourceKey = side === 'left' ? 'leftComparisonSource' : 'rightComparisonSource'
     const sourceTotalKey = side === 'left' ? 'leftComparisonSourceTotal' : 'rightComparisonSourceTotal'
 
-    fields[metricKey].disabled = disabled
+    fields[metricInputsKey]?.forEach(input => { input.disabled = disabled })
     fields[sourceKey].disabled = disabled
     fields[sourceTotalKey].disabled = disabled
-    fields[comparatorInputsKey]?.forEach(input => { input.disabled = disabled })
-    fields[comparatorKey]?.classList.toggle('condition-form-radio-row--disabled', disabled)
+    fields[comparatorKey].disabled = disabled
   }
 
   disableComparisonSourceOptions(rel, fields) {

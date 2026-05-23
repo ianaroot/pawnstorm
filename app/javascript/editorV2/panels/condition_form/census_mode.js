@@ -85,8 +85,8 @@ export default class CensusMode {
     cen.regionFileTarget = Number(pillValue(fields.censusFileInputs) || 1)
     cen.regionSquareFile = Number(pillValue(fields.censusSquareFileInputs) || 1)
     cen.regionSquareRank = Number(pillValue(fields.censusSquareRankInputs) || 1)
-    cen.operator = fields.censusOperator?.value || 'count'
-    cen.comparator = pillValue(fields.censusComparatorInputs) || 'greater_than'
+    cen.operator = pillValue(fields.censusOperatorInputs) || 'count'
+    cen.comparator = fields.censusComparator?.value || 'greater_than'
     cen.target = fields.censusTarget?.value || 'exact_number'
     cen.targetFilter = fields.censusTargetFilter?.value || 'any'
     cen.targetFilterMode = fields.censusTargetFilterMode?.checked ? 'exclude' : 'include'
@@ -148,8 +148,8 @@ export default class CensusMode {
     setPillChecked(fields.censusFileInputs, cen.regionFileTarget, true)
     setPillChecked(fields.censusSquareFileInputs, cen.regionSquareFile, true)
     setPillChecked(fields.censusSquareRankInputs, cen.regionSquareRank, true)
-    if (fields.censusOperator) fields.censusOperator.value = cen.operator
-    setPillChecked(fields.censusComparatorInputs, cen.comparator)
+    setPillChecked(fields.censusOperatorInputs, cen.operator)
+    if (fields.censusComparator) fields.censusComparator.value = cen.comparator
     if (fields.censusTarget) fields.censusTarget.value = cen.target
     if (fields.censusTargetTotal) fields.censusTargetTotal.value = cen.targetTotal
     if (fields.censusTargetFilter) fields.censusTargetFilter.value = cen.targetFilter
@@ -159,6 +159,7 @@ export default class CensusMode {
     fields.censusRegionComparator?.classList.toggle('condition-form-comparator-toggle--locked', isSquare)
     fields.censusRegionTarget?.classList.toggle('hidden', false)
     fields.censusRankInput?.classList.toggle('hidden', !region || isSquare || cen.regionAxis === 'file')
+    fields.censusRankNote?.classList.toggle('hidden', !region || isSquare || cen.regionAxis === 'file')
     fields.censusFileInput?.classList.toggle('hidden', !region || isSquare || cen.regionAxis === 'rank')
     fields.censusSquareInputs?.classList.toggle('hidden', region && !isSquare)
     fields.censusSquareInputs?.classList.toggle('condition-form-radio-list--disabled', !region)

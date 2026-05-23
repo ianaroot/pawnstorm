@@ -19,7 +19,7 @@ const identityTargetOptions = ['captured_piece', 'enemy_moved_piece']
   .map(value => option(value))
   .join('')
 const censusOperatorOptions = ['count', 'mobility', 'value']
-  .map(value => option(value))
+  .map((value, i) => `<label class="condition-form-checkbox"><input type="radio" name="cond-census-operator" value="${value}"${i === 0 ? ' checked' : ''}><span>${value}</span></label>`)
   .join('')
 const censusTargetOptions = ['exact_number', 'allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece', 'prior_board_state']
   .map(value => option(value))
@@ -45,12 +45,17 @@ function buildPanel() {
         <span>Non-</span>
       </label>
       <select id="cond-left-filter">${option('any')}${option('pawn')}${option('rook')}</select>
-      <select id="cond-left-comparison-metric">${option('count')}</select>
-      <div id="cond-left-comparator">
-        <label class="condition-form-checkbox"><input type="radio" name="cond-left-comparator" value="equal_to" checked><span>=</span></label>
-        <label class="condition-form-checkbox"><input type="radio" name="cond-left-comparator" value="greater_than"><span>></span></label>
-        <label class="condition-form-checkbox"><input type="radio" name="cond-left-comparator" value="less_than"><span><</span></label>
+      <div id="cond-left-comparison-metric">
+        <label class="condition-form-checkbox"><input type="radio" name="cond-left-comparison-metric" value="count" checked><span>Count</span></label>
+        <label class="condition-form-checkbox"><input type="radio" name="cond-left-comparison-metric" value="individual_value"><span>Value</span></label>
       </div>
+      <select id="cond-left-comparator">
+        <option value="equal_to">equal to</option>
+        <option value="greater_than">greater than</option>
+        <option value="less_than">less than</option>
+        <option value="greater_than_or_equal_to">at least</option>
+        <option value="less_than_or_equal_to">at most</option>
+      </select>
       <div id="cond-left-comparison-section" class="condition-form-comparison">
         <button type="button" id="cond-left-comparison-toggle"></button>
         <div id="cond-left-comparison-body" class="hidden"></div>
@@ -71,12 +76,17 @@ function buildPanel() {
         <span>Non-</span>
       </label>
       <select id="cond-right-filter">${option('any')}${option('pawn')}${option('rook')}</select>
-      <select id="cond-right-comparison-metric">${option('count')}</select>
-      <div id="cond-right-comparator">
-        <label class="condition-form-checkbox"><input type="radio" name="cond-right-comparator" value="equal_to" checked><span>=</span></label>
-        <label class="condition-form-checkbox"><input type="radio" name="cond-right-comparator" value="greater_than"><span>></span></label>
-        <label class="condition-form-checkbox"><input type="radio" name="cond-right-comparator" value="less_than"><span><</span></label>
+      <div id="cond-right-comparison-metric">
+        <label class="condition-form-checkbox"><input type="radio" name="cond-right-comparison-metric" value="count" checked><span>Count</span></label>
+        <label class="condition-form-checkbox"><input type="radio" name="cond-right-comparison-metric" value="individual_value"><span>Value</span></label>
       </div>
+      <select id="cond-right-comparator">
+        <option value="equal_to">equal to</option>
+        <option value="greater_than">greater than</option>
+        <option value="less_than">less than</option>
+        <option value="greater_than_or_equal_to">at least</option>
+        <option value="less_than_or_equal_to">at most</option>
+      </select>
       <div id="cond-right-comparison-section" class="condition-form-comparison">
         <button type="button" id="cond-right-comparison-toggle"></button>
         <div id="cond-right-comparison-body" class="hidden"></div>
@@ -108,12 +118,14 @@ function buildPanel() {
       <div id="cond-census-comparison" class="condition-form-comparison">
         <button type="button" id="cond-census-comparison-toggle"></button>
         <div id="cond-census-comparison-body" class="hidden">
-          <select id="cond-census-operator">${censusOperatorOptions}</select>
-          <div id="cond-census-comparator">
-            <label class="condition-form-checkbox"><input type="radio" name="cond-census-comparator" value="equal_to" checked><span>=</span></label>
-            <label class="condition-form-checkbox"><input type="radio" name="cond-census-comparator" value="greater_than"><span>></span></label>
-            <label class="condition-form-checkbox"><input type="radio" name="cond-census-comparator" value="less_than"><span><</span></label>
-          </div>
+          <div id="cond-census-operator">${censusOperatorOptions}</div>
+          <select id="cond-census-comparator">
+            <option value="equal_to">equal to</option>
+            <option value="greater_than">greater than</option>
+            <option value="less_than">less than</option>
+            <option value="greater_than_or_equal_to">at least</option>
+            <option value="less_than_or_equal_to">at most</option>
+          </select>
           <div id="cond-census-target-stack" class="condition-form-comparison-source-stack">
             <select id="cond-census-target">${censusTargetOptions}</select>
             <div id="cond-census-target-filter-row">
@@ -160,6 +172,7 @@ function buildPanel() {
           <div id="cond-census-square-rank">${radioList('cond-census-square-rank')}</div>
         </div>
       </section>
+      <p id="cond-census-rank-note" class="hidden"></p>
     </div>
 
     <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
@@ -577,6 +590,7 @@ describe('ConditionForm', () => {
 
     expect(panel.querySelector('#cond-census-axis-rank').checked).toBe(true)
     expect(panel.querySelector('#cond-census-region-target').classList.contains('hidden')).toBe(false)
+    expect(panel.querySelector('#cond-census-rank-note').classList.contains('hidden')).toBe(false)
 
     expect(form.buildPayload()).toEqual({
       version: 2,
@@ -614,6 +628,7 @@ describe('ConditionForm', () => {
 
     expect(panel.querySelector('#cond-census-comparison-toggle').textContent).toBe('+ Advanced options')
     expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-census-rank-note').classList.contains('hidden')).toBe(true)
 
     const targetSelect = panel.querySelector('#cond-census-target')
     targetSelect.value = 'prior_board_state'
@@ -794,7 +809,7 @@ describe('ConditionForm', () => {
     expect(form.buildPayload().target).toBe('enemy')
   })
 
-  it('round-trips a non-default relational comparator through the pill', () => {
+  it('round-trips a non-default relational comparator through the dropdown', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -813,7 +828,7 @@ describe('ConditionForm', () => {
       targetFilter: 'any'
     })
 
-    expect(panel.querySelector('#cond-left-comparator input[value="greater_than"]').checked).toBe(true)
+    expect(panel.querySelector('#cond-left-comparator').value).toBe('greater_than')
     expect(form.buildPayload().subjectComparator).toBe('greater_than')
   })
 
