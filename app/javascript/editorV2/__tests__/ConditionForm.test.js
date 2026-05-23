@@ -6,7 +6,10 @@ function option(value, label = value) {
   return `<option value="${value}">${label}</option>`
 }
 
-const subjectOptions = ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
+const relationalSubjectOptions = ['moved_piece', 'allied', 'enemy', 'enemy_moved_piece']
+  .map(value => option(value))
+  .join('')
+const censusSubjectOptions = ['moved_piece', 'allied', 'enemy', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
 const relationalOperatorOptions = ['targets', 'shield', 'adjacent']
@@ -21,7 +24,7 @@ const identityTargetOptions = ['captured_piece', 'enemy_moved_piece']
 const censusOperatorOptions = ['count', 'mobility', 'value']
   .map((value, i) => `<label class="condition-form-checkbox"><input type="radio" name="cond-census-operator" value="${value}"${i === 0 ? ' checked' : ''}><span>${value}</span></label>`)
   .join('')
-const censusTargetOptions = ['exact_number', 'allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece', 'prior_board_state']
+const censusTargetOptions = ['exact_number', 'prior_board_state', 'moved_piece', 'allied', 'enemy', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
 function radioList(name) {
@@ -39,7 +42,7 @@ function buildPanel() {
     <button type="button" id="cond-mode-identity">Identity</button>
 
     <div class="condition-form-layout">
-      <select id="cond-left-subject">${subjectOptions}</select>
+      <select id="cond-left-subject">${relationalSubjectOptions}</select>
       <label class="condition-form-checkbox">
         <input id="cond-left-filter-mode" type="checkbox">
         <span>Non-</span>
@@ -70,7 +73,7 @@ function buildPanel() {
 
       <select id="cond-relational-operator">${relationalOperatorOptions}</select>
 
-      <select id="cond-right-subject">${subjectOptions}</select>
+      <select id="cond-right-subject">${relationalSubjectOptions}</select>
       <label class="condition-form-checkbox">
         <input id="cond-right-filter-mode" type="checkbox">
         <span>Non-</span>
@@ -107,7 +110,7 @@ function buildPanel() {
     </div>
 
     <div class="condition-form-layout condition-form-position-layout hidden" id="cond-census-layout">
-      <select id="cond-census-subject">${subjectOptions}</select>
+      <select id="cond-census-subject">${censusSubjectOptions}</select>
       <div id="cond-census-filter-row">
         <label class="condition-form-checkbox">
           <input id="cond-census-filter-mode" type="checkbox">
@@ -337,7 +340,7 @@ describe('ConditionForm', () => {
     expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="allied"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(false)
-    expect(rightSubject.querySelector('option[value="captured_piece"]').disabled).toBe(true)
+    expect(rightSubject.querySelector('option[value="captured_piece"]')).toBeNull()
   })
 
   it('translates targets operator to defend when subject and target are same team', () => {
@@ -407,7 +410,7 @@ describe('ConditionForm', () => {
     expect(rightSubject.querySelector('option[value="enemy"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="moved_piece"]').disabled).toBe(false)
     expect(rightSubject.querySelector('option[value="enemy_moved_piece"]').disabled).toBe(false)
-    expect(rightSubject.querySelector('option[value="captured_piece"]').disabled).toBe(true)
+    expect(rightSubject.querySelector('option[value="captured_piece"]')).toBeNull()
   })
 
   it('uses rendered grammar config for shield target scoping', () => {

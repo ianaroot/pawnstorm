@@ -125,4 +125,26 @@ describe('MatchReplayController', () => {
     expect(play.classList.contains('replay-control--hint')).toBe(false)
     expect(forward.classList.contains('replay-control--hint')).toBe(false)
   })
+
+  it('flips the board to the viewer when they own the black bot', () => {
+    const root = buildRoot({ finalLayout: Layout.default(), movementNotation: [] })
+    root.dataset.blackBotOwnerId = '1'
+    root.dataset.whiteName = 'Alice'
+    root.dataset.blackName = 'Bob'
+    document.body.appendChild(root)
+
+    const controller = new MatchReplayController({ rootElement: root })
+    root.insertAdjacentHTML('beforeend', `
+      <div id="arena">
+        <div class="board-player-name" data-board-name="top"></div>
+        <table id="chess-board"></table>
+        <div class="board-player-name" data-board-name="bottom"></div>
+      </div>
+    `)
+    controller.applyOrientation()
+
+    expect(root.querySelector('#chess-board').classList.contains('flipped')).toBe(true)
+    expect(root.querySelector('[data-board-name="bottom"]').textContent).toBe('Bob')
+    expect(root.querySelector('[data-board-name="bottom"]').dataset.team).toBe('B')
+  })
 })
