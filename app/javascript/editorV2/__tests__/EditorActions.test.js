@@ -611,13 +611,9 @@ describe('EditorActions', () => {
   describe('preview', () => {
     let boardStatePreview
     let editorPanel
-    let formText
 
     beforeEach(() => {
       editorPanel = document.createElement('div')
-      formText = document.createElement('div')
-      formText.className = 'condition-form-formulation__text'
-      editorPanel.appendChild(formText)
       clickHandler.editorPanel = editorPanel
 
       boardStatePreview = {
@@ -639,11 +635,6 @@ describe('EditorActions', () => {
         editorActions.activateConditionPreview(conditionForm)
         expect(boardStatePreview.activate).toHaveBeenCalledWith(conditionForm)
       })
-
-      it('hides the formulation text', () => {
-        editorActions.activateConditionPreview({})
-        expect(formText.classList.contains('hidden')).toBe(true)
-      })
     })
 
     describe('deactivatePreview', () => {
@@ -651,36 +642,17 @@ describe('EditorActions', () => {
         editorActions.deactivatePreview()
         expect(boardStatePreview.deactivate).toHaveBeenCalled()
       })
-
-      it('shows the formulation text', () => {
-        formText.classList.add('hidden')
-        editorActions.deactivatePreview()
-        expect(formText.classList.contains('hidden')).toBe(false)
-      })
     })
 
     describe('togglePreview', () => {
-      it('toggles an active preview off and shows the formulation text', () => {
+      it('toggles an active preview off', () => {
         boardStatePreview.isEnabled = true
         boardStatePreview.mode = 'form'
         boardStatePreview.toggle.mockImplementation(() => { boardStatePreview.isEnabled = false })
-        formText.classList.add('hidden')
 
         editorActions.togglePreview()
 
         expect(boardStatePreview.toggle).toHaveBeenCalled()
-        expect(formText.classList.contains('hidden')).toBe(false)
-      })
-
-      it('does not show formulation text when toggling back on', () => {
-        boardStatePreview.isEnabled = true
-        boardStatePreview.mode = 'form'
-        boardStatePreview.toggle.mockImplementation(() => { boardStatePreview.isEnabled = true })
-        formText.classList.add('hidden')
-
-        editorActions.togglePreview()
-
-        expect(formText.classList.contains('hidden')).toBe(true)
       })
 
       it('enables preview and calls renderSelectionPreview when multiple nodes are selected', () => {
@@ -691,7 +663,6 @@ describe('EditorActions', () => {
         editorActions.togglePreview()
 
         expect(boardStatePreview.isEnabled).toBe(true)
-        expect(formText.classList.contains('hidden')).toBe(true)
         expect(editorActions.renderSelectionPreview).toHaveBeenCalled()
       })
 

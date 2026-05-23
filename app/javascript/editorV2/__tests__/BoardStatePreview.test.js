@@ -179,6 +179,14 @@ describe('BoardStatePreview', () => {
 
       expect(preview.content.querySelector('.board-state-preview__chain')).toBeNull()
     })
+
+    it('does not append a chain in form mode (the sentence is shown in the form instead)', () => {
+      preview.mode = 'form'
+      preview.conditionLabels = [[{ text: 'White pawn advances' }]]
+      preview._appendChain()
+
+      expect(preview.content.querySelector('.board-state-preview__chain')).toBeNull()
+    })
   })
 
   // ── _update ────────────────────────────────────────────────────────────────

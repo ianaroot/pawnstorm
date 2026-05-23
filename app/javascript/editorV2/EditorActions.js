@@ -85,10 +85,8 @@ class EditorActions {
   togglePreview() {
     if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
       this.boardStatePreview.toggle()
-      if (!this.boardStatePreview.isEnabled) { this._showFormulationText() }
     } else if (this.store.getSelectedNodeIds().length > 1) {
       this.boardStatePreview.isEnabled = true
-      this._hideFormulationText()
       this.renderSelectionPreview()
     } else if (this.clickHandler?.getEditingNodeId() && this.clickHandler?.conditionForm) {
       this.activateConditionPreview(this.clickHandler.conditionForm)
@@ -97,20 +95,10 @@ class EditorActions {
 
   activateConditionPreview(conditionForm) {
     this.boardStatePreview?.activate(conditionForm)
-    this._hideFormulationText()
   }
 
   deactivatePreview() {
     this.boardStatePreview?.deactivate()
-    this._showFormulationText()
-  }
-
-  _hideFormulationText() {
-    this.clickHandler?.editorPanel?.querySelector('.condition-form-formulation__text')?.classList.add('hidden')
-  }
-
-  _showFormulationText() {
-    this.clickHandler?.editorPanel?.querySelector('.condition-form-formulation__text')?.classList.remove('hidden')
   }
 
   async save() {
