@@ -2,7 +2,7 @@
   <%= form_with url: human_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
     <%= form.hidden_field :bot_id, value: rematch_options.human_vs_bot_params[:bot_id] %>
     <%= form.hidden_field :human_color, value: rematch_options.human_vs_bot_params[:human_color] %>
-    <%= form.submit 'Play Again' %>
+    <%= form.submit 'Play Again', class: 'btn-rematch' %>
   <% end %>
 <% elsif rematch_options.human_vs_bot_unavailable_message.present? %>
   <p class="match-show-meta-item"><%= rematch_options.human_vs_bot_unavailable_message %></p>
@@ -10,6 +10,6 @@
   <%= form_with url: bot_vs_bot_matches_path, scope: :match, method: :post, local: true do |form| %>
     <%= form.hidden_field :own_bot_id, value: rematch_options.bot_vs_bot_params[:own_bot_id] %>
     <%= form.hidden_field :opponent_bot_id, value: rematch_options.bot_vs_bot_params[:opponent_bot_id] %>
-    <%= form.submit 'Rematch' %>
+    <%= form.submit 'Rematch', class: 'btn-rematch' %>
   <% end %>
 <% end %>

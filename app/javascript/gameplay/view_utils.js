@@ -71,8 +71,10 @@ export function renderBoardPieces(board) {
 
 export function updateTeamAllowedToMove(board) {
   const span = document.getElementById("team-allowed-to-move")
-  if (!span) { return }
-  span.innerText = board.allowedToMove
+  if (span) { span.innerText = board.allowedToMove }
+  document.querySelectorAll(".board-player-name").forEach(label => {
+    label.classList.toggle("board-player-name--active", label.dataset.team === board.allowedToMove)
+  })
 }
 
 export function updateCaptures(board) {

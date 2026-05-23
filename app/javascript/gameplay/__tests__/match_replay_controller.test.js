@@ -108,4 +108,21 @@ describe('MatchReplayController', () => {
     const botInspection = controller.inspectionContextForBoard(botBoard)
     expect(botInspection.unavailableMessage).toBe("condition trace unavailable for other players' bots")
   })
+
+  it('hints the play and forward buttons until forward or play is used', () => {
+    const root = buildRoot({ finalLayout: Layout.default(), movementNotation: [] })
+    document.body.appendChild(root)
+
+    new MatchReplayController({ rootElement: root })
+    const play = root.querySelector('[data-match-replay-target="play-button"]')
+    const forward = root.querySelector('[data-match-replay-target="forward-button"]')
+
+    expect(play.classList.contains('replay-control--hint')).toBe(true)
+    expect(forward.classList.contains('replay-control--hint')).toBe(true)
+
+    forward.dispatchEvent(new Event('click'))
+
+    expect(play.classList.contains('replay-control--hint')).toBe(false)
+    expect(forward.classList.contains('replay-control--hint')).toBe(false)
+  })
 })

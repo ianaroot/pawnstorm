@@ -4,6 +4,7 @@ import NotationResolver from "gameplay/notation_resolver"
 import ReplayMoveInspector from "gameplay/replay_move_inspector"
 import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
 import { cloneRecentMoveContext } from "gameplay/recent_move_context"
+import { applyBoardOrientation } from "gameplay/board_orientation"
 import Sound from "gameplay/sound"
 
 class MatchReplayController {
@@ -23,10 +24,10 @@ class MatchReplayController {
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.boardElement = rootElement.querySelector('#chess-board')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
-    this.playButton?.addEventListener('click', () => this.togglePlayback(1))
+    this.playButton?.addEventListener('click', () => { this.clearControlHints(); this.togglePlayback(1) })
     this.reverseButton?.addEventListener('click', () => this.togglePlayback(-1))
     this.backButton?.addEventListener('click', this.stepBackwardOnce.bind(this))
-    this.forwardButton?.addEventListener('click', this.stepForwardOnce.bind(this))
+    this.forwardButton?.addEventListener('click', () => { this.clearControlHints(); this.stepForwardOnce() })
     this.startButton?.addEventListener('click', this.jumpToStart.bind(this))
     this.topMovesToggle?.addEventListener('click', this.toggleTopMoveHighlights.bind(this))
     this.notationElement?.addEventListener('click', this.jumpToNotationMove.bind(this))
@@ -35,6 +36,8 @@ class MatchReplayController {
     this.speedButtons.forEach(button => {
       button.addEventListener('click', () => this.setSpeed(Number(button.dataset.speedMultiplier)))
     })
+    this.playButton?.classList.add('replay-control--hint')
+    this.forwardButton?.classList.add('replay-control--hint')
 
     this.intervalId = null
     this.isPlaying = false
@@ -60,7 +63,25 @@ class MatchReplayController {
     this.selectedStartPosition = null
     this.inspectedMoveKey = null
     this.muteTopMoveHighlights = false
+    this.applyOrientation()
     this.renderCurrentFrame()
+  }
+
+  clearControlHints() {
+    this.playButton?.classList.remove('replay-control--hint')
+    this.forwardButton?.classList.remove('replay-control--hint')
+  }
+
+  applyOrientation() {
+    const viewerOwnsBlackBot =
+      Number.isInteger(this.currentUserId) &&
+      this.blackBotOwnerId !== null &&
+      this.currentUserId === this.blackBotOwnerId
+    applyBoardOrientation(this.rootElement.querySelector('#arena'), {
+      flipped: viewerOwnsBlackBot,
+      whiteName: this.rootElement.dataset.whiteName,
+      blackName: this.rootElement.dataset.blackName
+    })
   }
 
   parseCompiledProgramSnapshot(snapshotJson) {
