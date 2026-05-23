@@ -34,11 +34,7 @@
                   <% end %>
                 </div>
 
-                <select id="cond-left-comparator">
-                  <% NodeForm::COMPARATOR_OPTIONS.each do |label, value| %>
-                    <option value="<%= value %>"><%= label %></option>
-                  <% end %>
-                </select>
+                <select id="cond-left-comparator"><%= options_for_select(NodeForm::COMPARATOR_OPTIONS) %></select>
 
                 <div class="condition-form-comparison-source-stack" id="cond-left-comparison-source-stack">
                   <select id="cond-left-comparison-source">
@@ -106,11 +102,7 @@
                     <% end %>
                   </div>
 
-                  <select id="cond-right-comparator">
-                    <% NodeForm::COMPARATOR_OPTIONS.each do |label, value| %>
-                      <option value="<%= value %>"><%= label %></option>
-                    <% end %>
-                  </select>
+                  <select id="cond-right-comparator"><%= options_for_select(NodeForm::COMPARATOR_OPTIONS) %></select>
 
                   <div class="condition-form-comparison-source-stack" id="cond-right-comparison-source-stack">
                     <select id="cond-right-comparison-source">
@@ -173,11 +165,7 @@
                   <% end %>
                 </div>
 
-                <select id="cond-census-comparator">
-                  <% NodeForm::COMPARATOR_OPTIONS.each do |label, value| %>
-                    <option value="<%= value %>"><%= label %></option>
-                  <% end %>
-                </select>
+                <select id="cond-census-comparator"><%= options_for_select(NodeForm::COMPARATOR_OPTIONS) %></select>
 
                 <div class="condition-form-comparison-source-stack" id="cond-census-target-stack">
                   <select id="cond-census-target">

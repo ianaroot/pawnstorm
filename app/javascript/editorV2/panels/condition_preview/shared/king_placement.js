@@ -298,7 +298,7 @@ function commitMovedPieceTo(ctx, species, position) {
 // from an L-distance square BK can't capture.
 function placeSmotherMate({ pieces, team, ctx, random }) {
   const enemyTeam = Board.opposingTeam(team)
-  const corners = team === Board.BLACK ? shuffled([56, 63], random) : shuffled([0, 7], random)
+  const corners = shuffled(team === Board.BLACK ? [56, 63] : [0, 7], random)
   for (const cornerPos of corners) {
     if (pieces.has(cornerPos)) { continue }
     if (!isLegalKingSquare({ pieces, pos: cornerPos, team, requireOutOfCheck: false, ctx })) { continue }
