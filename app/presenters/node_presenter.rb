@@ -18,7 +18,7 @@ class NodePresenter
     'identity' => [
       { 'role' => 'side', 'fields' => { 'subject' => 'subject', 'filter' => 'subjectFilter', 'filter_mode' => 'subjectFilterMode' } },
       { 'role' => 'operator', 'consts' => { 'operator' => 'same_piece' } },
-      { 'role' => 'side', 'fields' => { 'subject' => 'target' }, 'consts' => { 'filter' => 'any' } }
+      { 'role' => 'side', 'fields' => { 'subject' => 'target' } }
     ],
     'census' => {
       'variant_by' => 'position_axis_present',

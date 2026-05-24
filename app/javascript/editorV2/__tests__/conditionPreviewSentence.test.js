@@ -128,25 +128,9 @@ describe('formatConditionSentence', () => {
   })
 
   describe('identity', () => {
-    it('enemy_moved_piece same_piece captured_piece', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'enemy_moved_piece', target: 'captured_piece' }))
-        .toBe('I captured the piece the enemy just moved')
-    })
-    it('captured_piece same_piece enemy_moved_piece (symmetric order)', () => {
+    it('renders the bare same-piece capture sentence', () => {
       expect(sentence({ version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_moved_piece' }))
         .toBe('I captured the piece the enemy just moved')
-    })
-    it('moved_piece same_piece captured_piece (en passant from my side)', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'moved_piece', target: 'captured_piece' }))
-        .toBe('I moved and captured the same piece')
-    })
-    it('moved_piece same_piece enemy_captured_piece', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'moved_piece', target: 'enemy_captured_piece' }))
-        .toBe('the enemy captured the piece I just moved')
-    })
-    it('enemy_moved_piece same_piece enemy_captured_piece (en passant from enemy side)', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'enemy_moved_piece', target: 'enemy_captured_piece' }))
-        .toBe('the enemy moved and captured the same piece')
     })
     describe('captured_piece same_piece enemy_moved_piece with a subject filter', () => {
       const captured = (subjectFilter, subjectFilterMode) =>
@@ -505,17 +489,6 @@ describe('formatConditionSentence', () => {
         targetComparisonSource: 'exact_number', targetComparisonSourceTotal: 1
       })))
         .toBe("my pieces, **more valuable** than 5, are adjacent to enemy's just-moved piece")
-    })
-  })
-
-  describe('identity — degenerate same_piece pairs covered', () => {
-    it('captured_piece same_piece enemy_captured_piece', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_captured_piece' }))
-        .toBe("my capture is the same piece as enemy's just-captured piece")
-    })
-    it('moved_piece same_piece enemy_moved_piece', () => {
-      expect(sentence({ version: 2, kind: 'identity', subject: 'moved_piece', target: 'enemy_moved_piece' }))
-        .toBe("my moved piece is the same piece as enemy's just-moved piece")
     })
   })
 

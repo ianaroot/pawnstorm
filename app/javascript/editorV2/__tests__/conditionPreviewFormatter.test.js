@@ -129,10 +129,10 @@ describe('conditionPreviewFormatter', () => {
         formatConditionPreview({
           version: 2,
           kind: 'identity',
-          subject: 'enemy_moved_piece',
-          target: 'captured_piece'
+          subject: 'captured_piece',
+          target: 'enemy_moved_piece'
         }).text
-      ).toBe('Enemy Moved Piece : is same-piece-as : Captured Piece')
+      ).toBe('Captured Piece : is same-piece-as : Enemy Moved Piece')
     })
 
     it('keeps king singular and any pluralized as allies or enemies', () => {
