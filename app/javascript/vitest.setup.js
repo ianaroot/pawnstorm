@@ -18,7 +18,7 @@ const SENTENCE_SPEC = {
       comparison_source: 'targetComparisonSource', comparison_source_total: 'targetComparisonSourceTotal' } }
   ],
   identity: [
-    { role: 'side', fields: { subject: 'subject' }, consts: { filter: 'any' } },
+    { role: 'side', fields: { subject: 'subject', filter: 'subjectFilter', filter_mode: 'subjectFilterMode' } },
     { role: 'operator', consts: { operator: 'same_piece' } },
     { role: 'side', fields: { subject: 'target' }, consts: { filter: 'any' } }
   ],

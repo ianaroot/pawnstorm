@@ -520,10 +520,15 @@ const SAME_PIECE_IDIOMS = {
 }
 
 function composeRelationalSamePiece(d) {
+  const filtered = d.subjectFilter && d.subjectFilter !== 'any'
   const key = [d.subject, d.target].sort().join('+')
-  const idiom = SAME_PIECE_IDIOMS[key]
-  if (idiom) return [{ text: idiom }]
-  const subj = actorNP(d.subject, undefined, undefined).text
+  if (filtered && key === 'captured_piece+enemy_moved_piece') {
+    return [{ text: `I captured the ${noun(d.subjectFilter, d.subjectFilterMode, false)} the enemy just moved` }]
+  }
+  if (!filtered && SAME_PIECE_IDIOMS[key]) {
+    return [{ text: SAME_PIECE_IDIOMS[key] }]
+  }
+  const subj = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode).text
   const tgt = actorNP(d.target, undefined, undefined).text
   return [{ text: `${subj} is the same piece as ${tgt}` }]
 }

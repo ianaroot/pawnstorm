@@ -141,7 +141,7 @@ RSpec.describe NodePresenter do
         {
           role: 'side',
           subject: 'enemy_moved_piece',
-          filter: 'any',
+          filter: nil,
           filter_mode: nil,
           comparison_metric: nil,
           comparator: nil,
@@ -162,6 +162,31 @@ RSpec.describe NodePresenter do
           comparison_source_total: nil
         }
       ])
+    end
+
+    it 'carries the subject filter on a filtered same-piece identity, target stays any' do
+      node = build(:node, :condition, data: {
+        'version' => 2,
+        'kind' => 'identity',
+        'subject' => 'captured_piece',
+        'target' => 'enemy_moved_piece',
+        'subjectFilter' => 'queen',
+        'subjectFilterMode' => 'include'
+      })
+
+      chunks = described_class.new(node).condition_preview_chunks
+
+      expect(chunks[0]).to eq({
+        role: 'side',
+        subject: 'captured_piece',
+        filter: 'queen',
+        filter_mode: 'include',
+        comparison_metric: nil,
+        comparator: nil,
+        comparison_source: nil,
+        comparison_source_total: nil
+      })
+      expect(chunks[4]).to include(role: 'side', subject: 'enemy_moved_piece', filter: 'any')
     end
   end
 
