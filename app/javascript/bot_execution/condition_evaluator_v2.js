@@ -293,7 +293,12 @@ class ConditionEvaluatorV2 {
 
     evaluateIdentity(conditionNode, analysis) {
       return profileCollector.measure('condition.v2.identity', () => {
-        return analysis.samePiece({ subject: conditionNode.subject, target: conditionNode.target })
+        return analysis.samePiece({
+          subject: conditionNode.subject,
+          target: conditionNode.target,
+          subjectFilter: conditionNode.subjectFilter,
+          subjectFilterMode: conditionNode.subjectFilterMode
+        })
       })
     }
 

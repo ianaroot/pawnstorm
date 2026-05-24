@@ -224,9 +224,10 @@ export function buildPlan(payload, options = {}) {
   if (payload.kind === 'census') { return buildCensusPlan(payload, options, teams) }
   if (payload.kind === 'identity') {
     // Verification still runs the identity payload — CandidateVerifier reads
-    // evaluationPayloads, not this plan.
+    // evaluationPayloads, not this plan. The subject filter flows through to
+    // narrow the captured piece's species pool; the target stays unfiltered.
     return buildRelationalPlan(
-      { ...payload, kind: 'relational', operator: 'same_piece', subjectFilter: 'any', targetFilter: 'any' },
+      { ...payload, kind: 'relational', operator: 'same_piece', targetFilter: 'any', targetFilterMode: null },
       options,
       teams
     )

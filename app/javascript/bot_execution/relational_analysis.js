@@ -13,29 +13,29 @@ import { actorTeam } from "bot_execution/actor_teams"
 const AFTER_BOARD = "after"
 const PRIOR_BOARD = "prior"
 
-export function samePiece(analysis, { subject, target }) {
+export function samePiece(analysis, { subject, target, subjectFilter = "any", subjectFilterMode = null }) {
   if (
     (subject === "enemy_moved_piece" && target === "captured_piece") ||
     (subject === "captured_piece" && target === "enemy_moved_piece")
   ) {
-    return enemyMovedPieceMatchesCapturedPiece(analysis)
+    return enemyMovedPieceMatchesCapturedPiece(analysis, { subjectFilter, subjectFilterMode })
   } else {
     throw new Error(`Unsupported V2 samePiece comparison: ${subject} vs ${target}`)
   }
 }
 
-function enemyMovedPieceMatchesCapturedPiece(analysis) {
+function enemyMovedPieceMatchesCapturedPiece(analysis, { subjectFilter = "any", subjectFilterMode = null } = {}) {
   const recentMove = analysis.board.recentMoveContext
   const capturedPiecePosition = analysis.capturedPiecePosition()
   const capturedPieceSpecies = analysis.capturedPieceSpecies()
   if (!recentMove || capturedPiecePosition === null || capturedPieceSpecies === null) {
     return false
-  } else {
-    return (
-      recentMove.movedPieceEndPosition === capturedPiecePosition &&
-      recentMove.movedPieceSpeciesAfterMove === capturedPieceSpecies
-    )
   }
+  return (
+    recentMove.movedPieceEndPosition === capturedPiecePosition &&
+    recentMove.movedPieceSpeciesAfterMove === capturedPieceSpecies &&
+    analysis.matchesFilter({ species: capturedPieceSpecies, filter: subjectFilter, filterMode: subjectFilterMode })
+  )
 }
 
 export function relationalResult(analysis, { subject, subjectFilter = "any", subjectFilterMode = null,

@@ -2456,6 +2456,64 @@ describe('ConditionEvaluatorV2', () => {
         )
       ).toBe(false)
     })
+
+    it('honors a matching subject filter on a same_piece capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', e2: 'wP', f7: 'bP' }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          { version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_moved_piece', subjectFilter: 'pawn' },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+
+      expect(
+        evaluate(
+          { version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_moved_piece', subjectFilter: 'knight' },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+    })
+
+    it('applies an exclude subject filter on a same_piece capture', () => {
+      const board = buildBoard({
+        pieces: { e1: 'wK', e8: 'bK', e2: 'wP', f7: 'bP' }
+      })
+
+      playMoveSequence(board, [
+        { from: 'e2', to: 'e4' },
+        { from: 'f7', to: 'f5' }
+      ])
+
+      const moveObject = getMove('e4', 'f5', board)
+
+      expect(
+        evaluate(
+          { version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_moved_piece', subjectFilter: 'pawn', subjectFilterMode: 'exclude' },
+          board,
+          moveObject
+        )
+      ).toBe(false)
+
+      expect(
+        evaluate(
+          { version: 2, kind: 'identity', subject: 'captured_piece', target: 'enemy_moved_piece', subjectFilter: 'knight', subjectFilterMode: 'exclude' },
+          board,
+          moveObject
+        )
+      ).toBe(true)
+    })
   })
 
   describe('position evaluation', () => {
