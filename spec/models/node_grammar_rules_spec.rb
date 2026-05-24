@@ -88,4 +88,13 @@ RSpec.describe NodeGrammarRules, type: :model do
       expect(NodeGrammarV2.valid_comparison_metric?('aggregate_value')).to be(false)
     end
   end
+
+  describe '.editor_config' do
+    it 'routes captured pieces to the captures tab, not census whole-board' do
+      config = described_class.editor_config
+
+      expect(config['capturesSubjects']).to eq(%w[captured_piece enemy_captured_piece])
+      expect(config['census']['wholeBoardSubjects']).not_to include('captured_piece', 'enemy_captured_piece')
+    end
+  end
 end

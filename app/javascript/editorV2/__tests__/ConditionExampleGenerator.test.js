@@ -1176,6 +1176,24 @@ describe('ConditionExampleGenerator', () => {
     })
   })
 
+  it('never produces en-passant examples for an enemy_captured_piece exists condition', () => {
+    const payload = {
+      version: 2, kind: 'census',
+      subject: 'enemy_captured_piece', subjectFilter: 'any',
+      operator: 'count', comparator: 'equal_to',
+      target: 'exact_number', targetTotal: 1
+    }
+
+    const seeds = [8101, 8102, 8103, 8104, 8105]
+    for (const seed of seeds) {
+      const preview = generateConditionExamples(payload, {
+        random: seededRandom(seed),
+        moveKinds: ['en_passant']
+      })
+      expect(preview.examples.some(ex => ex.moveKind === 'en_passant')).toBe(false)
+    }
+  })
+
   it('produces en-passant examples for a same_piece chain', () => {
     // enemy_moved_piece same_piece captured_piece is exactly true for
     // en-passant: the enemy's prior move was the double-stepped pawn, and

@@ -351,8 +351,8 @@ class CandidateMoveAnalysisV2 {
 
   // ===== Delegates =====
 
-  samePiece({ subject, target }) {
-    return samePiece(this, { subject, target })
+  samePiece({ subject, target, subjectFilter, subjectFilterMode }) {
+    return samePiece(this, { subject, target, subjectFilter, subjectFilterMode })
   }
 
   unaryTotal({ actor, filter = "any", filterMode = null, operator, boardScope = AFTER_BOARD }) {

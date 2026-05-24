@@ -283,6 +283,31 @@ describe('buildSingulars — same_piece aliasing', () => {
   })
 })
 
+describe('buildSingulars — identity same_piece subject filter', () => {
+  it('narrows the aliased captured piece species_set by an include subject filter', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'identity',
+      subject: 'captured_piece', target: 'enemy_moved_piece',
+      subjectFilter: 'queen', subjectFilterMode: 'include'
+    }])
+    const singulars = buildSingulars(combinedPlan)
+
+    expect(singulars.captured_piece).toBe(singulars.enemy_moved_piece)
+    expect(singulars.captured_piece.species_set).toEqual(new Set([Board.QUEEN]))
+  })
+
+  it('narrows the aliased captured piece species_set by an exclude subject filter', () => {
+    const combinedPlan = buildCombinedPlan([{
+      version: 2, kind: 'identity',
+      subject: 'captured_piece', target: 'enemy_moved_piece',
+      subjectFilter: 'queen', subjectFilterMode: 'exclude'
+    }])
+    const singulars = buildSingulars(combinedPlan)
+
+    expect(singulars.captured_piece.species_set).toEqual(new Set([Board.PAWN, Board.NIGHT, Board.BISHOP, Board.ROOK]))
+  })
+})
+
 describe('buildSingulars — multi-plan accumulation', () => {
   it('intersects narrowings across multiple plans on the same singular', () => {
     const combinedPlan = buildCombinedPlan([

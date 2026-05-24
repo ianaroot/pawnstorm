@@ -510,20 +510,15 @@ function composeRelationalTargetValueClause(d, { includePassive = true } = {}) {
   ]
 }
 
-const SAME_PIECE_IDIOMS = {
-  'captured_piece+enemy_moved_piece': 'I captured the piece the enemy just moved',
-  'captured_piece+moved_piece': 'I moved and captured the same piece',
-  'enemy_captured_piece+enemy_moved_piece': 'the enemy moved and captured the same piece',
-  'enemy_captured_piece+moved_piece': 'the enemy captured the piece I just moved',
-  'captured_piece+enemy_captured_piece': "my capture is the same piece as enemy's just-captured piece",
-  'enemy_moved_piece+moved_piece': "my moved piece is the same piece as enemy's just-moved piece"
-}
-
 function composeRelationalSamePiece(d) {
   const key = [d.subject, d.target].sort().join('+')
-  const idiom = SAME_PIECE_IDIOMS[key]
-  if (idiom) return [{ text: idiom }]
-  const subj = actorNP(d.subject, undefined, undefined).text
+  if (key === 'captured_piece+enemy_moved_piece') {
+    const what = d.subjectFilter && d.subjectFilter !== 'any'
+      ? noun(d.subjectFilter, d.subjectFilterMode, false)
+      : 'piece'
+    return [{ text: `I captured the ${what} the enemy just moved` }]
+  }
+  const subj = actorNP(d.subject, d.subjectFilter, d.subjectFilterMode).text
   const tgt = actorNP(d.target, undefined, undefined).text
   return [{ text: `${subj} is the same piece as ${tgt}` }]
 }
