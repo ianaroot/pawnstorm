@@ -1126,7 +1126,7 @@ describe('ConditionForm', () => {
       expect(form.buildPayload()).toEqual(node)
     })
 
-    it('disables same_piece for enemy_captured_piece', () => {
+    it('switches enemy_captured_piece to a capturable subject when same_piece is picked', () => {
       const panel = buildPanel()
       const form = new ConditionForm(panel)
       form.attach()
@@ -1136,7 +1136,17 @@ describe('ConditionForm', () => {
       subject.value = 'enemy_captured_piece'
       subject.dispatchEvent(new Event('change'))
 
-      expect(panel.querySelector('#cond-captures-operator input[value="same_piece"]').disabled).toBe(true)
+      const samePiece = panel.querySelector('#cond-captures-operator input[value="same_piece"]')
+      expect(samePiece.disabled).toBe(false)
+      samePiece.checked = true
+      samePiece.dispatchEvent(new Event('change'))
+
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'identity',
+        subject: 'captured_piece',
+        target: 'enemy_moved_piece'
+      })
     })
 
     it('shows the prior-move note only when the subject is enemy_captured_piece', () => {

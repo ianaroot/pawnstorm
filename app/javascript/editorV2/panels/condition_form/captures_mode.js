@@ -16,7 +16,6 @@ const DEFAULT_CAPTURES_STATE = {
 }
 
 const CAPTURES_SUBJECTS = ['captured_piece', 'enemy_captured_piece']
-const MEASURE_OPERATORS = ['exists', 'does_not_exist', 'value']
 
 // exists/does_not_exist → census count=1/count=0; value → census (no region keys);
 // same_piece → identity.
@@ -102,10 +101,10 @@ export default class CapturesMode {
     if (!this.subjects().includes(cap.subject)) {
       cap.subject = DEFAULT_CAPTURES_STATE.subject
     }
-    if (!this.allowedOperators(cap.subject).includes(cap.operator)) {
-      cap.operator = 'exists'
-    }
     if (cap.operator === 'same_piece') {
+      if (!this.canSamePiece(cap.subject)) {
+        cap.subject = this.firstSamePieceSubject()
+      }
       cap.target = this.samePiecePartner(cap.subject)
     } else if (cap.operator === 'value' && !this.measureTargets().includes(cap.target)) {
       cap.target = 'exact_number'
@@ -141,15 +140,7 @@ export default class CapturesMode {
     fields.capturesTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !targetFilterModeAvailable)
     fields.capturesEnemyNote?.classList.toggle('hidden', cap.subject !== 'enemy_captured_piece')
 
-    this.disableOperatorOptions(cap, fields)
     this.disableTargetOptions(cap, fields)
-  }
-
-  disableOperatorOptions(cap, fields) {
-    const allowed = this.allowedOperators(cap.subject)
-    fields.capturesOperatorInputs?.forEach(input => {
-      input.disabled = !allowed.includes(input.value)
-    })
   }
 
   disableTargetOptions(cap, fields) {
@@ -169,8 +160,8 @@ export default class CapturesMode {
     return this.grammarRules.capturesSubjects || CAPTURES_SUBJECTS
   }
 
-  allowedOperators(subject) {
-    return this.canSamePiece(subject) ? [...MEASURE_OPERATORS, 'same_piece'] : [...MEASURE_OPERATORS]
+  firstSamePieceSubject() {
+    return this.subjects().find(subject => this.canSamePiece(subject)) || DEFAULT_CAPTURES_STATE.subject
   }
 
   measureTargets() {
