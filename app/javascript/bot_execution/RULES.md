@@ -20,4 +20,4 @@ reach the evaluator.
   the whole-board helper). With `positionAxis` it is region-restricted: the
   **subject** is filtered to the region, but a distinct-actor **target** is
   read board-wide. `target: 'prior_board_state'` coerces both sides.
-- `evaluateIdentity`: `same_piece` over subject/target only.
+- `evaluateIdentity`: `same_piece` over subject/target, honoring the subject filter on the matched piece.
