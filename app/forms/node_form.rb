@@ -70,16 +70,33 @@ class NodeForm
       NodeGrammarV2::SUBJECTS.map { |value| [subject_label(value), value] }
     end
 
-    def editor_subject_options
-      NodeGrammarV2::EDITOR_SUBJECTS.map { |value| [subject_label(value), value] }
-    end
-
     def relational_subject_options
       NodeGrammarRules::REGULAR_RELATIONAL_SUBJECTS.map { |value| [subject_label(value), value] }
     end
 
     def relational_target_options
       NodeGrammarRules::REGULAR_RELATIONAL_TARGETS.map { |value| [subject_label(value), value] }
+    end
+
+    def census_subject_options
+      (NodeGrammarV2::EDITOR_SUBJECTS - NodeGrammarV2::OFF_BOARD_SUBJECTS).map { |value| [subject_label(value), value] }
+    end
+
+    def captures_subject_options
+      NodeGrammarV2::OFF_BOARD_SUBJECTS.map { |value| [subject_label(value), value] }
+    end
+
+    def captures_operator_options
+      [['Exists', 'exists'], ["Doesn't exist", 'does_not_exist'], ['Value', 'value'], ['Same-Piece', 'same_piece']]
+    end
+
+    def captures_target_options
+      [['Integer', NodeGrammarV2::EXACT_COMPARISON_SOURCE]] +
+        NodeGrammarV2::EDITOR_SUBJECTS.map { |value| [subject_label(value), value] }
+    end
+
+    def captures_filter_options
+      (NodeGrammarV2::FILTERS - ['king']).map { |value| [filter_label(value), value] }
     end
 
     def filter_options

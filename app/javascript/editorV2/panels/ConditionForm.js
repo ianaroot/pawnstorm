@@ -2,7 +2,7 @@ import { renderConditionSentence } from 'editorV2/utils/conditionPreviewFormatte
 import { pillInputs } from 'editorV2/panels/condition_form/dom_helpers'
 import RelationalMode from 'editorV2/panels/condition_form/relational_mode'
 import CensusMode from 'editorV2/panels/condition_form/census_mode'
-import IdentityMode from 'editorV2/panels/condition_form/identity_mode'
+import CapturesMode from 'editorV2/panels/condition_form/captures_mode'
 
 const DEFAULT_GRAMMAR_RULES = Object.freeze({
   editorSubjects: ['allied', 'enemy', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece'],
@@ -27,7 +27,12 @@ const DEFAULT_GRAMMAR_RULES = Object.freeze({
   opposingTeamGroups: {
     allied: 'enemy',
     enemy: 'allied'
-  }
+  },
+  census: {
+    regionSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece'],
+    wholeBoardSubjects: ['allied', 'enemy', 'moved_piece', 'enemy_moved_piece']
+  },
+  capturesSubjects: ['captured_piece', 'enemy_captured_piece']
 })
 
 class ConditionForm {
@@ -37,7 +42,7 @@ class ConditionForm {
     this.modes = {
       relational: new RelationalMode(this.grammarRules),
       census: new CensusMode(this.grammarRules),
-      identity: new IdentityMode(this.grammarRules)
+      captures: new CapturesMode(this.grammarRules)
     }
     this.state = this.defaultState()
     this.boundHandleFieldChange = this.handleFieldChange.bind(this)
@@ -45,7 +50,7 @@ class ConditionForm {
     this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
     this.boundHandleModeRelational = () => this.handleModeChange('relational')
     this.boundHandleModeCensus = () => this.handleModeChange('census')
-    this.boundHandleModeIdentity = () => this.handleModeChange('identity')
+    this.boundHandleModeCaptures = () => this.handleModeChange('captures')
     this.boundHandleCensusComparisonToggle = this.toggleCensusComparison.bind(this)
   }
 
@@ -54,7 +59,7 @@ class ConditionForm {
       mode: 'census',
       relational: this.modes.relational.defaultState(),
       census: this.modes.census.defaultState(),
-      identity: this.modes.identity.defaultState()
+      captures: this.modes.captures.defaultState()
     }
   }
 
@@ -76,7 +81,7 @@ class ConditionForm {
     fields.rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.addEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.addEventListener('click', this.boundHandleModeCensus)
-    fields.modeIdentityBtn?.addEventListener('click', this.boundHandleModeIdentity)
+    fields.modeCapturesBtn?.addEventListener('click', this.boundHandleModeCaptures)
     fields.censusComparisonToggle?.addEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
@@ -88,7 +93,7 @@ class ConditionForm {
     fields.rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.removeEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.removeEventListener('click', this.boundHandleModeCensus)
-    fields.modeIdentityBtn?.removeEventListener('click', this.boundHandleModeIdentity)
+    fields.modeCapturesBtn?.removeEventListener('click', this.boundHandleModeCaptures)
     fields.censusComparisonToggle?.removeEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
@@ -130,8 +135,16 @@ class ConditionForm {
     const censusFileInput = this.editorPanel.querySelector('#cond-census-file-input')
     const censusSquareFile = this.editorPanel.querySelector('#cond-census-square-file')
     const censusSquareRank = this.editorPanel.querySelector('#cond-census-square-rank')
-    const identitySubject = this.editorPanel.querySelector('#cond-identity-subject')
-    const identityTarget = this.editorPanel.querySelector('#cond-identity-target')
+    const capturesSubject = this.editorPanel.querySelector('#cond-captures-subject')
+    const capturesFilterMode = this.editorPanel.querySelector('#cond-captures-filter-mode')
+    const capturesFilter = this.editorPanel.querySelector('#cond-captures-filter')
+    const capturesOperator = this.editorPanel.querySelector('#cond-captures-operator')
+    const capturesOperatorInputs = pillInputs(capturesOperator)
+    const capturesComparator = this.editorPanel.querySelector('#cond-captures-comparator')
+    const capturesTarget = this.editorPanel.querySelector('#cond-captures-target')
+    const capturesTargetFilter = this.editorPanel.querySelector('#cond-captures-target-filter')
+    const capturesTargetFilterMode = this.editorPanel.querySelector('#cond-captures-target-filter-mode')
+    const capturesTargetTotal = this.editorPanel.querySelector('#cond-captures-target-total')
     const censusRankInputs = pillInputs(censusRankInput)
     const censusFileInputs = pillInputs(censusFileInput)
     const censusSquareFileInputs = pillInputs(censusSquareFile)
@@ -179,8 +192,16 @@ class ConditionForm {
       censusFileInputs,
       censusSquareFileInputs,
       censusSquareRankInputs,
-      identitySubject,
-      identityTarget,
+      capturesSubject,
+      capturesFilterMode,
+      capturesFilter,
+      capturesOperator,
+      capturesOperatorInputs,
+      capturesComparator,
+      capturesTarget,
+      capturesTargetFilter,
+      capturesTargetFilterMode,
+      capturesTargetTotal,
       leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
       leftComparisonSourceStack: this.editorPanel.querySelector('#cond-left-comparison-source-stack'),
@@ -197,13 +218,19 @@ class ConditionForm {
       formulationPreview: this.editorPanel.querySelector('#cond-formulation-preview'),
       modeRelationalBtn: this.editorPanel.querySelector('#cond-mode-relational'),
       modeCensusBtn: this.editorPanel.querySelector('#cond-mode-census'),
-      modeIdentityBtn: this.editorPanel.querySelector('#cond-mode-identity'),
+      modeCapturesBtn: this.editorPanel.querySelector('#cond-mode-captures'),
       relationalTargetNote: this.editorPanel.querySelector('#cond-relational-target-note'),
       leftAggregateNote: this.editorPanel.querySelector('#cond-left-aggregate-note'),
       rightAggregateNote: this.editorPanel.querySelector('#cond-right-aggregate-note'),
-      mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout):not(.condition-form-identity-layout)'),
+      mainLayout: this.editorPanel.querySelector('.condition-form-layout:not(.condition-form-position-layout):not(.condition-form-captures-layout)'),
       censusLayout: this.editorPanel.querySelector('#cond-census-layout'),
-      identityLayout: this.editorPanel.querySelector('#cond-identity-layout'),
+      capturesLayout: this.editorPanel.querySelector('#cond-captures-layout'),
+      capturesFilterRow: this.editorPanel.querySelector('#cond-captures-filter-row'),
+      capturesTargetStack: this.editorPanel.querySelector('#cond-captures-target-stack'),
+      capturesTargetFilterRow: this.editorPanel.querySelector('#cond-captures-target-filter-row'),
+      capturesFilterModeControl: capturesFilterMode?.closest('.condition-form-checkbox'),
+      capturesTargetFilterModeControl: capturesTargetFilterMode?.closest('.condition-form-checkbox'),
+      capturesEnemyNote: this.editorPanel.querySelector('#cond-captures-enemy-note'),
       censusFilterRow: this.editorPanel.querySelector('#cond-census-filter-row'),
       censusFilterModeControl: censusFilterMode?.closest('.condition-form-checkbox'),
       censusComparisonToggle: this.editorPanel.querySelector('#cond-census-comparison-toggle'),
@@ -223,12 +250,14 @@ class ConditionForm {
         censusTarget, censusTargetFilter, censusTargetFilterMode,
         censusScopeWhole, censusAxisRank, censusAxisFile, censusAxisSquare, ...censusRegionComparatorInputs,
         ...censusRankInputs, ...censusFileInputs, ...censusSquareFileInputs, ...censusSquareRankInputs,
-        identitySubject, identityTarget
+        capturesSubject, capturesFilterMode, capturesFilter, ...capturesOperatorInputs, capturesComparator,
+        capturesTarget, capturesTargetFilter, capturesTargetFilterMode
       ],
       numberInputs: [
         leftComparisonSourceTotal,
         rightComparisonSourceTotal,
-        censusTargetTotal
+        censusTargetTotal,
+        capturesTargetTotal
       ]
     }
   }
@@ -245,36 +274,49 @@ class ConditionForm {
   }
 
   isValidV2Node(nodeData = {}) {
-    return nodeData.version === 2 && Object.keys(this.modes).includes(nodeData.kind)
+    return nodeData.version === 2 && ['relational', 'census', 'identity'].includes(nodeData.kind)
   }
 
   stateFromNodeData(nodeData) {
+    const mode = this.modeForNodeData(nodeData)
     const state = {
-      mode: nodeData.kind,
+      mode,
       relational: this.modes.relational.defaultState(),
       census: this.modes.census.defaultState(),
-      identity: this.modes.identity.defaultState()
+      captures: this.modes.captures.defaultState()
     }
-    state[nodeData.kind] = this.modes[nodeData.kind].fromNodeData(nodeData)
+    state[mode] = this.modes[mode].fromNodeData(nodeData)
     return state
+  }
+
+  modeForNodeData(nodeData) {
+    if (nodeData.kind === 'identity') { return 'captures' }
+    if (nodeData.kind === 'census' && this.isCapturedSubject(nodeData.subject)) { return 'captures' }
+    if (nodeData.kind === 'census') { return 'census' }
+    return 'relational'
+  }
+
+  isCapturedSubject(subject) {
+    const capturesSubjects = this.grammarRules.capturesSubjects || ['captured_piece', 'enemy_captured_piece']
+    return capturesSubjects.includes(subject)
   }
 
   render() {
     const fields = this.fields()
     const isRelational = this.state.mode === 'relational'
     const isCensus = this.state.mode === 'census'
-    const isIdentity = this.state.mode === 'identity'
+    const isCaptures = this.state.mode === 'captures'
 
     fields.modeRelationalBtn?.classList.toggle('active', isRelational)
     fields.modeCensusBtn?.classList.toggle('active', isCensus)
-    fields.modeIdentityBtn?.classList.toggle('active', isIdentity)
+    fields.modeCapturesBtn?.classList.toggle('active', isCaptures)
 
     fields.relationalOperatorSelect?.classList.toggle('hidden', !isRelational)
     fields.rightRelationalFields?.classList.toggle('hidden', !isRelational)
     fields.leftComparisonSection?.classList.toggle('hidden', !isRelational)
     fields.mainLayout?.classList.toggle('hidden', !isRelational)
     fields.censusLayout?.classList.toggle('hidden', !isCensus)
-    fields.identityLayout?.classList.toggle('hidden', !isIdentity)
+    fields.capturesLayout?.classList.toggle('hidden', !isCaptures)
 
     this.modes[this.state.mode].render(this.state[this.state.mode], fields)
 

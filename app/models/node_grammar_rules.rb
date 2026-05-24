@@ -120,11 +120,10 @@ class NodeGrammarRules
         'teamSubjectGroups' => TEAM_SUBJECT_GROUPS,
         'opposingTeamGroups' => OPPOSING_TEAM_GROUPS,
         'positionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
+        'capturesSubjects' => NodeGrammarV2::OFF_BOARD_SUBJECTS,
         'census' => {
           'regionSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
-          # TEMPORARY: captured pieces live in census whole-board until they
-          # move to identity. Drop OFF_BOARD_SUBJECTS here once relocated.
-          'wholeBoardSubjects' => NodeGrammarV2::POSITION_SUBJECTS + NodeGrammarV2::OFF_BOARD_SUBJECTS,
+          'wholeBoardSubjects' => NodeGrammarV2::POSITION_SUBJECTS,
           'operators' => NodeGrammarV2::POSITION_OPERATORS,
           'axes' => NodeGrammarV2::POSITION_AXES,
           'wholeBoardTargets' => NodeGrammarV2::UNARY_TARGETS

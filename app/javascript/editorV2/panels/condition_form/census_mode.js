@@ -1,6 +1,7 @@
 import {
   disableOptions, showAllOptions, pillValue, setPillChecked
 } from 'editorV2/panels/condition_form/dom_helpers'
+import { censusMeasurePayload } from 'editorV2/panels/condition_form/census_payload'
 
 const DEFAULT_CENSUS_STATE = {
   left: {
@@ -94,30 +95,21 @@ export default class CensusMode {
   }
 
   buildPayload(cen) {
-    const payload = {
-      version: 2,
-      kind: 'census',
+    const payload = censusMeasurePayload({
       subject: cen.left.subject,
       subjectFilter: cen.left.filter,
+      subjectFilterMode: cen.left.filterMode,
       operator: cen.operator,
-      comparator: cen.comparator
-    }
-    if (cen.left.filter !== 'any') {
-      payload.subjectFilterMode = cen.left.filterMode
-    }
+      comparator: cen.comparator,
+      target: cen.target,
+      targetFilter: cen.targetFilter,
+      targetFilterMode: cen.targetFilterMode,
+      targetTotal: cen.targetTotal
+    })
     if (cen.scope === 'region') {
       payload.positionAxis = cen.regionAxis
       payload.positionComparator = cen.regionAxis === 'square' ? 'equal_to' : cen.regionComparator
       payload.positionTarget = this.resolvedRegionTarget(cen)
-    }
-    payload.target = cen.target
-    if (cen.target === 'exact_number') {
-      payload.targetTotal = cen.targetTotal
-    } else if (this.targetUsesActor(cen)) {
-      payload.targetFilter = cen.targetFilter
-      if (cen.targetFilter !== 'any') {
-        payload.targetFilterMode = cen.targetFilterMode
-      }
     }
     return payload
   }

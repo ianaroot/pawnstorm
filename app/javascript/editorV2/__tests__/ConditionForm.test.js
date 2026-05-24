@@ -9,16 +9,19 @@ function option(value, label = value) {
 const relationalSubjectOptions = ['moved_piece', 'allied', 'enemy', 'enemy_moved_piece']
   .map(value => option(value))
   .join('')
-const censusSubjectOptions = ['moved_piece', 'allied', 'enemy', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece']
+const censusSubjectOptions = ['moved_piece', 'allied', 'enemy', 'enemy_moved_piece']
   .map(value => option(value))
   .join('')
 const relationalOperatorOptions = ['targets', 'shield', 'adjacent']
   .map(value => option(value))
   .join('')
-const identitySubjectOptions = ['enemy_moved_piece', 'captured_piece']
+const capturesSubjectOptions = ['captured_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
-const identityTargetOptions = ['captured_piece', 'enemy_moved_piece']
+const capturesOperatorOptions = ['exists', 'does_not_exist', 'value', 'same_piece']
+  .map((value, i) => `<label class="condition-form-checkbox"><input type="radio" name="cond-captures-operator" value="${value}"${i === 0 ? ' checked' : ''}><span>${value}</span></label>`)
+  .join('')
+const capturesTargetOptions = ['exact_number', 'moved_piece', 'allied', 'enemy', 'enemy_moved_piece', 'captured_piece', 'enemy_captured_piece']
   .map(value => option(value))
   .join('')
 const censusOperatorOptions = ['count', 'mobility', 'value']
@@ -39,7 +42,7 @@ function buildPanel() {
   panel.innerHTML = `
     <button type="button" id="cond-mode-census">Positions</button>
     <button type="button" id="cond-mode-relational" class="active">Attack/Defend</button>
-    <button type="button" id="cond-mode-identity">Identity</button>
+    <button type="button" id="cond-mode-captures">Captures</button>
 
     <div class="condition-form-layout">
       <select id="cond-left-subject">${relationalSubjectOptions}</select>
@@ -178,9 +181,35 @@ function buildPanel() {
       <p id="cond-census-rank-note" class="hidden"></p>
     </div>
 
-    <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
-      <select id="cond-identity-subject">${identitySubjectOptions}</select>
-      <select id="cond-identity-target">${identityTargetOptions}</select>
+    <div class="condition-form-layout condition-form-captures-layout hidden" id="cond-captures-layout">
+      <select id="cond-captures-subject">${capturesSubjectOptions}</select>
+      <div id="cond-captures-filter-row">
+        <label class="condition-form-checkbox">
+          <input id="cond-captures-filter-mode" type="checkbox">
+          <span>Non-</span>
+        </label>
+        <select id="cond-captures-filter">${option('any')}${option('pawn')}${option('rook')}</select>
+      </div>
+      <div id="cond-captures-operator">${capturesOperatorOptions}</div>
+      <select id="cond-captures-comparator">
+        <option value="equal_to">equal to</option>
+        <option value="greater_than">greater than</option>
+        <option value="less_than">less than</option>
+        <option value="greater_than_or_equal_to">at least</option>
+        <option value="less_than_or_equal_to">at most</option>
+      </select>
+      <div id="cond-captures-target-stack" class="condition-form-comparison-source-stack">
+        <select id="cond-captures-target">${capturesTargetOptions}</select>
+        <div id="cond-captures-target-filter-row">
+          <label class="condition-form-checkbox">
+            <input id="cond-captures-target-filter-mode" type="checkbox">
+            <span>Non-</span>
+          </label>
+          <select id="cond-captures-target-filter">${option('any')}${option('pawn')}${option('rook')}</select>
+        </div>
+        <input id="cond-captures-target-total" type="number">
+      </div>
+      <p id="cond-captures-enemy-note" class="hidden">enemy captured note</p>
     </div>
 
     <div id="cond-formulation-preview"></div>
@@ -881,8 +910,142 @@ describe('ConditionForm', () => {
     expect(payload).not.toHaveProperty('targetComparisonSource')
   })
 
-  describe('identity mode', () => {
-    it('loads an identity node and builds a minimal identity payload', () => {
+  describe('captures mode', () => {
+    it('defaults to Exists, emitting a count = 1 whole-board census payload', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+
+      expect(form.state.mode).toBe('captures')
+      expect(panel.querySelector('#cond-captures-layout').classList.contains('hidden')).toBe(false)
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 1
+      })
+    })
+
+    it('emits a count = 0 payload for Doesn\'t exist', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+      const doesNotExist = panel.querySelector('#cond-captures-operator input[value="does_not_exist"]')
+      doesNotExist.checked = true
+      doesNotExist.dispatchEvent(new Event('change'))
+
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 0
+      })
+    })
+
+    it('routes a count = 1 captured census node into the captures tab as Exists', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      const node = {
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 1
+      }
+      form.populate(node)
+
+      expect(form.state.mode).toBe('captures')
+      expect(panel.querySelector('#cond-captures-layout').classList.contains('hidden')).toBe(false)
+      expect(form.buildPayload()).toEqual(node)
+    })
+
+    it('loads a count = 0 captured census node as Doesn\'t exist', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      const node = {
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 0
+      }
+      form.populate(node)
+
+      expect(form.state.mode).toBe('captures')
+      expect(form.buildPayload()).toEqual(node)
+    })
+
+    it('collapses a legacy non-canonical captured count payload to Exists', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      form.populate({
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'greater_than',
+        target: 'exact_number',
+        targetTotal: 2
+      })
+
+      expect(form.state.mode).toBe('captures')
+      expect(form.buildPayload()).toEqual({
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'equal_to',
+        target: 'exact_number',
+        targetTotal: 1
+      })
+    })
+
+    it('keeps an on-board whole-board census node in the positions tab', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      form.populate({
+        version: 2,
+        kind: 'census',
+        subject: 'allied',
+        subjectFilter: 'any',
+        operator: 'count',
+        comparator: 'greater_than',
+        target: 'exact_number',
+        targetTotal: 1
+      })
+
+      expect(form.state.mode).toBe('census')
+    })
+
+    it('loads a same_piece identity node into the captures tab', () => {
       const panel = buildPanel()
       const form = new ConditionForm(panel)
       form.attach()
@@ -890,46 +1053,29 @@ describe('ConditionForm', () => {
       form.populate({
         version: 2,
         kind: 'identity',
-        subject: 'enemy_moved_piece',
-        target: 'captured_piece'
+        subject: 'captured_piece',
+        target: 'enemy_moved_piece'
       })
 
-      expect(form.state.mode).toBe('identity')
-      expect(panel.querySelector('#cond-identity-layout').classList.contains('hidden')).toBe(false)
+      expect(form.state.mode).toBe('captures')
+      expect(panel.querySelector('#cond-captures-layout').classList.contains('hidden')).toBe(false)
       expect(form.buildPayload()).toEqual({
         version: 2,
         kind: 'identity',
-        subject: 'enemy_moved_piece',
-        target: 'captured_piece'
+        subject: 'captured_piece',
+        target: 'enemy_moved_piece'
       })
     })
 
-    it('switches to identity mode via the mode picker', () => {
+    it('switches the operator to same_piece and emits a kind identity payload', () => {
       const panel = buildPanel()
       const form = new ConditionForm(panel)
       form.attach()
 
-      panel.querySelector('#cond-mode-identity').dispatchEvent(new Event('click'))
-
-      expect(form.state.mode).toBe('identity')
-      expect(form.buildPayload()).toMatchObject({ kind: 'identity' })
-    })
-
-    it('reconstrains the target to the subject pairing when the subject changes', () => {
-      const panel = buildPanel()
-      const form = new ConditionForm(panel)
-      form.attach()
-
-      form.populate({
-        version: 2,
-        kind: 'identity',
-        subject: 'enemy_moved_piece',
-        target: 'captured_piece'
-      })
-
-      const subject = panel.querySelector('#cond-identity-subject')
-      subject.value = 'captured_piece'
-      subject.dispatchEvent(new Event('change'))
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+      const samePiece = panel.querySelector('#cond-captures-operator input[value="same_piece"]')
+      samePiece.checked = true
+      samePiece.dispatchEvent(new Event('change'))
 
       expect(form.buildPayload()).toEqual({
         version: 2,
@@ -937,6 +1083,82 @@ describe('ConditionForm', () => {
         subject: 'captured_piece',
         target: 'enemy_moved_piece'
       })
+    })
+
+    it('builds a value capture with an actor target and target filter', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      const node = {
+        version: 2,
+        kind: 'census',
+        subject: 'captured_piece',
+        subjectFilter: 'any',
+        operator: 'value',
+        comparator: 'greater_than',
+        target: 'enemy',
+        targetFilter: 'pawn',
+        targetFilterMode: 'exclude'
+      }
+      form.populate(node)
+
+      expect(form.state.mode).toBe('captures')
+      expect(form.buildPayload()).toEqual(node)
+    })
+
+    it('persists a subject filter on a same_piece capture (eval-inert until phase 2)', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      const node = {
+        version: 2,
+        kind: 'identity',
+        subject: 'captured_piece',
+        target: 'enemy_moved_piece',
+        subjectFilter: 'pawn',
+        subjectFilterMode: 'include'
+      }
+      form.populate(node)
+
+      expect(form.state.mode).toBe('captures')
+      expect(form.buildPayload()).toEqual(node)
+    })
+
+    it('disables same_piece for enemy_captured_piece', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+      const subject = panel.querySelector('#cond-captures-subject')
+      subject.value = 'enemy_captured_piece'
+      subject.dispatchEvent(new Event('change'))
+
+      expect(panel.querySelector('#cond-captures-operator input[value="same_piece"]').disabled).toBe(true)
+    })
+
+    it('shows the prior-move note only when the subject is enemy_captured_piece', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+      const note = panel.querySelector('#cond-captures-enemy-note')
+      expect(note.classList.contains('hidden')).toBe(true)
+
+      const subject = panel.querySelector('#cond-captures-subject')
+      subject.value = 'enemy_captured_piece'
+      subject.dispatchEvent(new Event('change'))
+
+      expect(note.classList.contains('hidden')).toBe(false)
+    })
+
+    it('no longer offers captured pieces as positions (census) subjects', () => {
+      const panel = buildPanel()
+      expect(panel.querySelector('#cond-census-subject option[value="captured_piece"]')).toBeNull()
+      expect(panel.querySelector('#cond-census-subject option[value="enemy_captured_piece"]')).toBeNull()
     })
   })
 })

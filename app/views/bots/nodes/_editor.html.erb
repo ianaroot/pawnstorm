@@ -11,7 +11,7 @@
       <div class="condition-form-mode-picker">
         <button type="button" class="condition-form-mode-picker__option" id="cond-mode-census">Positions</button>
         <button type="button" class="condition-form-mode-picker__option" id="cond-mode-relational">Attack/Defend</button>
-        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-identity">Identity</button>
+        <button type="button" class="condition-form-mode-picker__option" id="cond-mode-captures">Captures</button>
       </div>
 
       <div class="condition-form-layout">
@@ -194,7 +194,7 @@
 
           <div class="condition-form-field">
             <select id="cond-census-subject">
-              <% NodeForm.editor_subject_options.each do |label, value| %>
+              <% NodeForm.census_subject_options.each do |label, value| %>
                 <option value="<%= value %>"><%= label %></option>
               <% end %>
             </select>
@@ -310,37 +310,78 @@
         <p class="condition-form-note condition-form-position-layout__note hidden" id="cond-census-rank-note">Rank 1 is your back rank, whether you are white or black.</p>
       </div>
 
-      <div class="condition-form-layout condition-form-identity-layout hidden" id="cond-identity-layout">
+      <div class="condition-form-layout condition-form-captures-layout hidden" id="cond-captures-layout">
         <section class="condition-form-side">
           <div class="condition-form-side__header">
             <span class="condition-form-side__label">Subject</span>
           </div>
+
           <div class="condition-form-field">
-            <select id="cond-identity-subject">
-              <% NodeGrammarRules::SAME_PIECE_TARGETS.keys.each do |value| %>
-                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+            <select id="cond-captures-subject">
+              <% NodeForm.captures_subject_options.each do |label, value| %>
+                <option value="<%= value %>"><%= label %></option>
               <% end %>
             </select>
+          </div>
+
+          <div class="condition-form-field" id="cond-captures-filter-row">
+            <div class="condition-form-inline-pair">
+              <label class="condition-form-checkbox">
+                <input id="cond-captures-filter-mode" type="checkbox">
+                <span>Non-</span>
+              </label>
+              <select id="cond-captures-filter">
+                <% NodeForm.captures_filter_options.each do |label, value| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
           </div>
         </section>
 
         <section class="condition-form-operator">
-          <label>Relation</label>
-          <p class="condition-form-identity-relation">is the same piece as</p>
+          <label>Operator</label>
+          <div class="condition-form-radio-row" id="cond-captures-operator">
+            <% NodeForm.captures_operator_options.each_with_index do |(label, value), i| %>
+              <label class="condition-form-checkbox">
+                <input type="radio" name="cond-captures-operator" value="<%= value %>" <%= 'checked' if i.zero? %>>
+                <span><%= label %></span>
+              </label>
+            <% end %>
+          </div>
         </section>
 
         <section class="condition-form-side">
           <div class="condition-form-side__header">
             <span class="condition-form-side__label">Target</span>
           </div>
-          <div class="condition-form-field">
-            <select id="cond-identity-target">
-              <% NodeGrammarRules::SAME_PIECE_TARGETS.values.flatten.uniq.each do |value| %>
-                <option value="<%= value %>"><%= NodeForm.subject_label(value) %></option>
+
+          <select id="cond-captures-comparator"><%= options_for_select(NodeForm::COMPARATOR_OPTIONS) %></select>
+
+          <div class="condition-form-comparison-source-stack" id="cond-captures-target-stack">
+            <select id="cond-captures-target">
+              <% NodeForm.captures_target_options.each do |label, value| %>
+                <option value="<%= value %>"><%= label %></option>
               <% end %>
             </select>
+
+            <div class="condition-form-inline-pair" id="cond-captures-target-filter-row">
+              <label class="condition-form-checkbox">
+                <input id="cond-captures-target-filter-mode" type="checkbox">
+                <span>Non-</span>
+              </label>
+              <select id="cond-captures-target-filter">
+                <% NodeForm.captures_filter_options.each do |label, value| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+
+            <input id="cond-captures-target-total" type="number" min="0" step="1" value="1">
           </div>
         </section>
+
+        <p class="condition-form-note hidden" id="cond-captures-enemy-note">The enemy captured piece is a record of the enemy capturing on their move, so it isn't visible in the example of your move.</p>
       </div>
 
       <div class="condition-form-formulation">
