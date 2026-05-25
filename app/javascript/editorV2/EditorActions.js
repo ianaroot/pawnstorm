@@ -175,11 +175,14 @@ class EditorActions {
     this._chainPreviewTimer = null
   }
 
-  async addNode(type) {
+  resolvePlacementOrigin(fallback = { x: 200, y: 200 }) {
     const recentAnchor = this.store.getRecentPlacementAnchor()
-    const origin = recentAnchor && this.viewport?.isGraphPointVisible?.(recentAnchor)
-      ? recentAnchor
-      : this.viewport?.getVisibleCanvasCenter() || recentAnchor || { x: 200, y: 200 }
+    if (recentAnchor && this.viewport?.isGraphPointVisible?.(recentAnchor)) { return recentAnchor }
+    return this.viewport?.getVisibleCanvasCenter() || recentAnchor || fallback
+  }
+
+  async addNode(type) {
+    const origin = this.resolvePlacementOrigin()
     const position = findAnchoredNodePlacement(this.store, type, origin)
     try {
       await this.syncManager.createNode(type, position, {})
@@ -328,7 +331,7 @@ class EditorActions {
     if (this.clipboard.nodes.length === 0) { return null }
 
     const anchorType = this.clipboard.nodes[0].type
-    const origin = this.store.getRecentPlacementAnchor() || this.clipboard.anchorPosition
+    const origin = this.resolvePlacementOrigin(this.clipboard.anchorPosition)
     const anchorPosition = findAnchoredNodePlacement(this.store, anchorType, origin)
 
     const newClientIdMap = this.clipboard.nodes.map(() => generateUUID())
