@@ -224,6 +224,10 @@ class CanvasViewport {
     }
   }
 
+  isInteracting() {
+    return this.activeInteractions > 0
+  }
+
   endInteraction() {
     if (this.activeInteractions === 0) {
       return
