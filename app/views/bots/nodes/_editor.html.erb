@@ -21,9 +21,7 @@
           </div>
 
           <div class="condition-form-comparison" id="cond-left-comparison-section">
-            <button type="button" class="condition-form-comparison__toggle" id="cond-left-comparison-toggle"></button>
-
-            <div class="condition-form-comparison__body hidden" id="cond-left-comparison-body">
+            <div class="condition-form-comparison__body" id="cond-left-comparison-body">
               <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
                 <div class="condition-form-radio-row" id="cond-left-comparison-metric">
                   <% NodeForm.comparison_metric_options.each_with_index do |(label, value), i| %>
@@ -46,6 +44,7 @@
                   <input id="cond-left-comparison-source-total" type="number" min="0" step="1">
                 </div>
               </div>
+              <p class="condition-form-note hidden" id="cond-left-comparison-locked-note">Comparison unavailable while target uses prior board state.</p>
               <p class="condition-form-note hidden" id="cond-left-aggregate-note">Aggregate value unavailable while target uses aggregate value.</p>
             </div>
           </div>
@@ -89,9 +88,7 @@
 
           <div id="cond-right-relational-fields">
             <div class="condition-form-comparison">
-              <button type="button" class="condition-form-comparison__toggle" id="cond-right-comparison-toggle"></button>
-
-              <div class="condition-form-comparison__body hidden" id="cond-right-comparison-body">
+              <div class="condition-form-comparison__body" id="cond-right-comparison-body">
                 <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
                   <div class="condition-form-radio-row" id="cond-right-comparison-metric">
                     <% NodeForm.comparison_metric_options.each_with_index do |(label, value), i| %>
@@ -114,6 +111,7 @@
                     <input id="cond-right-comparison-source-total" type="number" min="0" step="1">
                   </div>
                 </div>
+                <p class="condition-form-note hidden" id="cond-right-comparison-locked-note">Comparison unavailable while subject uses prior board state.</p>
                 <p class="condition-form-note hidden" id="cond-right-aggregate-note">Aggregate value unavailable while subject uses aggregate value.</p>
               </div>
             </div>
@@ -152,9 +150,7 @@
           </div>
 
           <div class="condition-form-comparison" id="cond-census-comparison">
-            <button type="button" class="condition-form-comparison__toggle" id="cond-census-comparison-toggle"></button>
-
-            <div class="condition-form-comparison__body hidden" id="cond-census-comparison-body">
+            <div class="condition-form-comparison__body" id="cond-census-comparison-body">
               <div class="condition-form-comparison-grid condition-form-comparison-grid--relational">
                 <div class="condition-form-radio-row" id="cond-census-operator">
                   <% NodeForm.condition_form_position_operator_options.each_with_index do |(label, value), i| %>
@@ -173,18 +169,6 @@
                       <option value="<%= value %>"><%= label %></option>
                     <% end %>
                   </select>
-
-                  <div class="condition-form-inline-pair" id="cond-census-target-filter-row">
-                    <label class="condition-form-checkbox">
-                      <input id="cond-census-target-filter-mode" type="checkbox">
-                      <span>Non-</span>
-                    </label>
-                    <select id="cond-census-target-filter">
-                      <% NodeForm.filter_options.each do |label, value| %>
-                        <option value="<%= value %>"><%= label %></option>
-                      <% end %>
-                    </select>
-                  </div>
 
                   <input id="cond-census-target-total" type="number" min="0" step="1" value="0">
                 </div>
@@ -341,13 +325,23 @@
 
         <section class="condition-form-operator">
           <label>Operator</label>
-          <div class="condition-form-radio-row" id="cond-captures-operator">
-            <% NodeForm.captures_operator_options.each_with_index do |(label, value), i| %>
-              <label class="condition-form-checkbox">
-                <input type="radio" name="cond-captures-operator" value="<%= value %>" <%= 'checked' if i.zero? %>>
-                <span><%= label %></span>
-              </label>
-            <% end %>
+          <div class="condition-form-operator-row">
+            <div class="condition-form-radio-row" id="cond-captures-operator">
+              <% NodeForm.captures_operator_options.each_with_index do |(label, value), i| %>
+                <label class="condition-form-checkbox">
+                  <input type="radio" name="cond-captures-operator" value="<%= value %>" <%= 'checked' if i.zero? %>>
+                  <span><%= label %></span>
+                </label>
+              <% end %>
+            </div>
+
+            <div class="condition-form-comparator-toggle hidden" id="cond-captures-comparator">
+              <label class="condition-form-checkbox"><input type="radio" name="cond-captures-comparator" value="greater_than"><span>&gt;</span></label>
+              <label class="condition-form-checkbox"><input type="radio" name="cond-captures-comparator" value="greater_than_or_equal_to"><span>≥</span></label>
+              <label class="condition-form-checkbox"><input type="radio" name="cond-captures-comparator" value="equal_to" checked><span>=</span></label>
+              <label class="condition-form-checkbox"><input type="radio" name="cond-captures-comparator" value="less_than_or_equal_to"><span>≤</span></label>
+              <label class="condition-form-checkbox"><input type="radio" name="cond-captures-comparator" value="less_than"><span>&lt;</span></label>
+            </div>
           </div>
         </section>
 
@@ -355,8 +349,6 @@
           <div class="condition-form-side__header">
             <span class="condition-form-side__label">Target</span>
           </div>
-
-          <select id="cond-captures-comparator"><%= options_for_select(NodeForm::COMPARATOR_OPTIONS) %></select>
 
           <div class="condition-form-comparison-source-stack" id="cond-captures-target-stack">
             <select id="cond-captures-target">

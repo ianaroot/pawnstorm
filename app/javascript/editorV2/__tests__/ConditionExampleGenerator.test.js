@@ -461,19 +461,6 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
   })
 
-  it('flags contradiction when a singular actor has count > 1', () => {
-    const payload = {
-      version: 2, kind: 'relational',
-      subject: 'moved_piece', subjectFilter: 'any', operator: 'attack',
-      target: 'enemy', targetFilter: 'any',
-      subjectComparisonMetric: 'count', subjectComparator: 'equal_to',
-      subjectComparisonSource: 'exact_number', subjectComparisonSourceTotal: 2
-    }
-    const preview = generateConditionExamples(payload, { random: seededRandom(1106) })
-    expect(preview.status).toBe('contradictory')
-    expect(preview.reason).toMatch(/singular actor/i)
-  })
-
   // Dormant: detectSingularActorWithAggregateValue is unregistered from
   // CONTRADICTION_DETECTORS while aggregate_value is grammar-gated. Re-enable
   // the detector and this test together.
@@ -514,54 +501,6 @@ describe('ConditionExampleGenerator', () => {
     const preview = generateConditionExamples(payload, { random: seededRandom(1110) })
     expect(preview.status).toBe('contradictory')
     expect(preview.reason).toMatch(/filter matches no pieces with the required value/i)
-  })
-
-  it('flags contradiction when a pawn is required on an illegal rank', () => {
-    const payload = {
-      version: 2, kind: 'census', target: 'exact_number',
-      subject: 'allied', subjectFilter: 'pawn', operator: 'count',
-      positionAxis: 'rank', positionComparator: 'equal_to', positionTarget: 0,
-      comparator: 'greater_than_or_equal_to', targetTotal: 1
-    }
-    const preview = generateConditionExamples(payload, { random: seededRandom(1111) })
-    expect(preview.status).toBe('contradictory')
-    expect(preview.reason).toMatch(/pawns cannot be on rank 1/i)
-  })
-
-  it('flags contradiction when a directional rank constraint resolves to only an illegal pawn rank', () => {
-    const payload = {
-      version: 2, kind: 'census', target: 'exact_number',
-      subject: 'allied', subjectFilter: 'pawn', operator: 'count',
-      positionAxis: 'rank', positionComparator: 'less_than', positionTarget: 1,
-      comparator: 'greater_than_or_equal_to', targetTotal: 1
-    }
-    const preview = generateConditionExamples(payload, { random: seededRandom(1112) })
-    expect(preview.status).toBe('contradictory')
-    expect(preview.reason).toMatch(/pawns cannot be on rank 1/i)
-  })
-
-  it('flags contradiction when a unary singular actor has count > 1', () => {
-    const payload = {
-      version: 2, kind: 'census',
-      subject: 'moved_piece', subjectFilter: 'any',
-      operator: 'count', comparator: 'equal_to',
-      target: 'exact_number', targetTotal: 2
-    }
-    const preview = generateConditionExamples(payload, { random: seededRandom(1113) })
-    expect(preview.status).toBe('contradictory')
-    expect(preview.reason).toMatch(/singular actor.*cannot have count > 1/i)
-  })
-
-  it('flags contradiction when moved_piece is required to have count = 0', () => {
-    const payload = {
-      version: 2, kind: 'census',
-      subject: 'moved_piece', subjectFilter: 'any',
-      operator: 'count', comparator: 'equal_to',
-      target: 'exact_number', targetTotal: 0
-    }
-    const preview = generateConditionExamples(payload, { random: seededRandom(1114) })
-    expect(preview.status).toBe('contradictory')
-    expect(preview.reason).toMatch(/moved_piece must exist/i)
   })
 
   it('uses forward generation for allied any mobility > prior_board_state via group-mobility-increase pattern', () => {

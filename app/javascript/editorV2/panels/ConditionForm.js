@@ -46,12 +46,9 @@ class ConditionForm {
     }
     this.state = this.defaultState()
     this.boundHandleFieldChange = this.handleFieldChange.bind(this)
-    this.boundHandleLeftComparisonToggle = this.toggleLeftComparison.bind(this)
-    this.boundHandleRightComparisonToggle = this.toggleRightComparison.bind(this)
     this.boundHandleModeRelational = () => this.handleModeChange('relational')
     this.boundHandleModeCensus = () => this.handleModeChange('census')
     this.boundHandleModeCaptures = () => this.handleModeChange('captures')
-    this.boundHandleCensusComparisonToggle = this.toggleCensusComparison.bind(this)
   }
 
   defaultState() {
@@ -77,24 +74,18 @@ class ConditionForm {
     const fields = this.fields()
     fields.all.forEach(field => field?.addEventListener('change', this.boundHandleFieldChange))
     fields.numberInputs.forEach(field => field?.addEventListener('input', this.boundHandleFieldChange))
-    fields.leftComparisonToggle?.addEventListener('click', this.boundHandleLeftComparisonToggle)
-    fields.rightComparisonToggle?.addEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.addEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.addEventListener('click', this.boundHandleModeCensus)
     fields.modeCapturesBtn?.addEventListener('click', this.boundHandleModeCaptures)
-    fields.censusComparisonToggle?.addEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
   detach() {
     const fields = this.fields()
     fields.all.forEach(field => field?.removeEventListener('change', this.boundHandleFieldChange))
     fields.numberInputs.forEach(field => field?.removeEventListener('input', this.boundHandleFieldChange))
-    fields.leftComparisonToggle?.removeEventListener('click', this.boundHandleLeftComparisonToggle)
-    fields.rightComparisonToggle?.removeEventListener('click', this.boundHandleRightComparisonToggle)
     fields.modeRelationalBtn?.removeEventListener('click', this.boundHandleModeRelational)
     fields.modeCensusBtn?.removeEventListener('click', this.boundHandleModeCensus)
     fields.modeCapturesBtn?.removeEventListener('click', this.boundHandleModeCaptures)
-    fields.censusComparisonToggle?.removeEventListener('click', this.boundHandleCensusComparisonToggle)
   }
 
   fields() {
@@ -123,8 +114,6 @@ class ConditionForm {
     const censusComparator = this.editorPanel.querySelector('#cond-census-comparator')
     const censusTarget = this.editorPanel.querySelector('#cond-census-target')
     const censusTargetTotal = this.editorPanel.querySelector('#cond-census-target-total')
-    const censusTargetFilter = this.editorPanel.querySelector('#cond-census-target-filter')
-    const censusTargetFilterMode = this.editorPanel.querySelector('#cond-census-target-filter-mode')
     const censusScopeWhole = this.editorPanel.querySelector('#cond-census-scope-whole')
     const censusAxisRank = this.editorPanel.querySelector('#cond-census-axis-rank')
     const censusAxisFile = this.editorPanel.querySelector('#cond-census-axis-file')
@@ -141,6 +130,7 @@ class ConditionForm {
     const capturesOperator = this.editorPanel.querySelector('#cond-captures-operator')
     const capturesOperatorInputs = pillInputs(capturesOperator)
     const capturesComparator = this.editorPanel.querySelector('#cond-captures-comparator')
+    const capturesComparatorInputs = pillInputs(capturesComparator)
     const capturesTarget = this.editorPanel.querySelector('#cond-captures-target')
     const capturesTargetFilter = this.editorPanel.querySelector('#cond-captures-target-filter')
     const capturesTargetFilterMode = this.editorPanel.querySelector('#cond-captures-target-filter-mode')
@@ -176,8 +166,6 @@ class ConditionForm {
       censusComparator,
       censusTarget,
       censusTargetTotal,
-      censusTargetFilter,
-      censusTargetFilterMode,
       censusScopeWhole,
       censusAxisRank,
       censusAxisFile,
@@ -198,17 +186,16 @@ class ConditionForm {
       capturesOperator,
       capturesOperatorInputs,
       capturesComparator,
+      capturesComparatorInputs,
       capturesTarget,
       capturesTargetFilter,
       capturesTargetFilterMode,
       capturesTargetTotal,
-      leftComparisonToggle: this.editorPanel.querySelector('#cond-left-comparison-toggle'),
       leftComparisonBody: this.editorPanel.querySelector('#cond-left-comparison-body'),
-      leftComparisonSourceStack: this.editorPanel.querySelector('#cond-left-comparison-source-stack'),
+      leftComparisonLockedNote: this.editorPanel.querySelector('#cond-left-comparison-locked-note'),
       leftFilterModeControl: leftFilterMode?.closest('.condition-form-checkbox'),
-      rightComparisonToggle: this.editorPanel.querySelector('#cond-right-comparison-toggle'),
       rightComparisonBody: this.editorPanel.querySelector('#cond-right-comparison-body'),
-      rightComparisonSourceStack: this.editorPanel.querySelector('#cond-right-comparison-source-stack'),
+      rightComparisonLockedNote: this.editorPanel.querySelector('#cond-right-comparison-locked-note'),
       rightFilterModeControl: rightFilterMode?.closest('.condition-form-checkbox'),
       rightCardLabel: this.editorPanel.querySelector('#cond-right-card-label'),
       rightRelationalFields: this.editorPanel.querySelector('#cond-right-relational-fields'),
@@ -233,11 +220,6 @@ class ConditionForm {
       capturesEnemyNote: this.editorPanel.querySelector('#cond-captures-enemy-note'),
       censusFilterRow: this.editorPanel.querySelector('#cond-census-filter-row'),
       censusFilterModeControl: censusFilterMode?.closest('.condition-form-checkbox'),
-      censusComparisonToggle: this.editorPanel.querySelector('#cond-census-comparison-toggle'),
-      censusComparisonBody: this.editorPanel.querySelector('#cond-census-comparison-body'),
-      censusTargetStack: this.editorPanel.querySelector('#cond-census-target-stack'),
-      censusTargetFilterRow: this.editorPanel.querySelector('#cond-census-target-filter-row'),
-      censusTargetFilterModeControl: censusTargetFilterMode?.closest('.condition-form-checkbox'),
       censusScope: this.editorPanel.querySelector('#cond-census-scope'),
       censusSquareInputs: this.editorPanel.querySelector('#cond-census-square-inputs'),
       censusRegionTarget: this.editorPanel.querySelector('#cond-census-region-target'),
@@ -247,10 +229,10 @@ class ConditionForm {
         relationalOperatorSelect,
         rightSubject, rightFilterMode, rightFilter, ...rightComparisonMetricInputs, rightComparator, rightComparisonSource,
         censusSubject, censusFilterMode, censusFilter, ...censusOperatorInputs, censusComparator,
-        censusTarget, censusTargetFilter, censusTargetFilterMode,
+        censusTarget,
         censusScopeWhole, censusAxisRank, censusAxisFile, censusAxisSquare, ...censusRegionComparatorInputs,
         ...censusRankInputs, ...censusFileInputs, ...censusSquareFileInputs, ...censusSquareRankInputs,
-        capturesSubject, capturesFilterMode, capturesFilter, ...capturesOperatorInputs, capturesComparator,
+        capturesSubject, capturesFilterMode, capturesFilter, ...capturesOperatorInputs, ...capturesComparatorInputs,
         capturesTarget, capturesTargetFilter, capturesTargetFilterMode
       ],
       numberInputs: [
@@ -325,23 +307,6 @@ class ConditionForm {
     }
 
     if (this.onStateChange) { this.onStateChange(this.buildPayload()) }
-  }
-
-  toggleLeftComparison() {
-    if (this.state.mode !== 'relational') { return }
-    if (this.modes.relational.toggleComparison('left', this.state.relational)) { this.render() }
-  }
-
-  toggleCensusComparison() {
-    if (this.state.mode !== 'census') { return }
-    this.modes.census.toggleAdvanced(this.state.census)
-    this.modes.census.applyCompatibilityRules(this.state.census)
-    this.render()
-  }
-
-  toggleRightComparison() {
-    if (this.state.mode !== 'relational') { return }
-    if (this.modes.relational.toggleComparison('right', this.state.relational)) { this.render() }
   }
 
   handleModeChange(mode) {

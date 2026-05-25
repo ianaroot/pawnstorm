@@ -1,4 +1,6 @@
-// Canonical definitions of actor sets used across bot execution and analysis.
+// Actor sets used across bot execution and analysis. The singular sets mirror
+// app/models/node_grammar_v2.rb (SINGULAR_SUBJECTS / RELATIONAL_SINGULAR_SUBJECTS);
+// spec/models/actors_js_sync_spec.rb guards the mirror.
 
 // Singular move-event actors — count is always 0 or 1 (one piece per role).
 // Distinct from group actors (allied, enemy) which can have many pieces.

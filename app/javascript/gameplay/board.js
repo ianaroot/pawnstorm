@@ -145,11 +145,11 @@ class Board {
     return position % 8
   }
 
-  static rank(position){
+  static rankLabel(position){
     return Board.rankIndex(position) + 1
   }
 
-  static file(position){
+  static fileLabel(position){
     let files = "abcdefgh";
     return files[Board.fileIndex(position)]
   }
@@ -506,12 +506,12 @@ class Board {
     let competingStarts = this.competingMoveStarts(moveObject)
     if( competingStarts.length === 0 ){ return pieceNotation }
 
-    let startFile = Board.file(moveObject.startPosition),
-      startRank = Board.rank(moveObject.startPosition),
-      fileMatches = competingStarts.filter(position => Board.file(position) === startFile)
+    let startFile = Board.fileLabel(moveObject.startPosition),
+      startRank = Board.rankLabel(moveObject.startPosition),
+      fileMatches = competingStarts.filter(position => Board.fileLabel(position) === startFile)
     if( fileMatches.length === 0 ){ return pieceNotation + startFile }
 
-    let rankMatches = competingStarts.filter(position => Board.rank(position) === startRank)
+    let rankMatches = competingStarts.filter(position => Board.rankLabel(position) === startRank)
     if( rankMatches.length === 0 ){ return pieceNotation + startRank }
 
     return pieceNotation + Board.gridCalculator(moveObject.startPosition)

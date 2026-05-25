@@ -674,8 +674,8 @@ export function cachedControlledSquares({ board, attackerPosition, cache = null,
     })
 }
 
-export function relativeRank(position, team) {
-    return team === Board.WHITE ? Board.rank(position) : 9 - Board.rank(position)
+export function relativeRankLabel(position, team) {
+    return team === Board.WHITE ? Board.rankLabel(position) : 9 - Board.rankLabel(position)
 }
 
 export function relativeToAbsolutePosition(relativeIndex, team) {

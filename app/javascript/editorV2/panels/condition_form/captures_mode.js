@@ -57,7 +57,7 @@ export default class CapturesMode {
     cap.filterMode = fields.capturesFilterMode?.checked ? 'exclude' : 'include'
     cap.filter = fields.capturesFilter?.value || 'any'
     cap.operator = pillValue(fields.capturesOperatorInputs) || 'exists'
-    cap.comparator = fields.capturesComparator?.value || 'equal_to'
+    cap.comparator = pillValue(fields.capturesComparatorInputs) || 'equal_to'
     cap.target = fields.capturesTarget?.value || 'exact_number'
     cap.targetFilter = fields.capturesTargetFilter?.value || 'any'
     cap.targetFilterMode = fields.capturesTargetFilterMode?.checked ? 'exclude' : 'include'
@@ -126,7 +126,7 @@ export default class CapturesMode {
     if (fields.capturesFilter) fields.capturesFilter.value = cap.filter
     if (fields.capturesFilterMode) fields.capturesFilterMode.checked = filterModeAvailable && cap.filterMode === 'exclude'
     setPillChecked(fields.capturesOperatorInputs, cap.operator)
-    if (fields.capturesComparator) fields.capturesComparator.value = cap.comparator
+    setPillChecked(fields.capturesComparatorInputs, cap.comparator)
     if (fields.capturesTarget) fields.capturesTarget.value = cap.target
     if (fields.capturesTargetTotal) fields.capturesTargetTotal.value = cap.targetTotal
     if (fields.capturesTargetFilter) fields.capturesTargetFilter.value = cap.targetFilter

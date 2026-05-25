@@ -2,30 +2,17 @@ import {
   disableOptions, enableAllOptions, showAllOptions, pillValue, setPillChecked
 } from 'editorV2/panels/condition_form/dom_helpers'
 
+const NEUTRAL_COMPARISON = {
+  comparisonMetric: 'count',
+  comparator: 'greater_than_or_equal_to',
+  comparisonSource: 'exact_number',
+  comparisonSourceTotal: 1
+}
+
 const DEFAULT_RELATIONAL_STATE = {
-  left: {
-    subject: 'allied',
-    filter: 'any',
-    filterMode: 'include',
-    comparisonMetric: '',
-    comparator: 'equal_to',
-    comparisonSource: 'exact_number',
-    comparisonSourceTotal: 1
-  },
+  left: { subject: 'allied', filter: 'any', filterMode: 'include', ...NEUTRAL_COMPARISON },
   operator: 'targets',
-  right: {
-    subject: 'enemy',
-    filter: 'any',
-    filterMode: 'include',
-    comparisonMetric: '',
-    comparator: 'equal_to',
-    comparisonSource: 'exact_number',
-    comparisonSourceTotal: 1
-  },
-  ui: {
-    leftComparisonOpen: false,
-    rightComparisonOpen: false
-  }
+  right: { subject: 'enemy', filter: 'any', filterMode: 'include', ...NEUTRAL_COMPARISON }
 }
 
 // Relational condition mode. State-only: the orchestrator owns DOM events and
@@ -59,11 +46,7 @@ export default class RelationalMode {
         comparator: nodeData.targetComparator,
         comparisonSource: nodeData.targetComparisonSource,
         comparisonSourceTotal: nodeData.targetComparisonSourceTotal
-      }),
-      ui: {
-        leftComparisonOpen: Boolean(nodeData.subjectComparisonMetric),
-        rightComparisonOpen: Boolean(nodeData.targetComparisonMetric)
-      }
+      })
     }
   }
 
@@ -74,15 +57,15 @@ export default class RelationalMode {
   }
 
   sideState({ subject, filter, filterMode, comparisonMetric, comparator, comparisonSource, comparisonSourceTotal }) {
-    const source = comparisonSource || 'exact_number'
+    const source = comparisonSource || NEUTRAL_COMPARISON.comparisonSource
     return {
       subject: subject || 'allied',
       filter: filter || 'any',
       filterMode: filterMode || 'include',
-      comparisonMetric: comparisonMetric || '',
-      comparator: comparator || 'equal_to',
+      comparisonMetric: comparisonMetric || NEUTRAL_COMPARISON.comparisonMetric,
+      comparator: comparator || NEUTRAL_COMPARISON.comparator,
       comparisonSource: source,
-      comparisonSourceTotal: source === 'exact_number' && typeof comparisonSourceTotal === 'number' ? comparisonSourceTotal : 1
+      comparisonSourceTotal: source === 'exact_number' && typeof comparisonSourceTotal === 'number' ? comparisonSourceTotal : NEUTRAL_COMPARISON.comparisonSourceTotal
     }
   }
 
@@ -90,7 +73,7 @@ export default class RelationalMode {
     rel.left.subject = fields.leftSubject?.value || 'allied'
     rel.left.filterMode = fields.leftFilterMode?.checked ? 'exclude' : 'include'
     rel.left.filter = fields.leftFilter?.value || 'any'
-    rel.left.comparisonMetric = pillValue(fields.leftComparisonMetricInputs) || ''
+    rel.left.comparisonMetric = pillValue(fields.leftComparisonMetricInputs) || 'count'
     rel.left.comparator = fields.leftComparator?.value || 'equal_to'
     rel.left.comparisonSource = fields.leftComparisonSource?.value || 'exact_number'
     rel.left.comparisonSourceTotal = Number(fields.leftComparisonSourceTotal?.value || 1)
@@ -98,7 +81,7 @@ export default class RelationalMode {
     rel.right.subject = fields.rightSubject?.value || 'enemy'
     rel.right.filterMode = fields.rightFilterMode?.checked ? 'exclude' : 'include'
     rel.right.filter = fields.rightFilter?.value || 'any'
-    rel.right.comparisonMetric = pillValue(fields.rightComparisonMetricInputs) || ''
+    rel.right.comparisonMetric = pillValue(fields.rightComparisonMetricInputs) || 'count'
     rel.right.comparator = fields.rightComparator?.value || 'equal_to'
     rel.right.comparisonSource = fields.rightComparisonSource?.value || 'exact_number'
     rel.right.comparisonSourceTotal = Number(fields.rightComparisonSourceTotal?.value || 1)
@@ -123,7 +106,7 @@ export default class RelationalMode {
       payload.targetFilterMode = rel.right.filterMode
     }
 
-    if (rel.ui.leftComparisonOpen && rel.left.comparisonMetric) {
+    if (!this.isNeutralComparison(rel.left)) {
       payload.subjectComparisonMetric = rel.left.comparisonMetric
       payload.subjectComparator = rel.left.comparator
       payload.subjectComparisonSource = rel.left.comparisonSource
@@ -132,7 +115,7 @@ export default class RelationalMode {
       }
     }
 
-    if (rel.ui.rightComparisonOpen && rel.right.comparisonMetric) {
+    if (!this.isNeutralComparison(rel.right)) {
       payload.targetComparisonMetric = rel.right.comparisonMetric
       payload.targetComparator = rel.right.comparator
       payload.targetComparisonSource = rel.right.comparisonSource
@@ -144,33 +127,21 @@ export default class RelationalMode {
     return payload
   }
 
-  toggleComparison(side, rel) {
-    if (this.comparisonLocked(rel, side)) { return false }
-    const sideState = rel[side]
-    const uiKey = side === 'left' ? 'leftComparisonOpen' : 'rightComparisonOpen'
-
-    if (!rel.ui[uiKey] && !sideState.comparisonMetric) {
-      sideState.comparisonMetric = 'count'
-      sideState.comparator = 'equal_to'
-      sideState.comparisonSource = 'exact_number'
-      sideState.comparisonSourceTotal ||= 1
-    }
-
-    rel.ui[uiKey] = !rel.ui[uiKey]
-    return true
+  isNeutralComparison(sideState) {
+    return Object.entries(NEUTRAL_COMPARISON).every(([key, value]) => sideState[key] === value)
   }
 
   render(rel, fields) {
-    const leftComparisonActive = rel.ui.leftComparisonOpen
-    const rightComparisonActive = rel.ui.rightComparisonOpen
     const leftFilterModeAvailable = rel.left.filter !== 'any'
     const rightFilterModeAvailable = rel.right.filter !== 'any'
+    const leftLocked = this.comparisonLocked(rel, 'left')
+    const rightLocked = this.comparisonLocked(rel, 'right')
 
     if (fields.relationalOperatorSelect) fields.relationalOperatorSelect.value = rel.operator
     if (fields.leftSubject) fields.leftSubject.value = rel.left.subject
     if (fields.leftFilterMode) fields.leftFilterMode.checked = leftFilterModeAvailable && rel.left.filterMode === 'exclude'
     if (fields.leftFilter) fields.leftFilter.value = rel.left.filter
-    setPillChecked(fields.leftComparisonMetricInputs, rel.left.comparisonMetric || 'count')
+    setPillChecked(fields.leftComparisonMetricInputs, rel.left.comparisonMetric)
     if (fields.leftComparator) fields.leftComparator.value = rel.left.comparator
     if (fields.leftComparisonSource) fields.leftComparisonSource.value = rel.left.comparisonSource
     if (fields.leftComparisonSourceTotal) fields.leftComparisonSourceTotal.value = rel.left.comparisonSourceTotal
@@ -178,33 +149,23 @@ export default class RelationalMode {
     if (fields.rightSubject) fields.rightSubject.value = rel.right.subject
     if (fields.rightFilterMode) fields.rightFilterMode.checked = rightFilterModeAvailable && rel.right.filterMode === 'exclude'
     if (fields.rightFilter) fields.rightFilter.value = rel.right.filter
-    setPillChecked(fields.rightComparisonMetricInputs, rel.right.comparisonMetric || 'count')
+    setPillChecked(fields.rightComparisonMetricInputs, rel.right.comparisonMetric)
     if (fields.rightComparator) fields.rightComparator.value = rel.right.comparator
     if (fields.rightComparisonSource) fields.rightComparisonSource.value = rel.right.comparisonSource
     if (fields.rightComparisonSourceTotal) fields.rightComparisonSourceTotal.value = rel.right.comparisonSourceTotal
 
-    fields.leftComparisonBody.classList.toggle('hidden', !rel.ui.leftComparisonOpen)
-    fields.rightComparisonBody.classList.toggle('hidden', !rel.ui.rightComparisonOpen)
     fields.leftComparisonSourceTotal?.classList.toggle('hidden', rel.left.comparisonSource !== 'exact_number')
     fields.rightComparisonSourceTotal?.classList.toggle('hidden', rel.right.comparisonSource !== 'exact_number')
-    fields.leftComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.left.comparisonSource === 'exact_number')
-    fields.rightComparisonSourceStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', rel.right.comparisonSource === 'exact_number')
 
     fields.leftFilterRow.classList.toggle('hidden', false)
     fields.rightFilterRow.classList.toggle('hidden', false)
     fields.leftFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !leftFilterModeAvailable)
     fields.rightFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !rightFilterModeAvailable)
-    fields.rightComparisonToggle.closest('.condition-form-comparison').classList.toggle('hidden', false)
 
-    const leftLocked = this.comparisonLocked(rel, 'left')
-    const rightLocked = this.comparisonLocked(rel, 'right')
-    fields.leftComparisonToggle.disabled = leftLocked
-    fields.rightComparisonToggle.disabled = rightLocked
-    fields.leftComparisonToggle.textContent = leftLocked ? this.comparisonUnavailableText(rel, 'left') : (rel.ui.leftComparisonOpen ? 'Hide comparison' : '+ comparison (advanced)')
-    fields.rightComparisonToggle.textContent = rightLocked ? this.comparisonUnavailableText(rel, 'right') : (rel.ui.rightComparisonOpen ? 'Hide comparison' : '+ comparison (advanced)')
-
-    this.setComparisonInputsDisabled('left', fields, !leftComparisonActive)
-    this.setComparisonInputsDisabled('right', fields, !rightComparisonActive)
+    fields.leftComparisonLockedNote?.classList.toggle('hidden', !leftLocked)
+    fields.rightComparisonLockedNote?.classList.toggle('hidden', !rightLocked)
+    fields.leftComparisonBody?.classList.toggle('condition-form-comparison__body--locked', leftLocked)
+    fields.rightComparisonBody?.classList.toggle('condition-form-comparison__body--locked', rightLocked)
 
     showAllOptions(fields.leftSubject)
     showAllOptions(fields.rightSubject)
@@ -232,13 +193,11 @@ export default class RelationalMode {
     }
 
     if (this.leftUsesPriorBoardState(rel)) {
-      this.clearComparator(rel, 'right')
-      rel.ui.rightComparisonOpen = false
+      this.resetComparison(rel, 'right')
     }
 
     if (this.rightUsesPriorBoardState(rel)) {
-      this.clearComparator(rel, 'left')
-      rel.ui.leftComparisonOpen = false
+      this.resetComparison(rel, 'left')
     }
 
     if (this.leftUsesAggregateValue(rel) && rel.right.comparisonMetric === 'aggregate_value') {
@@ -264,42 +223,28 @@ export default class RelationalMode {
     if (rel.right.filter === 'any') { rel.right.filterMode = 'include' }
   }
 
-  clearComparator(rel, side) {
-    const sideState = rel[side]
-    sideState.comparisonMetric = ''
-    sideState.comparator = 'equal_to'
-    sideState.comparisonSource = 'exact_number'
-    sideState.comparisonSourceTotal = 1
+  resetComparison(rel, side) {
+    Object.assign(rel[side], NEUTRAL_COMPARISON)
   }
 
   leftUsesPriorBoardState(rel) {
-    return rel.ui.leftComparisonOpen && rel.left.comparisonSource === 'prior_board_state'
+    return rel.left.comparisonSource === 'prior_board_state'
   }
 
   rightUsesPriorBoardState(rel) {
-    return rel.ui.rightComparisonOpen && rel.right.comparisonSource === 'prior_board_state'
+    return rel.right.comparisonSource === 'prior_board_state'
   }
 
   leftUsesAggregateValue(rel) {
-    return rel.ui.leftComparisonOpen && rel.left.comparisonMetric === 'aggregate_value'
+    return rel.left.comparisonMetric === 'aggregate_value'
   }
 
   rightUsesAggregateValue(rel) {
-    return rel.ui.rightComparisonOpen && rel.right.comparisonMetric === 'aggregate_value'
+    return rel.right.comparisonMetric === 'aggregate_value'
   }
 
   comparisonLocked(rel, side) {
     return side === 'left' ? this.rightUsesPriorBoardState(rel) : this.leftUsesPriorBoardState(rel)
-  }
-
-  comparisonUnavailableText(rel, side) {
-    if (side === 'left' && this.rightUsesPriorBoardState(rel)) {
-      return '+ comparison unavailable while target uses prior'
-    }
-    if (side === 'right' && this.leftUsesPriorBoardState(rel)) {
-      return '+ comparison unavailable while subject uses prior'
-    }
-    return '+ comparison unavailable'
   }
 
   regularSubjects() {
@@ -348,18 +293,6 @@ export default class RelationalMode {
       return ['exact_number', 'prior_board_state', 'moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
     }
     return ['exact_number', 'prior_board_state']
-  }
-
-  setComparisonInputsDisabled(side, fields, disabled) {
-    const metricInputsKey = side === 'left' ? 'leftComparisonMetricInputs' : 'rightComparisonMetricInputs'
-    const comparatorKey = side === 'left' ? 'leftComparator' : 'rightComparator'
-    const sourceKey = side === 'left' ? 'leftComparisonSource' : 'rightComparisonSource'
-    const sourceTotalKey = side === 'left' ? 'leftComparisonSourceTotal' : 'rightComparisonSourceTotal'
-
-    fields[metricInputsKey]?.forEach(input => { input.disabled = disabled })
-    fields[sourceKey].disabled = disabled
-    fields[sourceTotalKey].disabled = disabled
-    fields[comparatorKey].disabled = disabled
   }
 
   disableComparisonSourceOptions(rel, fields) {

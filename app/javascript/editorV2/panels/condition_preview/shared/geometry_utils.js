@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS, relativeRank, relativeToAbsolutePosition } from 'gameplay/board_query_utils'
+import { nextPositionOnRay, knightControlledSquares, kingControlledSquares, ROOK_RAY_STEPS, BISHOP_RAY_STEPS, QUEEN_RAY_STEPS, relativeRankLabel, relativeToAbsolutePosition } from 'gameplay/board_query_utils'
 
 export { QUEEN_RAY_STEPS as RAY_STEPS }
 
@@ -169,7 +169,7 @@ export function qualifyingSquares(positionAxis, positionComparator, positionTarg
   const result = []
   for (let pos = 0; pos < 64; pos += 1) {
     if (positionAxis === 'rank') {
-      if (satisfiesComparator(positionComparator, relativeRank(pos, team), positionTarget)) { result.push(pos) }
+      if (satisfiesComparator(positionComparator, relativeRankLabel(pos, team), positionTarget)) { result.push(pos) }
     } else if (positionAxis === 'file') {
       if (satisfiesComparator(positionComparator, Board.fileIndex(pos) + 1, positionTarget)) { result.push(pos) }
     } else if (positionAxis === 'square') {

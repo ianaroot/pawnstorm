@@ -16,12 +16,9 @@ const DEFAULT_CENSUS_STATE = {
   regionFileTarget: 1,
   regionSquareFile: 1,
   regionSquareRank: 1,
-  advanced: false,
   operator: 'count',
   comparator: 'greater_than',
   target: 'exact_number',
-  targetFilter: 'any',
-  targetFilterMode: 'include',
   targetTotal: 0
 }
 
@@ -55,12 +52,9 @@ export default class CensusMode {
       regionFileTarget: nodeData.positionAxis === 'file' ? (nodeData.positionTarget || 1) : 1,
       regionSquareFile: squareFile,
       regionSquareRank: squareRank,
-      advanced: Boolean(nodeData.target) && nodeData.target !== 'exact_number',
       operator: nodeData.operator || 'count',
       comparator: nodeData.comparator || 'greater_than',
       target: nodeData.target || 'exact_number',
-      targetFilter: nodeData.targetFilter || 'any',
-      targetFilterMode: nodeData.targetFilterMode || 'include',
       targetTotal: typeof nodeData.targetTotal === 'number' ? nodeData.targetTotal : 0
     }
   }
@@ -89,8 +83,6 @@ export default class CensusMode {
     cen.operator = pillValue(fields.censusOperatorInputs) || 'count'
     cen.comparator = fields.censusComparator?.value || 'greater_than'
     cen.target = fields.censusTarget?.value || 'exact_number'
-    cen.targetFilter = fields.censusTargetFilter?.value || 'any'
-    cen.targetFilterMode = fields.censusTargetFilterMode?.checked ? 'exclude' : 'include'
     cen.targetTotal = Number(fields.censusTargetTotal?.value || 0)
   }
 
@@ -102,8 +94,8 @@ export default class CensusMode {
       operator: cen.operator,
       comparator: cen.comparator,
       target: cen.target,
-      targetFilter: cen.targetFilter,
-      targetFilterMode: cen.targetFilterMode,
+      targetFilter: 'any',
+      targetFilterMode: 'include',
       targetTotal: cen.targetTotal
     })
     if (cen.scope === 'region') {
@@ -114,16 +106,10 @@ export default class CensusMode {
     return payload
   }
 
-  toggleAdvanced(cen) {
-    cen.advanced = !cen.advanced
-  }
-
   render(cen, fields) {
     const region = cen.scope === 'region'
     const isSquare = region && cen.regionAxis === 'square'
     const filterModeAvailable = cen.left.filter !== 'any'
-    const targetUsesActor = this.targetUsesActor(cen)
-    const targetFilterModeAvailable = targetUsesActor && cen.targetFilter !== 'any'
 
     if (fields.censusSubject) fields.censusSubject.value = cen.left.subject
     if (fields.censusFilterMode) fields.censusFilterMode.checked = filterModeAvailable && cen.left.filterMode === 'exclude'
@@ -144,8 +130,6 @@ export default class CensusMode {
     if (fields.censusComparator) fields.censusComparator.value = cen.comparator
     if (fields.censusTarget) fields.censusTarget.value = cen.target
     if (fields.censusTargetTotal) fields.censusTargetTotal.value = cen.targetTotal
-    if (fields.censusTargetFilter) fields.censusTargetFilter.value = cen.targetFilter
-    if (fields.censusTargetFilterMode) fields.censusTargetFilterMode.checked = targetFilterModeAvailable && cen.targetFilterMode === 'exclude'
 
     fields.censusRegionComparator?.classList.toggle('hidden', !region)
     fields.censusRegionComparator?.classList.toggle('condition-form-comparator-toggle--locked', isSquare)
@@ -158,19 +142,9 @@ export default class CensusMode {
     const squareTargetInputs = [...(fields.censusSquareFileInputs || []), ...(fields.censusSquareRankInputs || [])]
     squareTargetInputs.forEach(input => { input.disabled = !region })
 
-    fields.censusTarget?.classList.toggle('hidden', !cen.advanced)
     fields.censusTargetTotal?.classList.toggle('hidden', cen.target !== 'exact_number')
-    fields.censusTargetFilterRow?.classList.toggle('hidden', !targetUsesActor)
-    fields.censusTargetStack?.classList.toggle('condition-form-comparison-source-stack--inline-number', cen.target === 'exact_number')
-
-    fields.censusComparisonBody?.classList.toggle('hidden', false)
-    fields.censusComparisonToggle?.classList.toggle('hidden', false)
-    if (fields.censusComparisonToggle) {
-      fields.censusComparisonToggle.textContent = cen.advanced ? 'Simplify' : '+ Advanced options'
-    }
 
     fields.censusFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !filterModeAvailable)
-    fields.censusTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !targetFilterModeAvailable)
 
     showAllOptions(fields.censusSubject)
     showAllOptions(fields.censusTarget)
@@ -191,24 +165,11 @@ export default class CensusMode {
     if (cen.scope === 'region' && cen.regionAxis === 'square') {
       cen.regionComparator = 'equal_to'
     }
-    if (!cen.advanced) {
+    const allowedTargets = this.allowedTargetsForOperator(cen.operator)
+    if (!allowedTargets.includes(cen.target)) {
       cen.target = 'exact_number'
-      cen.targetFilter = 'any'
-      cen.targetFilterMode = 'include'
-    } else {
-      const allowedTargets = this.allowedTargetsForOperator(cen.operator)
-      if (!allowedTargets.includes(cen.target)) {
-        cen.target = 'exact_number'
-        cen.targetFilter = 'any'
-        cen.targetFilterMode = 'include'
-      }
     }
-    this.applyFilterModeCompatibilityRules(cen)
-  }
-
-  applyFilterModeCompatibilityRules(cen) {
     if (cen.left.filter === 'any') { cen.left.filterMode = 'include' }
-    if (cen.targetFilter === 'any') { cen.targetFilterMode = 'include' }
   }
 
   resolvedRegionTarget(cen) {
@@ -233,14 +194,13 @@ export default class CensusMode {
     return census.wholeBoardSubjects || this.editorSubjects()
   }
 
-  targetUsesActor(cen) {
-    return cen.advanced && !['exact_number', 'prior_board_state'].includes(cen.target)
-  }
-
   allowedTargetsForOperator(operator) {
+    if (operator !== 'value') {
+      return ['exact_number', 'prior_board_state']
+    }
     return [
       'exact_number',
-      ...this.editorSubjects().filter(subject => this.allowedOperatorsForSubject(subject).includes(operator)),
+      ...this.editorSubjects().filter(subject => this.allowedOperatorsForSubject(subject).includes('value')),
       'prior_board_state'
     ]
   }

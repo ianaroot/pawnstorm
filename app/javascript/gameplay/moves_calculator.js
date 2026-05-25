@@ -86,7 +86,7 @@ class MovesCalculator {
 
   promotionPiecesFor(endPosition) {
     if (this.pieceType !== Board.PAWN) { return [null] }
-    if (Board.rank(endPosition) !== 1 && Board.rank(endPosition) !== 8) { return [null] }
+    if (Board.rankLabel(endPosition) !== 1 && Board.rankLabel(endPosition) !== 8) { return [null] }
 
     return [Board.QUEEN, Board.ROOK, Board.BISHOP, Board.NIGHT]
   }
@@ -388,8 +388,8 @@ class MovesCalculator {
                 doubleStepCheck: Board.isSeventhRank(startPosition) && board._twoSpacesDownIsEmpty(startPosition) && board._oneSpaceDownIsEmpty(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashDownIncrement}),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashDownIncrement}),
-                rightEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition + 1) && board.whitePawnDoubleSteppedTo(startPosition + 1),//board.whitePawnDoubleSteppedFrom(startPosition - 15),
-                leftEnPassantCheck: Board.rank(startPosition) === 4 && board._whitePawnAt(startPosition - 1) && board.whitePawnDoubleSteppedTo(startPosition - 1)// board.whitePawnDoubleSteppedFrom(startPosition - 17),
+                rightEnPassantCheck: Board.rankLabel(startPosition) === 4 && board._whitePawnAt(startPosition + 1) && board.whitePawnDoubleSteppedTo(startPosition + 1),//board.whitePawnDoubleSteppedFrom(startPosition - 15),
+                leftEnPassantCheck: Board.rankLabel(startPosition) === 4 && board._whitePawnAt(startPosition - 1) && board.whitePawnDoubleSteppedTo(startPosition - 1)// board.whitePawnDoubleSteppedFrom(startPosition - 17),
               },
               W: {
                 startRank: 2,
@@ -398,8 +398,8 @@ class MovesCalculator {
                 doubleStepCheck: Board.isSecondRank(startPosition) && board._twoSpacesUpIsEmpty( startPosition ) && board._oneSpaceUpIsEmpty(startPosition),
                 leftAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.backSlashUpIncrement}),
                 rightAttackMove: MovesCalculator.genericMovements({increment: MovesCalculator.forwardSlashUpIncrement}),
-                leftEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition - 1) && board.blackPawnDoubleSteppedTo(startPosition - 1),//board.blackPawnDoubleSteppedFrom(startPosition + 15),
-                rightEnPassantCheck: Board.rank(startPosition) === 5 && board._blackPawnAt(startPosition + 1) && board.blackPawnDoubleSteppedTo(startPosition + 1)//board.blackPawnDoubleSteppedFrom(startPosition + 17),
+                leftEnPassantCheck: Board.rankLabel(startPosition) === 5 && board._blackPawnAt(startPosition - 1) && board.blackPawnDoubleSteppedTo(startPosition - 1),//board.blackPawnDoubleSteppedFrom(startPosition + 15),
+                rightEnPassantCheck: Board.rankLabel(startPosition) === 5 && board._blackPawnAt(startPosition + 1) && board.blackPawnDoubleSteppedTo(startPosition + 1)//board.blackPawnDoubleSteppedFrom(startPosition + 17),
               }
             },
             pawnVars = colorVars[teamString]
@@ -423,7 +423,7 @@ class MovesCalculator {
               const movementType = pawnVars.leftAttackMove
               movementType.rangeLimit = 1
               movementType.startPosition = startPosition
-              movementType.pieceNotation = Board.file(startPosition)
+              movementType.pieceNotation = Board.fileLabel(startPosition)
               movementTypes.push(movementType)
             }
           }
@@ -433,7 +433,7 @@ class MovesCalculator {
               const movementType = pawnVars.rightAttackMove
               movementType.rangeLimit = 1
               movementType.startPosition = startPosition
-              movementType.pieceNotation = Board.file(startPosition)
+              movementType.pieceNotation = Board.fileLabel(startPosition)
               movementTypes.push(movementType)
             }
           }
@@ -441,7 +441,7 @@ class MovesCalculator {
             let movementType = pawnVars.rightAttackMove
             movementType.rangeLimit = 1
             movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)// + "x"
+            movementType.pieceNotation = Board.fileLabel(startPosition)// + "x"
             movementType.captureNotation = "x" //might be quicker to assign a single hash at once
             movementType.additionalActions = function(startPosition){
               this._capture(startPosition + 1)
@@ -454,7 +454,7 @@ class MovesCalculator {
             let movementType = pawnVars.leftAttackMove
             movementType.rangeLimit = 1
             movementType.startPosition = startPosition
-            movementType.pieceNotation = Board.file(startPosition)// + "x"
+            movementType.pieceNotation = Board.fileLabel(startPosition)// + "x"
             movementType.captureNotation = "x" //might be quicker to assign a single hash at once
             movementType.additionalActions = function(startPosition){
               this._capture(startPosition - 1)
