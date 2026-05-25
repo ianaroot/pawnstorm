@@ -1,5 +1,5 @@
 import Board from 'gameplay/board'
-import { relativeRank } from 'gameplay/board_query_utils'
+import { relativeRankLabel } from 'gameplay/board_query_utils'
 import { intersectRegions } from 'editorV2/panels/condition_preview/forward_proposition/region'
 
 // Region census is only satisfiable via moved_piece: entering the region as a
@@ -28,7 +28,7 @@ function captureRegion(region, moved, captured) {
   if (epEligible(moved, captured)) {
     const forward = moved.team === Board.BLACK ? 8 : -8
     for (const sq of region.squares) {
-      if (relativeRank(sq, moved.team) !== 5) { continue }
+      if (relativeRankLabel(sq, moved.team) !== 5) { continue }
       const landing = sq + forward
       if (landing >= 0 && landing <= 63) { squares.add(landing) }
     }

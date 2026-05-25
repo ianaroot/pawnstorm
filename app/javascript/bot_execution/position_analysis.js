@@ -1,5 +1,5 @@
 import Board from "gameplay/board"
-import { materialValue, relativeRank, relativeToAbsolutePosition } from "gameplay/board_query_utils"
+import { materialValue, relativeRankLabel, relativeToAbsolutePosition } from "gameplay/board_query_utils"
 import profileCollector from "gameplay/profile_collector"
 import { relationalActorPositions } from "bot_execution/actor_positions"
 import { aggregateOrNull, compareValues } from "bot_execution/utils"
@@ -35,7 +35,7 @@ export function positionMetricTotal(analysis, { positions, operator, boardScope 
 function positionSatisfied(position, team, { positionAxis, positionComparator, positionTarget }) {
   switch (positionAxis) {
     case "rank": {
-      const rank = relativeRank(position, team)
+      const rank = relativeRankLabel(position, team)
       return compareValues(rank, positionComparator, positionTarget)
     }
     case "file": {

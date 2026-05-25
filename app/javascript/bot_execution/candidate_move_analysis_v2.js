@@ -214,7 +214,7 @@ class CandidateMoveAnalysisV2 {
     const endPosition = this.moveObject.endPosition
     const movedPieceType = this.board.pieceTypeAt(startPosition)
     if (this.board.teamAt(endPosition) !== Board.EMPTY) { return endPosition }
-    const changedFiles = Board.file(startPosition) !== Board.file(endPosition)
+    const changedFiles = Board.fileLabel(startPosition) !== Board.fileLabel(endPosition)
     if (movedPieceType === Board.PAWN && changedFiles) {
       return this.movedPieceTeam() === Board.WHITE
         ? endPosition - 8
