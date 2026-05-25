@@ -63,8 +63,8 @@ function buildPanel() {
         <option value="less_than_or_equal_to">at most</option>
       </select>
       <div id="cond-left-comparison-section" class="condition-form-comparison">
-        <button type="button" id="cond-left-comparison-toggle"></button>
-        <div id="cond-left-comparison-body" class="hidden"></div>
+        <div id="cond-left-comparison-body"></div>
+        <p id="cond-left-comparison-locked-note" class="hidden"></p>
       </div>
       <div id="cond-left-comparison-source-stack" class="condition-form-comparison-source-stack">
         <select id="cond-left-comparison-source">
@@ -94,8 +94,8 @@ function buildPanel() {
         <option value="less_than_or_equal_to">at most</option>
       </select>
       <div id="cond-right-comparison-section" class="condition-form-comparison">
-        <button type="button" id="cond-right-comparison-toggle"></button>
-        <div id="cond-right-comparison-body" class="hidden"></div>
+        <div id="cond-right-comparison-body"></div>
+        <p id="cond-right-comparison-locked-note" class="hidden"></p>
       </div>
       <div id="cond-right-comparison-source-stack" class="condition-form-comparison-source-stack">
         <select id="cond-right-comparison-source">
@@ -122,8 +122,7 @@ function buildPanel() {
         <select id="cond-census-filter">${option('any')}${option('pawn')}${option('rook')}</select>
       </div>
       <div id="cond-census-comparison" class="condition-form-comparison">
-        <button type="button" id="cond-census-comparison-toggle"></button>
-        <div id="cond-census-comparison-body" class="hidden">
+        <div id="cond-census-comparison-body">
           <div id="cond-census-operator">${censusOperatorOptions}</div>
           <select id="cond-census-comparator">
             <option value="equal_to">equal to</option>
@@ -134,13 +133,6 @@ function buildPanel() {
           </select>
           <div id="cond-census-target-stack" class="condition-form-comparison-source-stack">
             <select id="cond-census-target">${censusTargetOptions}</select>
-            <div id="cond-census-target-filter-row">
-              <label class="condition-form-checkbox">
-                <input id="cond-census-target-filter-mode" type="checkbox">
-                <span>Non-</span>
-              </label>
-              <select id="cond-census-target-filter">${option('any')}${option('pawn')}${option('rook')}</select>
-            </div>
             <input id="cond-census-target-total" type="number">
           </div>
         </div>
@@ -245,8 +237,6 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-left-comparison-source').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-left-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
-    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
 
     const rightSource = panel.querySelector('#cond-right-comparison-source')
     rightSource.value = 'prior_board_state'
@@ -255,7 +245,9 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(true)
     expect(panel.querySelector('#cond-right-comparison-source').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(false)
+
+    expect(panel.querySelector('#cond-left-comparison-body').classList.contains('condition-form-comparison__body--locked')).toBe(true)
+    expect(panel.querySelector('#cond-left-comparison-locked-note').classList.contains('hidden')).toBe(false)
   })
 
   it('hides the numeric selector when the left source is symbolic and leaves the right side alone', () => {
@@ -284,8 +276,6 @@ describe('ConditionForm', () => {
     expect(panel.querySelector('#cond-left-comparison-source-total').classList.contains('hidden')).toBe(true)
     expect(panel.querySelector('#cond-right-comparison-source-total').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-left-comparison-source').classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-left-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(false)
-    expect(panel.querySelector('#cond-right-comparison-source-stack').classList.contains('condition-form-comparison-source-stack--inline-number')).toBe(true)
   })
 
   it('hides and clears the subject non toggle when the subject filter is any', () => {
@@ -474,7 +464,7 @@ describe('ConditionForm', () => {
     expect(form.buildPayload().target).toBe('enemy')
   })
 
-  it('loads a whole-board census and builds an actor-target payload with filters', () => {
+  it('loads a whole-board value census and drops any target piece-type filter', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -498,7 +488,6 @@ describe('ConditionForm', () => {
     expect(squareInputs.classList.contains('condition-form-radio-list--disabled')).toBe(true)
     expect(panel.querySelector('#cond-census-square-rank input').disabled).toBe(true)
     expect(panel.querySelector('#cond-census-target-total').classList.contains('hidden')).toBe(true)
-    expect(panel.querySelector('#cond-census-target-filter-row').classList.contains('hidden')).toBe(false)
 
     const payload = form.buildPayload()
     expect(payload).toMatchObject({
@@ -509,9 +498,9 @@ describe('ConditionForm', () => {
       operator: 'value',
       comparator: 'greater_than',
       target: 'enemy',
-      targetFilter: 'rook',
-      targetFilterMode: 'exclude'
+      targetFilter: 'any'
     })
+    expect(payload).not.toHaveProperty('targetFilterMode')
     expect(payload).not.toHaveProperty('positionAxis')
     expect(payload).not.toHaveProperty('positionComparator')
     expect(payload).not.toHaveProperty('positionTarget')
@@ -547,38 +536,7 @@ describe('ConditionForm', () => {
     })
   })
 
-  it('hides and clears the whole-board target non toggle when the target filter is any', () => {
-    const panel = buildPanel()
-    const form = new ConditionForm(panel)
-    form.attach()
-
-    form.populate({
-      version: 2,
-      kind: 'census',
-      subject: 'allied',
-      subjectFilter: 'any',
-      operator: 'value',
-      comparator: 'greater_than',
-      target: 'enemy',
-      targetFilter: 'rook',
-      targetFilterMode: 'exclude'
-    })
-
-    const targetFilterMode = panel.querySelector('#cond-census-target-filter-mode')
-    const control = targetFilterMode.closest('.condition-form-checkbox')
-    expect(targetFilterMode.checked).toBe(true)
-    expect(control.classList.contains('condition-form-checkbox--unavailable')).toBe(false)
-
-    const targetFilter = panel.querySelector('#cond-census-target-filter')
-    targetFilter.value = 'any'
-    targetFilter.dispatchEvent(new Event('change', { bubbles: true }))
-
-    expect(targetFilterMode.checked).toBe(false)
-    expect(control.classList.contains('condition-form-checkbox--unavailable')).toBe(true)
-    expect(form.buildPayload()).not.toHaveProperty('targetFilterMode')
-  })
-
-  it('disallows captured-piece whole-board census targets for mobility', () => {
+  it('limits whole-board mobility targets to integer and prior board state', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -590,15 +548,15 @@ describe('ConditionForm', () => {
       subjectFilter: 'any',
       operator: 'mobility',
       comparator: 'greater_than',
-      target: 'captured_piece',
-      targetFilter: 'any'
+      target: 'enemy'
     })
 
     const targetSelect = panel.querySelector('#cond-census-target')
     expect(form.buildPayload().target).toBe('exact_number')
+    expect(targetSelect.querySelector('option[value="enemy"]').disabled).toBe(true)
     expect(targetSelect.querySelector('option[value="captured_piece"]').disabled).toBe(true)
-    expect(targetSelect.querySelector('option[value="enemy_captured_piece"]').disabled).toBe(true)
-    expect(targetSelect.querySelector('option[value="enemy"]').disabled).toBe(false)
+    expect(targetSelect.querySelector('option[value="exact_number"]').disabled).toBe(false)
+    expect(targetSelect.querySelector('option[value="prior_board_state"]').disabled).toBe(false)
   })
 
   it('loads a region census and emits spatial keys with an exact_number target', () => {
@@ -639,7 +597,7 @@ describe('ConditionForm', () => {
     })
   })
 
-  it('keeps a Simple region census on exact_number and hides the target select', () => {
+  it('shows the region census target select and switches count to prior_board_state', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -658,8 +616,7 @@ describe('ConditionForm', () => {
       targetTotal: 0
     })
 
-    expect(panel.querySelector('#cond-census-comparison-toggle').textContent).toBe('+ Advanced options')
-    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
     expect(panel.querySelector('#cond-census-rank-note').classList.contains('hidden')).toBe(true)
 
     const targetSelect = panel.querySelector('#cond-census-target')
@@ -670,9 +627,9 @@ describe('ConditionForm', () => {
       kind: 'census',
       positionAxis: 'file',
       positionTarget: 3,
-      target: 'exact_number',
-      targetTotal: 0
+      target: 'prior_board_state'
     })
+    expect(form.buildPayload()).not.toHaveProperty('targetTotal')
   })
 
   it('preserves relational state when switching to the census tab and back', () => {
@@ -727,7 +684,7 @@ describe('ConditionForm', () => {
     expect(payload.targetTotal).toBe(3)
   })
 
-  it('defaults whole-board to Simple (no target select) and reveals it via Advanced', () => {
+  it('shows the whole-board target select with no advanced toggle', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -743,48 +700,13 @@ describe('ConditionForm', () => {
       targetTotal: 2
     })
 
-    const toggle = panel.querySelector('#cond-census-comparison-toggle')
     expect(panel.querySelector('#cond-census-scope-whole').checked).toBe(true)
-    expect(panel.querySelector('#cond-census-comparison-body').classList.contains('hidden')).toBe(false)
-    expect(toggle.classList.contains('hidden')).toBe(false)
-    expect(toggle.textContent).toBe('+ Advanced options')
-    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(true)
+    expect(panel.querySelector('#cond-census-comparison-toggle')).toBeNull()
+    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
     expect(form.buildPayload()).toMatchObject({ kind: 'census', target: 'exact_number', targetTotal: 2 })
-
-    toggle.dispatchEvent(new Event('click'))
-
-    expect(toggle.textContent).toBe('Simplify')
-    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
   })
 
-  it('keeps the Advanced toggle available in region scope', () => {
-    const panel = buildPanel()
-    const form = new ConditionForm(panel)
-    form.attach()
-
-    form.populate({
-      version: 2,
-      kind: 'census',
-      subject: 'allied',
-      subjectFilter: 'any',
-      positionAxis: 'rank',
-      positionComparator: 'equal_to',
-      positionTarget: 5,
-      operator: 'count',
-      comparator: 'greater_than',
-      target: 'exact_number',
-      targetTotal: 0
-    })
-
-    const toggle = panel.querySelector('#cond-census-comparison-toggle')
-    expect(toggle.classList.contains('hidden')).toBe(false)
-    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(true)
-
-    toggle.dispatchEvent(new Event('click'))
-    expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
-  })
-
-  it('loads a region prior_board_state census straight into Advanced and round-trips spatial keys', () => {
+  it('loads a region prior_board_state census and round-trips spatial keys', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -803,7 +725,6 @@ describe('ConditionForm', () => {
       target: 'prior_board_state'
     })
 
-    expect(panel.querySelector('#cond-census-comparison-toggle').textContent).toBe('Simplify')
     expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
     expect(form.buildPayload()).toEqual({
       version: 2,
@@ -820,7 +741,7 @@ describe('ConditionForm', () => {
     })
   })
 
-  it('loads an actor-target whole-board census straight into Advanced', () => {
+  it('loads an actor-target whole-board value census', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()
@@ -836,7 +757,6 @@ describe('ConditionForm', () => {
       targetFilter: 'rook'
     })
 
-    expect(panel.querySelector('#cond-census-comparison-toggle').textContent).toBe('Simplify')
     expect(panel.querySelector('#cond-census-target').classList.contains('hidden')).toBe(false)
     expect(form.buildPayload().target).toBe('enemy')
   })
@@ -864,29 +784,7 @@ describe('ConditionForm', () => {
     expect(form.buildPayload().subjectComparator).toBe('greater_than')
   })
 
-  it('relabels the relational comparison toggle to "+ comparison (advanced)"', () => {
-    const panel = buildPanel()
-    const form = new ConditionForm(panel)
-    form.attach()
-
-    form.populate({
-      version: 2,
-      kind: 'relational',
-      subject: 'allied',
-      subjectFilter: 'any',
-      operator: 'attack',
-      target: 'enemy',
-      targetFilter: 'any'
-    })
-
-    const toggle = panel.querySelector('#cond-left-comparison-toggle')
-    expect(toggle.textContent).toBe('+ comparison (advanced)')
-
-    toggle.dispatchEvent(new Event('click'))
-    expect(toggle.textContent).toBe('Hide comparison')
-  })
-
-  it('a collapsed relational comparison emits no comparison fields', () => {
+  it('a relational with no explicit comparison emits no comparison fields', () => {
     const panel = buildPanel()
     const form = new ConditionForm(panel)
     form.attach()

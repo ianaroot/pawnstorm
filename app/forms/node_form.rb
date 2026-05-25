@@ -9,7 +9,7 @@ class NodeForm
   }.freeze
 
   FILTER_LABELS = {
-    'any' => 'Any piece',
+    'any' => 'Any piece type',
     'king' => 'King',
     'queen' => 'Queen',
     'rook' => 'Rook',
