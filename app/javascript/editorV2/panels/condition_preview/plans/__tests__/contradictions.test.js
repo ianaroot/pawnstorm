@@ -41,6 +41,10 @@ describe('plan contradictions', () => {
       expect(result(census({ subjectFilter: 'king', subjectFilterMode: 'include', targetTotal: 2 })).reason).toMatch(/at most once/i)
     })
 
+    it('allows a king-exclude group count above 1', () => {
+      expect(result(census({ subjectFilter: 'king', subjectFilterMode: 'exclude', comparator: 'greater_than', targetTotal: 1 })).status).not.toBe('contradictory')
+    })
+
     it('flags a singular relational subject count of 2', () => {
       expect(result(relational({
         subjectComparisonMetric: 'count', subjectComparator: 'equal_to',

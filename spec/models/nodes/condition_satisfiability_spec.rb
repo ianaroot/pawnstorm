@@ -79,6 +79,12 @@ RSpec.describe Nodes::ConditionSatisfiability do
         .to include(reason(:single_count_ceiling))
     end
 
+    it 'does not apply to a king-exclude group count above 1' do
+      expect(reasons(census(subject: 'allied', subjectFilter: 'king', subjectFilterMode: 'exclude',
+                            operator: 'count', comparator: 'greater_than', targetTotal: 1)))
+        .to be_empty
+    end
+
     it 'rejects a vacuous singular count upper bound' do
       expect(reasons(census(subject: 'moved_piece', operator: 'count', comparator: 'less_than', targetTotal: 5)))
         .to include(reason(:single_count_ceiling))

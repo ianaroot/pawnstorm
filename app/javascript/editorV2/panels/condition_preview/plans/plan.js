@@ -79,15 +79,15 @@ function detectConflictingRequiredPositions({ plans }) {
 }
 
 // Single-condition detectors, mirroring Ruby Nodes::ConditionSatisfiability
-// (condition_satisfiability.rb) — keep in sync. One intentional drift: 
-// Ruby also declines vacuous comparisons (e.g. singular count < 5) the generator can satisfy.
+// (condition_satisfiability.rb) — keep in sync. Ruby also declines two cases the
+// generator/form already handle: vacuous comparisons (e.g. singular count < 5) and negatives.
 
 const BASE_PAWN_RANKS = Object.freeze([2, 3, 4, 5, 6, 7])
 const PAWN_HOME_RANK = Object.freeze({ moved_piece: 2, enemy_moved_piece: 7 })
 const ALL_RANKS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8])
 
-function atMostOneSet(actor, filter) {
-  return SINGULAR_ACTORS.has(actor) || filter === 'king'
+function atMostOneSet(actor, filter, filterMode) {
+  return SINGULAR_ACTORS.has(actor) || (filter === 'king' && filterMode !== 'exclude')
 }
 
 function requiresMoreThanOne(comparator, total) {
@@ -130,7 +130,7 @@ function measureComparisons(plan) {
     if (plan.target !== 'exact_number') { return [] }
     return [{
       metric: plan.operator, comparator: plan.comparator, total: Number(plan.targetTotal ?? 0),
-      actor: plan.subject, filter: plan.subjectFilter
+      actor: plan.subject, filter: plan.subjectFilter, filterMode: plan.subjectFilterMode
     }]
   }
   if (plan.kind === 'relational') {
@@ -139,7 +139,8 @@ function measureComparisons(plan) {
       .map(descriptor => ({
         metric: descriptor.metric, comparator: descriptor.comparator, total: Number(descriptor.total ?? 0),
         actor: descriptor.side === 'subject' ? plan.subject : plan.target,
-        filter: descriptor.side === 'subject' ? plan.subjectFilter : plan.targetFilter
+        filter: descriptor.side === 'subject' ? plan.subjectFilter : plan.targetFilter,
+        filterMode: descriptor.side === 'subject' ? plan.subjectFilterMode : plan.targetFilterMode
       }))
   }
   return []
@@ -160,7 +161,7 @@ function detectImpossibleSingularCount({ plans }) {
   for (const plan of plans) {
     for (const comparison of measureComparisons(plan)) {
       if (comparison.metric === 'count'
-          && atMostOneSet(comparison.actor, comparison.filter)
+          && atMostOneSet(comparison.actor, comparison.filter, comparison.filterMode)
           && requiresMoreThanOne(comparison.comparator, comparison.total)) {
         return 'This piece can appear at most once, so its count cannot exceed 1; this condition can never be satisfied.'
       }
