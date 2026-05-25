@@ -78,31 +78,150 @@ function detectConflictingRequiredPositions({ plans }) {
   return null
 }
 
-function detectIllegalPawnRanks({ plans }) {
-  for (const { square, filter } of positionRequirementsFromPlans(plans)) {
-    if (filter === 'pawn') {
-      const rank = Board.rankIndex(square)
-      if (rank === 0 || rank === 7) {
-        return `A condition requires a pawn on ${Board.gridCalculator(square)}, which is never a legal pawn position.`
+// Single-condition detectors, mirroring Ruby Nodes::ConditionSatisfiability
+// (condition_satisfiability.rb) — keep in sync. One intentional drift: 
+// Ruby also declines vacuous comparisons (e.g. singular count < 5) the generator can satisfy.
+
+const BASE_PAWN_RANKS = Object.freeze([2, 3, 4, 5, 6, 7])
+const PAWN_HOME_RANK = Object.freeze({ moved_piece: 2, enemy_moved_piece: 7 })
+const ALL_RANKS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8])
+
+function atMostOneSet(actor, filter) {
+  return SINGULAR_ACTORS.has(actor) || filter === 'king'
+}
+
+function requiresMoreThanOne(comparator, total) {
+  return (comparator === 'equal_to' && total > 1) ||
+    (comparator === 'greater_than' && total >= 1) ||
+    (comparator === 'greater_than_or_equal_to' && total > 1)
+}
+
+function assertsZero(comparator, total) {
+  return (comparator === 'equal_to' && total === 0) ||
+    (comparator === 'less_than' && total === 1) ||
+    (comparator === 'less_than_or_equal_to' && total === 0)
+}
+
+function rankComparatorMatches(comparator, rank, target) {
+  switch (comparator) {
+    case 'equal_to': return rank === target
+    case 'greater_than': return rank > target
+    case 'greater_than_or_equal_to': return rank >= target
+    case 'less_than': return rank < target
+    case 'less_than_or_equal_to': return rank <= target
+    default: return false
+  }
+}
+
+function legalPawnRanks(subject) {
+  const home = PAWN_HOME_RANK[subject]
+  return home ? BASE_PAWN_RANKS.filter(rank => rank !== home) : BASE_PAWN_RANKS
+}
+
+function admittedPawnRanks(plan) {
+  if (plan.positionAxis === 'square') {
+    return [Board.rankIndex(plan.positionTarget) + 1]
+  }
+  return ALL_RANKS.filter(rank => rankComparatorMatches(plan.positionComparator, rank, plan.positionTarget))
+}
+
+function measureComparisons(plan) {
+  if (plan.kind === 'census') {
+    if (plan.target !== 'exact_number') { return [] }
+    return [{
+      metric: plan.operator, comparator: plan.comparator, total: Number(plan.targetTotal ?? 0),
+      actor: plan.subject, filter: plan.subjectFilter
+    }]
+  }
+  if (plan.kind === 'relational') {
+    return (plan.comparisonDescriptors ?? [])
+      .filter(descriptor => descriptor.source === 'exact_number')
+      .map(descriptor => ({
+        metric: descriptor.metric, comparator: descriptor.comparator, total: Number(descriptor.total ?? 0),
+        actor: descriptor.side === 'subject' ? plan.subject : plan.target,
+        filter: descriptor.side === 'subject' ? plan.subjectFilter : plan.targetFilter
+      }))
+  }
+  return []
+}
+
+function detectComparisonBelowZero({ plans }) {
+  for (const plan of plans) {
+    for (const comparison of measureComparisons(plan)) {
+      if (comparison.comparator === 'less_than' && comparison.total === 0) {
+        return 'Count, mobility, and value are never below 0; this condition can never be satisfied.'
       }
     }
   }
   return null
 }
 
-function detectSingularActorWithImpossibleCount({ plans }) {
+function detectImpossibleSingularCount({ plans }) {
   for (const plan of plans) {
-    if (plan.kind !== 'relational') { continue }
-    const descriptors = plan.comparisonDescriptors ?? []
-    for (const descriptor of descriptors) {
-      if (descriptor.metric !== 'count') { continue }
-      if (descriptor.source !== 'exact_number') { continue }
-      const total = Number(descriptor.total ?? 0)
-      const actor = descriptor.side === 'subject' ? plan.subject : plan.target
-      if (!SINGULAR_ACTORS.has(actor)) { continue }
-      if (total > 1) {
-        return `A singular actor (${actor}) cannot have count ${total}; its count is at most 1.`
+    for (const comparison of measureComparisons(plan)) {
+      if (comparison.metric === 'count'
+          && atMostOneSet(comparison.actor, comparison.filter)
+          && requiresMoreThanOne(comparison.comparator, comparison.total)) {
+        return 'This piece can appear at most once, so its count cannot exceed 1; this condition can never be satisfied.'
       }
+    }
+  }
+  return null
+}
+
+function detectImpossiblePawnRank({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'census') { continue }
+    if (plan.subjectFilter !== 'pawn' || plan.subjectFilterMode === 'exclude') { continue }
+    if (plan.positionAxis !== 'rank' && plan.positionAxis !== 'square') { continue }
+    const admitted = admittedPawnRanks(plan)
+    if (admitted.length === 0) { continue }
+    if (admitted.every(rank => !BASE_PAWN_RANKS.includes(rank))) {
+      return 'Pawns can never be on rank 1 or 8; this condition can never be satisfied.'
+    }
+    if (admitted.every(rank => !legalPawnRanks(plan.subject).includes(rank))) {
+      return 'A pawn that just moved cannot still be on its starting rank; this condition can never be satisfied.'
+    }
+  }
+  return null
+}
+
+function detectAlliedFullyImmobile({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'census') { continue }
+    if (plan.operator !== 'mobility') { continue }
+    if (plan.subject !== 'allied' || plan.subjectFilter !== 'any') { continue }
+    if (plan.positionAxis != null) { continue }
+    if (plan.target !== 'exact_number') { continue }
+    if (assertsZero(plan.comparator, Number(plan.targetTotal ?? 0))) {
+      return 'The moving team always has a legal move, so allied mobility cannot be 0; this condition can never be satisfied.'
+    }
+  }
+  return null
+}
+
+function detectCountExceedsPriorBoard({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'census') { continue }
+    if (plan.operator !== 'count') { continue }
+    if (plan.subjectFilter !== 'any') { continue }
+    if (plan.positionAxis != null) { continue }
+    if (plan.comparator !== 'greater_than') { continue }
+    if (plan.target !== 'prior_board_state') { continue }
+    return 'A team never gains pieces during a turn, so its count cannot exceed the prior board state; this condition can never be satisfied.'
+  }
+  return null
+}
+
+function detectMovedPieceMustExist({ plans }) {
+  for (const plan of plans) {
+    if (plan.kind !== 'census') { continue }
+    if (plan.subject !== 'moved_piece' || plan.subjectFilter !== 'any') { continue }
+    if (plan.operator !== 'count') { continue }
+    if (plan.positionAxis != null) { continue }
+    if (plan.target !== 'exact_number') { continue }
+    if (assertsZero(plan.comparator, Number(plan.targetTotal ?? 0))) {
+      return 'The moved piece must exist (a move occurred); this condition can never be satisfied.'
     }
   }
   return null
@@ -127,40 +246,6 @@ function detectFilterMatchesNoSpecies({ plans }) {
   return null
 }
 
-const ALL_RELATIVE_RANKS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7])
-const ILLEGAL_PAWN_RANKS = Object.freeze(new Set([0, 7]))
-
-function rankSatisfiesComparator(rank, comparator, target) {
-  switch (comparator) {
-    case 'equal_to':                 return rank === target
-    case 'greater_than':             return rank > target
-    case 'greater_than_or_equal_to': return rank >= target
-    case 'less_than':                return rank < target
-    case 'less_than_or_equal_to':    return rank <= target
-    default:                         return false
-  }
-}
-
-function detectImpossiblePawnPosition({ plans }) {
-  for (const plan of plans) {
-    if (plan.kind !== 'census') { continue }
-    if (plan.subjectFilter !== 'pawn') { continue }
-    if (plan.positionAxis !== 'rank') { continue }
-    const matching = ALL_RELATIVE_RANKS.filter(r =>
-      rankSatisfiesComparator(r, plan.positionComparator, plan.positionTarget)
-    )
-    // Empty matching set is a different impossibility (out-of-range comparator/target);
-    // leave that for upstream/other detectors. We fire only when the satisfying ranks
-    // exist but every one of them is a pawn-illegal rank.
-    if (matching.length === 0) { continue }
-    if (matching.every(r => ILLEGAL_PAWN_RANKS.has(r))) {
-      const ranksText = matching.map(r => r + 1).join(' or ')
-      return `Pawns cannot be on rank ${ranksText} relative to the moving team; this condition can never be satisfied.`
-    }
-  }
-  return null
-}
-
 function detectSingularActorWithAggregateValue({ plans }) {
   for (const plan of plans) {
     if (plan.kind !== 'relational') { continue }
@@ -176,53 +261,16 @@ function detectSingularActorWithAggregateValue({ plans }) {
   return null
 }
 
-function detectSingularActorWithImpossibleUnaryCount({ plans }) {
-  for (const plan of plans) {
-    if (plan.kind !== 'census') { continue }
-    if (!SINGULAR_ACTORS.has(plan.subject)) { continue }
-    if (plan.operator !== 'count') { continue }
-    if (plan.target !== 'exact_number') { continue }
-    const total = Number(plan.targetTotal ?? 0)
-    const requiresMoreThanOne =
-      (plan.comparator === 'equal_to' && total > 1) ||
-      (plan.comparator === 'greater_than' && total >= 1) ||
-      (plan.comparator === 'greater_than_or_equal_to' && total > 1)
-    if (requiresMoreThanOne) {
-      return `A singular actor (${plan.subject}) cannot have count > 1; its count is at most 1.`
-    }
-  }
-  return null
-}
-
-function detectMovedPieceWithCountZero({ plans }) {
-  for (const plan of plans) {
-    if (plan.kind !== 'census') { continue }
-    if (plan.subject !== 'moved_piece') { continue }
-    if (plan.operator !== 'count') { continue }
-    // Region-restricted census moved_piece count = 0 is satisfiable (piece exists outside the region)
-    if (plan.positionAxis != null) { continue }
-    if (plan.target !== 'exact_number') { continue }
-    const total = Number(plan.targetTotal ?? 0)
-    const requiresZero =
-      (plan.comparator === 'equal_to' && total === 0) ||
-      (plan.comparator === 'less_than' && total <= 1) ||
-      (plan.comparator === 'less_than_or_equal_to' && total === 0)
-    if (requiresZero) {
-      return 'moved_piece must exist (a move occurred), but a condition requires its count to be zero.'
-    }
-  }
-  return null
-}
-
 const CONTRADICTION_DETECTORS = [
+  detectComparisonBelowZero,
+  detectImpossibleSingularCount,
+  detectImpossiblePawnRank,
+  detectAlliedFullyImmobile,
+  detectCountExceedsPriorBoard,
+  detectMovedPieceMustExist,
   detectIncompatibleMoveKinds,
   detectImpossibleMovedPieceSpecies,
   detectConflictingRequiredPositions,
-  detectIllegalPawnRanks,
-  detectImpossiblePawnPosition,
-  detectSingularActorWithImpossibleCount,
-  detectSingularActorWithImpossibleUnaryCount,
-  detectMovedPieceWithCountZero,
   detectFilterMatchesNoSpecies
 ]
 
