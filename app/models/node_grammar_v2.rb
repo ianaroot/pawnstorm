@@ -10,6 +10,11 @@
 
     EDITOR_SUBJECTS = SUBJECTS
 
+    # Mirrored in app/javascript/bot_execution/actors.js; kept in sync by
+    # spec/models/actors_js_sync_spec.rb.
+    SINGULAR_SUBJECTS = (SUBJECTS - %w[allied enemy]).freeze
+    RELATIONAL_SINGULAR_SUBJECTS = %w[moved_piece enemy_moved_piece].freeze
+
     FILTERS = %w[any king queen rook bishop knight pawn major minor].freeze
     CONCRETE_FILTERS = %w[king queen rook bishop knight pawn major minor].freeze
     FILTER_MODES = %w[include exclude].freeze

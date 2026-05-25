@@ -49,6 +49,13 @@ module Nodes
       else
         record.errors.add(:data, "has invalid kind: #{kind}")
       end
+      validate_condition_satisfiability if record.errors[:data].empty?
+    end
+
+    def validate_condition_satisfiability
+      Nodes::ConditionSatisfiability.reasons(record.data).each do |reason|
+        record.errors.add(:data, reason)
+      end
     end
 
     def validate_condition_data_v2_relational
