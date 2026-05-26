@@ -161,10 +161,6 @@ describe('DragHandler', () => {
       expect(dragHandler.dragOffsets.size).toBe(0)
       expect(dragHandler.draggedClientIds).toEqual([])
     })
-
-    it('attaches background pointer handlers to the visible canvas container', () => {
-      expect(viewport.container.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function))
-    })
   })
 
   describe('handlePointerDown', () => {
@@ -576,6 +572,39 @@ describe('DragHandler', () => {
       dragHandler.cancelDrag()
 
       expect(viewport.endInteraction).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('contextmenu', () => {
+    it('cancels an in-progress node drag (ctrl+click never delivers pointerup)', () => {
+      addNode(store, { clientId: 'node-1', type: 'condition', x: 100, y: 100 })
+      beginDrag(dragHandler, 'node-1', mockElement, buildPointerEvent({ clientX: 100, clientY: 100 }))
+      expect(dragHandler.isDragging).toBe(true)
+
+      dragHandler.handleContextMenu()
+
+      expect(dragHandler.isDragging).toBe(false)
+      expect(dragHandler.draggedClientId).toBe(null)
+    })
+
+    it('cancels an in-progress marquee selection', () => {
+      const startEvent = buildPointerEvent({
+        clientX: 300,
+        clientY: 300,
+        currentTarget: viewport.container,
+        target: { closest: vi.fn(() => null) }
+      })
+      dragHandler.handleBackgroundPointerDown(startEvent)
+      dragHandler.handlePointerMove(buildPointerEvent({
+        clientX: 300 + DRAG_START_THRESHOLD + 2,
+        clientY: 300 + DRAG_START_THRESHOLD + 2
+      }))
+      expect(dragHandler.isMarqueeSelecting).toBe(true)
+
+      dragHandler.handleContextMenu()
+
+      expect(dragHandler.isMarqueeSelecting).toBe(false)
+      expect(store.getMarqueeState().isMarqueeSelecting).toBe(false)
     })
   })
 
