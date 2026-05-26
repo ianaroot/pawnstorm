@@ -43,7 +43,11 @@ describe('tileDecoration', () => {
   it('decorates a single-role tile with one inset ring and a tinted background', () => {
     const deco = tileDecoration({ roles: { attacker: [10] } }, 10)
     expect(deco.boxShadow).toBe(`inset 0 0 0 3px ${HIGHLIGHT_ROLES.attacker.color}`)
+<<<<<<< HEAD
     expect(deco.background).toBe(HIGHLIGHT_ROLES.attacker.tint)
+=======
+    expect(deco.background).toBe(`${HIGHLIGHT_ROLES.attacker.color}59`)
+>>>>>>> 54fe34b (tile fill blends over wood; bump alpha to ~35%)
   })
 
   it('stacks role rings inside the moved rings when a piece carries both', () => {

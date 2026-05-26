@@ -1,7 +1,7 @@
 function role(varName, label) {
   return {
     color: `rgb(var(${varName}))`,
-    tint:  `rgb(var(${varName}) / 25%)`,
+    tint:  `rgb(var(${varName}) / 35%)`,
     label
   }
 }
