@@ -75,7 +75,7 @@ function applyCombinatorialFilter(plan, result, analysis) {
   }
 }
 
-function censusSubjectPositions(plan, analysis) {
+function censusSubjectPositions(plan, analysis, boardScope = 'after') {
   if (plan.positionAxis) {
     return analysis.positionFilteredPositions({
       actor: plan.subject,
@@ -83,14 +83,20 @@ function censusSubjectPositions(plan, analysis) {
       filterMode: plan.subjectFilterMode,
       positionAxis: plan.positionAxis,
       positionComparator: plan.positionComparator,
-      positionTarget: plan.positionTarget
+      positionTarget: plan.positionTarget,
+      boardScope
     })
   }
   return analysis.relationalActorPositions({
     actor: plan.subject,
     filter: plan.subjectFilter,
-    filterMode: plan.subjectFilterMode
+    filterMode: plan.subjectFilterMode,
+    boardScope
   })
+}
+
+function comparesAgainstPriorBoard(plan) {
+  return (plan.comparisonDescriptors ?? []).some(d => d.source === PRIOR_BOARD_COMPARISON_SOURCE)
 }
 
 export function buildAggregatedResult(combinedPlan, analysis) {
@@ -126,23 +132,35 @@ export function buildAggregatedResult(combinedPlan, analysis) {
       subjectPositions = [...subjectPositions, ...result.subjectPositions]
       targetPositions = [...targetPositions, ...result.targetPositions]
       pairs = [...pairs, ...result.pairs]
-      contributions.push({
+      const contribution = {
         operator: plan.operator,
         subjectActor: plan.subject,
         targetActor: plan.target,
         subjectPositions: result.subjectPositions,
         targetPositions: result.targetPositions,
         pairs: result.pairs
-      })
+      }
+      if (comparesAgainstPriorBoard(plan)) {
+        const priorRaw = analysis.relationalResult({ ...plan.relationParams, boardScope: 'prior' })
+        contribution.priorSubjectPositions = priorRaw.subjectPositions
+        contribution.priorTargetPositions = priorRaw.targetPositions
+        contribution.priorPairs = priorRaw.pairs
+      }
+      contributions.push(contribution)
     } else if (plan.kind === 'census') {
       // Kept out of the subjectPositions union so movedPieceInRelation /
       // variantType (in example_factory + enrichment) stays relational-only.
       const positions = censusSubjectPositions(plan, analysis)
-      contributions.push({
+      const contribution = {
         kind: 'census',
         subjectActor: plan.subject,
-        subjectPositions: positions
-      })
+        subjectPositions: positions,
+        positionAxis: plan.positionAxis || null
+      }
+      if (comparesAgainstPriorBoard(plan)) {
+        contribution.priorSubjectPositions = censusSubjectPositions(plan, analysis, 'prior')
+      }
+      contributions.push(contribution)
     }
   }
 
@@ -168,7 +186,7 @@ function rolesToArrays(map) {
   return out
 }
 
-export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard) {
+export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard, afterBoard) {
   const start = moveObject.startPosition
   const end = moveObject.endPosition
   const prior = {}
@@ -176,7 +194,9 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
 
   for (const c of aggregatedResult.contributions) {
     if (c.kind === 'census') {
-      const priorPos = c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions
+      if (!c.positionAxis) { continue }
+      const priorPos = c.priorSubjectPositions
+        ?? (c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions)
       addRole(prior, 'positionSubject', priorPos)
       addRole(after, 'positionSubject', c.subjectPositions)
       continue
@@ -185,15 +205,21 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
     const subjectRole = relationSubjectRole(c.operator)
     const targetRole = relationTargetRole(c.operator)
 
-    addRole(prior, subjectRole, c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions)
     addRole(after, subjectRole, c.subjectPositions)
-    addRole(prior, targetRole, c.targetActor === 'moved_piece' ? [start] : c.targetPositions)
     addRole(after, targetRole, c.targetPositions)
-
     if (c.operator === 'shield' && c.pairs.length > 0) {
-      const attackers = shieldAttackerPositions(c.pairs, priorBoard)
-      addRole(prior, 'attacker', attackers)
-      addRole(after, 'attacker', attackers)
+      addRole(after, 'attacker', shieldAttackerPositions(c.pairs, afterBoard))
+    }
+
+    if (c.priorPairs !== undefined) {
+      addRole(prior, subjectRole, c.priorSubjectPositions)
+      addRole(prior, targetRole, c.priorTargetPositions)
+      if (c.operator === 'shield' && c.priorPairs.length > 0) {
+        addRole(prior, 'attacker', shieldAttackerPositions(c.priorPairs, priorBoard))
+      }
+    } else {
+      addRole(prior, subjectRole, c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions)
+      addRole(prior, targetRole, c.targetActor === 'moved_piece' ? [start] : c.targetPositions)
     }
   }
 
