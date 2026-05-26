@@ -852,6 +852,24 @@ describe('ConditionForm', () => {
       })
     })
 
+    it('hides collection actors (allied/enemy) from value-comparison targets', () => {
+      const panel = buildPanel()
+      const form = new ConditionForm(panel)
+      form.attach()
+
+      panel.querySelector('#cond-mode-captures').dispatchEvent(new Event('click'))
+      const valueOp = panel.querySelector('#cond-captures-operator input[value="value"]')
+      valueOp.checked = true
+      valueOp.dispatchEvent(new Event('change'))
+
+      const target = panel.querySelector('#cond-captures-target')
+      expect(target.querySelector('option[value="allied"]').hidden).toBe(true)
+      expect(target.querySelector('option[value="enemy"]').hidden).toBe(true)
+      expect(target.querySelector('option[value="moved_piece"]').hidden).toBe(false)
+      expect(target.querySelector('option[value="enemy_captured_piece"]').hidden).toBe(false)
+      expect(target.querySelector('option[value="exact_number"]').hidden).toBe(false)
+    })
+
     it('routes a count = 1 captured census node into the captures tab as Exists', () => {
       const panel = buildPanel()
       const form = new ConditionForm(panel)
@@ -983,7 +1001,7 @@ describe('ConditionForm', () => {
       })
     })
 
-    it('builds a value capture with an actor target and target filter', () => {
+    it('builds a value capture with a singular-actor target and target filter', () => {
       const panel = buildPanel()
       const form = new ConditionForm(panel)
       form.attach()
@@ -995,7 +1013,7 @@ describe('ConditionForm', () => {
         subjectFilter: 'any',
         operator: 'value',
         comparator: 'greater_than',
-        target: 'enemy',
+        target: 'enemy_moved_piece',
         targetFilter: 'pawn',
         targetFilterMode: 'exclude'
       }

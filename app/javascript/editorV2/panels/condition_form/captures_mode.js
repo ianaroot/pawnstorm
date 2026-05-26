@@ -1,5 +1,5 @@
 import {
-  disableOptions, showAllOptions, pillValue, setPillChecked
+  disableOptions, hideOptions, showAllOptions, pillValue, setPillChecked
 } from 'editorV2/panels/condition_form/dom_helpers'
 import { censusMeasurePayload } from 'editorV2/panels/condition_form/census_payload'
 
@@ -16,6 +16,7 @@ const DEFAULT_CAPTURES_STATE = {
 }
 
 const CAPTURES_SUBJECTS = ['captured_piece', 'enemy_captured_piece']
+const SINGULAR_ACTORS = ['moved_piece', 'captured_piece', 'enemy_moved_piece', 'enemy_captured_piece']
 
 // exists/does_not_exist → census count=1/count=0; value → census (no region keys);
 // same_piece → identity.
@@ -140,15 +141,15 @@ export default class CapturesMode {
     fields.capturesTargetFilterModeControl?.classList.toggle('condition-form-checkbox--unavailable', !targetFilterModeAvailable)
     fields.capturesEnemyNote?.classList.toggle('hidden', cap.subject !== 'enemy_captured_piece')
 
-    this.disableTargetOptions(cap, fields)
+    this.narrowTargetOptions(cap, fields)
   }
 
-  disableTargetOptions(cap, fields) {
+  narrowTargetOptions(cap, fields) {
     if (!fields.capturesTarget) { return }
     showAllOptions(fields.capturesTarget)
     const all = Array.from(fields.capturesTarget.options).map(o => o.value)
     const allowed = cap.operator === 'same_piece' ? [this.samePiecePartner(cap.subject)] : this.measureTargets()
-    disableOptions(fields.capturesTarget, all.filter(v => !allowed.includes(v)))
+    hideOptions(fields.capturesTarget, all.filter(v => !allowed.includes(v)))
   }
 
   censusOperator(nodeData) {
@@ -165,7 +166,7 @@ export default class CapturesMode {
   }
 
   measureTargets() {
-    return ['exact_number', ...(this.grammarRules.editorSubjects || [])]
+    return ['exact_number', ...(this.grammarRules.editorSubjects || []).filter(s => SINGULAR_ACTORS.includes(s))]
   }
 
   canSamePiece(subject) {
