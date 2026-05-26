@@ -177,6 +177,14 @@ describe('formatConditionSentence', () => {
       expect(sentence(census({ subject: 'captured_piece', subjectFilter: 'any', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 })))
         .toBe('this move **captures nothing**')
     })
+    it('renders enemy capture in past tense', () => {
+      expect(sentence(census({ subject: 'enemy_captured_piece', subjectFilter: 'any', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 1 })))
+        .toBe("enemy's move **captured** a piece")
+    })
+    it('negates enemy capture in past tense', () => {
+      expect(sentence(census({ subject: 'enemy_captured_piece', subjectFilter: 'any', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 })))
+        .toBe("enemy's move **captured nothing**")
+    })
     it('moved_piece knight count = 0', () => {
       expect(sentence(census({ subject: 'moved_piece', subjectFilter: 'knight', operator: 'count', comparator: 'equal_to', target: 'exact_number', targetTotal: 0 })))
         .toBe('my moved piece is **not** a knight')
@@ -208,6 +216,14 @@ describe('formatConditionSentence', () => {
     it('allied value < PBS (capture idiom)', () => {
       expect(sentence(census({ subject: 'allied', subjectFilter: 'any', operator: 'value', comparator: 'less_than', target: pbs })))
         .toBe('I **captured** a piece')
+    })
+    it("appends 'than before' to a collection count compared to PBS", () => {
+      expect(sentence(census({ subject: 'enemy', subjectFilter: 'queen', operator: 'count', comparator: 'less_than', target: pbs })))
+        .toBe('enemy has **fewer** queens than before')
+    })
+    it("uses 'as before' when the PBS count comparison is equal_to", () => {
+      expect(sentence(census({ subject: 'allied', subjectFilter: 'pawn', operator: 'count', comparator: 'equal_to', target: pbs })))
+        .toBe('I have the **same number** of pawns as before')
     })
   })
 

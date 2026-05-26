@@ -308,6 +308,20 @@ describe('EditorActions', () => {
       expect(vi.mocked(findAnchoredNodePlacement)).toHaveBeenCalledWith(store, 'condition', { x: 300, y: 300 })
     })
 
+    it('falls back to the visible canvas center when the recent anchor is outside the viewport', async () => {
+      editorActions.viewport = {
+        getVisibleCanvasCenter: vi.fn(() => ({ x: 411, y: 311 })),
+        isGraphPointVisible: vi.fn(() => false)
+      }
+      store.selectOnlyNode('condition')
+      editorActions.copySelectedNodes()
+      store.setRecentPlacementAnchor({ x: 900, y: 800 })
+
+      await editorActions.pasteCopiedNodes()
+
+      expect(vi.mocked(findAnchoredNodePlacement)).toHaveBeenCalledWith(store, 'condition', { x: 411, y: 311 })
+    })
+
     it('pastes multiple nodes with connections', async () => {
       syncManager.insertNodeSet.mockResolvedValue({ clientIds: ['pasted-1', 'pasted-2'] })
 

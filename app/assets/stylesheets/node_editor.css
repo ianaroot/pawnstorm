@@ -2426,55 +2426,6 @@
   background-color: #b58863;
 }
 
-.mini-board__tile--subject {
-  outline: 3px solid #c084fc;
-  outline-offset: -3px;
-  background-color: rgba(192, 132, 252, 0.3);
-}
-
-.mini-board__tile--target {
-  outline: 3px solid #4ade80;
-  outline-offset: -3px;
-  background-color: rgba(74, 222, 128, 0.3);
-}
-
-.mini-board__tile--relation {
-  outline: 3px solid #60a5fa;
-  outline-offset: -3px;
-  background-color: rgba(96, 165, 250, 0.3);
-}
-
-.mini-board__tile--moved-start {
-  box-shadow: inset 0 0 0 3px #fbbf24;
-  background-color: rgba(251, 191, 36, 0.25);
-}
-
-.mini-board__tile--moved-end {
-  box-shadow: inset 0 0 0 3px #fbbf24, inset 0 0 12px rgba(251, 191, 36, 0.4);
-  background-color: rgba(251, 191, 36, 0.3);
-}
-
-.mini-board__tile--subject.mini-board__tile--moved-start,
-.mini-board__tile--subject.mini-board__tile--moved-end {
-  background-color: rgba(192, 132, 252, 0.3);
-  outline: none;
-  box-shadow: inset 0 0 0 4px #c084fc, inset 0 0 0 8px #fbbf24;
-}
-
-.mini-board__tile--target.mini-board__tile--moved-start,
-.mini-board__tile--target.mini-board__tile--moved-end {
-  background-color: rgba(74, 222, 128, 0.3);
-  outline: none;
-  box-shadow: inset 0 0 0 4px #4ade80, inset 0 0 0 8px #fbbf24;
-}
-
-.mini-board__tile--relation.mini-board__tile--moved-start,
-.mini-board__tile--relation.mini-board__tile--moved-end {
-  background-color: rgba(96, 165, 250, 0.3);
-  outline: none;
-  box-shadow: inset 0 0 0 4px #60a5fa, inset 0 0 0 8px #fbbf24;
-}
-
 /* Piece glyphs — explicit team colors with contrasting shadow */
 .mini-piece {
   display: block;

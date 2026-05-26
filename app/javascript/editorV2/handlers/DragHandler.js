@@ -59,12 +59,14 @@ class DragHandler {
     this.boundHandleKeyDown = this.handleKeyDown.bind(this)
     this.boundHandleKeyUp = this.handleKeyUp.bind(this)
     this.boundHandleBackgroundPointerDown = this.handleBackgroundPointerDown.bind(this)
+    this.boundHandleContextMenu = this.handleContextMenu.bind(this)
     
     // Element-to-clientId mappings
     this.attachedElements = new WeakMap()
 
     this.attachBackgroundHandlers()
     this.attachKeyboardHandlers()
+    this.attachContextMenuHandler()
   }
 
   attachBackgroundHandlers() {
@@ -82,6 +84,10 @@ class DragHandler {
   attachKeyboardHandlers() {
     document.addEventListener('keydown', this.boundHandleKeyDown)
     document.addEventListener('keyup', this.boundHandleKeyUp)
+  }
+
+  attachContextMenuHandler() {
+    document.addEventListener('contextmenu', this.boundHandleContextMenu)
   }
   
   attach(element, clientId) {
@@ -271,6 +277,12 @@ class DragHandler {
 
     this.spacePanKeyActive = false
     this.updateSpacePanMode()
+  }
+
+  // A ctrl+click on macOS arrives as a primary pointerdown but its pointerup is
+  // consumed by the context menu, so cancel here to avoid a stuck drag/marquee.
+  handleContextMenu() {
+    this.cancelDrag()
   }
   
   handlePointerMove(event) {
@@ -843,6 +855,7 @@ class DragHandler {
     })
     document.removeEventListener('keydown', this.boundHandleKeyDown)
     document.removeEventListener('keyup', this.boundHandleKeyUp)
+    document.removeEventListener('contextmenu', this.boundHandleContextMenu)
     document.body?.classList.remove(SPACE_PAN_ACTIVE_CLASS)
     this.marqueeElement?.remove()
     

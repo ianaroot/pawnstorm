@@ -33,7 +33,9 @@ function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
  *
  * Hover detection uses geometric proximity via mousemove on the canvas
  * container rather than SVG hit-area elements, so overlapping connections
- * always resolve to the nearest one regardless of render order.
+ * always resolve to the nearest one regardless of render order. Hover is
+ * suppressed while a node drag is in progress and while the cursor is over
+ * a node, so delete buttons never appear mid-drag or on top of a node.
  */
 class ConnectionRenderer {
   constructor(svgContainer, store, viewport = null) {
@@ -89,7 +91,7 @@ class ConnectionRenderer {
     this._rafPending = true
     requestAnimationFrame(() => {
       this._rafPending = false
-      this._updateHoveredConnection(event.clientX, event.clientY)
+      this._updateHoveredConnection(event.clientX, event.clientY, event.target)
     })
   }
 
@@ -97,7 +99,16 @@ class ConnectionRenderer {
     this._setHoveredConnection(null)
   }
 
-  _updateHoveredConnection(clientX, clientY) {
+  _shouldSuppressHover(target = null) {
+    return Boolean(this.viewport?.isInteracting?.() || target?.closest?.('.node'))
+  }
+
+  _updateHoveredConnection(clientX, clientY, target = null) {
+    if (this._shouldSuppressHover(target)) {
+      this._setHoveredConnection(null)
+      return
+    }
+
     const graphPoint = this.viewport?.screenToGraphPoint(clientX, clientY) || { x: clientX, y: clientY }
     const threshold = this.scaledHoverHitAreaWidth() / 2
 
@@ -147,6 +158,7 @@ class ConnectionRenderer {
 
       case EVENTS.NODE_UPDATE:
         this.updateConnectionsFor(data.clientId)
+        if (this._shouldSuppressHover()) { this._setHoveredConnection(null) }
         break
 
       case EVENTS.NODE_REMOVE:

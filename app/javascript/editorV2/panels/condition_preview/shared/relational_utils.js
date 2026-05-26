@@ -16,7 +16,7 @@ function rayStepBetween(fromPosition, toPosition) {
   return null
 }
 
-function shieldAttackerPositions(pairs, board) {
+export function shieldAttackerPositions(pairs, board) {
   const attackers = new Set()
   pairs.forEach(({ subjectPosition, targetPosition }) => {
     const stepToTarget = rayStepBetween(subjectPosition, targetPosition)
@@ -49,32 +49,6 @@ export function relationParams(payload) {
     target: payload.target,
     targetFilter: payload.targetFilter || 'any',
     targetFilterMode: payload.targetFilterMode || null
-  }
-}
-
-export function relationalActorLabels(plan, moveObject, result, board = null) {
-  const startPosition = moveObject.startPosition
-  const endPosition = moveObject.endPosition
-  const priorSubjectPositions = plan.subject === 'moved_piece' ? [startPosition] : result.subjectPositions
-  const priorTargetPositions = plan.target === 'moved_piece' ? [startPosition] : result.targetPositions
-
-  const attackers = (plan.operator === 'shield' && board && result.pairs?.length > 0)
-    ? shieldAttackerPositions(result.pairs, board)
-    : []
-
-  return {
-    prior: {
-      subjectPositions: [...(priorSubjectPositions || []), ...attackers],
-      targetPositions: priorTargetPositions,
-      movedStartPosition: startPosition,
-      movedEndPosition: null
-    },
-    after: {
-      subjectPositions: [...(result.subjectPositions || []), ...attackers],
-      targetPositions: result.targetPositions,
-      movedStartPosition: null,
-      movedEndPosition: endPosition
-    }
   }
 }
 
