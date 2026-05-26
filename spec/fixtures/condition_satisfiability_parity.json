@@ -1,0 +1,86 @@
+[
+  {
+    "name": "singular census count of 2",
+    "satisfiable": false,
+    "reasonKey": "single_count_ceiling",
+    "data": { "version": 2, "kind": "census", "subject": "moved_piece", "subjectFilter": "any", "operator": "count", "comparator": "equal_to", "target": "exact_number", "targetTotal": 2 }
+  },
+  {
+    "name": "singular census count of 1",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "census", "subject": "moved_piece", "subjectFilter": "any", "operator": "count", "comparator": "equal_to", "target": "exact_number", "targetTotal": 1 }
+  },
+  {
+    "name": "captured-piece census count greater than 1",
+    "satisfiable": false,
+    "reasonKey": "single_count_ceiling",
+    "data": { "version": 2, "kind": "census", "subject": "captured_piece", "subjectFilter": "any", "operator": "count", "comparator": "greater_than", "target": "exact_number", "targetTotal": 1 }
+  },
+  {
+    "name": "king-include census count of 2",
+    "satisfiable": false,
+    "reasonKey": "single_count_ceiling",
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "king", "subjectFilterMode": "include", "operator": "count", "comparator": "equal_to", "target": "exact_number", "targetTotal": 2 }
+  },
+  {
+    "name": "king-exclude census count above 1",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "king", "subjectFilterMode": "exclude", "operator": "count", "comparator": "greater_than", "target": "exact_number", "targetTotal": 1 }
+  },
+  {
+    "name": "singular relational subject count of 2",
+    "satisfiable": false,
+    "reasonKey": "single_count_ceiling",
+    "data": { "version": 2, "kind": "relational", "subject": "moved_piece", "subjectFilter": "any", "operator": "attack", "target": "enemy", "targetFilter": "any", "subjectComparisonMetric": "count", "subjectComparator": "equal_to", "subjectComparisonSource": "exact_number", "subjectComparisonSourceTotal": 2 }
+  },
+  {
+    "name": "plain relational attack",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "relational", "subject": "moved_piece", "subjectFilter": "any", "operator": "attack", "target": "enemy", "targetFilter": "any" }
+  },
+  {
+    "name": "pawn census on rank 1",
+    "satisfiable": false,
+    "reasonKey": "pawn_rank",
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "pawn", "subjectFilterMode": "include", "operator": "count", "comparator": "greater_than", "target": "exact_number", "targetTotal": 0, "positionAxis": "rank", "positionComparator": "equal_to", "positionTarget": 1 }
+  },
+  {
+    "name": "pawn census on rank 5",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "pawn", "subjectFilterMode": "include", "operator": "count", "comparator": "greater_than", "target": "exact_number", "targetTotal": 0, "positionAxis": "rank", "positionComparator": "equal_to", "positionTarget": 5 }
+  },
+  {
+    "name": "moved_piece pawn on its home rank 2",
+    "satisfiable": false,
+    "reasonKey": "moved_pawn_home",
+    "data": { "version": 2, "kind": "census", "subject": "moved_piece", "subjectFilter": "pawn", "subjectFilterMode": "include", "operator": "count", "comparator": "greater_than", "target": "exact_number", "targetTotal": 0, "positionAxis": "rank", "positionComparator": "equal_to", "positionTarget": 2 }
+  },
+  {
+    "name": "allied mobility of 0",
+    "satisfiable": false,
+    "reasonKey": "allied_stuck",
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "any", "operator": "mobility", "comparator": "equal_to", "target": "exact_number", "targetTotal": 0 }
+  },
+  {
+    "name": "allied mobility at least 1",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "any", "operator": "mobility", "comparator": "greater_than_or_equal_to", "target": "exact_number", "targetTotal": 1 }
+  },
+  {
+    "name": "team count greater than prior board state",
+    "satisfiable": false,
+    "reasonKey": "count_growth",
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "any", "operator": "count", "comparator": "greater_than", "target": "prior_board_state" }
+  },
+  {
+    "name": "moved_piece count of 0",
+    "satisfiable": false,
+    "reasonKey": "moved_piece_exists",
+    "data": { "version": 2, "kind": "census", "subject": "moved_piece", "subjectFilter": "any", "operator": "count", "comparator": "equal_to", "target": "exact_number", "targetTotal": 0 }
+  },
+  {
+    "name": "group count of 3",
+    "satisfiable": true,
+    "data": { "version": 2, "kind": "census", "subject": "allied", "subjectFilter": "any", "operator": "count", "comparator": "equal_to", "target": "exact_number", "targetTotal": 3 }
+  }
+]
