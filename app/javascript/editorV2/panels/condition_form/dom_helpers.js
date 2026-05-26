@@ -33,6 +33,13 @@ export function disableOptions(control, disallowedValues) {
   })
 }
 
+export function hideOptions(control, valuesToHide) {
+  if (!control?.options) { return }
+  Array.from(control.options).forEach(option => {
+    option.hidden = valuesToHide.includes(option.value)
+  })
+}
+
 export function enableAllOptions(select) {
   Array.from(select.options).forEach(option => {
     option.disabled = false
