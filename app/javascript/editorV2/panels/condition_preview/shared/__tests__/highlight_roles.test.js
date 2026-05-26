@@ -3,11 +3,18 @@ import {
   HIGHLIGHT_ROLES,
   MOVED_FROM,
   MOVED_TO,
+  ROLE_RENDER_ORDER,
   relationSubjectRole,
   relationTargetRole,
   tileDecoration,
   legendEntries
 } from '../highlight_roles.js'
+
+describe('ROLE_RENDER_ORDER', () => {
+  it('includes every role that HIGHLIGHT_ROLES defines', () => {
+    expect(new Set(ROLE_RENDER_ORDER)).toEqual(new Set(Object.keys(HIGHLIGHT_ROLES)))
+  })
+})
 
 describe('relationSubjectRole / relationTargetRole', () => {
   it('maps each operator to its subject and target role keys', () => {
@@ -36,7 +43,7 @@ describe('tileDecoration', () => {
   it('decorates a single-role tile with one inset ring and a tinted background', () => {
     const deco = tileDecoration({ roles: { attacker: [10] } }, 10)
     expect(deco.boxShadow).toBe(`inset 0 0 0 3px ${HIGHLIGHT_ROLES.attacker.color}`)
-    expect(deco.background).toBe(`${HIGHLIGHT_ROLES.attacker.color}40`)
+    expect(deco.background).toBe(HIGHLIGHT_ROLES.attacker.tint)
   })
 
   it('stacks role rings inside the moved rings when a piece carries both', () => {
@@ -61,7 +68,7 @@ describe('tileDecoration', () => {
         `inset 0 0 0 9px ${HIGHLIGHT_ROLES.targetGeneric.color}`
       ].join(', ')
     )
-    expect(deco.background).toBe(`${HIGHLIGHT_ROLES.attacker.color}40`)
+    expect(deco.background).toBe(HIGHLIGHT_ROLES.attacker.tint)
   })
 
   it('shows moved-from + moved-to as concentric rings on a one-square move', () => {
