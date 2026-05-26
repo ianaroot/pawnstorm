@@ -797,7 +797,7 @@ describe('ConditionExampleGenerator', () => {
     expect(preview.examples.length).toBeGreaterThan(0)
 
     preview.examples.forEach(example => {
-      expect(example.highlights.after.subjectPositions.length).toBe(2)
+      expect(example.highlights.after.roles.attacker.length).toBe(2)
     })
   })
 

@@ -1,5 +1,6 @@
 import { findCombinatorialQualifyingKeys } from 'bot_execution/relational_qualifying'
-import { relationalActorLabels } from 'editorV2/panels/condition_preview/shared/relational_utils'
+import { shieldAttackerPositions } from 'editorV2/panels/condition_preview/shared/relational_utils'
+import { relationSubjectRole, relationTargetRole } from 'editorV2/panels/condition_preview/shared/highlight_roles'
 import {
   PRIOR_BOARD_COMPARISON_SOURCE,
   COUNT_COMPARISON_METRIC,
@@ -74,22 +75,48 @@ function applyCombinatorialFilter(plan, result, analysis) {
   }
 }
 
+function censusSubjectPositions(plan, analysis) {
+  if (plan.positionAxis) {
+    return analysis.positionFilteredPositions({
+      actor: plan.subject,
+      filter: plan.subjectFilter,
+      filterMode: plan.subjectFilterMode,
+      positionAxis: plan.positionAxis,
+      positionComparator: plan.positionComparator,
+      positionTarget: plan.positionTarget
+    })
+  }
+  return analysis.relationalActorPositions({
+    actor: plan.subject,
+    filter: plan.subjectFilter,
+    filterMode: plan.subjectFilterMode
+  })
+}
+
 export function buildAggregatedResult(combinedPlan, analysis) {
   let subjectPositions = []
   let targetPositions = []
   let pairs = []
+  const contributions = []
 
   for (const plan of combinedPlan.plans) {
     if (plan.kind === 'relational') {
       // same_piece bypasses pair-aggregation — both actors resolve to the same
-      // square (the captured piece's prior position). CEv2 is authoritative
-      // for evaluation; we produce a synthetic single-pair result for highlighting.
+      // square (the captured piece's prior position).
       if (plan.operator === 'same_piece') {
         const capturedPos = analysis.capturedPiecePosition()
         if (capturedPos !== null && capturedPos !== undefined) {
           subjectPositions.push(capturedPos)
           targetPositions.push(capturedPos)
           pairs.push({ subject: capturedPos, target: capturedPos })
+          contributions.push({
+            operator: 'same_piece',
+            subjectActor: null,
+            targetActor: null,
+            subjectPositions: [capturedPos],
+            targetPositions: [capturedPos],
+            pairs: []
+          })
         }
         continue
       }
@@ -99,85 +126,79 @@ export function buildAggregatedResult(combinedPlan, analysis) {
       subjectPositions = [...subjectPositions, ...result.subjectPositions]
       targetPositions = [...targetPositions, ...result.targetPositions]
       pairs = [...pairs, ...result.pairs]
-    } else if (plan.kind === 'unary') {
-      const positions = analysis.relationalActorPositions({
-        actor: plan.subject,
-        filter: plan.subjectFilter,
-        filterMode: plan.subjectFilterMode
+      contributions.push({
+        operator: plan.operator,
+        subjectActor: plan.subject,
+        targetActor: plan.target,
+        subjectPositions: result.subjectPositions,
+        targetPositions: result.targetPositions,
+        pairs: result.pairs
       })
-      subjectPositions = [...subjectPositions, ...positions]
-    } else if (plan.kind === 'position') {
-      const positions = analysis.positionFilteredPositions({
-        actor: plan.subject,
-        filter: plan.subjectFilter,
-        filterMode: plan.subjectFilterMode,
-        positionAxis: plan.positionAxis,
-        positionComparator: plan.positionComparator,
-        positionTarget: plan.positionTarget
+    } else if (plan.kind === 'census') {
+      // Kept out of the subjectPositions union so movedPieceInRelation /
+      // variantType (in example_factory + enrichment) stays relational-only.
+      const positions = censusSubjectPositions(plan, analysis)
+      contributions.push({
+        kind: 'census',
+        subjectActor: plan.subject,
+        subjectPositions: positions
       })
-      subjectPositions = [...subjectPositions, ...positions]
     }
   }
 
   return {
     subjectPositions: [...new Set(subjectPositions)],
     targetPositions: [...new Set(targetPositions)],
-    pairs
+    pairs,
+    contributions
   }
 }
 
 // ===== buildAggregatedHighlights =====
 
+function addRole(map, key, positions) {
+  if (!positions || positions.length === 0) { return }
+  const set = map[key] || (map[key] = new Set())
+  positions.forEach(p => set.add(p))
+}
+
+function rolesToArrays(map) {
+  const out = {}
+  for (const key of Object.keys(map)) { out[key] = [...map[key]] }
+  return out
+}
+
 export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedResult, priorBoard) {
-  const relationalPlans = combinedPlan.plans.filter(p => p.kind === 'relational')
+  const start = moveObject.startPosition
+  const end = moveObject.endPosition
+  const prior = {}
+  const after = {}
 
-  const priorSubject = new Set()
-  const priorTarget = new Set()
-  const afterSubject = new Set(aggregatedResult.subjectPositions)
-  const afterTarget = new Set(aggregatedResult.targetPositions)
+  for (const c of aggregatedResult.contributions) {
+    if (c.kind === 'census') {
+      const priorPos = c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions
+      addRole(prior, 'positionSubject', priorPos)
+      addRole(after, 'positionSubject', c.subjectPositions)
+      continue
+    }
 
-  for (const plan of relationalPlans) {
-    const labels = relationalActorLabels(plan, moveObject, aggregatedResult, priorBoard)
-    labels.prior.subjectPositions.forEach(p => priorSubject.add(p))
-    labels.prior.targetPositions.forEach(p => priorTarget.add(p))
-    labels.after.subjectPositions.forEach(p => afterSubject.add(p))
-    labels.after.targetPositions.forEach(p => afterTarget.add(p))
-  }
+    const subjectRole = relationSubjectRole(c.operator)
+    const targetRole = relationTargetRole(c.operator)
 
-  if (relationalPlans.length === 0) {
-    aggregatedResult.subjectPositions.forEach(p => priorSubject.add(p))
-  }
+    addRole(prior, subjectRole, c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions)
+    addRole(after, subjectRole, c.subjectPositions)
+    addRole(prior, targetRole, c.targetActor === 'moved_piece' ? [start] : c.targetPositions)
+    addRole(after, targetRole, c.targetPositions)
 
-  if (combinedPlan.plans.length > 1) {
-    const priorRelation = [...new Set([...priorSubject, ...priorTarget])]
-    const afterRelation = [...new Set([...afterSubject, ...afterTarget])]
-    return {
-      prior: {
-        relationPositions: priorRelation,
-        movedStartPosition: moveObject.startPosition,
-        movedEndPosition: moveObject.endPosition
-      },
-      after: {
-        relationPositions: afterRelation,
-        movedStartPosition: null,
-        movedEndPosition: moveObject.endPosition
-      }
+    if (c.operator === 'shield' && c.pairs.length > 0) {
+      const attackers = shieldAttackerPositions(c.pairs, priorBoard)
+      addRole(prior, 'attacker', attackers)
+      addRole(after, 'attacker', attackers)
     }
   }
 
   return {
-    prior: {
-      subjectPositions: [...priorSubject],
-      targetPositions: [...priorTarget],
-      movedStartPosition: moveObject.startPosition,
-      movedEndPosition: moveObject.endPosition
-    },
-    after: {
-      subjectPositions: [...afterSubject],
-      targetPositions: [...afterTarget],
-      movedStartPosition: null,
-      movedEndPosition: moveObject.endPosition
-    }
+    prior: { roles: rolesToArrays(prior), movedStartPosition: start, movedEndPosition: end },
+    after: { roles: rolesToArrays(after), movedStartPosition: null, movedEndPosition: end }
   }
 }
-

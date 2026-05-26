@@ -1,6 +1,7 @@
 import generateConditionExamples from 'editorV2/panels/condition_preview/orchestrator'
 import { formatConditionSentence, renderSentenceSegments } from 'editorV2/utils/conditionPreviewFormatter'
 import { exampleId } from 'editorV2/utils/example_id'
+import { tileDecoration, legendEntries } from 'editorV2/panels/condition_preview/shared/highlight_roles'
 import Board from 'gameplay/board'
 import Sound from 'gameplay/sound'
 
@@ -39,22 +40,18 @@ function buildMiniBoardEl() {
   return wrapper
 }
 
-function renderLayout(boardEl, layout, highlights) {
-  const relationPositions = new Set(highlights.relationPositions || [])
-  const subjectPositions  = relationPositions.size ? new Set() : new Set(highlights.subjectPositions || [])
-  const targetPositions   = relationPositions.size ? new Set() : new Set(highlights.targetPositions || [])
-  const movedStartPosition = highlights.movedStartPosition
-  const movedEndPosition   = highlights.movedEndPosition
+function decorateTile(tile, index, highlights) {
+  const deco = tileDecoration(highlights, index)
+  tile.style.boxShadow  = deco?.boxShadow  || ''
+  tile.style.background = deco?.background || ''
+}
 
+function renderLayout(boardEl, layout, highlights) {
   boardEl.querySelectorAll('[data-index]').forEach(tile => {
     const i = parseInt(tile.dataset.index, 10)
     const piece = layout[i]
     tile.innerHTML = ''
-    tile.classList.toggle('mini-board__tile--relation',   relationPositions.has(i))
-    tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
-    tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
-    tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
-    tile.classList.toggle('mini-board__tile--moved-end',   movedEndPosition === i)
+    decorateTile(tile, i, highlights)
     if (piece && PIECE_GLYPHS[piece]) {
       const span = document.createElement('span')
       span.className = `mini-piece mini-piece--${piece[0]}`
@@ -89,19 +86,8 @@ function syncBoardToLayout(boardEl, layout) {
 }
 
 function applyHighlights(boardEl, highlights) {
-  const relationPositions  = new Set(highlights.relationPositions || [])
-  const subjectPositions   = relationPositions.size ? new Set() : new Set(highlights.subjectPositions || [])
-  const targetPositions    = relationPositions.size ? new Set() : new Set(highlights.targetPositions || [])
-  const movedStartPosition = highlights.movedStartPosition
-  const movedEndPosition   = highlights.movedEndPosition
-
   boardEl.querySelectorAll('[data-index]').forEach(tile => {
-    const i = parseInt(tile.dataset.index, 10)
-    tile.classList.toggle('mini-board__tile--relation',   relationPositions.has(i))
-    tile.classList.toggle('mini-board__tile--subject',    subjectPositions.has(i))
-    tile.classList.toggle('mini-board__tile--target',     targetPositions.has(i))
-    tile.classList.toggle('mini-board__tile--moved-start', movedStartPosition === i)
-    tile.classList.toggle('mini-board__tile--moved-end',   movedEndPosition === i)
+    decorateTile(tile, parseInt(tile.dataset.index, 10), highlights)
   })
 }
 
@@ -349,26 +335,15 @@ class BoardStatePreview {
     controlsRow.appendChild(muteBtn)
     side.appendChild(controlsRow)
 
-    const isChain = (this.conditionLabels?.length ?? 0) > 1
-    const legendEntries = this.mode === 'selection' || isChain
-      ? [
-          { swatchClass: 'mini-board__tile--relation', label: 'Relation piece' },
-          { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
-        ]
-      : [
-          { swatchClass: 'mini-board__tile--subject', label: 'Subject' },
-          { swatchClass: 'mini-board__tile--target', label: 'Target' },
-          { swatchClass: 'mini-board__tile--moved-end', label: 'Moved piece' }
-        ]
-
     const legend = document.createElement('div')
     legend.className = 'board-state-preview__legend'
     legend.style.gridRow = '3'
-    legendEntries.forEach(({ swatchClass, label }) => {
+    legendEntries(example).forEach(({ color, label }) => {
       const item = document.createElement('div')
       item.className = 'board-state-preview__legend-item'
       const swatch = document.createElement('span')
-      swatch.className = `board-state-preview__legend-swatch ${swatchClass}`
+      swatch.className = 'board-state-preview__legend-swatch'
+      swatch.style.background = color
       const labelText = document.createElement('span')
       labelText.className = 'board-state-preview__legend-label'
       labelText.textContent = label
