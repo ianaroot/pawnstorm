@@ -42,8 +42,10 @@ function buildMiniBoardEl() {
 
 function decorateTile(tile, index, highlights) {
   const deco = tileDecoration(highlights, index)
-  tile.style.boxShadow  = deco?.boxShadow  || ''
-  tile.style.background = deco?.background || ''
+  tile.style.boxShadow = deco?.boxShadow || ''
+  // background-image (not the shorthand) so the wood background-color from
+  // .mini-board__tile--light/dark stays underneath and the wash alpha-blends over it.
+  tile.style.backgroundImage = deco ? `linear-gradient(${deco.background}, ${deco.background})` : ''
 }
 
 function renderLayout(boardEl, layout, highlights) {

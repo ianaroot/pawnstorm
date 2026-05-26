@@ -17,7 +17,7 @@ export class ExampleFactory {
     if (!aggregatedResult) { return null }
 
     const highlights = buildAggregatedHighlights(
-      this.combinedPlan, candidate.moveObject, aggregatedResult, candidate.priorBoard
+      this.combinedPlan, candidate.moveObject, aggregatedResult, candidate.priorBoard, candidate.afterBoard
     )
     const movedPieceInRelation = (
       aggregatedResult.subjectPositions.includes(candidate.moveObject.endPosition) ||

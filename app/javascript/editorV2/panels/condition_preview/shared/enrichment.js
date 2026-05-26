@@ -143,7 +143,7 @@ function deriveVerifiedExample({ combinedPlan, priorBoard, moveObject, baseExamp
     afterBoard,
     moveObject: recomputedMoveObject,
     result: aggregatedResult,
-    highlights: buildAggregatedHighlights(combinedPlan, recomputedMoveObject, aggregatedResult, priorBoard),
+    highlights: buildAggregatedHighlights(combinedPlan, recomputedMoveObject, aggregatedResult, priorBoard, afterBoard),
     variantType: movedPieceInRelation ? 'involved' : 'separate',
     geometryKey: `${baseExample.geometryKey}:enriched:${suffix}`,
     movedPieceInRelation,

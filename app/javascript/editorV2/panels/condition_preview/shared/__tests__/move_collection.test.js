@@ -15,11 +15,14 @@ function fakeAnalysis({
   positionFilteredPositions = [],
   relationalActorPositions = []
 } = {}) {
+  // Each query accepts a value or a function — function form lets a test branch
+  // on boardScope to simulate prior vs after evals.
+  const callOrReturn = (v) => (params) => typeof v === 'function' ? v(params) : v
   return {
-    relationalResult: () => relationalResult,
+    relationalResult: callOrReturn(relationalResult),
     capturedPiecePosition: () => capturedPos,
-    positionFilteredPositions: () => positionFilteredPositions,
-    relationalActorPositions: () => relationalActorPositions,
+    positionFilteredPositions: callOrReturn(positionFilteredPositions),
+    relationalActorPositions: callOrReturn(relationalActorPositions),
     afterBoard: () => ({})
   }
 }
@@ -83,7 +86,8 @@ describe('buildAggregatedResult', () => {
     expect(result.contributions[0]).toEqual({
       kind: 'census',
       subjectActor: 'allied',
-      subjectPositions: [12, 20]
+      subjectPositions: [12, 20],
+      positionAxis: 'rank'
     })
   })
 
@@ -98,6 +102,49 @@ describe('buildAggregatedResult', () => {
   it('returns null when a relational plan has zero pairs and no descriptor allows zero', () => {
     const analysis = fakeAnalysis()
     expect(buildAggregatedResult({ plans: [attackPlan()] }, analysis)).toBe(null)
+  })
+
+  it('also evaluates the prior board for a relational plan that compares against PBS', () => {
+    const relationalCalls = []
+    const analysis = fakeAnalysis({
+      relationalResult: (params) => {
+        relationalCalls.push(params)
+        if (params.boardScope === 'prior') {
+          return { pairs: [{ subjectPosition: 10, targetPosition: 20 }, { subjectPosition: 11, targetPosition: 21 }],
+                   subjectPositions: [10, 11], targetPositions: [20, 21] }
+        }
+        return { pairs: [{ subjectPosition: 10, targetPosition: 20 }], subjectPositions: [10], targetPositions: [20] }
+      }
+    })
+    const plan = attackPlan({
+      relationParams: { subject: 'allied', target: 'enemy', operator: 'attack' },
+      comparisonDescriptors: [{ side: 'subject', source: 'prior_board_state', comparator: 'less_than' }]
+    })
+
+    const result = buildAggregatedResult({ plans: [plan] }, analysis)
+
+    expect(relationalCalls.some(c => c.boardScope === 'prior')).toBe(true)
+    expect(result.contributions[0].priorSubjectPositions).toEqual([10, 11])
+    expect(result.contributions[0].priorTargetPositions).toEqual([20, 21])
+    expect(result.contributions[0].priorPairs).toHaveLength(2)
+  })
+
+  it('also evaluates the prior board for a census plan that compares against PBS', () => {
+    const positionCalls = []
+    const analysis = fakeAnalysis({
+      relationalActorPositions: ({ boardScope }) => {
+        positionCalls.push(boardScope)
+        return boardScope === 'prior' ? [4, 5, 6] : [4, 5]
+      }
+    })
+    const plan = censusPlan({
+      comparisonDescriptors: [{ side: 'subject', source: 'prior_board_state', comparator: 'less_than' }]
+    })
+
+    const result = buildAggregatedResult({ plans: [plan] }, analysis)
+
+    expect(positionCalls).toContain('prior')
+    expect(result.contributions[0].priorSubjectPositions).toEqual([4, 5, 6])
   })
 
   it('synthesizes a single-pair same_piece contribution at the captured square', () => {
@@ -124,7 +171,8 @@ describe('buildAggregatedHighlights', () => {
       { plans },
       moveObject,
       { subjectPositions: [], targetPositions: [], pairs: [], contributions },
-      {} // priorBoard — shieldAttackerPositions is mocked
+      {}, // priorBoard — shieldAttackerPositions is mocked
+      {}  // afterBoard — same
     )
   }
 
@@ -140,14 +188,16 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles).toEqual({ attacker: [10], targetAttack: [20] })
     expect(highlights.prior.roles).toEqual({ attacker: [10], targetAttack: [20] })
     expect(highlights.prior.movedStartPosition).toBe(12)
-    expect(highlights.after.movedStartPosition).toBe(null)
+    expect(highlights.after.movedStartPosition).toBe(12)
     expect(highlights.prior.movedEndPosition).toBe(28)
     expect(highlights.after.movedEndPosition).toBe(28)
   })
 
-  it('tags defend, shield (with its external attacker), and adjacent under their roles', () => {
+  it('tags defend, shield (with its external attacker walked once on the after board and reused for prior), and adjacent under their roles', () => {
+    shieldAttackerPositions.mockClear()
     const shieldPairs = [{ subjectPosition: 13, targetPosition: 23 }]
-    const priorBoard = {}
+    const priorBoard = { id: 'prior' }
+    const afterBoard = { id: 'after' }
     const highlights = buildAggregatedHighlights(
       { plans: [attackPlan(), attackPlan(), attackPlan()] },
       moveObject,
@@ -156,7 +206,8 @@ describe('buildAggregatedHighlights', () => {
         { operator: 'shield', subjectActor: 'allied', targetActor: 'enemy', subjectPositions: [13], targetPositions: [23], pairs: shieldPairs },
         { operator: 'adjacent', subjectActor: 'allied', targetActor: 'enemy', subjectPositions: [14], targetPositions: [24], pairs: [] }
       ] },
-      priorBoard
+      priorBoard,
+      afterBoard
     )
     expect(highlights.after.roles.defender).toEqual([11])
     expect(highlights.after.roles.targetDefend).toEqual([21])
@@ -165,7 +216,40 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles.attacker).toEqual([99]) // mocked shieldAttackerPositions
     expect(highlights.after.roles.subject).toEqual([14])
     expect(highlights.after.roles.targetGeneric).toEqual([24])
-    expect(shieldAttackerPositions).toHaveBeenCalledWith(shieldPairs, priorBoard)
+    expect(highlights.prior.roles.attacker).toEqual([99]) // non-PBS reuses the after attacker
+    expect(shieldAttackerPositions).toHaveBeenCalledTimes(1)
+    expect(shieldAttackerPositions).toHaveBeenCalledWith(shieldPairs, afterBoard)
+  })
+
+  it('uses prior eval for relational prior roles when the plan compares against the prior board', () => {
+    shieldAttackerPositions.mockClear()
+    const priorPairs = [{ subjectPosition: 13, targetPosition: 23 }]
+    const priorBoard = { id: 'prior' }
+    const afterBoard = { id: 'after' }
+    const highlights = buildAggregatedHighlights(
+      { plans: [attackPlan({ operator: 'shield' })] },
+      moveObject,
+      { subjectPositions: [], targetPositions: [], pairs: [], contributions: [{
+        operator: 'shield', subjectActor: 'allied', targetActor: 'enemy',
+        subjectPositions: [13], targetPositions: [23], pairs: [],
+        priorSubjectPositions: [13, 50], priorTargetPositions: [23, 60], priorPairs
+      }] },
+      priorBoard,
+      afterBoard
+    )
+    expect(highlights.prior.roles.shield).toEqual([13, 50])
+    expect(highlights.prior.roles.targetShield).toEqual([23, 60])
+    expect(highlights.prior.roles.attacker).toEqual([99]) // mocked
+    expect(shieldAttackerPositions).toHaveBeenCalledWith(priorPairs, priorBoard)
+  })
+
+  it('uses priorSubjectPositions for census prior roles when present (region-filtered)', () => {
+    const highlights = build(
+      [censusPlan({ positionAxis: 'rank' })],
+      [{ kind: 'census', subjectActor: 'allied', subjectPositions: [4, 5], priorSubjectPositions: [4, 5, 6], positionAxis: 'rank' }]
+    )
+    expect(highlights.prior.roles.positionSubject).toEqual([4, 5, 6])
+    expect(highlights.after.roles.positionSubject).toEqual([4, 5])
   })
 
   it('rewrites the prior position to startPosition when subject/target is moved_piece', () => {
@@ -186,13 +270,22 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles.targetAttack).toEqual([28])
   })
 
-  it('tags census subjects under positionSubject', () => {
+  it('tags region-filtered census subjects under positionSubject', () => {
     const highlights = build(
-      [censusPlan()],
-      [{ kind: 'census', subjectActor: 'allied', subjectPositions: [4, 5] }]
+      [censusPlan({ positionAxis: 'rank' })],
+      [{ kind: 'census', subjectActor: 'allied', subjectPositions: [4, 5], positionAxis: 'rank' }]
     )
     expect(highlights.prior.roles.positionSubject).toEqual([4, 5])
     expect(highlights.after.roles.positionSubject).toEqual([4, 5])
+  })
+
+  it('skips highlighting for whole-board census subjects (no positionAxis)', () => {
+    const highlights = build(
+      [censusPlan()],
+      [{ kind: 'census', subjectActor: 'allied', subjectPositions: [4, 5], positionAxis: null }]
+    )
+    expect(highlights.prior.roles.positionSubject).toBeUndefined()
+    expect(highlights.after.roles.positionSubject).toBeUndefined()
   })
 
   it('aggregates multiple contributions in a chain so one piece can carry multiple roles', () => {
@@ -209,12 +302,13 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles.targetDefend).toEqual([30])
   })
 
-  it('produces no roles when there are no contributions, but keeps the moved markers', () => {
+  it('produces no roles when there are no contributions, but keeps the moved markers on both boards', () => {
     const highlights = build([], [])
     expect(highlights.prior.roles).toEqual({})
     expect(highlights.after.roles).toEqual({})
     expect(highlights.prior.movedStartPosition).toBe(12)
     expect(highlights.prior.movedEndPosition).toBe(28)
+    expect(highlights.after.movedStartPosition).toBe(12)
     expect(highlights.after.movedEndPosition).toBe(28)
   })
 })
