@@ -1,20 +1,28 @@
-export const HIGHLIGHT_ROLES = {
-  attacker:        { color: '#991b1b', label: 'Attacker' },
-  defender:        { color: '#2563eb', label: 'Defender' },
-  shield:          { color: '#7c3aed', label: 'Shield' },
-  subject:         { color: '#16a34a', label: 'Subject' },
-  positionSubject: { color: '#f97316', label: 'Subject' },
-  targetAttack:    { color: '#f43f5e', label: "Attacker's target" },
-  targetDefend:    { color: '#93c5fd', label: "Defender's target" },
-  targetShield:    { color: '#c4b5fd', label: "Shield's target" },
-  targetGeneric:   { color: '#86efac', label: 'Target' }
+function role(varName, label) {
+  return {
+    color: `rgb(var(${varName}))`,
+    tint:  `rgb(var(${varName}) / 25%)`,
+    label
+  }
 }
 
-export const MOVED_FROM = { color: '#fde047', label: 'Moved from' }
-export const MOVED_TO   = { color: '#eab308', label: 'Moved to' }
+export const HIGHLIGHT_ROLES = {
+  attacker:        role('--highlight-attacker',         'Attacker'),
+  defender:        role('--highlight-defender',         'Defender'),
+  shield:          role('--highlight-shield',           'Shield'),
+  subject:         role('--highlight-subject',          'Subject'),
+  positionSubject: role('--highlight-position-subject', 'Subject'),
+  targetAttack:    role('--highlight-target-attack',    "Attacker's target"),
+  targetDefend:    role('--highlight-target-defend',    "Defender's target"),
+  targetShield:    role('--highlight-target-shield',    "Shield's target"),
+  targetGeneric:   role('--highlight-target-generic',   'Target')
+}
+
+export const MOVED_FROM = role('--highlight-moved-from', 'Moved from')
+export const MOVED_TO   = role('--highlight-moved-to',   'Moved to')
 
 // Innermost first; moved rings drawn outside role rings.
-const ROLE_RENDER_ORDER = [
+export const ROLE_RENDER_ORDER = [
   'attacker', 'defender', 'shield', 'subject', 'positionSubject',
   'targetAttack', 'targetDefend', 'targetShield', 'targetGeneric'
 ]
@@ -37,19 +45,22 @@ export function relationTargetRole(operator) {
   }
 }
 
-function rolesAtPosition(roles, index) {
-  return ROLE_RENDER_ORDER.filter(key => roles[key]?.includes(index))
+function entriesAtPosition(highlights, index) {
+  const roles = highlights.roles || {}
+  const entries = ROLE_RENDER_ORDER
+    .filter(key => roles[key]?.includes(index))
+    .map(key => HIGHLIGHT_ROLES[key])
+  if (highlights.movedStartPosition === index) { entries.push(MOVED_FROM) }
+  if (highlights.movedEndPosition === index)   { entries.push(MOVED_TO) }
+  return entries
 }
 
 export function tileDecoration(highlights, index) {
-  const roles = highlights.roles || {}
-  const colors = rolesAtPosition(roles, index).map(key => HIGHLIGHT_ROLES[key].color)
-  if (highlights.movedStartPosition === index) { colors.push(MOVED_FROM.color) }
-  if (highlights.movedEndPosition === index)   { colors.push(MOVED_TO.color) }
-  if (colors.length === 0) { return null }
+  const entries = entriesAtPosition(highlights, index)
+  if (entries.length === 0) { return null }
 
-  const boxShadow = colors.map((color, ring) => `inset 0 0 0 ${3 * (ring + 1)}px ${color}`).join(', ')
-  return { boxShadow, background: `${colors[0]}40` }
+  const boxShadow = entries.map((e, ring) => `inset 0 0 0 ${3 * (ring + 1)}px ${e.color}`).join(', ')
+  return { boxShadow, background: entries[0].tint }
 }
 
 export function legendEntries(example) {

@@ -1,5 +1,17 @@
 :root {
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpolygon points='0,0 8,0 4,5' fill='%23A855F7'/%3E%3C/svg%3E");
+
+  --highlight-attacker:        153 27 27;
+  --highlight-defender:        37 99 235;
+  --highlight-shield:          124 58 237;
+  --highlight-subject:         22 163 74;
+  --highlight-position-subject: 249 115 22;
+  --highlight-target-attack:   244 63 94;
+  --highlight-target-defend:   147 197 253;
+  --highlight-target-shield:   196 181 253;
+  --highlight-target-generic:  134 239 172;
+  --highlight-moved-from:      253 224 71;
+  --highlight-moved-to:        234 179 8;
 }
 
 .page-content.page-content--bot-editor {
