@@ -1,0 +1,16 @@
+/* ============================================
+   TOUR SPOTLIGHT — class applied to the active step's target.
+   Sits above the .tour-backdrop so it remains interactive and visible;
+   the box-shadow trick paints a dim ring all the way to the viewport
+   edges (no separate clip-path needed).
+   ============================================ */
+
+.tour-spotlight {
+  position: relative;
+  z-index: 9100;
+  box-shadow:
+    0 0 0 4px rgba(192, 132, 252, 0.55),
+    0 0 0 9999px rgba(0, 0, 0, 0.55);
+  border-radius: 6px;
+  transition: box-shadow 0.15s ease-out;
+}

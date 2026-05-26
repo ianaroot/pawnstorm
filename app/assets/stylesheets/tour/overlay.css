@@ -1,0 +1,11 @@
+/* ============================================
+   TOUR OVERLAY — dimmed backdrop behind the spotlight
+   ============================================ */
+
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
