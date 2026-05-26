@@ -141,6 +141,8 @@ export function buildAggregatedResult(combinedPlan, analysis) {
         pairs: result.pairs
       }
       if (comparesAgainstPriorBoard(plan)) {
+        // Unfiltered on purpose — we want the literal prior relationships, not
+        // the combinatorial-filtered view (which is an after-board projection).
         const priorRaw = analysis.relationalResult({ ...plan.relationParams, boardScope: 'prior' })
         contribution.priorSubjectPositions = priorRaw.subjectPositions
         contribution.priorTargetPositions = priorRaw.targetPositions
@@ -155,7 +157,7 @@ export function buildAggregatedResult(combinedPlan, analysis) {
         kind: 'census',
         subjectActor: plan.subject,
         subjectPositions: positions,
-        positionAxis: plan.positionAxis || null
+        positionAxis: plan.positionAxis ?? null
       }
       if (comparesAgainstPriorBoard(plan)) {
         contribution.priorSubjectPositions = censusSubjectPositions(plan, analysis, 'prior')
@@ -207,11 +209,13 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
 
     addRole(after, subjectRole, c.subjectPositions)
     addRole(after, targetRole, c.targetPositions)
+    let afterAttackers = null
     if (c.operator === 'shield' && c.pairs.length > 0) {
-      addRole(after, 'attacker', shieldAttackerPositions(c.pairs, afterBoard))
+      afterAttackers = shieldAttackerPositions(c.pairs, afterBoard)
+      addRole(after, 'attacker', afterAttackers)
     }
 
-    if (c.priorPairs !== undefined) {
+    if (c.priorPairs) {
       addRole(prior, subjectRole, c.priorSubjectPositions)
       addRole(prior, targetRole, c.priorTargetPositions)
       if (c.operator === 'shield' && c.priorPairs.length > 0) {
@@ -220,11 +224,13 @@ export function buildAggregatedHighlights(combinedPlan, moveObject, aggregatedRe
     } else {
       addRole(prior, subjectRole, c.subjectActor === 'moved_piece' ? [start] : c.subjectPositions)
       addRole(prior, targetRole, c.targetActor === 'moved_piece' ? [start] : c.targetPositions)
+      // Non-PBS shield: relationship holds on both boards, so reuse the after attacker.
+      if (afterAttackers) { addRole(prior, 'attacker', afterAttackers) }
     }
   }
 
   return {
     prior: { roles: rolesToArrays(prior), movedStartPosition: start, movedEndPosition: end },
-    after: { roles: rolesToArrays(after), movedStartPosition: null, movedEndPosition: end }
+    after: { roles: rolesToArrays(after), movedStartPosition: start, movedEndPosition: end }
   }
 }

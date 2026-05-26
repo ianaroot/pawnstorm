@@ -15,11 +15,14 @@ function fakeAnalysis({
   positionFilteredPositions = [],
   relationalActorPositions = []
 } = {}) {
+  // Each query accepts a value or a function — function form lets a test branch
+  // on boardScope to simulate prior vs after evals.
+  const callOrReturn = (v) => (params) => typeof v === 'function' ? v(params) : v
   return {
-    relationalResult: () => relationalResult,
+    relationalResult: callOrReturn(relationalResult),
     capturedPiecePosition: () => capturedPos,
-    positionFilteredPositions: () => positionFilteredPositions,
-    relationalActorPositions: () => relationalActorPositions,
+    positionFilteredPositions: callOrReturn(positionFilteredPositions),
+    relationalActorPositions: callOrReturn(relationalActorPositions),
     afterBoard: () => ({})
   }
 }
@@ -103,7 +106,7 @@ describe('buildAggregatedResult', () => {
 
   it('also evaluates the prior board for a relational plan that compares against PBS', () => {
     const relationalCalls = []
-    const analysis = {
+    const analysis = fakeAnalysis({
       relationalResult: (params) => {
         relationalCalls.push(params)
         if (params.boardScope === 'prior') {
@@ -111,10 +114,8 @@ describe('buildAggregatedResult', () => {
                    subjectPositions: [10, 11], targetPositions: [20, 21] }
         }
         return { pairs: [{ subjectPosition: 10, targetPosition: 20 }], subjectPositions: [10], targetPositions: [20] }
-      },
-      capturedPiecePosition: () => null,
-      afterBoard: () => ({})
-    }
+      }
+    })
     const plan = attackPlan({
       relationParams: { subject: 'allied', target: 'enemy', operator: 'attack' },
       comparisonDescriptors: [{ side: 'subject', source: 'prior_board_state', comparator: 'less_than' }]
@@ -130,16 +131,12 @@ describe('buildAggregatedResult', () => {
 
   it('also evaluates the prior board for a census plan that compares against PBS', () => {
     const positionCalls = []
-    const analysis = {
-      relationalResult: () => ({ pairs: [], subjectPositions: [], targetPositions: [] }),
-      capturedPiecePosition: () => null,
-      positionFilteredPositions: () => [],
+    const analysis = fakeAnalysis({
       relationalActorPositions: ({ boardScope }) => {
         positionCalls.push(boardScope)
         return boardScope === 'prior' ? [4, 5, 6] : [4, 5]
-      },
-      afterBoard: () => ({})
-    }
+      }
+    })
     const plan = censusPlan({
       comparisonDescriptors: [{ side: 'subject', source: 'prior_board_state', comparator: 'less_than' }]
     })
@@ -191,12 +188,13 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles).toEqual({ attacker: [10], targetAttack: [20] })
     expect(highlights.prior.roles).toEqual({ attacker: [10], targetAttack: [20] })
     expect(highlights.prior.movedStartPosition).toBe(12)
-    expect(highlights.after.movedStartPosition).toBe(null)
+    expect(highlights.after.movedStartPosition).toBe(12)
     expect(highlights.prior.movedEndPosition).toBe(28)
     expect(highlights.after.movedEndPosition).toBe(28)
   })
 
-  it('tags defend, shield (with its external attacker walked on the after board), and adjacent under their roles', () => {
+  it('tags defend, shield (with its external attacker walked once on the after board and reused for prior), and adjacent under their roles', () => {
+    shieldAttackerPositions.mockClear()
     const shieldPairs = [{ subjectPosition: 13, targetPosition: 23 }]
     const priorBoard = { id: 'prior' }
     const afterBoard = { id: 'after' }
@@ -218,8 +216,9 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles.attacker).toEqual([99]) // mocked shieldAttackerPositions
     expect(highlights.after.roles.subject).toEqual([14])
     expect(highlights.after.roles.targetGeneric).toEqual([24])
+    expect(highlights.prior.roles.attacker).toEqual([99]) // non-PBS reuses the after attacker
+    expect(shieldAttackerPositions).toHaveBeenCalledTimes(1)
     expect(shieldAttackerPositions).toHaveBeenCalledWith(shieldPairs, afterBoard)
-    expect(highlights.prior.roles.attacker).toBeUndefined() // no priorPairs → no prior attacker walk
   })
 
   it('uses prior eval for relational prior roles when the plan compares against the prior board', () => {
@@ -303,12 +302,13 @@ describe('buildAggregatedHighlights', () => {
     expect(highlights.after.roles.targetDefend).toEqual([30])
   })
 
-  it('produces no roles when there are no contributions, but keeps the moved markers', () => {
+  it('produces no roles when there are no contributions, but keeps the moved markers on both boards', () => {
     const highlights = build([], [])
     expect(highlights.prior.roles).toEqual({})
     expect(highlights.after.roles).toEqual({})
     expect(highlights.prior.movedStartPosition).toBe(12)
     expect(highlights.prior.movedEndPosition).toBe(28)
+    expect(highlights.after.movedStartPosition).toBe(12)
     expect(highlights.after.movedEndPosition).toBe(28)
   })
 })
