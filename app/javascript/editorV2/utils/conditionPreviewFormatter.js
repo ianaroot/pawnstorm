@@ -306,6 +306,17 @@ const SINGULAR_ACTOR = {
   enemy_moved_piece: "enemy's just-moved piece",
   enemy_captured_piece: "enemy's just-captured piece"
 }
+
+const SINGULAR_CAPTURE_PHRASING = {
+  captured_piece: {
+    affirm: { prefix: 'I ',             verb: 'capture',          suffix: ' a piece' },
+    negate: { prefix: 'this move ',     verb: 'captures nothing' }
+  },
+  enemy_captured_piece: {
+    affirm: { prefix: "enemy's move ", verb: 'captured',         suffix: ' a piece' },
+    negate: { prefix: "enemy's move ", verb: 'captured nothing' }
+  }
+}
 const SPECIES = {
   king: 'king', queen: 'queen', rook: 'rook', bishop: 'bishop',
   knight: 'knight', pawn: 'pawn', major: 'major piece', minor: 'minor piece'
@@ -783,18 +794,28 @@ function composeCensusCountSingularSubject(d) {
   if (d.subjectFilter && d.subjectFilter !== 'any') {
     return existenceSegments(SINGULAR_ACTOR[d.subject], sense === 'affirm', `a ${speciesNoun(d.subjectFilter)}`)
   }
-  return sense === 'affirm'
-    ? [{ text: 'I ' }, { text: 'capture', emphasis: true }, { text: ' a piece' }]
-    : [{ text: 'this move ' }, { text: 'captures nothing', emphasis: true }]
+  const phrasing = SINGULAR_CAPTURE_PHRASING[d.subject]
+  if (!phrasing) { return existenceWarn(d) }
+  const parts = phrasing[sense === 'affirm' ? 'affirm' : 'negate']
+  const segments = [{ text: parts.prefix }, { text: parts.verb, emphasis: true }]
+  if (parts.suffix) { segments.push({ text: parts.suffix }) }
+  return segments
 }
 
 function composeCensusCountCollection(d) {
   const info = quantifyCount({ comparator: d.comparator, source: d.target, total: d.targetTotal })
   const n = noun(d.subjectFilter, d.subjectFilterMode, !info.atLeastOne)
+  if (info.same) {
+    return [
+      { text: `${teamHas(d.subject)} the ` },
+      { text: 'same number', emphasis: true },
+      { text: ` of ${n} as before` }
+    ]
+  }
   return [
     { text: `${teamHas(d.subject)} ` },
     { text: info.q, emphasis: true },
-    { text: ` ${n}` }
+    { text: ` ${n}${tail(info)}` }
   ]
 }
 
