@@ -27,6 +27,7 @@ export default class TourEngine {
     this.dom = null
     this.spotlightTarget = null
     this.stepCleanup = []
+    this.lastAdvanceDetail = null
   }
 
   get isActive() { return this.active }
@@ -37,12 +38,14 @@ export default class TourEngine {
     if (this.active || this.steps.length === 0) { return }
     this.active = true
     this.currentIndex = -1
+    this.lastAdvanceDetail = null
     this.mountDom()
     this.advanceToNextValidStep()
   }
 
-  next() {
+  next(detail = null) {
     if (!this.active) { return }
+    this.lastAdvanceDetail = detail
     this.advanceToNextValidStep()
   }
 
@@ -77,14 +80,18 @@ export default class TourEngine {
 
   shouldSkip(step) {
     if (typeof step.skipIf !== 'function') { return false }
-    try { return Boolean(step.skipIf({ engine: this })) }
+    try { return Boolean(step.skipIf(this.context())) }
     catch (err) { console.warn('TourEngine: skipIf threw:', err); return false }
   }
 
   resolveTarget(step) {
     if (!step.target) { return null }
-    if (typeof step.target === 'function') { return step.target() || null }
+    if (typeof step.target === 'function') { return step.target(this.context()) || null }
     return document.querySelector(step.target)
+  }
+
+  context() {
+    return { engine: this, lastAdvanceDetail: this.lastAdvanceDetail }
   }
 
   renderStep(step, target) {
@@ -156,7 +163,7 @@ export default class TourEngine {
         const detail = event.detail || {}
         if (advance.when && !advance.when(detail)) { return }
         if (advance.selector && !event.target?.closest?.(advance.selector)) { return }
-        this.next()
+        this.next(detail)
       }
       this.bindCleanup(document, advance.event, handler)
     }

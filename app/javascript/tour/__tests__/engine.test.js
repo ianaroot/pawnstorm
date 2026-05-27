@@ -323,4 +323,85 @@ describe('TourEngine', () => {
       expect(target.classList.contains('tour-spotlight')).toBe(true)
     })
   })
+
+  describe('lastAdvanceDetail context', () => {
+    it('passes the prior event detail to the next step target', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const targetFn = vi.fn(() => document.getElementById('b'))
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', advanceOn: { event: 'editor:node-added' } },
+          { target: targetFn, title: 'second' }
+        ]
+      })
+      engine.start()
+      document.dispatchEvent(new CustomEvent('editor:node-added', { detail: { type: 'condition', clientId: 'abc' } }))
+
+      expect(targetFn).toHaveBeenCalled()
+      const ctx = targetFn.mock.calls[0][0]
+      expect(ctx.lastAdvanceDetail).toEqual({ type: 'condition', clientId: 'abc' })
+      expect(ctx.engine).toBe(engine)
+    })
+
+    it('passes the prior event detail to the next step skipIf', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const skipIf = vi.fn(() => false)
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', advanceOn: { event: 'editor:node-added' } },
+          { target: '#b', title: 'second', skipIf }
+        ]
+      })
+      engine.start()
+      document.dispatchEvent(new CustomEvent('editor:node-added', { detail: { clientId: 'xyz' } }))
+
+      expect(skipIf).toHaveBeenCalled()
+      expect(skipIf.mock.calls[0][0].lastAdvanceDetail).toEqual({ clientId: 'xyz' })
+    })
+
+    it('passes null lastAdvanceDetail for the first step', () => {
+      const targetFn = vi.fn(() => makeTarget())
+      const engine = new TourEngine({
+        steps: [{ target: targetFn, title: 'first' }]
+      })
+      engine.start()
+
+      expect(targetFn.mock.calls[0][0].lastAdvanceDetail).toBeNull()
+    })
+
+    it('passes null lastAdvanceDetail when advanced via the Next button', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const targetFn = vi.fn(() => document.getElementById('b'))
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', advanceOn: 'next' },
+          { target: targetFn, title: 'second' }
+        ]
+      })
+      engine.start()
+      nextButton().click()
+
+      expect(targetFn.mock.calls[0][0].lastAdvanceDetail).toBeNull()
+    })
+
+    it('preserves lastAdvanceDetail across a skipped step', () => {
+      makeTarget('a')
+      makeTarget('c')
+      const targetFn = vi.fn(() => document.getElementById('c'))
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', advanceOn: { event: 'editor:node-added' } },
+          { target: '#b', title: 'skipped', skipIf: () => true },
+          { target: targetFn, title: 'third' }
+        ]
+      })
+      engine.start()
+      document.dispatchEvent(new CustomEvent('editor:node-added', { detail: { clientId: 'kept' } }))
+
+      expect(targetFn.mock.calls[0][0].lastAdvanceDetail).toEqual({ clientId: 'kept' })
+    })
+  })
 })
