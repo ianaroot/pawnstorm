@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import Board from 'gameplay/board'
 import Layout from 'gameplay/layout'
@@ -124,6 +124,95 @@ describe('MatchReplayController', () => {
 
     expect(play.classList.contains('replay-control--hint')).toBe(false)
     expect(forward.classList.contains('replay-control--hint')).toBe(false)
+  })
+
+  describe('replay:move-inspected event', () => {
+    const VISIBLE_END_POSITION = 36
+
+    function buildController() {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: [] })
+      document.body.appendChild(root)
+      const controller = new MatchReplayController({ rootElement: root })
+      controller.renderCurrentFrame = vi.fn()
+      controller.currentBoard = vi.fn().mockReturnValue({ teamAt: () => null })
+      controller.inspectionContextForBoard = vi.fn().mockReturnValue({
+        enabled: true,
+        team: Board.WHITE,
+        result: {
+          visibleMoves: [{ moveObject: { endPosition: VISIBLE_END_POSITION }, key: 'move-1' }]
+        }
+      })
+      return controller
+    }
+
+    function clickTile(square) {
+      const tile = document.createElement('div')
+      tile.className = 'chess-tile'
+      tile.id = square
+      document.body.appendChild(tile)
+      return tile
+    }
+
+    function listen() {
+      const handler = vi.fn()
+      document.addEventListener('replay:move-inspected', handler)
+      return {
+        handler,
+        cleanup: () => document.removeEventListener('replay:move-inspected', handler)
+      }
+    }
+
+    it('fires when the user clicks a visible-move destination', () => {
+      const controller = buildController()
+      const square = Board.gridCalculator(VISIBLE_END_POSITION)
+      const tile = clickTile(square)
+      const { handler, cleanup } = listen()
+
+      controller.handleBoardClick({ target: tile })
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ square, inspectedMoveKey: 'move-1' })
+      cleanup()
+    })
+
+    it('does not fire when the user clicks a start-position square', () => {
+      const controller = buildController()
+      controller.currentBoard = vi.fn().mockReturnValue({ teamAt: () => Board.WHITE })
+      const otherSquare = Board.gridCalculator(8)
+      const tile = clickTile(otherSquare)
+      const { handler, cleanup } = listen()
+
+      controller.handleBoardClick({ target: tile })
+
+      expect(handler).not.toHaveBeenCalled()
+      cleanup()
+    })
+
+    it('does not fire when the user clicks a background square', () => {
+      const controller = buildController()
+      controller.currentBoard = vi.fn().mockReturnValue({ teamAt: () => Board.BLACK })
+      const otherSquare = Board.gridCalculator(8)
+      const tile = clickTile(otherSquare)
+      const { handler, cleanup } = listen()
+
+      controller.handleBoardClick({ target: tile })
+
+      expect(handler).not.toHaveBeenCalled()
+      cleanup()
+    })
+
+    it('does not fire while the replay is playing', () => {
+      const controller = buildController()
+      controller.isPlaying = true
+      const square = Board.gridCalculator(VISIBLE_END_POSITION)
+      const tile = clickTile(square)
+      const { handler, cleanup } = listen()
+
+      controller.handleBoardClick({ target: tile })
+
+      expect(handler).not.toHaveBeenCalled()
+      cleanup()
+    })
   })
 
   it('flips the board to the viewer when they own the black bot', () => {

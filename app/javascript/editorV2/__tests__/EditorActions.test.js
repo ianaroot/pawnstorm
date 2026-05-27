@@ -138,6 +138,33 @@ describe('EditorActions', () => {
       expect(syncManager.updateNodeData).not.toHaveBeenCalled()
       expect(clickHandler.closeEditor).toHaveBeenCalled()
     })
+
+    it('fires editor:node-saved with type + clientId on success', async () => {
+      clickHandler.getEditingNodeId.mockReturnValue('condition')
+      clickHandler.buildDataPayloadByType.mockReturnValue({ kind: 'unary' })
+      const handler = vi.fn()
+      document.addEventListener('editor:node-saved', handler)
+
+      await editorActions.save()
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ type: 'condition', clientId: 'condition' })
+      document.removeEventListener('editor:node-saved', handler)
+    })
+
+    it('does not fire editor:node-saved when syncManager rejects', async () => {
+      clickHandler.getEditingNodeId.mockReturnValue('condition')
+      clickHandler.buildDataPayloadByType.mockReturnValue({ kind: 'unary' })
+      syncManager.updateNodeData.mockRejectedValueOnce(new Error('boom'))
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const handler = vi.fn()
+      document.addEventListener('editor:node-saved', handler)
+
+      await editorActions.save()
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:node-saved', handler)
+    })
   })
 
   // ===== addNode =====
@@ -183,6 +210,30 @@ describe('EditorActions', () => {
       await editorActions.addNode('organizer')
 
       expect(vi.mocked(findAnchoredNodePlacement)).toHaveBeenCalledWith(store, 'organizer', { x: 200, y: 200 })
+    })
+
+    it('fires editor:node-added with type + clientId on success', async () => {
+      syncManager.createNode.mockResolvedValueOnce('new-client-id')
+      const handler = vi.fn()
+      document.addEventListener('editor:node-added', handler)
+
+      await editorActions.addNode('condition')
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ type: 'condition', clientId: 'new-client-id' })
+      document.removeEventListener('editor:node-added', handler)
+    })
+
+    it('does not fire editor:node-added when syncManager rejects', async () => {
+      syncManager.createNode.mockRejectedValueOnce(new Error('boom'))
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const handler = vi.fn()
+      document.addEventListener('editor:node-added', handler)
+
+      await editorActions.addNode('condition')
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:node-added', handler)
     })
   })
 

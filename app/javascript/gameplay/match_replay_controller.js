@@ -6,6 +6,7 @@ import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
 import { cloneRecentMoveContext } from "gameplay/recent_move_context"
 import { applyBoardOrientation } from "gameplay/board_orientation"
 import Sound from "gameplay/sound"
+import { emitReplayEvent } from "gameplay/utils/replayEvents"
 
 class MatchReplayController {
   constructor({ rootElement, intervalMs = 1250 }) {
@@ -291,6 +292,7 @@ class MatchReplayController {
     if (clickedVisibleMove) {
       this.inspectedMoveKey = clickedVisibleMove.key
       this.renderCurrentFrame()
+      emitReplayEvent('move-inspected', { square, inspectedMoveKey: clickedVisibleMove.key })
       return
     }
     if (board.teamAt(position) === inspection.team) {

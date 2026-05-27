@@ -2,12 +2,13 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-intro"
+     data-controller="editor bot-intro tour"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>"
-     data-bot-intro-auto-value="<%= params[:intro].present? %>">
+     data-bot-intro-auto-value="<%= params[:intro].present? %>"
+     data-tour-set-value="editor-first-bot">
   <div class="bot-editor-header">
     <div class="bot-editor-header__name" id="bot-name-display" title="<%= @bot.name %>"><%= @bot.name %></div>
     <button type="button" class="bot-editor-header__rename" data-bot-rename-open>Rename</button>
@@ -23,6 +24,10 @@
           data-action="click->bot-intro#open"
           aria-controls="bot-intro-modal"
           aria-haspopup="dialog">How it works</button>
+        <button
+          type="button"
+          class="btn-guide"
+          data-action="click->tour#start">Take the tour</button>
         <button type="button" class="btn-open-templates">Templates</button>
       </div>
       <button type="button" class="btn-add-node" data-type="condition">+ Condition</button>

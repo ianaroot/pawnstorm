@@ -2,6 +2,8 @@
  * IMPORTANT: This handler never calls history.push() directly.
  * SyncManager handles history push after successful server sync.
  */
+import { emitEditorEvent } from 'editorV2/utils/editorEvents'
+
 const SPACE_PAN_ACTIVE_CLASS = 'editor-space-pan-active'
 
 class ConnectionHandler {
@@ -158,14 +160,16 @@ class ConnectionHandler {
     // SyncManager handles: optimistic update, server sync, history push
     try {
       await this.syncManager.createConnection(sourceClientId, targetClientId)
+      emitEditorEvent('connection-created', { sourceId: sourceClientId, targetId: targetClientId })
     } catch (error) {
       console.error('Failed to create connection:', error)
     }
   }
-  
+
   async deleteConnection(clientId) {
     try {
       await this.syncManager.deleteConnection(clientId)
+      emitEditorEvent('connection-deleted', { clientId })
     } catch (error) {
       console.error('Failed to delete connection:', error)
     }

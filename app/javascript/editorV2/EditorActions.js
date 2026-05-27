@@ -7,6 +7,7 @@ import { pipelineStats } from 'editorV2/panels/condition_preview/shared/pipeline
 import { buildSelectedConditionChain } from 'editorV2/panels/condition_preview/condition_chain_selection'
 import { formatConditionSentence } from 'editorV2/utils/conditionPreviewFormatter'
 import { exampleId } from 'editorV2/utils/example_id'
+import { emitEditorEvent } from 'editorV2/utils/editorEvents'
 
 const CLIPBOARD_STORAGE_KEY = 'editorV2.nodeClipboard'
 const CLIPBOARD_STORAGE_VERSION = 1
@@ -110,6 +111,7 @@ class EditorActions {
     if (payload) {
       try {
         await this.syncManager.updateNodeData(editingNodeId, payload)
+        emitEditorEvent('node-saved', { type: node.type, clientId: editingNodeId })
       } catch (error) {
         console.error('Failed to save node:', error)
         return
@@ -185,7 +187,8 @@ class EditorActions {
     const origin = this.resolvePlacementOrigin()
     const position = findAnchoredNodePlacement(this.store, type, origin)
     try {
-      await this.syncManager.createNode(type, position, {})
+      const clientId = await this.syncManager.createNode(type, position, {})
+      emitEditorEvent('node-added', { type, clientId })
     } catch (err) {
       console.error('Failed to create node:', err)
     }
