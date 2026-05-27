@@ -298,14 +298,16 @@ class MatchReplayController {
     if (!inspection.enabled || !inspection.result) { return }
     const square = tile.id
     const position = Board.gridCalculatorReverse(square)
-    const clickedVisibleMove = inspection.result.visibleMoves.find(result => (
-      Board.gridCalculator(result.moveObject.endPosition) === square
-    ))
-    if (clickedVisibleMove) {
-      this.inspectedMoveKey = clickedVisibleMove.key
-      this.renderCurrentFrame()
-      emitReplayEvent('move-inspected', { square, inspectedMoveKey: clickedVisibleMove.key })
-      return
+    if (this.selectedStartPosition !== null) {
+      const clickedVisibleMove = inspection.result.visibleMoves.find(result => (
+        Board.gridCalculator(result.moveObject.endPosition) === square
+      ))
+      if (clickedVisibleMove) {
+        this.inspectedMoveKey = clickedVisibleMove.key
+        this.renderCurrentFrame()
+        emitReplayEvent('move-inspected', { square, inspectedMoveKey: clickedVisibleMove.key })
+        return
+      }
     }
     if (board.teamAt(position) === inspection.team) {
       this.selectedStartPosition = this.selectedStartPosition === position ? null : position

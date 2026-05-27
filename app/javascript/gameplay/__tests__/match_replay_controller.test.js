@@ -162,8 +162,9 @@ describe('MatchReplayController', () => {
       }
     }
 
-    it('fires when the user clicks a visible-move destination', () => {
+    it('fires when the user clicks a visible-move destination after selecting a piece', () => {
       const controller = buildController()
+      controller.selectedStartPosition = 8
       const square = Board.gridCalculator(VISIBLE_END_POSITION)
       const tile = clickTile(square)
       const { handler, cleanup } = listen()
@@ -172,6 +173,18 @@ describe('MatchReplayController', () => {
 
       expect(handler).toHaveBeenCalledTimes(1)
       expect(handler.mock.calls[0][0].detail).toEqual({ square, inspectedMoveKey: 'move-1' })
+      cleanup()
+    })
+
+    it('does not fire on a visible-move destination when no piece is selected', () => {
+      const controller = buildController()
+      const square = Board.gridCalculator(VISIBLE_END_POSITION)
+      const tile = clickTile(square)
+      const { handler, cleanup } = listen()
+
+      controller.handleBoardClick({ target: tile })
+
+      expect(handler).not.toHaveBeenCalled()
       cleanup()
     })
 
