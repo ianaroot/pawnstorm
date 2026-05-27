@@ -77,6 +77,84 @@ describe('ReplayView', () => {
     expect(tiedTile.classList.contains('match-replay-square--tied-move')).toBe(true)
   })
 
+  it('hides the chosen-move highlight when the user has a different piece selected', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    appendTile(2)
+    const chosenTile = appendTile(9)
+
+    view.renderBoardHighlights({
+      inspection: {
+        enabled: true,
+        selectedStartSquare: Board.gridCalculator(2),
+        result: {
+          currentChoiceKey: '1:9:none',
+          currentChoiceMove: { moveObject: { startPosition: 1, endPosition: 9 } },
+          explicitInspectedMoveKey: null,
+          inspectedMove: null,
+          tiedTopMoveKeys: [],
+          visibleMoves: []
+        }
+      },
+      muteTopMoveHighlights: false
+    })
+
+    expect(chosenTile.classList.contains('match-replay-square--chosen-move')).toBe(false)
+  })
+
+  it('does not stack tied-move on top of chosen-move when both keys target the same destination', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    const chosenTile = appendTile(9)
+
+    view.renderBoardHighlights({
+      inspection: {
+        enabled: true,
+        selectedStartSquare: null,
+        result: {
+          currentChoiceKey: '1:9:none',
+          currentChoiceMove: { moveObject: { startPosition: 1, endPosition: 9 } },
+          explicitInspectedMoveKey: null,
+          inspectedMove: null,
+          tiedTopMoveKeys: ['1:9:none', '2:9:none'],
+          visibleMoves: [
+            { key: '1:9:none', moveObject: { startPosition: 1, endPosition: 9 } },
+            { key: '2:9:none', moveObject: { startPosition: 2, endPosition: 9 } }
+          ]
+        }
+      },
+      muteTopMoveHighlights: false
+    })
+
+    expect(chosenTile.classList.contains('match-replay-square--chosen-move')).toBe(true)
+    expect(chosenTile.classList.contains('match-replay-square--tied-move')).toBe(false)
+  })
+
+  it('keeps the chosen-move highlight when the user selected the piece that made the chosen move', () => {
+    const root = buildRoot()
+    const view = new ReplayView({ rootElement: root })
+    appendTile(1)
+    const chosenTile = appendTile(9)
+
+    view.renderBoardHighlights({
+      inspection: {
+        enabled: true,
+        selectedStartSquare: Board.gridCalculator(1),
+        result: {
+          currentChoiceKey: '1:9:none',
+          currentChoiceMove: { moveObject: { startPosition: 1, endPosition: 9 } },
+          explicitInspectedMoveKey: null,
+          inspectedMove: null,
+          tiedTopMoveKeys: [],
+          visibleMoves: []
+        }
+      },
+      muteTopMoveHighlights: false
+    })
+
+    expect(chosenTile.classList.contains('match-replay-square--chosen-move')).toBe(true)
+  })
+
   it('mutes chosen and tied highlights while keeping piece candidate highlights', () => {
     const root = buildRoot()
     const view = new ReplayView({ rootElement: root })

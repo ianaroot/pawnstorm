@@ -20,12 +20,12 @@
   --match-replay-pill-action-bg: #798596;
   --match-replay-pill-action-text: #192535;
   --match-replay-pill-action-border: #677384;
-  --match-replay-selected-piece: #14b8a6;
-  --match-replay-chosen-move: #a21caf;
-  --match-replay-inspected-move: #3b82f6;
-  --match-replay-tied-move: #6366f1;
-  --match-replay-candidate-move: rgba(103, 232, 249, 0.68);
-  --match-replay-last-move-end: rgba(255, 106, 82, 1);
+  --match-replay-selected-piece: 20 184 166;
+  --match-replay-chosen-move: 255 106 82;
+  --match-replay-inspected-move: 132 204 22;
+  --match-replay-tied-move: 245 158 11;
+  --match-replay-candidate-move: 56 189 248;
+  --match-replay-last-move-end: 126 34 206;
 }
 
 .match-show-meta {
@@ -510,36 +510,36 @@ input[type="submit"].btn-rematch {
 .match-replay-page .match-replay-square--last-move-start,
 .match-replay-page .match-replay-square--last-move-end {
   box-shadow:
-    inset 0 0 0 2px rgba(255, 78, 106, 0.98),
-    inset 0 0 18px rgba(255, 78, 106, 0.34),
-    0 0 10px rgba(255, 78, 106, 0.3);
+    inset 0 0 0 2px rgb(var(--match-replay-last-move-end) / 98%),
+    inset 0 0 18px rgb(var(--match-replay-last-move-end) / 34%),
+    0 0 10px rgb(var(--match-replay-last-move-end) / 30%);
 }
 
 .match-replay-page .match-replay-square--last-move-end {
   box-shadow:
-    inset 0 0 0 3px var(--match-replay-last-move-end),
-    inset 0 0 24px rgba(255, 106, 82, 0.4),
-    0 0 14px rgba(255, 106, 82, 0.36);
+    inset 0 0 0 3px rgb(var(--match-replay-last-move-end)),
+    inset 0 0 24px rgb(var(--match-replay-last-move-end) / 40%),
+    0 0 14px rgb(var(--match-replay-last-move-end) / 36%);
 }
 
 .match-replay-page .match-replay-square--selected-piece {
-  box-shadow: inset 0 0 0 4px var(--match-replay-selected-piece), 0 0 10px rgba(20, 184, 166, 0.26);
+  box-shadow: inset 0 0 0 4px rgb(var(--match-replay-selected-piece)), 0 0 10px rgb(var(--match-replay-selected-piece) / 26%);
 }
 
 .match-replay-page .match-replay-square--chosen-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-chosen-move), 0 0 10px rgba(162, 28, 175, 0.26);
+  box-shadow: inset 0 0 0 7px rgb(var(--match-replay-chosen-move)), 0 0 16px rgb(var(--match-replay-chosen-move) / 55%);
 }
 
 .match-replay-page .match-replay-square--inspected-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-inspected-move), 0 0 10px rgba(59, 130, 246, 0.24);
+  box-shadow: inset 0 0 0 5px rgb(var(--match-replay-inspected-move)), 0 0 10px rgb(var(--match-replay-inspected-move) / 24%);
 }
 
 .match-replay-page .match-replay-square--tied-move {
-  box-shadow: inset 0 0 0 5px var(--match-replay-tied-move), 0 0 10px rgba(99, 102, 241, 0.24);
+  box-shadow: inset 0 0 0 6px rgb(var(--match-replay-tied-move)), 0 0 12px rgb(var(--match-replay-tied-move) / 35%);
 }
 
 .match-replay-page .match-replay-square--candidate-move {
-  box-shadow: inset 0 0 0 4px var(--match-replay-candidate-move), 0 0 10px rgba(103, 232, 249, 0.22);
+  box-shadow: inset 0 0 0 4px rgb(var(--match-replay-candidate-move)), 0 0 10px rgb(var(--match-replay-candidate-move) / 22%);
 }
 
 /* ============================================
