@@ -404,4 +404,37 @@ describe('TourEngine', () => {
       expect(targetFn.mock.calls[0][0].lastAdvanceDetail).toEqual({ clientId: 'kept' })
     })
   })
+
+  describe('beforeEnter', () => {
+    it('runs on step entry with engine + lastAdvanceDetail context', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const beforeEnter = vi.fn()
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', advanceOn: { event: 'editor:node-added' } },
+          { target: '#b', title: 'second', beforeEnter }
+        ]
+      })
+      engine.start()
+      document.dispatchEvent(new CustomEvent('editor:node-added', { detail: { clientId: 'x' } }))
+
+      expect(beforeEnter).toHaveBeenCalledTimes(1)
+      const ctx = beforeEnter.mock.calls[0][0]
+      expect(ctx.engine).toBe(engine)
+      expect(ctx.lastAdvanceDetail).toEqual({ clientId: 'x' })
+    })
+
+    it('throwing does not crash the tour', () => {
+      makeTarget('a')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const engine = new TourEngine({
+        steps: [{ target: '#a', title: 'first', beforeEnter: () => { throw new Error('nope') } }]
+      })
+      engine.start()
+      expect(engine.isActive).toBe(true)
+      expect(warn).toHaveBeenCalled()
+      warn.mockRestore()
+    })
+  })
 })

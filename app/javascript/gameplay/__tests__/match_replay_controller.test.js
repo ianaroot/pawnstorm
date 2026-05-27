@@ -236,4 +236,98 @@ describe('MatchReplayController', () => {
     expect(root.querySelector('[data-board-name="bottom"]').textContent).toBe('Bob')
     expect(root.querySelector('[data-board-name="bottom"]').dataset.team).toBe('B')
   })
+
+  describe('userBotTeam', () => {
+    function setup({ whiteOwner, blackOwner, currentUser = '1' } = {}) {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: [] })
+      root.dataset.currentUserId = currentUser
+      if (whiteOwner !== undefined) { root.dataset.whiteBotOwnerId = whiteOwner }
+      if (blackOwner !== undefined) { root.dataset.blackBotOwnerId = blackOwner }
+      document.body.appendChild(root)
+      return new MatchReplayController({ rootElement: root })
+    }
+
+    it('is Board.WHITE when the user owns the white bot', () => {
+      expect(setup({ whiteOwner: '1' }).userBotTeam).toBe(Board.WHITE)
+    })
+
+    it('is Board.BLACK when the user owns the black bot', () => {
+      expect(setup({ blackOwner: '1' }).userBotTeam).toBe(Board.BLACK)
+    })
+
+    it('is null when the user owns neither bot', () => {
+      expect(setup({ whiteOwner: '2', blackOwner: '3' }).userBotTeam).toBeNull()
+    })
+  })
+
+  describe('replay:frame-changed event', () => {
+    function setupAndListen({ whiteOwner = '1' } = {}) {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: ['1. e4', 'a5'] })
+      root.dataset.currentUserId = '1'
+      root.dataset.whiteBotOwnerId = whiteOwner
+      document.body.appendChild(root)
+      const handler = vi.fn()
+      document.addEventListener('replay:frame-changed', handler)
+      const controller = new MatchReplayController({ rootElement: root })
+      handler.mockClear()
+      return { controller, handler, cleanup: () => document.removeEventListener('replay:frame-changed', handler) }
+    }
+
+    it('fires when the user steps forward', () => {
+      const { controller, handler, cleanup } = setupAndListen()
+      controller.stepForwardOnce()
+      expect(handler).toHaveBeenCalledTimes(1)
+      cleanup()
+    })
+
+    it('carries moveIndex, allowedToMove, and userBotTeam', () => {
+      const { controller, handler, cleanup } = setupAndListen({ whiteOwner: '1' })
+      controller.stepForwardOnce()
+      const detail = handler.mock.calls[0][0].detail
+      expect(detail.moveIndex).toBe(0)
+      expect(detail.allowedToMove).toBe(Board.BLACK)
+      expect(detail.userBotTeam).toBe(Board.WHITE)
+      cleanup()
+    })
+
+    it('does not fire on a render where moveIndex did not change', () => {
+      const { controller, handler, cleanup } = setupAndListen()
+      controller.renderCurrentFrame()
+      expect(handler).not.toHaveBeenCalled()
+      cleanup()
+    })
+
+    it('fires when stepping back to a different moveIndex', () => {
+      const { controller, handler, cleanup } = setupAndListen()
+      controller.stepForwardOnce()
+      handler.mockClear()
+      controller.stepBackwardOnce()
+      expect(handler).toHaveBeenCalledTimes(1)
+      cleanup()
+    })
+  })
+
+  describe('replay:request-pause', () => {
+    it('pauses playback when playing', () => {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: ['1. e4', 'a5'] })
+      document.body.appendChild(root)
+      const controller = new MatchReplayController({ rootElement: root })
+      controller.play(1)
+      expect(controller.isPlaying).toBe(true)
+
+      document.dispatchEvent(new CustomEvent('replay:request-pause'))
+
+      expect(controller.isPlaying).toBe(false)
+    })
+
+    it('is a no-op when not playing', () => {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: ['1. e4', 'a5'] })
+      document.body.appendChild(root)
+      const controller = new MatchReplayController({ rootElement: root })
+      expect(controller.isPlaying).toBe(false)
+
+      expect(() => document.dispatchEvent(new CustomEvent('replay:request-pause'))).not.toThrow()
+      expect(controller.isPlaying).toBe(false)
+    })
+  })
 })

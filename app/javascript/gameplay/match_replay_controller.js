@@ -54,6 +54,7 @@ class MatchReplayController {
     this.currentUserId = Number(rootElement.dataset.currentUserId)
     this.whiteBotOwnerId = rootElement.dataset.whiteBotOwnerId ? Number(rootElement.dataset.whiteBotOwnerId) : null
     this.blackBotOwnerId = rootElement.dataset.blackBotOwnerId ? Number(rootElement.dataset.blackBotOwnerId) : null
+    this.userBotTeam = this.deriveUserBotTeam()
     this.whiteCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.whiteCompiledProgramSnapshot)
     this.blackCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.blackCompiledProgramSnapshot)
 
@@ -64,6 +65,10 @@ class MatchReplayController {
     this.selectedStartPosition = null
     this.inspectedMoveKey = null
     this.muteTopMoveHighlights = false
+    this._lastEmittedMoveIndex = null
+    document.addEventListener('replay:request-pause', () => {
+      if (this.isPlaying) { this.pause() }
+    })
     this.applyOrientation()
     this.renderCurrentFrame()
   }
@@ -88,6 +93,13 @@ class MatchReplayController {
   parseCompiledProgramSnapshot(snapshotJson) {
     if (!snapshotJson) { return null }
     return JSON.parse(snapshotJson)
+  }
+
+  deriveUserBotTeam() {
+    if (!Number.isInteger(this.currentUserId)) { return null }
+    if (this.whiteBotOwnerId === this.currentUserId) { return Board.WHITE }
+    if (this.blackBotOwnerId === this.currentUserId) { return Board.BLACK }
+    return null
   }
 
   buildFrames() {
@@ -402,6 +414,14 @@ class MatchReplayController {
       inspection,
       muteTopMoveHighlights: this.muteTopMoveHighlights
     })
+    if (this.currentMoveIndex !== this._lastEmittedMoveIndex) {
+      this._lastEmittedMoveIndex = this.currentMoveIndex
+      emitReplayEvent('frame-changed', {
+        moveIndex: this.currentMoveIndex,
+        allowedToMove: board.allowedToMove,
+        userBotTeam: this.userBotTeam
+      })
+    }
   }
 
   playReplaySound(notation) {

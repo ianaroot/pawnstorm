@@ -67,6 +67,8 @@ export default class TourEngine {
     this.currentIndex = candidate
 
     const step = this.steps[candidate]
+    this.runBeforeEnter(step)
+
     const target = this.resolveTarget(step)
     if (step.target && !target) {
       console.warn(`TourEngine: target not found for step ${candidate}: ${step.target}`)
@@ -76,6 +78,12 @@ export default class TourEngine {
 
     this.renderStep(step, target)
     this.wireStepTriggers(step, target)
+  }
+
+  runBeforeEnter(step) {
+    if (typeof step.beforeEnter !== 'function') { return }
+    try { step.beforeEnter(this.context()) }
+    catch (err) { console.warn('TourEngine: beforeEnter threw:', err) }
   }
 
   shouldSkip(step) {
