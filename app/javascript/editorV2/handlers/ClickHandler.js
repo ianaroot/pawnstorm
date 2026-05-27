@@ -1,5 +1,6 @@
 import ConditionForm from 'editorV2/panels/ConditionForm'
 import { EVENTS } from 'editorV2/constants'
+import { emitEditorEvent } from 'editorV2/utils/editorEvents'
 
 class ClickHandler {
   constructor(store, history, editorPanel = null) {
@@ -166,13 +167,15 @@ class ClickHandler {
     this.store.setRecentPlacementAnchor(node.position)
     this.editingNodeId = clientId
     this.store.setEditingNode(clientId)
-    
+
     // Show editor panel
     if (this.editorPanel) {
       this.editorPanel.classList.remove('hidden')
       this.populateEditorPanel(node)
     }
-    
+
+    emitEditorEvent('node-editing-started', { clientId, type: node.type })
+
     // Callback
     if (this.onNodeEdit) {
       this.onNodeEdit(clientId, node)
