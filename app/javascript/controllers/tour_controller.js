@@ -23,14 +23,19 @@ export default class extends Controller {
 
   start() {
     if (this.engine) { return }
-    const steps = STEP_SETS[this.setValue]
-    if (!steps) {
+    const set = STEP_SETS[this.setValue]
+    if (!set) {
       console.warn(`tour_controller: unknown step set "${this.setValue}"`)
       return
     }
+    const steps = Array.isArray(set) ? set : set.steps
     this.engine = new TourEngine({
       steps,
-      onClose: () => { this.engine = null }
+      onStart: set.onStart,
+      onClose: () => {
+        set.onClose?.()
+        this.engine = null
+      }
     })
     this.engine.start()
   }

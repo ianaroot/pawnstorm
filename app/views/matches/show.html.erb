@@ -31,6 +31,8 @@
   <% else %>
     <div
       class="match-replay-page match-replay-layout"
+      data-controller="tour"
+      data-tour-set-value="matches-show"
       data-match-replay-page="true"
       data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
@@ -49,7 +51,7 @@
         <% end %>
         <div class="replay-controls replay-stack replay-shrink-0">
           <div class="replay-meta-row">
-            <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
+            <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options, show_tour_button: true %>
             <p data-match-replay-target="result"></p>
           </div>
           <div class="match-replay-controls replay-inline replay-inline--center">

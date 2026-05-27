@@ -258,4 +258,4 @@ const STEPS = [
   }
 ]
 
-export default STEPS
+export default { steps: STEPS }

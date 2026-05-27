@@ -19,13 +19,14 @@ const TOOLTIP_WIDTH = 320
 const TOOLTIP_GAP = 12
 
 export default class TourEngine {
-  constructor({ steps = [], onClose = () => {} } = {}) {
+  constructor({ steps = [], onStart = () => {}, onClose = () => {} } = {}) {
     this.steps = steps
+    this.onStart = onStart
     this.onClose = onClose
     this.active = false
     this.currentIndex = -1
     this.dom = null
-    this.spotlightTarget = null
+    this.spotlightTargets = []
     this.stepCleanup = []
     this.lastAdvanceDetail = null
   }
@@ -39,6 +40,7 @@ export default class TourEngine {
     this.active = true
     this.currentIndex = -1
     this.lastAdvanceDetail = null
+    try { this.onStart() } catch (err) { console.warn('TourEngine: onStart threw:', err) }
     this.mountDom()
     this.advanceToNextValidStep()
   }
@@ -94,8 +96,31 @@ export default class TourEngine {
 
   resolveTarget(step) {
     if (!step.target) { return null }
-    if (typeof step.target === 'function') { return step.target(this.context()) || null }
-    return document.querySelector(step.target)
+    const raw = typeof step.target === 'function' ? step.target(this.context()) : step.target
+    if (!raw) { return null }
+    if (Array.isArray(raw)) {
+      const elements = raw.map((item) => this.resolveOne(item)).filter(Boolean)
+      return elements.length > 0 ? elements : null
+    }
+    return this.resolveOne(raw)
+  }
+
+  resolveOne(item) {
+    if (typeof item === 'string') { return document.querySelector(item) }
+    if (item instanceof Element) { return item }
+    return null
+  }
+
+  computeBoundingRect(target) {
+    if (Array.isArray(target)) {
+      const rects = target.map((el) => el.getBoundingClientRect())
+      const top = Math.min(...rects.map((r) => r.top))
+      const bottom = Math.max(...rects.map((r) => r.bottom))
+      const left = Math.min(...rects.map((r) => r.left))
+      const right = Math.max(...rects.map((r) => r.right))
+      return { top, bottom, left, right, width: right - left, height: bottom - top }
+    }
+    return target.getBoundingClientRect()
   }
 
   context() {
@@ -104,11 +129,13 @@ export default class TourEngine {
 
   renderStep(step, target) {
     if (target) {
-      target.classList.add('tour-spotlight')
-      this.spotlightTarget = target
+      const targets = Array.isArray(target) ? target : [target]
+      targets.forEach((el) => el.classList.add('tour-spotlight'))
+      this.spotlightTargets = targets
     }
     this.dom.title.textContent = step.title ?? ''
-    this.dom.body.innerHTML = step.body ?? ''
+    const bodyHtml = typeof step.body === 'function' ? step.body(this.context()) : step.body
+    this.dom.body.innerHTML = bodyHtml ?? ''
     this.dom.progress.textContent = `${this.currentIndex + 1} of ${this.steps.length}`
     this.positionFramesAndHalo(target)
     this.positionTooltip(target, step.placement)
@@ -123,7 +150,7 @@ export default class TourEngine {
       return
     }
     backdropFull.hidden = true
-    const r = target.getBoundingClientRect()
+    const r = this.computeBoundingRect(target)
     const vh = window.innerHeight
     const vw = window.innerWidth
     Object.assign(frameTop.style,    { top: '0',           left: '0',           width: '100vw',                       height: `${Math.max(0, r.top)}px` })
@@ -144,7 +171,7 @@ export default class TourEngine {
       style.transform = 'translate(-50%, -50%)'
       return
     }
-    const rect = target.getBoundingClientRect()
+    const rect = this.computeBoundingRect(target)
     const desired = !placement || placement === 'auto' ? this.pickPlacement(rect) : placement
     const { top, left } = this.placementCoords(rect, desired)
     style.position = 'fixed'
@@ -189,7 +216,8 @@ export default class TourEngine {
 
     if (advance === 'click') {
       if (!target) { return }
-      this.bindCleanup(target, 'click', () => this.next())
+      const clickTargets = Array.isArray(target) ? target : [target]
+      clickTargets.forEach((el) => this.bindCleanup(el, 'click', () => this.next()))
       return
     }
 
@@ -223,9 +251,9 @@ export default class TourEngine {
   teardownStep() {
     this.stepCleanup.forEach((fn) => fn())
     this.stepCleanup = []
-    if (this.spotlightTarget) {
-      this.spotlightTarget.classList.remove('tour-spotlight')
-      this.spotlightTarget = null
+    if (this.spotlightTargets.length > 0) {
+      this.spotlightTargets.forEach((el) => el.classList.remove('tour-spotlight'))
+      this.spotlightTargets = []
     }
   }
 

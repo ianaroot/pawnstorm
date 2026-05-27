@@ -1,0 +1,12 @@
+/* ============================================
+   TOUR LOCKED — applied to interactive elements that should be
+   visually and functionally inert during a tour step. Survives the
+   replay view re-toggling `disabled` on every render.
+   ============================================ */
+
+.tour-locked {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}

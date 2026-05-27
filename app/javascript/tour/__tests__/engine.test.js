@@ -405,6 +405,87 @@ describe('TourEngine', () => {
     })
   })
 
+  describe('multi-element target', () => {
+    it('applies the tour-spotlight class to each element in an array target', () => {
+      const a = makeTarget('a')
+      const b = makeTarget('b')
+      const engine = new TourEngine({
+        steps: [{ target: ['#a', '#b'], title: 'pair' }]
+      })
+      engine.start()
+      expect(a.classList.contains('tour-spotlight')).toBe(true)
+      expect(b.classList.contains('tour-spotlight')).toBe(true)
+    })
+
+    it('removes the class from each element when advancing', () => {
+      const a = makeTarget('a')
+      const b = makeTarget('b')
+      const c = makeTarget('c')
+      const engine = new TourEngine({
+        steps: [
+          { target: ['#a', '#b'], title: 'pair' },
+          { target: '#c', title: 'next' }
+        ]
+      })
+      engine.start()
+      engine.next()
+      expect(a.classList.contains('tour-spotlight')).toBe(false)
+      expect(b.classList.contains('tour-spotlight')).toBe(false)
+      expect(c.classList.contains('tour-spotlight')).toBe(true)
+    })
+
+    it('accepts a function returning an array', () => {
+      const a = makeTarget('a')
+      const b = makeTarget('b')
+      const engine = new TourEngine({
+        steps: [{ target: () => [a, b], title: 'fn-array' }]
+      })
+      engine.start()
+      expect(a.classList.contains('tour-spotlight')).toBe(true)
+      expect(b.classList.contains('tour-spotlight')).toBe(true)
+    })
+  })
+
+  describe('onStart', () => {
+    it('fires once when start() is called', () => {
+      makeTarget()
+      const onStart = vi.fn()
+      const engine = new TourEngine({
+        steps: [{ target: '#target', title: 'A' }],
+        onStart
+      })
+      engine.start()
+      expect(onStart).toHaveBeenCalledTimes(1)
+    })
+
+    it('throwing does not crash the tour', () => {
+      makeTarget()
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const engine = new TourEngine({
+        steps: [{ target: '#target', title: 'A' }],
+        onStart: () => { throw new Error('nope') }
+      })
+      engine.start()
+      expect(engine.isActive).toBe(true)
+      expect(warn).toHaveBeenCalled()
+      warn.mockRestore()
+    })
+  })
+
+  describe('body as function', () => {
+    it('renders the string returned by a body function, with ctx', () => {
+      const target = makeTarget()
+      const bodyFn = vi.fn(() => '<p>dynamic body</p>')
+      const engine = new TourEngine({
+        steps: [{ target: '#target', title: 'fn', body: bodyFn }]
+      })
+      engine.start()
+      expect(body().innerHTML).toBe('<p>dynamic body</p>')
+      expect(bodyFn).toHaveBeenCalled()
+      expect(bodyFn.mock.calls[0][0].engine).toBe(engine)
+    })
+  })
+
   describe('beforeEnter', () => {
     it('runs on step entry with engine + lastAdvanceDetail context', () => {
       makeTarget('a')

@@ -205,6 +205,11 @@
   background: #2a2622;
 }
 
+.btn-guide--small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 /* Zoom controls */
 .btn-zoom {
   background: #1a1815;
