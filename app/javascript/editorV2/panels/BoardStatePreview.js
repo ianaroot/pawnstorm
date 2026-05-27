@@ -162,7 +162,7 @@ class BoardStatePreview {
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
       this._applyPreview(preview)
-      emitEditorEvent('preview-shown', { mode: 'selection' })
+      emitEditorEvent('preview-shown', { mode: 'selection', hasChain: this.conditionLabels?.length > 0 })
     } else {
       this.content.classList.add('hidden')
     }

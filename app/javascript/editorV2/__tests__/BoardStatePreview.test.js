@@ -145,7 +145,7 @@ describe('BoardStatePreview', () => {
       preview.showSelectionPreview({ status: 'no_examples', reason: '', examples: [] })
 
       expect(handler).toHaveBeenCalledTimes(1)
-      expect(handler.mock.calls[0][0].detail).toEqual({ mode: 'selection' })
+      expect(handler.mock.calls[0][0].detail).toEqual({ mode: 'selection', hasChain: false })
       document.removeEventListener('editor:preview-shown', handler)
     })
 

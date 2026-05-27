@@ -217,7 +217,10 @@ export default class TourEngine {
     if (advance === 'click') {
       if (!target) { return }
       const clickTargets = Array.isArray(target) ? target : [target]
-      clickTargets.forEach((el) => this.bindCleanup(el, 'click', () => this.next()))
+      const handler = (event) => {
+        if (clickTargets.some((el) => el.contains(event.target))) { this.next() }
+      }
+      this.bindCleanup(document, 'click', handler)
       return
     }
 

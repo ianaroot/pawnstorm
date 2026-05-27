@@ -30,32 +30,53 @@ const STEPS = [
     placement: 'center',
     title: 'Welcome to the bot editor',
     body: `
-      <p>Your bot follows a <strong>rulebook you build</strong>. Every legal move gets evaluated against your rules; the highest scored move is chosen.</p>
-      <p>When nothing applies, or scores tie, the bot picks <strong>entirely randomly from the top-scoring moves</strong>.</p>
-      <p>Let's build your first rule.</p>
+      <ul>
+        <li>Your bot follows a <strong>rulebook you build</strong>.</li>
+        <li>Each turn, every  legal move gets evaluated against your rules</li>
+        <li>The highest scored move is chosen.</li>
+        <li>When scores tie, the bot picks <strong>randomly from the top-scoring moves</strong>.</li>
+        <li>Let's build your first rule.</li>
+      </ul>
     `,
     advanceOn: 'next'
   },
   {
     target: '#canvas-workspace',
     title: 'Your graph lives here',
-    body: `<p>This is your <strong>bot graph</strong>. The <strong>Root</strong> at the top is where every move's evaluation starts. Rules flow down from it.</p>`,
+    body: `
+    <ul>
+      <li>This is your <strong>bot graph</strong>.</li>
+      <li>The <strong>Root</strong> at the top is where every move's evaluation starts.</li>
+      <li>Rules flow down from it.</li>
+    </ul>`,
     advanceOn: 'next'
   },
   {
     target: '.btn-open-templates',
     title: 'Start with a template',
-    body: `<p>Templates are pre-built rules — common patterns you can drop in. Click <strong>Templates</strong> to open the picker.</p>`,
+    body: `
+      <p>Templates are pre-built rules — common patterns you can drop in.</p>
+      <p>Click <strong>Templates</strong> to open the picker.</p>`,
     advanceOn: 'click'
   },
   {
-    target: '.template-picker-modal__dialog',
-    title: 'Insert the Checkmate template',
-    body: `
-      <p>Browse to <strong>King Pressure → Checkmate</strong> and click <strong>Insert Template</strong>.</p>
-      <p>We're starting with one that lets your bot recognize checkmate.</p>
-    `,
-    advanceOn: { event: 'click', selector: '[data-template-picker-insert]' }
+    target: '.template-picker__category[data-category="king_pressure"]',
+    title: 'Browse to King Pressure',
+    body: `<p>Click the <strong>King Pressure</strong> category — templates that pursue or punish the opposing king.</p>`,
+    advanceOn: 'click'
+  },
+  {
+    target: '.template-picker__card[data-template-id="checkmate"]',
+    title: 'The Checkmate template',
+    body: `<p><strong>Checkmate</strong> is already selected, since it's the first card in King Pressure).</p>
+      <p>It lets your bot recognize checkmate.</p>`,
+    advanceOn: 'next'
+  },
+  {
+    target: '[data-template-picker-insert]',
+    title: 'Insert it',
+    body: `<p>Click <strong>Insert Template</strong> to drop it onto your canvas.</p>`,
+    advanceOn: 'click'
   },
   {
     target: () => document.querySelector('.node.organizer'),
@@ -66,22 +87,25 @@ const STEPS = [
   {
     target: '#canvas-workspace',
     title: 'Connect it to Root',
-    body: `<p>For the template to run, connect it to Root. <strong>Drag from Root's output dot</strong> (bottom) <strong>to the Organizer's input dot</strong> (top).</p>`,
+    body: `
+      <p>For the template to run, connect it to Root.</p>
+      <p><strong>Drag from Root's output dot</strong> (bottom) <strong>to the Organizer's input dot</strong> (top).</p>
+    `,
     advanceOn: { event: 'editor:connection-created' }
   },
   {
     target: '#canvas-workspace',
     title: 'How the bot walks the graph',
     body: `
-      <p>For each move, the bot starts at Root and walks the graph <strong>depth-first</strong>.</p>
+      <p>For each move, the bot walks from Root <strong>depth-first</strong>.</p>
 
-      <p>A condition <strong>passes</strong> when it's a true statement about the board <em>after</em> the move being evaluated, and the branch continues.</p>
+      <p>When a condition <strong>passes</strong> — it's true of the board after the move — the branch continues.</p>
 
-      <p>Otherwise it <strong>fails</strong> — the bot backtracks to the next unevaluated branch or sub-branch and carries on from there.</p>
+      <p>If it <strong>fails</strong>, the bot backtracks to the next branch.</p>
 
-      <p>Score nodes change the score when reached.</p>
+      <p>Conditions chained together - like the two conditions in the checkmate template - act as an <strong>AND</strong> — every one above a score node must pass for that score to apply.</p>
 
-      <p>When a node has multiple children, the bot evaluates them <strong>counterclockwise from midnight</strong>.</p>
+      <p>When one node has multiple children, they evaluate <strong>depth-first</strong>, <strong>counterclockwise from midnight</strong>.</p>
 
       ${WALK_DIAGRAM}
     `,
@@ -104,10 +128,10 @@ const STEPS = [
   },
   {
     target: '.condition-form-mode-picker',
+    placement: 'left',
     title: 'Pick a question kind',
     body: `
       <p>A condition asks one yes/no question — pick which <strong>kind</strong>.</p>
-
       <ul>
         <li><strong>Positions</strong> — count or measure pieces in regions.</li>
         <li><strong>Attack/Defend</strong> — relate two pieces (Targets, Shield, or Adjacent).</li>
@@ -117,7 +141,29 @@ const STEPS = [
     advanceOn: 'next'
   },
   {
+    target: '.condition-form-mode-picker',
+    placement: 'left',
+    title: 'Positions mode',
+    body: `<p>Click <strong>Positions</strong>. This mode counts or measures pieces in regions. <strong>Mobility</strong> (a piece's legal-move count) is a third metric available only here.</p>`,
+    advanceOn: { event: 'click', selector: '#cond-mode-census' }
+  },
+  {
+    target: '.condition-form-mode-picker',
+    placement: 'left',
+    title: 'Captures mode',
+    body: `<p>Click <strong>Captures</strong>. This mode focuses on what just got captured this turn.</p>`,
+    advanceOn: { event: 'click', selector: '#cond-mode-captures' }
+  },
+  {
+    target: '.condition-form-mode-picker',
+    placement: 'left',
+    title: 'Back to Attack/Defend',
+    body: `<p>Click <strong>Attack/Defend</strong> to return — we'll keep going in this mode for the deep dive.</p>`,
+    advanceOn: { event: 'click', selector: '#cond-mode-relational' }
+  },
+  {
     target: '#cond-left-subject',
+    placement: 'left',
     title: 'Who is the question about?',
     body: `
       <p>The <strong>Subject</strong> picks the piece in question:</p>
@@ -126,40 +172,85 @@ const STEPS = [
         <li><strong>My Pieces</strong>, <strong>Enemy Pieces</strong> — any piece on the relevant team.</li>
         <li><strong>Enemy Moved Piece</strong> — the enemy piece from their last move.</li>
       </ul>
-
-      <p>The filter narrows to a piece type; <strong>Non-</strong> inverts it.</p>
-
-      <p><em>Moved Piece</em> is the powerful one. Compare:</p>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#cond-left-subject',
+    placement: 'left',
+    title: 'Moved Piece is powerful',
+    body: `
+      <p><em>Moved Piece</em> is powerful because it narrows the question to <em>this turn's mover</em>.</p>
+      <p>Compare:</p>
       <ul>
-        <li>"Does my <strong>Moved Piece</strong> attack the enemy queen?"</li>
-        <li>"Do <strong>any of my pieces</strong> attack the enemy queen?"</li>
+        <li><strong>My Pieces</strong> attacks the enemy queen — true whenever you have an attacker, even on turns you moved a different piece.</li>
+        <li><strong>Moved Piece</strong> attacks the enemy queen — only scores when this turn's mover IS the attacker.</li>
+        <li>Combine with <strong>Prior Board State</strong>, in the comparison chunk above, to ask whether the move <em>created</em> the attack.</li>
       </ul>
-
-      <p>The <em>any</em> version stays true as long as some piece keeps attacking — even on turns when you move a completely different piece. The Moved Piece version only scores when this turn's mover IS the attacker.</p>
-
-      <p>Combine Moved Piece with <strong>Prior Board State</strong> (in the comparison block below) to ask whether the move <em>created</em> the attack, not just continues one.</p>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#cond-left-filter-row',
+    placement: 'left',
+    title: 'Filter the subject',
+    body: `
+      <p>The <strong>filter</strong> below narrows the subject to a piece type.</p>
+      <p><strong>Non-</strong> inverts it — e.g. <em>Non-King</em> matches everything except the king.</p>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#cond-relational-operator',
+    placement: 'left',
+    title: 'Operator',
+    body: `
+      <p>The <strong>Operator</strong> chooses the relationship between subject and target:</p>
+      <ul>
+        <li><strong>Targets</strong> — subject attacks the target's square.</li>
+        <li><strong>Shield</strong> — subject stands between an enemy attacker and a same-team target.</li>
+        <li><strong>Adjacent</strong> — subject sits next to the target.</li>
+      </ul>
     `,
     advanceOn: 'next'
   },
   {
     target: '#cond-left-comparison-section',
+    placement: 'left',
     title: 'Compare piece stats',
     body: `
       <p>This block asks about a piece's <strong>count</strong> or <strong>value</strong>:</p>
       <ul>
-        <li><strong>Count</strong> — how many pieces satisfy the relation. <code>count ≥ 1</code> is an easy default: "at least one piece must match."</li>
-        <li><strong>Value</strong> — the value of an <em>individual</em> piece satisfying the relation. <em>"At least one of my pieces with value ≤ 5 attacks the enemy queen."</em></li>
+        <li><strong>Count</strong> — how many pieces satisfy the relation.</li>
+        <li><strong>Value</strong> — the value of an <em>individual</em> piece satisfying the relation.</li>
+        <li><strong>Count at least 1</strong> is usually a safe default.</li>
       </ul>
-
-      <p><strong>Mobility</strong> (legal-move count) is a third metric — but it's only available in Positions conditions, reachable from the mode tab above.</p>
-
-      <p>Pick a metric, a <strong>comparator</strong> (<em>greater than / at least / equals / at most / less than</em>), and what to compare against.</p>
-
-      <p>The source can be a fixed Integer, another piece type, or <strong>Prior Board State</strong> — the same metric measured before this move.</p>
-
-      <p>Comparing against Prior Board State catches what the move changed:</p>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#cond-left-comparison-section',
+    placement: 'left',
+    title: 'Comparator and source',
+    body: `
+      <p>Pick a <strong>comparator</strong>: <em>greater than / at least / equals / at most / less than</em>.</p>
+      <p>Then pick what to compare against. The <strong>source</strong> can be:</p>
       <ul>
-        <li>Count of attackers <em>greater than</em> Prior Board State — rewards moves that pile on a relation.</li>
+        <li>A fixed <strong>Integer</strong>.</li>
+        <li><strong>Prior Board State</strong> — the same metric measured before this move.</li>
+        <li>Another piece type.</li>
+      </ul>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#cond-left-comparison-section',
+    placement: 'left',
+    title: 'Prior Board State examples',
+    body: `
+      <p>Comparing against <strong>Prior Board State</strong> catches what the move changed:</p>
+      <ul>
+        <li>Count of attackers <em>greater than</em> Prior Board State — makes sure that a move creates new attacks.</li>
         <li>Moved Piece value <em>greater than</em> Prior Board State — detects promotion (the value just went up).</li>
       </ul>
     `,
@@ -167,17 +258,36 @@ const STEPS = [
   },
   {
     target: '#cond-formulation-preview',
+    placement: 'left',
     title: 'Read your condition',
     body: `
-      <p>This line is your condition in plain English. It updates as you change the form, so you can verify you've built the question you meant to.</p>
-      <p>Prefer terse chunks over sentences? Toggle <strong>Sentences: on/off</strong> in the toolbar.</p>
+      <ul>
+        <li>This line is your condition in plain English.</li>
+        <li>It updates as you change the form, so you can verify you've built the question you meant to.</li>
+        <li>Prefer terse chunks over sentences? Toggle <strong>Sentences: on/off</strong> in the toolbar.</li>
+      </ul>
+    `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#board-state-preview-wrap',
+    title: 'See it on real boards',
+    body: `
+      <p>This shows real positions where your condition is TRUE.</p>
+      <p>Use it to verify you've built the question you meant to.</p>
     `,
     advanceOn: 'next'
   },
   {
     target: '#board-state-preview-wrap',
     title: 'Cycle through examples',
-    body: `<p>Cycle the example boards with <kbd>← Prev</kbd> / <kbd>Next →</kbd> (or the <kbd>←</kbd>/<kbd>→</kbd> arrow keys). Press <kbd>P</kbd> to tuck the preview away.</p>`,
+    body: `
+      <ul>
+        <li>Cycle the examples with <kbd>←Prev</kbd> / <kbd>Next →</kbd></li>
+        <li>or the <kbd>←</kbd>/<kbd>→</kbd> arrow keys).</li>
+        <li>Press <kbd>P</kbd> to tuck the preview away.</li>
+      </ul>
+    `,
     advanceOn: 'next'
   },
   {
@@ -189,13 +299,58 @@ const STEPS = [
   {
     target: '#canvas-workspace',
     title: 'Connect it to Root',
-    body: `<p>Connect it to Root. <strong>Drag from Root's output dot to your condition's input dot.</strong></p>`,
+    body: `
+      <p>Your condition won't do anything until you connect it to the rest of the node graph.</p>
+      <p><strong>Drag from Root's output dot to your condition's input dot.</strong></p>
+    `,
+    advanceOn: { event: 'editor:connection-created' }
+  },
+  {
+    target: '.btn-add-node[data-type="score"]',
+    title: 'Add a score node',
+    body: `<p>A condition by itself doesn't change anything. To reward (or punish) moves, add a <strong>+ Score</strong> node.</p>`,
+    advanceOn: { event: 'editor:node-added', when: (d) => d.type === 'score' }
+  },
+  {
+    target: (ctx) => {
+      const id = ctx.lastAdvanceDetail?.clientId
+      return id ? document.querySelector(`.node[data-client-id="${id}"]`) : null
+    },
+    title: 'Open your new score',
+    body: `<p><strong>Click your new score node</strong> to open the editor.</p>`,
+    advanceOn: { event: 'editor:node-editing-started', when: (d) => d.type === 'score' }
+  },
+  {
+    target: '#node-form-panel',
+    placement: 'left',
+    title: 'Configure the score',
+    body: `
+      <p>Score:</p>
+      <ul>
+        <li><em>Add</em> raise the move's score to incentivize it</li>
+        <li><em>Subtract</em> drop a move's score to discourage it - e.g. "my Moved Piece is undefended AND attacked".</li>
+        <li><em>Set</em> replaces the current score at that point in evaluation. <em></li>
+        <li>Return</em> sets the score and <strong>stops evaluating</strong> this move immediately.</li>
+        <li>Change the value to reflect the importance of the rule you made.</li>
+      </ul>
+      </br>
+      <p>Save when you're done.</p>
+    `,
+    advanceOn: { event: 'editor:node-saved', when: (d) => d.type === 'score' }
+  },
+  {
+    target: '#canvas-workspace',
+    title: 'Connect the score to your condition',
+    body: `
+      <p>Drag from your condition's output dot to the score's input dot.</p>
+      <p>The score now applies only when the condition above it passes.</p>
+    `,
     advanceOn: { event: 'editor:connection-created' }
   },
   {
     target: '#canvas-workspace',
     title: 'Removing a connection',
-    body: `<p>To delete a connection, hover it — a small <strong>×</strong> appears. Click it to remove the line. You don't have to delete anything now; just know how.</p>`,
+    body: `<p>To delete a connection, hover it — a small <strong>×</strong> appears. Click it to remove the line.</p>`,
     advanceOn: 'next'
   },
   {
@@ -208,24 +363,18 @@ const STEPS = [
     target: '#canvas-workspace',
     title: 'Preview a chain of conditions',
     body: `
+      <p>To see a board where every condition in the chain holds.</p>
       <p><strong>Shift-click</strong> two or more connected conditions.</p>
-      <p>Press <kbd>P</kbd> to see a position where every condition in the chain holds.</p>
+      <p>Press <kbd>P</kbd></p>
     `,
-    advanceOn: { event: 'editor:preview-shown', when: (d) => d.mode === 'selection' }
+    advanceOn: { event: 'editor:preview-shown', when: (d) => d.mode === 'selection' && d.hasChain }
   },
   {
-    target: '.btn-add-node[data-type="score"]',
-    title: 'Reward or punish moves',
+    target: '.board-state-preview__chain',
+    title: 'Read the chain',
     body: `
-      <p>Score nodes change the move's score when reached through TRUE conditions.</p>
-
-      <ul>
-        <li><strong>Add</strong> / <strong>Subtract</strong> — nudge up or down.</li>
-        <li><strong>Set</strong> — replace the score with a fixed value.</li>
-        <li><strong>Return</strong> — set the score and <strong>stop evaluating</strong> this move immediately.</li>
-      </ul>
-
-      <p>Use <strong>Subtract</strong> for negative chains: conditions that describe a <em>bad</em> circumstance ("my Moved Piece is undefended and attacked") with a Subtract underneath. The bot now disincentivizes those moves.</p>
+      <p>At the bottom of the preview, each condition in the chain appears as a sentence — in order.</p>
+      <p>Useful for verifying the chain reads the way you intended.</p>
     `,
     advanceOn: 'next'
   },
@@ -245,15 +394,14 @@ const STEPS = [
   },
   {
     target: '#compile-and-exit-link',
-    title: 'Compile to play',
-    body: `<p>When you're ready, click <strong>Compile</strong>. That bakes your graph into a runnable bot. Then play it from the matches page.</p>`,
+    title: 'Compile your bot',
+    body: `<p>When you're ready, click <strong>Compile</strong>. That bakes your graph into a runnable bot.</p>`,
     advanceOn: 'next'
   },
   {
-    target: null,
-    placement: 'center',
-    title: "You're set",
-    body: `<p>That's the editor. Once you compile and play a match, look for <strong>Take the tour</strong> on the match page to learn the replay — it shows your bot's reasoning move-by-move.</p>`,
+    target: () => Array.from(document.querySelectorAll('.sidebar__link')).find((el) => el.textContent.trim() === 'Play Match'),
+    title: 'Play your bot',
+    body: `<p>After you finish, head to <strong>Play Match</strong> in the side nav to test your bot against another.</p>`,
     advanceOn: 'next'
   }
 ]
