@@ -55,6 +55,22 @@ class Match < ApplicationRecord
   scope :active, -> { where(status: [statuses[:queued], statuses[:running]]) }
   scope :unfinished, -> { where(status: [statuses[:pending], statuses[:queued], statuses[:running]]) }
 
+  def bot_owned_by?(user)
+    return false unless user
+    (white_player_type == 'Bot' && white_player&.user_id == user.id) ||
+    (black_player_type == 'Bot' && black_player&.user_id == user.id)
+  end
+
+  def first_bot_match_for?(user)
+    return false unless bot_owned_by?(user)
+    bot_ids = user.bots.pluck(:id)
+    Match.where(
+      "(white_player_type = 'Bot' AND white_player_id IN (:bot_ids)) OR " \
+      "(black_player_type = 'Bot' AND black_player_id IN (:bot_ids))",
+      bot_ids: bot_ids
+    ).where("id < ?", id).none?
+  end
+
   def compiled_program_snapshot_for(player)
     return tournament_compiled_program_snapshot_for(player) if tournament.present?
 

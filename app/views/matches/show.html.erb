@@ -33,6 +33,7 @@
       class="match-replay-page match-replay-layout"
       data-controller="tour"
       data-tour-set-value="matches-show"
+      data-tour-auto-value="<%= @auto_tour_first_match %>"
       data-match-replay-page="true"
       data-final-layout="<%= json_escape(@match.lay_out.to_json) %>"
       data-movement-notation="<%= json_escape(@match.movement_notation.to_json) %>"
