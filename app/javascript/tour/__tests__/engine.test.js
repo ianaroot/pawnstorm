@@ -88,7 +88,7 @@ describe('TourEngine', () => {
       })
       engine.start()
       engine.start()
-      expect(document.querySelectorAll('.tour-backdrop')).toHaveLength(1)
+      expect(document.querySelectorAll('.tour-tooltip')).toHaveLength(1)
     })
   })
 

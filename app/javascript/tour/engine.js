@@ -102,7 +102,29 @@ export default class TourEngine {
     this.dom.title.textContent = step.title ?? ''
     this.dom.body.innerHTML = step.body ?? ''
     this.dom.progress.textContent = `${this.currentIndex + 1} of ${this.steps.length}`
+    this.positionFramesAndHalo(target)
     this.positionTooltip(target, step.placement)
+  }
+
+  positionFramesAndHalo(target) {
+    const { backdropFull, frameTop, frameRight, frameBottom, frameLeft, halo } = this.dom
+    if (!target) {
+      backdropFull.hidden = false
+      frameTop.hidden = frameRight.hidden = frameBottom.hidden = frameLeft.hidden = true
+      halo.hidden = true
+      return
+    }
+    backdropFull.hidden = true
+    const r = target.getBoundingClientRect()
+    const vh = window.innerHeight
+    const vw = window.innerWidth
+    Object.assign(frameTop.style,    { top: '0',           left: '0',           width: '100vw',                       height: `${Math.max(0, r.top)}px` })
+    Object.assign(frameBottom.style, { top: `${r.bottom}px`, left: '0',         width: '100vw',                       height: `${Math.max(0, vh - r.bottom)}px` })
+    Object.assign(frameLeft.style,   { top: `${r.top}px`,  left: '0',           width: `${Math.max(0, r.left)}px`,    height: `${r.height}px` })
+    Object.assign(frameRight.style,  { top: `${r.top}px`,  left: `${r.right}px`, width: `${Math.max(0, vw - r.right)}px`, height: `${r.height}px` })
+    frameTop.hidden = frameRight.hidden = frameBottom.hidden = frameLeft.hidden = false
+    Object.assign(halo.style, { top: `${r.top}px`, left: `${r.left}px`, width: `${r.width}px`, height: `${r.height}px` })
+    halo.hidden = false
   }
 
   positionTooltip(target, placement) {
@@ -118,9 +140,14 @@ export default class TourEngine {
     const desired = !placement || placement === 'auto' ? this.pickPlacement(rect) : placement
     const { top, left } = this.placementCoords(rect, desired)
     style.position = 'fixed'
+    style.transform = 'none'
     style.top = `${top}px`
     style.left = `${left}px`
-    style.transform = 'none'
+    const tooltipRect = this.dom.tooltip.getBoundingClientRect()
+    const clampedTop = Math.max(8, Math.min(top, window.innerHeight - tooltipRect.height - 8))
+    const clampedLeft = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8))
+    style.top = `${clampedTop}px`
+    style.left = `${clampedLeft}px`
   }
 
   pickPlacement(rect) {
@@ -195,8 +222,19 @@ export default class TourEngine {
   }
 
   mountDom() {
-    const backdrop = document.createElement('div')
-    backdrop.className = 'tour-backdrop'
+    const makeBackdrop = (modifier) => {
+      const el = document.createElement('div')
+      el.className = `tour-backdrop tour-backdrop--${modifier}`
+      return el
+    }
+    const backdropFull = makeBackdrop('full')
+    const frameTop = makeBackdrop('frame')
+    const frameRight = makeBackdrop('frame')
+    const frameBottom = makeBackdrop('frame')
+    const frameLeft = makeBackdrop('frame')
+
+    const halo = document.createElement('div')
+    halo.className = 'tour-halo'
 
     const tooltip = document.createElement('div')
     tooltip.className = 'tour-tooltip'
@@ -228,14 +266,26 @@ export default class TourEngine {
 
     footer.append(progress, nextButton)
     tooltip.append(closeButton, heading, body, footer)
-    document.body.append(backdrop, tooltip)
+    document.body.append(backdropFull, frameTop, frameRight, frameBottom, frameLeft, halo, tooltip)
 
-    this.dom = { backdrop, tooltip, title: heading, body, footer, progress, nextButton, closeButton }
+    const stopPropagation = (e) => e.stopPropagation()
+    ;[backdropFull, frameTop, frameRight, frameBottom, frameLeft, tooltip]
+      .forEach((el) => el.addEventListener('click', stopPropagation))
+
+    this.dom = {
+      backdropFull, frameTop, frameRight, frameBottom, frameLeft, halo,
+      tooltip, title: heading, body, footer, progress, nextButton, closeButton
+    }
   }
 
   unmountDom() {
     if (!this.dom) { return }
-    this.dom.backdrop.remove()
+    this.dom.backdropFull.remove()
+    this.dom.frameTop.remove()
+    this.dom.frameRight.remove()
+    this.dom.frameBottom.remove()
+    this.dom.frameLeft.remove()
+    this.dom.halo.remove()
     this.dom.tooltip.remove()
     this.dom = null
   }
