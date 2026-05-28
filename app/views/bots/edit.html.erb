@@ -2,12 +2,11 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-intro tour"
+     data-controller="editor tour"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>"
-     data-bot-intro-auto-value="<%= params[:intro].present? %>"
      data-tour-set-value="editor-first-bot"
      data-tour-auto-value="<%= @auto_tour_first_bot %>">
   <div class="bot-editor-header">
@@ -19,12 +18,6 @@
     <div class="toolbar-section">
       <div class="toolbar-section__heading">
         <h3>Add Node</h3>
-        <button
-          type="button"
-          class="btn-guide"
-          data-action="click->bot-intro#open"
-          aria-controls="bot-intro-modal"
-          aria-haspopup="dialog">How it works</button>
         <button
           type="button"
           class="btn-guide"
@@ -180,7 +173,5 @@
   </div>
 
   <%= render "bots/nodes/editor" %>
-
-  <%= render "bots/intro_modal" %>
   </div>
 </div>

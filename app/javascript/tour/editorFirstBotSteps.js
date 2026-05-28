@@ -32,7 +32,7 @@ const STEPS = [
     body: `
       <ul>
         <li>Your bot follows a <strong>rulebook you build</strong>.</li>
-        <li>Each turn, every  legal move gets evaluated against your rules</li>
+        <li>Each turn, every  legal move gets evaluated against your entire rule set</li>
         <li>The highest scored move is chosen.</li>
         <li>When scores tie, the bot picks <strong>randomly from the top-scoring moves</strong>.</li>
         <li>Let's build your first rule.</li>
@@ -40,17 +40,17 @@ const STEPS = [
     `,
     advanceOn: 'next'
   },
-  {
-    target: '#canvas-workspace',
-    title: 'Your graph lives here',
-    body: `
-    <ul>
-      <li>This is your <strong>bot graph</strong>.</li>
-      <li>The <strong>Root</strong> at the top is where every move's evaluation starts.</li>
-      <li>Rules flow down from it.</li>
-    </ul>`,
-    advanceOn: 'next'
-  },
+  // {
+  //   target: '#canvas-workspace',
+  //   title: 'Your graph lives here',
+  //   body: `
+  //   <ul>
+  //     <li>This is your <strong>bot graph</strong>.</li>
+  //     <li>The <strong>Root</strong> at the top is where every move's evaluation starts.</li>
+  //     <li>Rules flow down from it.</li>
+  //   </ul>`,
+  //   advanceOn: 'next'
+  // },
   {
     target: '.btn-open-templates',
     title: 'Start with a template',
@@ -68,8 +68,7 @@ const STEPS = [
   {
     target: '.template-picker__card[data-template-id="checkmate"]',
     title: 'The Checkmate template',
-    body: `<p><strong>Checkmate</strong> is already selected, since it's the first card in King Pressure).</p>
-      <p>It lets your bot recognize checkmate.</p>`,
+    body: `<p><strong>Checkmate</strong> lets your bot recognize checkmate.</p>`,
     advanceOn: 'next'
   },
   {
@@ -89,7 +88,7 @@ const STEPS = [
     title: 'Connect it to Root',
     body: `
       <p>For the template to run, connect it to Root.</p>
-      <p><strong>Drag from Root's output dot</strong> (bottom) <strong>to the Organizer's input dot</strong> (top).</p>
+      <p><strong>Drag from Root's output dot</strong> (bottom) <strong>to the Organizer</strong> (top).</p>
     `,
     advanceOn: { event: 'editor:connection-created' }
   },
@@ -97,15 +96,17 @@ const STEPS = [
     target: '#canvas-workspace',
     title: 'How the bot walks the graph',
     body: `
-      <p>For each move, the bot walks from Root <strong>depth-first</strong>.</p>
+      <p>For each move, the bot walks from Root.</p>
+
+      <p>Branches are evaluated depth-first.</p>
+
+      <p>When one node has multiple children, the branches are traversed <strong>counterclockwise</strong> starting from midnight.</p>
 
       <p>When a condition <strong>passes</strong> — it's true of the board after the move — the branch continues.</p>
 
       <p>If it <strong>fails</strong>, the bot backtracks to the next branch.</p>
 
       <p>Conditions chained together - like the two conditions in the checkmate template - act as an <strong>AND</strong> — every one above a score node must pass for that score to apply.</p>
-
-      <p>When one node has multiple children, they evaluate <strong>depth-first</strong>, <strong>counterclockwise from midnight</strong>.</p>
 
       ${WALK_DIAGRAM}
     `,
@@ -131,34 +132,35 @@ const STEPS = [
     placement: 'left',
     title: 'Pick a question kind',
     body: `
-      <p>A condition asks one yes/no question — pick which <strong>kind</strong>.</p>
-      <ul>
-        <li><strong>Positions</strong> — count or measure pieces in regions.</li>
-        <li><strong>Attack/Defend</strong> — relate two pieces (Targets, Shield, or Adjacent).</li>
-        <li><strong>Captures</strong> — does this move capture, and what?</li>
-      </ul>
+      <p>A condition asks one yes/no question.</p>
+      <p>There are 3 different kinds.</p>
+      </br>
+      <p>Start by clicking <strong>Positions</strong></p>
     `,
-    advanceOn: 'next'
-  },
-  {
-    target: '.condition-form-mode-picker',
-    placement: 'left',
-    title: 'Positions mode',
-    body: `<p>Click <strong>Positions</strong>. This mode counts or measures pieces in regions. <strong>Mobility</strong> (a piece's legal-move count) is a third metric available only here.</p>`,
     advanceOn: { event: 'click', selector: '#cond-mode-census' }
   },
   {
     target: '.condition-form-mode-picker',
     placement: 'left',
-    title: 'Captures mode',
-    body: `<p>Click <strong>Captures</strong>. This mode focuses on what just got captured this turn.</p>`,
+    title: 'Positions mode',
+    body: `
+      <p>This mode measures pieces on the board, or a specific region.</p>
+      <strong>Mobility</strong> comparisons can be used to look for forcing moves, or moves that increases a piece's activity</p>
+      </br>
+      <p>Now click <strong>Captures</strong></p>
+    `,
     advanceOn: { event: 'click', selector: '#cond-mode-captures' }
   },
   {
     target: '.condition-form-mode-picker',
     placement: 'left',
-    title: 'Back to Attack/Defend',
-    body: `<p>Click <strong>Attack/Defend</strong> to return — we'll keep going in this mode for the deep dive.</p>`,
+    title: 'Captures mode',
+    body: `
+      <p>Captured piece is the piece your move captures (if any).</p>
+      <p>Enemy captured piece is the piece your opponent captured on their prior turn (if any).</p>
+      </br>
+      <p>Now click <strong>Attack/Defend</strong></p>
+    `,
     advanceOn: { event: 'click', selector: '#cond-mode-relational' }
   },
   {
@@ -183,9 +185,8 @@ const STEPS = [
       <p><em>Moved Piece</em> is powerful because it narrows the question to <em>this turn's mover</em>.</p>
       <p>Compare:</p>
       <ul>
-        <li><strong>My Pieces</strong> attacks the enemy queen — true whenever you have an attacker, even on turns you moved a different piece.</li>
+        <li><strong>My Pieces</strong> attacks the enemy queen — doesn't care which piece actually moved.</li>
         <li><strong>Moved Piece</strong> attacks the enemy queen — only scores when this turn's mover IS the attacker.</li>
-        <li>Combine with <strong>Prior Board State</strong>, in the comparison chunk above, to ask whether the move <em>created</em> the attack.</li>
       </ul>
     `,
     advanceOn: 'next'
@@ -211,6 +212,8 @@ const STEPS = [
         <li><strong>Shield</strong> — subject stands between an enemy attacker and a same-team target.</li>
         <li><strong>Adjacent</strong> — subject sits next to the target.</li>
       </ul>
+      </br>
+      <p>Change the selected operator to see examples of each on the board below</p>
     `,
     advanceOn: 'next'
   },
@@ -219,12 +222,13 @@ const STEPS = [
     placement: 'left',
     title: 'Compare piece stats',
     body: `
-      <p>This block asks about a piece's <strong>count</strong> or <strong>value</strong>:</p>
+      <p>This block asks about the subjects'<strong>count</strong> or <strong>value</strong>:</p>
       <ul>
         <li><strong>Count</strong> — how many pieces satisfy the relation.</li>
         <li><strong>Value</strong> — the value of an <em>individual</em> piece satisfying the relation.</li>
-        <li><strong>Count at least 1</strong> is usually a safe default.</li>
       </ul>
+      </br>
+      <p><strong>Count at least 1</strong> is usually a safe default.</p>
     `,
     advanceOn: 'next'
   },
@@ -238,7 +242,7 @@ const STEPS = [
       <ul>
         <li>A fixed <strong>Integer</strong>.</li>
         <li><strong>Prior Board State</strong> — the same metric measured before this move.</li>
-        <li>Another piece type.</li>
+        <li>Another piece type (value only).</li>
       </ul>
     `,
     advanceOn: 'next'
@@ -349,18 +353,6 @@ const STEPS = [
   },
   {
     target: '#canvas-workspace',
-    title: 'Removing a connection',
-    body: `<p>To delete a connection, hover it — a small <strong>×</strong> appears. Click it to remove the line.</p>`,
-    advanceOn: 'next'
-  },
-  {
-    target: '.btn-delete-node',
-    title: 'Deleting a node',
-    body: `<p>Select a node and press <kbd>Delete</kbd> or <kbd>Backspace</kbd>, or click the <strong>Delete</strong> button in the toolbar. Deleting a node also removes its connections.</p>`,
-    advanceOn: 'next'
-  },
-  {
-    target: '#canvas-workspace',
     title: 'Preview a chain of conditions',
     body: `
       <p>To see a board where every condition in the chain holds.</p>
@@ -373,9 +365,21 @@ const STEPS = [
     target: '.board-state-preview__chain',
     title: 'Read the chain',
     body: `
-      <p>At the bottom of the preview, each condition in the chain appears as a sentence — in order.</p>
-      <p>Useful for verifying the chain reads the way you intended.</p>
+      <p>Each condition in the chain appears as a sentence — in order.</p>
+      <p>Now you are previewing moves on which each condition in the chain is simultaneously TRUE.</p>
     `,
+    advanceOn: 'next'
+  },
+  {
+    target: '#canvas-workspace',
+    title: 'Removing a connection',
+    body: `<p>To delete a connection, hover it — a small <strong>×</strong> appears. Click it to remove the line.</p>`,
+    advanceOn: 'next'
+  },
+  {
+    target: '.btn-delete-node',
+    title: 'Deleting a node',
+    body: `<p>Select a node and press <kbd>Delete</kbd> or <kbd>Backspace</kbd>, or click the <strong>Delete</strong> button in the toolbar. Deleting a node also removes its connections.</p>`,
     advanceOn: 'next'
   },
   {
@@ -384,8 +388,8 @@ const STEPS = [
     title: 'Tips for working faster',
     body: `
       <ul>
-        <li><kbd>I</kbd> hover-toggle the big-text version of a node — useful in crowded graphs.</li>
-        <li>Drag a node to move its <strong>whole branch</strong>; hold <kbd>Alt</kbd> to move just that node.</li>
+        <li><kbd>I</kbd> toggles big-text on hover.</li>
+        <li>Drag a node to move <strong>all children</strong> with it; hold <kbd>Alt</kbd> to move just that node.</li>
         <li><kbd>Cmd/Ctrl+C</kbd> / <kbd>V</kbd> — copy and paste selected nodes.</li>
         <li><kbd>Cmd/Ctrl+Z</kbd> — undo. <kbd>Cmd/Ctrl+Shift+Z</kbd> — redo.</li>
       </ul>

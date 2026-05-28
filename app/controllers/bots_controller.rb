@@ -15,7 +15,7 @@ class BotsController < ApplicationController
   def create
     @bot = current_user_or_create_guest!.bots.new(bot_params)
     if @bot.save
-      redirect_to edit_bot_path(@bot, intro: 1), notice: 'Bot was successfully created.'
+      redirect_to edit_bot_path(@bot), notice: 'Bot was successfully created.'
     else
       render :new, status: :unprocessable_entity
     end

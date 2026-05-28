@@ -35,7 +35,7 @@ const STEPS = [
     target: null,
     placement: 'center',
     title: "Reading your bot's match",
-    body: `<p>How to understand your bot's decision making during a match.</p>`,
+    body: `<p>How to understand your bot's decision making.</p>`,
     advanceOn: 'next'
   },
   {
@@ -109,7 +109,7 @@ const STEPS = [
     title: 'Organizer titles',
     body: () => {
       const absent = !document.querySelector('.trace-tree-organizer__summary')
-      return `<p>Organizer titles ${organizerIcon} label each branch — they let you tell at a glance which strategy is engaging.${absent ? ' (None visible in this trace.)' : ''}</p>`
+      return `<p>Organizer titles from your bot ${organizerIcon} label each branch.${absent ? ' (None visible in this trace.)' : ''}</p>`
     },
     advanceOn: 'next'
   },
@@ -137,7 +137,7 @@ const STEPS = [
     title: 'Click in to inspect',
     body: `
       <p>Click one of your pieces. Its legal moves get highlighted as candidates ${swatch('--match-replay-candidate-move')}.</p>
-      <p>Only candidate highlights are clickable for inspection — click any one to update the trace panel with that move's evaluation.</p>
+      <p>Now click one of the ${swatch('--match-replay-candidate-move')} moves to update the trace panel with that move's evaluation.</p>
     `,
     advanceOn: { event: 'replay:move-inspected' }
   },
@@ -160,12 +160,13 @@ const STEPS = [
   {
     target: '[data-match-replay-target="top-moves-toggle"]',
     title: 'Mute top moves',
-    body: `<p>Hides highlights for tied top moves. Cleaner board, but you lose evidence of an unopinionated bot.</p>`,
+    body: `<p>Hides highlights for tied top moves.</p>
+    <p>Cleaner board, but you lose evidence of an unopinionated bot.</p>`,
     advanceOn: 'next'
   },
   {
     target: '.match-replay-notation',
-    title: 'The move list',
+    title: 'Game notation',
     body: `<p>Every move is listed here. Click any entry to jump straight to that position.</p>`,
     advanceOn: 'next'
   },
@@ -178,7 +179,7 @@ const STEPS = [
   {
     target: '.btn-rematch',
     title: 'Rematch',
-    body: `<p>When you're ready for another match, the button is right here.</p>`,
+    body: `<p>If you want a rematch, the button is right here.</p>`,
     advanceOn: 'next'
   },
   {
