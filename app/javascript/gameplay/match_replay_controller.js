@@ -66,11 +66,21 @@ class MatchReplayController {
     this.inspectedMoveKey = null
     this.muteTopMoveHighlights = false
     this._lastEmittedMoveIndex = null
-    document.addEventListener('replay:request-pause', () => {
-      if (this.isPlaying) { this.pause() }
-    })
+    this.handleRequestPause = this.handleRequestPause.bind(this)
+    this.handleTurboBeforeRender = this.destroy.bind(this)
+    document.addEventListener('replay:request-pause', this.handleRequestPause)
+    document.addEventListener('turbo:before-render', this.handleTurboBeforeRender, { once: true })
     this.applyOrientation()
     this.renderCurrentFrame()
+  }
+
+  handleRequestPause() {
+    if (this.isPlaying) { this.pause() }
+  }
+
+  destroy() {
+    document.removeEventListener('replay:request-pause', this.handleRequestPause)
+    document.removeEventListener('turbo:before-render', this.handleTurboBeforeRender)
   }
 
   clearControlHints() {

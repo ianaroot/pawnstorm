@@ -342,5 +342,31 @@ describe('MatchReplayController', () => {
       expect(() => document.dispatchEvent(new CustomEvent('replay:request-pause'))).not.toThrow()
       expect(controller.isPlaying).toBe(false)
     })
+
+    it('is a no-op after the controller is destroyed', () => {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: ['1. e4', 'a5'] })
+      document.body.appendChild(root)
+      const controller = new MatchReplayController({ rootElement: root })
+      controller.play(1)
+      expect(controller.isPlaying).toBe(true)
+
+      controller.destroy()
+      document.dispatchEvent(new CustomEvent('replay:request-pause'))
+
+      expect(controller.isPlaying).toBe(true)
+    })
+
+    it('turbo:before-render destroys the controller so subsequent pauses are ignored', () => {
+      const root = buildRoot({ finalLayout: Layout.default(), movementNotation: ['1. e4', 'a5'] })
+      document.body.appendChild(root)
+      const controller = new MatchReplayController({ rootElement: root })
+      controller.play(1)
+      expect(controller.isPlaying).toBe(true)
+
+      document.dispatchEvent(new CustomEvent('turbo:before-render'))
+      document.dispatchEvent(new CustomEvent('replay:request-pause'))
+
+      expect(controller.isPlaying).toBe(true)
+    })
   })
 })
