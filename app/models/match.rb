@@ -65,10 +65,11 @@ class Match < ApplicationRecord
     return false unless bot_owned_by?(user)
     bot_ids = user.bots.pluck(:id)
     Match.where(
-      "(white_player_type = 'Bot' AND white_player_id IN (:bot_ids)) OR " \
-      "(black_player_type = 'Bot' AND black_player_id IN (:bot_ids))",
+      '(white_player_type = :bot_type AND white_player_id IN (:bot_ids)) OR ' \
+      '(black_player_type = :bot_type AND black_player_id IN (:bot_ids))',
+      bot_type: Bot.polymorphic_name,
       bot_ids: bot_ids
-    ).where("id < ?", id).none?
+    ).where('id < ?', id).none?
   end
 
   def compiled_program_snapshot_for(player)

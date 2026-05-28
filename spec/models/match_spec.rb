@@ -57,5 +57,12 @@ RSpec.describe Match, type: :model do
       this_match = create(:match, white_player: user_bot)
       expect(this_match.first_bot_match_for?(user)).to be true
     end
+
+    it 'counts an earlier tournament match as a prior match' do
+      tournament = create(:tournament)
+      create(:match, white_player: user_bot, tournament: tournament)
+      later_match = create(:match, white_player: user_bot)
+      expect(later_match.first_bot_match_for?(user)).to be false
+    end
   end
 end
