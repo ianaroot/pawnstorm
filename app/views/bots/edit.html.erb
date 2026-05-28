@@ -29,20 +29,21 @@
       <button type="button" class="btn-add-node" data-type="organizer">+ Organizer</button>
     </div>
 
-    <div class="toolbar-section toolbar-section--tool"
-         data-controller="tips-popover">
+    <div class="toolbar-section toolbar-section--tool">
       <div class="toolbar-section__heading">
         <h3>Tool</h3>
-        <button type="button"
-                class="btn-tips-toggle"
-                data-tips-popover-target="button"
-                data-action="click->tips-popover#toggle"
-                aria-haspopup="dialog"
-                aria-expanded="false"
-                aria-label="Editor tips">?</button>
+        <div class="toolbar-popover-anchor" data-controller="tips-popover">
+          <button type="button"
+                  class="btn-tips-toggle"
+                  data-tips-popover-target="button"
+                  data-action="click->tips-popover#toggle"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
+                  aria-label="Editor tips and Bot Guide">?</button>
+          <%= render 'bots/tips_popover', bot_guide_sections: @bot_guide_sections %>
+        </div>
       </div>
       <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
-      <%= render 'bots/tips_popover' %>
     </div>
 
     <div class="toolbar-section">

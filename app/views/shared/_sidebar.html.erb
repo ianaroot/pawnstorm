@@ -70,9 +70,6 @@
           class: "sidebar__link #{'sidebar__link--active' if controller_name == 'bots'}",
           data: { action: "click->sidebar#navigate" } %>
 
-      <%= link_to "Bot Guide", bot_help_path,
-          class: "sidebar__link #{'sidebar__link--active' if current_page?(bot_help_path)}",
-          data: { action: "click->sidebar#navigate" } %>
     </nav>
 
     <div class="sidebar__auth">
