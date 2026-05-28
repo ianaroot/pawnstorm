@@ -653,5 +653,29 @@ RSpec.describe 'Matches', type: :request do
       expect(match.reload.compiled_program_snapshot_for(:white)).to eq(deleted_entry.compiled_program_snapshot)
     end
 
+    it 'wires the matches-show tour and auto-triggers it for the first bot match' do
+      user_bot = create(:bot, :compiled, user: user)
+      match = Match.create!(
+        creator: user,
+        white_player: user_bot,
+        black_player: create(:bot, :compiled),
+        white_compiled_program_snapshot: { nodes: [] },
+        black_compiled_program_snapshot: { nodes: [] },
+        status: :completed,
+        result: :white_win,
+        allowed_to_move: 'B',
+        captured_pieces: [],
+        movement_notation: ['1. e4', 'e5'],
+        previous_layouts: [],
+        lay_out: Array.new(64, '')
+      )
+
+      get match_path(match)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('data-controller="tour"')
+      expect(response.body).to include('data-tour-set-value="matches-show"')
+      expect(response.body).to include('data-tour-auto-value="true"')
+    end
   end
 end

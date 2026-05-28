@@ -5,6 +5,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   let(:user) { create(:user) }
   let!(:bot) { create(:bot, user: user) }
+  let!(:bot_to_disable_auto_tour) { create(:bot, user: user) }
 
   # If the repeated connection expectations grow, extract a small local helper for the
   # common "connection exists / connection count changed" assertions instead of repeating them.
@@ -53,7 +54,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       find('button.btn-tips-toggle').click
 
       expect(page).to have_css('.tips-popover[role="dialog"]')
-      expect(page).to have_css('.tips-popover__group-title', text: 'Selecting & moving')
+      expect(page).to have_css('.tips-popover__group-title', text: 'SELECTING & MOVING')
       expect(page).to have_css('.tips-popover__label', text: 'Toggle node hover previews')
 
       find('.mode-picker__option', text: 'Bot Guide').click

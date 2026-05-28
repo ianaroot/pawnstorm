@@ -152,6 +152,7 @@ RSpec.describe BotsController, type: :request do
 
       expect(response.body).to include('class="btn-tips-toggle"')
       expect(response.body).to include('data-controller="tips-popover"')
+      expect(response.body).to include('data-tour-set-value="editor-first-bot"')
       expect(response.body).to include('Toggle node hover previews')
       expect(response.body).to include('Pan the canvas')
     end
