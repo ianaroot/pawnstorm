@@ -45,6 +45,25 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
   end
 
   # ============================================================
+  # TIPS POPOVER
+  # ============================================================
+
+  describe 'tips popover' do
+    it 'opens via the Tool ? button, lists tips, and closes on Escape' do
+      find('button.btn-tips-toggle').click
+
+      expect(page).to have_css('.tips-popover[role="dialog"]')
+      expect(page).to have_css('.tips-popover__group-title', text: 'Selecting & moving')
+      expect(page).to have_css('.tips-popover__group-title', text: 'Keyboard')
+      expect(page).to have_css('.tips-popover__label', text: 'Toggle node hover previews')
+
+      find('body').send_keys(:escape)
+
+      expect(page).to have_no_css('.tips-popover[role="dialog"]')
+    end
+  end
+
+  # ============================================================
   # NODE CREATION
   # ============================================================
 

@@ -68,7 +68,7 @@ const STEPS = [
       <ul>
         <li>The move's score.</li>
         <li>Board coordinates of the move evaluated below.</li>
-        <li>A count of moves tied at the top score.</li>
+        <li>A count of moves tied for top score (if you don't see this, then the bot was decisive about which move is best on this turn).</li>
       </ul>
     `,
     beforeEnter: () => {
@@ -109,7 +109,7 @@ const STEPS = [
     title: 'Organizer titles',
     body: () => {
       const absent = !document.querySelector('.trace-tree-organizer__summary')
-      return `<p>Organizer titles from your bot ${organizerIcon} label each branch.${absent ? ' (None visible in this trace.)' : ''}</p>`
+      return `<p>Organizer titles from your bot ${organizerIcon} appear as labels for their branch.${absent ? ' (None visible in this trace.)' : ''}</p>`
     },
     advanceOn: 'next'
   },
@@ -145,8 +145,8 @@ const STEPS = [
     target: '[data-match-replay-target="trace-panel"]',
     title: 'Now showing the selected move',
     body: `
-      <p>The clicked move's highlight is this color ${swatch('--match-replay-inspected-move')}.</p>
-      <p>The panel updated — it's now walking through the evaluation of that move, not the bot's chosen move.</p>
+      <p>The clicked move's highlight is now this color ${swatch('--match-replay-inspected-move')}.</p>
+      <p>The panel updated — it's now showing the evaluation of the ${swatch('--match-replay-inspected-move')} move.</p>
       <p>Scroll if your bot's tree is tall enough to overflow.</p>
     `,
     advanceOn: 'next'

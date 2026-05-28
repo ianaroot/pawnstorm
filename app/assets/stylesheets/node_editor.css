@@ -210,6 +210,109 @@
   font-size: 12px;
 }
 
+/* Tips popover: "?" button in the Tool section opens a reference card. */
+
+.toolbar-section--tool {
+  position: relative;
+}
+
+.toolbar-section button.btn-tips-toggle {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: #1a1815;
+  color: #f4efe6;
+  border: 1px solid #6f665d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.toolbar-section button.btn-tips-toggle:hover,
+.toolbar-section button.btn-tips-toggle[aria-expanded="true"] {
+  background: #2a2622;
+  border-color: #A855F7;
+  color: #fff;
+}
+
+.tips-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  width: 340px;
+  padding: 12px 14px;
+  background: #1f1f22;
+  color: #E5E5E5;
+  border: 1px solid #3F3F46;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+}
+
+.tips-popover[hidden] {
+  display: none;
+}
+
+.tips-popover__group + .tips-popover__group {
+  margin-top: 14px;
+}
+
+.tips-popover__group-title {
+  margin: 0 0 6px 0;
+  color: #C084FC;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tips-popover__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tips-popover__row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.tips-popover__trigger {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: #f4efe6;
+}
+
+.tips-popover__trigger--gesture {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tips-popover__trigger kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #f4efe6;
+  background: #2d2d2d;
+  border: 1px solid #52525B;
+  border-radius: 4px;
+}
+
+.tips-popover__label {
+  margin: 0;
+  color: #9CA3AF;
+  line-height: 1.4;
+}
+
 /* Zoom controls */
 .btn-zoom {
   background: #1a1815;

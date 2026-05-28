@@ -1,9 +1,0 @@
-<div class="tips-rail-image__frame tips-rail-image__frame--notation">
-  <div class="tips-rail-image__notation" aria-hidden="true">
-    <% data.fetch(:rows).each_with_index do |row, index| %>
-      <span class="tips-rail-image__notation-row <%= 'is-active' if index == data[:active_index] %>">
-        <%= row %>
-      </span>
-    <% end %>
-  </div>
-</div>

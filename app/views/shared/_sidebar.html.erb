@@ -75,10 +75,6 @@
           data: { action: "click->sidebar#navigate" } %>
     </nav>
 
-    <% if (sidebar_tips = sidebar_tips_for_page).present? %>
-      <%= render 'shared/tips_rail', label: 'Tips', tips: sidebar_tips %>
-    <% end %>
-    
     <div class="sidebar__auth">
       <% if current_user&.guest? %>
         <div class="sidebar__user">

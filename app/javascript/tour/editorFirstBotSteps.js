@@ -385,13 +385,16 @@ const STEPS = [
   {
     target: null,
     placement: 'center',
-    title: 'Tips for working faster',
+    title: 'Tool Tips',
     body: `
       <ul>
         <li><kbd>I</kbd> toggles big-text on hover.</li>
         <li>Drag a node to move <strong>all children</strong> with it; hold <kbd>Alt</kbd> to move just that node.</li>
         <li><kbd>Cmd/Ctrl+C</kbd> / <kbd>V</kbd> — copy and paste selected nodes.</li>
         <li><kbd>Cmd/Ctrl+Z</kbd> — undo. <kbd>Cmd/Ctrl+Shift+Z</kbd> — redo.</li>
+        <li>Click and drag empty canvas to select multiple nodes.</li>
+        <li>Or shift+click to select multiple nodes.</li>
+        <li><kbd>Space</kbd> + click and drag to pan the canvas</li>
       </ul>
     `,
     advanceOn: 'next'
