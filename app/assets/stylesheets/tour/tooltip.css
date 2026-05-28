@@ -83,9 +83,8 @@
 .tour-tooltip__next {
   padding: 6px 14px;
   font-size: 13px;
-  color: var(--text-primary, #e5e5e5);
-  background: var(--accent-secondary, #c084fc);
   color: #1c1c1f;
+  background: var(--accent-secondary, #c084fc);
   border: none;
   border-radius: 6px;
   cursor: pointer;

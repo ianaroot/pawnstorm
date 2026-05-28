@@ -24,6 +24,9 @@ const WALK_DIAGRAM = `
   </svg>
 `
 
+const lockNodeDrag = () => document.body.classList.add('editor-drag-locked')
+const unlockNodeDrag = () => document.body.classList.remove('editor-drag-locked')
+
 const STEPS = [
   {
     target: null,
@@ -32,7 +35,7 @@ const STEPS = [
     body: `
       <ul>
         <li>Your bot follows a <strong>rulebook you build</strong>.</li>
-        <li>Each turn, every  legal move gets evaluated against your entire rule set</li>
+        <li>Each turn, every legal move gets evaluated against your entire rule set.</li>
         <li>The highest scored move is chosen.</li>
         <li>When scores tie, the bot picks <strong>randomly from the top-scoring moves</strong>.</li>
         <li>Let's build your first rule.</li>
@@ -125,6 +128,8 @@ const STEPS = [
     },
     title: 'Open it to edit',
     body: `<p><strong>Click your new condition</strong> to open the editor on the right.</p>`,
+    beforeEnter: lockNodeDrag,
+    onExit: unlockNodeDrag,
     advanceOn: { event: 'editor:node-editing-started', when: (d) => d.type === 'condition' }
   },
   {
@@ -134,7 +139,7 @@ const STEPS = [
     body: `
       <p>A condition asks one yes/no question.</p>
       <p>There are 3 different kinds.</p>
-      </br>
+      <br>
       <p>Start by clicking <strong>Positions</strong></p>
     `,
     advanceOn: { event: 'click', selector: '#cond-mode-census' }
@@ -146,7 +151,7 @@ const STEPS = [
     body: `
       <p>This mode measures pieces on the board, or a specific region.</p>
       <strong>Mobility</strong> comparisons can be used to look for forcing moves, or moves that increases a piece's activity</p>
-      </br>
+      <br>
       <p>Now click <strong>Captures</strong></p>
     `,
     advanceOn: { event: 'click', selector: '#cond-mode-captures' }
@@ -158,7 +163,7 @@ const STEPS = [
     body: `
       <p>Captured piece is the piece your move captures (if any).</p>
       <p>Enemy captured piece is the piece your opponent captured on their prior turn (if any).</p>
-      </br>
+      <br>
       <p>Now click <strong>Attack/Defend</strong></p>
     `,
     advanceOn: { event: 'click', selector: '#cond-mode-relational' }
@@ -212,7 +217,7 @@ const STEPS = [
         <li><strong>Shield</strong> — subject stands between an enemy attacker and a same-team target.</li>
         <li><strong>Adjacent</strong> — subject sits next to the target.</li>
       </ul>
-      </br>
+      <br>
       <p>Change the selected operator to see examples of each on the board below</p>
     `,
     advanceOn: 'next'
@@ -222,12 +227,12 @@ const STEPS = [
     placement: 'left',
     title: 'Compare piece stats',
     body: `
-      <p>This block asks about the subjects'<strong>count</strong> or <strong>value</strong>:</p>
+      <p>This block asks about the subject's <strong>count</strong> or <strong>value</strong>:</p>
       <ul>
         <li><strong>Count</strong> — how many pieces satisfy the relation.</li>
         <li><strong>Value</strong> — the value of an <em>individual</em> piece satisfying the relation.</li>
       </ul>
-      </br>
+      <br>
       <p><strong>Count at least 1</strong> is usually a safe default.</p>
     `,
     advanceOn: 'next'
@@ -322,6 +327,8 @@ const STEPS = [
     },
     title: 'Open your new score',
     body: `<p><strong>Click your new score node</strong> to open the editor.</p>`,
+    beforeEnter: lockNodeDrag,
+    onExit: unlockNodeDrag,
     advanceOn: { event: 'editor:node-editing-started', when: (d) => d.type === 'score' }
   },
   {
@@ -331,13 +338,13 @@ const STEPS = [
     body: `
       <p>Score:</p>
       <ul>
-        <li><em>Add</em> raise the move's score to incentivize it</li>
-        <li><em>Subtract</em> drop a move's score to discourage it - e.g. "my Moved Piece is undefended AND attacked".</li>
-        <li><em>Set</em> replaces the current score at that point in evaluation. <em></li>
-        <li>Return</em> sets the score and <strong>stops evaluating</strong> this move immediately.</li>
+        <li><em>Add</em> — raises the move's score to incentivize it.</li>
+        <li><em>Subtract</em> — drops the move's score to discourage it (e.g. "my Moved Piece is undefended AND attacked").</li>
+        <li><em>Set</em> — replaces the current score at that point in evaluation.</li>
+        <li><em>Return</em> — sets the score and <strong>stops evaluating</strong> this move immediately.</li>
         <li>Change the value to reflect the importance of the rule you made.</li>
       </ul>
-      </br>
+      <br>
       <p>Save when you're done.</p>
     `,
     advanceOn: { event: 'editor:node-saved', when: (d) => d.type === 'score' }

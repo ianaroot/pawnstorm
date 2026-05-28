@@ -11,8 +11,10 @@
 //     title:     string,
 //     body:      string,                                  // HTML allowed
 //     placement: 'auto' | 'top' | 'bottom' | 'left' | 'right' | 'center',
-//     advanceOn: 'next' | 'click' | { event, when?, selector? },
-//     skipIf:    (ctx) => boolean
+//     advanceOn:   'next' | 'click' | { event, when?, selector? },
+//     skipIf:      (ctx) => boolean,
+//     beforeEnter: (ctx) => void,    // setup when the step becomes active
+//     onExit:      (ctx) => void     // cleanup when the step is left
 //   }
 
 const TOOLTIP_WIDTH = 320
@@ -252,6 +254,11 @@ export default class TourEngine {
   }
 
   teardownStep() {
+    const exitingStep = this.steps[this.currentIndex]
+    if (exitingStep && typeof exitingStep.onExit === 'function') {
+      try { exitingStep.onExit(this.context()) }
+      catch (err) { console.warn('TourEngine: onExit threw:', err) }
+    }
     this.stepCleanup.forEach((fn) => fn())
     this.stepCleanup = []
     if (this.spotlightTargets.length > 0) {

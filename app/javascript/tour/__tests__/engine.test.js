@@ -518,4 +518,68 @@ describe('TourEngine', () => {
       warn.mockRestore()
     })
   })
+
+  describe('onExit', () => {
+    it('fires on the exiting step when advancing', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const onExit = vi.fn()
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', onExit },
+          { target: '#b', title: 'second' }
+        ]
+      })
+      engine.start()
+      engine.next()
+      expect(onExit).toHaveBeenCalledTimes(1)
+      const ctx = onExit.mock.calls[0][0]
+      expect(ctx.engine).toBe(engine)
+    })
+
+    it('fires on close', () => {
+      makeTarget('a')
+      const onExit = vi.fn()
+      const engine = new TourEngine({
+        steps: [{ target: '#a', title: 'only', onExit }]
+      })
+      engine.start()
+      engine.close()
+      expect(onExit).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not fire on entry, only on exit', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const onExit = vi.fn()
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first' },
+          { target: '#b', title: 'second', onExit }
+        ]
+      })
+      engine.start()
+      engine.next()
+      expect(onExit).not.toHaveBeenCalled()
+      engine.close()
+      expect(onExit).toHaveBeenCalledTimes(1)
+    })
+
+    it('throwing does not crash the tour', () => {
+      makeTarget('a')
+      makeTarget('b')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const engine = new TourEngine({
+        steps: [
+          { target: '#a', title: 'first', onExit: () => { throw new Error('nope') } },
+          { target: '#b', title: 'second' }
+        ]
+      })
+      engine.start()
+      engine.next()
+      expect(engine.isActive).toBe(true)
+      expect(warn).toHaveBeenCalled()
+      warn.mockRestore()
+    })
+  })
 })

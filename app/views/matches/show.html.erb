@@ -52,7 +52,7 @@
         <% end %>
         <div class="replay-controls replay-stack replay-shrink-0">
           <div class="replay-meta-row">
-            <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options, show_tour_button: true %>
+            <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options, show_tour_button: @match.bot_owned_by?(current_user) %>
             <p data-match-replay-target="result"></p>
           </div>
           <div class="match-replay-controls replay-inline replay-inline--center">
