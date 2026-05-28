@@ -126,6 +126,41 @@ describe('BoardStatePreview', () => {
     })
   })
 
+  describe('editor:preview-shown event', () => {
+    it('fires with mode "form" when activate is called', () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:preview-shown', handler)
+
+      preview.activate(buildConditionFormMock())
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ mode: 'form' })
+      document.removeEventListener('editor:preview-shown', handler)
+    })
+
+    it('fires with mode "selection" when showSelectionPreview is called and enabled', () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:preview-shown', handler)
+
+      preview.showSelectionPreview({ status: 'no_examples', reason: '', examples: [] })
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ mode: 'selection', hasChain: false })
+      document.removeEventListener('editor:preview-shown', handler)
+    })
+
+    it('does not fire from showSelectionPreview when isEnabled is false', () => {
+      preview.isEnabled = false
+      const handler = vi.fn()
+      document.addEventListener('editor:preview-shown', handler)
+
+      preview.showSelectionPreview({ status: 'no_examples', reason: '', examples: [] })
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:preview-shown', handler)
+    })
+  })
+
   // ── toggle ─────────────────────────────────────────────────────────────────
 
   describe('toggle', () => {

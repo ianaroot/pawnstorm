@@ -70,15 +70,8 @@
           class: "sidebar__link #{'sidebar__link--active' if controller_name == 'bots'}",
           data: { action: "click->sidebar#navigate" } %>
 
-      <%= link_to "Bot Guide", bot_help_path,
-          class: "sidebar__link #{'sidebar__link--active' if current_page?(bot_help_path)}",
-          data: { action: "click->sidebar#navigate" } %>
     </nav>
 
-    <% if (sidebar_tips = sidebar_tips_for_page).present? %>
-      <%= render 'shared/tips_rail', label: 'Tips', tips: sidebar_tips %>
-    <% end %>
-    
     <div class="sidebar__auth">
       <% if current_user&.guest? %>
         <div class="sidebar__user">

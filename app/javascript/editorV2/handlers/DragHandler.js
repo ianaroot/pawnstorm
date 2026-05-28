@@ -330,6 +330,10 @@ class DragHandler {
   }
 
   beginNodeDrag(pendingDrag) {
+    if (document.body.classList.contains('editor-drag-locked')) {
+      this.pendingDrag = null
+      return
+    }
     const { clientId, node, pointerGraph } = pendingDrag
 
     this.pendingDrag = null

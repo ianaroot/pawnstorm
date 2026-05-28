@@ -78,7 +78,10 @@ class ReplayView {
     const chosenMoveTile = chosenMove
       ? document.getElementById(Board.gridCalculator(chosenMove.endPosition))
       : null
-    if (!muteTopMoveHighlights) {
+    const userSelectedDifferentPiece = inspection.selectedStartSquare &&
+      chosenMove &&
+      Board.gridCalculator(chosenMove.startPosition) !== inspection.selectedStartSquare
+    if (!muteTopMoveHighlights && !userSelectedDifferentPiece) {
       chosenMoveTile?.classList.add('match-replay-square--chosen-move')
     }
 
@@ -99,6 +102,8 @@ class ReplayView {
       if (!tile) { return }
       if (result.key === inspection.result.currentChoiceKey) { return }
       if (result.key === inspection.result.explicitInspectedMoveKey) { return }
+      if (tile.classList.contains('match-replay-square--chosen-move')) { return }
+      if (tile.classList.contains('match-replay-square--inspected-move')) { return }
       if (!muteTopMoveHighlights && inspection.result.tiedTopMoveKeys.includes(result.key)) {
         tile.classList.add('match-replay-square--tied-move')
       } else if (inspection.selectedStartSquare) {

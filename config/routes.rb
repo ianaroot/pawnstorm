@@ -7,8 +7,6 @@ Rails.application.routes.draw do
   
   root to: "matches/bot_vs_bot#new"
 
-  get 'help/bots', to: 'help#bots', as: :bot_help
-
   resources :bots, except: :show do
     member do
       post :compile

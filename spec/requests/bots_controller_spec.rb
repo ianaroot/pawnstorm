@@ -145,14 +145,16 @@ RSpec.describe BotsController, type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'renders the editor tips rail' do
+    it 'renders the editor tips popover with the trigger button and tip content' do
       sign_in bot.user
 
       get edit_bot_path(bot)
 
-      expect(response.body).to include('Inspect node previews')
-      expect(response.body).to include('Build a bigger selection')
-      expect(response.body).to include('data-controller="tips-rail"')
+      expect(response.body).to include('class="btn-tips-toggle"')
+      expect(response.body).to include('data-controller="tips-popover"')
+      expect(response.body).to include('data-tour-set-value="editor-first-bot"')
+      expect(response.body).to include('Toggle node hover previews')
+      expect(response.body).to include('Pan the canvas')
     end
 
     it 'returns 404 for another users bot' do

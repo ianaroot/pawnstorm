@@ -6,6 +6,7 @@ import ReplayView, { buildReplayBoard } from "gameplay/replay_view"
 import { cloneRecentMoveContext } from "gameplay/recent_move_context"
 import { applyBoardOrientation } from "gameplay/board_orientation"
 import Sound from "gameplay/sound"
+import { emitReplayEvent } from "gameplay/utils/replayEvents"
 
 class MatchReplayController {
   constructor({ rootElement, intervalMs = 1250 }) {
@@ -53,6 +54,7 @@ class MatchReplayController {
     this.currentUserId = Number(rootElement.dataset.currentUserId)
     this.whiteBotOwnerId = rootElement.dataset.whiteBotOwnerId ? Number(rootElement.dataset.whiteBotOwnerId) : null
     this.blackBotOwnerId = rootElement.dataset.blackBotOwnerId ? Number(rootElement.dataset.blackBotOwnerId) : null
+    this.userBotTeam = this.deriveUserBotTeam()
     this.whiteCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.whiteCompiledProgramSnapshot)
     this.blackCompiledProgramSnapshot = this.parseCompiledProgramSnapshot(rootElement.dataset.blackCompiledProgramSnapshot)
 
@@ -63,8 +65,22 @@ class MatchReplayController {
     this.selectedStartPosition = null
     this.inspectedMoveKey = null
     this.muteTopMoveHighlights = false
+    this._lastEmittedMoveIndex = null
+    this.handleRequestPause = this.handleRequestPause.bind(this)
+    this.handleTurboBeforeRender = this.destroy.bind(this)
+    document.addEventListener('replay:request-pause', this.handleRequestPause)
+    document.addEventListener('turbo:before-render', this.handleTurboBeforeRender, { once: true })
     this.applyOrientation()
     this.renderCurrentFrame()
+  }
+
+  handleRequestPause() {
+    if (this.isPlaying) { this.pause() }
+  }
+
+  destroy() {
+    document.removeEventListener('replay:request-pause', this.handleRequestPause)
+    document.removeEventListener('turbo:before-render', this.handleTurboBeforeRender)
   }
 
   clearControlHints() {
@@ -87,6 +103,13 @@ class MatchReplayController {
   parseCompiledProgramSnapshot(snapshotJson) {
     if (!snapshotJson) { return null }
     return JSON.parse(snapshotJson)
+  }
+
+  deriveUserBotTeam() {
+    if (!Number.isInteger(this.currentUserId)) { return null }
+    if (this.whiteBotOwnerId === this.currentUserId) { return Board.WHITE }
+    if (this.blackBotOwnerId === this.currentUserId) { return Board.BLACK }
+    return null
   }
 
   buildFrames() {
@@ -285,13 +308,16 @@ class MatchReplayController {
     if (!inspection.enabled || !inspection.result) { return }
     const square = tile.id
     const position = Board.gridCalculatorReverse(square)
-    const clickedVisibleMove = inspection.result.visibleMoves.find(result => (
-      Board.gridCalculator(result.moveObject.endPosition) === square
-    ))
-    if (clickedVisibleMove) {
-      this.inspectedMoveKey = clickedVisibleMove.key
-      this.renderCurrentFrame()
-      return
+    if (this.selectedStartPosition !== null) {
+      const clickedVisibleMove = inspection.result.visibleMoves.find(result => (
+        Board.gridCalculator(result.moveObject.endPosition) === square
+      ))
+      if (clickedVisibleMove) {
+        this.inspectedMoveKey = clickedVisibleMove.key
+        this.renderCurrentFrame()
+        emitReplayEvent('move-inspected', { square, inspectedMoveKey: clickedVisibleMove.key })
+        return
+      }
     }
     if (board.teamAt(position) === inspection.team) {
       this.selectedStartPosition = this.selectedStartPosition === position ? null : position
@@ -400,6 +426,14 @@ class MatchReplayController {
       inspection,
       muteTopMoveHighlights: this.muteTopMoveHighlights
     })
+    if (this.currentMoveIndex !== this._lastEmittedMoveIndex) {
+      this._lastEmittedMoveIndex = this.currentMoveIndex
+      emitReplayEvent('frame-changed', {
+        moveIndex: this.currentMoveIndex,
+        allowedToMove: board.allowedToMove,
+        userBotTeam: this.userBotTeam
+      })
+    }
   }
 
   playReplaySound(notation) {

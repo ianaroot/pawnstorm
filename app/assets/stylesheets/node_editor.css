@@ -107,8 +107,9 @@
   margin-bottom: 0;
 }
 
-/* Push the heading-row buttons to the right of the section title. */
-.toolbar-section__heading h3 + button {
+/* Push the first heading-row control to the right of the section title. */
+.toolbar-section__heading h3 + button,
+.toolbar-section__heading h3 + .toolbar-popover-anchor {
   margin-left: auto;
 }
 
@@ -203,6 +204,131 @@
 
 .btn-guide:hover {
   background: #2a2622;
+}
+
+.btn-guide--small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Toolbar popovers: each "?" / "📖" trigger sits in its own anchor div so the
+   popovers stay scoped (click-outside on one doesn't keep the other open). */
+
+.toolbar-popover-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbar-section__heading .toolbar-popover-anchor + .toolbar-popover-anchor {
+  margin-left: 6px;
+}
+
+.toolbar-section button.btn-tips-toggle {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: #1a1815;
+  color: #f4efe6;
+  border: 1px solid #6f665d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.toolbar-section button.btn-tips-toggle:hover,
+.toolbar-section button.btn-tips-toggle[aria-expanded="true"] {
+  background: #2a2622;
+  border-color: #A855F7;
+  color: #fff;
+}
+
+.tips-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  width: 520px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: #1f1f22;
+  color: #E5E5E5;
+  border: 1px solid #3F3F46;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+}
+
+.tips-popover[hidden] {
+  display: none;
+}
+
+.tips-popover__tabs {
+  margin: 0 0 12px 0;
+}
+
+.tips-popover__panel[hidden] {
+  display: none;
+}
+
+.tips-popover__group + .tips-popover__group {
+  margin-top: 14px;
+}
+
+.tips-popover__group-title {
+  margin: 0 0 6px 0;
+  color: #C084FC;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tips-popover__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tips-popover__row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.tips-popover__trigger {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: #f4efe6;
+}
+
+.tips-popover__trigger--gesture {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tips-popover__trigger kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #f4efe6;
+  background: #2d2d2d;
+  border: 1px solid #52525B;
+  border-radius: 4px;
+}
+
+.tips-popover__label {
+  margin: 0;
+  color: #9CA3AF;
+  line-height: 1.4;
 }
 
 /* Zoom controls */
@@ -1583,18 +1709,19 @@
   font-size: 12px;
 }
 
-.condition-form-mode-picker {
-  display: flex;
-  align-self: center;
+/* Shared segmented-control chrome. Wear this alongside a BEM-context class
+   (e.g. `condition-form-mode-picker mode-picker`) — the context class carries
+   layout/margin only; this one carries the visual shell. */
+.mode-picker {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
   background: #1d1916;
   border: 1px solid #4a443d;
   border-radius: 5px;
-  padding: 3px;
-  gap: 2px;
-  margin-bottom: 2px;
 }
 
-.condition-form-mode-picker__option {
+.mode-picker__option {
   padding: 5px 18px;
   background: transparent;
   border: 1px solid transparent;
@@ -1606,10 +1733,15 @@
   cursor: pointer;
 }
 
-.condition-form-mode-picker__option.active {
+.mode-picker__option.active {
   background: #33273a;
   border-color: rgba(168, 85, 247, 0.45);
   color: #e9d5ff;
+}
+
+.condition-form-mode-picker {
+  align-self: center;
+  margin-bottom: 2px;
 }
 
 .condition-form-note {

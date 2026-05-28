@@ -9,3 +9,4 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 pin_all_from 'app/javascript/gameplay', under: 'gameplay', to: 'gameplay'
 pin_all_from 'app/javascript/bot_execution', under: 'bot_execution', to: 'bot_execution'
 pin_all_from 'app/javascript/editorV2', under: 'editorV2', to: 'editorV2'
+pin_all_from 'app/javascript/tour', under: 'tour', to: 'tour'

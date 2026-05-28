@@ -1,0 +1,21 @@
+/* ============================================
+   TOUR OVERLAY — dim panels behind the spotlight.
+   --full covers the entire viewport (used for centered modal steps).
+   --frame is positioned by engine.js as one of four panels surrounding
+   the spotlight target, leaving the target itself unobstructed.
+   ============================================ */
+
+.tour-backdrop {
+  position: fixed;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+.tour-backdrop--full {
+  inset: 0;
+}
+
+.tour-backdrop[hidden] {
+  display: none;
+}

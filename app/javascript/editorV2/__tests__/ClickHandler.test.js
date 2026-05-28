@@ -251,4 +251,30 @@ describe('ClickHandler', () => {
     expect(clickHandler.conditionForm.buildPayload).toHaveBeenCalled()
     expect(payload).toBe(expected)
   })
+
+  describe('editor:node-editing-started event', () => {
+    it('fires with clientId + type when a node opens for editing', () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:node-editing-started', handler)
+
+      dispatchClick(conditionElement)
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({
+        clientId: conditionNode.clientId,
+        type: 'condition'
+      })
+      document.removeEventListener('editor:node-editing-started', handler)
+    })
+
+    it('does not fire when a root node is clicked', () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:node-editing-started', handler)
+
+      dispatchClick(rootElement)
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:node-editing-started', handler)
+    })
+  })
 })

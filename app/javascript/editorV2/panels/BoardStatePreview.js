@@ -3,6 +3,7 @@ import { formatConditionSentence, renderSentenceSegments } from 'editorV2/utils/
 import { exampleId } from 'editorV2/utils/example_id'
 import { tileDecoration, legendEntries } from 'editorV2/panels/condition_preview/shared/highlight_roles'
 import Board from 'gameplay/board'
+import { emitEditorEvent } from 'editorV2/utils/editorEvents'
 import Sound from 'gameplay/sound'
 
 const PRIOR_DWELL  = 1500
@@ -143,6 +144,7 @@ class BoardStatePreview {
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
       this._debouncedUpdate(conditionForm.buildPayload())
+      emitEditorEvent('preview-shown', { mode: 'form' })
     } else {
       this.content.classList.add('hidden')
     }
@@ -160,6 +162,7 @@ class BoardStatePreview {
     if (this.isEnabled) {
       this.content.classList.remove('hidden')
       this._applyPreview(preview)
+      emitEditorEvent('preview-shown', { mode: 'selection', hasChain: this.conditionLabels?.length > 0 })
     } else {
       this.content.classList.add('hidden')
     }

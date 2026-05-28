@@ -263,4 +263,77 @@ describe('ConnectionHandler', () => {
 
     expect(() => connectionHandler.cancelConnection()).not.toThrow()
   })
+
+  describe('event emissions', () => {
+    it('fires editor:connection-created with source/target on success', async () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-created', handler)
+
+      await connectionHandler.finishConnection('source', 'target')
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ sourceId: 'source', targetId: 'target' })
+      document.removeEventListener('editor:connection-created', handler)
+    })
+
+    it('does not fire editor:connection-created on a self-loop', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-created', handler)
+
+      await connectionHandler.finishConnection('source', 'source')
+
+      expect(handler).not.toHaveBeenCalled()
+      expect(syncManager.createConnection).not.toHaveBeenCalled()
+      document.removeEventListener('editor:connection-created', handler)
+    })
+
+    it('does not fire editor:connection-created when the connection already exists', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.spyOn(store, 'findConnection').mockReturnValue({ clientId: 'existing' })
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-created', handler)
+
+      await connectionHandler.finishConnection('source', 'target')
+
+      expect(handler).not.toHaveBeenCalled()
+      expect(syncManager.createConnection).not.toHaveBeenCalled()
+      document.removeEventListener('editor:connection-created', handler)
+    })
+
+    it('does not fire editor:connection-created when syncManager rejects', async () => {
+      syncManager.createConnection.mockRejectedValueOnce(new Error('boom'))
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-created', handler)
+
+      await connectionHandler.finishConnection('source', 'target')
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:connection-created', handler)
+    })
+
+    it('fires editor:connection-deleted with clientId on success', async () => {
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-deleted', handler)
+
+      await connectionHandler.deleteConnection('conn-1')
+
+      expect(handler).toHaveBeenCalledTimes(1)
+      expect(handler.mock.calls[0][0].detail).toEqual({ clientId: 'conn-1' })
+      document.removeEventListener('editor:connection-deleted', handler)
+    })
+
+    it('does not fire editor:connection-deleted when syncManager rejects', async () => {
+      syncManager.deleteConnection.mockRejectedValueOnce(new Error('boom'))
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const handler = vi.fn()
+      document.addEventListener('editor:connection-deleted', handler)
+
+      await connectionHandler.deleteConnection('conn-1')
+
+      expect(handler).not.toHaveBeenCalled()
+      document.removeEventListener('editor:connection-deleted', handler)
+    })
+  })
 })

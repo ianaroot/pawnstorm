@@ -2,12 +2,13 @@
 
 <div class="bot-editor-shell">
   <div class="bot-editor"
-     data-controller="editor bot-intro"
+     data-controller="editor tour"
      data-editor-bot-id-value="<%= @bot.id %>"
      data-editor-bot-name-value="<%= @bot.name %>"
      data-editor-bot-description-value="<%= @bot.description.to_s %>"
      data-editor-bot-stale-value="<%= @bot.compiled_program_stale? %>"
-     data-bot-intro-auto-value="<%= params[:intro].present? %>">
+     data-tour-set-value="editor-first-bot"
+     data-tour-auto-value="<%= @auto_tour_first_bot %>">
   <div class="bot-editor-header">
     <div class="bot-editor-header__name" id="bot-name-display" title="<%= @bot.name %>"><%= @bot.name %></div>
     <button type="button" class="bot-editor-header__rename" data-bot-rename-open>Rename</button>
@@ -20,9 +21,7 @@
         <button
           type="button"
           class="btn-guide"
-          data-action="click->bot-intro#open"
-          aria-controls="bot-intro-modal"
-          aria-haspopup="dialog">How it works</button>
+          data-action="click->tour#start">Take the tour</button>
         <button type="button" class="btn-open-templates">Templates</button>
       </div>
       <button type="button" class="btn-add-node" data-type="condition">+ Condition</button>
@@ -30,8 +29,20 @@
       <button type="button" class="btn-add-node" data-type="organizer">+ Organizer</button>
     </div>
 
-    <div class="toolbar-section">
-      <h3>Tool</h3>
+    <div class="toolbar-section toolbar-section--tool">
+      <div class="toolbar-section__heading">
+        <h3>Tool</h3>
+        <div class="toolbar-popover-anchor" data-controller="tips-popover">
+          <button type="button"
+                  class="btn-tips-toggle"
+                  data-tips-popover-target="button"
+                  data-action="click->tips-popover#toggle"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
+                  aria-label="Editor tips and Bot Guide">?</button>
+          <%= render 'bots/tips_popover', bot_guide_sections: @bot_guide_sections %>
+        </div>
+      </div>
       <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
     </div>
 
@@ -174,7 +185,5 @@
   </div>
 
   <%= render "bots/nodes/editor" %>
-
-  <%= render "bots/intro_modal" %>
   </div>
 </div>

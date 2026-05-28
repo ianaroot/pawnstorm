@@ -653,10 +653,11 @@ RSpec.describe 'Matches', type: :request do
       expect(match.reload.compiled_program_snapshot_for(:white)).to eq(deleted_entry.compiled_program_snapshot)
     end
 
-    it 'renders the replay tips rail' do
+    it 'wires the matches-show tour and auto-triggers it for the first bot match' do
+      user_bot = create(:bot, :compiled, user: user)
       match = Match.create!(
         creator: user,
-        white_player: create(:bot, :compiled, user: user),
+        white_player: user_bot,
         black_player: create(:bot, :compiled),
         white_compiled_program_snapshot: { nodes: [] },
         black_compiled_program_snapshot: { nodes: [] },
@@ -672,9 +673,9 @@ RSpec.describe 'Matches', type: :request do
       get match_path(match)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include('Inspect moves')
-      expect(response.body).to include('Jump by notation')
-      expect(response.body).to include('data-controller="tips-rail"')
+      expect(response.body).to include('data-controller="tour"')
+      expect(response.body).to include('data-tour-set-value="matches-show"')
+      expect(response.body).to include('data-tour-auto-value="true"')
     end
   end
 end

@@ -15,7 +15,7 @@ class BotsController < ApplicationController
   def create
     @bot = current_user_or_create_guest!.bots.new(bot_params)
     if @bot.save
-      redirect_to edit_bot_path(@bot, intro: 1), notice: 'Bot was successfully created.'
+      redirect_to edit_bot_path(@bot), notice: 'Bot was successfully created.'
     else
       render :new, status: :unprocessable_entity
     end
@@ -24,6 +24,8 @@ class BotsController < ApplicationController
   def edit
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
+    @auto_tour_first_bot = current_user&.bots&.count.to_i <= 1
+    @bot_guide_sections = BotGuide.sections
     respond_to do |format|
       format.html { @open_tournaments = open_tournaments }
       format.json { render json: { nodes: @nodes, connections: @connections } }

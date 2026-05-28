@@ -1,0 +1,77 @@
+<%
+gesture_tips = [
+  ['Drag empty canvas', 'Select multiple nodes'],
+  ['Shift+click',       'Add to selection'],
+  ['Alt+drag',          'Move only the grabbed node (leaves children in place)'],
+  ['Space+drag',        'Pan the canvas']
+]
+
+keyboard_tips = [
+  [['I'],                                       'Toggle node hover previews'],
+  [['P'],                                       'Toggle the board-state preview'],
+  [['←', '→'],                                  'Step through preview examples'],
+  [['Enter'],                                   "Save the node you're editing"],
+  [['Esc'],                                     'Close the editor panel'],
+  [['Delete', 'Backspace'],                     'Remove selected nodes'],
+  [['Cmd/Ctrl+Z', 'Cmd/Ctrl+Shift+Z'],          'Undo / redo'],
+  [['Cmd/Ctrl+C', 'Cmd/Ctrl+V'],                'Copy / paste selected nodes']
+]
+%>
+
+<div class="tips-popover"
+     data-tips-popover-target="popover"
+     role="dialog"
+     aria-label="Editor tips and Bot Guide"
+     hidden>
+  <div class="tips-popover__tabs mode-picker" role="tablist" aria-label="Editor tips and Bot Guide">
+    <button type="button"
+            class="mode-picker__option active"
+            data-tips-popover-target="tipsTab"
+            data-action="click->tips-popover#showTips"
+            role="tab"
+            aria-selected="true">Tips</button>
+    <button type="button"
+            class="mode-picker__option"
+            data-tips-popover-target="botGuideTab"
+            data-action="click->tips-popover#showBotGuide"
+            role="tab"
+            aria-selected="false">Bot Guide</button>
+  </div>
+
+  <div class="tips-popover__panel"
+       data-tips-popover-target="tipsPanel"
+       role="tabpanel">
+    <section class="tips-popover__group">
+      <h4 class="tips-popover__group-title">Selecting &amp; moving</h4>
+      <dl class="tips-popover__list">
+        <% gesture_tips.each do |gesture, label| %>
+          <div class="tips-popover__row">
+            <dt class="tips-popover__trigger tips-popover__trigger--gesture"><%= gesture %></dt>
+            <dd class="tips-popover__label"><%= label %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </section>
+
+    <section class="tips-popover__group">
+      <h4 class="tips-popover__group-title">Keyboard</h4>
+      <dl class="tips-popover__list">
+        <% keyboard_tips.each do |chords, label| %>
+          <div class="tips-popover__row">
+            <dt class="tips-popover__trigger">
+              <% chords.each do |chord| %><kbd><%= chord %></kbd><% end %>
+            </dt>
+            <dd class="tips-popover__label"><%= label %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </section>
+  </div>
+
+  <div class="tips-popover__panel"
+       data-tips-popover-target="botGuidePanel"
+       role="tabpanel"
+       hidden>
+    <%= render 'shared/bot_guide', sections: bot_guide_sections %>
+  </div>
+</div>

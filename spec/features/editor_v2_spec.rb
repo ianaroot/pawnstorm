@@ -5,6 +5,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
   let(:user) { create(:user) }
   let!(:bot) { create(:bot, user: user) }
+  let!(:bot_to_disable_auto_tour) { create(:bot, user: user) }
 
   # If the repeated connection expectations grow, extract a small local helper for the
   # common "connection exists / connection count changed" assertions instead of repeating them.
@@ -42,32 +43,33 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       expect_node_count(1)
     end
+  end
 
-    describe 'how-it-works walkthrough modal' do
-      it 'opens, navigates between slides, and closes' do
-        trigger = find('button.btn-guide', text: 'How it works')
-        # JS click: the toolbar overlaps the trigger at the feature-test viewport.
-        page.execute_script('arguments[0].click()', trigger)
+  # ============================================================
+  # TIPS POPOVER
+  # ============================================================
 
-        expect(page).to have_css('#bot-intro-modal[aria-hidden="false"]')
-        expect(page).to have_css('.bot-intro-modal__dialog[role="dialog"]')
-        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
-        expect(page).to have_button('Back', disabled: true)
+  describe 'tips popover' do
+    it 'opens via the Tool ? button, lets you switch between Tips and Bot Guide tabs, and closes on Escape' do
+      find('button.btn-tips-toggle').click
 
-        click_button 'Next'
+      expect(page).to have_css('.tips-popover[role="dialog"]')
+      expect(page).to have_css('.tips-popover__group-title', text: 'SELECTING & MOVING')
+      expect(page).to have_css('.tips-popover__label', text: 'Toggle node hover previews')
 
-        expect(page).to have_css('.bot-intro-slide__title', text: 'Condition nodes & the form')
-        expect(page).to have_button('Back', disabled: false)
+      find('.mode-picker__option', text: 'Bot Guide').click
 
-        click_button 'Back'
+      expect(page).to have_css('.bot-guide-section__title', text: 'What Your Bot Does')
+      expect(page).to have_css('.bot-guide-section__title', text: 'How The Graph Is Read')
+      expect(page).to have_css('.bot-guide-section__title', text: 'How Scoring Works')
 
-        expect(page).to have_css('.bot-intro-slide__title', text: 'How your bot thinks')
+      find('.mode-picker__option', text: 'Tips').click
 
-        find('.bot-intro-modal__close').click
+      expect(page).to have_css('.tips-popover__label', text: 'Toggle node hover previews')
 
-        expect(page).to have_css('#bot-intro-modal[aria-hidden="true"]', visible: :all)
-        expect(page).to have_no_css('.bot-intro-slide__title', text: 'How your bot thinks')
-      end
+      find('body').send_keys(:escape)
+
+      expect(page).to have_no_css('.tips-popover[role="dialog"]')
     end
   end
 

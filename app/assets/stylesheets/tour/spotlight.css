@@ -1,0 +1,25 @@
+/* ============================================
+   TOUR SPOTLIGHT — the purple halo ring drawn over the active target.
+   Engine positions this absolutely in the root stacking context so the
+   ring is never clipped by ancestor overflow.
+
+   .tour-spotlight (applied to the target element itself) is a behavioral
+   marker used by tests; the visual highlight lives entirely on .tour-halo.
+   ============================================ */
+
+.tour-halo {
+  position: fixed;
+  z-index: 9100;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.55);
+  border-radius: 6px;
+  transition:
+    top 0.15s ease-out,
+    left 0.15s ease-out,
+    width 0.15s ease-out,
+    height 0.15s ease-out;
+}
+
+.tour-halo[hidden] {
+  display: none;
+}
