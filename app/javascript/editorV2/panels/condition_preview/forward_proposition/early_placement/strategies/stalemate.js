@@ -6,9 +6,9 @@ import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/sh
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 import {
-  tryNarrowSingular, regionDefinitelyContains
+  tryNarrowSingular, tryNarrowMovedPiece,
+  canNarrowSingular, canNarrowMovedPiece
 } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkState with checkRestriction (one mobility-restricting king arrangement per team).
@@ -96,29 +96,18 @@ function arrangeCapture(pieces, ctx, random) {
           .filter(o => !pieces.has(o) && o !== x)
         if (origins.length === 0) { continue }
         if (!respectsAllCaps(moved.team, movedSpecies, x, ctx, pieces)) { continue }
-        if (!movedFitsBinding(ctx, movedSpecies, x)) { continue }
-        if (!regionDefinitelyContains(moved.region, x)) { continue }
-        if (!moved.species_set.has(movedSpecies)) { continue }
+        if (!canNarrowSingular(moved, movedSpecies, x)) { continue }
+        if (!canNarrowMovedPiece(ctx, movedSpecies, x)) { continue }
+        if (!canNarrowSingular(enemyMoved, enemySpecies, x)) { continue }
         // All checks passed — atomic commit.
-        moved.species_set = new Set([movedSpecies])
-        moved.region = { kind: 'set', squares: new Set([x]) }
-        enemyMoved.species_set = new Set([enemySpecies])
-        commitCapturedPieceRegion(enemyMoved, x)
+        tryNarrowMovedPiece(ctx, movedSpecies, x)
+        tryNarrowSingular(enemyMoved, enemySpecies, x)
         ctx.singulars.captured_piece = enemyMoved
         return pieces
       }
     }
   }
   return null
-}
-
-function movedFitsBinding(ctx, species, position) {
-  for (const a of ctx?.movedBinding?.assignments ?? []) {
-    if (a.kind === 'related-to') { continue }
-    if (!a.side.species_set.has(species)) { return false }
-    if (!regionDefinitelyContains(a.side.region, position)) { return false }
-  }
-  return true
 }
 
 function valueComparisonsPass(singular, otherActorKey, mySpecies, otherSpecies) {

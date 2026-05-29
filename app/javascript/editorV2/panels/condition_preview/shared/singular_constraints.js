@@ -1,7 +1,25 @@
-export function regionDefinitelyContains(region, position) {
+export function canNarrowSingularSpecies(singular, species) {
+  return singular.species_set.has(species)
+}
+
+export function canNarrowSingularRegion(singular, position) {
+  const { region } = singular
   if (region.kind === 'all') { return true }
   if (region.kind === 'set') { return region.squares.has(position) }
   return false
+}
+
+export function canNarrowSingular(singular, species, position) {
+  return canNarrowSingularSpecies(singular, species) &&
+         canNarrowSingularRegion(singular, position)
+}
+
+export function canNarrowMovedPiece(ctx, species, position) {
+  for (const a of ctx?.movedBinding?.assignments ?? []) {
+    if (a.kind === 'related-to') { continue }
+    if (!canNarrowSingular(a.side, species, position)) { return false }
+  }
+  return true
 }
 
 export function committedSpecies(singular) {
@@ -12,14 +30,13 @@ export function committedSpecies(singular) {
 }
 
 export function tryNarrowSingularRegion(singular, position) {
-  if (!regionDefinitelyContains(singular.region, position)) { return false }
+  if (!canNarrowSingularRegion(singular, position)) { return false }
   singular.region = { kind: 'set', squares: new Set([position]) }
   return true
 }
 
 export function tryNarrowSingular(singular, species, position) {
-  if (!singular.species_set.has(species)) { return false }
-  if (!regionDefinitelyContains(singular.region, position)) { return false }
+  if (!canNarrowSingular(singular, species, position)) { return false }
   singular.species_set = new Set([species])
   singular.region = { kind: 'set', squares: new Set([position]) }
   return true
@@ -27,13 +44,8 @@ export function tryNarrowSingular(singular, species, position) {
 
 export function tryNarrowMovedPiece(ctx, species, position) {
   const moved = ctx.singulars.moved_piece
-  if (!moved.species_set.has(species)) { return false }
-  if (!regionDefinitelyContains(moved.region, position)) { return false }
-  for (const a of ctx?.movedBinding?.assignments ?? []) {
-    if (a.kind === 'related-to') { continue }
-    if (!a.side.species_set.has(species)) { return false }
-    if (!regionDefinitelyContains(a.side.region, position)) { return false }
-  }
+  if (!canNarrowSingular(moved, species, position)) { return false }
+  if (!canNarrowMovedPiece(ctx, species, position)) { return false }
   moved.species_set = new Set([species])
   moved.region = { kind: 'set', squares: new Set([position]) }
   return true
