@@ -1,4 +1,3 @@
-import Board from 'gameplay/board'
 import { buildBoardFromLayout, buildLayoutFromPieces, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece, teamHasKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import {
@@ -39,14 +38,6 @@ export function directionSatisfied(direction, afterMobility, priorMobility) {
   if (direction === '-') { return afterMobility < priorMobility }
   if (direction === '=') { return afterMobility === priorMobility }
   return false
-}
-
-export function enemyKingPosition(pieces, team) {
-  const kingCode = pieceCode(team, Board.KING)
-  for (const [pos, piece] of pieces) {
-    if (piece === kingCode) { return pos }
-  }
-  return null
 }
 
 export function ensureEnemyKingPlaced(pieces, ctx, random) {

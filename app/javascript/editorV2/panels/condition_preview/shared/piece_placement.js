@@ -16,6 +16,14 @@ export function teamHasKing(pieces, team) {
   return false
 }
 
+export function positionOfKing(pieces, team) {
+  const code = `${team}${Board.KING}`
+  for (const [pos, piece] of pieces) {
+    if (piece === code) { return pos }
+  }
+  return null
+}
+
 export function pawnCount(pieces, team) {
   const code = `${team}${Board.PAWN}`
   let count = 0

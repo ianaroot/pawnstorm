@@ -2,7 +2,7 @@ import Board from 'gameplay/board'
 import { controllingPositions, nextPositionOnRay } from 'gameplay/board_query_utils'
 import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { placePiece, teamHasKing, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, teamHasKing, legalPlacementForSpecies, positionOfKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { tryNarrowMovedPiece } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
@@ -94,14 +94,6 @@ export function placeKingInCheck({ pieces, team, frame, ctx, random }) {
       pieces: withKing, kingPos, attackerTeam: enemyTeam, ctx, random
     })
     if (next !== null) { return next }
-  }
-  return null
-}
-
-function positionOfKing(pieces, team) {
-  const code = `${team}${Board.KING}`
-  for (const [pos, piece] of pieces) {
-    if (piece === code) { return pos }
   }
   return null
 }

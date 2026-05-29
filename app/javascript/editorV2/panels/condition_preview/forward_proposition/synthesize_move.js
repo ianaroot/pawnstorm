@@ -7,9 +7,9 @@ import {
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { controllingPositions, positionsBetween } from 'gameplay/board_query_utils'
 import { originCandidatesForSpecies } from 'editorV2/panels/condition_preview/shared/geometry_utils'
-import { buildPriorBoard, buildRecentMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
+import { buildPriorBoard, synthesizeEnemyMoveContext, legalPriorTurnState } from 'editorV2/panels/condition_preview/shared/example_utils'
 import { placeWithCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { enemyKingPosition } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
+import { positionOfKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { regionPossiblyContains } from 'editorV2/panels/condition_preview/forward_proposition/region'
 import { standardScenario } from 'editorV2/panels/condition_preview/forward_proposition/scenarios/standard'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
@@ -106,7 +106,7 @@ function placeBlockerAndRetry(attempt, between, kingTeam, excluded) {
 
 // priorBoard has `kingTeam`'s king actively checked by `attackerTeam`.
 function interposeCheck(attempt, priorBoard, kingTeam, attackerTeam) {
-  const kingPos = enemyKingPosition(attempt.priorPieces, kingTeam)
+  const kingPos = positionOfKing(attempt.priorPieces, kingTeam)
   if (kingPos === null) { return null }
   const checkers = controllingPositions({ board: priorBoard, targetPosition: kingPos, team: attackerTeam })
   if (checkers.length !== 1) { return null }
@@ -125,7 +125,7 @@ function interposePin(attempt) {
   afterPieces.delete(origin)
   afterPieces.set(endPos, moving)
   const afterBoard = buildBoardFromLayout(buildLayoutFromPieces(afterPieces), recentMoveContext, moverTeam)
-  const kingPos = enemyKingPosition(afterPieces, moverTeam)
+  const kingPos = positionOfKing(afterPieces, moverTeam)
   if (kingPos === null) { return null }
   const checkers = controllingPositions({ board: afterBoard, targetPosition: kingPos, team: Board.opposingTeam(moverTeam) })
   if (checkers.length !== 1) { return null }
@@ -146,7 +146,7 @@ function recentMoveContextForEnemy(ctx, random) {
     ? [...enemyCaptured.species_set].find(s => s !== null) ?? null
     : null
 
-  return buildRecentMoveContext({
+  return synthesizeEnemyMoveContext({
     team: enemyMoved.team,
     species,
     endPosition: [...enemyMoved.region.squares][0],
