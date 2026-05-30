@@ -1,7 +1,7 @@
 import Board from 'gameplay/board'
 import profileCollector from 'gameplay/profile_collector'
 import Rules from 'gameplay/rules'
-import { adjacentPositions, attackingPositions, controlledSquares, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
+import { adjacentPositions, controlledSquares, controllingPositions, coveringPositions, coveredPositions, defendingPositions, materialValue, shieldingPositions, shieldedPositions } from 'gameplay/board_query_utils'
 
 class CandidateMoveAnalysis {
   constructor({ board, moveObject }) {
@@ -346,7 +346,7 @@ class CandidateMoveAnalysis {
   rawRelatedPositions({ relation, targetPosition, team, board }) {
     switch (relation) {
       case 'attacker':
-        return attackingPositions({
+        return controllingPositions({
           board,
           targetPosition,
           team

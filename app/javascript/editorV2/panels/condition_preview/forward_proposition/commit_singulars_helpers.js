@@ -6,10 +6,6 @@ import { intersectRegions } from 'editorV2/panels/condition_preview/forward_prop
 import { materializeRegion } from 'editorV2/panels/condition_preview/forward_proposition/materialize_region'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
-export function commitCapturedPieceRegion(singular, square) {
-  singular.region = { kind: 'set', squares: new Set([square]) }
-}
-
 export function applyRelationsToAnchors(singular, singulars, committed, species) {
   for (const r of singular.relationsToAnchors ?? []) {
     if (!committed.has(r.otherActor)) { continue }

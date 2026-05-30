@@ -7,8 +7,8 @@ import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_
 import { placeKingInStalemate } from 'editorV2/panels/condition_preview/shared/king_placement'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import {
-  tryNarrowSingular, tryNarrowMovedPiece,
-  canNarrowSingular, canNarrowMovedPiece
+  commitSingular, commitMovedPiece,
+  canCommitSingular, canCommitMovedPiece
 } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 // Shares ctx.checkState with checkRestriction (one mobility-restricting king arrangement per team).
@@ -56,7 +56,7 @@ function handleEnemyMovedPiece(pieces, ctx, random) {
     if (candidate === null) { continue }
     const board = buildBoardFromLayout(buildLayoutFromPieces(candidate))
     if (mobilityAt(board, tryPos) !== 0) { continue }
-    if (!tryNarrowSingular(enemyMoved, species, tryPos)) { continue }
+    if (!commitSingular(enemyMoved, species, tryPos)) { continue }
     return candidate
   }
   return arrangeCapture(pieces, ctx, random)
@@ -96,12 +96,12 @@ function arrangeCapture(pieces, ctx, random) {
           .filter(o => !pieces.has(o) && o !== x)
         if (origins.length === 0) { continue }
         if (!respectsAllCaps(moved.team, movedSpecies, x, ctx, pieces)) { continue }
-        if (!canNarrowSingular(moved, movedSpecies, x)) { continue }
-        if (!canNarrowMovedPiece(ctx, movedSpecies, x)) { continue }
-        if (!canNarrowSingular(enemyMoved, enemySpecies, x)) { continue }
+        if (!canCommitSingular(moved, movedSpecies, x)) { continue }
+        if (!canCommitMovedPiece(ctx, movedSpecies, x)) { continue }
+        if (!canCommitSingular(enemyMoved, enemySpecies, x)) { continue }
         // All checks passed — atomic commit.
-        tryNarrowMovedPiece(ctx, movedSpecies, x)
-        tryNarrowSingular(enemyMoved, enemySpecies, x)
+        commitMovedPiece(ctx, movedSpecies, x)
+        commitSingular(enemyMoved, enemySpecies, x)
         ctx.singulars.captured_piece = enemyMoved
         return pieces
       }

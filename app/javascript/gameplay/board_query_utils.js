@@ -459,16 +459,12 @@ export function defendingPositions({ board, targetPosition, team, species = null
     return controllingPositions({ board, targetPosition, team, species }).filter(position => position !== targetPosition)
 }
 
-export function attackingPositions({ board, targetPosition, team, species = null }) {
-    return controllingPositions({ board, targetPosition, team, species })
-}
-
 export function defenderCount(args) {
     return defendingPositions(args).length
 }
 
 export function attackerCount(args) {
-    return attackingPositions(args).length
+    return controllingPositions(args).length
 }
 
 export function adjacentPositions({ board, targetPosition, team, species = null }) {

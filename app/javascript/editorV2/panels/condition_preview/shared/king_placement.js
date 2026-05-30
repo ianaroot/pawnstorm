@@ -3,7 +3,7 @@ import { controllingPositions, nextPositionOnRay } from 'gameplay/board_query_ut
 import { ALL_POSITIONS, buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { attackerCandidatesFor } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { placePiece, teamHasKing, legalPlacementForSpecies, positionOfKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
-import { tryNarrowMovedPiece } from 'editorV2/panels/condition_preview/shared/singular_constraints'
+import { commitMovedPiece } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 
 const CHECK_ATTACKER_SPECIES = Object.freeze([
@@ -282,10 +282,6 @@ export function placeKingInCheckmate({ pieces, team, frame, ctx, random }) {
   return null
 }
 
-function commitMovedPieceTo(ctx, species, position) {
-  return tryNarrowMovedPiece(ctx, species, position)
-}
-
 // Smother mate: BK in corner, 3 own pieces blocking escapes, WN giving check
 // from an L-distance square BK can't capture.
 function placeSmotherMate({ pieces, team, ctx, random }) {
@@ -321,7 +317,7 @@ function placeSmotherMate({ pieces, team, ctx, random }) {
         next = placePiece(next, knightPos, pieceCode(enemyTeam, Board.NIGHT))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos: cornerPos })) { continue }
-        const committed = commitMovedPieceTo(ctx, Board.NIGHT, knightPos)
+        const committed = commitMovedPiece(ctx, Board.NIGHT, knightPos)
         if (!committed) { continue }
         return next
       }
@@ -382,7 +378,7 @@ function placeBackRankMate({ pieces, team, ctx, random }) {
         next = placePiece(next, rookPos, pieceCode(enemyTeam, Board.ROOK))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos })) { continue }
-        const committed = commitMovedPieceTo(ctx, Board.ROOK, rookPos)
+        const committed = commitMovedPiece(ctx, Board.ROOK, rookPos)
         if (!committed) { continue }
         return next
       }
@@ -422,7 +418,7 @@ function placeQueenMate({ pieces, team, ctx, random }) {
         next = placePiece(next, queenPos, pieceCode(enemyTeam, Board.QUEEN))
         if (next === null) { continue }
         if (!isCheckmate({ pieces: next, team, kingPos })) { continue }
-        const committed = commitMovedPieceTo(ctx, Board.QUEEN, queenPos)
+        const committed = commitMovedPiece(ctx, Board.QUEEN, queenPos)
         if (!committed) { continue }
         return next
       }
