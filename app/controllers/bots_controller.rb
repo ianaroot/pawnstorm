@@ -25,9 +25,8 @@ class BotsController < ApplicationController
   def edit
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
-    @auto_start_tour = params[:intro] == '1'
     respond_to do |format|
-      format.html { @open_tournaments = open_tournaments }
+      format.html { set_edit_view_data }
       format.json { render json: { nodes: @nodes, connections: @connections } }
     end
   end
@@ -46,7 +45,7 @@ class BotsController < ApplicationController
         end
       else
         format.html do
-          @open_tournaments = open_tournaments
+          set_edit_view_data
           render :edit, status: :unprocessable_entity
         end
         format.json { render json: { errors: @bot.errors.full_messages }, status: :unprocessable_entity }
@@ -92,6 +91,11 @@ class BotsController < ApplicationController
 
   def bot_params
     params.require(:bot).permit(:name, :description, :commands)
+  end
+
+  def set_edit_view_data
+    @open_tournaments = open_tournaments
+    @auto_start_tour = params[:intro] == '1'
   end
 
   def open_tournaments
