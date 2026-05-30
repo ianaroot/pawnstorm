@@ -7,14 +7,6 @@ export function pieceCode(team, species) {
   return `${team}${species}`
 }
 
-export function pieceTeam(piece) {
-  return piece ? Board.parseTeam(piece) : null
-}
-
-export function pieceSpecies(piece) {
-  return piece ? Board.parseSpecies(piece) : null
-}
-
 export function unique(values) {
   return Array.from(new Set(values))
 }

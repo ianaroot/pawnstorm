@@ -122,9 +122,3 @@ describe('blockersMechanism.apply respecting caps', () => {
   })
 })
 
-describe('blockersMechanism.isActive', () => {
-  it('is currently a placeholder that returns false', () => {
-    const target = targetAt('d4', Board.WHITE, Board.QUEEN)
-    expect(blockersMechanism.isActive(target, new Map())).toBe(false)
-  })
-})

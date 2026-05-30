@@ -3,7 +3,7 @@ import { pieceControlsSquare } from 'gameplay/board_query_utils'
 import {
   buildBoardFromLayout, buildLayoutFromPieces, pieceCode, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
-import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
+import { placePiece, positionOfKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { adjacentNeighborPositions } from 'editorV2/panels/condition_preview/shared/geometry_utils'
 import { mobilityAt } from 'gameplay/mobility'
 import {
@@ -11,7 +11,7 @@ import {
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, hypotheticalMobilityAt, directionSatisfied,
-  enemyKingPosition, ensureEnemyKingPlaced
+  ensureEnemyKingPlaced
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
@@ -49,7 +49,7 @@ export const movedPieceShiftsEnemyKingMobility = {
 
     const piecesWithKing = ensureEnemyKingPlaced(pieces, ctx, random)
     if (piecesWithKing === null) { return null }
-    const kingPos = enemyKingPosition(piecesWithKing, ctx.enemyTeam)
+    const kingPos = positionOfKing(piecesWithKing, ctx.enemyTeam)
     if (kingPos === null) { return null }
 
     const paths = shuffled(

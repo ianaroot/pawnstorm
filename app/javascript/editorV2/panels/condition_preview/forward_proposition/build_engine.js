@@ -46,7 +46,7 @@ export function buildAttempt(combinedPlan, random, scenario = standardScenario, 
   commitSingularsSpecies(ctx, random)
   commitSingularsPosition(ctx, random, earlyPieces)
 
-  let pieces = placeSingulars(ctx.singulars, random, earlyPieces)
+  let pieces = placeSingulars(ctx.singulars, earlyPieces)
   if (pieces === null) { return buildFailed('place_singulars') }
 
   pieces = satisfyPropositions(ctx, pieces, random)

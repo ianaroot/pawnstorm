@@ -1,7 +1,25 @@
-export function regionDefinitelyContains(region, position) {
+export function canCommitSingularSpecies(singular, species) {
+  return singular.species_set.has(species)
+}
+
+export function canCommitSingularRegion(singular, position) {
+  const { region } = singular
   if (region.kind === 'all') { return true }
   if (region.kind === 'set') { return region.squares.has(position) }
   return false
+}
+
+export function canCommitSingular(singular, species, position) {
+  return canCommitSingularSpecies(singular, species) &&
+         canCommitSingularRegion(singular, position)
+}
+
+export function canCommitMovedPiece(ctx, species, position) {
+  for (const a of ctx?.movedBinding?.assignments ?? []) {
+    if (a.kind === 'related-to') { continue }
+    if (!canCommitSingular(a.side, species, position)) { return false }
+  }
+  return true
 }
 
 export function committedSpecies(singular) {
@@ -11,29 +29,23 @@ export function committedSpecies(singular) {
   return [...singular.species_set][0]
 }
 
-export function tryNarrowSingularRegion(singular, position) {
-  if (!regionDefinitelyContains(singular.region, position)) { return false }
+export function commitSingularRegion(singular, position) {
+  if (!canCommitSingularRegion(singular, position)) { return false }
   singular.region = { kind: 'set', squares: new Set([position]) }
   return true
 }
 
-export function tryNarrowSingular(singular, species, position) {
-  if (!singular.species_set.has(species)) { return false }
-  if (!regionDefinitelyContains(singular.region, position)) { return false }
+export function commitSingular(singular, species, position) {
+  if (!canCommitSingular(singular, species, position)) { return false }
   singular.species_set = new Set([species])
   singular.region = { kind: 'set', squares: new Set([position]) }
   return true
 }
 
-export function tryNarrowMovedPiece(ctx, species, position) {
+export function commitMovedPiece(ctx, species, position) {
   const moved = ctx.singulars.moved_piece
-  if (!moved.species_set.has(species)) { return false }
-  if (!regionDefinitelyContains(moved.region, position)) { return false }
-  for (const a of ctx?.movedBinding?.assignments ?? []) {
-    if (a.kind === 'related-to') { continue }
-    if (!a.side.species_set.has(species)) { return false }
-    if (!regionDefinitelyContains(a.side.region, position)) { return false }
-  }
+  if (!canCommitSingular(moved, species, position)) { return false }
+  if (!canCommitMovedPiece(ctx, species, position)) { return false }
   moved.species_set = new Set([species])
   moved.region = { kind: 'set', squares: new Set([position]) }
   return true

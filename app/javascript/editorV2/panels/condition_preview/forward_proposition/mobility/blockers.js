@@ -25,9 +25,7 @@ export const blockersMechanism = {
       }
     }
     return null
-  },
-
-  isActive() { return false }
+  }
 }
 
 function emptyReachableSquares(target, pieces) {

@@ -15,7 +15,8 @@ class BotsController < ApplicationController
   def create
     @bot = current_user_or_create_guest!.bots.new(bot_params)
     if @bot.save
-      redirect_to edit_bot_path(@bot), notice: 'Bot was successfully created.'
+      tour_param = @bot.user.bots.one? ? { intro: 1 } : {}
+      redirect_to edit_bot_path(@bot, **tour_param), notice: 'Bot was successfully created.'
     else
       render :new, status: :unprocessable_entity
     end
@@ -24,10 +25,8 @@ class BotsController < ApplicationController
   def edit
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
-    @auto_tour_first_bot = current_user&.bots&.count.to_i <= 1
-    @bot_guide_sections = BotGuide.sections
     respond_to do |format|
-      format.html { @open_tournaments = open_tournaments }
+      format.html { set_edit_view_data }
       format.json { render json: { nodes: @nodes, connections: @connections } }
     end
   end
@@ -46,7 +45,7 @@ class BotsController < ApplicationController
         end
       else
         format.html do
-          @open_tournaments = open_tournaments
+          set_edit_view_data
           render :edit, status: :unprocessable_entity
         end
         format.json { render json: { errors: @bot.errors.full_messages }, status: :unprocessable_entity }
@@ -92,6 +91,11 @@ class BotsController < ApplicationController
 
   def bot_params
     params.require(:bot).permit(:name, :description, :commands)
+  end
+
+  def set_edit_view_data
+    @open_tournaments = open_tournaments
+    @auto_start_tour = params[:intro] == '1'
   end
 
   def open_tournaments

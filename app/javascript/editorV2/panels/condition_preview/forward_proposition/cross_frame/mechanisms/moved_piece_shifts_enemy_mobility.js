@@ -3,10 +3,11 @@ import {
   buildBoardFromLayout, buildLayoutFromPieces, shuffled
 } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { mobilityAt } from 'gameplay/mobility'
+import { positionOfKing } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { singularSquare, commitPriorRegion } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/cross_frame_helpers'
 import {
   legalOriginCandidates, piecesWithMovedAt, directionSatisfied,
-  enemyKingPosition, ensureEnemyKingPlaced
+  ensureEnemyKingPlaced
 } from 'editorV2/panels/condition_preview/forward_proposition/cross_frame/mechanisms/shifts_mobility_helpers'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
@@ -83,7 +84,7 @@ function targetMobilityShifts(direction, pieces, destination, origin, movedTeam,
 function tryCheckingEnemyKing({ entry, ctx, pieces, random, moved, destination, movedSpecies }) {
   const piecesWithKing = ensureEnemyKingPlaced(pieces, ctx, random)
   if (piecesWithKing === null) { return null }
-  const kingPos = enemyKingPosition(piecesWithKing, ctx.enemyTeam)
+  const kingPos = positionOfKing(piecesWithKing, ctx.enemyTeam)
   if (kingPos === null) { return null }
 
   const board = buildBoardFromLayout(buildLayoutFromPieces(piecesWithKing))

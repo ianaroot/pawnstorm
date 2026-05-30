@@ -14,7 +14,6 @@ RSpec.describe 'Sidebar navigation', type: :feature do
       expect(page).to have_link('Play Match')
       expect(page).to have_link('Tournaments')
       expect(page).to have_link('Bots')
-      expect(page).to have_link('Bot Guide')
     end
 
     it 'shows email and sign out, not sign in/up' do

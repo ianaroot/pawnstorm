@@ -2,7 +2,7 @@ import { ALL_POSITIONS, pieceCode, pickWeightedSpecies, shuffled } from 'editorV
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { isEdgePosition } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
-import { tryNarrowSingularRegion } from 'editorV2/panels/condition_preview/shared/singular_constraints'
+import { commitSingularRegion } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
 export const edgeStrategy = {
   name: 'edge',
@@ -73,7 +73,7 @@ function tryPlaceAtEdge(entry, constraint, edgeSquares, ctx, pieces, random) {
     if (nextPieces === null) { continue }
 
     if (entry.source === 'singular') {
-      const narrowed = tryNarrowSingularRegion(ctx.singulars[entry.actorKey], square)
+      const narrowed = commitSingularRegion(ctx.singulars[entry.actorKey], square)
       if (!narrowed) { continue }
     }
 

@@ -4,7 +4,7 @@ import { MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN
 import { SINGULAR_ACTORS } from 'bot_execution/actors'
 import { actorTeam } from 'bot_execution/actor_teams'
 import {
-  relationalTeamForActor, buildExampleVariantPlan, sideSpeciesPool, relationParams
+  buildExampleVariantPlan, sideSpeciesPool, relationParams
 } from 'editorV2/panels/condition_preview/shared/relational_utils'
 import {
   COUNT_COMPARISON_METRIC, INDIVIDUAL_VALUE_METRIC, AGGREGATE_VALUE_METRIC, isValueMetric,
@@ -135,8 +135,8 @@ function buildRelationalPlan(payload, options = {}, teams = {}) {
     variants: buildExampleVariantPlan(payload),
     subjectSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'subject'), comparisons, 'subject'),
     targetSpeciesPool: valueFilteredSpeciesPool(sideSpeciesPool(payload, 'target'), comparisons, 'target'),
-    subjectTeam: relationalTeamForActor(payload.subject),
-    targetTeam: relationalTeamForActor(payload.target),
+    subjectTeam: actorTeam(payload.subject, movingTeam),
+    targetTeam: actorTeam(payload.target, movingTeam),
     movingTeam,
     enemyTeam,
     moveKinds: options.moveKinds || [MOVE_KIND_STANDARD, MOVE_KIND_CASTLE, MOVE_KIND_PROMOTION, MOVE_KIND_EN_PASSANT],

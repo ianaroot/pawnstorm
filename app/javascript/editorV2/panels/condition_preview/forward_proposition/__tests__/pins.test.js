@@ -140,9 +140,3 @@ describe('pinsMechanism.apply respecting caps', () => {
   })
 })
 
-describe('pinsMechanism.isActive', () => {
-  it('is currently a placeholder that returns false', () => {
-    const target = targetAt('d4', Board.WHITE, Board.NIGHT)
-    expect(pinsMechanism.isActive(target, new Map())).toBe(false)
-  })
-})

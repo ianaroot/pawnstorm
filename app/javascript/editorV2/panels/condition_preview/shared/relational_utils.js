@@ -32,10 +32,6 @@ export function shieldAttackerPositions(pairs, board) {
   return [...attackers]
 }
 
-export function relationalTeamForActor(actor) {
-  return actor === 'allied' || actor === 'moved_piece' ? Board.WHITE : Board.BLACK
-}
-
 function roleRequiresMovedPiece(actor) {
   return actor === 'moved_piece'
 }

@@ -1,7 +1,7 @@
 import { ALL_POSITIONS, pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece, legalPlacementForSpecies } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { aggregateMobilityRangeForSingular, edgeBiasedShuffle } from 'editorV2/panels/condition_preview/forward_proposition/mobility/edge_bias'
-import { applyRelationsToAnchors, commitCapturedPieceRegion } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
+import { applyRelationsToAnchors } from 'editorV2/panels/condition_preview/forward_proposition/commit_singulars_helpers'
 import { respectsAllCaps } from 'editorV2/panels/condition_preview/forward_proposition/respect_caps'
 import { ACTOR_PRIORITY } from 'editorV2/panels/condition_preview/forward_proposition/singulars'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
@@ -52,14 +52,14 @@ function commitPositionFor(singular, singulars, committed, random, ctx, key, ear
       if (moved.region.kind === 'set' && moved.region.squares.size === 1) {
         const movedDestination = [...moved.region.squares][0]
         if (legalPlacementForSpecies(movedDestination, species)) {
-          commitCapturedPieceRegion(singular, movedDestination)
+          singular.region = { kind: 'set', squares: new Set([movedDestination]) }
           return
         }
       }
     }
     for (const candidate of ordered) {
       if (!legalPlacementForSpecies(candidate, species)) { continue }
-      commitCapturedPieceRegion(singular, candidate)
+      singular.region = { kind: 'set', squares: new Set([candidate]) }
       return
     }
     singular.region = { kind: 'set', squares: new Set() }

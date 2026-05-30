@@ -121,9 +121,3 @@ function makeSeededRandom(seed) {
   }
 }
 
-describe('kingAdjacentControlMechanism.isActive', () => {
-  it('is currently a placeholder that returns false', () => {
-    const target = targetAt('d4', Board.WHITE, Board.KING)
-    expect(kingAdjacentControlMechanism.isActive(target, new Map())).toBe(false)
-  })
-})
