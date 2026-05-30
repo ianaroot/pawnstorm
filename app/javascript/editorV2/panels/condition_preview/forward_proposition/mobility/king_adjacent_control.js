@@ -28,9 +28,7 @@ export const kingAdjacentControlMechanism = {
       if (result !== null) { return result }
     }
     return null
-  },
-
-  isActive() { return false }
+  }
 }
 
 function tryPlaceEnemyAttacker(targetSquare, kingPosition, enemyTeam, board, ctx, pieces, random) {

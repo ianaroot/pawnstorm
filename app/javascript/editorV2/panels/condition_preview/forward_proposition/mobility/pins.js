@@ -24,9 +24,7 @@ export const pinsMechanism = {
       }
     }
     return null
-  },
-
-  isActive() { return false }
+  }
 }
 
 // step = direction from king toward target (and beyond, toward slider).

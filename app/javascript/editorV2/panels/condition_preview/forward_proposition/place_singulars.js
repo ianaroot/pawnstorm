@@ -2,7 +2,7 @@ import { pieceCode } from 'editorV2/panels/condition_preview/shared/board_utils'
 import { placePiece } from 'editorV2/panels/condition_preview/shared/piece_placement'
 import { committedSpecies } from 'editorV2/panels/condition_preview/shared/singular_constraints'
 
-export function placeSingulars(singulars, random, initialPieces = new Map()) {
+export function placeSingulars(singulars, initialPieces = new Map()) {
   let pieces = placeIfNotAlready(singulars.moved_piece, initialPieces)
   if (pieces === null) { return null }
   if (singulars.enemy_moved_piece !== singulars.captured_piece) {

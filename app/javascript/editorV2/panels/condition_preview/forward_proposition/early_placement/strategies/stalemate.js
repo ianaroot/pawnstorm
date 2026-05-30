@@ -50,7 +50,7 @@ function handleEnemyMovedPiece(pieces, ctx, random) {
     random
   )
   for (const species of candidates) {
-    const tryPos = pickPlacementCandidate(pieces, enemyMoved.team, species, random)
+    const tryPos = pickPlacementCandidate(pieces, species, random)
     if (tryPos === null) { continue }
     const candidate = placePiece(pieces, tryPos, pieceCode(enemyMoved.team, species))
     if (candidate === null) { continue }
@@ -62,7 +62,7 @@ function handleEnemyMovedPiece(pieces, ctx, random) {
   return arrangeCapture(pieces, ctx, random)
 }
 
-function pickPlacementCandidate(pieces, team, species, random) {
+function pickPlacementCandidate(pieces, species, random) {
   for (const pos of shuffled(ALL_POSITIONS, random)) {
     if (pieces.has(pos)) { continue }
     if (!legalPlacementForSpecies(pos, species)) { continue }
