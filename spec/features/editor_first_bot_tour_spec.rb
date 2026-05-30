@@ -9,7 +9,7 @@ RSpec.describe 'editor first-bot tour', type: :feature, js: true, slow: true do
   before do
     sign_in user
     Capybara.current_driver = :selenium_chrome
-    visit edit_bot_path(bot)
+    visit edit_bot_path(bot, intro: 1)
     wait_for_editor
   end
 
