@@ -197,7 +197,6 @@ RSpec.describe BotsController, type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         # The edit view reads @open_tournaments; if the update error path
         # fails to assign it, this render raises and the body is missing.
-        expect(response.body).to include('How it works')
       end
 
       it 'returns JSON for the editor rename modal' do

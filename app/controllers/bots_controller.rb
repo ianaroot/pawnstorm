@@ -25,7 +25,6 @@ class BotsController < ApplicationController
     @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
     @connections = @bot.nodes.flat_map(&:outgoing_connections)
     @auto_tour_first_bot = current_user&.bots&.count.to_i <= 1
-    @bot_guide_sections = BotGuide.sections
     respond_to do |format|
       format.html { @open_tournaments = open_tournaments }
       format.json { render json: { nodes: @nodes, connections: @connections } }
