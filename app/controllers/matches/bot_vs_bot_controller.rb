@@ -1,4 +1,6 @@
 class Matches::BotVsBotController < ApplicationController
+  OPPONENT_PAGE_SIZE = 12
+
   before_action :authenticate_registered_or_guest_user!, only: [:create]
 
   def new
@@ -31,6 +33,7 @@ class Matches::BotVsBotController < ApplicationController
     @all_opponent_bots = creation.all_opponent_bots
     @selected_own_bot_id = creation.selected_own_bot_id
     @selected_opponent_bot_id = creation.selected_opponent_bot_id
+    @opponent_landing_page = creation.opponent_page(per_page: OPPONENT_PAGE_SIZE)
   end
 
   def paginate_bot_lists
@@ -50,11 +53,17 @@ class Matches::BotVsBotController < ApplicationController
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
       @all_opponent_bots.with_name(params[:opponent_name]),
-      limit: 8,
+      limit: OPPONENT_PAGE_SIZE,
       page_param: :opponent_page,
-      page: params[:opponent_page],
+      page: params[:opponent_page] || default_opponent_page,
       params: shared_params.merge(own_bot_page: params[:own_bot_page])
     )
+  end
+
+  def default_opponent_page
+    return if params[:opponent_name].present?
+
+    @opponent_landing_page
   end
 
   def setup_params

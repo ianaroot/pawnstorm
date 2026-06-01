@@ -26,7 +26,7 @@
         <h2>Your Bot</h2>
         <%= turbo_frame_tag "own-bots-frame" do %>
           <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form' do |f| %>
-            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id] %>
+            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
             <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
             <%= f.hidden_field :opponent_name, value: params[:opponent_name] %>
             <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
@@ -40,12 +40,14 @@
                     name="match[own_bot_id]"
                     value="<%= bot.id %>"
                     form="match-form"
+                    data-action="change->match-setup#ownBotChosen"
                     <%= 'checked' if @selected_own_bot_id.to_i == bot.id %>
                     data-bot-name="<%= bot.name %>"
                     data-bot-stale="<%= bot.compiled_program_stale? %>"
                     data-bot-owned="true">
                   <span>
                     <strong><%= bot.name %></strong>
+                    <small class="match-bot-rating"><%= bot.rating.round %></small>
                     <small>by <%= bot.user.email %></small>
                     <%= ' (needs recompile)' if bot.compiled_program_stale? %>
                   </span>
@@ -68,8 +70,8 @@
       <div class="match-setup-section">
         <h2>Opponent Bot</h2>
         <%= turbo_frame_tag "opponent-bots-frame" do %>
-          <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form' do |f| %>
-            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id] %>
+          <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { match_setup_target: 'opponentForm' } do |f| %>
+            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
             <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
             <%= f.hidden_field :own_bot_name, value: params[:own_bot_name] %>
             <%= f.hidden_field :own_bot_page, value: params[:own_bot_page] %>
@@ -89,6 +91,7 @@
                     data-bot-owned="<%= current_user && bot.user_id == current_user.id %>">
                   <span>
                     <strong><%= bot.name %></strong>
+                    <small class="match-bot-rating"><%= bot.rating.round %></small>
                     <small>by <%= bot.user.email %></small>
                     <%= ' (needs recompile)' if bot.compiled_program_stale? %>
                   </span>

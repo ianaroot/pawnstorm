@@ -1,7 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["staleBotConfirmation", "form"]
+  static targets = ["staleBotConfirmation", "form", "opponentForm", "ownBotIdField"]
+
+  ownBotChosen(event) {
+    this.ownBotIdFieldTargets.forEach((field) => { field.value = event.target.value })
+    this.opponentFormTarget.requestSubmit()
+  }
 
   confirmStaleCompile(event) {
     if (this.staleBotConfirmationTarget.value === 'compile') { return }
