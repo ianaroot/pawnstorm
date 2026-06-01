@@ -140,7 +140,7 @@
   color: var(--text-primary);
 }
 
-.index-pagination span[aria-current] {
+.index-pagination [aria-current] {
   background: #A855F7;
   color: #1E1E1E;
   border-color: #A855F7;
