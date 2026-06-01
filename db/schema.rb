@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_16_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_01_003341) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_16_120000) do
     t.text "description"
     t.json "compiled_program"
     t.boolean "compiled_program_stale", default: true, null: false
+    t.float "rating", default: 1000.0, null: false
+    t.float "rating_deviation", default: 350.0, null: false
+    t.float "rating_volatility", default: 0.06, null: false
     t.index ["name"], name: "index_bots_on_name", unique: true
     t.index ["user_id"], name: "index_bots_on_user_id"
   end
@@ -149,6 +152,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_16_120000) do
     t.json "profile_data"
     t.bigint "white_tournament_entry_id"
     t.bigint "black_tournament_entry_id"
+    t.float "white_rating_before"
+    t.float "white_rating_after"
+    t.float "black_rating_before"
+    t.float "black_rating_after"
     t.index ["black_player_type", "black_player_id"], name: "index_matches_on_black_player"
     t.index ["black_tournament_entry_id"], name: "index_matches_on_black_tournament_entry_id"
     t.index ["creator_id"], name: "index_matches_on_creator_id"

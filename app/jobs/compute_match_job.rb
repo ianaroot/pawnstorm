@@ -55,6 +55,7 @@ class ComputeMatchJob < ApplicationJob
         profile_data: result_payload['profile']
       )
 
+      apply_ratings(match)
       match.tournament&.enqueue_next_match!
     end
   rescue StandardError => error
@@ -64,6 +65,12 @@ class ComputeMatchJob < ApplicationJob
   end
 
   private
+
+  def apply_ratings(match)
+    Ratings::ApplyMatchResult.new(match).call
+  rescue StandardError => error
+    Rails.logger.error("Rating update failed for match #{match.id}: #{error.message}")
+  end
 
   def start_match!(match)
     expected_status = match.tournament.present? ? Match.statuses[:queued] : Match.statuses[:pending]
