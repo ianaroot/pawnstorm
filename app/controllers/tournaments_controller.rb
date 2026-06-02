@@ -4,7 +4,6 @@ class TournamentsController < ApplicationController
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
   before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility, :edit, :update, :open_registration]
-  before_action :authorize_public_tournament_access!, only: [:show, :pairing]
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start, :edit, :update, :open_registration]
 
   def index
@@ -61,7 +60,7 @@ class TournamentsController < ApplicationController
   end
 
   def show_by_invite
-    @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    @tournament = tournament_scope.find_by!(invite_token: params[:invite_token])
     if @tournament.status_draft? && @tournament.creator != current_user
       head :not_found
       return
@@ -78,7 +77,7 @@ class TournamentsController < ApplicationController
   end
 
   def pairing_by_invite
-    @tournament = invite_tournament_scope.find_by!(invite_token: params[:invite_token])
+    @tournament = tournament_scope.find_by!(invite_token: params[:invite_token])
     @tournament_back_path = invitation_tournament_path(@tournament.invite_token)
     render :pairing if assign_pairing_state
   end
@@ -199,10 +198,6 @@ class TournamentsController < ApplicationController
     Tournament.includes(matches: [:white_tournament_entry, :black_tournament_entry])
   end
 
-  def invite_tournament_scope
-    tournament_scope
-  end
-
   def assign_show_state
     @tournament_presenter = TournamentPresenter.new(@tournament)
     @entrants = @tournament_presenter.entrants
@@ -243,12 +238,6 @@ class TournamentsController < ApplicationController
       formats: [:html],
       locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token }
     )
-  end
-
-  def authorize_public_tournament_access!
-    return if @tournament.visibility_public?
-
-    head :not_found
   end
 
   def authorize_tournament_control!

@@ -29,10 +29,6 @@ class TournamentPresenter
     stats.total_count
   end
 
-  def overall_status
-    stats.overall_status
-  end
-
   def active?
     stats.active?
   end

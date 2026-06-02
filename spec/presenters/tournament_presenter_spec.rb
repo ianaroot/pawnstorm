@@ -24,7 +24,6 @@ RSpec.describe TournamentPresenter do
 
       expect(presenter.running_matches_count).to eq(1)
       expect(presenter.active?).to be(true)
-      expect(presenter.overall_status).to eq('running')
     end
   end
 

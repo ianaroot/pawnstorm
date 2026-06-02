@@ -23,15 +23,6 @@ class TournamentMatchStats
     counts.values.sum
   end
 
-  def overall_status
-    return 'paused' if tournament.paused?
-    return 'pending' if total_count.zero? || pending_count == total_count
-    return 'running' if pending_count.positive? || running_count.positive?
-    return 'completed_with_failures' if failed_count.positive?
-
-    'completed'
-  end
-
   def active?
     pending_count.positive? || running_count.positive?
   end
