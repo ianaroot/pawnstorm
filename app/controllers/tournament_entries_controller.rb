@@ -91,9 +91,10 @@ class TournamentEntriesController < ApplicationController
   end
 
   def eligible_bot
-    current_user.bots.find_by(id: entry_params[:bot_id]).tap do |bot|
-      return nil unless bot&.compiled_program.present? && bot.compiled_program_stale == false
-    end
+    bot = current_user.bots.find_by(id: entry_params[:bot_id])
+    return nil unless bot&.compiled_program.present? && bot.compiled_program_stale == false
+
+    bot
   end
 
   def current_user_entry

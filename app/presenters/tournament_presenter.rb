@@ -59,28 +59,31 @@ class TournamentPresenter
       black_entrant = match.black_tournament_entry
       next unless white_entrant && black_entrant
       next unless rows.key?(white_entrant.id) && rows.key?(black_entrant.id)
-      if match.failed?
-        rows[white_entrant.id][:failed] += 1
-        rows[black_entrant.id][:failed] += 1
+      white_row = rows[white_entrant.id]
+      black_row = rows[black_entrant.id]
+      case classify_match(match)
+      when :failed
+        white_row[:failed] += 1
+        black_row[:failed] += 1
+        next
+      when :draw
+        white_row[:points] += 0.5
+        black_row[:points] += 0.5
+        white_row[:draws] += 1
+        black_row[:draws] += 1
+      when :white_win
+        white_row[:points] += 1.0
+        white_row[:wins] += 1
+        black_row[:losses] += 1
+      when :black_win
+        black_row[:points] += 1.0
+        black_row[:wins] += 1
+        white_row[:losses] += 1
+      else
         next
       end
-      next unless match.completed?
-      if Tournament::DRAW_RESULTS.include?(match.result)
-        rows[white_entrant.id][:points] += 0.5
-        rows[black_entrant.id][:points] += 0.5
-        rows[white_entrant.id][:draws] += 1
-        rows[black_entrant.id][:draws] += 1
-      elsif match.white_win?
-        rows[white_entrant.id][:points] += 1.0
-        rows[white_entrant.id][:wins] += 1
-        rows[black_entrant.id][:losses] += 1
-      elsif match.black_win?
-        rows[black_entrant.id][:points] += 1.0
-        rows[black_entrant.id][:wins] += 1
-        rows[white_entrant.id][:losses] += 1
-      end
-      rows[white_entrant.id][:completed] += 1
-      rows[black_entrant.id][:completed] += 1
+      white_row[:completed] += 1
+      black_row[:completed] += 1
     end
     rows.values.sort_by do |row|
       [-row[:points], -row[:wins], row[:losses], row[:entrant].display_name]
@@ -150,19 +153,15 @@ class TournamentPresenter
     }
 
     pairing_matches.each do |match|
-      if match.failed?
+      case (outcome = classify_match(match))
+      when :failed
         record[:failed] += 1
-        next
-      end
-
-      next unless match.completed?
-
-      if Tournament::DRAW_RESULTS.include?(match.result)
+      when :draw
         record[:entrant_a_points] += 0.5
         record[:entrant_b_points] += 0.5
         record[:draws] += 1
-      elsif match.white_win? || match.black_win?
-        winner = match.white_win? ? match.white_tournament_entry : match.black_tournament_entry
+      when :white_win, :black_win
+        winner = outcome == :white_win ? match.white_tournament_entry : match.black_tournament_entry
 
         if winner == entrant_a
           record[:entrant_a_points] += 1.0
@@ -175,6 +174,16 @@ class TournamentPresenter
     end
 
     record
+  end
+
+  def classify_match(match)
+    return :failed if match.failed?
+    return nil unless match.completed?
+    return :draw if Tournament::DRAW_RESULTS.include?(match.result)
+    return :white_win if match.white_win?
+    return :black_win if match.black_win?
+
+    nil
   end
 
   def directional_pairing_record(white_entrant, black_entrant)
