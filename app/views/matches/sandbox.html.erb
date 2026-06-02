@@ -1,18 +1,13 @@
-<div class="game-page" data-game-controller-page="true"><div id="arena">
-  <div id="notifications"></div>
-  <div id="turn-marker"><span id="team-allowed-to-move">white</span>'s turn</div>
-  <div id="W-captures" class="captures">
-    <br><br><br>
+<div class="game-page" data-game-controller-page="true">
+  <div id="arena">
+    <div id="notifications"></div>
+    <div id="turn-marker"><span id="team-allowed-to-move">white</span>'s turn</div>
+    <div id="W-captures" class="captures">
+      <br><br><br>
+    </div>
+    <%= render partial: 'shared/chess_board' %>
+    <div id="B-captures" class="captures">
+      <br><br><br>
+    </div>
   </div>
-  <%= render partial: 'shared/chess_board' %>
-  <div id="B-captures" class="captures">
-    <br><br><br>
-  </div>
-</div>
-
-<button id="undo-button">
-  undo
-</button>
-<button id="pause-button">pause</button>
-</div>
 </div>

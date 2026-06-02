@@ -50,6 +50,9 @@ class Matches::CompleteHumanVsBot
       previous_layouts: @params.fetch(:previous_layouts),
       error_message: nil
     )
+  rescue KeyError => error
+    field = error.is_a?(ActionController::ParameterMissing) ? error.param : error.key
+    fail_with("Missing match completion field: #{field}.")
   end
 
   def fail_with(message)

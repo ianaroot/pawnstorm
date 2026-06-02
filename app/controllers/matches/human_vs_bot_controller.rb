@@ -61,7 +61,7 @@ class Matches::HumanVsBotController < ApplicationController
     @play_bots_pagy, @play_bots = pagy(
       @play_bots.with_name(params[:bot_name]),
       limit: 8,
-      page_param: :bot_page,
+      page_key: 'bot_page',
       page: params[:bot_page],
       params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
     )

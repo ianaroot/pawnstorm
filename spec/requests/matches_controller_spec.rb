@@ -415,6 +415,32 @@ RSpec.describe 'Matches', type: :request do
       expect(match.result).to eq('error')
       expect(match.error_message).to eq('Bot move failed: kaboom')
     end
+
+    it 'returns a 422 instead of erroring when a completion field is missing' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      patch complete_human_vs_bot_match_path(match), params: {
+        match: {
+          status: 'completed',
+          result: 'white_win'
+          # lay_out and other replay fields intentionally omitted
+        }
+      }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('lay_out')
+      expect(match.reload).to be_running
+    end
   end
 
   describe 'GET #show' do
