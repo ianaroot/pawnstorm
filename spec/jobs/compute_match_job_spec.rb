@@ -189,5 +189,70 @@ RSpec.describe ComputeMatchJob, type: :job do
       expect(payload.dig('error', 'message')).to eq('Match computation completed without writing a result payload')
       expect(payload.dig('process', 'exit_status')).to eq(0)
     end
+
+    it 'applies rating changes to both bots on a rated result' do
+      match = Match.create!(
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_compiled_program_snapshot: white_bot.compiled_program,
+        black_compiled_program_snapshot: black_bot.compiled_program,
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      status = instance_double(Process::Status, success?: true)
+      payload = {
+        result: 'white_win',
+        lay_out: Array.new(64, 'ee'),
+        captured_pieces: [],
+        allowed_to_move: 'B',
+        movement_notation: ['1. e4', 'e5'],
+        previous_layouts: []
+      }
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:read_result_file).and_return(payload.to_json)
+
+      described_class.perform_now(match.id)
+
+      expect(white_bot.reload.rating).to be > 1000.0
+      expect(black_bot.reload.rating).to be < 1000.0
+      expect(match.reload.white_rating_after).to be_present
+    end
+
+    it 'leaves the match completed when rating application raises' do
+      match = Match.create!(
+        creator: user,
+        white_player: white_bot,
+        black_player: black_bot,
+        white_compiled_program_snapshot: white_bot.compiled_program,
+        black_compiled_program_snapshot: black_bot.compiled_program,
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      status = instance_double(Process::Status, success?: true)
+      payload = {
+        result: 'white_win',
+        lay_out: Array.new(64, 'ee'),
+        captured_pieces: [],
+        allowed_to_move: 'B',
+        movement_notation: ['1. e4', 'e5'],
+        previous_layouts: []
+      }
+      allow_any_instance_of(ComputeMatchJob).to receive(:run_match_process).and_return(['', '', status])
+      allow_any_instance_of(ComputeMatchJob).to receive(:read_result_file).and_return(payload.to_json)
+      allow(Ratings::ApplyMatchResult).to receive(:new).and_raise(StandardError, 'boom')
+
+      described_class.perform_now(match.id)
+
+      expect(match.reload).to be_completed
+    end
   end
 end

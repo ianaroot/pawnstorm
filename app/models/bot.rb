@@ -2,16 +2,22 @@
 #
 # Table name: bots
 #
-#  id          :bigint           not null, primary key
-#  commands    :json
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  user_id    :bigint           not null
-#  name       :string
-#  description :text
+#  id                     :bigint           not null, primary key
+#  user_id                :bigint
+#  commands               :json
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  name                   :string
+#  description            :text
+#  compiled_program       :json
+#  compiled_program_stale :boolean          default(TRUE), not null
+#  rating                 :float            default(1000.0), not null
+#  rating_deviation       :float            default(350.0), not null
+#  rating_volatility      :float            default(0.06), not null
 #
 class Bot < ApplicationRecord
   SYSTEM_BOT_NAME = 'Seed Bot'
+  RECOMPILE_RD_BUMP = 250.0
 
   def self.system_bot
     find_by(name: SYSTEM_BOT_NAME)
@@ -52,10 +58,10 @@ class Bot < ApplicationRecord
   end
 
   def compile_program!
-    update_columns(
-      compiled_program: BotCompiler.new(self).compile,
-      compiled_program_stale: false
-    )
+    new_program = BotCompiler.new(self).compile
+    changed = compiled_program.present? && new_program.as_json != compiled_program
+    update_columns(compiled_program: new_program, compiled_program_stale: false)
+    inflate_deviation_for_recompile! if changed
   end
 
   def mark_compiled_program_stale!
@@ -70,7 +76,19 @@ class Bot < ApplicationRecord
     compiled_program.deep_dup
   end
 
+  def rating_state
+    Glicko2::Rating.new(rating: rating, deviation: rating_deviation, volatility: rating_volatility)
+  end
+
+  def apply_rating!(state)
+    update_columns(rating: state.rating, rating_deviation: state.deviation, rating_volatility: state.volatility)
+  end
+
   private
+
+  def inflate_deviation_for_recompile!
+    with_lock { apply_rating!(rating_state.with_inflated_deviation(RECOMPILE_RD_BUMP)) }
+  end
 
   def destroy_open_tournament_entries
     tournament_entries

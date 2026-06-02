@@ -253,4 +253,39 @@ RSpec.describe Bot, type: :model do
       expect(bot.reload.compiled_program_stale).to be(true)
     end
   end
+
+  describe '#compile_program! rating deviation' do
+    it 'inflates deviation when the compiled program changes' do
+      bot = create(:bot, :compiled)
+      bot.update_columns(rating_deviation: 50.0)
+      allow_any_instance_of(BotCompiler).to receive(:compile).and_return(root: 'root', nodes: { 'n1' => {} })
+
+      expect { bot.compile_program! }.to(change { bot.reload.rating_deviation })
+      expect(bot.rating_deviation).to be > 50.0
+    end
+
+    it 'leaves deviation unchanged when the recompiled program is identical' do
+      bot = create(:bot, :compiled)
+      bot.update_columns(rating_deviation: 50.0)
+      allow_any_instance_of(BotCompiler).to receive(:compile).and_return(root: 'root', nodes: {})
+
+      expect { bot.compile_program! }.not_to(change { bot.reload.rating_deviation })
+    end
+
+    it 'does not change the rating itself on recompile' do
+      bot = create(:bot, :compiled)
+      bot.update_columns(rating: 1200.0, rating_deviation: 50.0)
+      allow_any_instance_of(BotCompiler).to receive(:compile).and_return(root: 'root', nodes: { 'n1' => {} })
+
+      expect { bot.compile_program! }.not_to(change { bot.reload.rating })
+    end
+
+    it 'does not inflate on the first compile' do
+      bot = create(:bot)
+      bot.update_columns(rating_deviation: 50.0)
+      allow_any_instance_of(BotCompiler).to receive(:compile).and_return(root: 'root', nodes: {})
+
+      expect { bot.compile_program! }.not_to(change { bot.reload.rating_deviation })
+    end
+  end
 end

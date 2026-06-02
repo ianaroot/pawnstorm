@@ -48,6 +48,20 @@ class Matches::CreateBotVsBot
     true
   end
 
+  def opponent_offset
+    bot = selected_own_bot
+    return nil unless bot
+
+    all_opponent_bots.where('bots.rating < ?', bot.rating).count
+  end
+
+  def opponent_page(per_page:)
+    offset = opponent_offset
+    return if offset.nil?
+
+    (offset / per_page) + 1
+  end
+
   private
 
   def load_bot_options
@@ -55,10 +69,10 @@ class Matches::CreateBotVsBot
       @own_bots = @user.bots.order(:name)
       @all_opponent_bots = Bot.where(user: @user)
                              .or(Bot.compiled.where.not(user: @user))
-                             .order(:name)
+                             .order(:rating)
     else
       @own_bots = Bot.none
-      @all_opponent_bots = Bot.compiled.order(:name)
+      @all_opponent_bots = Bot.compiled.order(:rating)
     end
   end
 

@@ -2,23 +2,32 @@
  #
  # Table name: matches
  #
- #  id                :bigint           not null, primary key
- #  allowed_to_move   :string           default("W"), not null
- #  captured_pieces   :json
- #  lay_out           :json
- #  movement_notation :json
- #  previous_layouts  :json
- #  error_message     :text
- #  profile_data      :json
- #  result            :integer
- #  status            :integer          default("pending"), not null
- #  created_at        :datetime         not null
- #  updated_at        :datetime         not null
- #  creator_id        :bigint
- #  white_player_type :string
- #  white_player_id   :bigint
- #  black_player_type :string
- #  black_player_id   :bigint
+ #  id                               :bigint           not null, primary key
+ #  lay_out                          :json
+ #  captured_pieces                  :json
+ #  allowed_to_move                  :string           default("W"), not null
+ #  movement_notation                :json
+ #  previous_layouts                 :json
+ #  created_at                       :datetime         not null
+ #  updated_at                       :datetime         not null
+ #  creator_id                       :bigint
+ #  white_player_type                :string
+ #  white_player_id                  :bigint
+ #  black_player_type                :string
+ #  black_player_id                  :bigint
+ #  status                           :integer          default(0), not null
+ #  result                           :integer
+ #  error_message                    :text
+ #  white_compiled_program_snapshot  :json
+ #  black_compiled_program_snapshot  :json
+ #  tournament_id                    :bigint
+ #  profile_data                     :json
+ #  white_tournament_entry_id        :bigint
+ #  black_tournament_entry_id        :bigint
+ #  white_rating_before              :float
+ #  white_rating_after               :float
+ #  black_rating_before              :float
+ #  black_rating_after               :float
  #
 class Match < ApplicationRecord
   attribute :captured_pieces, default: []
