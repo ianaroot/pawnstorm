@@ -396,6 +396,7 @@ RSpec.describe TournamentsController, type: :request do
       post abort_tournament_path(tournament)
 
       expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(tournament.reload).to be_status_aborted
       expect(pending_match.reload).to be_failed
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')

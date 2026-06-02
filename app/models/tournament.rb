@@ -58,6 +58,7 @@ class Tournament < ApplicationRecord
 
   def enqueue_next_match!
     return if paused?
+    return if status_aborted?
     return if matches.where(status: [Match.statuses[:queued], Match.statuses[:running]]).exists?
 
     next_match = matches.pending.order(:created_at, :id).first
@@ -76,6 +77,7 @@ class Tournament < ApplicationRecord
       result: Match.results[:error],
       error_message: 'Tournament aborted'
     )
+    status_aborted!
   end
 
   def pause!

@@ -29,8 +29,10 @@
         <%= button_to 'Pause Tournament', pause_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Pause this tournament? The current running match may finish, but no new matches will be queued.' } %>
       <% end %>
     </p>
-    <p class="match-show-meta-item">
-      <%= button_to 'Abort Tournament', abort_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
-    </p>
+    <% if Rails.env.development? || Rails.env.test? %>
+      <p class="match-show-meta-item">
+        <%= button_to 'Abort Tournament', abort_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
+      </p>
+    <% end %>
   <% end %>
 </div>

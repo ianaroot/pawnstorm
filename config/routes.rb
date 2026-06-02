@@ -35,7 +35,7 @@ Rails.application.routes.draw do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
       post :start
-      post :abort
+      post :abort if Rails.env.development? || Rails.env.test?
       post :pause
       post :resume
       post :open_registration

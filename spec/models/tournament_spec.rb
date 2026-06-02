@@ -10,4 +10,29 @@ RSpec.describe Tournament, type: :model do
       expect(tournament.invite_token).to match(/\A\h{6}\z/)
     end
   end
+
+  describe '#enqueue_next_match!' do
+    it 'leaves an aborted tournament untouched instead of queueing or completing it' do
+      user = create(:user)
+      tournament = create(:tournament, creator: user, status: :aborted)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      pending_match = Match.create!(
+        tournament: tournament,
+        creator: user,
+        white_player: bot_a,
+        black_player: bot_b,
+        status: :pending,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      tournament.enqueue_next_match!
+
+      expect(pending_match.reload).to be_pending
+      expect(tournament.reload).to be_status_aborted
+    end
+  end
 end
