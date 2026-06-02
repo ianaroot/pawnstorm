@@ -30,32 +30,12 @@
             <%= f.hidden_field :human_color, value: params[:human_color] %>
             <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
           <% end %>
-          <div class="match-bot-list-frame">
-            <div class="match-bot-list">
-              <% @play_bots.each do |bot| %>
-                <label class="match-bot-option">
-                  <input type="radio"
-                    name="match[bot_id]"
-                    value="<%= bot.id %>"
-                    form="match-form"
-                    <%= 'checked' if @selected_bot_id.to_i == bot.id %>
-                    data-bot-name="<%= bot.name %>"
-                    data-bot-stale="<%= bot.compiled_program_stale? %>"
-                    data-bot-owned="<%= current_user && bot.user_id == current_user.id %>">
-                  <span>
-                    <strong><%= bot.name %></strong>
-                    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
-                  </span>
-                </label>
-              <% end %>
-            </div>
-            <div class="match-bot-scroll-track" aria-hidden="true">
-              <div class="match-bot-scroll-thumb"></div>
-            </div>
-          </div>
-          <div class="index-pagination">
-            <%== @play_bots_pagy.series_nav if @play_bots_pagy.pages > 1 %>
-          </div>
+          <%= render 'matches/bot_list',
+            bots: @play_bots,
+            pagy: @play_bots_pagy,
+            radio_name: 'match[bot_id]',
+            selected_id: @selected_bot_id,
+            show_details: false %>
         <% end %>
       </div>
       <button type="submit" form="match-form" class="btn btn-primary">Start Game</button>

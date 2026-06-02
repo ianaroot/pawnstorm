@@ -2,9 +2,6 @@
   <%= render 'shared/condition_sentence_spec' %>
   <% if @match.awaiting_generation? %>
     <meta http-equiv="refresh" content="2">
-  <% end %>
-
-  <% if @match.awaiting_generation? %>
     <div class="match-replay-page match-replay-layout">
       <div class="game-page">
         <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options %>
@@ -41,8 +38,8 @@
       data-current-user-id="<%= current_user.id %>"
       data-white-name="<%= @match.player_display_name_for(:white) %>"
       data-black-name="<%= @match.player_display_name_for(:black) %>"
-      data-white-bot-owner-id="<%= @match.white_tournament_entry&.bot_owner_id || (@match.white_player_type == 'Bot' ? @match.white_player&.user_id : '') %>"
-      data-black-bot-owner-id="<%= @match.black_tournament_entry&.bot_owner_id || (@match.black_player_type == 'Bot' ? @match.black_player&.user_id : '') %>"
+      data-white-bot-owner-id="<%= @match.bot_owner_id_for(:white) %>"
+      data-black-bot-owner-id="<%= @match.bot_owner_id_for(:black) %>"
       data-white-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:white).to_json) %>"
       data-black-compiled-program-snapshot="<%= json_escape(@match.compiled_program_snapshot_for(:black).to_json) %>"
     >

@@ -1,4 +1,6 @@
 class Matches::HumanVsBotController < ApplicationController
+  BOT_PAGE_SIZE = 8
+
   before_action -> { current_user_or_create_guest! }, only: [:create]
   before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
@@ -27,7 +29,7 @@ class Matches::HumanVsBotController < ApplicationController
 
   def live
     @match = current_user.created_matches.find(params[:id])
-    unless @match.running? && interactive_play_match?(@match)
+    unless @match.running? && @match.interactive_human_vs_bot_for?(current_user)
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 
@@ -60,17 +62,11 @@ class Matches::HumanVsBotController < ApplicationController
   def paginate_bot_list
     @play_bots_pagy, @play_bots = pagy(
       @play_bots.with_name(params[:bot_name]),
-      limit: 8,
+      limit: BOT_PAGE_SIZE,
       page_key: 'bot_page',
       page: params[:bot_page],
       params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
     )
-  end
-
-  def interactive_play_match?(match)
-    players = [match.white_player, match.black_player]
-    players.count { |player| player == current_user } == 1 &&
-      players.count { |player| player.is_a?(Bot) } == 1
   end
 
   def setup_params

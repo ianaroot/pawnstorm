@@ -1,0 +1,20 @@
+<% owned = current_user.present? && bot.user_id == current_user.id %>
+<label class="match-bot-option">
+  <input type="radio"
+    name="<%= radio_name %>"
+    value="<%= bot.id %>"
+    form="match-form"
+    <%= 'checked' if checked %>
+    <% if local_assigns[:change_action].present? %>data-action="<%= change_action %>"<% end %>
+    data-bot-name="<%= bot.name %>"
+    data-bot-stale="<%= bot.compiled_program_stale? %>"
+    data-bot-owned="<%= owned %>">
+  <span>
+    <strong><%= bot.name %></strong>
+    <% if show_details %>
+      <small class="match-bot-rating"><%= bot.rating.round %></small>
+      <small>by <%= bot.user.email %></small>
+    <% end %>
+    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
+  </span>
+</label>

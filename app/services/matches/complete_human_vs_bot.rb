@@ -9,7 +9,7 @@ class Matches::CompleteHumanVsBot
 
   def call
     @match = @user.created_matches.find(@match_id)
-    raise ActiveRecord::RecordNotFound unless interactive_play_match?
+    raise ActiveRecord::RecordNotFound unless match.interactive_human_vs_bot_for?(@user)
 
     return true if match.completed? || match.failed?
 
@@ -24,12 +24,6 @@ class Matches::CompleteHumanVsBot
   end
 
   private
-
-  def interactive_play_match?
-    players = [match.white_player, match.black_player]
-    players.count { |player| player == @user } == 1 &&
-      players.count { |player| player.is_a?(Bot) } == 1
-  end
 
   def fail_match
     match.update!(

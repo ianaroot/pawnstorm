@@ -70,6 +70,13 @@ class Match < ApplicationRecord
     (black_player_type == 'Bot' && black_player&.user_id == user.id)
   end
 
+  def interactive_human_vs_bot_for?(user)
+    return false unless user
+    players = [white_player, black_player]
+    players.count { |player| player == user } == 1 &&
+      players.count { |player| player.is_a?(Bot) } == 1
+  end
+
   def first_bot_match_for?(user)
     return false unless bot_owned_by?(user)
     bot_ids = user.bots.pluck(:id)
@@ -84,14 +91,7 @@ class Match < ApplicationRecord
   def compiled_program_snapshot_for(player)
     return tournament_compiled_program_snapshot_for(player) if tournament.present?
 
-    case player.to_sym
-    when :white
-      white_compiled_program_snapshot
-    when :black
-      black_compiled_program_snapshot
-    else
-      raise ArgumentError, "Unknown match player for compiled program snapshot: #{player.inspect}"
-    end
+    normalize_player(player) == :white ? white_compiled_program_snapshot : black_compiled_program_snapshot
   end
 
   def player_display_name_for(player)
@@ -102,12 +102,18 @@ class Match < ApplicationRecord
     fallback_player_label(player)
   end
 
+  def bot_owner_id_for(player)
+    tournament_entry = tournament_entry_for_player(player)
+    return tournament_entry.bot_owner_id if tournament_entry&.bot_owner_id
+
+    record = player_record_for(player)
+    record.is_a?(Bot) ? record.user_id : ''
+  end
+
   def winner
-    return false if result != "white_win" && result != "black_win"
-    if result == "white_win"
-      player_display_name_for(:white)
-    else
-      player_display_name_for(:black)
+    case result
+    when "white_win" then player_display_name_for(:white)
+    when "black_win" then player_display_name_for(:black)
     end
   end
 
@@ -117,6 +123,13 @@ class Match < ApplicationRecord
 
   private
 
+  def normalize_player(player)
+    symbol = player.to_sym
+    return symbol if %i[white black].include?(symbol)
+
+    raise ArgumentError, "Unknown match player: #{player.inspect}"
+  end
+
   def tournament_compiled_program_snapshot_for(player)
     tournament_entry = tournament_entry_for_player(player)
     return tournament_entry.frozen_compiled_program_snapshot if tournament_entry&.frozen_compiled_program_snapshot.present?
@@ -125,36 +138,16 @@ class Match < ApplicationRecord
   end
 
   def tournament_entry_for_player(player)
-    case player.to_sym
-    when :white
-      white_tournament_entry
-    when :black
-      black_tournament_entry
-    else
-      raise ArgumentError, "Unknown match player: #{player.inspect}"
-    end
+    normalize_player(player) == :white ? white_tournament_entry : black_tournament_entry
   end
 
   def player_record_for(player)
-    case player.to_sym
-    when :white
-      white_player
-    when :black
-      black_player
-    else
-      raise ArgumentError, "Unknown match player: #{player.inspect}"
-    end
+    normalize_player(player) == :white ? white_player : black_player
   end
 
   def fallback_player_label(player)
-    case player.to_sym
-    when :white
-      "#{white_player_type} #{white_player_id}".strip.presence || 'Unknown player'
-    when :black
-      "#{black_player_type} #{black_player_id}".strip.presence || 'Unknown player'
-    else
-      raise ArgumentError, "Unknown match player: #{player.inspect}"
-    end
+    type, id = normalize_player(player) == :white ? [white_player_type, white_player_id] : [black_player_type, black_player_id]
+    "#{type} #{id}".strip.presence || 'Unknown player'
   end
 
   def completed_matches_require_replay_state
