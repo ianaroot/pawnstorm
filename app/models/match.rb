@@ -123,18 +123,18 @@ class Match < ApplicationRecord
 
   private
 
-  def normalize_player(player)
-    symbol = player.to_sym
-    return symbol if %i[white black].include?(symbol)
-
-    raise ArgumentError, "Unknown match player: #{player.inspect}"
-  end
-
   def tournament_compiled_program_snapshot_for(player)
     tournament_entry = tournament_entry_for_player(player)
     return tournament_entry.frozen_compiled_program_snapshot if tournament_entry&.frozen_compiled_program_snapshot.present?
 
     nil
+  end
+
+  def normalize_player(player)
+    symbol = player.to_sym
+    return symbol if %i[white black].include?(symbol)
+
+    raise ArgumentError, "Unknown match player: #{player.inspect}"
   end
 
   def tournament_entry_for_player(player)
