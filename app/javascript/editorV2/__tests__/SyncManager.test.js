@@ -6,6 +6,7 @@ import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
 import Graph from '../models/Graph.js'
 import { DEFAULT_CONDITION_DATA } from '../utils/nodeDefaults.js'
+import { EVENTS } from '../constants.js'
 
 describe('SyncManager', () => {
   let store
@@ -551,6 +552,19 @@ describe('SyncManager', () => {
 
       expect(store.getNode('n1').data.foo).toBe('bar')
       expect(store.getNode('n1').data.baz).toBeUndefined()
+    })
+
+    it('emits NODE_PERSISTED after the save succeeds', async () => {
+      const persisted = []
+      store.subscribe((event, data) => { if (event === EVENTS.NODE_PERSISTED) { persisted.push(data) } })
+      await syncManager.updateNodeData('n1', { baz: 'qux' })
+      expect(persisted).toEqual([{ clientId: 'n1' }])
+    })
+
+    it('updates the store only once', async () => {
+      const updateSpy = vi.spyOn(store, 'updateNode')
+      await syncManager.updateNodeData('n1', { baz: 'qux' })
+      expect(updateSpy).toHaveBeenCalledTimes(1)
     })
   })
 

@@ -53,7 +53,11 @@ class NodeRenderer {
       case EVENTS.NODE_UPDATE:
         this.updateNode(data.clientId, data.updates)
         break
-      
+
+      case EVENTS.NODE_PERSISTED:
+        this.fetchPreview(data.clientId)
+        break
+
       case EVENTS.NODE_REMOVE:
         this.removeNode(data.clientId)
         break
@@ -146,14 +150,12 @@ class NodeRenderer {
       }
     }
 
-    // Refetch preview when data changes or when the server ID arrives.
-    // Newly created nodes render optimistically before they have a server ID,
-    // so the first preview fetch can only succeed after sync completes.
-    if (updates.data !== undefined || updates.serverId !== undefined) {
+    // serverId arrives after an optimistic create — the first point a server preview can be fetched.
+    if (updates.serverId !== undefined) {
       this.fetchPreview(clientId)
-      if (updates.data !== undefined && snapshot) {
-        this.nodeSnapshot.set(clientId, { ...snapshot, dataKey: JSON.stringify(updates.data) })
-      }
+    }
+    if (updates.data !== undefined && snapshot) {
+      this.nodeSnapshot.set(clientId, { ...snapshot, dataKey: JSON.stringify(updates.data) })
     }
   }
   
