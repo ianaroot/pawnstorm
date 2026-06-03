@@ -44,6 +44,29 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include(%(value="#{own_bot.id}"))
       expect(response.body).to match(/value="#{own_bot.id}"[^>]*checked/)
     end
+
+    it 'shows the no-bots notice when a signed-in user has none' do
+      sign_in create(:user)
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).to include("You don't have any bots yet.")
+    end
+
+    it 'hides the no-bots notice once the user has a bot' do
+      user = create(:user)
+      create(:bot, :compiled, user: user)
+
+      sign_in user
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).not_to include("You don't have any bots yet.")
+    end
+
+    it 'shows the no-bots notice to an unauthenticated guest' do
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).to include("You don't have any bots yet.")
+    end
   end
 
   describe 'POST #create' do

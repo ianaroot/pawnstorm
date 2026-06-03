@@ -3,7 +3,7 @@
   <h1>Play Against Your Bot</h1>
   <p>Choose a bot, pick a side, and play a persisted match.</p>
   <p><%= link_to 'Set up a bot vs bot match instead', new_bot_vs_bot_match_path %></p>
-  <% if @user_has_no_own_bots %>
+  <% if user_has_no_own_bots? %>
     <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
   <% end %>
 

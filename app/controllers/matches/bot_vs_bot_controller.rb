@@ -1,43 +1,39 @@
 class Matches::BotVsBotController < ApplicationController
+  include Matches::SetupForm
+
   OWN_BOT_PAGE_SIZE = 8
   OPPONENT_PAGE_SIZE = 12
 
   before_action :authenticate_registered_or_guest_user!, only: [:create]
 
   def new
-    creation = Matches::CreateBotVsBot.new(user: current_user, params: setup_params)
-    assign_form_state(creation)
-    paginate_bot_lists
-    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
-
-    render 'matches/new'
+    render_form(Matches::CreateBotVsBot.new(user: current_user, params: setup_params))
   end
 
   def create
-    creation = Matches::CreateBotVsBot.new(user: current_user, params: match_params)
+    setup = Matches::CreateBotVsBot.new(user: current_user, params: match_params)
+    return redirect_to match_path(setup.match), notice: 'Match created. Generation will begin soon.' if setup.call
 
-    if creation.call
-      redirect_to match_path(creation.match), notice: 'Match created. Generation will begin soon.'
-    else
-      assign_form_state(creation)
-      paginate_bot_lists
-      @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
-      flash.now[:alert] = creation.error_message
-      render 'matches/new', status: :unprocessable_entity
-    end
+    flash.now[:alert] = setup.error_message
+    render_form(setup, status: :unprocessable_entity)
   end
 
   private
 
-  def assign_form_state(creation)
-    @own_bot_options = creation.own_bots
-    @opponent_bot_options = creation.all_opponent_bots
-    @selected_own_bot_id = creation.selected_own_bot_id
-    @selected_opponent_bot_id = creation.selected_opponent_bot_id
-    @opponent_landing_page = creation.opponent_page(per_page: OPPONENT_PAGE_SIZE)
+  def render_form(setup, status: :ok)
+    assign_form_state(setup)
+    paginate_bot_lists(setup)
+    render 'matches/new', status: status
   end
 
-  def paginate_bot_lists
+  def assign_form_state(setup)
+    @own_bot_options = setup.own_bots
+    @opponent_bot_options = setup.all_opponent_bots
+    @selected_own_bot_id = setup.selected_own_bot_id
+    @selected_opponent_bot_id = setup.selected_opponent_bot_id
+  end
+
+  def paginate_bot_lists(setup)
     shared_params = {
       own_bot_id: params[:own_bot_id],
       own_bot_name: params[:own_bot_name],
@@ -56,15 +52,15 @@ class Matches::BotVsBotController < ApplicationController
       @opponent_bot_options.with_name(params[:opponent_name]),
       limit: OPPONENT_PAGE_SIZE,
       page_key: 'opponent_page',
-      page: params[:opponent_page] || default_opponent_page,
+      page: params[:opponent_page] || default_opponent_page(setup),
       params: shared_params.merge(own_bot_page: params[:own_bot_page])
     )
   end
 
-  def default_opponent_page
+  def default_opponent_page(setup)
     return if params[:opponent_name].present?
 
-    @opponent_landing_page
+    setup.opponent_page(per_page: OPPONENT_PAGE_SIZE)
   end
 
   def setup_params

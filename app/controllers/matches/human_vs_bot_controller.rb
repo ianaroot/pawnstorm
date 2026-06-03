@@ -1,30 +1,21 @@
 class Matches::HumanVsBotController < ApplicationController
+  include Matches::SetupForm
+
   BOT_PAGE_SIZE = 8
 
   before_action -> { current_user_or_create_guest! }, only: [:create]
   before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
   def new
-    creation = Matches::CreateHumanVsBot.new(user: current_user, params: setup_params)
-    assign_form_state(creation)
-    paginate_bot_list
-    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
-
-    render 'matches/new_human_vs_bot'
+    render_form(Matches::CreateHumanVsBot.new(user: current_user, params: setup_params))
   end
 
   def create
-    creation = Matches::CreateHumanVsBot.new(user: current_user, params: match_params)
+    setup = Matches::CreateHumanVsBot.new(user: current_user, params: match_params)
+    return redirect_to live_human_vs_bot_match_path(setup.match) if setup.call
 
-    if creation.call
-      redirect_to live_human_vs_bot_match_path(creation.match)
-    else
-      assign_form_state(creation)
-      paginate_bot_list
-      @user_has_no_own_bots = current_user.bots.empty?
-      flash.now[:alert] = creation.error_message
-      render 'matches/new_human_vs_bot', status: :unprocessable_entity
-    end
+    flash.now[:alert] = setup.error_message
+    render_form(setup, status: :unprocessable_entity)
   end
 
   def live
@@ -53,10 +44,16 @@ class Matches::HumanVsBotController < ApplicationController
 
   private
 
-  def assign_form_state(creation)
-    @play_bots = creation.play_bots
-    @selected_bot_id = creation.selected_bot_id
-    @selected_color = creation.selected_color
+  def render_form(setup, status: :ok)
+    assign_form_state(setup)
+    paginate_bot_list
+    render 'matches/new_human_vs_bot', status: status
+  end
+
+  def assign_form_state(setup)
+    @play_bots = setup.play_bots
+    @selected_bot_id = setup.selected_bot_id
+    @selected_color = setup.selected_color
   end
 
   def paginate_bot_list
