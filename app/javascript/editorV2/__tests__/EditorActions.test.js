@@ -62,6 +62,16 @@ describe('EditorActions', () => {
     vi.restoreAllMocks()
   })
 
+  // ===== togglePreview =====
+
+  describe('togglePreview', () => {
+    it('does not throw on multi-select when there is no board state preview', () => {
+      store.setSelectedNodeIds(['root', 'condition'])
+      expect(editorActions.boardStatePreview).toBeUndefined()
+      expect(() => editorActions.togglePreview()).not.toThrow()
+    })
+  })
+
   // ===== deleteSelected =====
 
   describe('deleteSelected', () => {

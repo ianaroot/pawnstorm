@@ -191,12 +191,9 @@ RSpec.describe NodePresenter do
   end
 
   describe '#action_type' do
-    it 'prefers actionType, then action_type, then add' do
-      node = build(:node, :score, data: { actionType: 'multiply', action_type: 'subtract', value: 1 })
+    it 'returns actionType, defaulting to add' do
+      node = build(:node, :score, data: { actionType: 'multiply', value: 1 })
       expect(described_class.new(node).action_type).to eq('multiply')
-
-      node = build(:node, :score, data: { action_type: 'subtract', value: 1 })
-      expect(described_class.new(node).action_type).to eq('subtract')
 
       node = build(:node, :score, data: { value: 1 })
       expect(described_class.new(node).action_type).to eq('add')

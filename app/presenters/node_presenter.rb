@@ -65,7 +65,7 @@ class NodePresenter
   end
 
   def action_type
-    data[:actionType] || data[:action_type] || 'add'
+    data[:actionType] || 'add'
   end
 
   def action_value

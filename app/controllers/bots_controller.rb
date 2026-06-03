@@ -23,11 +23,12 @@ class BotsController < ApplicationController
   end
 
   def edit
-    @nodes = @bot.nodes.includes(:outgoing_connections, :incoming_connections)
-    @connections = @bot.nodes.flat_map(&:outgoing_connections)
     respond_to do |format|
       format.html { set_edit_view_data }
-      format.json { render json: { nodes: @nodes, connections: @connections } }
+      format.json do
+        nodes = @bot.nodes.includes(:outgoing_connections)
+        render json: { nodes: nodes, connections: nodes.flat_map(&:outgoing_connections) }
+      end
     end
   end
 
