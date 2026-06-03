@@ -41,17 +41,6 @@ RSpec.describe BotNodesController, type: :request do
     end
   end
 
-  describe 'GET #edit' do
-    before { sign_in user }
-
-    it 'returns the node as JSON' do
-      get edit_bot_node_path(bot, node, format: :json)
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['id']).to eq(node.id)
-    end
-  end
-
   describe 'POST #create' do
     before do
       sign_in user
@@ -222,18 +211,6 @@ RSpec.describe BotNodesController, type: :request do
       expect(response).to have_http_status(:success)
       expect(JSON.parse(response.body)).to eq('deleted_node_ids' => [], 'deleted_connection_ids' => [])
       expect(root.reload).to be_present
-    end
-  end
-
-  describe 'POST #update_position' do
-    before { sign_in user }
-
-    it 'updates the node position' do
-      post update_position_bot_node_path(bot, node), params: { position_x: 150.5, position_y: 250.0 }
-      node.reload
-      expect(node.position_x).to eq(150.5)
-      expect(node.position_y).to eq(250.0)
-      expect(response).to have_http_status(:success)
     end
   end
 

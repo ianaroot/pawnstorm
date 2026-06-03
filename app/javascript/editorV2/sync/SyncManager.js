@@ -8,6 +8,7 @@ import { showError } from 'editorV2/utils/errors'
 import { showErrorDialog } from 'editorV2/utils/ErrorDialog'
 import { normalizeNodeData } from 'editorV2/utils/nodeDefaults'
 import { buildTemplateInsertOperation } from 'editorV2/templates/TemplateInserter'
+import { EVENTS } from 'editorV2/constants'
 
 /**
  * SyncManager
@@ -766,10 +767,9 @@ class SyncManager {
       // 2. Sync with server
       await this.api.updateNode(clientId, { data: newData })
 
-      // 3. Re-emit the data update after the server save completes so
-      // preview rendering refetches against committed server state.
-      this.store.updateNode(clientId, { data: newData })
-      
+      // 3. Signal persistence so the preview refetches committed server state
+      this.store.emit(EVENTS.NODE_PERSISTED, { clientId })
+
       // 4. Push to history after success
       this.history.push('Update node', {
         type: 'updateNodeData',
@@ -781,9 +781,9 @@ class SyncManager {
       this.notifyPersistedMutation()
       
     } catch (error) {
-      // 4. Rollback on failure
+      // 5. Rollback on failure
       this.store.updateNode(clientId, { data: previousData })
-      
+
       showError(`Failed to save node: ${error.message}`)
       console.error('Failed to update node data:', error)
       
@@ -1056,21 +1056,21 @@ class SyncManager {
   // ===== Utility =====
   
   /**
-   * Get server ID for a client ID
-   * @param {string} clientId - Client ID
+   * Get server ID for a node client ID
+   * @param {string} clientId - Node client ID
    * @returns {number|null}
    */
-  getServerId(clientId) {
-    return this.api.getServerId(clientId)
+  getNodeServerId(clientId) {
+    return this.api.getNodeServerId(clientId)
   }
-  
+
   /**
-   * Get client ID for a server ID
-   * @param {number} serverId - Server ID
+   * Get client ID for a node server ID
+   * @param {number} serverId - Node server ID
    * @returns {string|null}
    */
-  getClientId(serverId) {
-    return this.api.getClientId(serverId)
+  getNodeClientId(serverId) {
+    return this.api.getNodeClientId(serverId)
   }
   
   /**

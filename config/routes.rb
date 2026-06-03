@@ -12,10 +12,9 @@ Rails.application.routes.draw do
       post :compile
       post :clone
     end
-    resources :nodes, controller: 'bot_nodes', except: [:index, :new, :destroy] do
+    resources :nodes, controller: 'bot_nodes', except: [:index, :new, :destroy, :edit] do
       member do
         post :connect
-        post :update_position
       end
       collection do
         delete :batch_destroy

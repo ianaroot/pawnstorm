@@ -287,7 +287,7 @@ class ClickHandler {
     if (!this.editorPanel) { return }
     const actionType = this.editorPanel.querySelector('#action-type')
     const actionValue = this.editorPanel.querySelector('#action-value')
-    if (actionType) { actionType.value = node.data.actionType || node.data.action_type || 'add' }
+    if (actionType) { actionType.value = node.data.actionType || 'add' }
     if (actionValue) { actionValue.value = node.data.value || 1 }
   }
 

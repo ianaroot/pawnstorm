@@ -1,17 +1,13 @@
 class BotNodesController < ApplicationController
   before_action :authenticate_registered_or_guest_user!
   before_action :set_bot
-  before_action :set_node, only: [:show, :edit, :update, :update_position]
+  before_action :set_node, only: [:show, :update]
 
   def show
     respond_to do |format|
       format.html { render partial: 'bots/nodes/preview', locals: { node: @node } }
       format.json { render json: @node }
     end
-  end
-
-  def edit
-    render json: @node
   end
 
   def create
@@ -54,14 +50,6 @@ class BotNodesController < ApplicationController
       deleted_node_ids: deleted_node_ids,
       deleted_connection_ids: deleted_connection_ids.uniq
     }
-  end
-
-  def update_position
-    if @node.update(position_x: params[:position_x], position_y: params[:position_y])
-      render json: @node
-    else
-      render json: @node.errors, status: :unprocessable_entity
-    end
   end
 
   def batch_update_positions
