@@ -26,8 +26,8 @@ describe('SyncManager', () => {
       createConnection: vi.fn(),
       deleteConnection: vi.fn(),
       loadBot: vi.fn(),
-      getServerId: vi.fn(),
-      getClientId: vi.fn(),
+      getNodeServerId: vi.fn(),
+      getNodeClientId: vi.fn(),
       isSynced: vi.fn()
     }
     
@@ -879,21 +879,21 @@ describe('SyncManager', () => {
   })
 
   describe('utility methods', () => {
-    it('getServerId delegates to api', () => {
-      mockApi.getServerId.mockReturnValue(123)
+    it('getNodeServerId delegates to api', () => {
+      mockApi.getNodeServerId.mockReturnValue(123)
 
-      const result = syncManager.getServerId('client-123')
+      const result = syncManager.getNodeServerId('client-123')
 
-      expect(mockApi.getServerId).toHaveBeenCalledWith('client-123')
+      expect(mockApi.getNodeServerId).toHaveBeenCalledWith('client-123')
       expect(result).toBe(123)
     })
 
-    it('getClientId delegates to api', () => {
-      mockApi.getClientId.mockReturnValue('client-123')
+    it('getNodeClientId delegates to api', () => {
+      mockApi.getNodeClientId.mockReturnValue('client-123')
 
-      const result = syncManager.getClientId(123)
+      const result = syncManager.getNodeClientId(123)
 
-      expect(mockApi.getClientId).toHaveBeenCalledWith(123)
+      expect(mockApi.getNodeClientId).toHaveBeenCalledWith(123)
       expect(result).toBe('client-123')
     })
 

@@ -21,7 +21,7 @@ module EditorV2Helpers
       (function() {
         const nodes = window.editorAPI.store.getNodes();
         for (const node of nodes) {
-          const sid = window.editorAPI.api.getServerId(node.clientId);
+          const sid = window.editorAPI.api.getNodeServerId(node.clientId);
           if (sid === #{server_id}) {
             return node.clientId;
           }
@@ -46,7 +46,7 @@ module EditorV2Helpers
   # @param client_id [String] The client UUID
   # @return [Integer, nil] The server ID or nil if not found
   def get_server_id(client_id)
-    page.evaluate_script("window.editorAPI.api.getServerId('#{client_id}')")
+    page.evaluate_script("window.editorAPI.api.getNodeServerId('#{client_id}')")
   end
 
   # Wait for the editor to fully initialize

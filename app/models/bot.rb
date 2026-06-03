@@ -18,9 +18,6 @@ class Bot < ApplicationRecord
   SYSTEM_BOT_NAME = 'Seed Bot'
   RECOMPILE_RD_BUMP = 250.0
 
-  def self.system_bot
-    find_by(name: SYSTEM_BOT_NAME)
-  end
   belongs_to :user
   has_many :matches_as_white_player, as: :white_player, class_name: 'Match', dependent: :nullify
   has_many :matches_as_black_player, as: :black_player, class_name: 'Match', dependent: :nullify
@@ -30,12 +27,12 @@ class Bot < ApplicationRecord
   has_many :connections, through: :nodes, source: :outgoing_connections
 
   scope :compiled,             ->         { where(compiled_program_stale: false).where.not(compiled_program: nil) }
-  scope :stale,             ->         { where(compiled_program_stale: true) }
+  scope :stale,                ->         { where(compiled_program_stale: true) }
   scope :with_name,            ->(name)   { where("bots.name ILIKE ?", "%#{name}%") }
   scope :with_compiled_status, ->(status) {
     case status
-    when 'compiled' then where(compiled_program_stale: false).where.not(compiled_program: nil)
-    when 'stale'    then where(compiled_program_stale: true)
+    when 'compiled' then compiled
+    when 'stale'    then stale
     end
   }
   scope :filtered, ->(name: nil, compiled_status: nil) {
@@ -51,7 +48,15 @@ class Bot < ApplicationRecord
   after_create :create_root_node
   
   validate :root_node_must_exist, on: :update
-  
+
+  def self.system_bot
+    find_by(name: SYSTEM_BOT_NAME)
+  end
+
+  def self.mark_stale_for(bot_id)
+    find_by(id: bot_id)&.mark_compiled_program_stale!
+  end
+
   def root_node
     nodes.find_by(node_type: 'root')
   end

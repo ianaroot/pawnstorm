@@ -418,16 +418,16 @@ class API {
    * @param {string} clientId - Node client ID
    * @returns {number|null} Server ID or null
    */
-  getServerId(clientId) {
+  getNodeServerId(clientId) {
     return this.nodeClientToServer.get(clientId) || null
   }
-  
+
   /**
    * Get client ID for a node server ID
    * @param {number} serverId - Node server ID
    * @returns {string|null} Client ID or null
    */
-  getClientId(serverId) {
+  getNodeClientId(serverId) {
     return this.nodeServerToClient.get(serverId) || null
   }
   

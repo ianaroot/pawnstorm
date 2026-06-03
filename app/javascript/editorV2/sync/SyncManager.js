@@ -1056,21 +1056,21 @@ class SyncManager {
   // ===== Utility =====
   
   /**
-   * Get server ID for a client ID
-   * @param {string} clientId - Client ID
+   * Get server ID for a node client ID
+   * @param {string} clientId - Node client ID
    * @returns {number|null}
    */
-  getServerId(clientId) {
-    return this.api.getServerId(clientId)
+  getNodeServerId(clientId) {
+    return this.api.getNodeServerId(clientId)
   }
-  
+
   /**
-   * Get client ID for a server ID
-   * @param {number} serverId - Server ID
+   * Get client ID for a node server ID
+   * @param {number} serverId - Node server ID
    * @returns {string|null}
    */
-  getClientId(serverId) {
-    return this.api.getClientId(serverId)
+  getNodeClientId(serverId) {
+    return this.api.getNodeClientId(serverId)
   }
   
   /**

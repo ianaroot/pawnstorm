@@ -1,7 +1,9 @@
 module Nodes
   class DataValidator
     CONDITION_V2_RELATION_KEYS = %w[ version kind subject subjectFilter subjectFilterMode subjectComparisonMetric subjectComparator subjectComparisonSource subjectComparisonSourceTotal operator target targetFilter targetFilterMode targetComparisonMetric targetComparator targetComparisonSource targetComparisonSourceTotal ].freeze
+    CONDITION_V2_RELATION_REQUIRED_KEYS = %w[version kind subject subjectFilter operator target targetFilter].freeze
     CONDITION_V2_CENSUS_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator target targetFilter targetFilterMode targetTotal positionAxis positionComparator positionTarget ].freeze
+    CONDITION_V2_CENSUS_REQUIRED_KEYS = %w[version kind subject subjectFilter operator comparator target].freeze
     CONDITION_V2_IDENTITY_KEYS = %w[ version kind subject target ].freeze
     ACTION_TYPES = %w[add subtract set return].freeze
     ACTION_KEYS = %w[actionType value].freeze
@@ -32,6 +34,17 @@ module Nodes
 
     attr_reader :record
 
+    def validate_keys(allowed:, required: [])
+      keys = record.data.keys.map(&:to_s)
+      extra_keys = keys - allowed
+      record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}") if extra_keys.any?
+      missing_keys = required - keys
+      return true if missing_keys.empty?
+
+      record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
+      false
+    end
+
     def validate_condition_data
       return record.errors.add(:data, 'must be a hash') unless record.data.is_a?(Hash)
       validate_condition_data_v2
@@ -59,16 +72,7 @@ module Nodes
     end
 
     def validate_condition_data_v2_relational
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - CONDITION_V2_RELATION_KEYS
-      missing_keys = %w[version kind subject subjectFilter operator target targetFilter] - keys
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
-      if missing_keys.any?
-        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-        return
-      end
+      return unless validate_keys(allowed: CONDITION_V2_RELATION_KEYS, required: CONDITION_V2_RELATION_REQUIRED_KEYS)
       subject = record.data['subject']
       subject_filter = record.data['subjectFilter']
       subject_filter_mode = record.data['subjectFilterMode']
@@ -107,16 +111,7 @@ module Nodes
     end
 
     def validate_condition_data_v2_census
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - CONDITION_V2_CENSUS_KEYS
-      missing_keys = %w[version kind subject subjectFilter operator comparator target] - keys
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
-      if missing_keys.any?
-        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-        return
-      end
+      return unless validate_keys(allowed: CONDITION_V2_CENSUS_KEYS, required: CONDITION_V2_CENSUS_REQUIRED_KEYS)
       subject = record.data['subject']
       subject_filter = record.data['subjectFilter']
       subject_filter_mode = record.data['subjectFilterMode']
@@ -155,16 +150,7 @@ module Nodes
     end
 
     def validate_condition_data_v2_identity
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - CONDITION_V2_IDENTITY_KEYS
-      missing_keys = %w[version kind subject target] - keys
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
-      if missing_keys.any?
-        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-        return
-      end
+      return unless validate_keys(allowed: CONDITION_V2_IDENTITY_KEYS, required: CONDITION_V2_IDENTITY_KEYS)
       subject = record.data['subject']
       target = record.data['target']
       unless NodeGrammarRules.valid_identity_pair?(subject:, target:)
@@ -174,16 +160,7 @@ module Nodes
 
     def validate_score_data
       return record.errors.add(:data, 'must be a hash') unless record.data.is_a?(Hash)
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - ACTION_KEYS
-      missing_keys = ACTION_KEYS - keys
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
-      if missing_keys.any?
-        record.errors.add(:data, "is missing required keys: #{missing_keys.join(', ')}")
-        return
-      end
+      return unless validate_keys(allowed: ACTION_KEYS, required: ACTION_KEYS)
       action_type = record.data['actionType'] || record.data[:actionType]
       value = record.data['value'] || record.data[:value]
       record.errors.add(:data, 'has invalid actionType') unless ACTION_TYPES.include?(action_type)
@@ -192,11 +169,7 @@ module Nodes
 
     def validate_organizer_data
       return record.errors.add(:data, 'must be a hash') unless record.data.is_a?(Hash)
-      keys = record.data.keys.map(&:to_s)
-      extra_keys = keys - ORGANIZER_KEYS
-      if extra_keys.any?
-        record.errors.add(:data, "contains invalid keys: #{extra_keys.join(', ')}")
-      end
+      validate_keys(allowed: ORGANIZER_KEYS)
       title = record.data['title'] || record.data[:title]
       notes = record.data['notes'] || record.data[:notes]
       record.errors.add(:data, 'title must be a string') unless title.is_a?(String)

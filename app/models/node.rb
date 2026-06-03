@@ -61,7 +61,7 @@ class Node < ApplicationRecord
   def mark_bot_compiled_program_stale_if_needed
     return if previously_persisted? && destroyed? == false && !saved_change_to_position_x? && !saved_change_to_position_y? && !saved_change_to_data?
 
-    Bot.where(id: bot_id).find_each(&:mark_compiled_program_stale!)
+    Bot.mark_stale_for(bot_id)
   end
   
   def single_root_per_bot
