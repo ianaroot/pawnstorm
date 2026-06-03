@@ -5,8 +5,8 @@ module Nodes
     CONDITION_V2_CENSUS_KEYS = %w[ version kind subject subjectFilter subjectFilterMode operator comparator target targetFilter targetFilterMode targetTotal positionAxis positionComparator positionTarget ].freeze
     CONDITION_V2_CENSUS_REQUIRED_KEYS = %w[version kind subject subjectFilter operator comparator target].freeze
     CONDITION_V2_IDENTITY_KEYS = %w[ version kind subject target ].freeze
-    ACTION_TYPES = %w[add subtract set return].freeze
-    ACTION_KEYS = %w[actionType value].freeze
+    SCORE_ACTION_TYPES = %w[add subtract set return].freeze
+    SCORE_KEYS = %w[actionType value].freeze
     ORGANIZER_KEYS = %w[title notes].freeze
 
     class << self
@@ -160,10 +160,10 @@ module Nodes
 
     def validate_score_data
       return record.errors.add(:data, 'must be a hash') unless record.data.is_a?(Hash)
-      return unless validate_keys(allowed: ACTION_KEYS, required: ACTION_KEYS)
+      return unless validate_keys(allowed: SCORE_KEYS, required: SCORE_KEYS)
       action_type = record.data['actionType'] || record.data[:actionType]
       value = record.data['value'] || record.data[:value]
-      record.errors.add(:data, 'has invalid actionType') unless ACTION_TYPES.include?(action_type)
+      record.errors.add(:data, 'has invalid actionType') unless SCORE_ACTION_TYPES.include?(action_type)
       record.errors.add(:data, 'value must be numeric') unless value.is_a?(Numeric)
     end
 

@@ -64,11 +64,11 @@ class NodePresenter
     self.class.condition_preview_chunks_for(data)
   end
 
-  def action_type
+  def score_action_type
     data[:actionType] || 'add'
   end
 
-  def action_value
+  def score_value
     data[:value] || 1
   end
 
