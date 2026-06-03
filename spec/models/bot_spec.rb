@@ -288,4 +288,29 @@ RSpec.describe Bot, type: :model do
       expect { bot.compile_program! }.not_to(change { bot.reload.rating_deviation })
     end
   end
+
+  describe '#eligibility_for and #eligible_for?' do
+    let(:bot) { create(:bot) }
+    let(:one_score_program) { { "root" => "s1", "nodes" => { "s1" => { "type" => "score", "children" => [] } } } }
+
+    before do
+      bot.update_columns(compiled_program: one_score_program, compiled_program_stale: false)
+    end
+
+    it 'is eligible when there are no constraints' do
+      expect(bot.eligible_for?(nil)).to be true
+    end
+
+    it 'returns a result object detailing violations against constraints' do
+      result = bot.eligibility_for("max_score_nodes" => 0)
+
+      expect(result).to be_a(Tournaments::BotEligibilityChecker::Result)
+      expect(result.eligible?).to be false
+      expect(result.violations.map { |v| v[:type] }).to include("max_score_nodes")
+    end
+
+    it 'eligible_for? mirrors the result object eligibility' do
+      expect(bot.eligible_for?("max_score_nodes" => 0)).to be false
+    end
+  end
 end

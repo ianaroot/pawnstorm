@@ -39,7 +39,6 @@ Rails.application.routes.draw do
       post :pause
       post :resume
       post :open_registration
-      get :eligible_bots
       get :eligibility
     end
   end

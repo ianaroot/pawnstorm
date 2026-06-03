@@ -1,9 +1,8 @@
 class TournamentsController < ApplicationController
-  include BotEligibility
-  include ConstraintsParams
+  include Tournaments::ConstraintsParams
   before_action :authenticate_registered_user!, except: [:index, :show, :show_by_invite, :pairing, :pairing_by_invite]
   before_action :set_public_tournament, only: [:show, :pairing]
-  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligible_bots, :eligibility, :edit, :update, :open_registration]
+  before_action :set_tournament, only: [:abort, :pause, :resume, :start, :eligibility, :edit, :update, :open_registration]
   before_action :authorize_tournament_control!, only: [:abort, :pause, :resume, :start, :edit, :update, :open_registration]
 
   def index
@@ -104,7 +103,7 @@ class TournamentsController < ApplicationController
 
     if @tournament.constraints.present?
       begin
-        BotEligibilityChecker.new(nil, @tournament.constraints).check
+        Tournaments::BotEligibilityChecker.new(nil, @tournament.constraints).check
       rescue StandardError
         return redirect_to tournament_show_path(@tournament), alert: 'Tournament constraints are invalid. Please review and save them before opening.'
       end
@@ -132,8 +131,7 @@ class TournamentsController < ApplicationController
       return render json: { eligible: false, cost: 0, budget: nil, violations: [{ type: "not_compiled", message: "Bot has not been compiled." }] }
     end
 
-    result = check_bot_eligibility(bot, @tournament.constraints)
-    render json: result
+    render json: bot.eligibility_for(@tournament.constraints)
   end
 
   def lookup
@@ -143,23 +141,6 @@ class TournamentsController < ApplicationController
     else
       render json: { error: 'not_found' }, status: :not_found
     end
-  end
-
-  def eligible_bots
-    unless current_user && !current_user.guest?
-      render json: { eligible_bot_ids: [] } and return
-    end
-
-    if @tournament.status_draft? && @tournament.creator != current_user
-      render json: { eligible_bot_ids: [] } and return
-    end
-
-    bots = current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil)
-    eligible_bot_ids = bots.filter_map do |bot|
-      bot.id if check_bot_eligibility(bot, @tournament.constraints)[:eligible]
-    end
-
-    render json: { eligible_bot_ids: eligible_bot_ids }
   end
 
   private
@@ -208,9 +189,13 @@ class TournamentsController < ApplicationController
   def assign_open_registration_state
     @open_registration_entries = @tournament.tournament_entries.includes(:bot_owner, :bot).order(:seed_order)
     @current_user_entry = current_user ? @open_registration_entries.detect { |entry| entry.bot_owner == current_user } : nil
-    @eligible_bots = current_user&.guest? || current_user.nil? ? Bot.none : current_user.bots.where(compiled_program_stale: false).where.not(compiled_program: nil).order(:name)
+    @eligible_bots = if current_user.nil? || current_user.guest?
+      []
+    else
+      current_user.bots.compiled.order(:name).to_a
+    end
     if @tournament.constraints.present?
-      @eligible_bots = @eligible_bots.select { |bot| check_bot_eligibility(bot, @tournament.constraints)[:eligible] }
+      @eligible_bots = @eligible_bots.select { |bot| bot.eligible_for?(@tournament.constraints) }
     end
     @tournament_full = @tournament.max_entries.present? && @open_registration_entries.size >= @tournament.max_entries
   end

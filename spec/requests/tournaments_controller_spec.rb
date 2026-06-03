@@ -325,6 +325,20 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).not_to include('Matchup Matrix')
       expect(response.body).not_to include('Standings')
     end
+
+    it 'offers only constraint-eligible bots in the open-registration form' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :open, constraints: { "max_score_nodes" => 0 })
+      create(:bot, :compiled, user: user, name: 'Eligible Bot')
+      ineligible = create(:bot, :compiled, user: user, name: 'Ineligible Bot')
+      ineligible.update_columns(compiled_program: { "root" => "s1", "nodes" => { "s1" => { "type" => "score", "children" => [] } } })
+      sign_in user
+
+      get public_tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Eligible Bot')
+      expect(response.body).not_to include('Ineligible Bot')
+    end
   end
 
   describe 'GET #pairing' do
