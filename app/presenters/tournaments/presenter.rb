@@ -1,4 +1,4 @@
-class TournamentPresenter
+class Tournaments::Presenter
   def initialize(tournament)
     @tournament = tournament
   end

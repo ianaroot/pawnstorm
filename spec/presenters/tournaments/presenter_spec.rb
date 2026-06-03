@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe TournamentPresenter do
+RSpec.describe Tournaments::Presenter do
   describe '#running_matches_count' do
     it 'treats queued matches as active running work' do
       creator = create(:user)

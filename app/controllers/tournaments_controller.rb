@@ -152,7 +152,7 @@ class TournamentsController < ApplicationController
   end
 
   def assign_pairing_state
-    @tournament_presenter = TournamentPresenter.new(@tournament)
+    @tournament_presenter = Tournaments::Presenter.new(@tournament)
     requested_entrant_ids = [params[:entrant_a_id], params[:entrant_b_id]].map(&:to_i).uniq
     requested_entrants = @tournament_presenter.entrants.where(id: requested_entrant_ids)
     if requested_entrant_ids.size != 2 || requested_entrants.size != 2
@@ -180,7 +180,7 @@ class TournamentsController < ApplicationController
   end
 
   def assign_show_state
-    @tournament_presenter = TournamentPresenter.new(@tournament)
+    @tournament_presenter = Tournaments::Presenter.new(@tournament)
     @entrants = @tournament_presenter.entrants
     @standings = @tournament_presenter.standings_rows
     assign_open_registration_state if @tournament.status_open?
