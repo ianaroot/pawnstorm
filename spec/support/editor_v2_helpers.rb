@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
-# Helper methods for EditorV2 feature tests
-# Provides utilities for finding nodes by server ID via client ID mapping,
-# and common editor operations.
-
 require "timeout"
 
-# Timing constants for async operations
-ASYNC_WAIT = 0.5  # Wait for async server sync operations
-SELECTION_WAIT = 0.1  # Wait for selection animation
-MOUSE_CLICK_OFFSET = 5  # Offset from element edge for drag simulation
+DRAG_GRAB_OFFSET = 5
 
 module EditorV2Helpers
-  # Find a node's client ID given its server (database) ID
-  # Uses window.editorAPI to map server IDs to client IDs
-  # @param server_id [Integer] The database ID of the node
-  # @return [String, nil] The client UUID or nil if not found
+  def wait_until(timeout: Capybara.default_max_wait_time)
+    Timeout.timeout(timeout) { sleep 0.05 until yield }
+  rescue Timeout::Error
+    nil
+  end
+
+  def click_ignoring_overlap(element)
+    page.execute_script('arguments[0].click()', element)
+  end
+
   def find_node_client_id(server_id)
     page.evaluate_script(<<~JS)
       (function() {
@@ -31,58 +30,39 @@ module EditorV2Helpers
     JS
   end
 
-  # Find a node DOM element by its server (database) ID
-  # Uses the client ID mapping to find the correct element
-  # @param server_id [Integer] The database ID of the node
-  # @return [Capybara::Element] The node element
   def find_node_by_server_id(server_id)
     client_id = find_node_client_id(server_id)
     raise "No client ID found for server ID #{server_id}" if client_id.nil?
-    
+
     find(".node[data-client-id='#{client_id}']")
   end
 
-  # Get the server (database) ID for a client ID
-  # @param client_id [String] The client UUID
-  # @return [Integer, nil] The server ID or nil if not found
   def get_server_id(client_id)
     page.evaluate_script("window.editorAPI.api.getNodeServerId('#{client_id}')")
   end
 
-  # Wait for the editor to fully initialize
-  # Ensures canvas and nodes are present before proceeding
   def wait_for_editor
     expect(page).to have_css('#nodes-canvas', wait: 5)
     expect(page).to have_css('#connections-canvas', wait: 5)
-    # Wait for at least root node to be rendered
     expect(page).to have_css('.node', wait: 10)
   end
 
-  # Assert history count (format: "X/50")
-  # @param n [Integer] Expected history count
   def expect_history_count(n)
     expect(page).to have_css('.undo-count', text: /^\(#{n}\/50\)/, wait: 3)
   end
 
-  # Count visible nodes in DOM
-  # @return [Integer] Number of visible .node elements
   def visible_node_count
     all('.node').count
   end
 
-  # Wait for expected node count in DOM
-  # @param expected_count [Integer] Expected number of nodes
   def expect_node_count(expected_count)
     expect(page).to have_css('.node', count: expected_count, wait: 2)
   end
 
-  # Count connections in store
-  # @return [Integer] Number of connections
   def connection_count
     page.evaluate_script('window.editorAPI.store.getConnections().length')
   end
 
-  # Poll the connection store until it reaches the expected size.
   def expect_connection_count(expected_count)
     Timeout.timeout(Capybara.default_max_wait_time) do
       sleep 0.05 until connection_count == expected_count
@@ -93,80 +73,66 @@ module EditorV2Helpers
     expect(connection_count).to eq(expected_count)
   end
 
-  # Check if undo button is enabled
-  # Uses Capybara's built-in waiting for async state changes
-  # @return [Boolean] true if enabled, false if disabled
   def undo_enabled?
     page.has_button?('↩ Undo', disabled: false, wait: 2)
   end
 
-  # Check if redo button is enabled
-  # Uses Capybara's built-in waiting for async state changes
-  # @return [Boolean] true if enabled, false if disabled
   def redo_enabled?
     page.has_button?('↪ Redo', disabled: false, wait: 2)
   end
 
-  # Click undo button and wait for loading to complete
   def click_undo
     find('.btn-undo').click
     expect(page).not_to have_css('.btn-undo.loading', wait: 2)
   end
 
-  # Click redo button and wait for loading to complete
   def click_redo
     find('.btn-redo').click
     expect(page).not_to have_css('.btn-redo.loading', wait: 2)
   end
 
-  # Click undo button without waiting for loading (for error scenarios)
   def click_undo_without_waiting
     find('.btn-undo').click
   end
 
-  # Click redo button without waiting for loading (for error scenarios)
   def click_redo_without_waiting
     find('.btn-redo').click
   end
 
-  # Select a node by clicking it
-  # @param server_id [Integer] The database ID of the node
   def select_node(server_id)
-    element = find_node_by_server_id(server_id)
-    # Use JavaScript click to avoid header overlap issues at small viewport sizes
-    page.execute_script('arguments[0].click()', element)
-    sleep SELECTION_WAIT
+    client_id = find_node_client_id(server_id)
+    raise "No client ID found for server ID #{server_id}" if client_id.nil?
+    click_ignoring_overlap(find(".node[data-client-id='#{client_id}']"))
+    expect(page).to have_css(".node[data-client-id='#{client_id}'].selected", wait: Capybara.default_max_wait_time)
   end
 
-  # Delete the currently selected node via toolbar button
-  # Accepts the confirmation dialog
   def delete_selected_node
-    delete_button = find('.btn-delete-node')
-    # Use JavaScript click to avoid toolbar/header overlap issues in the feature-test viewport.
-    page.execute_script('arguments[0].click()', delete_button)
+    selected_client_ids = Array(page.evaluate_script('window.editorAPI.store.getSelectedNodeIds()'))
+    server_ids = selected_client_ids.map { |client_id| get_server_id(client_id) }.compact
+    click_ignoring_overlap(find('.btn-delete-node'))
     page.accept_confirm
-    sleep 0.3 # Wait for async deletion
+    selected_client_ids.each do |client_id|
+      expect(page).to have_no_css(".node[data-client-id='#{client_id}']", wait: 5)
+    end
+    wait_until { Node.where(id: server_ids).none? } if server_ids.any?
   end
 
-  # Create a connection by dragging from source to target
-  # @param source_server_id [Integer] The database ID of the source node
-  # @param target_server_id [Integer] The database ID of the target node
   def create_connection(source_server_id, target_server_id)
     source_client = find_node_client_id(source_server_id)
     target_client = find_node_client_id(target_server_id)
-    
+
     source_connector = find(".node[data-client-id='#{source_client}'] .node-connector.output")
     target_connector = find(".node[data-client-id='#{target_client}'] .node-connector.input")
-    
+
     source_connector.drag_to(target_connector)
-    sleep 0.3 # Wait for connection to be created
+    expect(page).to have_css(
+      "line.connection-line[data-source-id='#{source_client}'][data-target-id='#{target_client}']",
+      visible: :all,
+      wait: 5
+    )
+    wait_until { Connection.where(source_node_id: source_server_id, target_node_id: target_server_id).count.positive? }
   end
 
-  # Delete a connection via its delete button.
-  # The button is always mounted at the connection midpoint but CSS-hidden
-  # until hover, so locate it with visible: :all and click via JS.
-  # @param source_server_id [Integer] The database ID of the source node
-  # @param target_server_id [Integer] The database ID of the target node
   def delete_connection(source_server_id, target_server_id)
     source_client = find_node_client_id(source_server_id)
     target_client = find_node_client_id(target_server_id)
@@ -175,42 +141,30 @@ module EditorV2Helpers
       ".connection-delete-btn[data-source-id='#{source_client}'][data-target-id='#{target_client}']",
       visible: :all
     )
-    page.execute_script('arguments[0].click()', delete_btn)
+    click_ignoring_overlap(delete_btn)
 
     expect(page).to have_no_css(
       "line.connection-line[data-source-id='#{source_client}'][data-target-id='#{target_client}']",
       visible: :all,
       wait: 5
     )
+    wait_until { Connection.where(source_node_id: source_server_id, target_node_id: target_server_id).count.zero? }
   end
 
-  # Find a node in the database by its properties
   # Useful when server ID changes after undo/redo
-  # @param bot [Bot] The bot instance
-  # @param node_type [String] The node type
-  # @param position_x [Integer] X position
-  # @param position_y [Integer] Y position
-  # @param data [Hash] Optional data to match
-  # @return [Node, nil] The matching node or nil
   def find_node_by_properties(bot:, node_type:, position_x:, position_y:, data: {})
     Node.where(bot: bot, node_type: node_type, position_x: position_x, position_y: position_y)
         .detect { |n| data.all? { |k, v| n.data[k] == v } }
   end
 
-  # Get the current state from the editor API
-  # Useful for verifying client-side state
-  # @return [Hash] The serialized state
   def get_editor_state
     page.evaluate_script('window.editorAPI.store.getState()')
   end
 
-  # Check if the editor API is available
-  # @return [Boolean] true if editorAPI is defined
   def editor_api_available?
     page.evaluate_script('typeof window.editorAPI !== "undefined"')
   end
 
-  # Simulate network offline by mocking fetch
   def go_offline
     page.execute_script(<<~JS)
       window.__originalFetch = window.fetch;
@@ -218,33 +172,19 @@ module EditorV2Helpers
     JS
   end
 
-  # Restore network by restoring original fetch
   def go_online
     page.execute_script('window.fetch = window.__originalFetch;')
   end
 
-  # Simulate dragging a node to a new position
-  # All descendants will move with the node (unless Shift key is used)
-  # @param server_id [Integer] The database ID of the node
-  # @param new_x [Integer] Target X position
-  # @param new_y [Integer] Target Y position
-  def drag_node(server_id, new_x, new_y)
+  def drag_node_with_descendants(server_id, new_x, new_y)
     client_id = find_node_client_id(server_id)
-    
-    # Get current position from store
-    current = page.evaluate_script(<<~JS)
-      (function() {
-        const node = window.editorAPI.store.getNode('#{client_id}');
-        return { x: node.position.x, y: node.position.y };
-      })();
-    JS
-    
+
+    current = node_position(client_id)
     current_x = current['x']
     current_y = current['y']
-    start = graph_to_client_coordinates( current_x + MOUSE_CLICK_OFFSET, current_y + MOUSE_CLICK_OFFSET )
-    finish = graph_to_client_coordinates( new_x + MOUSE_CLICK_OFFSET, new_y + MOUSE_CLICK_OFFSET )
+    start = graph_to_client_coordinates(current_x + DRAG_GRAB_OFFSET, current_y + DRAG_GRAB_OFFSET)
+    finish = graph_to_client_coordinates(new_x + DRAG_GRAB_OFFSET, new_y + DRAG_GRAB_OFFSET)
 
-    
     page.execute_script(<<~JS)
       (function() {
         const el = document.querySelector('[data-client-id="#{client_id}"]');
@@ -286,29 +226,18 @@ module EditorV2Helpers
       })();
     JS
 
-    sleep ASYNC_WAIT
+    wait_until { at_position?(client_id, new_x, new_y) }
   end
 
-  # Simulate dragging a node with Shift key held (drag node only, no children)
-  # @param server_id [Integer] The database ID of the node
-  # @param new_x [Integer] Target X position
-  # @param new_y [Integer] Target Y position
-  def drag_node_with_shift(server_id, new_x, new_y)
+  def drag_single_node(server_id, new_x, new_y)
     client_id = find_node_client_id(server_id)
-    
-    # Get current position from store
-    current = page.evaluate_script(<<~JS)
-      (function() {
-        const node = window.editorAPI.store.getNode('#{client_id}');
-        return { x: node.position.x, y: node.position.y };
-      })();
-    JS
-    
+
+    current = node_position(client_id)
     current_x = current['x']
     current_y = current['y']
-    start = graph_to_client_coordinates( current_x + MOUSE_CLICK_OFFSET, current_y + MOUSE_CLICK_OFFSET )
-    finish = graph_to_client_coordinates( new_x + MOUSE_CLICK_OFFSET, new_y + MOUSE_CLICK_OFFSET )
-    
+    start = graph_to_client_coordinates(current_x + DRAG_GRAB_OFFSET, current_y + DRAG_GRAB_OFFSET)
+    finish = graph_to_client_coordinates(new_x + DRAG_GRAB_OFFSET, new_y + DRAG_GRAB_OFFSET)
+
     page.execute_script(<<~JS)
       (function() {
         const el = document.querySelector('[data-client-id="#{client_id}"]');
@@ -350,22 +279,23 @@ module EditorV2Helpers
         }));
       })();
     JS
-    
-    sleep ASYNC_WAIT
+
+    wait_until { at_position?(client_id, new_x, new_y) }
   end
 
-  # Assert that a node is at a specific position
-  # @param server_id [Integer] The database ID of the node
-  # @param expected_x [Integer] Expected X position
-  # @param expected_y [Integer] Expected Y position
+  def node_position(client_id)
+    page.evaluate_script("(function(){const n=window.editorAPI.store.getNode('#{client_id}');return n?{x:n.position.x,y:n.position.y}:null;})()")
+  end
+
+  def at_position?(client_id, x, y)
+    pos = node_position(client_id)
+    pos && (pos['x'].to_f - x).abs <= 0.5 && (pos['y'].to_f - y).abs <= 0.5
+  end
+
   def expect_node_position(server_id, expected_x, expected_y)
     client_id = find_node_client_id(server_id)
-    actual = page.evaluate_script(<<~JS)
-      (function() {
-        const node = window.editorAPI.store.getNode('#{client_id}');
-        return { x: node.position.x, y: node.position.y };
-      })();
-    JS
+    wait_until { at_position?(client_id, expected_x, expected_y) }
+    actual = node_position(client_id)
     expect(actual['x']).to be_within(0.5).of(expected_x)
     expect(actual['y']).to be_within(0.5).of(expected_y)
   end

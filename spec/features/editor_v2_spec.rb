@@ -82,6 +82,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       click_button '+ Condition'
 
       expect_node_count(2)
+      wait_until { Node.where(bot: bot, node_type: 'condition').count == 1 }
       expect(Node.where(bot: bot, node_type: 'condition').count).to eq(1)
       expect_history_count(2)
     end
@@ -90,6 +91,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       click_button '+ Score'
 
       expect_node_count(2)
+      wait_until { Node.where(bot: bot, node_type: 'score').count == 1 }
       expect(Node.where(bot: bot, node_type: 'score').count).to eq(1)
       expect_history_count(2)
     end
@@ -161,13 +163,13 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       visit edit_bot_path(bot)
       wait_for_editor
 
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       select_node(condition_node.id)
       delete_selected_node
 
       expect_node_count(2) # root + action
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
     end
   end
 
@@ -187,7 +189,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       create_connection(node1.id, node2.id)
 
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
       expect(Connection.where(source_node_id: node1.id, target_node_id: node2.id).count).to eq(1)
       expect_history_count(2)
     end
@@ -196,13 +198,13 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       wait_for_editor
 
       create_connection(node1.id, node2.id)
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       # Try to create same connection again
       create_connection(node1.id, node2.id)
 
       # Should still be 1, no duplicate
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
     end
 
     it 'does not allow self-connections' do
@@ -323,6 +325,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
         expect_node_count(2)
         # Node should be restored
+        wait_until { Node.where(bot: bot, node_type: 'condition').count == 1 }
         expect(Node.where(bot: bot, node_type: 'condition').count).to eq(1)
       end
     end
@@ -343,11 +346,11 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
         wait_for_editor
 
         create_connection(node1.id, node2.id)
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
 
         click_undo
 
-        expect(connection_count).to eq(0)
+        expect_connection_count(0)
         expect_history_count(1)
       end
 
@@ -358,7 +361,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
         click_undo
         click_redo
 
-        expect(connection_count).to eq(1)
+        expect_connection_count(1)
       end
     end
 
@@ -573,7 +576,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       page.evaluate_script("
         window.editorAPI.syncManager.updateNodePosition('#{original_client_id}', 200, 200)
       ")
-      sleep ASYNC_WAIT
+      wait_until { at_position?(original_client_id, 200, 200) }
 
       # Client ID should remain stable
       expect(find_node_client_id(condition_node.id)).to eq(original_client_id)
@@ -638,24 +641,24 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
 
       # Operation 3: Connect condition -> action
       create_connection(condition_node.id, action_node.id)
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
       expect_history_count(4)
 
       # Operation 4: Delete condition node (cascade deletes connection)
       select_node(condition_node.id)
       delete_selected_node
       expect_node_count(2)
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
       expect_history_count(5)
 
       # Undo operation 4
       click_undo
       expect_node_count(3)
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       # Undo operation 3
       click_undo
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
 
       # Undo operation 2
       click_undo
@@ -674,11 +677,11 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect_node_count(3)
 
       click_redo
-      expect(connection_count).to eq(1)
+      expect_connection_count(1)
 
       click_redo
       expect_node_count(2)
-      expect(connection_count).to eq(0)
+      expect_connection_count(0)
     end
   end
 
@@ -702,7 +705,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       # Drag condition node (connected to 2 score nodes)
       # Original position: condition at (100, 100), action1 at (200, 100), action2 at (200, 200)
       # Move condition to (300, 300)
-      drag_node(condition_node.id, 300, 300)
+      drag_node_with_descendants(condition_node.id, 300, 300)
 
       # Condition should be at new position
       expect_node_position(condition_node.id, 300, 300)
@@ -717,7 +720,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       expect_node_count(4)
 
       # Drag with Shift key (only condition moves)
-      drag_node_with_shift(condition_node.id, 300, 300)
+      drag_single_node(condition_node.id, 300, 300)
 
       # Condition should be at new position
       expect_node_position(condition_node.id, 300, 300)
@@ -731,7 +734,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       wait_for_editor
       expect_history_count(1)
 
-      drag_node(condition_node.id, 300, 300)
+      drag_node_with_descendants(condition_node.id, 300, 300)
 
       # History count should increase by 1
       expect_history_count(2)
@@ -748,7 +751,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
       original_action2_x = 200
       original_action2_y = 200
 
-      drag_node(condition_node.id, 300, 300)
+      drag_node_with_descendants(condition_node.id, 300, 300)
       expect_history_count(2)
 
       # Undo
@@ -763,7 +766,7 @@ RSpec.describe 'EditorV2', type: :feature, js: true, slow: true do
     it 'redoes all positions when dragging with children' do
       wait_for_editor
 
-      drag_node(condition_node.id, 300, 300)
+      drag_node_with_descendants(condition_node.id, 300, 300)
       click_undo
       click_redo
 
