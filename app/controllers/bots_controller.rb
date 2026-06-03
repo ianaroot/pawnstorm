@@ -90,7 +90,7 @@ class BotsController < ApplicationController
   end
 
   def bot_params
-    params.require(:bot).permit(:name, :description, :commands)
+    params.require(:bot).permit(:name, :description)
   end
 
   def set_edit_view_data

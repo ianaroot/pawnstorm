@@ -8,8 +8,7 @@ class BotCloner
     ActiveRecord::Base.transaction do
       new_bot = @user.bots.create!(
         name: next_clone_name,
-        description: @source_bot.description,
-        commands: @source_bot.commands
+        description: @source_bot.description
       )
 
       id_map = {}
