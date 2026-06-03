@@ -1,6 +1,15 @@
 require 'rails_helper'
 
 RSpec.describe Tournaments::Presenter do
+  def query_count
+    count = 0
+    counter = ->(_name, _start, _finish, _id, payload) do
+      count += 1 unless payload[:name] == 'SCHEMA' || payload[:cached]
+    end
+    ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { yield }
+    count
+  end
+
   describe '#running_matches_count' do
     it 'treats queued matches as active running work' do
       creator = create(:user)
@@ -95,15 +104,6 @@ RSpec.describe Tournaments::Presenter do
 
       expect(grown).to eq(baseline)
     end
-
-    def query_count
-      count = 0
-      counter = ->(_name, _start, _finish, _id, payload) do
-        count += 1 unless payload[:name] == 'SCHEMA' || payload[:cached]
-      end
-      ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { yield }
-      count
-    end
   end
 
   describe '#pairing_row' do
@@ -132,14 +132,14 @@ RSpec.describe Tournaments::Presenter do
       )
 
       pairing = described_class.new(tournament).pairing_row(entry_a, entry_b)
-      expect(pairing[:total_record][:draws]).to eq(1)
-      expect(pairing[:total_record][:entrant_a_points]).to eq(0.5)
-      expect(pairing[:total_record][:entrant_b_points]).to eq(0.5)
+      expect(pairing[:total_record].draws).to eq(1)
+      expect(pairing[:total_record].points_for(entry_a)).to eq(0.5)
+      expect(pairing[:total_record].points_for(entry_b)).to eq(0.5)
     end
   end
 
-  describe '#directional_pairing_summary' do
-    it 'counts fifty_move_rule as a draw in the matrix summary' do
+  describe '#pairing_matrix' do
+    it 'records a fifty_move_rule game as a draw in the directional cell' do
       creator = create(:user)
       tournament = create(:tournament, creator: creator)
       bot_a = create(:bot, :compiled)
@@ -163,12 +163,49 @@ RSpec.describe Tournaments::Presenter do
         lay_out: Array.new(64, 'ee')
       )
 
-      summary = described_class.new(tournament).directional_pairing_summary(entry_a, entry_b)
-      expect(summary[:white_points]).to eq(0.5)
-      expect(summary[:black_points]).to eq(0.5)
-      expect(summary[:draws]).to eq(1)
-      expect(summary[:failed]).to eq(0)
-      expect(summary[:matches].size).to eq(1)
+      record = described_class.new(tournament).pairing_matrix[[entry_a.id, entry_b.id]]
+      expect(record.points_for(entry_a)).to eq(0.5)
+      expect(record.points_for(entry_b)).to eq(0.5)
+      expect(record.draws).to eq(1)
+      expect(record.failed).to eq(0)
+      expect(record.matches.size).to eq(1)
+    end
+
+    it 'does not issue more queries as the match count grows' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      add_matches = ->(count) do
+        count.times do
+          Match.create!(
+            tournament: tournament,
+            creator: creator,
+            white_player: bot_a,
+            black_player: bot_b,
+            white_tournament_entry: entry_a,
+            black_tournament_entry: entry_b,
+            status: :completed,
+            result: :white_win,
+            allowed_to_move: 'W',
+            captured_pieces: [],
+            movement_notation: ['1. Nf3'],
+            previous_layouts: [],
+            lay_out: Array.new(64, 'ee')
+          )
+        end
+      end
+
+      add_matches.call(2)
+      baseline = query_count { described_class.new(Tournament.find(tournament.id)).pairing_matrix }
+
+      add_matches.call(3)
+      grown = query_count { described_class.new(Tournament.find(tournament.id)).pairing_matrix }
+
+      expect(grown).to eq(baseline)
     end
   end
 end

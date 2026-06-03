@@ -19,21 +19,26 @@
             </tr>
           </thead>
           <tbody>
+            <% a = @pairing[:entrant_a] %>
+            <% b = @pairing[:entrant_b] %>
+            <% a_white = @pairing[:entrant_a_white_record] %>
+            <% b_white = @pairing[:entrant_b_white_record] %>
+            <% total = @pairing[:total_record] %>
             <tr>
               <td>
-                <%= @pairing[:entrant_a].display_name %> <%= @pairing[:entrant_a_white_record][:record][:entrant_a_points] %> -
-                <%= @pairing[:entrant_a_white_record][:record][:entrant_b_points] %> <%= @pairing[:entrant_b].display_name %>
-                (<%= @pairing[:entrant_a_white_record][:record][:entrant_a_wins] %>-<%= @pairing[:entrant_a_white_record][:record][:entrant_b_wins] %>, draws: <%= @pairing[:entrant_a_white_record][:record][:draws] %>, failed: <%= @pairing[:entrant_a_white_record][:record][:failed] %>)
+                <%= a.display_name %> <%= a_white.points_for(a) %> -
+                <%= a_white.points_for(b) %> <%= b.display_name %>
+                (<%= a_white.wins_for(a) %>-<%= a_white.wins_for(b) %>, draws: <%= a_white.draws %>, failed: <%= a_white.failed %>)
               </td>
               <td>
-                <%= @pairing[:entrant_b].display_name %> <%= @pairing[:entrant_b_white_record][:record][:entrant_a_points] %> -
-                <%= @pairing[:entrant_b_white_record][:record][:entrant_b_points] %> <%= @pairing[:entrant_a].display_name %>
-                (<%= @pairing[:entrant_b_white_record][:record][:entrant_a_wins] %>-<%= @pairing[:entrant_b_white_record][:record][:entrant_b_wins] %>, draws: <%= @pairing[:entrant_b_white_record][:record][:draws] %>, failed: <%= @pairing[:entrant_b_white_record][:record][:failed] %>)
+                <%= b.display_name %> <%= b_white.points_for(b) %> -
+                <%= b_white.points_for(a) %> <%= a.display_name %>
+                (<%= b_white.wins_for(b) %>-<%= b_white.wins_for(a) %>, draws: <%= b_white.draws %>, failed: <%= b_white.failed %>)
               </td>
               <td>
-                <%= @pairing[:entrant_a].display_name %> <%= @pairing[:total_record][:entrant_a_points] %> -
-                <%= @pairing[:total_record][:entrant_b_points] %> <%= @pairing[:entrant_b].display_name %>
-                (<%= @pairing[:total_record][:entrant_a_wins] %>-<%= @pairing[:total_record][:entrant_b_wins] %>, draws: <%= @pairing[:total_record][:draws] %>, failed: <%= @pairing[:total_record][:failed] %>)
+                <%= a.display_name %> <%= total.points_for(a) %> -
+                <%= total.points_for(b) %> <%= b.display_name %>
+                (<%= total.wins_for(a) %>-<%= total.wins_for(b) %>, draws: <%= total.draws %>, failed: <%= total.failed %>)
               </td>
             </tr>
           </tbody>
