@@ -1,4 +1,6 @@
 class Matches::CreateBotVsBot
+  include Matches::StaleBotConfirmation
+
   attr_reader :all_opponent_bots,
     :error_message,
     :match,
@@ -92,22 +94,11 @@ class Matches::CreateBotVsBot
     bots.compact.select { |bot| bot.user_id == @user.id && bot.compiled_program_stale? }
   end
 
-  def compile_confirmation_requested?
-    @params[:stale_bot_confirmation] == 'compile'
-  end
-
   def compile_selected_bots(bots)
     bots.each(&:compile_program!)
     true
   rescue StandardError => error
     fail_with("Selected stale bot#{'s' if bots.length != 1} could not be compiled: #{error.message}")
-  end
-
-  def stale_compile_message(bots)
-    names = bots.map(&:name).uniq.join(', ')
-    return "#{names} needs to be recompiled before match generation." if bots.length == 1
-
-    "#{names} each need to be recompiled before match generation."
   end
 
   def fail_with(message)

@@ -129,7 +129,7 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include('recompiled before match generation')
+      expect(response.body).to include('must be recompiled first. Compile and continue?')
     end
 
     it 'compiles stale selected owned bots and immediately creates the match when confirmed' do
@@ -257,7 +257,7 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include("#{stale_bot.name} needs to be recompiled before you can play. Compile and continue?")
+      expect(response.body).to include("#{stale_bot.name} must be recompiled first. Compile and continue?")
 
       expect do
         post human_vs_bot_matches_path, params: {
