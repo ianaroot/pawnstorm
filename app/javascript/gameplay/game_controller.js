@@ -67,7 +67,6 @@ class GameController {
 		var board = this.board,
 			alert = "",
 			sound = "";
-		sound
 		if( board.gameOver ){
 			return
 		}

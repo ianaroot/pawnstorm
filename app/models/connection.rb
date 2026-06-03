@@ -25,8 +25,7 @@ class Connection < ApplicationRecord
   private
 
   def mark_bot_compiled_program_stale
-    bot_id = source_node&.bot_id || target_node&.bot_id
-    Bot.where(id: bot_id).find_each(&:mark_compiled_program_stale!)
+    Bot.mark_stale_for(source_node&.bot_id || target_node&.bot_id)
   end
 
   def source_and_target_must_be_different

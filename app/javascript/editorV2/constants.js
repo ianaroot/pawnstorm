@@ -54,6 +54,7 @@ export const NODE_COLORS = {
 export const EVENTS = {
   NODE_ADD: 'node:add',
   NODE_UPDATE: 'node:update',
+  NODE_PERSISTED: 'node:persisted',
   NODE_REMOVE: 'node:remove',
   CONNECTION_ADD: 'connection:add',
   CONNECTION_UPDATE: 'connection:update',
