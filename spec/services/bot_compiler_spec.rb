@@ -203,6 +203,21 @@ RSpec.describe BotCompiler do
       end
     end
 
+    context 'score nodes' do
+      let!(:root) { bot.root_node }
+      let!(:score) do
+        create(:node, :score, bot: bot, position_x: 100, position_y: 100, data: { actionType: 'set', value: 7 })
+      end
+
+      before { connect_nodes(root, score) }
+
+      it 'preserves score actionType and value in compiled output' do
+        compiled = described_class.new(bot).compile
+
+        expect(compiled[:nodes][score.id.to_s][:data]).to eq({ actionType: 'set', value: 7 })
+      end
+    end
+
     context 'disconnected nodes' do
       let!(:root) { bot.root_node }
       let!(:connected) { create(:node, :condition, bot: bot, position_x: 100, position_y: 100) }

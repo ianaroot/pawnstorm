@@ -86,7 +86,7 @@ class EditorActions {
   togglePreview() {
     if (this.boardStatePreview?.isEnabled && this.boardStatePreview?.mode !== 'idle') {
       this.boardStatePreview.toggle()
-    } else if (this.store.getSelectedNodeIds().length > 1) {
+    } else if (this.boardStatePreview && this.store.getSelectedNodeIds().length > 1) {
       this.boardStatePreview.isEnabled = true
       this.renderSelectionPreview()
     } else if (this.clickHandler?.getEditingNodeId() && this.clickHandler?.conditionForm) {

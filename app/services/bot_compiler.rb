@@ -15,6 +15,13 @@ class BotCompiler
 
   PROGRAM_VERSION = 1
 
+  SCORE_KEYS = %i[actionType value].freeze
+  CONDITION_KEYS_BY_KIND = {
+    'relational' => Nodes::DataValidator::CONDITION_V2_RELATION_KEYS.map(&:to_sym).freeze,
+    'census'     => Nodes::DataValidator::CONDITION_V2_CENSUS_KEYS.map(&:to_sym).freeze,
+    'identity'   => Nodes::DataValidator::CONDITION_V2_IDENTITY_KEYS.map(&:to_sym).freeze
+  }.freeze
+
   def initialize(bot, node_dimensions = ApplicationHelper::NODE_DIMENSIONS)
     @bot = bot
     @node_dimensions = node_dimensions
@@ -90,62 +97,9 @@ class BotCompiler
 
     case node.node_type
     when 'condition'
-      kind = raw['kind'] || raw[:kind]
-
-      case kind
-      when 'census'
-        # Unary shape plus optional region keys; compact drops absent ones.
-        {
-          version: 2,
-          kind: 'census',
-          subject: raw['subject'] || raw[:subject],
-          subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
-          subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
-          operator: raw['operator'] || raw[:operator],
-          comparator: raw['comparator'] || raw[:comparator],
-          target: raw['target'] || raw[:target],
-          targetFilter: raw['targetFilter'] || raw[:targetFilter],
-          targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
-          targetTotal: hash_value(raw, 'targetTotal'),
-          positionAxis: raw['positionAxis'] || raw[:positionAxis],
-          positionComparator: raw['positionComparator'] || raw[:positionComparator],
-          positionTarget: hash_value(raw, 'positionTarget')
-        }.compact
-      when 'identity'
-        {
-          version: 2,
-          kind: 'identity',
-          subject: raw['subject'] || raw[:subject],
-          target: raw['target'] || raw[:target]
-        }.compact
-      when 'relational'
-        {
-          version: 2,
-          kind: 'relational',
-          subject: raw['subject'] || raw[:subject],
-          subjectFilter: raw['subjectFilter'] || raw[:subjectFilter],
-          subjectFilterMode: raw['subjectFilterMode'] || raw[:subjectFilterMode],
-          subjectComparisonMetric: raw['subjectComparisonMetric'] || raw[:subjectComparisonMetric],
-          subjectComparator: raw['subjectComparator'] || raw[:subjectComparator],
-          subjectComparisonSource: raw['subjectComparisonSource'] || raw[:subjectComparisonSource],
-          subjectComparisonSourceTotal: hash_value(raw, 'subjectComparisonSourceTotal'),
-          operator: raw['operator'] || raw[:operator],
-          target: raw['target'] || raw[:target],
-          targetFilter: raw['targetFilter'] || raw[:targetFilter],
-          targetFilterMode: raw['targetFilterMode'] || raw[:targetFilterMode],
-          targetComparisonMetric: raw['targetComparisonMetric'] || raw[:targetComparisonMetric],
-          targetComparator: raw['targetComparator'] || raw[:targetComparator],
-          targetComparisonSource: raw['targetComparisonSource'] || raw[:targetComparisonSource],
-          targetComparisonSourceTotal: hash_value(raw, 'targetComparisonSourceTotal')
-        }.compact
-      else
-        raw
-      end
+      normalize_condition_data(raw)
     when 'score'
-      {
-        actionType: raw['actionType'] || raw[:actionType],
-        value: raw['value'] || raw[:value]
-      }
+      raw.symbolize_keys.slice(*SCORE_KEYS)
     else
       # Organizers carry freeform user-authored text. We intentionally strip that
       # data out during compilation so annotation content never becomes part of the
@@ -154,8 +108,11 @@ class BotCompiler
     end
   end
 
-  def hash_value(hash, key)
-    hash.key?(key) ? hash[key] : hash[key.to_sym]
+  def normalize_condition_data(raw)
+    allowed = CONDITION_KEYS_BY_KIND[raw['kind'] || raw[:kind]]
+    return raw unless allowed
+
+    raw.symbolize_keys.slice(*allowed)
   end
 
 end

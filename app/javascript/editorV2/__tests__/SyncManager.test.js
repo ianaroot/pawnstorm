@@ -6,6 +6,7 @@ import Node from '../models/Node.js'
 import Connection from '../models/Connection.js'
 import Graph from '../models/Graph.js'
 import { DEFAULT_CONDITION_DATA } from '../utils/nodeDefaults.js'
+import { EVENTS } from '../constants.js'
 
 describe('SyncManager', () => {
   let store
@@ -26,8 +27,8 @@ describe('SyncManager', () => {
       createConnection: vi.fn(),
       deleteConnection: vi.fn(),
       loadBot: vi.fn(),
-      getServerId: vi.fn(),
-      getClientId: vi.fn(),
+      getNodeServerId: vi.fn(),
+      getNodeClientId: vi.fn(),
       isSynced: vi.fn()
     }
     
@@ -552,6 +553,30 @@ describe('SyncManager', () => {
       expect(store.getNode('n1').data.foo).toBe('bar')
       expect(store.getNode('n1').data.baz).toBeUndefined()
     })
+
+    it('emits NODE_PERSISTED after the save succeeds', async () => {
+      const persisted = []
+      store.subscribe((event, data) => { if (event === EVENTS.NODE_PERSISTED) { persisted.push(data) } })
+      await syncManager.updateNodeData('n1', { baz: 'qux' })
+      expect(persisted).toEqual([{ clientId: 'n1' }])
+    })
+
+    it('updates the store only once', async () => {
+      const updateSpy = vi.spyOn(store, 'updateNode')
+      await syncManager.updateNodeData('n1', { baz: 'qux' })
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not emit NODE_PERSISTED when the save fails', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      mockApi.updateNode.mockRejectedValue(new Error('Network error'))
+      const persisted = []
+      store.subscribe((event, data) => { if (event === EVENTS.NODE_PERSISTED) { persisted.push(data) } })
+
+      await expect(syncManager.updateNodeData('n1', { baz: 'qux' })).rejects.toThrow('Network error')
+
+      expect(persisted).toEqual([])
+    })
   })
 
   describe('deleteNodes (single node)', () => {
@@ -879,21 +904,21 @@ describe('SyncManager', () => {
   })
 
   describe('utility methods', () => {
-    it('getServerId delegates to api', () => {
-      mockApi.getServerId.mockReturnValue(123)
+    it('getNodeServerId delegates to api', () => {
+      mockApi.getNodeServerId.mockReturnValue(123)
 
-      const result = syncManager.getServerId('client-123')
+      const result = syncManager.getNodeServerId('client-123')
 
-      expect(mockApi.getServerId).toHaveBeenCalledWith('client-123')
+      expect(mockApi.getNodeServerId).toHaveBeenCalledWith('client-123')
       expect(result).toBe(123)
     })
 
-    it('getClientId delegates to api', () => {
-      mockApi.getClientId.mockReturnValue('client-123')
+    it('getNodeClientId delegates to api', () => {
+      mockApi.getNodeClientId.mockReturnValue('client-123')
 
-      const result = syncManager.getClientId(123)
+      const result = syncManager.getNodeClientId(123)
 
-      expect(mockApi.getClientId).toHaveBeenCalledWith(123)
+      expect(mockApi.getNodeClientId).toHaveBeenCalledWith(123)
       expect(result).toBe('client-123')
     })
 

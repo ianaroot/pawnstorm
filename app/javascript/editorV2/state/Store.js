@@ -3,6 +3,21 @@ import Graph from 'editorV2/models/Graph'
 import Node from 'editorV2/models/Node'
 import Connection from 'editorV2/models/Connection'
 
+function defaultViewState() {
+  return {
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    selectedNodeIds: [],
+    primarySelectedNodeId: null,
+    editingNodeId: null,
+    recentPlacementAnchor: null,
+    isMarqueeSelecting: false,
+    marqueeStart: null,
+    marqueeCurrent: null
+  }
+}
+
 /**
  * Store - Single source of truth for application state
  * 
@@ -17,21 +32,10 @@ class Store {
   constructor() {
     // Graph state (undoable)
     this.graph = new Graph()
-    
+
     // View state (not undoable)
-    this.viewState = {
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      selectedNodeIds: [],
-      primarySelectedNodeId: null,
-      editingNodeId: null,
-      recentPlacementAnchor: null,
-      isMarqueeSelecting: false,
-      marqueeStart: null,
-      marqueeCurrent: null
-    }
-    this.subscribers = [] 
+    this.viewState = defaultViewState()
+    this.subscribers = []
     this.isUpdating = false 
     this.destroyed = false
 
@@ -366,18 +370,7 @@ class Store {
   
   clear() {
     this.graph = new Graph()
-    this.viewState = {
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      selectedNodeIds: [],
-      primarySelectedNodeId: null,
-      editingNodeId: null,
-      recentPlacementAnchor: null,
-      isMarqueeSelecting: false,
-      marqueeStart: null,
-      marqueeCurrent: null
-    }
+    this.viewState = defaultViewState()
     this.clickSuppressedUntil = 0
     this.emit(EVENTS.GRAPH_REPLACE, { graph: this.graph })
   }
