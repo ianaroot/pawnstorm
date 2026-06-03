@@ -220,7 +220,7 @@ class TournamentsController < ApplicationController
       format.html { render :show }
       format.json do
         render json: {
-          meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter, rematch_params: @rematch_params }),
+          meta_html: render_to_string(partial: 'meta', formats: [:html], locals: { tournament: @tournament, tournament_presenter: @tournament_presenter }),
           progress_html: render_to_string(partial: 'progress', formats: [:html], locals: { tournament_presenter: @tournament_presenter }),
           standings_html: render_to_string(partial: 'standings', formats: [:html], locals: { standings: @standings }),
           matrix_html: matrix_html,
