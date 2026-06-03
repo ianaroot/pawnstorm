@@ -61,9 +61,6 @@ class Match < ApplicationRecord
 
   validate :completed_matches_require_replay_state
 
-  scope :active, -> { where(status: [statuses[:queued], statuses[:running]]) }
-  scope :unfinished, -> { where(status: [statuses[:pending], statuses[:queued], statuses[:running]]) }
-
   def bot_owned_by?(user)
     return false unless user
     (white_player_type == 'Bot' && white_player&.user_id == user.id) ||
