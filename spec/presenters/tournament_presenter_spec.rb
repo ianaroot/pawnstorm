@@ -58,6 +58,52 @@ RSpec.describe TournamentPresenter do
       expect(standings_by_entry_id.fetch(entry_a.id)[:draws]).to eq(1)
       expect(standings_by_entry_id.fetch(entry_b.id)[:draws]).to eq(1)
     end
+
+    it 'does not issue more queries as the match count grows' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      add_matches = ->(count) do
+        count.times do
+          Match.create!(
+            tournament: tournament,
+            creator: creator,
+            white_player: bot_a,
+            black_player: bot_b,
+            white_tournament_entry: entry_a,
+            black_tournament_entry: entry_b,
+            status: :completed,
+            result: :white_win,
+            allowed_to_move: 'W',
+            captured_pieces: [],
+            movement_notation: ['1. Nf3'],
+            previous_layouts: [],
+            lay_out: Array.new(64, 'ee')
+          )
+        end
+      end
+
+      add_matches.call(2)
+      baseline = query_count { described_class.new(Tournament.find(tournament.id)).standings_rows }
+
+      add_matches.call(3)
+      grown = query_count { described_class.new(Tournament.find(tournament.id)).standings_rows }
+
+      expect(grown).to eq(baseline)
+    end
+
+    def query_count
+      count = 0
+      counter = ->(_name, _start, _finish, _id, payload) do
+        count += 1 unless payload[:name] == 'SCHEMA' || payload[:cached]
+      end
+      ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { yield }
+      count
+    end
   end
 
   describe '#pairing_row' do

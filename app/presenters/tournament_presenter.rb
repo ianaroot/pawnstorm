@@ -48,7 +48,7 @@ class TournamentPresenter
       }
     end
 
-    tournament.matches.includes(:white_player, :black_player).find_each do |match|
+    tournament.matches.includes(:white_tournament_entry, :black_tournament_entry).find_each do |match|
       white_entrant = match.white_tournament_entry
       black_entrant = match.black_tournament_entry
       next unless white_entrant && black_entrant
