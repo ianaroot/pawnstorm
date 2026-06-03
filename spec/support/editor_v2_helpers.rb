@@ -5,6 +5,8 @@ require "timeout"
 DRAG_GRAB_OFFSET = 5
 
 module EditorV2Helpers
+  # Polls until the block is truthy; on timeout it returns nil instead of raising,
+  # so pair it with an assertion when a stuck state should fail the test.
   def wait_until(timeout: Capybara.default_max_wait_time)
     Timeout.timeout(timeout) { sleep 0.05 until yield }
   rescue Timeout::Error

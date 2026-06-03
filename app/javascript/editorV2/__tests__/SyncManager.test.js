@@ -566,6 +566,17 @@ describe('SyncManager', () => {
       await syncManager.updateNodeData('n1', { baz: 'qux' })
       expect(updateSpy).toHaveBeenCalledTimes(1)
     })
+
+    it('does not emit NODE_PERSISTED when the save fails', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      mockApi.updateNode.mockRejectedValue(new Error('Network error'))
+      const persisted = []
+      store.subscribe((event, data) => { if (event === EVENTS.NODE_PERSISTED) { persisted.push(data) } })
+
+      await expect(syncManager.updateNodeData('n1', { baz: 'qux' })).rejects.toThrow('Network error')
+
+      expect(persisted).toEqual([])
+    })
   })
 
   describe('deleteNodes (single node)', () => {
