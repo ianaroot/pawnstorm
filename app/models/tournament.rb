@@ -102,9 +102,14 @@ class Tournament < ApplicationRecord
   def generate_unique_invite_token
     10.times do
       token = SecureRandom.hex(INVITE_TOKEN_BYTES)
+      next if collides_with_id_route?(token)
       return token unless self.class.exists?(invite_token: token)
     end
     raise "Could not generate a unique invite token after 10 attempts"
+  end
+
+  def collides_with_id_route?(token)
+    token.match?(/\A\d+\z/)
   end
 
   def paused_cache_key

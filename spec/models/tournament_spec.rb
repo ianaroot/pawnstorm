@@ -9,6 +9,15 @@ RSpec.describe Tournament, type: :model do
 
       expect(tournament.invite_token).to match(/\A\h{6}\z/)
     end
+
+    it 'skips an all-numeric token that would collide with id routes' do
+      allow(SecureRandom).to receive(:hex).and_return('123456', '12ab34')
+      tournament = build(:tournament)
+
+      tournament.valid?
+
+      expect(tournament.invite_token).to eq('12ab34')
+    end
   end
 
   describe '#enqueue_next_match!' do
