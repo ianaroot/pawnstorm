@@ -20,7 +20,7 @@ class Matches::HumanVsBotController < ApplicationController
 
   def live
     @match = current_user.created_matches.find(params[:id])
-    unless @match.running? && @match.interactive_human_vs_bot_for?(current_user)
+    unless @match.running? && @match.human_vs_bot_for?(current_user)
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 

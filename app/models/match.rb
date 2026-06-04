@@ -67,7 +67,7 @@ class Match < ApplicationRecord
     (black_player_type == 'Bot' && black_player&.user_id == user.id)
   end
 
-  def interactive_human_vs_bot_for?(user)
+  def human_vs_bot_for?(user)
     return false unless user
     players = [white_player, black_player]
     players.count { |player| player == user } == 1 &&
@@ -104,7 +104,7 @@ class Match < ApplicationRecord
     return tournament_entry.bot_owner_id if tournament_entry&.bot_owner_id
 
     record = player_record_for(player)
-    record.is_a?(Bot) ? record.user_id : ''
+    record.user_id if record.is_a?(Bot)
   end
 
   def winner

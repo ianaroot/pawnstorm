@@ -9,7 +9,7 @@ class Matches::CompleteHumanVsBot
 
   def call
     @match = @user.created_matches.find(@match_id)
-    raise ActiveRecord::RecordNotFound unless match.interactive_human_vs_bot_for?(@user)
+    raise ActiveRecord::RecordNotFound unless match.human_vs_bot_for?(@user)
 
     return true if match.completed? || match.failed?
 
