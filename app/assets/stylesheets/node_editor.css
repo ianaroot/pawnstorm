@@ -1200,18 +1200,17 @@
 
 .node-form-panel {
   width: 20rem;
-}
-
-.node-form-panel.condition-form-panel,
-.node-form-panel.node-form-panel--condition {
-  width: min(49rem, calc(100vw - 0.5rem));
   max-height: calc(100vh - 28px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.node-form-panel--condition .panel-actions {
+.node-form-panel.node-form-panel--condition {
+  width: min(49rem, calc(100vw - 0.5rem));
+}
+
+.node-form-panel .panel-actions {
   flex-shrink: 0;
 }
 
