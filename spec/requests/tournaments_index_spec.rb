@@ -47,5 +47,13 @@ RSpec.describe 'Tournaments index', type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include(entered_tournament.name)
     end
+
+    it 'renders the tournament list inside a turbo frame so filters can apply live' do
+      create(:tournament, visibility: :public)
+
+      get tournaments_path
+
+      expect(response.body).to include('<turbo-frame id="tournaments"')
+    end
   end
 end
