@@ -153,9 +153,8 @@ class ReplayView {
     }
 
     this.resultElement.append(
-      document.createTextNode('Result hidden to avoid spoilers. Click '),
-      this.buildSpoilerRevealButton(),
-      document.createTextNode(' to reveal results early.')
+      document.createTextNode('Result hidden to avoid spoilers. '),
+      this.buildSpoilerRevealButton()
     )
   }
 
@@ -164,7 +163,7 @@ class ReplayView {
     button.type = 'button'
     button.dataset.matchReplaySpoilerReveal = 'true'
     button.className = 'match-replay-spoiler-reveal'
-    button.textContent = 'HERE'
+    button.textContent = 'Reveal'
     return button
   }
 
