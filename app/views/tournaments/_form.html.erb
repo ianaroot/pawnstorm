@@ -79,6 +79,8 @@
   <details class="constraints-section" <%= "open" if @constraints.present? %>>
     <summary class="constraints-summary">Bot Eligibility Constraints</summary>
     <div class="constraints-body">
+      <p class="constraints-explainer">Constraints limit which bots may enter. Assign costs to a bot's building blocks against a total budget, restrict its structure, or ban specific condition and score types — bots that exceed the limits can't be submitted.</p>
+
       <div class="constraints-grid">
 
         <%# ── Budget ──────────────────────────────────────── %>
@@ -98,8 +100,8 @@
             "census_condition"     => "Positions",
             "relational_condition" => "Attack/Defend",
             "identity_condition"   => "Captures",
-            "and"                  => "AND edge",
-            "or"                   => "OR merge"
+            "and"                  => "AND",
+            "or"                   => "OR"
           }.each do |key, label| %>
             <div class="ci-row">
               <span class="ci-label"><%= label %></span>
@@ -116,7 +118,7 @@
         <div class="ci-structure">
           <p class="ci-heading">Structure</p>
           <div class="ci-row">
-            <span class="ci-label">Disallow AND branches</span>
+            <span class="ci-label">Disallow chained conditions (AND)</span>
             <label class="ci-toggle">
               <input type="checkbox"
                 name="tournament[constraints][allow_and]"
@@ -126,7 +128,7 @@
             </label>
           </div>
           <div class="ci-row">
-            <span class="ci-label">Disallow OR branches</span>
+            <span class="ci-label">Disallow merged branches (OR)</span>
             <label class="ci-toggle">
               <input type="checkbox"
                 name="tournament[constraints][allow_or]"
@@ -142,6 +144,8 @@
               value="<%= @constraints&.dig("max_branch_length") %>"
               min="1" step="1" placeholder="N/A">
           </div>
+          <p class="ce-check-note">Counts chained conditions only — score nodes don't add to the length.</p>
+          <%= render 'constraints_legend' %>
         </div>
 
         <%# ── Banned ──────────────────────────────────────── %>

@@ -532,6 +532,65 @@ details[open] .constraints-summary::after {
   color: #6b7280;
 }
 
+.constraints-explainer {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 1rem;
+  line-height: 1.45;
+  border-left: 3px solid #A855F7;
+  padding-left: 0.7rem;
+}
+
+.constraints-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.constraints-legend__item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.constraints-legend__svg {
+  flex: none;
+}
+
+.constraints-legend__term {
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.constraints-legend__note {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0;
+  max-width: 24ch;
+  line-height: 1.4;
+}
+
+.constraints-legend__cases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.constraints-legend__case {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.constraints-legend__case .constraints-legend__note {
+  margin: 0;
+  max-width: 30ch;
+}
+
 [data-constraints-eligibility-target="panel"] {
   margin-top: 1rem;
 }
