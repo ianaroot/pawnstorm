@@ -1,33 +1,26 @@
 class Matches::HumanVsBotController < ApplicationController
+  include Matches::SetupForm
+
+  BOT_PAGE_SIZE = 8
+
   before_action -> { current_user_or_create_guest! }, only: [:create]
   before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
   def new
-    creation = Matches::CreateHumanVsBot.new(user: current_user, params: setup_params)
-    assign_form_state(creation)
-    paginate_bot_list
-    @user_has_no_own_bots = current_user.nil? || current_user.bots.empty?
-
-    render 'matches/new_human_vs_bot'
+    render_form(Matches::CreateHumanVsBot.new(user: current_user, params: setup_params))
   end
 
   def create
-    creation = Matches::CreateHumanVsBot.new(user: current_user, params: match_params)
+    setup = Matches::CreateHumanVsBot.new(user: current_user, params: match_params)
+    return redirect_to live_human_vs_bot_match_path(setup.match) if setup.call
 
-    if creation.call
-      redirect_to live_human_vs_bot_match_path(creation.match)
-    else
-      assign_form_state(creation)
-      paginate_bot_list
-      @user_has_no_own_bots = current_user.bots.empty?
-      flash.now[:alert] = creation.error_message
-      render 'matches/new_human_vs_bot', status: :unprocessable_entity
-    end
+    flash.now[:alert] = setup.error_message
+    render_form(setup, status: :unprocessable_entity)
   end
 
   def live
     @match = current_user.created_matches.find(params[:id])
-    unless @match.running? && interactive_play_match?(@match)
+    unless @match.running? && @match.human_vs_bot_for?(current_user)
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 
@@ -51,26 +44,25 @@ class Matches::HumanVsBotController < ApplicationController
 
   private
 
-  def assign_form_state(creation)
-    @play_bots = creation.play_bots
-    @selected_bot_id = creation.selected_bot_id
-    @selected_color = creation.selected_color
+  def render_form(setup, status: :ok)
+    assign_form_state(setup)
+    paginate_bot_list(setup)
+    render 'matches/new_human_vs_bot', status: status
   end
 
-  def paginate_bot_list
+  def assign_form_state(setup)
+    @selected_bot_id = setup.selected_bot_id
+    @selected_color = setup.selected_color
+  end
+
+  def paginate_bot_list(setup)
     @play_bots_pagy, @play_bots = pagy(
-      @play_bots.with_name(params[:bot_name]),
-      limit: 8,
-      page_param: :bot_page,
+      setup.play_bots.with_name(params[:bot_name]),
+      limit: BOT_PAGE_SIZE,
+      page_key: 'bot_page',
       page: params[:bot_page],
       params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
     )
-  end
-
-  def interactive_play_match?(match)
-    players = [match.white_player, match.black_player]
-    players.count { |player| player == current_user } == 1 &&
-      players.count { |player| player.is_a?(Bot) } == 1
   end
 
   def setup_params

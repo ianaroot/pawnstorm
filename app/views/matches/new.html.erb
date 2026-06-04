@@ -1,8 +1,9 @@
-<div class="match-setup-page" data-controller="match-setup">
+<div class="match-setup-page" data-controller="match-setup"
+  data-match-setup-stale-message-template-value="<%= stale_bot_message_template %>">
   <h1>Set Up Match</h1>
   <p>Choose one of your bots and an opponent. Colors will be assigned randomly.</p>
   <p><%= link_to 'Play against one of your bots instead', new_human_vs_bot_match_path %></p>
-  <% if @user_has_no_own_bots %>
+  <% if user_has_no_own_bots? %>
     <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
   <% end %>
 
@@ -32,35 +33,13 @@
             <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
             <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
           <% end %>
-          <div class="match-bot-list-frame">
-            <div class="match-bot-list">
-              <% @own_bots.each do |bot| %>
-                <label class="match-bot-option">
-                  <input type="radio"
-                    name="match[own_bot_id]"
-                    value="<%= bot.id %>"
-                    form="match-form"
-                    data-action="change->match-setup#ownBotChosen"
-                    <%= 'checked' if @selected_own_bot_id.to_i == bot.id %>
-                    data-bot-name="<%= bot.name %>"
-                    data-bot-stale="<%= bot.compiled_program_stale? %>"
-                    data-bot-owned="true">
-                  <span>
-                    <strong><%= bot.name %></strong>
-                    <small class="match-bot-rating"><%= bot.rating.round %></small>
-                    <small>by <%= bot.user.email %></small>
-                    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
-                  </span>
-                </label>
-              <% end %>
-            </div>
-            <div class="match-bot-scroll-track" aria-hidden="true">
-              <div class="match-bot-scroll-thumb"></div>
-            </div>
-          </div>
-          <div class="index-pagination">
-            <%== @own_bots_pagy.series_nav if @own_bots_pagy.pages > 1 %>
-          </div>
+          <%= render 'matches/bot_list',
+            bots: @own_bots,
+            pagy: @own_bots_pagy,
+            radio_name: 'match[own_bot_id]',
+            selected_id: @selected_own_bot_id,
+            change_action: 'change->match-setup#ownBotChosen',
+            show_details: true %>
         <% end %>
       </div>
       <button type="submit" form="match-form" class="btn btn-primary">Create Match</button>
@@ -77,34 +56,12 @@
             <%= f.hidden_field :own_bot_page, value: params[:own_bot_page] %>
             <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
           <% end %>
-          <div class="match-bot-list-frame">
-            <div class="match-bot-list">
-              <% @opponent_bots.each do |bot| %>
-                <label class="match-bot-option">
-                  <input type="radio"
-                    name="match[opponent_bot_id]"
-                    value="<%= bot.id %>"
-                    form="match-form"
-                    <%= 'checked' if @selected_opponent_bot_id.to_i == bot.id %>
-                    data-bot-name="<%= bot.name %>"
-                    data-bot-stale="<%= bot.compiled_program_stale? %>"
-                    data-bot-owned="<%= current_user && bot.user_id == current_user.id %>">
-                  <span>
-                    <strong><%= bot.name %></strong>
-                    <small class="match-bot-rating"><%= bot.rating.round %></small>
-                    <small>by <%= bot.user.email %></small>
-                    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
-                  </span>
-                </label>
-              <% end %>
-            </div>
-            <div class="match-bot-scroll-track" aria-hidden="true">
-              <div class="match-bot-scroll-thumb"></div>
-            </div>
-          </div>
-          <div class="index-pagination">
-            <%== @opponent_bots_pagy.series_nav if @opponent_bots_pagy.pages > 1 %>
-          </div>
+          <%= render 'matches/bot_list',
+            bots: @opponent_bots,
+            pagy: @opponent_bots_pagy,
+            radio_name: 'match[opponent_bot_id]',
+            selected_id: @selected_opponent_bot_id,
+            show_details: true %>
         <% end %>
       </div>
     </div>

@@ -31,6 +31,56 @@ RSpec.describe Match, type: :model do
     end
   end
 
+  describe '#bot_owner_id_for' do
+    let(:owner) { create(:user) }
+
+    it 'returns the user id of the bot on that side' do
+      bot = create(:bot, user: owner)
+      match = create(:match, white_player: bot)
+      expect(match.bot_owner_id_for(:white)).to eq(owner.id)
+    end
+
+    it 'returns nil when that side is a human player' do
+      match = create(:match, :white_human)
+      expect(match.bot_owner_id_for(:white)).to be_nil
+    end
+
+    it 'accepts a string player argument' do
+      bot = create(:bot, user: owner)
+      match = create(:match, black_player: bot)
+      expect(match.bot_owner_id_for('black')).to eq(owner.id)
+    end
+
+    it 'raises for an unknown player' do
+      match = create(:match)
+      expect { match.bot_owner_id_for(:sideways) }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe '#human_vs_bot_for?' do
+    let(:user) { create(:user) }
+
+    it 'is true when the user plays one side and a bot the other' do
+      match = create(:match, white_player: user, black_player: create(:bot))
+      expect(match.human_vs_bot_for?(user)).to be true
+    end
+
+    it 'is false for a bot-vs-bot match' do
+      match = create(:match)
+      expect(match.human_vs_bot_for?(user)).to be false
+    end
+
+    it 'is false when the human side is a different user' do
+      match = create(:match, white_player: create(:user), black_player: create(:bot))
+      expect(match.human_vs_bot_for?(user)).to be false
+    end
+
+    it 'is false for a nil user' do
+      match = create(:match, white_player: user, black_player: create(:bot))
+      expect(match.human_vs_bot_for?(nil)).to be false
+    end
+  end
+
   describe '#first_bot_match_for?' do
     let(:user) { create(:user) }
     let(:user_bot) { create(:bot, user: user) }
