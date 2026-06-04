@@ -68,13 +68,14 @@ class Matches::CreateBotVsBot
 
   def load_bot_options
     if @user
-      @own_bots = @user.bots.order(:name)
+      @own_bots = @user.bots.includes(:user).order(:name)
       @all_opponent_bots = Bot.where(user: @user)
                              .or(Bot.compiled.where.not(user: @user))
+                             .includes(:user)
                              .order(:rating)
     else
       @own_bots = Bot.none
-      @all_opponent_bots = Bot.compiled.order(:rating)
+      @all_opponent_bots = Bot.compiled.includes(:user).order(:rating)
     end
   end
 
