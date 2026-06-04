@@ -14,7 +14,7 @@ export default class extends Controller {
     const staleOwnedBots = this.selectedStaleOwnedBots()
     if (staleOwnedBots.length === 0) { return }
     event.preventDefault()
-    const names = staleOwnedBots.map(bot => bot.name).join(' and ')
+    const names = [...new Set(staleOwnedBots.map(bot => bot.name))].join(' and ')
     const message = this.staleMessageTemplateValue.replace('%{names}', names)
     if (!window.confirm(message)) { return }
     this.staleBotConfirmationTarget.value = 'compile'
