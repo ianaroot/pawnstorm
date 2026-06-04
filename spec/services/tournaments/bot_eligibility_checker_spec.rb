@@ -455,4 +455,10 @@ RSpec.describe Tournaments::BotEligibilityChecker do
       expect(result.violations.map { |v| v[:type] }).to contain_exactly("condition_kind", "score_node_action_type")
     end
   end
+
+  describe "#as_json" do
+    it "serializes the fields clients read, without the internal stats" do
+      expect(check(linear_program).as_json.keys).to contain_exactly(:eligible, :cost, :budget, :violations)
+    end
+  end
 end

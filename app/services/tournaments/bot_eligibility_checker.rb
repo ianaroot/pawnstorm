@@ -4,7 +4,7 @@ module Tournaments
   class BotEligibilityChecker
     Result = Data.define(:eligible, :cost, :budget, :violations, :stats) do
       def eligible? = eligible
-      def as_json(*) = to_h
+      def as_json(*) = to_h.except(:stats)
     end
 
     def initialize(compiled_program, constraints)
