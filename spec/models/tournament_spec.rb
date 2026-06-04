@@ -44,4 +44,34 @@ RSpec.describe Tournament, type: :model do
       expect(tournament.reload).to be_status_aborted
     end
   end
+
+  describe 'pause state' do
+    it 'persists pausing to the database' do
+      tournament = create(:tournament)
+      expect(tournament).not_to be_paused
+
+      tournament.pause!
+
+      expect(tournament.reload).to be_paused
+    end
+
+    it 'clears the paused state on resume' do
+      tournament = create(:tournament)
+      tournament.pause!
+
+      tournament.resume!
+
+      expect(tournament.reload).not_to be_paused
+    end
+
+    it 'clears the paused state when aborted' do
+      tournament = create(:tournament)
+      tournament.pause!
+
+      tournament.abort!
+
+      expect(tournament.reload).not_to be_paused
+      expect(tournament.reload).to be_status_aborted
+    end
+  end
 end

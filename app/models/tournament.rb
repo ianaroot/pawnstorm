@@ -2,7 +2,6 @@ require 'securerandom'
 
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
-  PAUSED_CACHE_TTL = 7.days
   INVITE_TOKEN_BYTES = 3
 
   enum :status, {
@@ -77,20 +76,20 @@ class Tournament < ApplicationRecord
       result: Match.results[:error],
       error_message: 'Tournament aborted'
     )
-    status_aborted!
+    update!(status: :aborted, paused_at: nil)
   end
 
   def pause!
-    Rails.cache.write(paused_cache_key, true, expires_in: PAUSED_CACHE_TTL)
+    update!(paused_at: Time.current)
   end
 
   def resume!
-    Rails.cache.delete(paused_cache_key)
+    update!(paused_at: nil)
     enqueue_next_match!
   end
 
   def paused?
-    Rails.cache.read(paused_cache_key) == true
+    paused_at.present?
   end
 
   private
@@ -110,9 +109,5 @@ class Tournament < ApplicationRecord
 
   def collides_with_id_route?(token)
     token.match?(/\A\d+\z/)
-  end
-
-  def paused_cache_key
-    "tournaments/#{id}/paused"
   end
 end

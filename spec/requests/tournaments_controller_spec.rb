@@ -450,8 +450,6 @@ RSpec.describe TournamentsController, type: :request do
     end
 
     it 'marks the tournament as paused without changing match statuses' do
-      skip 'tournament pause behavior is currently being reworked and is not production-critical'
-
       tournament = create(:tournament, creator: user)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
