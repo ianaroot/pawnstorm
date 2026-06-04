@@ -3,6 +3,7 @@
   <p><strong>Rows:</strong> White player. <strong>Columns:</strong> Black player.</p>
   <p>Cell format: white points - black points, then draws and failed counts.</p>
 
+  <% matrix = tournament_presenter.pairing_matrix %>
   <div class="tournament-pairing-matrix-wrap">
     <table class="tournament-pairing-matrix">
       <thead>
@@ -25,7 +26,7 @@
                 <% if white_entrant == black_entrant %>
                   -
                 <% else %>
-                  <% summary = tournament_presenter.directional_pairing_summary(white_entrant, black_entrant) %>
+                  <% record = matrix[[white_entrant.id, black_entrant.id]] %>
                   <% pairing_path = if local_assigns[:invite_token].present?
                     invitation_tournament_pairing_path(local_assigns[:invite_token], white_entrant, black_entrant)
                   else
@@ -33,10 +34,10 @@
                   end %>
                   <%= link_to pairing_path, class: 'tournament-pairing-matrix__link' do %>
                     <span class="tournament-pairing-matrix__primary">
-                      <%= summary[:white_wins] %> - <%= summary[:black_wins] %> - <%= summary[:draws] %>
+                      <%= record.wins_for(white_entrant) %> - <%= record.wins_for(black_entrant) %> - <%= record.draws %>
                     </span>
                     <span class="tournament-pairing-matrix__secondary">
-                      fails <%= summary[:failed] %>
+                      fails <%= record.failed %>
                     </span>
                   <% end %>
                 <% end %>

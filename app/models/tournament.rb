@@ -2,7 +2,6 @@ require 'securerandom'
 
 class Tournament < ApplicationRecord
   DRAW_RESULTS = %w[stalemate threefold_repetition capped fifty_move_rule].freeze
-  PAUSED_CACHE_TTL = 7.days
   INVITE_TOKEN_BYTES = 3
 
   enum :status, {
@@ -58,6 +57,7 @@ class Tournament < ApplicationRecord
 
   def enqueue_next_match!
     return if paused?
+    return if status_aborted?
     return if matches.where(status: [Match.statuses[:queued], Match.statuses[:running]]).exists?
 
     next_match = matches.pending.order(:created_at, :id).first
@@ -71,24 +71,27 @@ class Tournament < ApplicationRecord
   end
 
   def abort!
-    matches.where(status: [Match.statuses[:pending], Match.statuses[:queued]]).update_all(
-      status: Match.statuses[:failed],
-      result: Match.results[:error],
-      error_message: 'Tournament aborted'
-    )
+    transaction do
+      matches.where(status: [Match.statuses[:pending], Match.statuses[:queued]]).update_all(
+        status: Match.statuses[:failed],
+        result: Match.results[:error],
+        error_message: 'Tournament aborted'
+      )
+      update!(status: :aborted, paused_at: nil)
+    end
   end
 
   def pause!
-    Rails.cache.write(paused_cache_key, true, expires_in: PAUSED_CACHE_TTL)
+    update!(paused_at: Time.current)
   end
 
   def resume!
-    Rails.cache.delete(paused_cache_key)
+    update!(paused_at: nil)
     enqueue_next_match!
   end
 
   def paused?
-    Rails.cache.read(paused_cache_key) == true
+    paused_at.present?
   end
 
   private
@@ -100,12 +103,13 @@ class Tournament < ApplicationRecord
   def generate_unique_invite_token
     10.times do
       token = SecureRandom.hex(INVITE_TOKEN_BYTES)
+      next if collides_with_id_route?(token)
       return token unless self.class.exists?(invite_token: token)
     end
     raise "Could not generate a unique invite token after 10 attempts"
   end
 
-  def paused_cache_key
-    "tournaments/#{id}/paused"
+  def collides_with_id_route?(token)
+    token.match?(/\A\d+\z/)
   end
 end

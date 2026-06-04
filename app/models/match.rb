@@ -122,7 +122,7 @@ class Match < ApplicationRecord
 
   def tournament_compiled_program_snapshot_for(player)
     tournament_entry = tournament_entry_for_player(player)
-    return tournament_entry.frozen_compiled_program_snapshot if tournament_entry&.frozen_compiled_program_snapshot.present?
+    return tournament_entry.compiled_program_snapshot if tournament_entry&.compiled_program_snapshot.present?
 
     nil
   end

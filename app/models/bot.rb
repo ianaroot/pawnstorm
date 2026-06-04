@@ -88,6 +88,14 @@ class Bot < ApplicationRecord
     update_columns(rating: state.rating, rating_deviation: state.deviation, rating_volatility: state.volatility)
   end
 
+  def eligibility_for(constraints)
+    Tournaments::BotEligibilityChecker.new(compiled_program, constraints).check
+  end
+
+  def eligible_for?(constraints)
+    eligibility_for(constraints).eligible?
+  end
+
   private
 
   def inflate_deviation_for_recompile!

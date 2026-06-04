@@ -1,5 +1,4 @@
 class TournamentEntriesController < ApplicationController
-  include BotEligibility
   before_action :authenticate_registered_user!
   before_action :set_tournament
 
@@ -91,9 +90,10 @@ class TournamentEntriesController < ApplicationController
   end
 
   def eligible_bot
-    current_user.bots.find_by(id: entry_params[:bot_id]).tap do |bot|
-      return nil unless bot&.compiled_program.present? && bot.compiled_program_stale == false
-    end
+    bot = current_user.bots.find_by(id: entry_params[:bot_id])
+    return nil unless bot&.compiled_program.present? && bot.compiled_program_stale == false
+
+    bot
   end
 
   def current_user_entry
@@ -146,9 +146,9 @@ class TournamentEntriesController < ApplicationController
 
   def constraint_violation_message(bot)
     return nil unless tournament.constraints.present?
-    result = check_bot_eligibility(bot, tournament.constraints)
-    return nil if result[:eligible]
-    "Bot is not eligible for this tournament: #{result[:violations].map { |v| v[:message] }.join(', ')}"
+    result = bot.eligibility_for(tournament.constraints)
+    return nil if result.eligible?
+    "Bot is not eligible for this tournament: #{result.violations.map { |v| v[:message] }.join(', ')}"
   end
 
   def entry_params

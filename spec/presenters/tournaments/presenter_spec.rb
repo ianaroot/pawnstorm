@@ -1,0 +1,174 @@
+require 'rails_helper'
+
+RSpec.describe Tournaments::Presenter do
+  def query_count
+    count = 0
+    counter = ->(_name, _start, _finish, _id, payload) do
+      count += 1 unless payload[:name] == 'SCHEMA' || payload[:cached]
+    end
+    ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { yield }
+    count
+  end
+
+  describe '#running_matches_count' do
+    it 'treats queued matches as active running work' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator, status: :running)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      create(
+        :match, :tournament_game,
+        tournament: tournament,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :queued
+      )
+
+      presenter = described_class.new(tournament)
+
+      expect(presenter.running_matches_count).to eq(1)
+      expect(presenter.active?).to be(true)
+    end
+  end
+
+  describe '#standings_rows' do
+    it 'counts fifty_move_rule as a draw in standings' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      create(
+        :match, :tournament_game,
+        tournament: tournament,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :completed,
+        result: :fifty_move_rule
+      )
+
+      standings_by_entry_id = described_class.new(tournament).standings_rows.index_by { |row| row[:entrant].id }
+      expect(standings_by_entry_id.fetch(entry_a.id)[:points]).to eq(0.5)
+      expect(standings_by_entry_id.fetch(entry_b.id)[:points]).to eq(0.5)
+      expect(standings_by_entry_id.fetch(entry_a.id)[:draws]).to eq(1)
+      expect(standings_by_entry_id.fetch(entry_b.id)[:draws]).to eq(1)
+    end
+
+    it 'does not issue more queries as the match count grows' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      add_matches = ->(count) do
+        count.times do
+          create(
+            :match, :tournament_game,
+            tournament: tournament,
+            white_tournament_entry: entry_a,
+            black_tournament_entry: entry_b,
+            status: :completed,
+            result: :white_win
+          )
+        end
+      end
+
+      add_matches.call(2)
+      baseline = query_count { described_class.new(Tournament.find(tournament.id)).standings_rows }
+
+      add_matches.call(3)
+      grown = query_count { described_class.new(Tournament.find(tournament.id)).standings_rows }
+
+      expect(grown).to eq(baseline)
+    end
+  end
+
+  describe '#pairing_row' do
+    it 'counts fifty_move_rule as a draw in pairings' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      create(
+        :match, :tournament_game,
+        tournament: tournament,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :completed,
+        result: :fifty_move_rule
+      )
+
+      pairing = described_class.new(tournament).pairing_row(entry_a, entry_b)
+      expect(pairing[:total_record].draws).to eq(1)
+      expect(pairing[:total_record].points_for(entry_a)).to eq(0.5)
+      expect(pairing[:total_record].points_for(entry_b)).to eq(0.5)
+    end
+  end
+
+  describe '#pairing_matrix' do
+    it 'records a fifty_move_rule game as a draw in the directional cell' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      create(
+        :match, :tournament_game,
+        tournament: tournament,
+        white_tournament_entry: entry_a,
+        black_tournament_entry: entry_b,
+        status: :completed,
+        result: :fifty_move_rule
+      )
+
+      record = described_class.new(tournament).pairing_matrix[[entry_a.id, entry_b.id]]
+      expect(record.points_for(entry_a)).to eq(0.5)
+      expect(record.points_for(entry_b)).to eq(0.5)
+      expect(record.draws).to eq(1)
+      expect(record.failed).to eq(0)
+      expect(record.matches.size).to eq(1)
+    end
+
+    it 'does not issue more queries as the match count grows' do
+      creator = create(:user)
+      tournament = create(:tournament, creator: creator)
+      bot_a = create(:bot, :compiled)
+      bot_b = create(:bot, :compiled)
+      entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
+      entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
+
+      add_matches = ->(count) do
+        count.times do
+          create(
+            :match, :tournament_game,
+            tournament: tournament,
+            white_tournament_entry: entry_a,
+            black_tournament_entry: entry_b,
+            status: :completed,
+            result: :white_win
+          )
+        end
+      end
+
+      add_matches.call(2)
+      baseline = query_count { described_class.new(Tournament.find(tournament.id)).pairing_matrix }
+
+      add_matches.call(3)
+      grown = query_count { described_class.new(Tournament.find(tournament.id)).pairing_matrix }
+
+      expect(grown).to eq(baseline)
+    end
+  end
+end
