@@ -40,6 +40,6 @@ class TournamentMatchStats
   end
 
   def count_for(status)
-    counts.fetch(status.to_s, counts.fetch(Match.statuses[status], 0))
+    counts.fetch(status.to_s, 0)
   end
 end
