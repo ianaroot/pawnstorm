@@ -34,19 +34,29 @@ class Matches::CompleteHumanVsBot
   end
 
   def complete_match
-    match.update!(
+    attributes = replay_attributes
+    return false unless attributes
+
+    match.update!(attributes)
+  end
+
+  def replay_attributes
+    {
       status: :completed,
+      error_message: nil,
       result: @params.fetch(:result),
       lay_out: @params.fetch(:lay_out),
       captured_pieces: @params.fetch(:captured_pieces),
       allowed_to_move: @params.fetch(:allowed_to_move),
       movement_notation: @params.fetch(:movement_notation),
-      previous_layouts: @params.fetch(:previous_layouts),
-      error_message: nil
-    )
+      previous_layouts: @params.fetch(:previous_layouts)
+    }
   rescue KeyError => error
-    field = error.is_a?(ActionController::ParameterMissing) ? error.param : error.key
-    fail_with("Missing match completion field: #{field}.")
+    fail_with("Missing match completion field: #{missing_field(error)}.")
+  end
+
+  def missing_field(error)
+    error.is_a?(ActionController::ParameterMissing) ? error.param : error.key
   end
 
   def fail_with(message)
