@@ -104,7 +104,7 @@ class CanvasViewport {
   updateZoomLabel() {
     const zoomLabel = document.getElementById('zoom-level')
     if (zoomLabel) {
-      zoomLabel.textContent = `${Math.round(this.getZoom() * 100)}%`
+      zoomLabel.textContent = `${Math.round((this.getZoom() / ZOOM_DEFAULT) * 100)}%`
     }
   }
 
