@@ -145,6 +145,17 @@ describe('ClickHandler', () => {
     expect(editorPanel.classList.contains('hidden')).toBe(true)
   })
 
+  it('keeps the editor open when a drag starts inside the panel and ends outside', () => {
+    dispatchClick(conditionElement)
+    expect(store.getEditingNode()).toBe(conditionNode.clientId)
+
+    editorPanel.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+    expect(store.getEditingNode()).toBe(conditionNode.clientId)
+    expect(editorPanel.classList.contains('hidden')).toBe(false)
+  })
+
   it('does not open the editor for shift-click or alt-click selection', () => {
     dispatchClick(conditionElement, { shiftKey: true })
     expect(store.getEditingNode()).toBe(null)
