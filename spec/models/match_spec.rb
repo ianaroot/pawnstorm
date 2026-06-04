@@ -57,6 +57,16 @@ RSpec.describe Match, type: :model do
     end
   end
 
+  describe '#player_display_name_for' do
+    it "labels a player whose record was deleted 'Deleted player'" do
+      bot = create(:bot)
+      match = create(:match, white_player: bot)
+      bot.destroy!
+
+      expect(match.reload.player_display_name_for(:white)).to eq('Deleted player')
+    end
+  end
+
   describe '#human_vs_bot_for?' do
     let(:user) { create(:user) }
 

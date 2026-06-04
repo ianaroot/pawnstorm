@@ -144,7 +144,7 @@ class Match < ApplicationRecord
 
   def fallback_player_label(player)
     type, id = normalize_player(player) == :white ? [white_player_type, white_player_id] : [black_player_type, black_player_id]
-    "#{type} #{id}".strip.presence || 'Unknown player'
+    "#{type} #{id}".strip.presence || 'Deleted player'
   end
 
   def completed_matches_require_replay_state
