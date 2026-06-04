@@ -96,8 +96,8 @@
 
 .match-replay-page.match-replay-layout {
   display: grid;
-  grid-template-columns: minmax(min-content, 2fr) minmax(3rem, 0.7fr) minmax(0, 2.5fr);
-  gap: 1.5rem;
+  grid-template-columns: max-content minmax(3rem, 0.7fr) minmax(0, 2.5fr);
+  gap: 1rem;
   align-items: stretch;
   height: calc(100vh - 4rem);
   min-height: 0;
@@ -208,6 +208,7 @@ input[type="submit"].btn-rematch {
   color: var(--text-primary);
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
 }
 
 .match-replay-page .match-replay-move:hover {
