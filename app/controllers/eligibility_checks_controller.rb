@@ -1,24 +1,20 @@
 class EligibilityChecksController < ApplicationController
-  include BotEligibility
-  include ConstraintsParams
+  include Tournaments::ConstraintsParams
   before_action :authenticate_registered_user!
 
   def create
     constraints = permitted_constraints
-    bots = current_user.bots
-                       .where(compiled_program_stale: false)
-                       .where.not(compiled_program: nil)
-                       .order(:name)
+    bots = current_user.bots.compiled.order(:name)
 
     results = bots.map do |bot|
-      result = check_bot_eligibility(bot, constraints)
+      result = bot.eligibility_for(constraints)
       {
         bot_id:     bot.id,
         bot_name:   bot.name,
-        eligible:   result[:eligible],
-        cost:       result[:cost],
-        budget:     result[:budget],
-        violations: result[:violations]
+        eligible:   result.eligible,
+        cost:       result.cost,
+        budget:     result.budget,
+        violations: result.violations
       }
     end
 

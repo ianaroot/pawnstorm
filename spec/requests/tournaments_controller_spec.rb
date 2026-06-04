@@ -144,20 +144,13 @@ RSpec.describe TournamentsController, type: :request do
         compiled_program_snapshot: bot_b.compiled_program,
         seed_order: 1
       )
-      match = Match.create!(
+      match = create(
+        :match, :tournament_game,
         tournament:,
-        creator: user,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :completed,
-        result: :white_win,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['e4', 'e5'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
+        result: :white_win
       )
 
       get public_tournament_path(tournament)
@@ -196,20 +189,13 @@ RSpec.describe TournamentsController, type: :request do
         compiled_program_snapshot: surviving_bot.compiled_program,
         seed_order: 1
       )
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament:,
-        creator: user,
-        white_player: deleted_bot,
-        black_player: surviving_bot,
         white_tournament_entry: deleted_entry,
         black_tournament_entry: surviving_entry,
         status: :completed,
-        result: :black_win,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['e4'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
+        result: :black_win
       )
       deleted_bot.destroy!
       deleted_entry.reload
@@ -232,17 +218,12 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament, creator: user, visibility: :public)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       get public_tournament_path(tournament)
@@ -257,17 +238,12 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament, creator: user, visibility: :public, status: :running)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
       sign_in user
 
@@ -325,6 +301,20 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).not_to include('Matchup Matrix')
       expect(response.body).not_to include('Standings')
     end
+
+    it 'offers only constraint-eligible bots in the open-registration form' do
+      tournament = create(:tournament, creator: user, visibility: :public, status: :open, constraints: { "max_score_nodes" => 0 })
+      create(:bot, :compiled, user: user, name: 'Eligible Bot')
+      ineligible = create(:bot, :compiled, user: user, name: 'Ineligible Bot')
+      ineligible.update_columns(compiled_program: { "root" => "s1", "nodes" => { "s1" => { "type" => "score", "children" => [] } } })
+      sign_in user
+
+      get public_tournament_path(tournament)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Eligible Bot')
+      expect(response.body).not_to include('Ineligible Bot')
+    end
   end
 
   describe 'GET #pairing' do
@@ -367,35 +357,26 @@ RSpec.describe TournamentsController, type: :request do
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
-      running_match = Match.create!(
+      running_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_b,
         black_player: bot_a,
-        status: :running,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :running
       )
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
+      expect(tournament.reload).to be_status_aborted
       expect(pending_match.reload).to be_failed
       expect(pending_match.result).to eq('error')
       expect(pending_match.error_message).to eq('Tournament aborted')
@@ -406,22 +387,17 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: tournament.creator,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       post abort_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(pending_match.reload).to be_pending
     end
@@ -435,30 +411,23 @@ RSpec.describe TournamentsController, type: :request do
     end
 
     it 'marks the tournament as paused without changing match statuses' do
-      skip 'tournament pause behavior is currently being reworked and is not production-critical'
-
       tournament = create(:tournament, creator: user)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       post pause_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
       expect(tournament.reload).to be_paused
       expect(pending_match.reload).to be_pending
     end
@@ -478,17 +447,12 @@ RSpec.describe TournamentsController, type: :request do
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       tournament.pause!
@@ -496,7 +460,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post resume_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(invitation_tournament_path(tournament.invite_token))
       expect(tournament.reload).not_to be_paused
       expect(ComputeMatchJob).to have_been_enqueued.with(pending_match.id)
     end
@@ -513,7 +477,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:notice]).to eq('Tournament started.')
       expect(tournament.reload).to be_status_running
       expect(tournament.started_at).to be_present
@@ -527,7 +491,7 @@ RSpec.describe TournamentsController, type: :request do
 
       post start_tournament_path(tournament)
 
-      expect(response).to redirect_to(TournamentPresenter.new(tournament).show_path)
+      expect(response).to redirect_to(public_tournament_path(tournament))
       expect(flash[:alert]).to eq('Only the tournament creator can manage this tournament.')
       expect(tournament.reload).to be_status_open
     end

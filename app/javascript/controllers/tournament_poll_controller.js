@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 const POLL_INTERVAL_MS = 10000
 const FLASH_DURATION_MS = 900
+const MAX_CONSECUTIVE_FAILURES = 5
 
 export default class extends Controller {
   static targets = ["meta", "progress", "standings", "matrix"]
@@ -11,6 +12,7 @@ export default class extends Controller {
   }
 
   connect() {
+    this.consecutiveFailures = 0
     if (!this.activeValue) { return }
     this.poll()
     this.startPolling()
@@ -37,16 +39,22 @@ export default class extends Controller {
         headers: { Accept: "application/json" },
         credentials: "same-origin"
       })
-      if (!response.ok) { return }
+      if (!response.ok) { this.recordFailure(); return }
       const payload = await response.json()
+      this.consecutiveFailures = 0
       this.replaceSection(this.metaTarget, payload.meta_html)
       this.updateSectionFields(this.progressTarget, payload.progress_html)
       this.updateStandings(this.standingsTarget, payload.standings_html)
       this.updateSectionFields(this.matrixTarget, payload.matrix_html)
       if (payload.polling_complete) { this.stopPolling() }
     } catch (_error) {
-      this.stopPolling()
+      this.recordFailure()
     }
+  }
+
+  recordFailure() {
+    this.consecutiveFailures += 1
+    if (this.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) { this.stopPolling() }
   }
 
   replaceSection(target, html) {

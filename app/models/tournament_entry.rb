@@ -9,8 +9,4 @@ class TournamentEntry < ApplicationRecord
   def display_name
     self[:display_name].presence || bot&.name || bot_owner&.email || "Bot #{bot_id}"
   end
-
-  def frozen_compiled_program_snapshot
-    compiled_program_snapshot
-  end
 end

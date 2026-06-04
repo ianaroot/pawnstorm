@@ -24,7 +24,7 @@ Rails.application.routes.draw do
     delete 'nodes/:node_id/connections/:id', to: 'bot_nodes#disconnect', as: :connection
   end
 
-  if Rails.env.development? || Rails.env.test?
+  if Rails.env.local?
     get 'matches/sandbox', to: 'matches#sandbox', as: :match_sandbox
   end
 
@@ -34,11 +34,10 @@ Rails.application.routes.draw do
     resources :entries, only: [:create, :update, :destroy], controller: 'tournament_entries'
     member do
       post :start
-      post :abort
+      post :abort if Rails.env.local?
       post :pause
       post :resume
       post :open_registration
-      get :eligible_bots
       get :eligibility
     end
   end

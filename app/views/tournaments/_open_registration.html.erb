@@ -24,23 +24,9 @@
 
       <% if available_bots.any? %>
         <% entries_path = @invite_token.present? ? invitation_tournament_entries_path(@invite_token) : tournament_entries_path(tournament) %>
-        <% if tournament.constraints.present? %>
-          <div data-controller="eligibility-check"
-               data-eligibility-check-url-value="<%= eligible_bots_tournament_path(tournament) %>">
-            <p data-eligibility-check-target="loader">Checking your bots for eligibility…</p>
-            <p data-eligibility-check-target="noBotsMessage" hidden>You do not have any eligible compiled bots for this tournament.</p>
-            <div data-eligibility-check-target="form" hidden>
-              <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true, class: "tournament-submit-form" do |form| %>
-                <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] }, {}, { data: { eligibility_check_target: "select" } } %>
-                <%= form.submit 'Submit Entry' %>
-              <% end %>
-            </div>
-          </div>
-        <% else %>
-          <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true, class: "tournament-submit-form" do |form| %>
-            <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] } %>
-            <%= form.submit 'Submit Entry' %>
-          <% end %>
+        <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true, class: "tournament-submit-form" do |form| %>
+          <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] } %>
+          <%= form.submit 'Submit Entry' %>
         <% end %>
       <% else %>
         <p>You do not have any eligible compiled bots available.</p>
