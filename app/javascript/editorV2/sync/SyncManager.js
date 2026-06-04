@@ -61,7 +61,7 @@ class SyncManager {
   }
 
   setRecentPlacementAnchorForSelection() {
-    const selectedId = this.store.getPrimarySelectedNode?.() || this.store.getSelectedNode?.()
+    const selectedId = this.store.getPrimarySelectedNode?.()
     if (selectedId) {
       this.setRecentPlacementAnchorForClientId(selectedId)
       return true

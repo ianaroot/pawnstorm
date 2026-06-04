@@ -277,15 +277,6 @@ class Store {
     return this.viewState.primarySelectedNodeId
   }
 
-  /**
-   * Backward-compatible single-selection getter.
-   * Leave this in place until handlers/renderers are updated.
-   * @returns {string|null}
-   */
-  getSelectedNode() {
-    return this.viewState.primarySelectedNodeId
-  }
-
   setEditingNode(clientId) {
     this.viewState.editingNodeId = clientId
   }

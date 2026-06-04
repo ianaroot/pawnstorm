@@ -22,7 +22,7 @@ class Bot < ApplicationRecord
   has_many :matches_as_white_player, as: :white_player, class_name: 'Match', dependent: :nullify
   has_many :matches_as_black_player, as: :black_player, class_name: 'Match', dependent: :nullify
   has_many :tournament_entries, dependent: :nullify
-  has_many :tournaments, through: :tournament_entries, dependent: :nullify
+  has_many :tournaments, through: :tournament_entries
   has_many :nodes, dependent: :destroy
   has_many :connections, through: :nodes, source: :outgoing_connections
 
