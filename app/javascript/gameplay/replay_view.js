@@ -78,11 +78,15 @@ class ReplayView {
     const chosenMoveTile = chosenMove
       ? document.getElementById(Board.gridCalculator(chosenMove.endPosition))
       : null
+    const chosenMoveStartTile = chosenMove
+      ? document.getElementById(Board.gridCalculator(chosenMove.startPosition))
+      : null
     const userSelectedDifferentPiece = inspection.selectedStartSquare &&
       chosenMove &&
       Board.gridCalculator(chosenMove.startPosition) !== inspection.selectedStartSquare
     if (!muteTopMoveHighlights && !userSelectedDifferentPiece) {
       chosenMoveTile?.classList.add('match-replay-square--chosen-move')
+      chosenMoveStartTile?.classList.add('match-replay-square--chosen-move')
     }
 
     const inspectedMove = inspection.result.explicitInspectedMoveKey
