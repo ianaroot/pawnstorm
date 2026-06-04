@@ -27,8 +27,6 @@ class Matches::BotVsBotController < ApplicationController
   end
 
   def assign_form_state(setup)
-    @own_bot_options = setup.own_bots
-    @opponent_bot_options = setup.all_opponent_bots
     @selected_own_bot_id = setup.selected_own_bot_id
     @selected_opponent_bot_id = setup.selected_opponent_bot_id
   end
@@ -42,14 +40,14 @@ class Matches::BotVsBotController < ApplicationController
     }.compact
 
     @own_bots_pagy, @own_bots = pagy(
-      @own_bot_options.with_name(params[:own_bot_name]),
+      setup.own_bots.with_name(params[:own_bot_name]),
       limit: OWN_BOT_PAGE_SIZE,
       page_key: 'own_bot_page',
       page: params[:own_bot_page],
       params: shared_params.merge(opponent_page: params[:opponent_page])
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
-      @opponent_bot_options.with_name(params[:opponent_name]),
+      setup.all_opponent_bots.with_name(params[:opponent_name]),
       limit: OPPONENT_PAGE_SIZE,
       page_key: 'opponent_page',
       page: params[:opponent_page] || default_opponent_page(setup),

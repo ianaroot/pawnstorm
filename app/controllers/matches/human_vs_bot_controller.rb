@@ -46,19 +46,18 @@ class Matches::HumanVsBotController < ApplicationController
 
   def render_form(setup, status: :ok)
     assign_form_state(setup)
-    paginate_bot_list
+    paginate_bot_list(setup)
     render 'matches/new_human_vs_bot', status: status
   end
 
   def assign_form_state(setup)
-    @play_bots = setup.play_bots
     @selected_bot_id = setup.selected_bot_id
     @selected_color = setup.selected_color
   end
 
-  def paginate_bot_list
+  def paginate_bot_list(setup)
     @play_bots_pagy, @play_bots = pagy(
-      @play_bots.with_name(params[:bot_name]),
+      setup.play_bots.with_name(params[:bot_name]),
       limit: BOT_PAGE_SIZE,
       page_key: 'bot_page',
       page: params[:bot_page],
