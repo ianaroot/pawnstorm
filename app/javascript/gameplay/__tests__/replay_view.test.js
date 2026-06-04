@@ -265,7 +265,7 @@ describe('ReplayView', () => {
     const resultElement = root.querySelector('[data-match-replay-target="result"]')
     const revealButton = resultElement.querySelector('[data-match-replay-spoiler-reveal]')
 
-    expect(resultElement.textContent).toBe('Result hidden to avoid spoilers. Click HERE to reveal results early.')
+    expect(resultElement.textContent).toBe('Result hidden to avoid spoilers. Reveal')
     expect(revealButton).not.toBeNull()
     expect(revealButton.type).toBe('button')
   })
