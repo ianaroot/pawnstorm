@@ -36,6 +36,19 @@ RSpec.describe TournamentsController, type: :request do
         expect(response.body).to include(%(name="tournament[#{field}]"))
       end
     end
+
+    it 'exposes eligibility controls for every condition kind' do
+      sign_in create(:user)
+
+      get new_tournament_path
+
+      expect(response.body).to include('tournament[constraints][costs][census_condition]')
+      expect(response.body).to include('tournament[constraints][costs][relational_condition]')
+      expect(response.body).to include('tournament[constraints][costs][identity_condition]')
+      expect(response.body).to include('Positions')
+      expect(response.body).to include('Attack/Defend')
+      expect(response.body).to include('Captures')
+    end
   end
 
   describe 'POST #create' do

@@ -95,9 +95,9 @@
           <p class="ci-subheading">Costs</p>
           <% {
             "score_node"           => "Score node",
-            "unary_condition"      => "Unary condition",
-            "relational_condition" => "Relational condition",
-            "position_condition"   => "Position condition",
+            "census_condition"     => "Positions",
+            "relational_condition" => "Attack/Defend",
+            "identity_condition"   => "Captures",
             "and"                  => "AND edge",
             "or"                   => "OR merge"
           }.each do |key, label| %>
@@ -148,16 +148,17 @@
         <div>
           <p class="ci-heading">Banned Condition Kinds</p>
           <div class="ci-pills">
-            <% %w[unary relational position].each do |kind| %>
+            <% { "census" => "Positions", "relational" => "Attack/Defend", "identity" => "Captures" }.each do |kind, label| %>
               <label class="ci-pill">
                 <input type="checkbox"
                   name="tournament[constraints][condition_restrictions][banned_kinds][]"
                   value="<%= kind %>"
                   <%= "checked" if @constraints&.dig("condition_restrictions", "banned_kinds")&.include?(kind) %>>
-                <span><%= kind %></span>
+                <span><%= label %></span>
               </label>
             <% end %>
           </div>
+          <p class="ce-check-note">Some conditions built in the editor's Captures tab are stored as Positions, so the Captures and Positions limits here may not line up exactly with the editor's tabs.</p>
           <p class="ci-subheading">Banned Score Actions</p>
           <div class="ci-pills">
             <% %w[add subtract set return].each do |action_type| %>
