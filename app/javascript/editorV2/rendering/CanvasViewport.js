@@ -163,10 +163,12 @@ class CanvasViewport {
     let contentHeight = viewportHeight > 0 ? viewportHeight / zoom : 0
 
     if (bounds.width > 0 || bounds.height > 0) {
-      const normalizedWorldMinX = bounds.minX - VIEWPORT_PADDING
-      const normalizedWorldMinY = bounds.minY - VIEWPORT_PADDING
-      let worldMaxX = bounds.maxX + VIEWPORT_PADDING
-      let worldMaxY = bounds.maxY + VIEWPORT_PADDING
+      const horizontalMargin = Math.max(VIEWPORT_PADDING, contentWidth)
+      const verticalMargin = Math.max(VIEWPORT_PADDING, contentHeight)
+      const normalizedWorldMinX = bounds.minX - horizontalMargin
+      const normalizedWorldMinY = bounds.minY - verticalMargin
+      let worldMaxX = bounds.maxX + horizontalMargin
+      let worldMaxY = bounds.maxY + verticalMargin
 
       if (this.interactionBounds) {
         const previousMinX = this.interactionBounds.minX
@@ -307,7 +309,10 @@ class CanvasViewport {
     this.refresh()
 
     requestAnimationFrame(() => {
-      this.centerOnGraphPoint(bounds.centerX, bounds.centerY)
+      const zoom = this.getZoom()
+      const scenePoint = this.graphToScenePoint(bounds.centerX, bounds.minY)
+      this.container.scrollLeft = Math.max(0, (scenePoint.x * zoom) - (this.container.clientWidth / 2))
+      this.container.scrollTop = Math.max(0, (scenePoint.y - VIEWPORT_PADDING) * zoom)
     })
   }
 
