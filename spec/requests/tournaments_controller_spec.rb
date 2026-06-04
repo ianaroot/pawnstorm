@@ -144,20 +144,13 @@ RSpec.describe TournamentsController, type: :request do
         compiled_program_snapshot: bot_b.compiled_program,
         seed_order: 1
       )
-      match = Match.create!(
+      match = create(
+        :match, :tournament_game,
         tournament:,
-        creator: user,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :completed,
-        result: :white_win,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['e4', 'e5'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
+        result: :white_win
       )
 
       get public_tournament_path(tournament)
@@ -196,20 +189,13 @@ RSpec.describe TournamentsController, type: :request do
         compiled_program_snapshot: surviving_bot.compiled_program,
         seed_order: 1
       )
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament:,
-        creator: user,
-        white_player: deleted_bot,
-        black_player: surviving_bot,
         white_tournament_entry: deleted_entry,
         black_tournament_entry: surviving_entry,
         status: :completed,
-        result: :black_win,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['e4'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
+        result: :black_win
       )
       deleted_bot.destroy!
       deleted_entry.reload
@@ -232,17 +218,12 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament, creator: user, visibility: :public)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       get public_tournament_path(tournament)
@@ -257,17 +238,12 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament, creator: user, visibility: :public, status: :running)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
       sign_in user
 
@@ -381,30 +357,20 @@ RSpec.describe TournamentsController, type: :request do
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
-      running_match = Match.create!(
+      running_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_b,
         black_player: bot_a,
-        status: :running,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :running
       )
 
       post abort_tournament_path(tournament)
@@ -421,17 +387,12 @@ RSpec.describe TournamentsController, type: :request do
       tournament = create(:tournament)
       bot_a = create(:bot, :compiled, name: 'Alpha')
       bot_b = create(:bot, :compiled, name: 'Beta')
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: tournament.creator,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       post abort_tournament_path(tournament)
@@ -456,17 +417,12 @@ RSpec.describe TournamentsController, type: :request do
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       post pause_tournament_path(tournament)
@@ -491,17 +447,12 @@ RSpec.describe TournamentsController, type: :request do
       create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        result: nil,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       tournament.pause!

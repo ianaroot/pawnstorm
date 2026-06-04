@@ -19,11 +19,9 @@ RSpec.describe Tournaments::Presenter do
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: creator,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :queued
@@ -45,20 +43,13 @@ RSpec.describe Tournaments::Presenter do
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: creator,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :completed,
-        result: :fifty_move_rule,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['1. Nf3'],
-        previous_layouts: [],
-        lay_out: Array.new(64, 'ee')
+        result: :fifty_move_rule
       )
 
       standings_by_entry_id = described_class.new(tournament).standings_rows.index_by { |row| row[:entrant].id }
@@ -78,20 +69,13 @@ RSpec.describe Tournaments::Presenter do
 
       add_matches = ->(count) do
         count.times do
-          Match.create!(
+          create(
+            :match, :tournament_game,
             tournament: tournament,
-            creator: creator,
-            white_player: bot_a,
-            black_player: bot_b,
             white_tournament_entry: entry_a,
             black_tournament_entry: entry_b,
             status: :completed,
-            result: :white_win,
-            allowed_to_move: 'W',
-            captured_pieces: [],
-            movement_notation: ['1. Nf3'],
-            previous_layouts: [],
-            lay_out: Array.new(64, 'ee')
+            result: :white_win
           )
         end
       end
@@ -115,20 +99,13 @@ RSpec.describe Tournaments::Presenter do
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: creator,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :completed,
-        result: :fifty_move_rule,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['1. Nf3'],
-        previous_layouts: [],
-        lay_out: Array.new(64, 'ee')
+        result: :fifty_move_rule
       )
 
       pairing = described_class.new(tournament).pairing_row(entry_a, entry_b)
@@ -147,20 +124,13 @@ RSpec.describe Tournaments::Presenter do
       entry_a = create(:tournament_entry, tournament: tournament, bot: bot_a, seed_order: 0)
       entry_b = create(:tournament_entry, tournament: tournament, bot: bot_b, seed_order: 1)
 
-      Match.create!(
+      create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: creator,
-        white_player: bot_a,
-        black_player: bot_b,
         white_tournament_entry: entry_a,
         black_tournament_entry: entry_b,
         status: :completed,
-        result: :fifty_move_rule,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['1. Nf3'],
-        previous_layouts: [],
-        lay_out: Array.new(64, 'ee')
+        result: :fifty_move_rule
       )
 
       record = described_class.new(tournament).pairing_matrix[[entry_a.id, entry_b.id]]
@@ -181,20 +151,13 @@ RSpec.describe Tournaments::Presenter do
 
       add_matches = ->(count) do
         count.times do
-          Match.create!(
+          create(
+            :match, :tournament_game,
             tournament: tournament,
-            creator: creator,
-            white_player: bot_a,
-            black_player: bot_b,
             white_tournament_entry: entry_a,
             black_tournament_entry: entry_b,
             status: :completed,
-            result: :white_win,
-            allowed_to_move: 'W',
-            captured_pieces: [],
-            movement_notation: ['1. Nf3'],
-            previous_layouts: [],
-            lay_out: Array.new(64, 'ee')
+            result: :white_win
           )
         end
       end

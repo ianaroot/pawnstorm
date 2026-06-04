@@ -26,16 +26,12 @@ RSpec.describe Tournament, type: :model do
       tournament = create(:tournament, creator: user, status: :aborted)
       bot_a = create(:bot, :compiled)
       bot_b = create(:bot, :compiled)
-      pending_match = Match.create!(
+      pending_match = create(
+        :match, :tournament_game,
         tournament: tournament,
-        creator: user,
         white_player: bot_a,
         black_player: bot_b,
-        status: :pending,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
+        status: :pending
       )
 
       tournament.enqueue_next_match!
