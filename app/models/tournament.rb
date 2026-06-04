@@ -71,12 +71,14 @@ class Tournament < ApplicationRecord
   end
 
   def abort!
-    matches.where(status: [Match.statuses[:pending], Match.statuses[:queued]]).update_all(
-      status: Match.statuses[:failed],
-      result: Match.results[:error],
-      error_message: 'Tournament aborted'
-    )
-    update!(status: :aborted, paused_at: nil)
+    transaction do
+      matches.where(status: [Match.statuses[:pending], Match.statuses[:queued]]).update_all(
+        status: Match.statuses[:failed],
+        result: Match.results[:error],
+        error_message: 'Tournament aborted'
+      )
+      update!(status: :aborted, paused_at: nil)
+    end
   end
 
   def pause!
