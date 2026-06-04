@@ -1,8 +1,9 @@
-<div class="match-setup-page" data-controller="match-setup">
+<div class="match-setup-page" data-controller="match-setup"
+  data-match-setup-stale-message-template-value="<%= stale_bot_message_template %>">
   <h1>Play Against Your Bot</h1>
   <p>Choose a bot, pick a side, and play a persisted match.</p>
   <p><%= link_to 'Set up a bot vs bot match instead', new_bot_vs_bot_match_path %></p>
-  <% if @user_has_no_own_bots %>
+  <% if user_has_no_own_bots? %>
     <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
   <% end %>
 
@@ -30,32 +31,12 @@
             <%= f.hidden_field :human_color, value: params[:human_color] %>
             <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
           <% end %>
-          <div class="match-bot-list-frame">
-            <div class="match-bot-list">
-              <% @play_bots.each do |bot| %>
-                <label class="match-bot-option">
-                  <input type="radio"
-                    name="match[bot_id]"
-                    value="<%= bot.id %>"
-                    form="match-form"
-                    <%= 'checked' if @selected_bot_id.to_i == bot.id %>
-                    data-bot-name="<%= bot.name %>"
-                    data-bot-stale="<%= bot.compiled_program_stale? %>"
-                    data-bot-owned="<%= current_user && bot.user_id == current_user.id %>">
-                  <span>
-                    <strong><%= bot.name %></strong>
-                    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
-                  </span>
-                </label>
-              <% end %>
-            </div>
-            <div class="match-bot-scroll-track" aria-hidden="true">
-              <div class="match-bot-scroll-thumb"></div>
-            </div>
-          </div>
-          <div class="index-pagination">
-            <%== @play_bots_pagy.series_nav if @play_bots_pagy.pages > 1 %>
-          </div>
+          <%= render 'matches/bot_list',
+            bots: @play_bots,
+            pagy: @play_bots_pagy,
+            radio_name: 'match[bot_id]',
+            selected_id: @selected_bot_id,
+            show_details: false %>
         <% end %>
       </div>
       <button type="submit" form="match-form" class="btn btn-primary">Start Game</button>

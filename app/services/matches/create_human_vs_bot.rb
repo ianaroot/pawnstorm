@@ -1,4 +1,6 @@
 class Matches::CreateHumanVsBot
+  include Matches::StaleBotConfirmation
+
   attr_reader :error_message, :match, :play_bots, :selected_bot_id, :selected_color
 
   def initialize(user:, params:)
@@ -59,19 +61,11 @@ class Matches::CreateHumanVsBot
     play_bots.find_by(id: selected_bot_id)
   end
 
-  def compile_confirmation_requested?
-    @params[:stale_bot_confirmation] == 'compile'
-  end
-
   def compile_bot(bot)
     bot.compile_program!
     true
   rescue StandardError => error
     fail_with("Bot could not be compiled: #{error.message}")
-  end
-
-  def stale_compile_message(bot)
-    "#{bot.name} needs to be recompiled before you can play. Compile and continue?"
   end
 
   def resolve_human_team(color)

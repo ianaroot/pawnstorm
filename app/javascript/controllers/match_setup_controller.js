@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["staleBotConfirmation", "form", "opponentForm", "ownBotIdField"]
+  static values = { staleMessageTemplate: String }
 
   ownBotChosen(event) {
     this.ownBotIdFieldTargets.forEach((field) => { field.value = event.target.value })
@@ -13,9 +14,8 @@ export default class extends Controller {
     const staleOwnedBots = this.selectedStaleOwnedBots()
     if (staleOwnedBots.length === 0) { return }
     event.preventDefault()
-    const message = staleOwnedBots.length === 1
-      ? `${staleOwnedBots[0].name} needs to be recompiled before match generation. Compile and continue?`
-      : `${staleOwnedBots.map(bot => bot.name).join(' and ')} each need to be recompiled before match generation. Compile both and continue?`
+    const names = [...new Set(staleOwnedBots.map(bot => bot.name))].join(' and ')
+    const message = this.staleMessageTemplateValue.replace('%{names}', names)
     if (!window.confirm(message)) { return }
     this.staleBotConfirmationTarget.value = 'compile'
     this.formTarget.submit()

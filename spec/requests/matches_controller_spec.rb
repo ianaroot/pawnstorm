@@ -44,6 +44,29 @@ RSpec.describe 'Matches', type: :request do
       expect(response.body).to include(%(value="#{own_bot.id}"))
       expect(response.body).to match(/value="#{own_bot.id}"[^>]*checked/)
     end
+
+    it 'shows the no-bots notice when a signed-in user has none' do
+      sign_in create(:user)
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).to include("You don't have any bots yet.")
+    end
+
+    it 'hides the no-bots notice once the user has a bot' do
+      user = create(:user)
+      create(:bot, :compiled, user: user)
+
+      sign_in user
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).not_to include("You don't have any bots yet.")
+    end
+
+    it 'shows the no-bots notice to an unauthenticated guest' do
+      get new_bot_vs_bot_match_path
+
+      expect(response.body).to include("You don't have any bots yet.")
+    end
   end
 
   describe 'POST #create' do
@@ -129,7 +152,7 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include('recompiled before match generation')
+      expect(response.body).to include('must be recompiled first. Compile and continue?')
     end
 
     it 'compiles stale selected owned bots and immediately creates the match when confirmed' do
@@ -257,7 +280,7 @@ RSpec.describe 'Matches', type: :request do
       end.not_to change(Match, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include("#{stale_bot.name} needs to be recompiled before you can play. Compile and continue?")
+      expect(response.body).to include("#{stale_bot.name} must be recompiled first. Compile and continue?")
 
       expect do
         post human_vs_bot_matches_path, params: {
@@ -414,6 +437,32 @@ RSpec.describe 'Matches', type: :request do
       expect(match.reload).to be_failed
       expect(match.result).to eq('error')
       expect(match.error_message).to eq('Bot move failed: kaboom')
+    end
+
+    it 'returns a 422 instead of erroring when a completion field is missing' do
+      match = Match.create!(
+        creator: user,
+        white_player: user,
+        black_player: bot,
+        black_compiled_program_snapshot: bot.compiled_program,
+        status: :running,
+        allowed_to_move: 'W',
+        captured_pieces: [],
+        movement_notation: [],
+        previous_layouts: []
+      )
+
+      patch complete_human_vs_bot_match_path(match), params: {
+        match: {
+          status: 'completed',
+          result: 'white_win'
+          # lay_out and other replay fields intentionally omitted
+        }
+      }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('lay_out')
+      expect(match.reload).to be_running
     end
   end
 

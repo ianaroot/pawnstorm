@@ -9,7 +9,7 @@ class Matches::CompleteHumanVsBot
 
   def call
     @match = @user.created_matches.find(@match_id)
-    raise ActiveRecord::RecordNotFound unless interactive_play_match?
+    raise ActiveRecord::RecordNotFound unless match.human_vs_bot_for?(@user)
 
     return true if match.completed? || match.failed?
 
@@ -25,12 +25,6 @@ class Matches::CompleteHumanVsBot
 
   private
 
-  def interactive_play_match?
-    players = [match.white_player, match.black_player]
-    players.count { |player| player == @user } == 1 &&
-      players.count { |player| player.is_a?(Bot) } == 1
-  end
-
   def fail_match
     match.update!(
       status: :failed,
@@ -40,16 +34,29 @@ class Matches::CompleteHumanVsBot
   end
 
   def complete_match
-    match.update!(
+    attributes = replay_attributes
+    return false unless attributes
+
+    match.update!(attributes)
+  end
+
+  def replay_attributes
+    {
       status: :completed,
+      error_message: nil,
       result: @params.fetch(:result),
       lay_out: @params.fetch(:lay_out),
       captured_pieces: @params.fetch(:captured_pieces),
       allowed_to_move: @params.fetch(:allowed_to_move),
       movement_notation: @params.fetch(:movement_notation),
-      previous_layouts: @params.fetch(:previous_layouts),
-      error_message: nil
-    )
+      previous_layouts: @params.fetch(:previous_layouts)
+    }
+  rescue KeyError => error
+    fail_with("Missing match completion field: #{missing_field(error)}.")
+  end
+
+  def missing_field(error)
+    error.is_a?(ActionController::ParameterMissing) ? error.param : error.key
   end
 
   def fail_with(message)
