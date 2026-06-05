@@ -1,9 +1,6 @@
 class Matches::BotVsBotController < ApplicationController
   include Matches::SetupForm
 
-  OWN_BOT_PAGE_SIZE = 8
-  OPPONENT_PAGE_SIZE = 12
-
   before_action :authenticate_registered_or_guest_user!, only: [:create]
 
   def new
@@ -41,14 +38,14 @@ class Matches::BotVsBotController < ApplicationController
 
     @own_bots_pagy, @own_bots = pagy(
       setup.own_bots.with_name(params[:own_bot_name]),
-      limit: OWN_BOT_PAGE_SIZE,
+      limit: BOT_PAGE_SIZE,
       page_key: 'own_bot_page',
       page: params[:own_bot_page],
       params: shared_params.merge(opponent_page: params[:opponent_page])
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
       setup.all_opponent_bots.with_name(params[:opponent_name]),
-      limit: OPPONENT_PAGE_SIZE,
+      limit: BOT_PAGE_SIZE,
       page_key: 'opponent_page',
       page: params[:opponent_page] || default_opponent_page(setup),
       params: shared_params.merge(own_bot_page: params[:own_bot_page])
@@ -58,7 +55,7 @@ class Matches::BotVsBotController < ApplicationController
   def default_opponent_page(setup)
     return if params[:opponent_name].present?
 
-    setup.opponent_page(per_page: OPPONENT_PAGE_SIZE)
+    setup.opponent_page(per_page: BOT_PAGE_SIZE)
   end
 
   def setup_params

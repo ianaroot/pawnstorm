@@ -1,6 +1,8 @@
 module Matches::SetupForm
   extend ActiveSupport::Concern
 
+  BOT_PAGE_SIZE = 12
+
   included { helper_method :user_has_no_own_bots?, :stale_bot_message_template }
 
   private

@@ -1,8 +1,6 @@
 class Matches::HumanVsBotController < ApplicationController
   include Matches::SetupForm
 
-  BOT_PAGE_SIZE = 8
-
   before_action -> { current_user_or_create_guest! }, only: [:create]
   before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
