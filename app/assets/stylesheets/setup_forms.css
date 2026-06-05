@@ -102,15 +102,15 @@
    SETUP FORM PAGE
    ============================================ */
 
-.setup-form-page {
+.tournament-setup-page {
   padding: 2rem 1.5rem;
 }
 
-.setup-form-page h1 {
+.tournament-setup-page h1 {
   margin-bottom: 0.375rem;
 }
 
-.setup-form-page > p {
+.tournament-setup-page > p {
   color: var(--text-secondary);
   font-size: 0.875rem;
   margin-bottom: 2rem;
@@ -120,14 +120,14 @@
    TWO-COLUMN LAYOUT
    ============================================ */
 
-.setup-form-grid {
+.tournament-setup-grid {
   display: grid;
   grid-template-columns: 55fr 45fr;
   gap: 1.25rem;
   align-items: start;
 }
 
-.setup-form-col {
+.tournament-setup-col {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -180,7 +180,7 @@
    SUBMIT
    ============================================ */
 
-.setup-form-col > .btn {
+.tournament-setup-col > .btn {
   align-self: flex-start;
 }
 
