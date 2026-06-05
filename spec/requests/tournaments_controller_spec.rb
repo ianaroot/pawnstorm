@@ -328,6 +328,56 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include('Eligible Bot')
       expect(response.body).not_to include('Ineligible Bot')
     end
+
+    it 'renders the invite link as copyable text with a copy button rather than a hyperlink' do
+      tournament = create(:tournament, creator: user, visibility: :link_only, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      invite_url = invitation_tournament_url(tournament.invite_token)
+      expect(response.body).to include("data-clipboard-text-value=\"#{invite_url}\"")
+      expect(response.body).to include('data-action="clipboard#copy"')
+      expect(response.body).not_to include("href=\"#{invitation_tournament_path(tournament.invite_token)}\"")
+    end
+
+    it 'labels the draft publish button clearly and confirms before opening entries' do
+      tournament = create(:tournament, creator: user, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Publish &amp; open for entries')
+      expect(response.body).to include('data-turbo-confirm')
+    end
+
+    it 'shows a collapsible read-only constraints summary when the tournament has constraints' do
+      tournament = create(
+        :tournament,
+        creator: user,
+        status: :draft,
+        constraints: { "budget" => 5, "costs" => { "census_condition" => 2 }, "allow_or" => false }
+      )
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Eligibility Constraints')
+      expect(response.body).to include('AND — chained conditions'.encode('UTF-8'))
+    end
+
+    it 'omits the constraints summary when the tournament has no constraints' do
+      tournament = create(:tournament, creator: user, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Eligibility Constraints')
+    end
   end
 
   describe 'GET #pairing' do

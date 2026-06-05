@@ -10,6 +10,10 @@
         <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
       </div>
 
+      <% if @tournament.constraints.present? %>
+        <%= render 'constraints_summary', constraints: @tournament.constraints %>
+      <% end %>
+
       <% if @tournament.status_draft? %>
         <%= render 'draft_management', tournament: @tournament %>
       <% elsif @tournament.status_open? %>

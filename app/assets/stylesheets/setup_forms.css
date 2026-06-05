@@ -495,6 +495,10 @@ details[open] .constraints-summary::after {
   align-items: center;
 }
 
+.tournament-draft__action {
+  display: contents;
+}
+
 /* ── Constraints Eligibility Checker ──────────────── */
 
 .ce-check-bar {
@@ -708,3 +712,94 @@ details[open] .constraints-summary::after {
   white-space: nowrap;
 }
 .ce-edit-link:hover { color: #e5e7eb; }
+
+/* ── Invite link (read-only, copyable) ─────────────── */
+
+.invite-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.invite-link__url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: #d1d5db;
+  background: #1a1815;
+  border: 1px solid #2d2a26;
+  border-radius: 4px;
+  padding: 2px 8px;
+  word-break: break-all;
+}
+
+.invite-link__copy {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  color: #d1d5db;
+  background: #1a1815;
+  border: 1px solid #4b4742;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.invite-link__copy:hover {
+  background: #252220;
+  color: #fff;
+}
+
+/* ── Read-only constraints summary (show page) ─────── */
+
+.constraints-readonly {
+  margin: 1.25rem 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+}
+
+.constraints-readonly__summary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.constraints-readonly__summary::-webkit-details-marker { display: none; }
+
+.constraints-readonly__summary::after {
+  content: ' ›';
+  color: var(--text-muted);
+}
+
+.constraints-readonly[open] .constraints-readonly__summary::after {
+  content: ' ⌄';
+}
+
+.constraints-readonly__body {
+  padding: 0 1.25rem 1.25rem;
+}
+
+.constraints-readonly__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2rem;
+}
+
+.constraints-readonly__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  margin: 0.4rem 0 0;
+  color: var(--text-secondary);
+}
+
+.constraints-readonly__line strong {
+  color: #e5e7eb;
+  font-weight: 600;
+}
