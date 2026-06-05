@@ -55,5 +55,23 @@ RSpec.describe 'Tournaments index', type: :request do
 
       expect(response.body).to include('<turbo-frame id="tournaments"')
     end
+
+    it 'defaults the list frame to _top so links inside it navigate the full page' do
+      create(:tournament, visibility: :public)
+
+      get tournaments_path
+
+      frame = Nokogiri::HTML(response.body).at_css('turbo-frame#tournaments')
+      expect(frame['target']).to eq('_top')
+    end
+
+    it 'keeps pagination inside the frame so paging stays live' do
+      create_list(:tournament, 11, visibility: :public)
+
+      get tournaments_path
+
+      page_two = Nokogiri::HTML(response.body).css('turbo-frame#tournaments a').find { |a| a['href']&.include?('page=2') }
+      expect(page_two['data-turbo-frame']).to eq('tournaments')
+    end
   end
 end

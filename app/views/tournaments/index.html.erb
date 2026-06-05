@@ -35,7 +35,7 @@
       </div>
     <% end %>
 
-    <%= turbo_frame_tag "tournaments" do %>
+    <%= turbo_frame_tag "tournaments", target: "_top" do %>
       <% if @tournaments.any? %>
         <table>
           <thead>
@@ -66,7 +66,7 @@
         </table>
 
         <div class="index-pagination">
-          <%== @pagy.series_nav if @pagy.pages > 1 %>
+          <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="tournaments"') if @pagy.pages > 1 %>
         </div>
       <% else %>
         <p class="index-empty">No tournaments found.</p>
