@@ -1,76 +1,72 @@
-<div class="match-show-page">
-  <div class="game-page tournament-page">
-    <div class="index-header">
-      <h1>Tournaments</h1>
-      <% if user_signed_in? && !current_user.guest? %>
-        <%= link_to 'Create Tournament', new_tournament_path, class: 'btn btn-primary' %>
-      <% end %>
-    </div>
-
-    <%= form_with url: tournaments_path, method: :get, class: 'index-filter-form',
-          data: { controller: 'auto-submit', turbo_frame: 'tournaments' } do |f| %>
-      <div class="index-filter-row">
-        <div class="index-filter-field">
-          <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'index-filter-input',
-                data: { action: 'input->auto-submit#submitDebounced' } %>
-        </div>
-        <div class="index-filter-field">
-          <%= f.text_field :owner, value: params[:owner], placeholder: 'Search by owner', class: 'index-filter-input',
-                data: { action: 'input->auto-submit#submitDebounced' } %>
-        </div>
-        <div class="index-filter-field">
-          <%= f.select :status,
-            [['Any status', ''], *Tournament.statuses.keys.map { |s| [s.humanize, s] }],
-            { selected: params[:status] },
-            { class: 'index-filter-select', data: { action: 'change->auto-submit#submitNow' } } %>
-        </div>
-        <% if user_signed_in? && !current_user.guest? %>
-          <label class="index-filter-checkbox-label">
-            <%= f.check_box :my_entries, { checked: params[:my_entries] == "1", class: 'index-filter-checkbox',
-                  data: { action: 'change->auto-submit#submitNow' } } %>
-            My entries
-          </label>
-        <% end %>
-        <%= link_to 'Clear', tournaments_path, class: 'btn btn-secondary' %>
-      </div>
-    <% end %>
-
-    <%= turbo_frame_tag "tournaments", target: "_top" do %>
-      <% if @tournaments.any? %>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Owner</th>
-              <th>Status</th>
-              <th>Entries</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @tournaments.each do |tournament| %>
-              <tr>
-                <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
-                <td class="index-table-secondary"><%= tournament.creator&.email %></td>
-                <td><span class="tournament-status-pill tournament-status-pill--<%= tournament.status %>"><%= tournament.status.humanize %></span></td>
-                <td>
-                  <%= tournament.tournament_entries.size %>
-                  <% if tournament.max_entries %>
-                    <span class="index-table-secondary">/ <%= tournament.max_entries %></span>
-                  <% end %>
-                </td>
-                <td class="index-table-secondary index-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-
-        <div class="index-pagination">
-          <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="tournaments"') if @pagy.pages > 1 %>
-        </div>
-      <% else %>
-        <p class="index-empty">No tournaments found.</p>
-      <% end %>
-    <% end %>
-  </div>
+<div class="index-header">
+  <h1>Tournaments</h1>
+  <% if user_signed_in? && !current_user.guest? %>
+    <%= link_to 'Create Tournament', new_tournament_path, class: 'btn btn-primary' %>
+  <% end %>
 </div>
+
+<%= form_with url: tournaments_path, method: :get, class: 'index-filter-form',
+      data: { controller: 'auto-submit', turbo_frame: 'tournaments' } do |f| %>
+  <div class="index-filter-row">
+    <div class="index-filter-field">
+      <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'index-filter-input',
+            data: { action: 'input->auto-submit#submitDebounced' } %>
+    </div>
+    <div class="index-filter-field">
+      <%= f.text_field :owner, value: params[:owner], placeholder: 'Search by owner', class: 'index-filter-input',
+            data: { action: 'input->auto-submit#submitDebounced' } %>
+    </div>
+    <div class="index-filter-field">
+      <%= f.select :status,
+        [['Any status', ''], *Tournament.statuses.keys.map { |s| [s.humanize, s] }],
+        { selected: params[:status] },
+        { class: 'index-filter-select', data: { action: 'change->auto-submit#submitNow' } } %>
+    </div>
+    <% if user_signed_in? && !current_user.guest? %>
+      <label class="index-filter-checkbox-label">
+        <%= f.check_box :my_entries, { checked: params[:my_entries] == "1", class: 'index-filter-checkbox',
+              data: { action: 'change->auto-submit#submitNow' } } %>
+        My entries
+      </label>
+    <% end %>
+    <%= link_to 'Clear', tournaments_path, class: 'btn btn-secondary' %>
+  </div>
+<% end %>
+
+<%= turbo_frame_tag "tournaments", target: "_top" do %>
+  <% if @tournaments.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Owner</th>
+          <th>Status</th>
+          <th>Entries</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tournaments.each do |tournament| %>
+          <tr>
+            <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
+            <td class="index-table-secondary"><%= tournament.creator&.email %></td>
+            <td><span class="tournament-status-pill tournament-status-pill--<%= tournament.status %>"><%= tournament.status.humanize %></span></td>
+            <td>
+              <%= tournament.tournament_entries.size %>
+              <% if tournament.max_entries %>
+                <span class="index-table-secondary">/ <%= tournament.max_entries %></span>
+              <% end %>
+            </td>
+            <td class="index-table-secondary index-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div class="index-pagination">
+      <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="tournaments"') if @pagy.pages > 1 %>
+    </div>
+  <% else %>
+    <p class="index-empty">No tournaments found.</p>
+  <% end %>
+<% end %>
