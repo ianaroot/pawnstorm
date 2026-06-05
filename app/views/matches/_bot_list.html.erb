@@ -1,17 +1,12 @@
-<div class="match-bot-list-frame">
-  <div class="match-bot-list">
-    <% bots.each do |bot| %>
-      <%= render 'matches/bot_option',
-        bot: bot,
-        radio_name: radio_name,
-        checked: selected_id.to_i == bot.id,
-        change_action: local_assigns[:change_action],
-        show_details: show_details %>
-    <% end %>
-  </div>
-  <div class="match-bot-scroll-track" aria-hidden="true">
-    <div class="match-bot-scroll-thumb"></div>
-  </div>
+<div class="match-bot-list">
+  <% bots.each do |bot| %>
+    <%= render 'matches/bot_option',
+      bot: bot,
+      radio_name: radio_name,
+      checked: selected_id.to_i == bot.id,
+      change_action: local_assigns[:change_action],
+      show_details: show_details %>
+  <% end %>
 </div>
 <div class="index-pagination">
   <%== pagy.series_nav if pagy.pages > 1 %>
