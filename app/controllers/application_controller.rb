@@ -45,14 +45,23 @@ class ApplicationController < ActionController::Base
         guest: true,
         last_active_at: Time.current
       )
-    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
-      retries += 1
-      retry if retries <= GUEST_EMAIL_MAX_RETRIES
-      raise
+    rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => error
+      if guest_email_collision?(error) && retries < GUEST_EMAIL_MAX_RETRIES
+        retries += 1
+        retry
+      else
+        raise
+      end
     end
 
     sign_in guest_user
     guest_user
+  end
+
+  def guest_email_collision?(error)
+    return true if error.is_a?(ActiveRecord::RecordNotUnique)
+
+    error.record.errors.of_kind?(:email, :taken)
   end
 
   def render_not_found
