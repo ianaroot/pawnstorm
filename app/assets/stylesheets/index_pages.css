@@ -2,13 +2,6 @@
    SHARED INDEX PAGE LAYOUT
    ============================================ */
 
-.game-page.bots-page {
-  min-height: auto;
-  margin-left: 0;
-  margin-right: 0;
-  min-width: 0;
-}
-
 .index-header {
   display: flex;
   align-items: center;
