@@ -1,18 +1,11 @@
 <% costs = constraints["costs"] || {} %>
-<% cost_labels = {
-  "score_node"           => "Score node",
-  "census_condition"     => "Positions",
-  "relational_condition" => "Attack/Defend",
-  "identity_condition"   => "Captures",
-  "and"                  => "AND",
-  "or"                   => "OR"
-} %>
-<% kind_labels = { "census" => "Positions", "relational" => "Attack/Defend", "identity" => "Captures" } %>
+<% cost_labels = constraint_cost_labels %>
+<% kind_labels = constraint_condition_kind_labels %>
 <% banned_kinds   = constraints.dig("condition_restrictions", "banned_kinds") || [] %>
 <% banned_actions = constraints.dig("score_node_restrictions", "banned_action_types") || [] %>
 <% and_or_relevant = costs["and"].present? || costs["or"].present? || constraints["allow_and"] == false || constraints["allow_or"] == false %>
 
-<details class="constraints-readonly">
+<details class="constraints-readonly" <%= "open" if local_assigns.fetch(:expanded, true) %>>
   <summary class="constraints-readonly__summary">Eligibility Constraints</summary>
   <div class="constraints-readonly__body">
     <p class="constraints-explainer">These limits decide which bots may enter — a bot that exceeds them can't be submitted.</p>
@@ -60,10 +53,13 @@
           <% end %>
         </div>
       <% end %>
-    </div>
 
-    <% if and_or_relevant %>
-      <%= render 'constraints_legend' %>
-    <% end %>
+      <% if and_or_relevant %>
+        <div class="constraints-readonly__legend">
+          <p class="constraints-readonly__legend-title">Legend</p>
+          <%= render 'constraints_legend' %>
+        </div>
+      <% end %>
+    </div>
   </div>
 </details>

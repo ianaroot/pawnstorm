@@ -353,7 +353,7 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include('data-turbo-confirm')
     end
 
-    it 'shows a collapsible read-only constraints summary when the tournament has constraints' do
+    it 'shows the constraints summary expanded, with its values, for a draft tournament' do
       tournament = create(
         :tournament,
         creator: user,
@@ -365,8 +365,23 @@ RSpec.describe TournamentsController, type: :request do
       get invitation_tournament_path(tournament.invite_token)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include('Eligibility Constraints')
-      expect(response.body).to include('AND — chained conditions'.encode('UTF-8'))
+      summary = Nokogiri::HTML(response.body).at_css('details.constraints-readonly')
+      expect(summary).to be_present
+      expect(summary).to have_attribute('open')
+      expect(summary.text).to include('Eligibility Constraints', 'Positions', '5', '2')
+      expect(response.body).to include('AND — chained conditions')
+    end
+
+    it 'collapses the constraints summary once the tournament is running' do
+      tournament = create(:tournament, creator: user, status: :running, constraints: { "budget" => 5 })
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      summary = Nokogiri::HTML(response.body).at_css('details.constraints-readonly')
+      expect(summary).to be_present
+      expect(summary).not_to have_attribute('open')
     end
 
     it 'omits the constraints summary when the tournament has no constraints' do

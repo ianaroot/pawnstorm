@@ -8,7 +8,8 @@
   </div>
 
   <% if @tournament.constraints.present? %>
-    <%= render 'constraints_summary', constraints: @tournament.constraints %>
+    <%= render 'constraints_summary', constraints: @tournament.constraints,
+          expanded: @tournament.status_draft? || @tournament.status_open? %>
   <% end %>
 
   <% if @tournament.status_draft? %>
