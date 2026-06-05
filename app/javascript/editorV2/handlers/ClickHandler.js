@@ -9,6 +9,8 @@ class ClickHandler {
     this.editorPanel = editorPanel
     
     this.boundHandleClick = this.handleClick.bind(this)
+    this.boundHandlePointerDown = this.handlePointerDown.bind(this)
+    this.dragStartedInsideEditor = false
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this)
     this.boundHandleSave = this.handleSave.bind(this)
     this.boundHandleCancel = this.closeEditor.bind(this)
@@ -48,7 +50,14 @@ class ClickHandler {
   
   // * Setup global handlers * Call this once after all nodes are attached
   setupGlobalHandlers() {
+    document.addEventListener('pointerdown', this.boundHandlePointerDown)
     document.addEventListener('click', this.boundHandleClick)
+  }
+
+  handlePointerDown(event) {
+    this.dragStartedInsideEditor =
+      Boolean(this.editorPanel?.contains(event.target)) ||
+      Boolean(this.boardStatePreview?.wrap?.contains(event.target))
   }
 
   setEditorPanel(panel) {
@@ -94,10 +103,13 @@ class ClickHandler {
 
   handleClick(event) {
     if (this.store.shouldSuppressClicks()) { return }
+    const isPointerClick = event.detail > 0
+    const dragStartedInsideEditor = this.dragStartedInsideEditor && isPointerClick
+    this.dragStartedInsideEditor = false
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
     const clickedOnPreview = this.boardStatePreview?.wrap?.contains(event.target)
-    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview) {
+    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview && !dragStartedInsideEditor) {
       this.deselectAll()
       this.closeEditor()
     }
@@ -342,6 +354,7 @@ class ClickHandler {
   }
 
   destroy() {
+    document.removeEventListener('pointerdown', this.boundHandlePointerDown)
     document.removeEventListener('click', this.boundHandleClick)
     this.conditionForm?.detach()
     this.unsubscribeStore?.()

@@ -10,10 +10,18 @@ export default class extends Controller {
       if (this.selectTarget.value) this.checkEligibility()
     }
     document.addEventListener('bot:compiled', this.handleCompiled)
+
+    this.handleClickOutside = (event) => {
+      if (this.panelTarget.hidden) return
+      if (this.element.contains(event.target)) return
+      this.panelTarget.hidden = true
+    }
+    document.addEventListener('click', this.handleClickOutside)
   }
 
   disconnect() {
     document.removeEventListener('bot:compiled', this.handleCompiled)
+    document.removeEventListener('click', this.handleClickOutside)
   }
 
   toggle() {
