@@ -150,10 +150,22 @@ describe('ClickHandler', () => {
     expect(store.getEditingNode()).toBe(conditionNode.clientId)
 
     editorPanel.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
-    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))
 
     expect(store.getEditingNode()).toBe(conditionNode.clientId)
     expect(editorPanel.classList.contains('hidden')).toBe(false)
+  })
+
+  it('closes the editor for a synthetic click that is not part of a pointer drag', () => {
+    dispatchClick(conditionElement)
+    expect(store.getEditingNode()).toBe(conditionNode.clientId)
+
+    editorPanel.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
+    const keyboardActivatedClick = new MouseEvent('click', { bubbles: true, detail: 0 })
+    document.body.dispatchEvent(keyboardActivatedClick)
+
+    expect(store.getEditingNode()).toBe(null)
+    expect(editorPanel.classList.contains('hidden')).toBe(true)
   })
 
   it('does not open the editor for shift-click or alt-click selection', () => {

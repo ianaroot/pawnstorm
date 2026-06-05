@@ -10,7 +10,7 @@ class ClickHandler {
     
     this.boundHandleClick = this.handleClick.bind(this)
     this.boundHandlePointerDown = this.handlePointerDown.bind(this)
-    this.pointerDownInsideEditor = false
+    this.dragStartedInsideEditor = false
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this)
     this.boundHandleSave = this.handleSave.bind(this)
     this.boundHandleCancel = this.closeEditor.bind(this)
@@ -55,7 +55,7 @@ class ClickHandler {
   }
 
   handlePointerDown(event) {
-    this.pointerDownInsideEditor =
+    this.dragStartedInsideEditor =
       Boolean(this.editorPanel?.contains(event.target)) ||
       Boolean(this.boardStatePreview?.wrap?.contains(event.target))
   }
@@ -103,12 +103,13 @@ class ClickHandler {
 
   handleClick(event) {
     if (this.store.shouldSuppressClicks()) { return }
-    const startedInsideEditor = this.pointerDownInsideEditor
-    this.pointerDownInsideEditor = false
+    const isPointerClick = event.detail > 0
+    const dragStartedInsideEditor = this.dragStartedInsideEditor && isPointerClick
+    this.dragStartedInsideEditor = false
     const clickedOnNode = event.target.closest('.node')
     const clickedOnEditor = this.editorPanel?.contains(event.target)
     const clickedOnPreview = this.boardStatePreview?.wrap?.contains(event.target)
-    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview && !startedInsideEditor) {
+    if (!clickedOnNode && !clickedOnEditor && !clickedOnPreview && !dragStartedInsideEditor) {
       this.deselectAll()
       this.closeEditor()
     }
