@@ -31,8 +31,8 @@ export const TEMP_LINE_STROKE_DASHARRAY = '5,5'
 export const MAX_HISTORY = 50
 
 // Viewport / zoom behavior
-export const ZOOM_DEFAULT = 1
-export const ZOOM_MIN = 0.25
+export const ZOOM_DEFAULT = 0.6
+export const ZOOM_MIN = 0.1
 export const ZOOM_MAX = 2
 export const ZOOM_STEP = 0.1
 export const VIEWPORT_PADDING = 200

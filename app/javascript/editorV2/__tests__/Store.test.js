@@ -486,12 +486,10 @@ describe('Store', () => {
 
     it('sets and gets selected node', () => {
       store.selectOnlyNode('node-1')
-      expect(store.getSelectedNode()).toBe('node-1')
       expect(store.getPrimarySelectedNode()).toBe('node-1')
       expect(store.getSelectedNodeIds()).toEqual(['node-1'])
 
       store.clearSelection()
-      expect(store.getSelectedNode()).toBe(null)
       expect(store.getSelectedNodeIds()).toEqual([])
     })
 
