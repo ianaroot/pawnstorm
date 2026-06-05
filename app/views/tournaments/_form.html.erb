@@ -95,14 +95,7 @@
               onblur="if(this.value==='0')this.value=''">
           </div>
           <p class="ci-subheading">Costs</p>
-          <% {
-            "score_node"           => "Score node",
-            "census_condition"     => "Positions",
-            "relational_condition" => "Attack/Defend",
-            "identity_condition"   => "Captures",
-            "and"                  => "AND",
-            "or"                   => "OR"
-          }.each do |key, label| %>
+          <% constraint_cost_labels.each do |key, label| %>
             <div class="ci-row">
               <span class="ci-label"><%= label %></span>
               <input class="ci-input ci-input--box" type="number"
@@ -152,7 +145,7 @@
         <div>
           <p class="ci-heading">Banned Condition Kinds</p>
           <div class="ci-pills">
-            <% { "census" => "Positions", "relational" => "Attack/Defend", "identity" => "Captures" }.each do |kind, label| %>
+            <% constraint_condition_kind_labels.each do |kind, label| %>
               <label class="ci-pill">
                 <input type="checkbox"
                   name="tournament[constraints][condition_restrictions][banned_kinds][]"
