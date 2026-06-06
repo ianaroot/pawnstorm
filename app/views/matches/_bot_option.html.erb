@@ -13,7 +13,9 @@
     <strong><%= bot.name %></strong>
     <% if show_details %>
       <small class="match-bot-rating"><%= bot.rating.round %></small>
-      <small>by <%= bot.user.username %></small>
+      <% if local_assigns.fetch(:show_owner, true) %>
+        <small>by <%= bot.user.username %></small>
+      <% end %>
     <% end %>
     <%= ' (needs recompile)' if bot.compiled_program_stale? %>
   </span>

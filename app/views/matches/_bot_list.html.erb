@@ -5,7 +5,8 @@
       radio_name: radio_name,
       checked: selected_id.to_i == bot.id,
       change_action: local_assigns[:change_action],
-      show_details: show_details %>
+      show_details: show_details,
+      show_owner: local_assigns.fetch(:show_owner, show_details) %>
   <% end %>
 </div>
 <div class="index-pagination">
