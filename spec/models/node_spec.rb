@@ -299,6 +299,13 @@ RSpec.describe Node, type: :model do
       expect(node).not_to be_valid
       expect(node.errors[:data]).to include('has invalid actionType')
     end
+
+    it 'rejects a non-integer score value' do
+      node = build(:node, :score, data: { actionType: 'add', value: 1.5 })
+
+      expect(node).not_to be_valid
+      expect(node.errors[:data]).to include('value must be a whole number')
+    end
   end
 
   describe 'associations' do
