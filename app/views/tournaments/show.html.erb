@@ -1,34 +1,34 @@
-<div class="match-show-page">
-  <div
-    class="match-replay-layout tournament-show-layout"
-    data-controller="tournament-poll"
-    data-tournament-poll-url-value="<%= @tournament_poll_url %>"
-    data-tournament-poll-active-value="<%= @tournament_presenter.active? %>"
-  >
-    <div class="game-page tournament-page">
-      <div data-tournament-poll-target="meta">
-        <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
-      </div>
-
-      <% if @tournament.status_draft? %>
-        <%= render 'draft_management', tournament: @tournament %>
-      <% elsif @tournament.status_open? %>
-        <%= render 'open_registration', tournament: @tournament %>
-      <% else %>
-        <div data-tournament-poll-target="progress">
-          <%= render 'progress', tournament_presenter: @tournament_presenter %>
-        </div>
-
-        <div data-tournament-poll-target="standings">
-          <%= render 'standings', standings: @standings %>
-        </div>
-
-        <% if @entrants.size >= 2 %>
-          <div data-tournament-poll-target="matrix">
-            <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token %>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
+<div
+  data-controller="tournament-poll"
+  data-tournament-poll-url-value="<%= @tournament_poll_url %>"
+  data-tournament-poll-active-value="<%= @tournament_presenter.active? %>"
+>
+  <div data-tournament-poll-target="meta">
+    <%= render 'meta', tournament: @tournament, tournament_presenter: @tournament_presenter %>
   </div>
+
+  <% if @tournament.constraints.present? %>
+    <%= render 'constraints_summary', constraints: @tournament.constraints,
+          expanded: @tournament.status_draft? || @tournament.status_open? %>
+  <% end %>
+
+  <% if @tournament.status_draft? %>
+    <%= render 'draft_management', tournament: @tournament %>
+  <% elsif @tournament.status_open? %>
+    <%= render 'open_registration', tournament: @tournament %>
+  <% else %>
+    <div data-tournament-poll-target="progress">
+      <%= render 'progress', tournament_presenter: @tournament_presenter %>
+    </div>
+
+    <div data-tournament-poll-target="standings">
+      <%= render 'standings', standings: @standings %>
+    </div>
+
+    <% if @entrants.size >= 2 %>
+      <div data-tournament-poll-target="matrix">
+        <%= render 'matrix', tournament: @tournament, tournament_presenter: @tournament_presenter, entrants: @entrants, invite_token: @invite_token %>
+      </div>
+    <% end %>
+  <% end %>
 </div>

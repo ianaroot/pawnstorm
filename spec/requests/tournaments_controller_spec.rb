@@ -36,6 +36,19 @@ RSpec.describe TournamentsController, type: :request do
         expect(response.body).to include(%(name="tournament[#{field}]"))
       end
     end
+
+    it 'exposes eligibility controls for every condition kind' do
+      sign_in create(:user)
+
+      get new_tournament_path
+
+      expect(response.body).to include('tournament[constraints][costs][census_condition]')
+      expect(response.body).to include('tournament[constraints][costs][relational_condition]')
+      expect(response.body).to include('tournament[constraints][costs][identity_condition]')
+      expect(response.body).to include('Positions')
+      expect(response.body).to include('Attack/Defend')
+      expect(response.body).to include('Captures')
+    end
   end
 
   describe 'POST #create' do
@@ -294,7 +307,8 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include('Open now.')
       expect(response.body).to include('Link only')
       expect(response.body).to include('Unlimited')
-      expect(response.body).to include('Max Entries')
+      expect(response.body).to include('Max entries')
+      expect(response.body).to include('Games per pair')
       expect(response.body).to include('12')
       expect(response.body).to include(invitation_tournament_path(tournament.invite_token))
       # expect(response.body).to include('Entries are open. Submit a compiled bot before the tournament starts.')
@@ -314,6 +328,71 @@ RSpec.describe TournamentsController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Eligible Bot')
       expect(response.body).not_to include('Ineligible Bot')
+    end
+
+    it 'renders the invite link as copyable text with a copy button rather than a hyperlink' do
+      tournament = create(:tournament, creator: user, visibility: :link_only, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      invite_url = invitation_tournament_url(tournament.invite_token)
+      expect(response.body).to include("data-clipboard-text-value=\"#{invite_url}\"")
+      expect(response.body).to include('data-action="clipboard#copy"')
+      expect(response.body).not_to include("href=\"#{invitation_tournament_path(tournament.invite_token)}\"")
+    end
+
+    it 'labels the draft publish button clearly and confirms before opening entries' do
+      tournament = create(:tournament, creator: user, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('Publish &amp; open for entries')
+      expect(response.body).to include('data-turbo-confirm')
+    end
+
+    it 'shows the constraints summary expanded, with its values, for a draft tournament' do
+      tournament = create(
+        :tournament,
+        creator: user,
+        status: :draft,
+        constraints: { "budget" => 5, "costs" => { "census_condition" => 2 }, "allow_or" => false }
+      )
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      summary = Nokogiri::HTML(response.body).at_css('details.constraints-readonly')
+      expect(summary).to be_present
+      expect(summary).to have_attribute('open')
+      expect(summary.text).to include('Eligibility Constraints', 'Positions', '5', '2')
+      expect(response.body).to include('AND — chained conditions')
+    end
+
+    it 'collapses the constraints summary once the tournament is running' do
+      tournament = create(:tournament, creator: user, status: :running, constraints: { "budget" => 5 })
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      summary = Nokogiri::HTML(response.body).at_css('details.constraints-readonly')
+      expect(summary).to be_present
+      expect(summary).not_to have_attribute('open')
+    end
+
+    it 'omits the constraints summary when the tournament has no constraints' do
+      tournament = create(:tournament, creator: user, status: :draft)
+      sign_in user
+
+      get invitation_tournament_path(tournament.invite_token)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Eligibility Constraints')
     end
   end
 

@@ -3,24 +3,39 @@
   <% if tournament.description.present? %>
     <p class="match-show-meta-item"><%= tournament.description %></p>
   <% end %>
-  <p class="match-show-meta-item"><strong>Status:</strong> <%= tournament.status.humanize %></p>
-  <p class="match-show-meta-item"><strong>Visibility:</strong> <%= tournament.visibility.humanize %></p>
-  <p class="match-show-meta-item"><strong>Entries Per User:</strong> <%= tournament.entries_per_user.humanize %></p>
-  <% if tournament.max_entries.present? %>
-    <p class="match-show-meta-item"><strong>Max Entries:</strong> <%= tournament.max_entries %></p>
-  <% end %>
-  <p class="match-show-meta-item"><strong>Games Per Pair:</strong> <%= tournament.games_per_pair %></p>
+
+  <div class="tournament-details">
+    <p class="tournament-details__heading">Details</p>
+    <dl class="tournament-details__grid">
+      <div class="tournament-details__row"><dt>Status</dt><dd><%= tournament.status.humanize %></dd></div>
+      <div class="tournament-details__row"><dt>Visibility</dt><dd><%= tournament.visibility.humanize %></dd></div>
+      <div class="tournament-details__row"><dt>Entries per user</dt><dd><%= tournament.entries_per_user.humanize %></dd></div>
+      <% if tournament.max_entries.present? %>
+        <div class="tournament-details__row"><dt>Max entries</dt><dd><%= tournament.max_entries %></dd></div>
+      <% end %>
+      <div class="tournament-details__row"><dt>Games per pair</dt><dd><%= tournament.games_per_pair %></dd></div>
+    </dl>
+  </div>
+
   <% if current_user == tournament.creator || tournament.visibility_link_only? %>
-    <p class="match-show-meta-item"><strong>Invite Link:</strong> <%= link_to invitation_tournament_path(tournament.invite_token), invitation_tournament_path(tournament.invite_token) %></p>
+    <% invite_url = invitation_tournament_url(tournament.invite_token) %>
+    <p class="match-show-meta-item invite-link" data-controller="clipboard" data-clipboard-text-value="<%= invite_url %>">
+      <strong>Invite Link:</strong>
+      <code class="invite-link__url"><%= invite_url %></code>
+      <button type="button" class="invite-link__copy" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+    </p>
   <% end %>
+
   <% if tournament.status_open? && current_user == tournament.creator %>
     <p class="match-show-meta-item">
       <%= button_to 'Start Tournament', start_tournament_path(tournament), method: :post %>
     </p>
   <% end %>
+
   <% if tournament_presenter.entrants.any? %>
     <p class="match-show-meta-item"><strong>Entrants:</strong> <%= tournament_presenter.entrants.map(&:display_name).join(', ') %></p>
   <% end %>
+
   <% if tournament_presenter.active? && current_user == tournament.creator %>
     <p class="match-show-meta-item">
       <% if tournament.paused? %>

@@ -1,6 +1,6 @@
 <%= form_with url: url, scope: :tournament, method: method, local: true do |form| %>
-  <div class="setup-form-grid">
-    <div class="setup-form-col">
+  <div class="tournament-setup-grid">
+    <div class="tournament-setup-col">
 
       <div class="ci-section">
         <p class="ci-heading">Details</p>
@@ -30,7 +30,7 @@
       <%= form.submit submit_label, class: 'btn btn-primary' %>
     </div>
 
-    <div class="setup-form-col">
+    <div class="tournament-setup-col">
 
       <div class="ci-section">
         <p class="ci-heading">Access</p>
@@ -79,6 +79,8 @@
   <details class="constraints-section" <%= "open" if @constraints.present? %>>
     <summary class="constraints-summary">Bot Eligibility Constraints</summary>
     <div class="constraints-body">
+      <p class="constraints-explainer">Constraints limit which bots may enter. Assign costs to a bot's building blocks against a total budget, restrict its structure, or ban specific condition and score types — bots that exceed the limits can't be submitted.</p>
+
       <div class="constraints-grid">
 
         <%# ── Budget ──────────────────────────────────────── %>
@@ -93,14 +95,7 @@
               onblur="if(this.value==='0')this.value=''">
           </div>
           <p class="ci-subheading">Costs</p>
-          <% {
-            "score_node"           => "Score node",
-            "unary_condition"      => "Unary condition",
-            "relational_condition" => "Relational condition",
-            "position_condition"   => "Position condition",
-            "and"                  => "AND edge",
-            "or"                   => "OR merge"
-          }.each do |key, label| %>
+          <% constraint_cost_labels.each do |key, label| %>
             <div class="ci-row">
               <span class="ci-label"><%= label %></span>
               <input class="ci-input ci-input--box" type="number"
@@ -116,7 +111,7 @@
         <div class="ci-structure">
           <p class="ci-heading">Structure</p>
           <div class="ci-row">
-            <span class="ci-label">Disallow AND branches</span>
+            <span class="ci-label">Disallow chained conditions (AND)</span>
             <label class="ci-toggle">
               <input type="checkbox"
                 name="tournament[constraints][allow_and]"
@@ -126,7 +121,7 @@
             </label>
           </div>
           <div class="ci-row">
-            <span class="ci-label">Disallow OR branches</span>
+            <span class="ci-label">Disallow merged branches (OR)</span>
             <label class="ci-toggle">
               <input type="checkbox"
                 name="tournament[constraints][allow_or]"
@@ -142,22 +137,25 @@
               value="<%= @constraints&.dig("max_branch_length") %>"
               min="1" step="1" placeholder="N/A">
           </div>
+          <p class="ce-check-note">Counts chained conditions only — score nodes don't add to the length.</p>
+          <%= render 'constraints_legend' %>
         </div>
 
         <%# ── Banned ──────────────────────────────────────── %>
         <div>
           <p class="ci-heading">Banned Condition Kinds</p>
           <div class="ci-pills">
-            <% %w[unary relational position].each do |kind| %>
+            <% constraint_condition_kind_labels.each do |kind, label| %>
               <label class="ci-pill">
                 <input type="checkbox"
                   name="tournament[constraints][condition_restrictions][banned_kinds][]"
                   value="<%= kind %>"
                   <%= "checked" if @constraints&.dig("condition_restrictions", "banned_kinds")&.include?(kind) %>>
-                <span><%= kind %></span>
+                <span><%= label %></span>
               </label>
             <% end %>
           </div>
+          <p class="ce-check-note">Some conditions built in the editor's Captures tab are stored as Positions, so the Captures and Positions limits here may not line up exactly with the editor's tabs.</p>
           <p class="ci-subheading">Banned Score Actions</p>
           <div class="ci-pills">
             <% %w[add subtract set return].each do |action_type| %>

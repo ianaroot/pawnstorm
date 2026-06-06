@@ -1,0 +1,65 @@
+<% costs = constraints["costs"] || {} %>
+<% cost_labels = constraint_cost_labels %>
+<% kind_labels = constraint_condition_kind_labels %>
+<% banned_kinds   = constraints.dig("condition_restrictions", "banned_kinds") || [] %>
+<% banned_actions = constraints.dig("score_node_restrictions", "banned_action_types") || [] %>
+<% and_or_relevant = costs["and"].present? || costs["or"].present? || constraints["allow_and"] == false || constraints["allow_or"] == false %>
+
+<details class="constraints-readonly" <%= "open" if local_assigns.fetch(:expanded, true) %>>
+  <summary class="constraints-readonly__summary">Eligibility Constraints</summary>
+  <div class="constraints-readonly__body">
+    <p class="constraints-explainer">These limits decide which bots may enter — a bot that exceeds them can't be submitted.</p>
+
+    <div class="constraints-readonly__grid">
+      <% if constraints["budget"].present? || costs.values.any?(&:present?) %>
+        <div>
+          <p class="ci-heading">Budget</p>
+          <% if constraints["budget"].present? %>
+            <p class="constraints-readonly__line"><span>Total</span><strong><%= constraints["budget"] %></strong></p>
+          <% end %>
+          <% cost_labels.each do |key, label| %>
+            <% next if costs[key].blank? %>
+            <p class="constraints-readonly__line"><span><%= label %></span><strong><%= costs[key] %></strong></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if constraints["allow_and"] == false || constraints["allow_or"] == false || constraints["max_branch_length"].present? || constraints["max_score_nodes"].present? %>
+        <div>
+          <p class="ci-heading">Structure</p>
+          <% if constraints["allow_and"] == false %>
+            <p class="constraints-readonly__line"><span>Chained conditions (AND)</span><strong>Not allowed</strong></p>
+          <% end %>
+          <% if constraints["allow_or"] == false %>
+            <p class="constraints-readonly__line"><span>Merged branches (OR)</span><strong>Not allowed</strong></p>
+          <% end %>
+          <% if constraints["max_branch_length"].present? %>
+            <p class="constraints-readonly__line"><span>Max branch length</span><strong><%= constraints["max_branch_length"] %></strong></p>
+          <% end %>
+          <% if constraints["max_score_nodes"].present? %>
+            <p class="constraints-readonly__line"><span>Max score nodes</span><strong><%= constraints["max_score_nodes"] %></strong></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if banned_kinds.any? || banned_actions.any? %>
+        <div>
+          <p class="ci-heading">Banned</p>
+          <% if banned_kinds.any? %>
+            <p class="constraints-readonly__line"><span>Condition kinds</span><strong><%= banned_kinds.map { |kind| kind_labels[kind] || kind }.join(", ") %></strong></p>
+          <% end %>
+          <% if banned_actions.any? %>
+            <p class="constraints-readonly__line"><span>Score actions</span><strong><%= banned_actions.join(", ") %></strong></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if and_or_relevant %>
+        <div class="constraints-readonly__legend">
+          <p class="constraints-readonly__legend-title">Legend</p>
+          <%= render 'constraints_legend' %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</details>

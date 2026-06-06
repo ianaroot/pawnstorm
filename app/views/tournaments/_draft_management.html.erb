@@ -3,7 +3,7 @@
   <p>This tournament is not yet open. No one can see it or submit entries.</p>
   <% if current_user == tournament.creator %>
     <div class="tournament-draft__actions">
-      <%= button_to 'Open for entries', open_registration_tournament_path(tournament), method: :post, class: 'btn btn-primary' %>
+      <%= button_to 'Publish & open for entries', open_registration_tournament_path(tournament), method: :post, class: 'btn btn-primary', form_class: 'tournament-draft__action', data: { turbo_confirm: 'Publish this tournament? It becomes visible and starts accepting entries.' } %>
       <%= link_to 'Edit settings', edit_tournament_path(tournament), class: 'btn btn-secondary' %>
     </div>
   <% end %>
