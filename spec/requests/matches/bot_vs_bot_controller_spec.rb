@@ -22,16 +22,10 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
     Nokogiri::HTML(response.body).at_css(%(input[name="match[#{field}]"][value="#{value}"]))
   end
 
-  # Own bot at 1000 with 12 opponents below it (so it lands on page 2 of the
-  # 12-per-page opponent list) and one opponent above it.
-  let!(:own_bot) do
-    bot = create(:bot, :compiled, user: user)
-    bot.update_columns(rating: 1000.0)
-    bot
-  end
-  let!(:weakling) { rated_opponent(50, name: 'Weakling') } # lowest — page 1
-  let!(:titan)    { rated_opponent(1500, name: 'Titan') }  # highest — own bot's landing page
-  let!(:fillers)  { Array.new(11) { |i| rated_opponent(100 + i) } }
+  let!(:own_bot) { create(:bot, :compiled, user: user) }
+  let!(:weakling) { rated_opponent(50, name: 'Weakling') }
+  let!(:page_one_fillers) { Array.new(Matches::SetupForm::BOT_PAGE_SIZE - 1) { |i| rated_opponent(100 + i) } }
+  let!(:titan) { rated_opponent(1500, name: 'Titan') }
 
   before { sign_in user }
 
