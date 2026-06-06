@@ -50,7 +50,7 @@
             <td><strong><%= entry.display_name %></strong></td>
             <td>
               <% if entry.bot_owner %>
-                <span class="tournament-entries-table__owner"><%= entry.bot_owner.email %></span>
+                <span class="tournament-entries-table__owner"><%= entry.bot_owner.username %></span>
               <% end %>
             </td>
             <%# updated_at reliably reflects when the snapshot was taken since snapshot_entry is called on every create/update.

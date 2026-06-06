@@ -30,7 +30,7 @@ class Tournament < ApplicationRecord
 
   scope :with_name,       ->(name)    { where("tournaments.name ILIKE ?", "%#{name}%") }
   scope :with_status,     ->(status)  { where(status: status) if statuses.key?(status) }
-  scope :with_owner,      ->(owner)   { joins(:creator).where("users.email ILIKE ?", "%#{owner}%") }
+  scope :with_owner,      ->(owner)   { joins(:creator).where("users.username ILIKE ?", "%#{owner}%") }
   scope :with_entry_from, ->(user_id) { where(id: TournamentEntry.where(bot_owner_id: user_id).select(:tournament_id)) }
   scope :publicly_visible, -> { visibility_public.where.not(status: :draft) }
   scope :visible_to, ->(user) {

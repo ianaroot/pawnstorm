@@ -49,7 +49,7 @@
         <% @tournaments.each do |tournament| %>
           <tr>
             <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
-            <td class="index-table-secondary"><%= tournament.creator&.email %></td>
+            <td class="index-table-secondary"><%= tournament.creator&.username %></td>
             <td><span class="tournament-status-pill tournament-status-pill--<%= tournament.status %>"><%= tournament.status.humanize %></span></td>
             <td>
               <%= tournament.tournament_entries.size %>
