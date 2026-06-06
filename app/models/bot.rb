@@ -29,6 +29,7 @@ class Bot < ApplicationRecord
   scope :compiled,             ->         { where(compiled_program_stale: false).where.not(compiled_program: nil) }
   scope :stale,                ->         { where(compiled_program_stale: true) }
   scope :with_name,            ->(name)   { where("bots.name ILIKE ?", "%#{name}%") }
+  scope :with_owner_username,  ->(owner)  { joins(:user).where("users.username ILIKE ?", "%#{owner}%") }
   scope :with_compiled_status, ->(status) {
     case status
     when 'compiled' then compiled

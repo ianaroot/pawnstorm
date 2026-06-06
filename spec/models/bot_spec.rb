@@ -174,6 +174,17 @@ RSpec.describe Bot, type: :model do
     end
   end
 
+  describe '.with_owner_username' do
+    it 'matches bots whose owner username contains the term' do
+      alice = create(:user, username: 'alice_smith')
+      bob = create(:user, username: 'bob_jones')
+      alice_bot = create(:bot, user: alice)
+      create(:bot, user: bob)
+
+      expect(Bot.with_owner_username('alice')).to contain_exactly(alice_bot)
+    end
+  end
+
   describe '#get_fresh_program' do
     it 'returns a deep copy of compiled_program when fresh' do
       bot = create(:bot, :compiled)

@@ -33,7 +33,8 @@ class Matches::BotVsBotController < ApplicationController
       own_bot_id: params[:own_bot_id],
       own_bot_name: params[:own_bot_name],
       opponent_bot_id: params[:opponent_bot_id],
-      opponent_name: params[:opponent_name]
+      opponent_name: params[:opponent_name],
+      opponent_owner: params[:opponent_owner]
     }.compact
 
     @own_bots_pagy, @own_bots = pagy(
@@ -44,7 +45,7 @@ class Matches::BotVsBotController < ApplicationController
       params: shared_params.merge(opponent_page: params[:opponent_page])
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
-      setup.all_opponent_bots.with_name(params[:opponent_name]),
+      setup.all_opponent_bots.with_name(params[:opponent_name]).with_owner_username(params[:opponent_owner]),
       limit: BOT_PAGE_SIZE,
       page_key: 'opponent_page',
       page: params[:opponent_page] || default_opponent_page(setup),
@@ -53,13 +54,13 @@ class Matches::BotVsBotController < ApplicationController
   end
 
   def default_opponent_page(setup)
-    return if params[:opponent_name].present?
+    return if params[:opponent_name].present? || params[:opponent_owner].present?
 
     setup.opponent_page(per_page: BOT_PAGE_SIZE)
   end
 
   def setup_params
-    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_page)
+    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_owner, :opponent_page)
   end
 
   def match_params

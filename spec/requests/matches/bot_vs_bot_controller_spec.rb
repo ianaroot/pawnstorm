@@ -53,4 +53,14 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
 
     expect(shows_opponent?(weakling)).to be(true)
   end
+
+  it 'filters opponents by owner username' do
+    other_owner = create(:user, username: 'distinct_owner')
+    other_bot = create(:bot, :compiled, user: other_owner, name: 'OtherBot')
+
+    get new_bot_vs_bot_match_path(own_bot_id: own_bot.id, opponent_owner: 'distinct_owner')
+
+    expect(shows_opponent?(other_bot)).to be(true)
+    expect(shows_opponent?(weakling)).to be(false)
+  end
 end
