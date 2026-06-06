@@ -11,6 +11,12 @@
       </div>
 
       <div class="form-field">
+        <%= f.label :username %>
+        <small class="auth-hint">Optional — defaults to the name in your email</small>
+        <%= f.text_field :username, autocomplete: "username" %>
+      </div>
+
+      <div class="form-field">
         <%= f.label :password %>
         <% if @minimum_password_length %>
           <small class="auth-hint"><%= @minimum_password_length %> characters minimum</small>
