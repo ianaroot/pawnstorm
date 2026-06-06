@@ -4,6 +4,7 @@
 <% banned_kinds   = constraints.dig("condition_restrictions", "banned_kinds") || [] %>
 <% banned_actions = constraints.dig("score_node_restrictions", "banned_action_types") || [] %>
 <% and_or_relevant = costs["and"].present? || costs["or"].present? || constraints["allow_and"] == false || constraints["allow_or"] == false %>
+<% any_structure_constraints = constraints["allow_and"] == false || constraints["allow_or"] == false || constraints["max_branch_length"].present? || constraints["max_score_nodes"].present? || constraints["max_total_absolute_value"].present? %>
 
 <details class="constraints-readonly" <%= "open" if local_assigns.fetch(:expanded, true) %>>
   <summary class="constraints-readonly__summary">Eligibility Constraints</summary>
@@ -24,7 +25,7 @@
         </div>
       <% end %>
 
-      <% if constraints["allow_and"] == false || constraints["allow_or"] == false || constraints["max_branch_length"].present? || constraints["max_score_nodes"].present? %>
+      <% if any_structure_constraints %>
         <div>
           <p class="ci-heading">Structure</p>
           <% if constraints["allow_and"] == false %>
@@ -38,6 +39,9 @@
           <% end %>
           <% if constraints["max_score_nodes"].present? %>
             <p class="constraints-readonly__line"><span>Max score nodes</span><strong><%= constraints["max_score_nodes"] %></strong></p>
+          <% end %>
+          <% if constraints["max_total_absolute_value"].present? %>
+            <p class="constraints-readonly__line"><span>Max total absolute value of scores</span><strong><%= constraints["max_total_absolute_value"] %></strong></p>
           <% end %>
         </div>
       <% end %>

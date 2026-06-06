@@ -49,6 +49,15 @@ RSpec.describe TournamentsController, type: :request do
       expect(response.body).to include('Attack/Defend')
       expect(response.body).to include('Captures')
     end
+
+    it 'exposes the max total absolute value of scores control' do
+      sign_in create(:user)
+
+      get new_tournament_path
+
+      expect(response.body).to include('tournament[constraints][max_total_absolute_value]')
+      expect(response.body).to include('Max total absolute value of scores')
+    end
   end
 
   describe 'POST #create' do
@@ -87,6 +96,21 @@ RSpec.describe TournamentsController, type: :request do
         status: 'draft'
       )
       expect(ComputeMatchJob).not_to have_been_enqueued
+    end
+
+    it 'persists the max total absolute value of scores constraint' do
+      post tournaments_path, params: {
+        tournament: {
+          name: 'Bounded Cup',
+          visibility: 'public',
+          entries_per_user: 'one',
+          games_per_pair: 10,
+          constraints: { max_total_absolute_value: '12' }
+        }
+      }
+
+      tournament = Tournament.order(:created_at).last
+      expect(tournament.constraints["max_total_absolute_value"]).to eq(12)
     end
 
     it 'rejects blank names' do
