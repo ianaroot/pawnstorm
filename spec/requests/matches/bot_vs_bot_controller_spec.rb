@@ -18,6 +18,10 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
     response.body.include?(%(value="#{bot.id}"))
   end
 
+  def radio(field, value)
+    Nokogiri::HTML(response.body).at_css(%(input[name="match[#{field}]"][value="#{value}"]))
+  end
+
   # Own bot at 1000 with 12 opponents below it (so it lands on page 2 of the
   # 12-per-page opponent list) and one opponent above it.
   let!(:own_bot) do
@@ -62,5 +66,27 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
 
     expect(shows_opponent?(other_bot)).to be(true)
     expect(shows_opponent?(weakling)).to be(false)
+  end
+
+  it 'filters your own bots by name' do
+    keeper = create(:bot, :compiled, user: user, name: 'KeeperBot')
+    other = create(:bot, :compiled, user: user, name: 'SomethingElse')
+
+    get new_bot_vs_bot_match_path(own_bot_name: 'Keeper')
+
+    expect(radio('own_bot_id', keeper.id)).to be_present
+    expect(radio('own_bot_id', other.id)).to be_nil
+  end
+
+  it 'keeps the chosen own bot selected when the list reloads' do
+    get new_bot_vs_bot_match_path(own_bot_id: own_bot.id, own_bot_name: own_bot.name)
+
+    expect(radio('own_bot_id', own_bot.id).key?('checked')).to be(true)
+  end
+
+  it 'keeps the chosen opponent selected when the list reloads' do
+    get new_bot_vs_bot_match_path(opponent_bot_id: titan.id, opponent_name: 'Titan')
+
+    expect(radio('opponent_bot_id', titan.id).key?('checked')).to be(true)
   end
 end
