@@ -25,15 +25,15 @@
     <div class="match-setup-col">
       <div class="match-setup-section">
         <h2>Your Bot</h2>
+        <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'own-bots-frame' } do |f| %>
+          <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
+          <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
+          <%= f.hidden_field :opponent_name, value: params[:opponent_name] %>
+          <%= f.hidden_field :opponent_owner, value: params[:opponent_owner] %>
+          <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
+          <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+        <% end %>
         <%= turbo_frame_tag "own-bots-frame" do %>
-          <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form' do |f| %>
-            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
-            <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
-            <%= f.hidden_field :opponent_name, value: params[:opponent_name] %>
-            <%= f.hidden_field :opponent_owner, value: params[:opponent_owner] %>
-            <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
-            <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
-          <% end %>
           <%= render 'matches/bot_list',
             bots: @own_bots,
             pagy: @own_bots_pagy,
@@ -49,15 +49,15 @@
     <div class="match-setup-col">
       <div class="match-setup-section">
         <h2>Opponent Bot</h2>
+        <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'opponent-bots-frame', match_setup_target: 'opponentForm' } do |f| %>
+          <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
+          <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
+          <%= f.hidden_field :own_bot_name, value: params[:own_bot_name] %>
+          <%= f.hidden_field :own_bot_page, value: params[:own_bot_page] %>
+          <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+          <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Search by owner', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+        <% end %>
         <%= turbo_frame_tag "opponent-bots-frame" do %>
-          <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { match_setup_target: 'opponentForm' } do |f| %>
-            <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
-            <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
-            <%= f.hidden_field :own_bot_name, value: params[:own_bot_name] %>
-            <%= f.hidden_field :own_bot_page, value: params[:own_bot_page] %>
-            <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input' %>
-            <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Search by owner', class: 'index-filter-input match-setup-filter-input' %>
-          <% end %>
           <%= render 'matches/bot_list',
             bots: @opponent_bots,
             pagy: @opponent_bots_pagy,
