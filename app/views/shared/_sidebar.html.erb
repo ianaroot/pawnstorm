@@ -85,7 +85,7 @@
             data: { action: "click->sidebar#navigate" } %>
       <% elsif user_signed_in? %>
         <div class="sidebar__user">
-          <%= current_user.email %>
+          <%= current_user.username %>
         </div>
         <%= button_to "Sign Out", destroy_user_session_path,
             method: :delete,

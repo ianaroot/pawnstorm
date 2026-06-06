@@ -16,10 +16,10 @@ RSpec.describe 'Sidebar navigation', type: :feature do
       expect(page).to have_link('Bots')
     end
 
-    it 'shows email and sign out, not sign in/up' do
+    it 'shows username and sign out, not sign in/up' do
       visit bots_path
 
-      expect(page).to have_content(user.email)
+      expect(page).to have_content(user.username)
       expect(page).to have_button('Sign Out')
       expect(page).not_to have_link('Sign In')
       expect(page).not_to have_link('Sign Up')
