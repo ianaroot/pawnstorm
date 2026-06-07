@@ -166,7 +166,7 @@
 
 .index-filter-checkbox:checked {
   border-color: var(--accent-primary);
-  box-shadow: inset 0 0 5px rgba(168, 85, 247, 0.6);
+  box-shadow: inset 0 0 5px rgb(from var(--accent-primary) r g b / 0.6);
 }
 
 .index-filter-checkbox:checked::after {
