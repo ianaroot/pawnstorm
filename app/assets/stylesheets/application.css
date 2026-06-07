@@ -33,12 +33,20 @@
   --accent-primary: #A855F7;
   --accent-secondary: #C084FC;
   --accent-hover: #7C3AED;
+  --accent-muted: #8e74c0;
   
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
   --info: #3B82F6;
-  
+
+  --tint-success: #4ade80;
+  --tint-warning: #fbbf24;
+  --tint-info: #60a5fa;
+  --tint-muted: var(--text-secondary);
+  --tint-danger: #f87171;
+  --tint-violet: #a78bfa;
+
   --border-color: #3F3F46;
   --border-light: #52525B;
   
@@ -146,7 +154,7 @@ input[type="submit"] {
   justify-content: center;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 400;
   border-radius: 0.5rem;
   border: none;
   cursor: pointer;
@@ -154,13 +162,37 @@ input[type="submit"] {
 }
 
 .btn-primary,
-button[type="submit"] {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
+button[type="submit"],
+.btn-outline,
+.btn-ghost {
+  background-color: var(--bg-recessed);
+  border: 1px solid var(--border-color);
 }
 
-.btn-primary:hover {
-  background-color: var(--accent-secondary);
+.btn-primary,
+button[type="submit"] {
+  color: var(--accent-secondary);
+  border-color: var(--accent-primary);
+  box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.btn-outline {
+  color: var(--accent-secondary);
+  border-color: var(--border-light);
+}
+
+.btn.btn-ghost {
+  background-color: var(--bg-recessed);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.btn-primary:hover,
+button[type="submit"]:hover,
+.btn-outline:hover,
+.btn-ghost:hover {
+  background-color: var(--bg-tertiary);
 }
 
 .btn-secondary {

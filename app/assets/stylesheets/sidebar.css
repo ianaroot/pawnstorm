@@ -87,7 +87,7 @@
 }
 
 .sidebar__link--primary {
-  background-color: var(--accent-primary);
+  background-color: var(--accent-muted);
   color: var(--bg-primary);
   font-weight: 600;
 }
@@ -117,12 +117,8 @@
   overflow-wrap: break-word;
 }
 
-.sidebar__link--signout {
-  background: none;
-  border: none;
+.sidebar__signout {
   width: 100%;
-  text-align: left;
-  cursor: pointer;
 }
 
 /* ============================================

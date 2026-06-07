@@ -1,19 +1,19 @@
 <div class="index-header">
   <h1>Your Matches</h1>
-  <%= link_to 'Set up a match', new_bot_vs_bot_match_path, class: 'btn btn-secondary' %>
+  <%= link_to 'Set up a match', new_bot_vs_bot_match_path, class: 'btn btn-outline' %>
 </div>
 
 <div class="index-panel">
 <%= form_with url: matches_path, method: :get, class: 'index-filter-form',
       data: { controller: 'auto-submit', turbo_frame: 'matches' } do |f| %>
   <div class="index-filter-row">
-    <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Your bot name', class: 'index-filter-input match-filter-input',
+    <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Your bot name', class: 'index-filter-input',
           data: { action: 'input->auto-submit#submitDebounced' } %>
-    <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Opponent name', class: 'index-filter-input match-filter-input',
+    <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Opponent name', class: 'index-filter-input',
           data: { action: 'input->auto-submit#submitDebounced' } %>
-    <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Opponent owner', class: 'index-filter-input match-filter-input',
+    <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Opponent owner', class: 'index-filter-input',
           data: { action: 'input->auto-submit#submitDebounced' } %>
-    <%= link_to 'Reset', matches_path, class: 'btn btn-secondary index-filter-reset match-filter-reset' %>
+    <%= link_to 'Reset', matches_path, class: 'btn btn-outline index-filter-reset match-filter-reset' %>
   </div>
   <div class="index-filter-row">
     <%= render 'matches/filter_toggle', f: f, name: :color, current: params[:color], label: 'Color',

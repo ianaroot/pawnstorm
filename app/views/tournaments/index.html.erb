@@ -5,6 +5,7 @@
   <% end %>
 </div>
 
+<div class="index-panel">
 <%= form_with url: tournaments_path, method: :get, class: 'index-filter-form',
       data: { controller: 'auto-submit', turbo_frame: 'tournaments' } do |f| %>
   <div class="index-filter-row">
@@ -18,18 +19,23 @@
     </div>
     <div class="index-filter-field">
       <%= f.select :status,
-        [['Any status', ''], *Tournament.statuses.keys.map { |s| [s.humanize, s] }],
-        { selected: params[:status] },
+        options_for_select(
+          [['Any status', '']] + Tournament.statuses.keys.map { |s|
+            [s.humanize, s, { class: "status-option status-option--#{tournament_status_tint(s)}" }]
+          },
+          params[:status]
+        ),
+        {},
         { class: 'index-filter-select', data: { action: 'change->auto-submit#submitNow' } } %>
     </div>
     <% if user_signed_in? && !current_user.guest? %>
       <label class="index-filter-checkbox-label">
         <%= f.check_box :my_entries, { checked: params[:my_entries] == "1", class: 'index-filter-checkbox',
               data: { action: 'change->auto-submit#submitNow' } } %>
-        My entries
+        Entered
       </label>
     <% end %>
-    <%= link_to 'Clear', tournaments_path, class: 'btn btn-secondary' %>
+    <%= link_to 'Reset', tournaments_path, class: 'btn btn-outline index-filter-reset' %>
   </div>
 <% end %>
 
@@ -70,3 +76,4 @@
     <p class="index-empty">No tournaments found.</p>
   <% end %>
 <% end %>
+</div>

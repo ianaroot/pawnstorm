@@ -89,7 +89,7 @@
         </div>
         <%= button_to "Sign Out", destroy_user_session_path,
             method: :delete,
-            class: "sidebar__link sidebar__link--signout",
+            class: "btn btn-ghost sidebar__signout",
             data: { action: "click->sidebar#navigate" } %>
       <% else %>
         <%= link_to "Sign In", new_user_session_path,
