@@ -1,10 +1,9 @@
 <div class="match-filter-field">
   <span class="match-filter-field__label"><%= label %></span>
-  <div class="segmented-toggle">
+  <div class="mode-picker">
     <% options.each do |value, text| %>
-      <label class="segmented-toggle__option">
+      <label class="mode-picker__option">
         <%= f.radio_button name, value, checked: current.to_s == value.to_s,
-              class: 'segmented-toggle__input',
               data: { action: 'change->auto-submit#submitNow' } %>
         <%= text %>
       </label>

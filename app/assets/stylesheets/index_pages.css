@@ -33,35 +33,16 @@
   background: var(--bg-primary);
 }
 
+.index-panel .index-filter-input,
+.index-panel .index-filter-select {
+  background: var(--bg-recessed);
+}
+
 .index-panel .index-filter-form {
   margin: -1.25rem -1.5rem 1.25rem;
   padding: 1.25rem 1.5rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
-}
-
-.index-panel .segmented-toggle {
-  gap: 2px;
-  padding: 3px;
-  background: var(--bg-recessed);
-  overflow: visible;
-}
-
-.index-panel .segmented-toggle__option {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
-  color: var(--text-secondary);
-}
-
-.index-panel .segmented-toggle__option + .segmented-toggle__option {
-  border-left: 1px solid transparent;
-}
-
-.index-panel .segmented-toggle__option:has(.segmented-toggle__input:checked) {
-  background: #33273a;
-  border-color: rgba(168, 85, 247, 0.45);
-  color: #e9d5ff;
 }
 
 .index-filter-form {
@@ -261,52 +242,6 @@
   border: 1px solid rgba(167, 139, 250, 0.25);
 }
 
-.match-tournament-tag {
-  margin-left: 0.35rem;
-}
-
-/* ============================================
-   SEGMENTED TOGGLE
-   ============================================ */
-
-.segmented-toggle {
-  display: inline-flex;
-  border: 1px solid var(--border-light);
-  border-radius: 0.4rem;
-  overflow: hidden;
-  font-size: 0.85rem;
-}
-
-.segmented-toggle__option {
-  display: inline-flex;
-  align-items: center;
-  margin: 0;
-  padding: 0.25rem 0.6rem;
-  background: var(--bg-secondary);
-  color: inherit;
-  font-weight: normal;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.segmented-toggle__option + .segmented-toggle__option {
-  border-left: 1px solid var(--border-light);
-}
-
-.segmented-toggle__option--active,
-.segmented-toggle__option:has(.segmented-toggle__input:checked) {
-  color: var(--accent-secondary);
-}
-
-.segmented-toggle__input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  margin: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .match-filter-field {
   display: flex;
   flex-direction: column;
@@ -320,9 +255,13 @@
 
 .index-filter-input.match-filter-input {
   width: 16rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem 0.6rem;
   font-size: 0.85rem;
-  background: var(--bg-recessed);
+}
+
+.index-filter-reset {
+  margin-left: auto;
+  background: var(--bg-elevated);
 }
 
 .match-filter-reset {
@@ -330,5 +269,4 @@
   margin-left: 2rem;
   padding: 0.25rem 0.7rem;
   font-size: 0.85rem;
-  background: var(--bg-elevated);
 }

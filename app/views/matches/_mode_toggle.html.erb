@@ -1,14 +1,14 @@
 <div class="match-setup-nav">
-  <nav class="segmented-toggle">
+  <nav class="mode-picker">
     <% if current_mode == :bot_vs_bot %>
-      <span class="segmented-toggle__option segmented-toggle__option--active">Bot vs Bot</span>
+      <span class="mode-picker__option active">Bot vs Bot</span>
     <% else %>
-      <%= link_to 'Bot vs Bot', new_bot_vs_bot_match_path, class: 'segmented-toggle__option' %>
+      <%= link_to 'Bot vs Bot', new_bot_vs_bot_match_path, class: 'mode-picker__option' %>
     <% end %>
     <% if current_mode == :human_vs_bot %>
-      <span class="segmented-toggle__option segmented-toggle__option--active">You vs Bot</span>
+      <span class="mode-picker__option active">You vs Bot</span>
     <% else %>
-      <%= link_to 'You vs Bot', new_human_vs_bot_match_path, class: 'segmented-toggle__option' %>
+      <%= link_to 'You vs Bot', new_human_vs_bot_match_path, class: 'mode-picker__option' %>
     <% end %>
   </nav>
   <%= link_to 'Past matches', matches_path, class: 'btn btn-secondary' %>

@@ -38,15 +38,13 @@ class Matches::IndexQuery
   end
 
   def restrict_opponent(scope, side)
-    return scope if opponent_query.blank?
+    return scope if opponent_name.blank? && opponent_owner.blank?
 
     scope.where("#{side}_player_type" => 'Bot', "#{side}_player_id" => opponent_bot_ids)
   end
 
   def opponent_bot_ids
-    Bot.joins(:user)
-       .where('bots.name ILIKE :q OR users.username ILIKE :q', q: "%#{opponent_query}%")
-       .select(:id)
+    Bot.with_name(opponent_name).with_owner_username(opponent_owner).select(:id)
   end
 
   def restrict_outcome(scope, win, loss)
@@ -82,7 +80,11 @@ class Matches::IndexQuery
     @params[:bot_name]
   end
 
-  def opponent_query
-    @params[:opponent]
+  def opponent_name
+    @params[:opponent_name]
+  end
+
+  def opponent_owner
+    @params[:opponent_owner]
   end
 end

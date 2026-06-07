@@ -49,13 +49,13 @@ RSpec.describe Matches::IndexQuery do
     expect(result(user: user, params: { bot_name: 'Sentinel' })).to contain_exactly(sentinel_match)
   end
 
-  it 'filters by opponent bot name or owner username' do
+  it 'filters by opponent bot name and by owner username' do
     vs_marauder = create(:match, white_player: my_bot, black_player: rival_bot)
     other_opp = create(:bot, user: create(:user, username: 'stranger'), name: 'Pawn')
     create(:match, white_player: my_bot, black_player: other_opp)
 
-    expect(result(user: user, params: { opponent: 'Marauder' })).to contain_exactly(vs_marauder)
-    expect(result(user: user, params: { opponent: 'rival' })).to contain_exactly(vs_marauder)
+    expect(result(user: user, params: { opponent_name: 'Marauder' })).to contain_exactly(vs_marauder)
+    expect(result(user: user, params: { opponent_owner: 'rival' })).to contain_exactly(vs_marauder)
   end
 
   it 'filters tournament games in and out' do
@@ -97,7 +97,7 @@ RSpec.describe Matches::IndexQuery do
     create(:match, white_player: my_bot, black_player: create(:bot, user: create(:user, username: 'stranger'), name: 'Pawn')) # wrong opponent
     create(:match, white_player: my_bot, black_player: rival_bot, tournament: tournament)                 # wrong tournament state
 
-    matches = result(user: user, params: { bot_name: 'Sentinel', opponent: 'rival', tournament: 'non_tournament' })
+    matches = result(user: user, params: { bot_name: 'Sentinel', opponent_owner: 'rival', tournament: 'non_tournament' })
 
     expect(matches).to contain_exactly(target)
   end

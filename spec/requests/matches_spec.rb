@@ -58,7 +58,7 @@ RSpec.describe 'Matches index', type: :request do
   it 'shows a filtered empty state when filters match nothing' do
     create(:match, white_player: my_bot)
 
-    get matches_path(opponent: 'nobody-by-this-name')
+    get matches_path(opponent_name: 'nobody-by-this-name')
 
     expect(response.body).to include('No matches fit these filters.')
   end

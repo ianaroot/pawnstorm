@@ -7,16 +7,13 @@
 <%= form_with url: matches_path, method: :get, class: 'index-filter-form',
       data: { controller: 'auto-submit', turbo_frame: 'matches' } do |f| %>
   <div class="index-filter-row">
-    <div class="match-filter-field">
-      <span class="match-filter-field__label">Your Bot</span>
-      <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'name', class: 'index-filter-input match-filter-input',
-            data: { action: 'input->auto-submit#submitDebounced' } %>
-    </div>
-    <div class="match-filter-field">
-      <span class="match-filter-field__label">Opponent Bot</span>
-      <%= f.text_field :opponent, value: params[:opponent], placeholder: 'name or owner', class: 'index-filter-input match-filter-input',
-            data: { action: 'input->auto-submit#submitDebounced' } %>
-    </div>
+    <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Your bot name', class: 'index-filter-input match-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Opponent name', class: 'index-filter-input match-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Opponent owner', class: 'index-filter-input match-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= link_to 'Reset', matches_path, class: 'btn btn-secondary index-filter-reset match-filter-reset' %>
   </div>
   <div class="index-filter-row">
     <%= render 'matches/filter_toggle', f: f, name: :color, current: params[:color], label: 'Color',
@@ -29,7 +26,6 @@
           options: [['', 'All'], ['me', 'By me'], ['others', 'By others']] %>
     <%= render 'matches/filter_toggle', f: f, name: :sort, current: params[:sort], label: 'Sort',
           options: [['', 'Newest'], ['oldest', 'Oldest']] %>
-    <%= link_to 'Reset', matches_path, class: 'btn btn-secondary match-filter-reset' %>
   </div>
 <% end %>
 
@@ -40,6 +36,7 @@
         <tr>
           <th>White</th>
           <th>Black</th>
+          <th>Tournament</th>
           <th>Result</th>
           <th>Created</th>
         </tr>
@@ -57,8 +54,14 @@
               <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
             </td>
             <td>
+              <% if match.tournament %>
+                <span class="pill pill--violet">Yes</span>
+              <% else %>
+                <span class="pill pill--muted">No</span>
+              <% end %>
+            </td>
+            <td>
               <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>
-              <% if match.tournament %><span class="pill pill--violet match-tournament-tag">Tournament</span><% end %>
             </td>
             <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
           </tr>

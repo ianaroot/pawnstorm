@@ -1721,6 +1721,9 @@
 }
 
 .mode-picker__option {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
   padding: 5px 18px;
   background: transparent;
   border: 1px solid transparent;
@@ -1732,7 +1735,17 @@
   cursor: pointer;
 }
 
-.mode-picker__option.active {
+.mode-picker__option input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-picker__option.active,
+.mode-picker__option:has(input:checked) {
   background: #33273a;
   border-color: rgba(168, 85, 247, 0.45);
   color: #e9d5ff;
