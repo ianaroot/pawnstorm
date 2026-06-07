@@ -49,7 +49,7 @@ class Matches::CreateHumanVsBot
     if @user
       base = @user.bots
       base = base.or(Bot.where(id: system_bot.id)) if system_bot && system_bot.user_id != @user.id
-      @play_bots = base.order(:name)
+      @play_bots = base.sorted_by(@params[:sort])
     else
       @play_bots = system_bot ? Bot.where(id: system_bot.id) : Bot.none
     end

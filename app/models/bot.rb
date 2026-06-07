@@ -30,6 +30,18 @@ class Bot < ApplicationRecord
   scope :stale,                ->         { where(compiled_program_stale: true) }
   scope :with_name,            ->(name)   { where("bots.name ILIKE ?", "%#{name}%") }
   scope :with_owner_username,  ->(owner)  { joins(:user).where("users.username ILIKE ?", "%#{owner}%") }
+
+  SORT_ORDERS = {
+    'name_asc'              => { name: :asc },
+    'name_desc'            => { name: :desc },
+    'elo_asc'              => { rating: :asc },
+    'elo_desc'            => { rating: :desc },
+    'recently_updated_asc'  => { updated_at: :asc },
+    'recently_updated_desc' => { updated_at: :desc }
+  }.freeze
+  DEFAULT_SORT = 'recently_updated_desc'
+
+  scope :sorted_by, ->(key) { order(SORT_ORDERS.fetch(key, SORT_ORDERS[DEFAULT_SORT])) }
   scope :with_compiled_status, ->(status) {
     case status
     when 'compiled' then compiled

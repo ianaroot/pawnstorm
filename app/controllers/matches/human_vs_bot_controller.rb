@@ -59,12 +59,12 @@ class Matches::HumanVsBotController < ApplicationController
       limit: BOT_PAGE_SIZE,
       page_key: 'bot_page',
       page: params[:bot_page],
-      params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
+      params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color], sort: params[:sort] }.compact
     )
   end
 
   def setup_params
-    params.permit(:bot_id, :human_color, :bot_name, :bot_page)
+    params.permit(:bot_id, :human_color, :bot_name, :bot_page, :sort)
   end
 
   def match_params

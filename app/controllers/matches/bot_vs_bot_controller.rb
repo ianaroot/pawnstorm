@@ -34,7 +34,8 @@ class Matches::BotVsBotController < ApplicationController
       own_bot_name: params[:own_bot_name],
       opponent_bot_id: params[:opponent_bot_id],
       opponent_name: params[:opponent_name],
-      opponent_owner: params[:opponent_owner]
+      opponent_owner: params[:opponent_owner],
+      sort: params[:sort]
     }.compact
 
     @own_bots_pagy, @own_bots = pagy(
@@ -60,7 +61,7 @@ class Matches::BotVsBotController < ApplicationController
   end
 
   def setup_params
-    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_owner, :opponent_page)
+    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_owner, :opponent_page, :sort)
   end
 
   def match_params

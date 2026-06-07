@@ -23,14 +23,16 @@
 
   <div class="match-setup-grid">
     <div class="match-setup-col">
-      <div class="match-setup-section">
+      <div class="match-setup-section" data-controller="sort">
         <h2>Opponent Bot</h2>
         <%= form_with url: new_human_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'play-bots-frame' } do |f| %>
           <%= f.hidden_field :bot_id, value: params[:bot_id] %>
           <%= f.hidden_field :human_color, value: params[:human_color] %>
+          <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
           <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
         <% end %>
         <%= turbo_frame_tag "play-bots-frame" do %>
+          <%= render 'matches/sort_controls', current_sort: params[:sort] %>
           <%= render 'matches/bot_list',
             bots: @play_bots,
             pagy: @play_bots_pagy,

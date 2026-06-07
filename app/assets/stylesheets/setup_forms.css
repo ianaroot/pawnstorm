@@ -101,6 +101,64 @@
   width: 100%;
 }
 
+.match-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.match-sort__label {
+  opacity: 0.8;
+  margin-right: 0.25rem;
+}
+
+.match-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: inherit;
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.match-sort-button--active {
+  font-weight: bold;
+  border-color: currentColor;
+}
+
+.match-sort-caret {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.match-sort-caret__up,
+.match-sort-caret__down {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  opacity: 0.35;
+}
+
+.match-sort-caret__up {
+  border-bottom: 5px solid currentColor;
+}
+
+.match-sort-caret__down {
+  border-top: 5px solid currentColor;
+}
+
+.match-sort-caret--on {
+  opacity: 1;
+}
+
 .match-setup-col > .btn {
   align-self: flex-start;
 }

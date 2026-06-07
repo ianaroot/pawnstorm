@@ -36,4 +36,14 @@ RSpec.describe 'Matches::HumanVsBot picker', type: :request do
 
     expect(bot_radio(alpha.id).key?('checked')).to be(true)
   end
+
+  it 'orders the play list by the sort param' do
+    zebra = create(:bot, user: user, name: 'Zebra')
+    apple = create(:bot, user: user, name: 'Apple')
+
+    get new_human_vs_bot_match_path(sort: 'name_asc')
+
+    ids = Nokogiri::HTML(response.body).css('input[name="match[bot_id]"]').map { |node| node['value'] }
+    expect(ids).to eq([apple.id.to_s, zebra.id.to_s])
+  end
 end
