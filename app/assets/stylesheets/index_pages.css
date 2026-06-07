@@ -141,9 +141,8 @@
 }
 
 .index-pagination [aria-current] {
-  background: #A855F7;
-  color: #1E1E1E;
-  border-color: #A855F7;
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
   font-weight: 600;
 }
 
