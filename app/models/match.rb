@@ -52,12 +52,25 @@ class Match < ApplicationRecord
     fifty_move_rule: 6
   }, allow_nil: true
 
+  DRAW_RESULTS = %w[stalemate threefold_repetition fifty_move_rule capped].freeze
+
   belongs_to :creator, class_name: 'User'
   belongs_to :tournament, optional: true
   belongs_to :white_player, polymorphic: true
   belongs_to :black_player, polymorphic: true
   belongs_to :white_tournament_entry, class_name: 'TournamentEntry', optional: true
   belongs_to :black_tournament_entry, class_name: 'TournamentEntry', optional: true
+
+  scope :playing_white, ->(user) {
+    where(white_player: user).or(where(white_player_type: 'Bot', white_player_id: user.bots.select(:id)))
+  }
+  scope :playing_black, ->(user) {
+    where(black_player: user).or(where(black_player_type: 'Bot', black_player_id: user.bots.select(:id)))
+  }
+  scope :created_by, ->(user) { where(creator_id: user.id) }
+  scope :not_created_by, ->(user) { where.not(creator_id: user.id) }
+  scope :without_tournament, -> { where(tournament_id: nil) }
+  scope :only_tournament, -> { where.not(tournament_id: nil) }
 
   validate :completed_matches_require_replay_state
 
