@@ -39,9 +39,9 @@
           <td class="index-table-secondary"><%= bot.description %></td>
           <td class="index-table-status">
             <% if bot.compiled_program.present? && !bot.compiled_program_stale? %>
-              <span class="bot-status-pill bot-status-pill--compiled">Compiled</span>
+              <span class="pill pill--success">Compiled</span>
             <% else %>
-              <span class="bot-status-pill bot-status-pill--stale">Stale</span>
+              <span class="pill pill--warning">Stale</span>
               <%= button_to 'Compile', compile_bot_path(bot), method: :post, class: 'btn btn-secondary index-table-status-compile-btn' %>
             <% end %>
           </td>

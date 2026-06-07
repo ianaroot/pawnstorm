@@ -294,6 +294,6 @@
    ============================================ */
 
 body {
-  background-color: #1E1E1E;
+  background-color: var(--bg-primary);
   color: #E5E5E5;
 }

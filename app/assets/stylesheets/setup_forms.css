@@ -166,30 +166,6 @@
   margin-bottom: 1rem;
 }
 
-.match-mode-toggle {
-  display: inline-flex;
-  border: 1px solid var(--border-light);
-  border-radius: 0.4rem;
-  overflow: hidden;
-  font-size: 0.9rem;
-}
-
-.match-mode-toggle__option {
-  padding: 0.25rem 0.7rem;
-  background: var(--bg-secondary);
-  color: inherit;
-  text-decoration: none;
-}
-
-.match-mode-toggle__option + .match-mode-toggle__option {
-  border-left: 1px solid var(--border-light);
-}
-
-.match-mode-toggle__option--active {
-  color: var(--accent-secondary);
-  font-weight: bold;
-}
-
 .match-setup-col > .btn {
   align-self: flex-start;
 }

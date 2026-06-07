@@ -19,9 +19,12 @@
    ============================================ */
 
 :root {
-  --bg-primary: #1E1E1E;
-  --bg-secondary: #252526;
-  --bg-tertiary: #2D2D2D;
+  --bg-deep: #110d0a;
+  --bg-recessed: #181410;
+  --bg-primary: #1e1b18;
+  --bg-secondary: #252220;
+  --bg-tertiary: #2d2a25;
+  --bg-elevated: #3a342b;
   
   --text-primary: #E5E5E5;
   --text-secondary: #9CA3AF;
@@ -60,7 +63,7 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #1E1E1E;
+  background-color: var(--bg-primary);
   color: #E5E5E5;
   line-height: 1.5;
   min-height: 100vh;
@@ -161,7 +164,7 @@ button[type="submit"] {
 }
 
 .btn-secondary {
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
   color: #E5E5E5;
   border: 1px solid #3F3F46;
 }
@@ -197,6 +200,11 @@ button[type="submit"] {
   gap: 0.5rem;
   align-items: baseline;
   margin-bottom: 0.5rem;
+}
+
+.match-bot-option input[type="radio"] {
+  accent-color: var(--accent-primary);
+  color-scheme: dark;
 }
 
 /* ============================================
@@ -256,7 +264,7 @@ select {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
   border: 1px solid #3F3F46;
   border-radius: 0.5rem;
   color: #E5E5E5;
@@ -302,13 +310,13 @@ label {
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #252526;
+  background-color: var(--bg-secondary);
   border-radius: 0.5rem;
   overflow: hidden;
 }
 
 thead {
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
 }
 
 th {
@@ -332,7 +340,7 @@ tbody tr:last-child td {
 }
 
 tbody tr:hover {
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
 }
 
 /* ============================================
@@ -340,7 +348,7 @@ tbody tr:hover {
    ============================================ */
 
 .card {
-  background-color: #252526;
+  background-color: var(--bg-secondary);
   border-radius: 0.75rem;
   padding: 1.5rem;
   border: 1px solid #3F3F46;
