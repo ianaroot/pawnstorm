@@ -145,24 +145,12 @@
 
 .btn-open-templates {
   background: #1a1815;
-  color: #f3e2a6;
-  border: 1px solid #f3e2a6;
+  color: var(--accent-gold-pale);
+  border: 1px solid var(--accent-gold-pale);
 }
 
 .btn-open-templates:hover {
   background: var(--bg-secondary);
-}
-
-.btn-back {
-  background: #1a1815;
-  color: var(--text-primary);
-  text-decoration: none;
-  border: 1px solid #5a5650;
-}
-
-.btn-back:hover {
-  background: var(--bg-secondary);
-  border-color: #7a7670;
 }
 
 .btn-test {
@@ -377,47 +365,6 @@
   text-transform: uppercase;
 }
 
-.palette-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  margin-bottom: 6px;
-  background: var(--bg-tertiary);
-  border-radius: 4px;
-  cursor: grab;
-  font-size: 12px;
-  color: var(--text-primary);
-}
-
-.palette-item:active {
-  cursor: grabbing;
-}
-
-.palette-item.condition {
-  border-left: 3px solid var(--accent-primary);
-}
-
-.palette-item.score {
-  border-left: 3px solid var(--accent-cyan);
-}
-
-.node-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
-.palette-item.condition .node-icon {
-  background: radial-gradient(circle at 30% 30%, var(--accent-secondary), var(--accent-hover));
-}
-
-.palette-item.score .node-icon {
-  background: linear-gradient(45deg, var(--accent-cyan), #0891B2);
-  border-radius: 0;
-  transform: rotate(45deg);
-}
-
 .canvas-container {
   flex: 1;
   position: relative;
@@ -498,30 +445,12 @@
   display: none;
 }
 
-.palette-item.root {
-  border-left: 3px solid #FCE38F;
-}
-
-.palette-item.root .node-icon {
-  background: radial-gradient(circle at 30% 30%, #FCE38F, #D97706);
-  border-radius: 4px;
-}
-
-.palette-item.organizer,
 .node.organizer {
   --organizer-accent: var(--info);
   --organizer-accent-soft: #7fb0ff;
   --organizer-accent-deep: #2563eb;
   --organizer-glow: rgb(from var(--info) r g b / 0.55);
   --organizer-glow-strong: rgb(from var(--info) r g b / 0.85);
-}
-
-.palette-item.organizer {
-  border-left: 3px solid var(--organizer-accent);
-}
-
-.palette-item.organizer .node-icon {
-  background: radial-gradient(circle at 30% 30%, var(--organizer-accent-soft), var(--organizer-accent-deep));
 }
 
 .node.root {
@@ -919,47 +848,6 @@
   font-size: 14px;
 }
 
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.form-group select,
-.form-group input[type="number"] {
-  width: 100%;
-  padding: 6px;
-  padding-right: 22px;
-  background: var(--bg-tertiary);
-  border: 1px solid #1a1815;
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 12px;
-}
-
-.form-group select {
-  appearance: none;
-  background-image: var(--select-arrow);
-  background-repeat: no-repeat;
-  background-position: right 7px center;
-}
-
-.form-group.checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.form-group.checkbox input {
-  margin: 0;
-}
-
 .panel-actions {
   display: flex;
   justify-content: space-evenly;
@@ -1069,7 +957,7 @@
 
 .node-hover-preview__label {
   margin-bottom: 8px;
-  color: #f3e2a6;
+  color: var(--accent-gold-pale);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1163,30 +1051,6 @@
 .form-part textarea {
   min-height: 6rem;
   resize: vertical;
-}
-
-.piece-filter {
-  margin-top: 8px;
-  padding-left: 10px;
-  border-left: 2px solid #3d3a35;
-}
-
-.piece-filter-option {
-  margin-top: 6px;
-}
-
-.cond-detail-section {
-  margin-top: 8px;
-  padding: 8px;
-  background: #14120f;
-  border-radius: 4px;
-}
-
-.cond-detail-section label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 .condition-form-panel .panel-content {
@@ -1672,42 +1536,6 @@
   padding-right: 0;
 }
 
-.condition-form-result-mode {
-  display: inline-flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.condition-form-result-mode__option {
-  padding: 5px 9px;
-  background: #1d1916;
-  border: 1px solid #4a443d;
-  border-radius: 999px;
-  color: #d1d5db;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.condition-form-result-mode__option.active {
-  background: #2e2924;
-  border-color: #8b5cf6;
-  color: var(--text-cream);
-}
-
-.condition-form-result-mode__option:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.condition-form-none-choice {
-  padding: 10px 12px;
-  background: #191613;
-  border: 1px solid #3d3a35;
-  border-radius: 8px;
-  color: #d1d5db;
-  font-size: 12px;
-}
-
 /* Shared segmented-control chrome. Wear this alongside a BEM-context class
    (e.g. `condition-form-mode-picker mode-picker`) — the context class carries
    layout/margin only; this one carries the visual shell. */
@@ -1927,7 +1755,7 @@
 
 .template-picker-modal__eyebrow {
   margin: 0 0 0.25rem;
-  color: #f3e2a6;
+  color: var(--accent-gold-pale);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1993,8 +1821,8 @@
 
 .template-picker__category.is-active {
   color: #1a1815;
-  background: #f3e2a6;
-  border-color: #f3e2a6;
+  background: var(--accent-gold-pale);
+  border-color: var(--accent-gold-pale);
 }
 
 .template-picker__list {
@@ -2025,8 +1853,8 @@
 }
 
 .template-picker__card.is-selected {
-  border-color: #f3e2a6;
-  box-shadow: 0 0 0 1px rgba(243, 226, 166, 0.25);
+  border-color: var(--accent-gold-pale);
+  box-shadow: 0 0 0 1px rgb(from var(--accent-gold-pale) r g b / 0.25);
 }
 
 .template-picker__card-title {
@@ -2084,16 +1912,6 @@
 .template-picker-modal__actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.template-picker-modal__insert {
-  background: var(--accent-primary);
-  color: #1a1815;
-  border: none;
-}
-
-.template-picker-modal__insert:hover:not(:disabled) {
-  background: var(--accent-secondary);
 }
 
 .template-picker-modal__insert:disabled {

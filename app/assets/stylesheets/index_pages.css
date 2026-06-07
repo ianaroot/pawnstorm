@@ -33,6 +33,10 @@
   background: var(--bg-primary);
 }
 
+.index-panel thead th {
+  color: var(--accent-gold-pale);
+}
+
 .index-panel .index-filter-input,
 .index-panel .index-filter-select {
   background: var(--bg-recessed);
