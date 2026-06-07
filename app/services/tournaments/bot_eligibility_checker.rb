@@ -23,12 +23,14 @@ module Tournaments
       and_count   = compute_and_count
       score_nodes = @nodes.values.select { |n| n["type"] == "score" }
       branch_len  = compute_max_branch_length
+      score_value = total_absolute_value(score_nodes)
 
       violations = []
       check_allow_or(or_count, violations)
       check_allow_and(and_count, violations)
       check_max_score_nodes(score_nodes.size, violations)
       check_max_branch_length(branch_len, violations)
+      check_max_total_absolute_value(score_value, violations)
       check_score_node_restrictions(score_nodes, violations)
       check_condition_restrictions(violations)
 
@@ -47,7 +49,8 @@ module Tournaments
           or_count: or_count,
           and_count: and_count,
           score_node_count: score_nodes.size,
-          max_branch_length: branch_len
+          max_branch_length: branch_len,
+          total_absolute_value: score_value
         }
       )
     end
@@ -129,6 +132,16 @@ module Tournaments
       max = @constraints["max_branch_length"]
       return unless max && length > max
       violations << { type: "max_branch_length", message: "Bot's longest branch is #{length} #{"condition".pluralize(length)} deep (max #{max})" }
+    end
+
+    def total_absolute_value(score_nodes)
+      score_nodes.sum { |node| node.dig("data", "value").to_i.abs }
+    end
+
+    def check_max_total_absolute_value(total, violations)
+      max = @constraints["max_total_absolute_value"]
+      return unless max && total > max
+      violations << { type: "max_total_absolute_value", message: "Bot's total absolute value of scores is #{total} (max #{max})" }
     end
 
     def check_score_node_restrictions(score_nodes, violations)

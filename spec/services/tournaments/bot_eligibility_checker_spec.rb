@@ -58,7 +58,7 @@ RSpec.describe Tournaments::BotEligibilityChecker do
 
     it "populates all stats keys" do
       result = check(linear_program, nil)
-      expect(result.stats.keys).to contain_exactly(:and_count, :or_count, :score_node_count, :max_branch_length)
+      expect(result.stats.keys).to contain_exactly(:and_count, :or_count, :score_node_count, :max_branch_length, :total_absolute_value)
     end
   end
 
@@ -278,6 +278,32 @@ RSpec.describe Tournaments::BotEligibilityChecker do
 
       it "is eligible when exactly at the limit" do
         expect(check(linear_program, { "max_score_nodes" => 1 }).eligible).to be true
+      end
+    end
+  end
+
+  describe "total absolute value of scores" do
+    let(:swing_program) do
+      program(
+        root("r", children: ["s1", "s2"]),
+        score("s1", value: 8),
+        score("s2", value: -8)
+      )
+    end
+
+    it "sums the absolute value of every score node, so offsetting values do not cancel" do
+      expect(check(swing_program).stats[:total_absolute_value]).to eq(16)
+    end
+
+    context "with max_total_absolute_value constraint" do
+      it "adds a violation when exceeded" do
+        result = check(swing_program, { "max_total_absolute_value" => 10 })
+        expect(result.eligible).to be false
+        expect(result.violations).to include(include(type: "max_total_absolute_value"))
+      end
+
+      it "is eligible when exactly at the limit" do
+        expect(check(swing_program, { "max_total_absolute_value" => 16 }).eligible).to be true
       end
     end
   end

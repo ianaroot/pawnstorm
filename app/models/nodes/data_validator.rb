@@ -164,7 +164,7 @@ module Nodes
       action_type = record.data['actionType'] || record.data[:actionType]
       value = record.data['value'] || record.data[:value]
       record.errors.add(:data, 'has invalid actionType') unless SCORE_ACTION_TYPES.include?(action_type)
-      record.errors.add(:data, 'value must be numeric') unless value.is_a?(Numeric)
+      record.errors.add(:data, 'value must be a whole number') unless value.is_a?(Integer)
     end
 
     def validate_organizer_data

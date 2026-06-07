@@ -138,6 +138,14 @@
               min="1" step="1" placeholder="N/A">
           </div>
           <p class="ce-check-note">Counts chained conditions only — score nodes don't add to the length.</p>
+          <div class="ci-row">
+            <span class="ci-label">Max total absolute value of scores</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[constraints][max_total_absolute_value]"
+              value="<%= @constraints&.dig("max_total_absolute_value") %>"
+              min="1" step="1" placeholder="N/A">
+          </div>
+          <p class="ce-check-note">−8 adds 8 to the total, the same as +8.</p>
           <%= render 'constraints_legend' %>
         </div>
 
