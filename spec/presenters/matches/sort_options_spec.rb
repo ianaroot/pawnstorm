@@ -31,4 +31,11 @@ RSpec.describe Matches::SortOptions do
     expect(elo.direction).to eq('asc')
     expect(elo.value).to eq('elo_desc')
   end
+
+  it 'falls back to a provided default when blank' do
+    active = described_class.new(nil, default: 'elo_desc').options.find(&:active)
+
+    expect(active.label).to eq('ELO')
+    expect(active.direction).to eq('desc')
+  end
 end

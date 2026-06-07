@@ -1,6 +1,8 @@
 class Matches::BotVsBotController < ApplicationController
   include Matches::SetupForm
 
+  OPPONENT_DEFAULT_SORT = 'elo_desc'
+
   before_action :authenticate_registered_or_guest_user!, only: [:create]
 
   def new
@@ -35,7 +37,8 @@ class Matches::BotVsBotController < ApplicationController
       opponent_bot_id: params[:opponent_bot_id],
       opponent_name: params[:opponent_name],
       opponent_owner: params[:opponent_owner],
-      sort: params[:sort]
+      sort: params[:sort],
+      opponent_sort: params[:opponent_sort]
     }.compact
 
     @own_bots_pagy, @own_bots = pagy(
@@ -46,7 +49,7 @@ class Matches::BotVsBotController < ApplicationController
       params: shared_params.merge(opponent_page: params[:opponent_page])
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
-      setup.all_opponent_bots.with_name(params[:opponent_name]).with_owner_username(params[:opponent_owner]),
+      setup.all_opponent_bots.with_name(params[:opponent_name]).with_owner_username(params[:opponent_owner]).sorted_by(opponent_sort),
       limit: BOT_PAGE_SIZE,
       page_key: 'opponent_page',
       page: params[:opponent_page] || default_opponent_page(setup),
@@ -54,14 +57,19 @@ class Matches::BotVsBotController < ApplicationController
     )
   end
 
+  def opponent_sort
+    params[:opponent_sort].presence || OPPONENT_DEFAULT_SORT
+  end
+
   def default_opponent_page(setup)
     return if params[:opponent_name].present? || params[:opponent_owner].present?
+    return if opponent_sort != OPPONENT_DEFAULT_SORT
 
     setup.opponent_page(per_page: BOT_PAGE_SIZE)
   end
 
   def setup_params
-    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_owner, :opponent_page, :sort)
+    params.permit(:own_bot_id, :opponent_bot_id, :own_bot_name, :own_bot_page, :opponent_name, :opponent_owner, :opponent_page, :sort, :opponent_sort)
   end
 
   def match_params

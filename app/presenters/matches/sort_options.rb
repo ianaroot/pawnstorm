@@ -7,8 +7,8 @@ class Matches::SortOptions
     ['recently_updated', 'Recently updated', 'desc']
   ].freeze
 
-  def initialize(current_sort)
-    @field, _, @direction = (current_sort.presence || Bot::DEFAULT_SORT).rpartition('_')
+  def initialize(current_sort, default: Bot::DEFAULT_SORT)
+    @field, _, @direction = (current_sort.presence || default).rpartition('_')
   end
 
   def options

@@ -54,7 +54,7 @@ class Matches::CreateBotVsBot
     bot = selected_own_bot
     return nil unless bot
 
-    all_opponent_bots.where('bots.rating < ?', bot.rating).count
+    all_opponent_bots.where('bots.rating > ?', bot.rating).count
   end
 
   def opponent_page(per_page:)
@@ -72,10 +72,9 @@ class Matches::CreateBotVsBot
       @all_opponent_bots = Bot.where(user: @user)
                              .or(Bot.compiled.where.not(user: @user))
                              .includes(:user)
-                             .order(:rating)
     else
       @own_bots = Bot.none
-      @all_opponent_bots = Bot.compiled.includes(:user).order(:rating)
+      @all_opponent_bots = Bot.compiled.includes(:user)
     end
   end
 

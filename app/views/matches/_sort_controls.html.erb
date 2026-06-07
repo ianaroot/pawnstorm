@@ -1,6 +1,6 @@
 <div class="match-sort">
   <span class="match-sort__label">Sort</span>
-  <% Matches::SortOptions.new(current_sort).options.each do |option| %>
+  <% Matches::SortOptions.new(current_sort, default: local_assigns.fetch(:default, Bot::DEFAULT_SORT)).options.each do |option| %>
     <%= button_tag type: :button,
           data: { action: 'click->sort#select', sort_value_param: option.value },
           class: class_names('match-sort-button', 'match-sort-button--active' => option.active) do %>

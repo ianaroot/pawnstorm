@@ -24,7 +24,7 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
 
   let!(:own_bot) { create(:bot, :compiled, user: user) }
   let!(:weakling) { rated_opponent(50, name: 'Weakling') }
-  let!(:page_one_fillers) { Array.new(Matches::SetupForm::BOT_PAGE_SIZE - 1) { |i| rated_opponent(100 + i) } }
+  let!(:page_one_fillers) { Array.new(Matches::SetupForm::BOT_PAGE_SIZE - 1) { |i| rated_opponent(1100 + i) } }
   let!(:titan) { rated_opponent(1500, name: 'Titan') }
 
   before { sign_in user }
@@ -32,15 +32,15 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
   it 'honors an explicit page instead of re-centering on the selected bot' do
     get new_bot_vs_bot_match_path(own_bot_id: own_bot.id, opponent_page: 1)
 
-    expect(shows_opponent?(weakling)).to be(true)
-    expect(shows_opponent?(titan)).to be(false)
+    expect(shows_opponent?(titan)).to be(true)
+    expect(shows_opponent?(weakling)).to be(false)
   end
 
   it 'lands on the page around the selected bot when no page is given' do
     get new_bot_vs_bot_match_path(own_bot_id: own_bot.id)
 
-    expect(shows_opponent?(titan)).to be(true)
-    expect(shows_opponent?(weakling)).to be(false)
+    expect(shows_opponent?(weakling)).to be(true)
+    expect(shows_opponent?(titan)).to be(false)
     # the opponent nav must key off opponent_page, not pagy's default `page`,
     # or clicking a page re-centers instead of navigating
     expect(response.body).to include('opponent_page=1')
@@ -82,5 +82,23 @@ RSpec.describe 'Matches::BotVsBot opponent pagination', type: :request do
     get new_bot_vs_bot_match_path(opponent_bot_id: titan.id, opponent_name: 'Titan')
 
     expect(radio('opponent_bot_id', titan.id).key?('checked')).to be(true)
+  end
+
+  it 'orders the opponent list by the opponent_sort param' do
+    create(:bot, :compiled, user: create(:user), name: 'Zeta Rival')
+    create(:bot, :compiled, user: create(:user), name: 'Alpha Rival')
+
+    get new_bot_vs_bot_match_path(opponent_name: 'Rival', opponent_sort: 'name_asc')
+
+    ids = Nokogiri::HTML(response.body).css('input[name="match[opponent_bot_id]"]').map { |node| node['value'] }
+    alpha = Bot.find_by(name: 'Alpha Rival').id.to_s
+    zeta = Bot.find_by(name: 'Zeta Rival').id.to_s
+    expect(ids.index(alpha)).to be < ids.index(zeta)
+  end
+
+  it 'skips centering on bot rating once the opponent list is sorted' do
+    get new_bot_vs_bot_match_path(own_bot_id: own_bot.id, opponent_sort: 'name_asc')
+
+    expect(shows_opponent?(weakling)).to be(false)
   end
 end
