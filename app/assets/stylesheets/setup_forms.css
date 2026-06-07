@@ -557,7 +557,7 @@ details[open] .constraints-summary::after {
 }
 
 .tournament-draft p {
-  color: #9ca3af;
+  color: var(--text-secondary);
   margin: 0 0 1.25rem;
 }
 
@@ -605,15 +605,15 @@ details[open] .constraints-summary::after {
 
 .ce-check-note {
   font-size: 0.72rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .constraints-explainer {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--text-muted);
   margin: 0 0 1rem;
   line-height: 1.45;
-  border-left: 3px solid #A855F7;
+  border-left: 3px solid var(--accent-primary);
   padding-left: 0.7rem;
 }
 
@@ -643,7 +643,7 @@ details[open] .constraints-summary::after {
 
 .constraints-legend__note {
   font-size: 0.72rem;
-  color: #6b7280;
+  color: var(--text-muted);
   margin: 0.25rem 0 0;
   max-width: 24ch;
   line-height: 1.4;
@@ -674,7 +674,7 @@ details[open] .constraints-summary::after {
 .ce-error,
 .ce-empty {
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -705,7 +705,7 @@ details[open] .constraints-summary::after {
 .ce-pill {
   padding: 3px 10px;
   background: transparent;
-  color: #9ca3af;
+  color: var(--text-secondary);
   border: 1px solid #3d3a35;
   border-radius: 999px;
   cursor: pointer;
@@ -730,7 +730,7 @@ details[open] .constraints-summary::after {
 .ce-table th {
   text-align: left;
   padding: 4px 8px;
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 600;
   border-bottom: 1px solid #2d2a26;
 }
@@ -765,7 +765,7 @@ details[open] .constraints-summary::after {
 
 .ce-cost {
   white-space: nowrap;
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
 .ce-violations {
@@ -779,7 +779,7 @@ details[open] .constraints-summary::after {
 
 .ce-edit-link {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   text-decoration: none;
   white-space: nowrap;
 }

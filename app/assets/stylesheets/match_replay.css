@@ -589,7 +589,7 @@ input[type="submit"].btn-rematch {
   position: sticky;
   top: 0;
   z-index: 2;
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
 }
 
 .tournament-pairing-matrix thead th:first-child,
@@ -600,7 +600,7 @@ input[type="submit"].btn-rematch {
 }
 
 .tournament-pairing-matrix tbody th {
-  background-color: #252526;
+  background-color: var(--bg-secondary);
   z-index: 1;
 }
 
@@ -636,7 +636,7 @@ input[type="submit"].btn-rematch {
 .tournament-pairing-matrix__secondary {
   white-space: nowrap;
   font-size: 0.75rem;
-  color: #9CA3AF;
+  color: var(--text-secondary);
 }
 
 /* ============================================
