@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
   GUEST_ID_LENGTH = 6
   GUEST_EMAIL_MAX_RETRIES = 20
   USER_ACTIVITY_THROTTLE = 12.hours
+  INDEX_PER_PAGE = 12
 
   before_action :record_user_activity
 

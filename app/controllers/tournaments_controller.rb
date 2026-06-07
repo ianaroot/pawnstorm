@@ -12,7 +12,7 @@ class TournamentsController < ApplicationController
                 .includes(:creator, :tournament_entries)
                 .filtered(**index_filters)
                 .order(created_at: :desc),
-      limit: 10
+      limit: INDEX_PER_PAGE
     )
   end
   def new
