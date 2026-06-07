@@ -143,7 +143,7 @@
             <input class="ci-input ci-input--box" type="number"
               name="tournament[constraints][max_total_absolute_value]"
               value="<%= @constraints&.dig("max_total_absolute_value") %>"
-              min="0" step="1" placeholder="N/A">
+              min="1" step="1" placeholder="N/A">
           </div>
           <p class="ce-check-note">−8 adds 8 to the total, the same as +8.</p>
           <%= render 'constraints_legend' %>
