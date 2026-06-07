@@ -23,13 +23,13 @@ RSpec.describe 'Matches index', type: :request do
     expect(shows_match?(not_mine)).to be(false)
   end
 
-  it 'paginates at INDEX_PER_PAGE' do
-    create_list(:match, ApplicationController::INDEX_PER_PAGE + 1, white_player: my_bot)
+  it 'paginates at MATCHES_PER_PAGE' do
+    create_list(:match, MatchesController::MATCHES_PER_PAGE + 1, white_player: my_bot)
 
     get matches_path
 
     rows = response.body.scan(%r{href="/matches/\d+"}).size
-    expect(rows).to eq(ApplicationController::INDEX_PER_PAGE)
+    expect(rows).to eq(MatchesController::MATCHES_PER_PAGE)
   end
 
   it 'threads a filter param through to the query' do
@@ -40,5 +40,26 @@ RSpec.describe 'Matches index', type: :request do
 
     expect(shows_match?(as_white)).to be(true)
     expect(shows_match?(as_black)).to be(false)
+  end
+
+  it 'renders the filter controls' do
+    get matches_path
+
+    expect(response.body).to include('name="color"')
+    expect(response.body).to include('name="outcome"')
+  end
+
+  it 'shows the bare empty state when you have no matches' do
+    get matches_path
+
+    expect(response.body).to include('No matches yet.')
+  end
+
+  it 'shows a filtered empty state when filters match nothing' do
+    create(:match, white_player: my_bot)
+
+    get matches_path(opponent: 'nobody-by-this-name')
+
+    expect(response.body).to include('No matches fit these filters.')
   end
 end

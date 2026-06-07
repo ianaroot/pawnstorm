@@ -3,6 +3,36 @@
   <%= link_to 'Set up a match', new_bot_vs_bot_match_path, class: 'btn btn-secondary' %>
 </div>
 
+<div class="index-panel">
+<%= form_with url: matches_path, method: :get, class: 'index-filter-form',
+      data: { controller: 'auto-submit', turbo_frame: 'matches' } do |f| %>
+  <div class="index-filter-row">
+    <div class="match-filter-field">
+      <span class="match-filter-field__label">Your Bot</span>
+      <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'name', class: 'index-filter-input match-filter-input',
+            data: { action: 'input->auto-submit#submitDebounced' } %>
+    </div>
+    <div class="match-filter-field">
+      <span class="match-filter-field__label">Opponent Bot</span>
+      <%= f.text_field :opponent, value: params[:opponent], placeholder: 'name or owner', class: 'index-filter-input match-filter-input',
+            data: { action: 'input->auto-submit#submitDebounced' } %>
+    </div>
+  </div>
+  <div class="index-filter-row">
+    <%= render 'matches/filter_toggle', f: f, name: :color, current: params[:color], label: 'Color',
+          options: [['', 'All'], ['white', 'White'], ['black', 'Black']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :outcome, current: params[:outcome], label: 'Outcome',
+          options: [['', 'All'], ['win', 'Win'], ['loss', 'Loss'], ['draw', 'Draw']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :tournament, current: params[:tournament], label: 'Tournament',
+          options: [['', 'All'], ['non_tournament', 'No'], ['tournament', 'Yes']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :creator, current: params[:creator], label: 'Created',
+          options: [['', 'All'], ['me', 'By me'], ['others', 'By others']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :sort, current: params[:sort], label: 'Sort',
+          options: [['', 'Newest'], ['oldest', 'Oldest']] %>
+    <%= link_to 'Reset', matches_path, class: 'btn btn-secondary match-filter-reset' %>
+  </div>
+<% end %>
+
 <%= turbo_frame_tag "matches", target: "_top" do %>
   <% if @matches.any? %>
     <table>
@@ -16,10 +46,20 @@
       </thead>
       <tbody>
         <% @matches.each do |match| %>
+          <% row = Matches::IndexRow.new(match: match, user: current_user) %>
           <tr>
-            <td><%= link_to match.player_display_name_for(:white), match_path(match) %></td>
-            <td class="index-table-secondary"><%= match.player_display_name_for(:black) %></td>
-            <td><%= match.result&.humanize || match.status.humanize %></td>
+            <td>
+              <%= link_to match.player_display_name_for(:white), match_path(match) %>
+              <% if row.playing_white? %><span class="index-table-secondary">(you)</span><% end %>
+            </td>
+            <td>
+              <%= match.player_display_name_for(:black) %>
+              <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
+            </td>
+            <td>
+              <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>
+              <% if match.tournament %><span class="pill pill--violet match-tournament-tag">Tournament</span><% end %>
+            </td>
             <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
           </tr>
         <% end %>
@@ -30,6 +70,9 @@
       <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="matches"') if @pagy.pages > 1 %>
     </div>
   <% else %>
-    <p class="index-empty">No matches yet.</p>
+    <p class="index-empty">
+      <%= @filter_params.to_h.values.any?(&:present?) ? 'No matches fit these filters.' : 'No matches yet.' %>
+    </p>
   <% end %>
 <% end %>
+</div>

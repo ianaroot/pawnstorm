@@ -1,4 +1,6 @@
 class MatchesController < ApplicationController
+  MATCHES_PER_PAGE = 9
+
   before_action :authenticate_registered_or_guest_user!
 
   def index
@@ -6,7 +8,7 @@ class MatchesController < ApplicationController
     @pagy, @matches = pagy(
       Matches::IndexQuery.new(user: current_user, params: @filter_params).matches
         .includes(:white_player, :black_player, :tournament),
-      limit: INDEX_PER_PAGE
+      limit: MATCHES_PER_PAGE
     )
   end
 

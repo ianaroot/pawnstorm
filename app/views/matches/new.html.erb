@@ -33,6 +33,7 @@
           <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
           <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
           <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+          <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
         <% end %>
         <%= turbo_frame_tag "own-bots-frame" do %>
           <%= render 'matches/sort_controls', current_sort: params[:sort] %>
@@ -59,6 +60,7 @@
           <%= f.hidden_field :opponent_sort, value: params[:opponent_sort], data: { sort_target: 'field' } %>
           <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
           <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Search by owner', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+          <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
         <% end %>
         <%= turbo_frame_tag "opponent-bots-frame" do %>
           <%= render 'matches/sort_controls', current_sort: params[:opponent_sort], default: 'elo_desc' %>
