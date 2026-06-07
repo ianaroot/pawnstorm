@@ -67,26 +67,26 @@
 }
 
 .bot-guide-mini-graph__shape--root {
-  stroke: #f6d77a;
+  stroke: var(--accent-gold);
 }
 
 .bot-guide-mini-graph__shape--condition {
-  stroke: #a855f7;
+  stroke: var(--accent-primary);
 }
 
 .bot-guide-mini-graph__shape--score {
-  stroke: #06b6d4;
+  stroke: var(--accent-cyan);
 }
 
 .bot-guide-mini-graph__label {
-  fill: #f4efe6;
+  fill: var(--text-cream);
   font-size: 13px;
   font-weight: 700;
   text-anchor: middle;
 }
 
 .bot-guide-mini-graph__order {
-  fill: #f6d77a;
+  fill: var(--accent-gold);
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
@@ -95,14 +95,14 @@
 }
 
 .bot-guide-mini-graph__orbit-text {
-  fill: #c084fc;
+  fill: var(--accent-secondary);
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
 }
 
 .bot-guide-mini-graph__note {
-  fill: #b7b0a7;
+  fill: var(--text-warm-muted);
   font-size: 10px;
   text-anchor: middle;
 }
@@ -167,7 +167,7 @@
 .bot-guide-snippet code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.9rem;
-  color: #f4efe6;
+  color: var(--text-cream);
   white-space: pre-wrap;
 }
 

@@ -29,11 +29,15 @@
   --text-primary: #E5E5E5;
   --text-secondary: #9CA3AF;
   --text-muted: #6B7280;
-  
+  --text-cream: #f4efe6;
+  --text-warm-muted: #b7b0a7;
+
   --accent-primary: #A855F7;
   --accent-secondary: #C084FC;
   --accent-hover: #7C3AED;
   --accent-muted: #8e74c0;
+  --accent-gold: #f6d77a;
+  --accent-cyan: #06b6d4;
   
   --success: #10B981;
   --error: #EF4444;
