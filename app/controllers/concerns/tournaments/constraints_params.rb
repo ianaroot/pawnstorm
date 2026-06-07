@@ -11,6 +11,7 @@ module Tournaments
 
       c["max_score_nodes"]   = raw[:max_score_nodes].to_i   if raw[:max_score_nodes].present?
       c["max_branch_length"] = raw[:max_branch_length].to_i if raw[:max_branch_length].present?
+      c["max_total_absolute_value"] = raw[:max_total_absolute_value].to_i if raw[:max_total_absolute_value].present?
       c["budget"]            = raw[:budget].to_i            if raw[:budget].present?
 
       costs = (raw[:costs]&.to_unsafe_h || {}).filter_map { |k, v| [k.to_s, v.to_i] if v.present? && v.to_i > 0 }.to_h
