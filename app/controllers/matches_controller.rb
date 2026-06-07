@@ -1,6 +1,15 @@
 class MatchesController < ApplicationController
   before_action :authenticate_registered_or_guest_user!
 
+  def index
+    @filter_params = params.permit(:bot_name, :opponent, :color, :outcome, :tournament, :creator, :sort)
+    @pagy, @matches = pagy(
+      Matches::IndexQuery.new(user: current_user, params: @filter_params).matches
+        .includes(:white_player, :black_player, :tournament),
+      limit: INDEX_PER_PAGE
+    )
+  end
+
   def show
     @match = Match.find(params[:id])
     @rematch_options = Matches::RematchOptions.new(match: @match, user: current_user)

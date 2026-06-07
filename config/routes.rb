@@ -70,7 +70,7 @@ Rails.application.routes.draw do
   post 'matches/human-vs-bot', to: 'matches/human_vs_bot#create', as: :human_vs_bot_matches
   get 'matches/human-vs-bot/:id/live', to: 'matches/human_vs_bot#live', as: :live_human_vs_bot_match
   patch 'matches/human-vs-bot/:id/live', to: 'matches/human_vs_bot#complete', as: :complete_human_vs_bot_match
-  resources :matches, only: [:show]
+  resources :matches, only: [:index, :show]
 
   # Defines the root path route ("/")
   # root "posts#index"

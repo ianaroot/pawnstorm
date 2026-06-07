@@ -159,9 +159,15 @@
   opacity: 1;
 }
 
+.match-setup-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
 .match-mode-toggle {
   display: inline-flex;
-  margin-bottom: 1rem;
   border: 1px solid var(--border-light);
   border-radius: 0.4rem;
   overflow: hidden;

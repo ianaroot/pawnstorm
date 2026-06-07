@@ -1,0 +1,35 @@
+<div class="index-header">
+  <h1>Your Matches</h1>
+  <%= link_to 'Set up a match', new_bot_vs_bot_match_path, class: 'btn btn-secondary' %>
+</div>
+
+<%= turbo_frame_tag "matches", target: "_top" do %>
+  <% if @matches.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>White</th>
+          <th>Black</th>
+          <th>Result</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @matches.each do |match| %>
+          <tr>
+            <td><%= link_to match.player_display_name_for(:white), match_path(match) %></td>
+            <td class="index-table-secondary"><%= match.player_display_name_for(:black) %></td>
+            <td><%= match.result&.humanize || match.status.humanize %></td>
+            <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div class="index-pagination">
+      <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="matches"') if @pagy.pages > 1 %>
+    </div>
+  <% else %>
+    <p class="index-empty">No matches yet.</p>
+  <% end %>
+<% end %>
