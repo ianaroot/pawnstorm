@@ -22,7 +22,7 @@
 
   <div class="match-setup-grid">
     <div class="match-setup-col">
-      <div class="match-setup-section" data-controller="sort">
+      <div class="setup-section" data-controller="sort">
         <h2>Your Bot</h2>
         <%= render layout: "shared/index_filter_form", locals: { url: new_bot_vs_bot_match_path, frame: "own-bots-frame" } do |f| %>
           <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
@@ -51,7 +51,7 @@
     </div>
 
     <div class="match-setup-col">
-      <div class="match-setup-section" data-controller="sort">
+      <div class="setup-section" data-controller="sort">
         <h2>Opponent Bot</h2>
         <%= render layout: "shared/index_filter_form", locals: { url: new_bot_vs_bot_match_path, frame: "opponent-bots-frame", data: { match_setup_target: 'opponentForm' } } do |f| %>
           <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>

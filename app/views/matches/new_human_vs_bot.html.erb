@@ -22,7 +22,7 @@
 
   <div class="match-setup-grid">
     <div class="match-setup-col">
-      <div class="match-setup-section" data-controller="sort">
+      <div class="setup-section" data-controller="sort">
         <h2>Opponent Bot</h2>
         <%= render layout: "shared/index_filter_form", locals: { url: new_human_vs_bot_match_path, frame: "play-bots-frame" } do |f| %>
           <%= f.hidden_field :bot_id, value: params[:bot_id] %>
@@ -47,7 +47,7 @@
     </div>
 
     <div class="match-setup-col">
-      <div class="match-setup-section">
+      <div class="setup-section">
         <h2>Your Color</h2>
         <label class="match-bot-option">
           <input type="radio" name="match[human_color]" value="white" form="match-form" <%= 'checked' if @selected_color == 'white' %>>
