@@ -149,9 +149,9 @@
 }
 
 .match-replay-page .match-replay-controls button.replay-control--hint {
-  background: #d8c160;
-  color: #1a1815;
-  border-color: #d8c160;
+  background: var(--accent-gold-deep);
+  color: var(--surface);
+  border-color: var(--accent-gold-deep);
   box-shadow: 0 0 6px rgba(216, 193, 96, 0.6);
   animation: replay-control-hint-pulse 4s ease-in-out infinite;
 }

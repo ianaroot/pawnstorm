@@ -25,12 +25,20 @@
   --bg-secondary: #252220;
   --bg-tertiary: #2d2a25;
   --bg-elevated: #3a342b;
+
+  --surface-canvas: #14120f;
+  --surface: #1a1815;
+  --surface-raised: #2a2622;
+  --surface-violet: #33273a;
+  --surface-violet-deep: #2a202f;
   
   --text-primary: #E5E5E5;
   --text-secondary: #9CA3AF;
   --text-muted: #6B7280;
   --text-cream: #f4efe6;
   --text-warm-muted: #b7b0a7;
+  --text-warm-dim: #6d655a;
+  --text-cool: #d1d5db;
 
   --accent-primary: #A855F7;
   --accent-secondary: #C084FC;
@@ -39,6 +47,32 @@
   --accent-gold: #f6d77a;
   --accent-gold-pale: #f3e2a6;
   --accent-cyan: #06b6d4;
+  --accent-gold-deep: #d8c160;
+
+  --node-root: #fce38f;
+  --node-score: #18b7cf;
+  --node-score-soft: #4fd1e0;
+  --node-score-pale: #a5f3fc;
+  --node-score-faint: #d7f6fb;
+  --node-organizer-deep: #2563eb;
+  --node-organizer-soft: #7fb0ff;
+  --node-organizer-light: #8db8ff;
+  --node-organizer-pale: #bfdbfe;
+  --node-organizer-faint: #dce8f2;
+  --node-condition-pale: #e9d5ff;
+  --node-condition-faint: #e8e1f5;
+  --node-selected: #f0abfc;
+
+  --board-light: #f0d9b5;
+  --board-dark: #b58863;
+  --piece-light: #f8f4ec;
+  --piece-outline: #2a2018;
+  --piece-dark: #1a1410;
+
+  --connection-line: #cc7722;
+  --connection-delete: #e94560;
+  --accent-ember: #e8420a;
+  --error-soft: #fca5a5;
   
   --success: #10B981;
   --error: #EF4444;
@@ -54,6 +88,9 @@
 
   --border-color: #3F3F46;
   --border-light: #52525B;
+  --border-warm: #3d3a35;
+  --border-warm-strong: #5a5650;
+  --border-warm-hover: #7a7670;
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);

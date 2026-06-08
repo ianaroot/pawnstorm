@@ -584,8 +584,8 @@ details[open] .constraints-summary::after {
 
 .ce-check-btn {
   padding: 5px 14px;
-  background: #1a1815;
-  color: #d1d5db;
+  background: var(--surface);
+  color: var(--text-cool);
   border: 1px solid #4b4742;
   border-radius: 4px;
   cursor: pointer;
@@ -689,7 +689,7 @@ details[open] .constraints-summary::after {
 
 .ce-filter-input {
   padding: 4px 8px;
-  background: #1a1815;
+  background: var(--surface);
   border: 1px solid #4b4742;
   border-radius: 4px;
   color: #e5e7eb;
@@ -706,7 +706,7 @@ details[open] .constraints-summary::after {
   padding: 3px 10px;
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid #3d3a35;
+  border: 1px solid var(--border-warm);
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.72rem;
@@ -797,8 +797,8 @@ details[open] .constraints-summary::after {
 .invite-link__url {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.8rem;
-  color: #d1d5db;
-  background: #1a1815;
+  color: var(--text-cool);
+  background: var(--surface);
   border: 1px solid #2d2a26;
   border-radius: 4px;
   padding: 2px 8px;
@@ -808,8 +808,8 @@ details[open] .constraints-summary::after {
 .invite-link__copy {
   padding: 3px 10px;
   font-size: 0.75rem;
-  color: #d1d5db;
-  background: #1a1815;
+  color: var(--text-cool);
+  background: var(--surface);
   border: 1px solid #4b4742;
   border-radius: 4px;
   cursor: pointer;
