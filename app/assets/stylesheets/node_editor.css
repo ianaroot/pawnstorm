@@ -122,11 +122,15 @@
 .toolbar-section button, .toolbar-section a {
   margin-right: 8px;
   padding: 6px 12px;
-  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.btn-delete-node:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-add-node {
@@ -153,15 +157,8 @@
   background: var(--bg-secondary);
 }
 
-.btn-test {
-  background: var(--accent-primary);
-  color: var(--surface);
+.toolbar-section .btn-test {
   text-decoration: none;
-  border: none;
-}
-
-.btn-test:hover {
-  background: var(--accent-secondary);
 }
 
 .compile-status {
@@ -173,10 +170,7 @@
   color: var(--error);
 }
 
-.btn-clone {
-  background: var(--border-color);
-  color: var(--text-primary);
-  border: 1px solid var(--border-light);
+.toolbar-section .btn-clone {
   text-decoration: none;
 }
 
@@ -858,20 +852,9 @@
 .btn-save, .btn-cancel {
   flex: 0 0 auto;
   padding: 5px 32px;
-  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-}
-
-.btn-save {
-  background: var(--accent-primary);
-  color: var(--surface);
-}
-
-.btn-cancel {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
 }
 
 .node:hover {
@@ -1302,8 +1285,8 @@
 .condition-form-scope-toggle input[type="radio"]:checked + span,
 .condition-form-radio-list input[type="radio"]:checked + span,
 .condition-form-comparator-toggle input[type="radio"]:checked + span {
-  background: var(--accent-primary);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent-primary) 40%, var(--surface));
+  color: var(--node-condition-pale);
   font-weight: 700;
 }
 
@@ -2588,20 +2571,9 @@
   position: relative;
 }
 
-.toolbar-eligibility__toggle {
-  padding: 3px 10px;
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-warm);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.toolbar-eligibility__toggle:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+.toolbar-section .toolbar-eligibility__toggle {
+  padding: 5px 10px;
+  font-size: 12px;
 }
 
 .toolbar-eligibility__panel[hidden] {

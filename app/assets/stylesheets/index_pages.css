@@ -169,10 +169,12 @@
   white-space: nowrap;
 }
 
-.index-filter-checkbox {
+.index-filter-checkbox,
+.condition-form-checkbox input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
+  flex: 0 0 auto;
   width: 1.05rem;
   height: 1.05rem;
   margin: 0;
@@ -182,12 +184,14 @@
   cursor: pointer;
 }
 
-.index-filter-checkbox:checked {
+.index-filter-checkbox:checked,
+.condition-form-checkbox input[type="checkbox"]:checked {
   border-color: var(--accent-primary);
   box-shadow: inset 0 0 5px rgb(from var(--accent-primary) r g b / 0.6);
 }
 
-.index-filter-checkbox:checked::after {
+.index-filter-checkbox:checked::after,
+.condition-form-checkbox input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
   left: 50%;

@@ -238,10 +238,12 @@ button[type="submit"]:hover,
   background-color: var(--bg-tertiary);
 }
 
-.btn-secondary {
+.btn-secondary,
+.btn.btn-secondary {
   background-color: var(--bg-recessed);
   color: var(--text-primary);
   border: 1px solid var(--border-light);
+  box-shadow: none;
 }
 
 .btn-secondary:hover {
