@@ -8,7 +8,7 @@
         <% if @match.error_message.present? %>
           <p class="match-show-error"><strong>Error:</strong> <%= @match.error_message %></p>
         <% end %>
-        <%= render 'shared/match_arena', match: @match %>
+        <div class="replay-board-area"><%= render 'shared/match_arena', match: @match %></div>
       </div>
 
       <div class="bot-trace-panel replay-stack replay-shell">
@@ -53,25 +53,25 @@
           </div>
           <p data-match-replay-target="result"></p>
           <div class="match-replay-controls replay-inline replay-inline--center">
-            <button type="button" data-match-replay-target="start-button">Restart</button>
-            <button type="button" data-match-replay-target="back-button">Back</button>
-            <button type="button" data-match-replay-target="forward-button">Forward</button>
-            <button type="button" data-match-replay-target="play-button">Play</button>
-            <button type="button" data-match-replay-target="reverse-button">Reverse</button>
-            <button type="button" data-match-replay-target="top-moves-toggle">Mute top moves</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="start-button">Restart</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="back-button">Back</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="forward-button">Forward</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="play-button">Play</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="reverse-button">Reverse</button>
+            <button type="button" class="btn btn-secondary" data-match-replay-target="top-moves-toggle">Mute top moves</button>
           </div>
           <div class="match-replay-speed replay-inline replay-inline--center">
             <div class="match-replay-speed-buttons replay-inline">
-              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
-              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
-              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
-              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
-              <button type="button" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
+              <button type="button" class="btn btn-secondary" data-match-replay-target="speed-button" data-speed-multiplier="0.5">0.5x</button>
+              <button type="button" class="btn btn-secondary" data-match-replay-target="speed-button" data-speed-multiplier="1">1x</button>
+              <button type="button" class="btn btn-secondary" data-match-replay-target="speed-button" data-speed-multiplier="2">2x</button>
+              <button type="button" class="btn btn-secondary" data-match-replay-target="speed-button" data-speed-multiplier="4">4x</button>
+              <button type="button" class="btn btn-secondary" data-match-replay-target="speed-button" data-speed-multiplier="8">8x</button>
             </div>
           </div>
           <p data-match-replay-target="warning" hidden></p>
         </div>
-        <%= render 'shared/match_arena', match: @match %>
+        <div class="replay-board-area"><%= render 'shared/match_arena', match: @match %></div>
       </div>
 
       <div class="match-replay-notation-column replay-scroll-y">

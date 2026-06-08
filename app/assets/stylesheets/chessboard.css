@@ -1,6 +1,5 @@
 :root {
   --board-highlight: #ffff00;
-  --capture-tray-bg: #8f8576;
 
   /* Live-status pills — bespoke palette, recolor deferred to the pill-cohesion pass */
   --live-pill-human-accent-rgb: 34, 197, 94;
@@ -139,16 +138,16 @@
 
 /* Capture panels */
 .captures {
-  background-color: var(--capture-tray-bg);
-  border: 2px solid var(--border-warm);
-  border-radius: 10px;
-  min-height: 40px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-warm);
+  border-radius: 8px;
+  min-height: 15px;
   width: 100%;
-  margin: 10px auto;
+  margin: 6px auto;
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  padding: 5px;
+  padding: 2px;
   overflow-x: auto;
 }
 
@@ -156,11 +155,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 19px;
   line-height: 1;
-  width: 32px;
-  height: 32px;
-  margin: 2px 4px 2px 0;
+  width: 15px;
+  height: 15px;
+  margin: 1px 4px 1px 0;
   color: var(--piece-dark);
 }
 
@@ -190,7 +189,7 @@
 
 .board-player-name--active {
   color: var(--accent-gold-deep);
-  text-shadow: 0 0 6px rgba(var(--accent-gold-deep-rgb), 0.7), 0 0 14px rgba(var(--accent-gold-deep-rgb), 0.4);
+  text-shadow: 0 0 4px rgba(var(--accent-gold-deep-rgb), 0.45), 0 0 9px rgba(var(--accent-gold-deep-rgb), 0.25);
 }
 
 #W-captures {

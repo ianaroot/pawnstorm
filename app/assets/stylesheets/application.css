@@ -277,7 +277,7 @@ button[type="submit"]:hover,
 .btn.btn-secondary {
   background-color: var(--bg-recessed);
   color: var(--text-primary);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-warm-hover);
   box-shadow: none;
 }
 
@@ -285,10 +285,12 @@ button[type="submit"]:hover,
   background-color: var(--bg-elevated);
 }
 
-.btn-danger {
+.btn-danger,
+.btn.btn-danger {
   background-color: var(--bg-recessed);
   color: var(--tint-danger);
   border: 1px solid var(--tint-danger);
+  box-shadow: none;
 }
 
 .btn-danger:hover {

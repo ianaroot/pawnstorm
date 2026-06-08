@@ -183,8 +183,8 @@
 
 .btn-guide {
   background: var(--surface);
-  color: var(--text-cream);
-  border: 1px solid var(--text-warm-dim);
+  color: var(--accent-gold-pale);
+  border: 1px solid var(--accent-gold-deep);
 }
 
 .btn-guide:hover {
