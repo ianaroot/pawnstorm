@@ -1,4 +1,15 @@
-<div class="match-bot-list">
+<% show_owner = local_assigns.fetch(:show_owner, show_details) %>
+<div class="match-bot-list<%= ' match-bot-list--no-owner' unless show_owner %>">
+  <% if show_details %>
+    <div class="match-bot-list__header">
+      <span class="match-bot-list__header-spacer"></span>
+      <span class="match-bot-option__name">Bot</span>
+      <span class="match-bot-option__rating">ELO</span>
+      <% if show_owner %>
+        <span class="match-bot-option__owner">Owner</span>
+      <% end %>
+    </div>
+  <% end %>
   <% bots.each do |bot| %>
     <%= render 'matches/bot_option',
       bot: bot,
@@ -6,7 +17,7 @@
       checked: selected_id.to_i == bot.id,
       change_action: local_assigns[:change_action],
       show_details: show_details,
-      show_owner: local_assigns.fetch(:show_owner, show_details) %>
+      show_owner: show_owner %>
   <% end %>
 </div>
 <div class="index-pagination">

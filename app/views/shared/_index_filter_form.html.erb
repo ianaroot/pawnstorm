@@ -1,4 +1,5 @@
-<%= form_with url: url, method: :get, class: "index-filter-form",
-      data: { controller: "auto-submit", turbo_frame: frame } do |f| %>
+<%= form_with url: url, method: :get,
+      class: local_assigns.fetch(:html_class, "index-filter-form"),
+      data: { controller: "auto-submit", turbo_frame: frame }.merge(local_assigns.fetch(:data, {})) do |f| %>
   <%= yield f %>
 <% end %>

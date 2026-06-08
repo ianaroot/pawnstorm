@@ -46,10 +46,6 @@
    MATCH SETUP PAGE
    ============================================ */
 
-.match-setup-page {
-  padding: 2rem 1.5rem;
-}
-
 .match-setup-page h1 {
   margin-bottom: 0.375rem;
 }
@@ -75,7 +71,7 @@
 }
 
 .match-setup-section {
-  background: var(--bg-secondary);
+  background: var(--bg-recessed);
   border: 1px solid var(--border-light);
   border-radius: 0.75rem;
   padding: 1.25rem 1.5rem;
@@ -86,14 +82,8 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--accent-gold-pale);
   margin: 0 0 1rem;
-}
-
-.match-setup-filter-form {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
 }
 
 .match-setup-filter-input {
@@ -132,6 +122,7 @@
 
 .match-sort-button--active {
   font-weight: bold;
+  color: var(--accent-gold-pale);
   border-color: currentColor;
 }
 
@@ -582,14 +573,14 @@ details[open] .constraints-summary::after {
   gap: 0.75rem;
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #2d2a26;
+  border-top: 1px solid var(--bg-tertiary);
 }
 
 .ce-check-btn {
   padding: 5px 14px;
   background: var(--surface);
   color: var(--text-cool);
-  border: 1px solid #4b4742;
+  border: 1px solid var(--border-warm);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8125rem;
@@ -597,8 +588,8 @@ details[open] .constraints-summary::after {
 }
 
 .ce-check-btn:hover:not(:disabled) {
-  background: #252220;
-  color: #f3f4f6;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .ce-check-btn:disabled {
@@ -693,9 +684,9 @@ details[open] .constraints-summary::after {
 .ce-filter-input {
   padding: 4px 8px;
   background: var(--surface);
-  border: 1px solid #4b4742;
+  border: 1px solid var(--border-warm);
   border-radius: 4px;
-  color: #e5e7eb;
+  color: var(--text-primary);
   font-size: 0.8125rem;
   width: 180px;
 }
@@ -716,12 +707,12 @@ details[open] .constraints-summary::after {
   font-weight: 600;
 }
 
-.ce-pill:hover { color: #e5e7eb; }
+.ce-pill:hover { color: var(--text-primary); }
 
 .ce-pill--active {
-  background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
-  border-color: rgba(167, 139, 250, 0.35);
+  background: rgb(from var(--tint-violet) r g b / 0.15);
+  color: var(--tint-violet);
+  border-color: rgb(from var(--tint-violet) r g b / 0.35);
 }
 
 .ce-table {
@@ -735,12 +726,12 @@ details[open] .constraints-summary::after {
   padding: 4px 8px;
   color: var(--text-muted);
   font-weight: 600;
-  border-bottom: 1px solid #2d2a26;
+  border-bottom: 1px solid var(--bg-tertiary);
 }
 
 .ce-table td {
   padding: 6px 8px;
-  border-bottom: 1px solid #1e1c19;
+  border-bottom: 1px solid var(--bg-primary);
   vertical-align: top;
 }
 
@@ -755,15 +746,15 @@ details[open] .constraints-summary::after {
 }
 
 .ce-badge--eligible {
-  background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.25);
+  background: rgb(from var(--tint-success) r g b / 0.12);
+  color: var(--tint-success);
+  border: 1px solid rgb(from var(--tint-success) r g b / 0.25);
 }
 
 .ce-badge--ineligible {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgb(from var(--error) r g b / 0.12);
+  color: var(--tint-danger);
+  border: 1px solid rgb(from var(--error) r g b / 0.25);
 }
 
 .ce-cost {
@@ -772,12 +763,12 @@ details[open] .constraints-summary::after {
 }
 
 .ce-violations {
-  color: #f87171;
+  color: var(--tint-danger);
   font-size: 0.75rem;
 }
 
 .ce-sep {
-  color: #4ade80;
+  color: var(--tint-success);
 }
 
 .ce-edit-link {
@@ -786,7 +777,7 @@ details[open] .constraints-summary::after {
   text-decoration: none;
   white-space: nowrap;
 }
-.ce-edit-link:hover { color: #e5e7eb; }
+.ce-edit-link:hover { color: var(--text-primary); }
 
 /* ── Invite link (read-only, copyable) ─────────────── */
 
@@ -802,7 +793,7 @@ details[open] .constraints-summary::after {
   font-size: 0.8rem;
   color: var(--text-cool);
   background: var(--surface);
-  border: 1px solid #2d2a26;
+  border: 1px solid var(--bg-tertiary);
   border-radius: 4px;
   padding: 2px 8px;
   word-break: break-all;
@@ -813,13 +804,13 @@ details[open] .constraints-summary::after {
   font-size: 0.75rem;
   color: var(--text-cool);
   background: var(--surface);
-  border: 1px solid #4b4742;
+  border: 1px solid var(--border-warm);
   border-radius: 4px;
   cursor: pointer;
 }
 
 .invite-link__copy:hover {
-  background: #252220;
+  background: var(--bg-secondary);
   color: #fff;
 }
 
@@ -887,7 +878,7 @@ details[open] .constraints-summary::after {
 }
 
 .constraints-readonly__line strong {
-  color: #e5e7eb;
+  color: var(--text-primary);
   font-weight: 600;
 }
 

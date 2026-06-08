@@ -263,12 +263,20 @@ button[type="submit"]:hover,
    ============================================ */
 
 .match-bot-list {
-  height: 23.5rem;
+  height: 26rem;
   overflow-y: auto;
   border: 1px solid var(--border-light);
-  background: var(--bg-secondary);
+  background: var(--bg-deep);
   padding: 0.75rem 1.5rem 0.75rem 0.75rem;
   border-radius: 0.5rem;
+  display: grid;
+  grid-template-columns: 1.25rem 1fr 3rem 6rem;
+  column-gap: 0.75rem;
+  align-content: start;
+}
+
+.match-bot-list--no-owner {
+  grid-template-columns: 1.25rem 1fr 3rem;
 }
 
 .match-bot-option {
@@ -281,6 +289,48 @@ button[type="submit"]:hover,
 .match-bot-option input[type="radio"] {
   accent-color: var(--accent-primary);
   color-scheme: dark;
+}
+
+.match-bot-list .match-bot-option,
+.match-bot-list__header {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.match-bot-list__header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-deep);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-warm);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-gold-pale);
+}
+
+.match-bot-option__name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-bot-option__rating {
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.match-bot-option__owner {
+  text-align: right;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ============================================

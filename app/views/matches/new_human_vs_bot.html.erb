@@ -2,7 +2,6 @@
   data-match-setup-stale-message-template-value="<%= stale_bot_message_template %>">
   <h1>Play Against Your Bot</h1>
   <%= render 'matches/mode_toggle', current_mode: :human_vs_bot %>
-  <p>Choose a bot, pick a side, and play a persisted match.</p>
   <% if user_has_no_own_bots? %>
     <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
   <% end %>
@@ -25,11 +24,13 @@
     <div class="match-setup-col">
       <div class="match-setup-section" data-controller="sort">
         <h2>Opponent Bot</h2>
-        <%= form_with url: new_human_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'play-bots-frame' } do |f| %>
+        <%= render layout: "shared/index_filter_form", locals: { url: new_human_vs_bot_match_path, frame: "play-bots-frame" } do |f| %>
           <%= f.hidden_field :bot_id, value: params[:bot_id] %>
           <%= f.hidden_field :human_color, value: params[:human_color] %>
           <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
-          <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+          <div class="index-filter-row">
+            <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+          </div>
         <% end %>
         <%= turbo_frame_tag "play-bots-frame" do %>
           <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:sort], default: Bot::DEFAULT_SORT).options %>

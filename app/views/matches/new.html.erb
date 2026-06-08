@@ -2,7 +2,6 @@
   data-match-setup-stale-message-template-value="<%= stale_bot_message_template %>">
   <h1>Set Up Match</h1>
   <%= render 'matches/mode_toggle', current_mode: :bot_vs_bot %>
-  <p>Choose one of your bots and an opponent. Colors will be assigned randomly.</p>
   <% if user_has_no_own_bots? %>
     <p class="notice">You don't have any bots yet. <%= link_to 'Build one', new_bot_path %> to get started.</p>
   <% end %>
@@ -25,15 +24,17 @@
     <div class="match-setup-col">
       <div class="match-setup-section" data-controller="sort">
         <h2>Your Bot</h2>
-        <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'own-bots-frame' } do |f| %>
+        <%= render layout: "shared/index_filter_form", locals: { url: new_bot_vs_bot_match_path, frame: "own-bots-frame" } do |f| %>
           <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
           <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
           <%= f.hidden_field :opponent_name, value: params[:opponent_name] %>
           <%= f.hidden_field :opponent_owner, value: params[:opponent_owner] %>
           <%= f.hidden_field :opponent_page, value: params[:opponent_page] %>
           <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
-          <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
-          <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
+          <div class="index-filter-row">
+            <%= f.text_field :own_bot_name, value: params[:own_bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+            <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
+          </div>
         <% end %>
         <%= turbo_frame_tag "own-bots-frame" do %>
           <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:sort], default: Bot::DEFAULT_SORT).options %>
@@ -52,15 +53,17 @@
     <div class="match-setup-col">
       <div class="match-setup-section" data-controller="sort">
         <h2>Opponent Bot</h2>
-        <%= form_with url: new_bot_vs_bot_match_path, method: :get, local: true, class: 'match-setup-filter-form', data: { controller: 'auto-submit', turbo_frame: 'opponent-bots-frame', match_setup_target: 'opponentForm' } do |f| %>
+        <%= render layout: "shared/index_filter_form", locals: { url: new_bot_vs_bot_match_path, frame: "opponent-bots-frame", data: { match_setup_target: 'opponentForm' } } do |f| %>
           <%= f.hidden_field :own_bot_id, value: params[:own_bot_id], data: { match_setup_target: 'ownBotIdField' } %>
           <%= f.hidden_field :opponent_bot_id, value: params[:opponent_bot_id] %>
           <%= f.hidden_field :own_bot_name, value: params[:own_bot_name] %>
           <%= f.hidden_field :own_bot_page, value: params[:own_bot_page] %>
           <%= f.hidden_field :opponent_sort, value: params[:opponent_sort], data: { sort_target: 'field' } %>
-          <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
-          <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Search by owner', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
-          <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
+          <div class="index-filter-row">
+            <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+            <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Search by owner', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
+            <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
+          </div>
         <% end %>
         <%= turbo_frame_tag "opponent-bots-frame" do %>
           <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:opponent_sort], default: 'elo_desc').options %>
