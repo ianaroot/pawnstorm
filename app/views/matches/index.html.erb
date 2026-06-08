@@ -23,8 +23,10 @@
           options: [['', 'All'], ['non_tournament', 'No'], ['tournament', 'Yes']] %>
     <%= render 'matches/filter_toggle', f: f, name: :creator, current: params[:creator], label: 'Created',
           options: [['', 'All'], ['me', 'By me'], ['others', 'By others']] %>
-    <%= render 'matches/filter_toggle', f: f, name: :sort, current: params[:sort], label: 'Sort',
-          options: [['', 'Newest'], ['oldest', 'Oldest']] %>
+    <div class="index-sort" data-controller="sort">
+      <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
+      <%= render 'matches/sort_controls', options: Matches::IndexSortOptions.new(params[:sort]).options, label: nil %>
+    </div>
   </div>
 <% end %>
 
@@ -53,11 +55,8 @@
             <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
           </td>
           <td>
-            <% if match.tournament %>
-              <span class="pill pill--violet">Yes</span>
-            <% else %>
-              <span class="pill pill--muted">No</span>
-            <% end %>
+            <% flag = match.tournament ? 'tournament' : 'casual' %>
+            <span class="pill pill--<%= pill_tint(flag) %>"><%= match.tournament ? 'Yes' : 'No' %></span>
           </td>
           <td>
             <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>

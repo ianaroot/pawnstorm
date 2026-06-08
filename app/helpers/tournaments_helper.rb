@@ -22,16 +22,4 @@ module TournamentsHelper
     CONSTRAINT_CONDITION_KIND_LABELS
   end
 
-  STATUS_PILL_TINTS = {
-    "open"      => "success",
-    "starting"  => "warning",
-    "running"   => "info",
-    "completed" => "muted",
-    "aborted"   => "danger",
-    "draft"     => "violet"
-  }.freeze
-
-  def tournament_status_tint(status)
-    STATUS_PILL_TINTS.fetch(status)
-  end
 end

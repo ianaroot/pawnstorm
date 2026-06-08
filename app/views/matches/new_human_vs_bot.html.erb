@@ -32,7 +32,7 @@
           <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Search by name', class: 'index-filter-input match-setup-filter-input', data: { action: 'input->auto-submit#submitDebounced' } %>
         <% end %>
         <%= turbo_frame_tag "play-bots-frame" do %>
-          <%= render 'matches/sort_controls', current_sort: params[:sort] %>
+          <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:sort], default: Bot::DEFAULT_SORT).options %>
           <%= render 'matches/bot_list',
             bots: @play_bots,
             pagy: @play_bots_pagy,

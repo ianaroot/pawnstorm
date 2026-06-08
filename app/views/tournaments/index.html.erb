@@ -20,7 +20,7 @@
       <%= f.select :status,
         options_for_select(
           [['Any status', '']] + Tournament.statuses.keys.map { |s|
-            [s.humanize, s, { class: "status-option status-option--#{tournament_status_tint(s)}" }]
+            [s.humanize, s, { class: "status-option status-option--#{pill_tint(s)}" }]
           },
           params[:status]
         ),
@@ -54,7 +54,7 @@
         <tr>
           <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
           <td class="index-table-secondary"><%= tournament.creator&.username %></td>
-          <td><span class="pill pill--<%= tournament_status_tint(tournament.status) %>"><%= tournament.status.humanize %></span></td>
+          <td><span class="pill pill--<%= pill_tint(tournament.status) %>"><%= tournament.status.humanize %></span></td>
           <td>
             <%= tournament.tournament_entries.size %>
             <% if tournament.max_entries %>

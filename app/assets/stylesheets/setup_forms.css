@@ -106,8 +106,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-  margin-bottom: 0.75rem;
   font-size: 0.85rem;
+}
+
+.match-setup-section .match-sort {
+  margin-bottom: 0.75rem;
 }
 
 .match-sort__label {

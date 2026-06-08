@@ -362,6 +362,12 @@
   color: var(--text-muted);
 }
 
+.index-sort {
+  align-self: flex-end;
+  margin-left: 2.5rem;
+  margin-bottom: 0.4rem;
+}
+
 .index-filter-reset {
   margin-left: auto;
 }

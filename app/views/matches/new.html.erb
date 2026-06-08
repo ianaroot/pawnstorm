@@ -36,7 +36,7 @@
           <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
         <% end %>
         <%= turbo_frame_tag "own-bots-frame" do %>
-          <%= render 'matches/sort_controls', current_sort: params[:sort] %>
+          <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:sort], default: Bot::DEFAULT_SORT).options %>
           <%= render 'matches/bot_list',
             bots: @own_bots,
             pagy: @own_bots_pagy,
@@ -63,7 +63,7 @@
           <button type="button" class="btn btn-secondary" data-action="click->auto-submit#reset">Reset</button>
         <% end %>
         <%= turbo_frame_tag "opponent-bots-frame" do %>
-          <%= render 'matches/sort_controls', current_sort: params[:opponent_sort], default: 'elo_desc' %>
+          <%= render 'matches/sort_controls', options: Matches::SortOptions.new(params[:opponent_sort], default: 'elo_desc').options %>
           <%= render 'matches/bot_list',
             bots: @opponent_bots,
             pagy: @opponent_bots_pagy,

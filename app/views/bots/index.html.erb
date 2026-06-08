@@ -14,8 +14,8 @@
       <%= f.select :compiled_status,
         options_for_select(
           [['Any status', ''],
-           ['Compiled', 'compiled', { class: 'status-option status-option--success' }],
-           ['Stale', 'stale', { class: 'status-option status-option--warning' }]],
+           ['Compiled', 'compiled', { class: "status-option status-option--#{pill_tint('compiled')}" }],
+           ['Stale', 'stale', { class: "status-option status-option--#{pill_tint('stale')}" }]],
           params[:compiled_status]
         ),
         {},
@@ -42,10 +42,10 @@
           <td><%= link_to bot.name, edit_bot_path(bot) %></td>
           <td class="index-table-secondary"><%= bot.description %></td>
           <td class="index-table-status">
-            <% if bot.compiled_program.present? && !bot.compiled_program_stale? %>
-              <span class="pill pill--success">Compiled</span>
-            <% else %>
-              <span class="pill pill--warning">Stale</span>
+            <% compiled = bot.compiled_program.present? && !bot.compiled_program_stale? %>
+            <% status = compiled ? 'compiled' : 'stale' %>
+            <span class="pill pill--<%= pill_tint(status) %>"><%= status.capitalize %></span>
+            <% unless compiled %>
               <%= button_to 'Compile', compile_bot_path(bot), method: :post, class: 'btn btn-secondary index-table-status-compile-btn' %>
             <% end %>
           </td>
