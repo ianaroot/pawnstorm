@@ -49,6 +49,7 @@
         <% end %>
         <div class="replay-controls replay-stack replay-shrink-0">
           <div class="replay-meta-row">
+            <p class="replay-player-names">White: <%= @match.player_display_name_for(:white) %> · Black: <%= @match.player_display_name_for(:black) %></p>
             <%= render 'matches/match_summary', match: @match, rematch_options: @rematch_options, show_tour_button: @match.bot_owned_by?(current_user) %>
           </div>
           <p data-match-replay-target="result"></p>
