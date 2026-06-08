@@ -1,0 +1,4 @@
+<%= form_with url: url, method: :get, class: "index-filter-form",
+      data: { controller: "auto-submit", turbo_frame: frame } do |f| %>
+  <%= yield f %>
+<% end %>

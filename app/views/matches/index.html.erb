@@ -4,8 +4,7 @@
 </div>
 
 <div class="index-panel">
-<%= form_with url: matches_path, method: :get, class: 'index-filter-form',
-      data: { controller: 'auto-submit', turbo_frame: 'matches' } do |f| %>
+<%= render layout: "shared/index_filter_form", locals: { url: matches_path, frame: "matches" } do |f| %>
   <div class="index-filter-row">
     <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Your bot name', class: 'index-filter-input',
           data: { action: 'input->auto-submit#submitDebounced' } %>
@@ -29,53 +28,44 @@
   </div>
 <% end %>
 
-<%= turbo_frame_tag "matches", target: "_top" do %>
-  <% if @matches.any? %>
-    <table>
-      <thead>
+<%= render layout: "shared/index_results", locals: { frame: "matches", pagy: @pagy, present: @matches.any?,
+      empty: (@filter_params.to_h.values.any?(&:present?) ? 'No matches fit these filters.' : 'No matches yet.') } do %>
+  <table>
+    <thead>
+      <tr>
+        <th>White</th>
+        <th>Black</th>
+        <th>Tournament</th>
+        <th>Result</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @matches.each do |match| %>
+        <% row = Matches::IndexRow.new(match: match, user: current_user) %>
         <tr>
-          <th>White</th>
-          <th>Black</th>
-          <th>Tournament</th>
-          <th>Result</th>
-          <th>Created</th>
+          <td>
+            <%= link_to match.player_display_name_for(:white), match_path(match) %>
+            <% if row.playing_white? %><span class="index-table-secondary">(you)</span><% end %>
+          </td>
+          <td>
+            <%= match.player_display_name_for(:black) %>
+            <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
+          </td>
+          <td>
+            <% if match.tournament %>
+              <span class="pill pill--violet">Yes</span>
+            <% else %>
+              <span class="pill pill--muted">No</span>
+            <% end %>
+          </td>
+          <td>
+            <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>
+          </td>
+          <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
         </tr>
-      </thead>
-      <tbody>
-        <% @matches.each do |match| %>
-          <% row = Matches::IndexRow.new(match: match, user: current_user) %>
-          <tr>
-            <td>
-              <%= link_to match.player_display_name_for(:white), match_path(match) %>
-              <% if row.playing_white? %><span class="index-table-secondary">(you)</span><% end %>
-            </td>
-            <td>
-              <%= match.player_display_name_for(:black) %>
-              <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
-            </td>
-            <td>
-              <% if match.tournament %>
-                <span class="pill pill--violet">Yes</span>
-              <% else %>
-                <span class="pill pill--muted">No</span>
-              <% end %>
-            </td>
-            <td>
-              <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>
-            </td>
-            <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-
-    <div class="index-pagination">
-      <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="matches"') if @pagy.pages > 1 %>
-    </div>
-  <% else %>
-    <p class="index-empty">
-      <%= @filter_params.to_h.values.any?(&:present?) ? 'No matches fit these filters.' : 'No matches yet.' %>
-    </p>
-  <% end %>
+      <% end %>
+    </tbody>
+  </table>
 <% end %>
 </div>

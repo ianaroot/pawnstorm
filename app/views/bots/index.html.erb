@@ -4,8 +4,7 @@
 </div>
 
 <div class="index-panel">
-<%= form_with url: bots_path, method: :get, class: 'index-filter-form',
-      data: { controller: 'auto-submit', turbo_frame: 'bots' } do |f| %>
+<%= render layout: "shared/index_filter_form", locals: { url: bots_path, frame: "bots" } do |f| %>
   <div class="index-filter-row">
     <div class="index-filter-field">
       <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'index-filter-input',
@@ -26,46 +25,38 @@
   </div>
 <% end %>
 
-<%= turbo_frame_tag "bots", target: "_top" do %>
-  <% if @bots.any? %>
-    <table>
-      <thead>
+<%= render layout: "shared/index_results", locals: { frame: "bots", pagy: @pagy, present: @bots.any?, empty: "No bots found." } do %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @bots.each do |bot| %>
         <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th></th>
+          <td><%= link_to bot.name, edit_bot_path(bot) %></td>
+          <td class="index-table-secondary"><%= bot.description %></td>
+          <td class="index-table-status">
+            <% if bot.compiled_program.present? && !bot.compiled_program_stale? %>
+              <span class="pill pill--success">Compiled</span>
+            <% else %>
+              <span class="pill pill--warning">Stale</span>
+              <%= button_to 'Compile', compile_bot_path(bot), method: :post, class: 'btn btn-secondary index-table-status-compile-btn' %>
+            <% end %>
+          </td>
+          <td class="index-table-secondary index-table-date"><%= bot.created_at.to_date.to_fs(:long) %></td>
+          <td class="index-table-actions">
+            <%= link_to 'Edit', edit_bot_path(bot), class: 'btn btn-secondary index-table-action-btn' %>
+            <%= link_to 'Delete', bot, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete #{bot.name}?" }, class: 'btn btn-danger index-table-action-btn' %>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <% @bots.each do |bot| %>
-          <tr>
-            <td><%= link_to bot.name, edit_bot_path(bot) %></td>
-            <td class="index-table-secondary"><%= bot.description %></td>
-            <td class="index-table-status">
-              <% if bot.compiled_program.present? && !bot.compiled_program_stale? %>
-                <span class="pill pill--success">Compiled</span>
-              <% else %>
-                <span class="pill pill--warning">Stale</span>
-                <%= button_to 'Compile', compile_bot_path(bot), method: :post, class: 'btn btn-secondary index-table-status-compile-btn' %>
-              <% end %>
-            </td>
-            <td class="index-table-secondary index-table-date"><%= bot.created_at.to_date.to_fs(:long) %></td>
-            <td class="index-table-actions">
-              <%= link_to 'Edit', edit_bot_path(bot), class: 'btn btn-secondary index-table-action-btn' %>
-              <%= link_to 'Delete', bot, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete #{bot.name}?" }, class: 'btn btn-danger index-table-action-btn' %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-
-    <div class="index-pagination">
-      <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="bots"') if @pagy.pages > 1 %>
-    </div>
-  <% else %>
-    <p class="index-empty">No bots found.</p>
-  <% end %>
+      <% end %>
+    </tbody>
+  </table>
 <% end %>
 </div>

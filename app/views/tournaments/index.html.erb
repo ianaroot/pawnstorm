@@ -6,8 +6,7 @@
 </div>
 
 <div class="index-panel">
-<%= form_with url: tournaments_path, method: :get, class: 'index-filter-form',
-      data: { controller: 'auto-submit', turbo_frame: 'tournaments' } do |f| %>
+<%= render layout: "shared/index_filter_form", locals: { url: tournaments_path, frame: "tournaments" } do |f| %>
   <div class="index-filter-row">
     <div class="index-filter-field">
       <%= f.text_field :name, value: params[:name], placeholder: 'Search by name', class: 'index-filter-input',
@@ -39,41 +38,33 @@
   </div>
 <% end %>
 
-<%= turbo_frame_tag "tournaments", target: "_top" do %>
-  <% if @tournaments.any? %>
-    <table>
-      <thead>
+<%= render layout: "shared/index_results", locals: { frame: "tournaments", pagy: @pagy, present: @tournaments.any?, empty: "No tournaments found." } do %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Entries</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @tournaments.each do |tournament| %>
         <tr>
-          <th>Name</th>
-          <th>Owner</th>
-          <th>Status</th>
-          <th>Entries</th>
-          <th>Created</th>
+          <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
+          <td class="index-table-secondary"><%= tournament.creator&.username %></td>
+          <td><span class="pill pill--<%= tournament_status_tint(tournament.status) %>"><%= tournament.status.humanize %></span></td>
+          <td>
+            <%= tournament.tournament_entries.size %>
+            <% if tournament.max_entries %>
+              <span class="index-table-secondary">/ <%= tournament.max_entries %></span>
+            <% end %>
+          </td>
+          <td class="index-table-secondary index-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
         </tr>
-      </thead>
-      <tbody>
-        <% @tournaments.each do |tournament| %>
-          <tr>
-            <td><%= link_to tournament.name, tournament_show_path(tournament) %></td>
-            <td class="index-table-secondary"><%= tournament.creator&.username %></td>
-            <td><span class="pill pill--<%= tournament_status_tint(tournament.status) %>"><%= tournament.status.humanize %></span></td>
-            <td>
-              <%= tournament.tournament_entries.size %>
-              <% if tournament.max_entries %>
-                <span class="index-table-secondary">/ <%= tournament.max_entries %></span>
-              <% end %>
-            </td>
-            <td class="index-table-secondary index-table-date"><%= tournament.created_at.to_date.to_fs(:long) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-
-    <div class="index-pagination">
-      <%== @pagy.series_nav(anchor_string: 'data-turbo-frame="tournaments"') if @pagy.pages > 1 %>
-    </div>
-  <% else %>
-    <p class="index-empty">No tournaments found.</p>
-  <% end %>
+      <% end %>
+    </tbody>
+  </table>
 <% end %>
 </div>

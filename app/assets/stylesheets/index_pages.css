@@ -30,11 +30,25 @@
 }
 
 .index-panel thead {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .index-panel thead th {
   color: var(--accent-gold-pale);
+}
+
+.index-panel tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.index-panel .index-table-action-btn,
+.index-panel .index-table-status-compile-btn {
+  background-color: var(--bg-tertiary);
+}
+
+.index-panel .index-table-action-btn:hover,
+.index-panel .index-table-status-compile-btn:hover {
+  background-color: var(--bg-elevated);
 }
 
 .index-panel .index-filter-input,

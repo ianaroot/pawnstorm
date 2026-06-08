@@ -1,0 +1,11 @@
+<%= turbo_frame_tag frame, target: "_top" do %>
+  <% if present %>
+    <%= yield %>
+
+    <div class="index-pagination">
+      <%== pagy.series_nav(anchor_string: "data-turbo-frame=\"#{frame}\"") if pagy.pages > 1 %>
+    </div>
+  <% else %>
+    <p class="index-empty"><%= empty %></p>
+  <% end %>
+<% end %>
