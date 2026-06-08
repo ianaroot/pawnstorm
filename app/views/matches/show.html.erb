@@ -75,8 +75,9 @@
         <div class="replay-board-area"><%= render 'shared/match_arena', match: @match %></div>
       </div>
 
-      <div class="match-replay-notation-column replay-scroll-y">
-        <ol data-match-replay-target="notation" class="match-replay-notation"></ol>
+      <div class="match-replay-notation-column replay-stack replay-shell">
+        <p class="match-replay-column-label">Notation</p>
+        <ol data-match-replay-target="notation" class="match-replay-notation replay-scroll-y replay-grow"></ol>
       </div>
 
       <div class="bot-trace-panel replay-stack replay-shell">

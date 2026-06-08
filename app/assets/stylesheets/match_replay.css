@@ -221,6 +221,16 @@ input[type="submit"].btn-rematch {
   font-weight: 700;
 }
 
+.match-replay-page .match-replay-column-label {
+  margin: 0;
+  padding: 0 0.5rem 0.4rem 1.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold-pale);
+}
+
 .match-replay-page .match-replay-notation {
   margin: 0;
   padding-left: 1.25rem;

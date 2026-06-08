@@ -44,7 +44,8 @@ class ReplayView {
     this.renderResult({ result, spoilerRevealed })
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
-    this.traceView.render(inspection)
+    const flipped = this.rootElement.querySelector('#chess-board')?.classList.contains('flipped') ?? false
+    this.traceView.render(inspection, flipped)
   }
 
   renderBoardHighlights({ inspection, muteTopMoveHighlights, lastMove }) {
