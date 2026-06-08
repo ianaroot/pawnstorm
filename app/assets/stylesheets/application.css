@@ -19,83 +19,118 @@
    ============================================ */
 
 :root {
-  --bg-deep: #110d0a;
+  --bg-deep-rgb: 17, 13, 10;
+  --bg-deep: rgb(var(--bg-deep-rgb));
   --bg-recessed: #181410;
-  --bg-primary: #1e1b18;
-  --bg-secondary: #252220;
-  --bg-tertiary: #2d2a25;
-  --bg-elevated: #3a342b;
+  --bg-primary-rgb: 30, 27, 24;
+  --bg-primary: rgb(var(--bg-primary-rgb));
+  --bg-secondary-rgb: 37, 34, 32;
+  --bg-secondary: rgb(var(--bg-secondary-rgb));
+  --bg-tertiary-rgb: 45, 42, 37;
+  --bg-tertiary: rgb(var(--bg-tertiary-rgb));
+  --bg-elevated-rgb: 58, 52, 43;
+  --bg-elevated: rgb(var(--bg-elevated-rgb));
 
-  --surface-canvas: #14120f;
+  --surface-canvas-rgb: 20, 18, 15;
+  --surface-canvas: rgb(var(--surface-canvas-rgb));
   --surface: #1a1815;
   --surface-raised: #2a2622;
   --surface-violet: #33273a;
   --surface-violet-deep: #2a202f;
-  
-  --text-primary: #E5E5E5;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --text-cream: #f4efe6;
+
+  --text-primary-rgb: 229, 229, 229;
+  --text-primary: rgb(var(--text-primary-rgb));
+  --text-secondary-rgb: 156, 163, 175;
+  --text-secondary: rgb(var(--text-secondary-rgb));
+  --text-muted-rgb: 107, 114, 128;
+  --text-muted: rgb(var(--text-muted-rgb));
+  --text-cream-rgb: 244, 239, 230;
+  --text-cream: rgb(var(--text-cream-rgb));
   --text-warm-muted: #b7b0a7;
   --text-warm-dim: #6d655a;
   --text-cool: #d1d5db;
 
-  --accent-primary: #A855F7;
-  --accent-secondary: #C084FC;
+  --accent-primary-rgb: 168, 85, 247;
+  --accent-primary: rgb(var(--accent-primary-rgb));
+  --accent-secondary-rgb: 192, 132, 252;
+  --accent-secondary: rgb(var(--accent-secondary-rgb));
   --accent-hover: #7C3AED;
   --accent-muted: #8e74c0;
-  --accent-gold: #f6d77a;
-  --accent-gold-pale: #f3e2a6;
+  --accent-gold-rgb: 246, 215, 122;
+  --accent-gold: rgb(var(--accent-gold-rgb));
+  --accent-gold-pale-rgb: 243, 226, 166;
+  --accent-gold-pale: rgb(var(--accent-gold-pale-rgb));
   --accent-cyan: #06b6d4;
-  --accent-gold-deep: #d8c160;
-  --accent-gold-bright: #fde68a;
+  --accent-gold-deep-rgb: 216, 193, 96;
+  --accent-gold-deep: rgb(var(--accent-gold-deep-rgb));
+  --accent-gold-bright-rgb: 253, 230, 138;
+  --accent-gold-bright: rgb(var(--accent-gold-bright-rgb));
 
-  --node-root: #fce38f;
-  --node-score: #18b7cf;
+  --node-root-rgb: 252, 227, 143;
+  --node-root: rgb(var(--node-root-rgb));
+  --node-score-rgb: 24, 183, 207;
+  --node-score: rgb(var(--node-score-rgb));
   --node-score-soft: #4fd1e0;
-  --node-score-pale: #a5f3fc;
+  --node-score-pale-rgb: 165, 243, 252;
+  --node-score-pale: rgb(var(--node-score-pale-rgb));
   --node-score-faint: #d7f6fb;
   --node-organizer-deep: #2563eb;
   --node-organizer-soft: #7fb0ff;
-  --node-organizer-light: #8db8ff;
+  --node-organizer-light-rgb: 141, 184, 255;
+  --node-organizer-light: rgb(var(--node-organizer-light-rgb));
   --node-organizer-pale: #bfdbfe;
   --node-organizer-faint: #dce8f2;
-  --node-condition-pale: #e9d5ff;
+  --node-condition-pale-rgb: 233, 213, 255;
+  --node-condition-pale: rgb(var(--node-condition-pale-rgb));
   --node-condition-faint: #e8e1f5;
-  --node-selected: #f0abfc;
+  --node-selected-rgb: 240, 171, 252;
+  --node-selected: rgb(var(--node-selected-rgb));
 
   --board-light: #f0d9b5;
   --board-dark: #b58863;
   --piece-light: #f8f4ec;
-  --piece-outline: #2a2018;
+  --piece-outline-rgb: 42, 32, 24;
+  --piece-outline: rgb(var(--piece-outline-rgb));
   --piece-dark: #1a1410;
 
   --connection-line: #cc7722;
   --connection-delete: #e94560;
   --accent-ember: #e8420a;
   --error-soft: #fca5a5;
-  
-  --success: #10B981;
-  --error: #EF4444;
-  --warning: #F59E0B;
-  --info: #3B82F6;
 
-  --tint-success: #4ade80;
-  --tint-warning: #fbbf24;
-  --tint-info: #60a5fa;
+  --success-rgb: 16, 185, 129;
+  --success: rgb(var(--success-rgb));
+  --error-rgb: 239, 68, 68;
+  --error: rgb(var(--error-rgb));
+  --warning-rgb: 245, 158, 11;
+  --warning: rgb(var(--warning-rgb));
+  --info-rgb: 59, 130, 246;
+  --info: rgb(var(--info-rgb));
+
+  --tint-success-rgb: 74, 222, 128;
+  --tint-success: rgb(var(--tint-success-rgb));
+  --tint-warning-rgb: 251, 191, 36;
+  --tint-warning: rgb(var(--tint-warning-rgb));
+  --tint-info-rgb: 96, 165, 250;
+  --tint-info: rgb(var(--tint-info-rgb));
+  --tint-muted-rgb: var(--text-secondary-rgb);
   --tint-muted: var(--text-secondary);
   --tint-danger: #f87171;
-  --tint-violet: #a78bfa;
+  --tint-violet-rgb: 167, 139, 250;
+  --tint-violet: rgb(var(--tint-violet-rgb));
 
   --border-color: #3F3F46;
-  --border-light: #52525B;
+  --border-light-rgb: 82, 82, 91;
+  --border-light: rgb(var(--border-light-rgb));
   --border-warm: #3d3a35;
   --border-warm-strong: #5a5650;
   --border-warm-hover: #7a7670;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  --shadow-color-rgb: 0, 0, 0;
+  --shadow-color: rgb(var(--shadow-color-rgb));
+  --shadow-sm: 0 1px 2px 0 rgba(var(--shadow-color-rgb), 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(var(--shadow-color-rgb), 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(var(--shadow-color-rgb), 0.1);
 }
 
 /* ============================================
@@ -216,7 +251,7 @@ button[type="submit"],
 button[type="submit"] {
   color: var(--accent-secondary);
   border-color: var(--accent-primary);
-  box-shadow: inset 0 0 10px rgb(from var(--accent-primary) r g b / 0.5);
+  box-shadow: inset 0 0 10px rgba(var(--accent-primary-rgb), 0.5);
 }
 
 .btn-outline {
@@ -346,20 +381,20 @@ button[type="submit"]:hover,
 }
 
 .notice {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(var(--success-rgb), 0.1);
   border: 1px solid var(--success);
   color: var(--success);
 }
 
 .alert {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(var(--error-rgb), 0.1);
   border: 1px solid var(--error);
   color: var(--error);
 }
 
 #error_explanation,
 .error_explanation {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(var(--error-rgb), 0.1);
   border: 1px solid var(--error);
   border-radius: 0.5rem;
   padding: 1rem;
@@ -407,7 +442,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--warning);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--warning-rgb), 0.1);
 }
 
 input::placeholder,
@@ -483,7 +518,7 @@ tbody tr:hover {
 }
 
 .card--elevated {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 /* ============================================

@@ -390,7 +390,7 @@ details[open] .constraints-summary::after {
   left: 0.125rem;
   width: 0.75rem;
   height: 0.75rem;
-  background: #fff;
+  background: var(--text-cream);
   border-radius: 50%;
   transition: transform 0.2s;
 }
@@ -435,7 +435,7 @@ details[open] .constraints-summary::after {
 }
 
 .ci-pill input:checked + span {
-  background: rgb(from var(--accent-primary) r g b / 0.15);
+  background: rgba(var(--accent-primary-rgb), 0.15);
   color: var(--accent-secondary);
   border-color: var(--accent-primary);
 }
@@ -710,9 +710,9 @@ details[open] .constraints-summary::after {
 .ce-pill:hover { color: var(--text-primary); }
 
 .ce-pill--active {
-  background: rgb(from var(--tint-violet) r g b / 0.15);
+  background: rgba(var(--tint-violet-rgb), 0.15);
   color: var(--tint-violet);
-  border-color: rgb(from var(--tint-violet) r g b / 0.35);
+  border-color: rgba(var(--tint-violet-rgb), 0.35);
 }
 
 .ce-table {
@@ -746,15 +746,15 @@ details[open] .constraints-summary::after {
 }
 
 .ce-badge--eligible {
-  background: rgb(from var(--tint-success) r g b / 0.12);
+  background: rgba(var(--tint-success-rgb), 0.12);
   color: var(--tint-success);
-  border: 1px solid rgb(from var(--tint-success) r g b / 0.25);
+  border: 1px solid rgba(var(--tint-success-rgb), 0.25);
 }
 
 .ce-badge--ineligible {
-  background: rgb(from var(--error) r g b / 0.12);
+  background: rgba(var(--error-rgb), 0.12);
   color: var(--tint-danger);
-  border: 1px solid rgb(from var(--error) r g b / 0.25);
+  border: 1px solid rgba(var(--error-rgb), 0.25);
 }
 
 .ce-cost {
@@ -811,7 +811,7 @@ details[open] .constraints-summary::after {
 
 .invite-link__copy:hover {
   background: var(--bg-secondary);
-  color: #fff;
+  color: var(--text-cream);
 }
 
 /* ── Read-only constraints summary (show page) ─────── */

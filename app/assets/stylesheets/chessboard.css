@@ -1,3 +1,19 @@
+:root {
+  --board-highlight: #ffff00;
+  --capture-tray-bg: #8f8576;
+
+  /* Live-status pills — bespoke palette, recolor deferred to the pill-cohesion pass */
+  --live-pill-human-accent-rgb: 34, 197, 94;
+  --live-pill-human-accent: rgb(var(--live-pill-human-accent-rgb));
+  --live-pill-human-text: #dcfce7;
+  --live-pill-bot-accent-rgb: 100, 116, 139;
+  --live-pill-bot-accent: rgb(var(--live-pill-bot-accent-rgb));
+  --live-pill-bot-text: #e2e8f0;
+  --live-pill-over-accent: #8b8b8b;
+  --live-pill-over-text: #f3f4f6;
+  --live-pill-error-text: #fee2e2;
+}
+
 /* ============================================
    GAME PAGE LAYOUT
    ============================================ */
@@ -34,10 +50,10 @@
 
 /* Notifications bar */
 #notifications {
-  background-color: #2d2a25;
+  background-color: var(--bg-tertiary);
   border: 1px solid var(--border-warm);
   border-radius: 10px;
-  color: #A855F7;
+  color: var(--accent-primary);
   width: 100%;
   height: 30px;
   text-align: center;
@@ -51,7 +67,7 @@
 #turn-marker {
   margin: 0 auto 15px auto;
   text-align: center;
-  color: #E5E5E5;
+  color: var(--text-primary);
 }
 
 .match-live-status-pill {
@@ -62,52 +78,52 @@
   padding: 0.35rem 0.8rem;
   border: 1px solid var(--border-light);
   border-radius: 999px;
-  background: linear-gradient(135deg, #24211d, var(--surface));
+  background: linear-gradient(135deg, var(--bg-secondary), var(--surface));
   color: var(--text-cool);
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 .match-live-status-pill--human {
-  border-color: #22c55e;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.08));
-  color: #dcfce7;
-  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.18), 0 0 18px rgba(34, 197, 94, 0.18);
+  border-color: var(--live-pill-human-accent);
+  background: linear-gradient(135deg, rgba(var(--live-pill-human-accent-rgb), 0.22), rgba(var(--live-pill-human-accent-rgb), 0.08));
+  color: var(--live-pill-human-text);
+  box-shadow: 0 0 0 1px rgba(var(--live-pill-human-accent-rgb), 0.18), 0 0 18px rgba(var(--live-pill-human-accent-rgb), 0.18);
   animation: live-turn-pulse 1.6s ease-in-out infinite;
 }
 
 .match-live-status-pill--bot {
-  border-color: #64748b;
-  background: linear-gradient(135deg, rgba(100, 116, 139, 0.24), rgba(100, 116, 139, 0.1));
-  color: #e2e8f0;
+  border-color: var(--live-pill-bot-accent);
+  background: linear-gradient(135deg, rgba(var(--live-pill-bot-accent-rgb), 0.24), rgba(var(--live-pill-bot-accent-rgb), 0.1));
+  color: var(--live-pill-bot-text);
 }
 
 .match-live-status-pill--over {
-  border-color: #8b8b8b;
-  background: linear-gradient(135deg, rgba(107, 114, 128, 0.24), rgba(107, 114, 128, 0.1));
-  color: #f3f4f6;
+  border-color: var(--live-pill-over-accent);
+  background: linear-gradient(135deg, rgba(var(--text-muted-rgb), 0.24), rgba(var(--text-muted-rgb), 0.1));
+  color: var(--live-pill-over-text);
 }
 
 .match-live-status-pill--error {
-  border-color: #ef4444;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.08));
-  color: #fee2e2;
+  border-color: var(--error);
+  background: linear-gradient(135deg, rgba(var(--error-rgb), 0.22), rgba(var(--error-rgb), 0.08));
+  color: var(--live-pill-error-text);
 }
 
 @keyframes live-turn-pulse {
   0% {
     transform: translateY(0);
-    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.18), 0 0 18px rgba(34, 197, 94, 0.14);
+    box-shadow: 0 0 0 1px rgba(var(--live-pill-human-accent-rgb), 0.18), 0 0 18px rgba(var(--live-pill-human-accent-rgb), 0.14);
   }
 
   50% {
     transform: translateY(-1px);
-    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3), 0 0 24px rgba(34, 197, 94, 0.28);
+    box-shadow: 0 0 0 1px rgba(var(--live-pill-human-accent-rgb), 0.3), 0 0 24px rgba(var(--live-pill-human-accent-rgb), 0.28);
   }
 
   100% {
     transform: translateY(0);
-    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.18), 0 0 18px rgba(34, 197, 94, 0.14);
+    box-shadow: 0 0 0 1px rgba(var(--live-pill-human-accent-rgb), 0.18), 0 0 18px rgba(var(--live-pill-human-accent-rgb), 0.14);
   }
 }
 
@@ -123,7 +139,7 @@
 
 /* Capture panels */
 .captures {
-  background-color: #8f8576;
+  background-color: var(--capture-tray-bg);
   border: 2px solid var(--border-warm);
   border-radius: 10px;
   min-height: 40px;
@@ -145,11 +161,11 @@
   width: 32px;
   height: 32px;
   margin: 2px 4px 2px 0;
-  color: black;
+  color: var(--piece-dark);
 }
 
 .capture-piece-glyph.W {
-  color: #f5f5f5;
+  color: var(--piece-light);
 }
 
 .board-piece-glyph {
@@ -169,12 +185,12 @@
   margin: 8px auto;
   text-align: center;
   font-weight: bold;
-  color: #E5E5E5;
+  color: var(--text-primary);
 }
 
 .board-player-name--active {
   color: var(--accent-gold-deep);
-  text-shadow: 0 0 6px rgba(216, 193, 96, 0.7), 0 0 14px rgba(216, 193, 96, 0.4);
+  text-shadow: 0 0 6px rgba(var(--accent-gold-deep-rgb), 0.7), 0 0 14px rgba(var(--accent-gold-deep-rgb), 0.4);
 }
 
 #W-captures {
@@ -234,18 +250,18 @@
 }
 
 .highlight1, .highlight2 {
-  -webkit-box-shadow: inset 0 0 3px 3px yellow;
-  -moz-box-shadow: inset 0 0 3px 3px yellow;
-  box-shadow: inset 0 0 3px 3px yellow;
+  -webkit-box-shadow: inset 0 0 3px 3px var(--board-highlight);
+  -moz-box-shadow: inset 0 0 3px 3px var(--board-highlight);
+  box-shadow: inset 0 0 3px 3px var(--board-highlight);
 }
 
 .control-preview-source {
-  outline: 3px solid #A855F7;
+  outline: 3px solid var(--accent-primary);
   outline-offset: -3px;
 }
 
 .control-preview-square {
-  outline: 2px solid #A855F7;
+  outline: 2px solid var(--accent-primary);
   outline-offset: -5px;
 }
 
@@ -261,14 +277,14 @@
   height: 36px;
   border-radius: 4px;
   border: none;
-  color: #1E1E1E;
-  background-color: #A855F7;
+  color: var(--bg-primary);
+  background-color: var(--accent-primary);
   cursor: pointer;
   font-size: 14px;
 }
 
 #undo-button:hover {
-  background-color: #C084FC;
+  background-color: var(--accent-secondary);
 }
 
 #pause-button {
@@ -279,14 +295,14 @@
   height: 36px;
   border-radius: 4px;
   border: none;
-  color: #1E1E1E;
-  background-color: #A855F7;
+  color: var(--bg-primary);
+  background-color: var(--accent-primary);
   cursor: pointer;
   font-size: 14px;
 }
 
 #pause-button:hover {
-  background-color: #C084FC;
+  background-color: var(--accent-secondary);
 }
 
 /* ============================================
@@ -295,5 +311,5 @@
 
 body {
   background-color: var(--bg-primary);
-  color: #E5E5E5;
+  color: var(--text-primary);
 }

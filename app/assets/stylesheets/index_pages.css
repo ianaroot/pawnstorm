@@ -187,7 +187,7 @@
 .index-filter-checkbox:checked,
 .condition-form-checkbox input[type="checkbox"]:checked {
   border-color: var(--accent-primary);
-  box-shadow: inset 0 0 5px rgb(from var(--accent-primary) r g b / 0.6);
+  box-shadow: inset 0 0 5px rgba(var(--accent-primary-rgb), 0.6);
 }
 
 .index-filter-checkbox:checked::after,
@@ -319,33 +319,33 @@
 .pill--violet,  .status-option--violet  { color: var(--tint-violet); }
 
 .pill--success {
-  background: color-mix(in srgb, var(--tint-success) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint-success) 30%, transparent);
+  background: rgba(var(--tint-success-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-success-rgb), 0.3);
 }
 
 .pill--warning {
-  background: color-mix(in srgb, var(--tint-warning) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint-warning) 30%, transparent);
+  background: rgba(var(--tint-warning-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-warning-rgb), 0.3);
 }
 
 .pill--info {
-  background: color-mix(in srgb, var(--tint-info) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint-info) 30%, transparent);
+  background: rgba(var(--tint-info-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-info-rgb), 0.3);
 }
 
 .pill--muted {
-  background: color-mix(in srgb, var(--tint-muted) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint-muted) 25%, transparent);
+  background: rgba(var(--tint-muted-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-muted-rgb), 0.25);
 }
 
 .pill--danger {
-  background: color-mix(in srgb, var(--error) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+  background: rgba(var(--error-rgb), 0.12);
+  border: 1px solid rgba(var(--error-rgb), 0.25);
 }
 
 .pill--violet {
-  background: color-mix(in srgb, var(--tint-violet) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint-violet) 25%, transparent);
+  background: rgba(var(--tint-violet-rgb), 0.12);
+  border: 1px solid rgba(var(--tint-violet-rgb), 0.25);
 }
 
 .index-filter-select:has(.status-option--success:checked) { color: var(--tint-success); }
