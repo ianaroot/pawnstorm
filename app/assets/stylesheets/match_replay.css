@@ -479,7 +479,7 @@ input[type="submit"].btn-rematch {
 }
 
 .match-replay-page .trace-tree-node.trace-tree-node--score-applied .trace-tree-node__text {
-  color: #fde68a;
+  color: var(--accent-gold-bright);
 }
 
 .match-replay-page .trace-tree-node.trace-tree-node--score-halted {
