@@ -394,8 +394,7 @@ button[type="submit"]:hover,
   color: var(--error);
 }
 
-#error_explanation,
-.error_explanation {
+.error-summary {
   background-color: rgba(var(--error-rgb), 0.1);
   border: 1px solid var(--error);
   border-radius: 0.5rem;
@@ -403,14 +402,12 @@ button[type="submit"]:hover,
   margin-bottom: 1rem;
 }
 
-#error_explanation h2,
-.error_explanation h2 {
+.error-summary h2 {
   color: var(--error);
   font-size: 1rem;
 }
 
-#error_explanation ul,
-.error_explanation ul {
+.error-summary ul {
   list-style: disc;
   padding-left: 1.5rem;
 }
