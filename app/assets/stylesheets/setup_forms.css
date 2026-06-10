@@ -86,6 +86,10 @@
   margin: 0 0 1rem;
 }
 
+.setup-section thead th {
+  color: var(--accent-gold-pale);
+}
+
 .match-setup-filter-input {
   flex: 1;
   width: 100%;
@@ -469,10 +473,6 @@ details[open] .constraints-summary::after {
 }
 
 /* ── Tournament Draft Management ──────────────────── */
-
-.tournament-draft {
-  padding: 2rem 0;
-}
 
 .tournament-draft h2 {
   margin: 0 0 0.5rem;
