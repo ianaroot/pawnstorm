@@ -1,5 +1,5 @@
 <div class="form-page">
-  <div class="setup-form-section">
+  <div class="setup-section">
     <h1>Sign up</h1>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
@@ -30,7 +30,7 @@
       </div>
 
       <div class="form-actions">
-        <%= f.submit "Sign up", class: 'btn btn-primary' %>
+        <button type="submit" class="btn btn-primary">Sign up</button>
       </div>
     <% end %>
 
