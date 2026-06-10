@@ -583,17 +583,6 @@ input[type="submit"].btn-rematch {
   box-shadow: inset 0 0 0 4px rgb(var(--match-replay-candidate-move)), 0 0 10px rgba(var(--match-replay-candidate-move), 0.22);
 }
 
-/* ============================================
-   TOURNAMENT LAYOUT
-   ============================================ */
-
-.tournament-page {
-  min-height: auto;
-  margin-left: 0;
-  margin-right: 0;
-  min-width: 0;
-}
-
 @media (max-width: 900px) {
   .match-replay-page.match-replay-layout {
     grid-template-columns: 1fr;
