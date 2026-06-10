@@ -22,6 +22,7 @@ class Matches::HumanVsBotController < ApplicationController
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 
+    @rematch_options = Matches::RematchOptions.new(match: @match, user: current_user)
     render 'matches/live'
   end
 

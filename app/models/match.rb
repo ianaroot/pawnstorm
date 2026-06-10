@@ -109,6 +109,7 @@ class Match < ApplicationRecord
     return tournament_entry.display_name if tournament_entry
     record = player_record_for(player)
     return record.name if record.respond_to?(:name)
+    return record.username if record.respond_to?(:username)
     fallback_player_label(player)
   end
 

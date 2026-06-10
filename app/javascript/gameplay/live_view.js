@@ -5,7 +5,6 @@ import {
   clearAlerts,
   displayAlerts,
   renderBoardPieces,
-  updateCaptureAreaSizing,
   updateCaptures,
   updateTeamAllowedToMove
 } from "gameplay/view_utils"
@@ -25,7 +24,6 @@ class LiveView {
         alert = args["alert"] || ""
     renderBoardPieces(board)
     this.setTileClickListener()
-    updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)

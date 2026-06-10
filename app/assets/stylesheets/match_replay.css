@@ -133,10 +133,6 @@
   align-items: flex-start;
 }
 
-.match-replay-page #notifications {
-  display: none;
-}
-
 .match-replay-page .replay-meta-row {
   display: flex;
   align-items: baseline;

@@ -4,7 +4,6 @@ import {
   clearAlerts,
   displayAlerts,
   renderBoardPieces,
-  updateCaptureAreaSizing,
   updateCaptures,
   updateTeamAllowedToMove
 } from "gameplay/view_utils"
@@ -34,7 +33,6 @@ class ReplayView {
 
   renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, spoilerRevealed, lastMove, warning, inspection, muteTopMoveHighlights }) {
     renderBoardPieces(board)
-    updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
