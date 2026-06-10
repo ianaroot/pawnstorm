@@ -37,3 +37,20 @@ For a translucent variant of a token color, compose it from the matching
 `rgba(var(--error-rgb), 0.1)`). Don't reach for `color-mix()` or relative
 color (`rgb(from …)`) — they are unsupported on the older browsers this app
 still targets, where transparency must keep working.
+
+## Finding dead compound/descendant rules
+
+Grep catches dead top-level classes but can't judge dead compound or
+descendant rules (`.a .b`, `.a:hover`) — where the parts exist but the
+combination matches nothing. For those, run PurgeCSS as a one-off audit
+(there is no CSS build step, so it is not pipeline-wired):
+
+    npx --yes purgecss \
+      --css app/assets/stylesheets/<sheet>.css \
+      --content 'app/**/*.erb' 'app/**/*.js' 'app/**/*.rb' \
+      --rejected
+
+Its `rejected` list is candidates, not a delete list: it also rejects every
+runtime-assembled selector above (PurgeCSS can't see those either) and
+gem-emitted ones (`pagy-*`, `[aria-current]`). Cross-reference this file and
+verify each candidate by hand — never apply PurgeCSS output directly.

@@ -672,18 +672,6 @@ input[type="submit"].btn-rematch {
    TOURNAMENT REGISTRATION
    ============================================ */
 
-.tournament-registration {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.tournament-registration h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
 .tournament-entries-table {
   font-size: 0.875rem;
 }
