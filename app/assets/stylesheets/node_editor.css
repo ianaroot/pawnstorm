@@ -1963,6 +1963,7 @@
   font-size: 12px;
   color: var(--text-warm-muted);
   text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .bot-rename-modal__field input[type="text"],

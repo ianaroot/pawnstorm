@@ -211,6 +211,10 @@
   margin-bottom: 0;
 }
 
+.form-field > label {
+  margin-bottom: 0.5rem;
+}
+
 .form-field-narrow input,
 .form-field-narrow select {
   max-width: 10rem;
