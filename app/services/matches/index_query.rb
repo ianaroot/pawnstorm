@@ -44,7 +44,10 @@ class Matches::IndexQuery
   end
 
   def opponent_bot_ids
-    Bot.with_name(opponent_name).with_owner_username(opponent_owner).select(:id)
+    scope = Bot.all
+    scope = scope.with_name(opponent_name) if opponent_name.present?
+    scope = scope.with_owner_username(opponent_owner) if opponent_owner.present?
+    scope.select(:id)
   end
 
   def restrict_outcome(scope, win, loss)

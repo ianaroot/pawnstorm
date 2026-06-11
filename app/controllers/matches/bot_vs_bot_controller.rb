@@ -49,12 +49,19 @@ class Matches::BotVsBotController < ApplicationController
       params: shared_params.merge(opponent_page: params[:opponent_page])
     )
     @opponent_bots_pagy, @opponent_bots = pagy(
-      setup.all_opponent_bots.with_name(params[:opponent_name]).with_owner_username(params[:opponent_owner]).sorted_by(opponent_sort),
+      filtered_opponent_bots(setup),
       limit: BOT_PAGE_SIZE,
       page_key: 'opponent_page',
       page: params[:opponent_page] || default_opponent_page(setup),
       params: shared_params.merge(own_bot_page: params[:own_bot_page])
     )
+  end
+
+  def filtered_opponent_bots(setup)
+    scope = setup.all_opponent_bots
+    scope = scope.with_name(params[:opponent_name]) if params[:opponent_name].present?
+    scope = scope.with_owner_username(params[:opponent_owner]) if params[:opponent_owner].present?
+    scope.sorted_by(opponent_sort)
   end
 
   def opponent_sort
