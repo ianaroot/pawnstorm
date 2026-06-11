@@ -21,6 +21,6 @@ module ApplicationHelper
   }.freeze
 
   def pill_tint(value)
-    PILL_TINTS.fetch(value.to_s)
+    PILL_TINTS.fetch(value.to_s, "muted")
   end
 end
