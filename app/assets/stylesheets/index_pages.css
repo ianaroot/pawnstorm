@@ -175,13 +175,17 @@
   -webkit-appearance: none;
   position: relative;
   flex: 0 0 auto;
-  width: 1.05rem;
-  height: 1.05rem;
   margin: 0;
+  padding: 0;
   border: 1px solid var(--border-light);
   border-radius: 0.25rem;
   background: var(--bg-recessed);
   cursor: pointer;
+}
+
+.index-filter-checkbox {
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .index-filter-checkbox:checked,
