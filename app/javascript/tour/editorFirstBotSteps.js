@@ -109,7 +109,7 @@ const STEPS = [
 
       <p>If it <strong>fails</strong>, the bot backtracks to the next branch.</p>
 
-      <p>Conditions chained together - like the two conditions in the checkmate template - act as an <strong>AND</strong> — every one above a score node must pass for that score to apply.</p>
+      <p>Conditions chained together - like the two conditions in the checkmate template - act as an <strong>AND</strong> — every condition above a score node must pass for that score to apply.</p>
 
       ${WALK_DIAGRAM}
     `,
@@ -282,7 +282,7 @@ const STEPS = [
     target: '#board-state-preview-wrap',
     title: 'See it on real boards',
     body: `
-      <p>This shows real positions where your condition is TRUE.</p>
+      <p>This shows real boards where your condition is TRUE.</p>
       <p>Use it to verify you've built the question you meant to.</p>
     `,
     advanceOn: 'next'
@@ -294,7 +294,7 @@ const STEPS = [
       <ul>
         <li>Cycle the examples with <kbd>←Prev</kbd> / <kbd>Next →</kbd></li>
         <li>or the <kbd>←</kbd>/<kbd>→</kbd> arrow keys).</li>
-        <li>Press <kbd>P</kbd> to tuck the preview away.</li>
+        <li>Press <kbd>P</kbd> to hide the preview.</li>
       </ul>
     `,
     advanceOn: 'next'

@@ -149,7 +149,7 @@ const STEPS = [
   {
     target: '.match-replay-notation',
     title: 'Game notation',
-    body: `<p>Every move is listed here. Click any entry to jump straight to that position.</p>`,
+    body: `<p>Game notation is listed here. Click any entry to jump straight to that position.</p>`,
     advanceOn: 'next'
   },
   {
