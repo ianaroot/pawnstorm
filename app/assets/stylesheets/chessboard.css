@@ -235,7 +235,7 @@
 }
 
 #chess-board tr {
-  height: 60px !important;
+  height: 60px;
 }
 
 #chess-board td {
