@@ -6,45 +6,45 @@
 }
 
 .bid-box {
-  fill: var(--bg-tertiary, #2d2d2d);
-  stroke: var(--border-light, #52525b);
+  fill: var(--bg-tertiary);
+  stroke: var(--border-light);
   stroke-width: 1;
 }
 
 .bid-box--accent {
-  fill: rgba(168, 85, 247, 0.18);
-  stroke: var(--accent-primary, #a855f7);
+  fill: rgba(var(--accent-primary-rgb), 0.18);
+  stroke: var(--accent-primary);
 }
 
 .bid-box--root {
-  fill: rgba(245, 158, 11, 0.18);
-  stroke: var(--warning, #f59e0b);
+  fill: rgba(var(--warning-rgb), 0.18);
+  stroke: var(--warning);
 }
 
 .bid-label {
-  fill: var(--text-primary, #e5e5e5);
+  fill: var(--text-primary);
   font-size: 13px;
   text-anchor: middle;
   dominant-baseline: middle;
 }
 
 .bid-caption {
-  fill: var(--text-secondary, #9ca3af);
+  fill: var(--text-secondary);
   font-size: 12px;
   text-anchor: middle;
 }
 
 .bid-edge,
 .bid-orbit {
-  stroke: var(--accent-secondary, #c084fc);
+  stroke: var(--accent-secondary);
   stroke-width: 1.5;
   fill: none;
 }
 
 .bid-edge {
-  stroke: var(--border-light, #52525b);
+  stroke: var(--border-light);
 }
 
 .bid-arrow-head {
-  fill: var(--accent-secondary, #c084fc);
+  fill: var(--accent-secondary);
 }

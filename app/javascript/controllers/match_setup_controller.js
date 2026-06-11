@@ -6,7 +6,17 @@ export default class extends Controller {
 
   ownBotChosen(event) {
     this.ownBotIdFieldTargets.forEach((field) => { field.value = event.target.value })
+    if (this.opponentListEngaged()) { return }
     this.opponentFormTarget.requestSubmit()
+  }
+
+  opponentListEngaged() {
+    const filtered = ['opponent_name', 'opponent_owner']
+      .some((name) => this.element.querySelector(`input[name="${name}"]`)?.value)
+    const selected = Boolean(this.element.querySelector('input[name="match[opponent_bot_id]"]:checked'))
+    const opponentSort = this.element.querySelector('input[name="opponent_sort"]')?.value
+    const sorted = Boolean(opponentSort) && opponentSort !== 'elo_desc'
+    return filtered || selected || sorted
   }
 
   confirmStaleCompile(event) {

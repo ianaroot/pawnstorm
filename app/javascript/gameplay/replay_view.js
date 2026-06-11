@@ -4,7 +4,6 @@ import {
   clearAlerts,
   displayAlerts,
   renderBoardPieces,
-  updateCaptureAreaSizing,
   updateCaptures,
   updateTeamAllowedToMove
 } from "gameplay/view_utils"
@@ -34,7 +33,6 @@ class ReplayView {
 
   renderFrame({ board, currentMoveIndex, isPlaying, playDirection, speedMultiplier, movePairs, result, totalMoves, spoilerRevealed, lastMove, warning, inspection, muteTopMoveHighlights }) {
     renderBoardPieces(board)
-    updateCaptureAreaSizing(board)
     updateCaptures(board)
     clearAlerts()
     updateTeamAllowedToMove(board)
@@ -44,7 +42,8 @@ class ReplayView {
     this.renderResult({ result, spoilerRevealed })
     this.renderWarning(warning)
     this.renderNotation({ movePairs, currentMoveIndex })
-    this.traceView.render(inspection)
+    const flipped = this.rootElement.querySelector('#chess-board')?.classList.contains('flipped') ?? false
+    this.traceView.render(inspection, flipped)
   }
 
   renderBoardHighlights({ inspection, muteTopMoveHighlights, lastMove }) {
@@ -78,11 +77,15 @@ class ReplayView {
     const chosenMoveTile = chosenMove
       ? document.getElementById(Board.gridCalculator(chosenMove.endPosition))
       : null
+    const chosenMoveStartTile = chosenMove
+      ? document.getElementById(Board.gridCalculator(chosenMove.startPosition))
+      : null
     const userSelectedDifferentPiece = inspection.selectedStartSquare &&
       chosenMove &&
       Board.gridCalculator(chosenMove.startPosition) !== inspection.selectedStartSquare
     if (!muteTopMoveHighlights && !userSelectedDifferentPiece) {
       chosenMoveTile?.classList.add('match-replay-square--chosen-move')
+      chosenMoveStartTile?.classList.add('match-replay-square--chosen-move')
     }
 
     const inspectedMove = inspection.result.explicitInspectedMoveKey
@@ -153,9 +156,8 @@ class ReplayView {
     }
 
     this.resultElement.append(
-      document.createTextNode('Result hidden to avoid spoilers. Click '),
-      this.buildSpoilerRevealButton(),
-      document.createTextNode(' to reveal results early.')
+      document.createTextNode('Result hidden to avoid spoilers. '),
+      this.buildSpoilerRevealButton()
     )
   }
 
@@ -164,7 +166,7 @@ class ReplayView {
     button.type = 'button'
     button.dataset.matchReplaySpoilerReveal = 'true'
     button.className = 'match-replay-spoiler-reveal'
-    button.textContent = 'HERE'
+    button.textContent = 'Reveal'
     return button
   }
 

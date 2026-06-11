@@ -89,6 +89,37 @@ RSpec.describe BotsController, type: :request do
       expect(response).to have_http_status(:success)
     end
 
+    context 'when the generated guest email collides' do
+      it 'retries until it lands on a free email' do
+        calls = 0
+        allow(User).to receive(:create!).and_wrap_original do |original, *args, **kwargs|
+          calls += 1
+          if calls == 1
+            taken = User.new
+            taken.errors.add(:email, :taken)
+            raise ActiveRecord::RecordInvalid.new(taken)
+          end
+          original.call(*args, **kwargs)
+        end
+
+        expect {
+          post bots_path, params: valid_params
+        }.to change { User.where(guest: true).count }.by(1)
+        expect(calls).to eq(2)
+      end
+
+      it 'reraises an unrelated validation failure without retrying' do
+        invalid = User.new
+        invalid.errors.add(:password, :too_short)
+        allow(User).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(invalid))
+
+        expect {
+          post bots_path, params: valid_params
+        }.to raise_error(ActiveRecord::RecordInvalid)
+        expect(User).to have_received(:create!).once
+      end
+    end
+
     context 'when authenticated' do
       let(:user) { create(:user) }
 

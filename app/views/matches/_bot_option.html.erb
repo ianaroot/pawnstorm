@@ -9,12 +9,13 @@
     data-bot-name="<%= bot.name %>"
     data-bot-stale="<%= bot.compiled_program_stale? %>"
     data-bot-owned="<%= owned %>">
-  <span>
+  <span class="match-bot-option__name">
     <strong><%= bot.name %></strong>
-    <% if show_details %>
-      <small class="match-bot-rating"><%= bot.rating.round %></small>
-      <small>by <%= bot.user.email %></small>
-    <% end %>
-    <%= ' (needs recompile)' if bot.compiled_program_stale? %>
   </span>
+  <% if show_details %>
+    <span class="match-bot-option__rating"><%= bot.rating.round %></span>
+    <% if local_assigns.fetch(:show_owner, true) %>
+      <span class="match-bot-option__owner"><%= bot.user.username %></span>
+    <% end %>
+  <% end %>
 </label>

@@ -92,21 +92,3 @@ export function updateCaptures(board) {
   }
 }
 
-function capturedCountForTeam(board, team) {
-  let total = 0
-  for (let i = 0; i < board.capturedPieces.length; i++) {
-    if (Board.parseTeam(board.capturedPieces[i]) === team) { total++ }
-  }
-  return total
-}
-
-export function updateCaptureAreaSizing(board) {
-  const whiteCaptureDiv = document.getElementById("W-captures")
-  const blackCaptureDiv = document.getElementById("B-captures")
-  if (whiteCaptureDiv && capturedCountForTeam(board, Board.WHITE) === 11) {
-    whiteCaptureDiv.style.height = 98
-  }
-  if (blackCaptureDiv && capturedCountForTeam(board, Board.BLACK) === 11) {
-    blackCaptureDiv.style.height = 98
-  }
-}

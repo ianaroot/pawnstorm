@@ -126,7 +126,7 @@ RSpec.describe TournamentsController, type: :request do
       end.not_to change(Tournament, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(flash[:alert]).to include("Name can't be blank")
+      expect(CGI.unescapeHTML(response.body)).to include("Name can't be blank")
     end
 
     it 'rejects games-per-pairing values above the production max' do
@@ -154,7 +154,7 @@ RSpec.describe TournamentsController, type: :request do
       end.not_to change(Tournament, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(flash[:alert]).to include('Max entries must be greater than or equal to 2')
+      expect(response.body).to include('Max entries must be greater than or equal to 2')
     end
   end
 

@@ -1,8 +1,6 @@
 class Matches::HumanVsBotController < ApplicationController
   include Matches::SetupForm
 
-  BOT_PAGE_SIZE = 8
-
   before_action -> { current_user_or_create_guest! }, only: [:create]
   before_action :authenticate_registered_or_guest_user!, only: [:live, :complete]
 
@@ -24,6 +22,7 @@ class Matches::HumanVsBotController < ApplicationController
       return redirect_to match_path(@match), alert: 'This match is no longer playable.'
     end
 
+    @rematch_options = Matches::RematchOptions.new(match: @match, user: current_user)
     render 'matches/live'
   end
 
@@ -61,12 +60,12 @@ class Matches::HumanVsBotController < ApplicationController
       limit: BOT_PAGE_SIZE,
       page_key: 'bot_page',
       page: params[:bot_page],
-      params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color] }.compact
+      params: { bot_id: params[:bot_id], bot_name: params[:bot_name], human_color: params[:human_color], sort: params[:sort] }.compact
     )
   end
 
   def setup_params
-    params.permit(:bot_id, :human_color, :bot_name, :bot_page)
+    params.permit(:bot_id, :human_color, :bot_name, :bot_page, :sort)
   end
 
   def match_params

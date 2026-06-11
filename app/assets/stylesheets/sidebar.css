@@ -9,8 +9,8 @@
   left: 0;
   width: 160px;
   height: 100vh;
-  background-color: #252526;
-  border-right: 1px solid #3F3F46;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -43,7 +43,7 @@
 .sidebar__title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #E5E5E5;
+  color: var(--text-primary);
   text-decoration: none;
 }
 
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
-  color: #9CA3AF;
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
@@ -72,29 +72,29 @@
 }
 
 .sidebar__link:hover {
-  background-color: #2D2D2D;
-  color: #E5E5E5;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .sidebar__link--active {
-  background-color: rgba(168, 85, 247, 0.1);
-  border-left-color: #A855F7;
-  color: #A855F7;
+  background-color: rgba(var(--accent-primary-rgb), 0.1);
+  border-left-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .sidebar__link--active:hover {
-  color: #C084FC;
+  color: var(--accent-secondary);
 }
 
 .sidebar__link--primary {
-  background-color: #A855F7;
-  color: #1E1E1E;
+  background-color: var(--accent-muted);
+  color: var(--bg-primary);
   font-weight: 600;
 }
 
 .sidebar__link--primary:hover {
-  background-color: #C084FC;
-  color: #1E1E1E;
+  background-color: var(--accent-secondary);
+  color: var(--bg-primary);
 }
 
 /* ============================================
@@ -107,22 +107,18 @@
   gap: 0.5rem;
   margin-top: auto;
   padding-top: 1rem;
-  border-top: 1px solid #3F3F46;
+  border-top: 1px solid var(--border-color);
 }
 
 .sidebar__user {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
-  color: #9CA3AF;
+  color: var(--text-secondary);
   overflow-wrap: break-word;
 }
 
-.sidebar__link--signout {
-  background: none;
-  border: none;
+.sidebar__signout {
   width: 100%;
-  text-align: left;
-  cursor: pointer;
 }
 
 /* ============================================
@@ -136,22 +132,22 @@
   left: 1rem;
   z-index: 1001;
   padding: 0.5rem;
-  background-color: #252526;
-  border: 1px solid #3F3F46;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .hamburger:hover {
-  background-color: #2D2D2D;
+  background-color: var(--bg-tertiary);
 }
 
 .hamburger__line {
   display: block;
   width: 1.5rem;
   height: 2px;
-  background-color: #E5E5E5;
+  background-color: var(--text-primary);
   margin: 0.3rem 0;
   transition: transform 0.3s, opacity 0.3s;
 }
@@ -191,7 +187,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(var(--shadow-color-rgb), 0.5);
   z-index: 999;
   opacity: 0;
   pointer-events: none;

@@ -1,18 +1,9 @@
 <div class="form-page">
-  <div class="setup-form-section">
+  <div class="setup-section">
     <h1>New Bot</h1>
 
     <%= form_with(model: @bot, local: true) do |form| %>
-      <% if @bot.errors.any? %>
-        <div id="error_explanation">
-          <h2><%= pluralize(@bot.errors.count, "error") %> prohibited this bot from being saved:</h2>
-          <ul>
-            <% @bot.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
+      <%= render "shared/error_messages", model: @bot %>
 
       <div class="form-field">
         <%= form.label :name %>
@@ -25,7 +16,7 @@
       </div>
 
       <div class="form-actions">
-        <%= form.submit "Create Bot", class: 'btn btn-primary' %>
+        <button type="submit" class="btn btn-primary">Create Bot</button>
         <%= link_to 'Back', bots_path, class: 'btn btn-secondary' %>
       </div>
     <% end %>

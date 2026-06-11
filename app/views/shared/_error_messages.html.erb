@@ -1,0 +1,14 @@
+<% if model.errors.any? %>
+  <div class="error-summary" data-turbo-cache="false">
+    <h2>
+      <%= I18n.t("errors.messages.not_saved",
+                 count: model.errors.count,
+                 resource: model.class.model_name.human.downcase) %>
+    </h2>
+    <ul>
+      <% model.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

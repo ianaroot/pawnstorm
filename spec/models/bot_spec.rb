@@ -174,6 +174,47 @@ RSpec.describe Bot, type: :model do
     end
   end
 
+  describe '.with_owner_username' do
+    it 'matches bots whose owner username contains the term' do
+      alice = create(:user, username: 'alice_smith')
+      bob = create(:user, username: 'bob_jones')
+      alice_bot = create(:bot, user: alice)
+      create(:bot, user: bob)
+
+      expect(Bot.with_owner_username('alice')).to contain_exactly(alice_bot)
+    end
+  end
+
+  describe '.sorted_by' do
+    it 'sorts by rating high-to-low for elo_desc' do
+      weak = create(:bot).tap { |b| b.update_column(:rating, 100) }
+      strong = create(:bot).tap { |b| b.update_column(:rating, 2000) }
+
+      expect(Bot.sorted_by('elo_desc').to_a).to eq([strong, weak])
+    end
+
+    it 'defaults to most-recently-updated first' do
+      older = create(:bot).tap { |b| b.update_column(:updated_at, 2.days.ago) }
+      newer = create(:bot).tap { |b| b.update_column(:updated_at, 1.hour.ago) }
+
+      expect(Bot.sorted_by(nil).to_a).to eq([newer, older])
+    end
+
+    it 'toggles to oldest-updated first for recently_updated_asc' do
+      older = create(:bot).tap { |b| b.update_column(:updated_at, 2.days.ago) }
+      newer = create(:bot).tap { |b| b.update_column(:updated_at, 1.hour.ago) }
+
+      expect(Bot.sorted_by('recently_updated_asc').to_a).to eq([older, newer])
+    end
+
+    it 'sorts alphabetically for name_asc' do
+      bravo = create(:bot, name: 'Bravo')
+      alpha = create(:bot, name: 'Alpha')
+
+      expect(Bot.sorted_by('name_asc').to_a).to eq([alpha, bravo])
+    end
+  end
+
   describe '#get_fresh_program' do
     it 'returns a deep copy of compiled_program when fresh' do
       bot = create(:bot, :compiled)

@@ -57,6 +57,16 @@ RSpec.describe Match, type: :model do
     end
   end
 
+  describe '#player_display_name_for' do
+    it "labels a player whose record was deleted 'Deleted player'" do
+      bot = create(:bot)
+      match = create(:match, white_player: bot)
+      bot.destroy!
+
+      expect(match.reload.player_display_name_for(:white)).to eq('Deleted player')
+    end
+  end
+
   describe '#human_vs_bot_for?' do
     let(:user) { create(:user) }
 
@@ -113,6 +123,49 @@ RSpec.describe Match, type: :model do
       create(:match, white_player: user_bot, tournament: tournament)
       later_match = create(:match, white_player: user_bot)
       expect(later_match.first_bot_match_for?(user)).to be false
+    end
+  end
+
+  describe '.playing_white' do
+    let(:user) { create(:user) }
+
+    it 'includes matches where the user plays white' do
+      match = create(:match, white_player: user)
+      expect(Match.playing_white(user)).to include(match)
+    end
+
+    it 'includes matches where a bot the user owns plays white' do
+      match = create(:match, white_player: create(:bot, user: user))
+      expect(Match.playing_white(user)).to include(match)
+    end
+
+    it 'excludes matches where the user is only on the black side' do
+      match = create(:match, black_player: create(:bot, user: user))
+      expect(Match.playing_white(user)).not_to include(match)
+    end
+
+    it "excludes other people's matches" do
+      match = create(:match)
+      expect(Match.playing_white(user)).not_to include(match)
+    end
+  end
+
+  describe '.playing_black' do
+    let(:user) { create(:user) }
+
+    it 'includes matches where the user plays black' do
+      match = create(:match, black_player: user)
+      expect(Match.playing_black(user)).to include(match)
+    end
+
+    it 'includes matches where a bot the user owns plays black' do
+      match = create(:match, black_player: create(:bot, user: user))
+      expect(Match.playing_black(user)).to include(match)
+    end
+
+    it 'excludes matches where the user is only on the white side' do
+      match = create(:match, white_player: create(:bot, user: user))
+      expect(Match.playing_black(user)).not_to include(match)
     end
   end
 end

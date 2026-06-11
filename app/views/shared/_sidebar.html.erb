@@ -85,11 +85,14 @@
             data: { action: "click->sidebar#navigate" } %>
       <% elsif user_signed_in? %>
         <div class="sidebar__user">
-          <%= current_user.email %>
+          <%= current_user.username %>
         </div>
+        <%= link_to "Account", edit_user_registration_path,
+            class: "sidebar__link #{'sidebar__link--active' if current_page?(edit_user_registration_path)}",
+            data: { action: "click->sidebar#navigate" } %>
         <%= button_to "Sign Out", destroy_user_session_path,
             method: :delete,
-            class: "sidebar__link sidebar__link--signout",
+            class: "btn btn-ghost sidebar__signout",
             data: { action: "click->sidebar#navigate" } %>
       <% else %>
         <%= link_to "Sign In", new_user_session_path,

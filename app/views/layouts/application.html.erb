@@ -20,14 +20,24 @@
     
     <main class="content-wrapper">
       <div class="page-content <%= yield(:page_content_class) %>">
-        <% if notice.present? %>
-          <div class="notice"><%= notice %></div>
+        <% if notice.present? || alert.present? %>
+          <div class="flash-toasts" data-controller="flash" data-turbo-cache="false">
+            <% if notice.present? %>
+              <div class="flash-toast notice" role="status" data-flash-target="toast" data-dismiss-after="5000">
+                <span class="flash-toast__message"><%= notice %></span>
+                <button type="button" class="flash-toast__close" data-action="flash#dismiss" aria-label="Dismiss">&times;</button>
+              </div>
+            <% end %>
+
+            <% if alert.present? %>
+              <div class="flash-toast alert" role="alert" data-flash-target="toast">
+                <span class="flash-toast__message"><%= alert %></span>
+                <button type="button" class="flash-toast__close" data-action="flash#dismiss" aria-label="Dismiss">&times;</button>
+              </div>
+            <% end %>
+          </div>
         <% end %>
-        
-        <% if alert.present? %>
-          <div class="alert"><%= alert %></div>
-        <% end %>
-        
+
         <%= yield %>
       </div>
     </main>

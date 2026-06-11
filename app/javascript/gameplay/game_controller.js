@@ -151,8 +151,13 @@ class GameController {
 	submitCompletionIfGameOver(){
 		if (!this.playConfig || !this.board.gameOver || this._completionSubmitted) { return }
 		this._completionSubmitted = true
-		this.updatePlayStatus(`${this.resultMessage()} Redirecting to replay...`, 'over')
-		setTimeout(() => this.persistInteractiveMatch(this.completedPayload()), 1200)
+		this.updatePlayStatus(this.resultMessage(), 'over')
+		this.persistInteractiveMatch(this.completedPayload(), () => this.revealMatchOverOptions())
+	}
+
+	revealMatchOverOptions(){
+		const options = this.rootElement?.querySelector('[data-match-over-options]')
+		if (options) { options.hidden = false }
 	}
 
 	completedPayload(){
@@ -197,7 +202,7 @@ class GameController {
 		})
 	}
 
-	persistInteractiveMatch(payload){
+	persistInteractiveMatch(payload, onSuccess = null){
 		fetch(this.playConfig.completeUrl, {
 			method: 'PATCH',
 			headers: {
@@ -212,7 +217,12 @@ class GameController {
 				return response.json()
 			})
 			.then(data => {
-				window.location.href = data.redirect_url || this.playConfig.replayUrl
+				if (onSuccess) {
+					onSuccess(data)
+					return
+				}
+				const redirectUrl = data.redirect_url || this.playConfig.replayUrl
+				if (window.Turbo) { window.Turbo.visit(redirectUrl) } else { window.location.href = redirectUrl }
 			})
 			.catch(error => {
 				this.updatePlayStatus(`Could not save match: ${error.message}`)

@@ -28,7 +28,7 @@
 
   <% if tournament.status_open? && current_user == tournament.creator %>
     <p class="match-show-meta-item">
-      <%= button_to 'Start Tournament', start_tournament_path(tournament), method: :post %>
+      <%= button_to 'Start Tournament', start_tournament_path(tournament), method: :post, class: 'btn btn-primary' %>
     </p>
   <% end %>
 
@@ -39,14 +39,14 @@
   <% if tournament_presenter.active? && current_user == tournament.creator %>
     <p class="match-show-meta-item">
       <% if tournament.paused? %>
-        <%= button_to 'Resume Tournament', resume_tournament_path(tournament), method: :post %>
+        <%= button_to 'Resume Tournament', resume_tournament_path(tournament), method: :post, class: 'btn btn-secondary' %>
       <% else %>
-        <%= button_to 'Pause Tournament', pause_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Pause this tournament? The current running match may finish, but no new matches will be queued.' } %>
+        <%= button_to 'Pause Tournament', pause_tournament_path(tournament), method: :post, class: 'btn btn-secondary', data: { turbo_confirm: 'Pause this tournament? The current running match may finish, but no new matches will be queued.' } %>
       <% end %>
     </p>
     <% if Rails.env.local? %>
       <p class="match-show-meta-item">
-        <%= button_to 'Abort Tournament', abort_tournament_path(tournament), method: :post, data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
+        <%= button_to 'Abort Tournament', abort_tournament_path(tournament), method: :post, class: 'btn btn-danger', data: { turbo_confirm: 'Abort this tournament? Pending matches will be marked failed.' } %>
       </p>
     <% end %>
   <% end %>

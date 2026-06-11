@@ -1,0 +1,70 @@
+<div class="index-header">
+  <h1>Your Matches</h1>
+  <%= link_to 'Set up a match', new_bot_vs_bot_match_path, class: 'btn btn-outline' %>
+</div>
+
+<div class="index-panel">
+<%= render layout: "shared/index_filter_form", locals: { url: matches_path, frame: "matches" } do |f| %>
+  <div class="index-filter-row">
+    <%= f.text_field :bot_name, value: params[:bot_name], placeholder: 'Your bot name', class: 'index-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= f.text_field :opponent_name, value: params[:opponent_name], placeholder: 'Opponent name', class: 'index-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= f.text_field :opponent_owner, value: params[:opponent_owner], placeholder: 'Opponent owner', class: 'index-filter-input',
+          data: { action: 'input->auto-submit#submitDebounced' } %>
+    <%= link_to 'Reset', matches_path, class: 'btn btn-outline index-filter-reset match-filter-reset' %>
+  </div>
+  <div class="index-filter-row">
+    <%= render 'matches/filter_toggle', f: f, name: :color, current: params[:color], label: 'Color',
+          options: [['', 'All'], ['white', 'White'], ['black', 'Black']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :outcome, current: params[:outcome], label: 'Outcome',
+          options: [['', 'All'], ['win', 'Win'], ['loss', 'Loss'], ['draw', 'Draw']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :tournament, current: params[:tournament], label: 'Tournament',
+          options: [['', 'All'], ['non_tournament', 'No'], ['tournament', 'Yes']] %>
+    <%= render 'matches/filter_toggle', f: f, name: :creator, current: params[:creator], label: 'Created',
+          options: [['', 'All'], ['me', 'By me'], ['others', 'By others']] %>
+    <div class="index-sort" data-controller="sort">
+      <%= f.hidden_field :sort, value: params[:sort], data: { sort_target: 'field' } %>
+      <%= render 'matches/sort_controls', options: Matches::IndexSortOptions.new(params[:sort]).options, label: nil %>
+    </div>
+  </div>
+<% end %>
+
+<%= render layout: "shared/index_results", locals: { frame: "matches", pagy: @pagy, present: @matches.any?,
+      empty: (@filter_params.to_h.values.any?(&:present?) ? 'No matches fit these filters.' : 'No matches yet.') } do %>
+  <table>
+    <thead>
+      <tr>
+        <th>White</th>
+        <th>Black</th>
+        <th>Tournament</th>
+        <th>Result</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @matches.each do |match| %>
+        <% row = Matches::IndexRow.new(match: match, user: current_user) %>
+        <tr>
+          <td>
+            <%= link_to match.player_display_name_for(:white), match_path(match) %>
+            <% if row.playing_white? %><span class="index-table-secondary">(you)</span><% end %>
+          </td>
+          <td>
+            <%= match.player_display_name_for(:black) %>
+            <% if row.playing_black? %><span class="index-table-secondary">(you)</span><% end %>
+          </td>
+          <td>
+            <% flag = match.tournament ? 'tournament' : 'casual' %>
+            <span class="pill pill--<%= pill_tint(flag) %>"><%= match.tournament ? 'Yes' : 'No' %></span>
+          </td>
+          <td>
+            <span class="pill pill--<%= row.outcome_tint %>"><%= row.outcome_label %></span>
+          </td>
+          <td class="index-table-secondary index-table-date"><%= match.created_at.to_date.to_fs(:long) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+</div>

@@ -1,41 +1,43 @@
 <%= form_with url: url, scope: :tournament, method: method, local: true do |form| %>
+  <%= render "shared/error_messages", model: @tournament if @tournament %>
+
   <div class="tournament-setup-grid">
     <div class="tournament-setup-col">
 
-      <div class="ci-section">
-        <p class="ci-heading">Details</p>
-        <div class="ci-row">
-          <span class="ci-label">Name</span>
-          <input class="ci-input ci-input--text" type="text"
+      <div class="setup-section">
+        <h2>Details</h2>
+        <div class="form-field">
+          <label for="tournament_name">Name</label>
+          <input type="text" id="tournament_name"
             name="tournament[name]"
             value="<%= @name %>">
         </div>
-        <div class="ci-field-block">
-          <span class="ci-label">Description</span>
-          <textarea class="ci-textarea" name="tournament[description]" rows="5"><%= @description %></textarea>
+        <div class="form-field">
+          <label for="tournament_description">Description</label>
+          <textarea id="tournament_description" name="tournament[description]" rows="5"><%= @description %></textarea>
         </div>
       </div>
 
-      <div class="ci-section">
-        <p class="ci-heading">Format</p>
-        <div class="ci-row">
-          <span class="ci-label">Games per pairing</span>
-          <input class="ci-input ci-input--box" type="number"
+      <div class="setup-section">
+        <h2>Format</h2>
+        <div class="form-field form-field-narrow">
+          <label for="tournament_games_per_pair">Games per pairing</label>
+          <input type="number" id="tournament_games_per_pair"
             name="tournament[games_per_pair]"
             value="<%= @games_per_pair %>"
             min="1" max="<%= Tournaments::CreateTournament::MAX_GAMES_PER_PAIR %>" step="1">
         </div>
       </div>
 
-      <%= form.submit submit_label, class: 'btn btn-primary' %>
+      <button type="submit" class="btn btn-primary"><%= submit_label %></button>
     </div>
 
     <div class="tournament-setup-col">
 
-      <div class="ci-section">
-        <p class="ci-heading">Access</p>
-        <div class="ci-row">
-          <span class="ci-label">Visibility</span>
+      <div class="setup-section">
+        <h2>Access</h2>
+        <div class="form-field">
+          <label>Visibility</label>
           <div class="ci-pills">
             <% Tournament.visibilities.keys.each do |v| %>
               <label class="ci-pill">
@@ -48,10 +50,10 @@
         </div>
       </div>
 
-      <div class="ci-section">
-        <p class="ci-heading">Entries</p>
-        <div class="ci-row">
-          <span class="ci-label">Per user</span>
+      <div class="setup-section">
+        <h2>Entries</h2>
+        <div class="form-field">
+          <label>Per user</label>
           <div class="ci-pills">
             <% Tournament.entries_per_users.keys.each do |e| %>
               <label class="ci-pill">
@@ -62,9 +64,9 @@
             <% end %>
           </div>
         </div>
-        <div class="ci-row">
-          <span class="ci-label">Max entries</span>
-          <input class="ci-input ci-input--box" type="number"
+        <div class="form-field form-field-narrow">
+          <label for="tournament_max_entries">Max entries</label>
+          <input type="number" id="tournament_max_entries"
             name="tournament[max_entries]"
             value="<%= @max_entries %>"
             min="2" step="1" placeholder="unlimited">
@@ -138,14 +140,6 @@
               min="1" step="1" placeholder="N/A">
           </div>
           <p class="ce-check-note">Counts chained conditions only — score nodes don't add to the length.</p>
-          <div class="ci-row">
-            <span class="ci-label">Max total absolute value of scores</span>
-            <input class="ci-input ci-input--box" type="number"
-              name="tournament[constraints][max_total_absolute_value]"
-              value="<%= @constraints&.dig("max_total_absolute_value") %>"
-              min="1" step="1" placeholder="N/A">
-          </div>
-          <p class="ce-check-note">−8 adds 8 to the total, the same as +8.</p>
           <%= render 'constraints_legend' %>
         </div>
 
@@ -176,12 +170,21 @@
               </label>
             <% end %>
           </div>
+          <p class="ci-subheading">Score Limitations</p>
+          <div class="ci-row">
+            <span class="ci-label">Max total absolute value of scores</span>
+            <input class="ci-input ci-input--box" type="number"
+              name="tournament[constraints][max_total_absolute_value]"
+              value="<%= @constraints&.dig("max_total_absolute_value") %>"
+              min="1" step="1" placeholder="N/A">
+          </div>
+          <p class="ce-check-note">−8 adds 8 to the total, the same as +8.</p>
         </div>
 
       </div>
 
       <div class="ce-check-bar">
-        <button type="button" class="ce-check-btn"
+        <button type="button" class="btn btn-outline ce-check-btn"
                 data-constraints-eligibility-target="button"
                 data-action="click->constraints-eligibility#check">Check my bots</button>
         <span class="ce-check-note">Checks against current (unsaved) settings</span>

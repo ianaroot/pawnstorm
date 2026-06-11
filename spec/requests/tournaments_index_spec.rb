@@ -66,7 +66,7 @@ RSpec.describe 'Tournaments index', type: :request do
     end
 
     it 'keeps pagination inside the frame so paging stays live' do
-      create_list(:tournament, 11, visibility: :public)
+      create_list(:tournament, ApplicationController::INDEX_PER_PAGE + 1, visibility: :public)
 
       get tournaments_path
 

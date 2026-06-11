@@ -12,7 +12,7 @@ class TournamentsController < ApplicationController
                 .includes(:creator, :tournament_entries)
                 .filtered(**index_filters)
                 .order(created_at: :desc),
-      limit: 10
+      limit: INDEX_PER_PAGE
     )
   end
   def new
@@ -34,7 +34,6 @@ class TournamentsController < ApplicationController
       redirect_to tournament_show_path(@tournament), notice: 'Tournament updated.'
     else
       assign_form_state_from_tournament
-      flash.now[:alert] = updater.error_message
       render :edit, status: :unprocessable_entity
     end
   end
@@ -46,7 +45,7 @@ class TournamentsController < ApplicationController
       redirect_to tournament_show_path(creation.tournament), notice: 'Tournament created.'
     else
       assign_form_state(creation)
-      flash.now[:alert] = creation.error_message
+      @tournament = creation.tournament
       render :new, status: :unprocessable_entity
     end
   end

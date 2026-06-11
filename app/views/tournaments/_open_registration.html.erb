@@ -1,4 +1,4 @@
-<div class="tournament-registration">
+<div class="setup-section">
   <h2>Entries Open</h2>
 
   <div class="tournament-submit-section">
@@ -26,7 +26,7 @@
         <% entries_path = @invite_token.present? ? invitation_tournament_entries_path(@invite_token) : tournament_entries_path(tournament) %>
         <%= form_with url: entries_path, scope: :tournament_entry, method: :post, local: true, class: "tournament-submit-form" do |form| %>
           <%= form.select :bot_id, available_bots.map { |bot| [bot.name, bot.id] } %>
-          <%= form.submit 'Submit Entry' %>
+          <button type="submit" class="btn btn-primary">Submit Entry</button>
         <% end %>
       <% else %>
         <p>You do not have any eligible compiled bots available.</p>
@@ -50,7 +50,7 @@
             <td><strong><%= entry.display_name %></strong></td>
             <td>
               <% if entry.bot_owner %>
-                <span class="tournament-entries-table__owner"><%= entry.bot_owner.email %></span>
+                <span class="tournament-entries-table__owner"><%= entry.bot_owner.username %></span>
               <% end %>
             </td>
             <%# updated_at reliably reflects when the snapshot was taken since snapshot_entry is called on every create/update.
@@ -66,11 +66,11 @@
                 <% if replacement_bots.any? %>
                   <%= form_with url: entry_path, scope: :tournament_entry, method: :patch, local: true, class: "tournament-entry-change-form" do |form| %>
                     <%= form.select :bot_id, replacement_bots.map { |bot| [bot.name, bot.id] }, selected: entry.bot_id %>
-                    <%= form.submit 'Change' %>
+                    <button type="submit" class="btn btn-secondary">Change</button>
                   <% end %>
                 <% end %>
 
-                <%= button_to 'Withdraw', entry_path, method: :delete, class: 'btn-danger' %>
+                <%= button_to 'Withdraw', entry_path, method: :delete, class: 'btn btn-danger' %>
               <% end %>
             </td>
           </tr>
@@ -78,7 +78,7 @@
       </tbody>
     </table>
   <% else %>
-    <p class="tournament-registration__empty">No entries yet.</p>
+    <p class="tournament-entries-empty">No entries yet.</p>
   <% end %>
 
 </div>

@@ -22,8 +22,8 @@
   border: 1px solid var(--border-color);
   border-radius: 0.9rem;
   background:
-    linear-gradient(180deg, rgba(58, 46, 34, 0.42), rgba(30, 30, 30, 0.7)),
-    radial-gradient(circle at top right, rgba(246, 215, 122, 0.08), transparent 32%);
+    linear-gradient(180deg, rgba(var(--bg-elevated-rgb), 0.42), rgba(var(--bg-primary-rgb), 0.7)),
+    radial-gradient(circle at top right, rgba(var(--accent-gold-rgb), 0.08), transparent 32%);
 }
 
 .bot-guide-visual__title {
@@ -41,52 +41,52 @@
   height: auto;
   display: block;
   border-radius: 1rem;
-  background: rgba(18, 16, 13, 0.75);
-  border: 1px solid rgba(82, 82, 91, 0.55);
+  background: rgba(var(--surface-canvas-rgb), 0.75);
+  border: 1px solid rgba(var(--border-light-rgb), 0.55);
 }
 
 .bot-guide-mini-graph__connector {
-  stroke: rgba(229, 229, 229, 0.42);
+  stroke: rgba(var(--text-primary-rgb), 0.42);
   stroke-width: 2;
 }
 
 .bot-guide-mini-graph__orbit-path {
   fill: none;
-  stroke: rgba(192, 132, 252, 0.7);
+  stroke: rgba(var(--accent-secondary-rgb), 0.7);
   stroke-width: 2.5;
   stroke-dasharray: 6 6;
 }
 
 .bot-guide-mini-graph__arrow-head {
-  fill: rgba(192, 132, 252, 0.9);
+  fill: rgba(var(--accent-secondary-rgb), 0.9);
 }
 
 .bot-guide-mini-graph__shape {
-  fill: rgba(37, 37, 38, 0.98);
+  fill: rgba(var(--bg-secondary-rgb), 0.98);
   stroke-width: 2;
 }
 
 .bot-guide-mini-graph__shape--root {
-  stroke: #f6d77a;
+  stroke: var(--accent-gold);
 }
 
 .bot-guide-mini-graph__shape--condition {
-  stroke: #a855f7;
+  stroke: var(--accent-primary);
 }
 
 .bot-guide-mini-graph__shape--score {
-  stroke: #06b6d4;
+  stroke: var(--accent-cyan);
 }
 
 .bot-guide-mini-graph__label {
-  fill: #f4efe6;
+  fill: var(--text-cream);
   font-size: 13px;
   font-weight: 700;
   text-anchor: middle;
 }
 
 .bot-guide-mini-graph__order {
-  fill: #f6d77a;
+  fill: var(--accent-gold);
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
@@ -95,14 +95,14 @@
 }
 
 .bot-guide-mini-graph__orbit-text {
-  fill: #c084fc;
+  fill: var(--accent-secondary);
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
 }
 
 .bot-guide-mini-graph__note {
-  fill: #b7b0a7;
+  fill: var(--text-warm-muted);
   font-size: 10px;
   text-anchor: middle;
 }
@@ -122,7 +122,7 @@
   padding: 1.25rem;
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  background: rgba(45, 45, 45, 0.6);
+  background: rgba(var(--bg-tertiary-rgb), 0.6);
 }
 
 .bot-guide-example__title {
@@ -143,7 +143,7 @@
 .bot-guide-snippet {
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  background: rgba(30, 30, 30, 0.9);
+  background: rgba(var(--bg-primary-rgb), 0.9);
   overflow: hidden;
 }
 
@@ -167,7 +167,7 @@
 .bot-guide-snippet code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.9rem;
-  color: #f4efe6;
+  color: var(--text-cream);
   white-space: pre-wrap;
 }
 

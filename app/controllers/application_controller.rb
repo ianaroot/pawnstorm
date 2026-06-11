@@ -6,7 +6,10 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
   GUEST_EMAIL_DOMAIN = 'guest.local'
+  GUEST_ID_LENGTH = 6
+  GUEST_EMAIL_MAX_RETRIES = 20
   USER_ACTIVITY_THROTTLE = 12.hours
+  INDEX_PER_PAGE = 12
 
   before_action :record_user_activity
 
@@ -35,15 +38,31 @@ class ApplicationController < ActionController::Base
   end
 
   def create_guest_user
-    guest_user = User.create!(
-      email: "guest-#{SecureRandom.uuid}@#{GUEST_EMAIL_DOMAIN}",
-      password: SecureRandom.hex(32),
-      guest: true,
-      last_active_at: Time.current
-    )
+    retries = 0
+    begin
+      guest_user = User.create!(
+        email: "guest-#{SecureRandom.alphanumeric(GUEST_ID_LENGTH).downcase}@#{GUEST_EMAIL_DOMAIN}",
+        password: SecureRandom.hex(32),
+        guest: true,
+        last_active_at: Time.current
+      )
+    rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => error
+      if retryable_guest_collision?(error) && retries < GUEST_EMAIL_MAX_RETRIES
+        retries += 1
+        retry
+      else
+        raise
+      end
+    end
 
     sign_in guest_user
     guest_user
+  end
+
+  def retryable_guest_collision?(error)
+    return true if error.is_a?(ActiveRecord::RecordNotUnique)
+
+    error.record.errors.of_kind?(:email, :taken)
   end
 
   def render_not_found

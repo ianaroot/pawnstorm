@@ -1,0 +1,16 @@
+<div class="match-sort">
+  <% if (sort_label = local_assigns.fetch(:label, "Sort")) %>
+    <span class="match-sort__label"><%= sort_label %></span>
+  <% end %>
+  <% options.each do |option| %>
+    <%= button_tag type: :button,
+          data: { action: 'click->sort#select', sort_value_param: option.value },
+          class: class_names('match-sort-button', 'match-sort-button--active' => option.active) do %>
+      <%= option.label %>
+      <span class="match-sort-caret">
+        <span class="match-sort-caret__up<%= ' match-sort-caret--on' if option.direction == 'asc' %>"></span>
+        <span class="match-sort-caret__down<%= ' match-sort-caret--on' if option.direction == 'desc' %>"></span>
+      </span>
+    <% end %>
+  <% end %>
+</div>

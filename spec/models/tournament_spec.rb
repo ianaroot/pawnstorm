@@ -70,4 +70,15 @@ RSpec.describe Tournament, type: :model do
       expect(tournament.reload).to be_status_aborted
     end
   end
+
+  describe '.with_owner' do
+    it 'matches tournaments whose creator username contains the term' do
+      alice = create(:user, username: 'alice_smith')
+      bob = create(:user, username: 'bob_jones')
+      alice_tournament = create(:tournament, creator: alice)
+      create(:tournament, creator: bob)
+
+      expect(Tournament.with_owner('alice')).to contain_exactly(alice_tournament)
+    end
+  end
 end

@@ -7,6 +7,6 @@ class TournamentEntry < ApplicationRecord
   validates :bot_id, uniqueness: { scope: :tournament_id }, allow_nil: true
 
   def display_name
-    self[:display_name].presence || bot&.name || bot_owner&.email || "Bot #{bot_id}"
+    self[:display_name].presence || bot&.name || bot_owner&.username || "Bot #{bot_id}"
   end
 end

@@ -17,7 +17,110 @@
    FILTER FORM
    ============================================ */
 
+.index-panel {
+  --panel-pad-y: 1.25rem;
+  --panel-pad-x: 1.5rem;
+  background: var(--bg-recessed);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: var(--panel-pad-y) var(--panel-pad-x);
+  overflow: hidden;
+}
+
+.index-panel table {
+  background: var(--bg-deep);
+}
+
+.index-panel thead {
+  background: var(--bg-secondary);
+}
+
+.index-panel thead th {
+  color: var(--accent-gold-pale);
+}
+
+.index-panel tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.index-panel .index-table-action-btn,
+.index-panel .index-table-status-compile-btn {
+  background-color: var(--bg-tertiary);
+}
+
+.index-panel .index-table-action-btn:hover,
+.index-panel .index-table-status-compile-btn:hover {
+  background-color: var(--bg-elevated);
+}
+
+.index-panel .index-filter-input,
+.index-panel .index-filter-select {
+  background: var(--bg-recessed);
+  font-size: 0.85rem;
+}
+
+.index-panel .index-filter-input {
+  width: 16rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.index-panel .index-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.35rem 1.75rem 0.35rem 0.6rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239ca3af' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+}
+
+@supports (appearance: base-select) {
+  .index-panel .index-filter-select {
+    appearance: base-select;
+  }
+
+  .index-filter-select::picker-icon {
+    display: none;
+  }
+
+  .index-filter-select::picker(select) {
+    appearance: base-select;
+    background: var(--bg-recessed);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .index-filter-select option {
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.35rem;
+    background: transparent;
+  }
+
+  .index-filter-select option:hover,
+  .index-filter-select option:focus {
+    background: var(--bg-tertiary);
+  }
+
+  .index-filter-select option:checked {
+    background: var(--bg-secondary);
+  }
+
+  .index-filter-select option::checkmark {
+    color: var(--accent-secondary);
+  }
+}
+
+.index-panel .index-filter-form {
+  margin: calc(-1 * var(--panel-pad-y)) calc(-1 * var(--panel-pad-x)) 1.25rem;
+  padding: var(--panel-pad-y) var(--panel-pad-x);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+}
+
 .index-filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
 
@@ -44,7 +147,7 @@
 
 .index-filter-input:focus {
   outline: none;
-  border-color: #A855F7;
+  border-color: var(--accent-primary);
 }
 
 .index-filter-select {
@@ -61,10 +164,16 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  margin: 0 0 0 0.75rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
+}
+
+.index-filter-checkbox {
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 /* ============================================
@@ -141,9 +250,8 @@
 }
 
 .index-pagination [aria-current] {
-  background: #A855F7;
-  color: #1E1E1E;
-  border-color: #A855F7;
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
   font-weight: 600;
 }
 
@@ -162,10 +270,10 @@
 }
 
 /* ============================================
-   TOURNAMENT STATUS PILLS
+   PILLS
    ============================================ */
 
-.tournament-status-pill {
+.pill {
   display: inline-flex;
   align-items: center;
   padding: 0.15rem 0.55rem;
@@ -176,65 +284,74 @@
   text-transform: lowercase;
 }
 
-.tournament-status-pill--open {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
+.pill--success, .status-option--success { color: var(--tint-success); }
+.pill--warning, .status-option--warning { color: var(--tint-warning); }
+.pill--info,    .status-option--info    { color: var(--tint-info); }
+.pill--muted,   .status-option--muted   { color: var(--tint-muted); }
+.pill--danger,  .status-option--danger  { color: var(--tint-danger); }
+.pill--violet,  .status-option--violet  { color: var(--tint-violet); }
+
+.pill--success {
+  background: rgba(var(--tint-success-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-success-rgb), 0.3);
 }
 
-.tournament-status-pill--starting {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+.pill--warning {
+  background: rgba(var(--tint-warning-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-warning-rgb), 0.3);
 }
 
-.tournament-status-pill--running {
-  background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(96, 165, 250, 0.3);
+.pill--info {
+  background: rgba(var(--tint-info-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-info-rgb), 0.3);
 }
 
-.tournament-status-pill--completed {
-  background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
-  border: 1px solid rgba(156, 163, 175, 0.25);
+.pill--muted {
+  background: rgba(var(--tint-muted-rgb), 0.15);
+  border: 1px solid rgba(var(--tint-muted-rgb), 0.25);
 }
 
-.tournament-status-pill--aborted {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+.pill--danger {
+  background: rgba(var(--error-rgb), 0.12);
+  border: 1px solid rgba(var(--error-rgb), 0.25);
 }
 
-.tournament-status-pill--draft {
-  background: rgba(167, 139, 250, 0.12);
-  color: #a78bfa;
-  border: 1px solid rgba(167, 139, 250, 0.25);
+.pill--violet {
+  background: rgba(var(--tint-violet-rgb), 0.12);
+  border: 1px solid rgba(var(--tint-violet-rgb), 0.25);
 }
 
-/* ============================================
-   BOT STATUS PILLS
-   ============================================ */
+.index-filter-select:has(.status-option--success:checked) { color: var(--tint-success); }
+.index-filter-select:has(.status-option--warning:checked) { color: var(--tint-warning); }
+.index-filter-select:has(.status-option--info:checked)    { color: var(--tint-info); }
+.index-filter-select:has(.status-option--muted:checked)   { color: var(--tint-muted); }
+.index-filter-select:has(.status-option--danger:checked)  { color: var(--tint-danger); }
+.index-filter-select:has(.status-option--violet:checked)  { color: var(--tint-violet); }
 
-.bot-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
+.match-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.match-filter-field__label {
   font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: lowercase;
+  color: var(--text-muted);
 }
 
-.bot-status-pill--compiled {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
+.index-sort {
+  align-self: flex-end;
+  margin-left: 2.5rem;
+  margin-bottom: 0.4rem;
 }
 
-.bot-status-pill--stale {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+.index-filter-reset {
+  margin-left: auto;
+}
+
+.match-filter-reset {
+  align-self: flex-end;
+  margin-left: 2rem;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.85rem;
 }

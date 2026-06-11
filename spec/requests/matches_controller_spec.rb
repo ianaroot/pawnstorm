@@ -296,17 +296,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'renders the persisted live page for the creator' do
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot, white_player: user, black_player: bot, status: :running)
 
       get live_human_vs_bot_match_path(match)
 
@@ -318,32 +308,21 @@ RSpec.describe 'Matches', type: :request do
 
     it 'does not render another user live match' do
       other_user = create(:user)
-      match = Match.create!(
-        creator: other_user,
-        white_player: other_user,
-        black_player: create(:bot, :compiled, user: other_user),
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot,
+                     white_player: other_user,
+                     black_player: create(:bot, :compiled, user: other_user),
+                     status: :running)
 
       get live_human_vs_bot_match_path(match)
       expect(response).to have_http_status(:not_found)
     end
 
     it 'does not render bot-vs-bot matches through the live route' do
-      match = Match.create!(
-        creator: user,
-        white_player: create(:bot, :compiled, user: user),
-        black_player: create(:bot, :compiled, user: user),
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match,
+                     creator: user,
+                     white_player: create(:bot, :compiled, user: user),
+                     black_player: create(:bot, :compiled, user: user),
+                     status: :running)
 
       get live_human_vs_bot_match_path(match)
 
@@ -351,17 +330,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'completes a running human-vs-bot match' do
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot, white_player: user, black_player: bot, status: :running)
 
       patch complete_human_vs_bot_match_path(match), params: {
         match: {
@@ -383,17 +352,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'persists a fifty-move-rule completed match' do
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot, white_player: user, black_player: bot, status: :running)
 
       patch complete_human_vs_bot_match_path(match), params: {
         match: {
@@ -414,17 +373,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'persists browser-side play failures' do
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot, white_player: user, black_player: bot, status: :running)
 
       patch complete_human_vs_bot_match_path(match), params: {
         match: {
@@ -440,17 +389,7 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'returns a 422 instead of erroring when a completion field is missing' do
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :running,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :human_vs_bot, white_player: user, black_player: bot, status: :running)
 
       patch complete_human_vs_bot_match_path(match), params: {
         match: {
@@ -474,16 +413,11 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'shows the loading state for pending matches' do
-      match = Match.create!(
-        creator: user,
-        white_player: create(:bot, :compiled, user: user),
-        black_player: create(:bot, :compiled),
-        status: :pending,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match,
+                     creator: user,
+                     white_player: create(:bot, :compiled, user: user),
+                     black_player: create(:bot, :compiled),
+                     status: :pending)
 
       get match_path(match)
 
@@ -494,16 +428,11 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'shows the loading state for queued matches' do
-      match = Match.create!(
-        creator: user,
-        white_player: create(:bot, :compiled, user: user),
-        black_player: create(:bot, :compiled),
-        status: :queued,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match,
+                     creator: user,
+                     white_player: create(:bot, :compiled, user: user),
+                     black_player: create(:bot, :compiled),
+                     status: :queued)
 
       get match_path(match)
 
@@ -514,18 +443,11 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'shows failure details for failed matches' do
-      match = Match.create!(
-        creator: user,
-        white_player: create(:bot, :compiled, user: user),
-        black_player: create(:bot, :compiled),
-        status: :failed,
-        result: :error,
-        error_message: 'boom',
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :failed,
+                     creator: user,
+                     white_player: create(:bot, :compiled, user: user),
+                     black_player: create(:bot, :compiled),
+                     error_message: 'boom')
 
       get match_path(match)
 
@@ -536,18 +458,11 @@ RSpec.describe 'Matches', type: :request do
     end
 
     it 'hides rematch when neither bot is owned by the current user' do
-      match = Match.create!(
-        creator: user,
-        white_player: create(:bot, :compiled),
-        black_player: create(:bot, :compiled),
-        status: :failed,
-        result: :error,
-        error_message: 'boom',
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :failed,
+                     creator: user,
+                     white_player: create(:bot, :compiled),
+                     black_player: create(:bot, :compiled),
+                     error_message: 'boom')
 
       get match_path(match)
 
@@ -558,18 +473,11 @@ RSpec.describe 'Matches', type: :request do
     it 'prefills rematch with the current user bot and the other bot' do
       own_bot = create(:bot, :compiled, user: user)
       opponent_bot = create(:bot, :compiled)
-      match = Match.create!(
-        creator: user,
-        white_player: opponent_bot,
-        black_player: own_bot,
-        status: :failed,
-        result: :error,
-        error_message: 'boom',
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: [],
-        previous_layouts: []
-      )
+      match = create(:match, :failed,
+                     creator: user,
+                     white_player: opponent_bot,
+                     black_player: own_bot,
+                     error_message: 'boom')
 
       get match_path(match)
 
@@ -581,19 +489,7 @@ RSpec.describe 'Matches', type: :request do
 
     it 'shows play again for human-vs-bot matches with a random color rematch' do
       bot = create(:bot, :compiled, user: user)
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :completed,
-        result: :white_win,
-        allowed_to_move: 'B',
-        captured_pieces: [],
-        movement_notation: ['1. e4#'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
-      )
+      match = create(:match, :human_vs_bot, :completed, white_player: user, black_player: bot)
 
       get match_path(match)
 
@@ -609,19 +505,7 @@ RSpec.describe 'Matches', type: :request do
 
     it 'explains why play again is unavailable when the human-vs-bot bot is stale' do
       bot = create(:bot, :compiled, user: user)
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :completed,
-        result: :white_win,
-        allowed_to_move: 'B',
-        captured_pieces: [],
-        movement_notation: ['1. e4#'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
-      )
+      match = create(:match, :human_vs_bot, :completed, white_player: user, black_player: bot)
       bot.update_column(:compiled_program_stale, true)
 
       get match_path(match)
@@ -633,19 +517,7 @@ RSpec.describe 'Matches', type: :request do
 
     it 'explains why play again is unavailable when the human-vs-bot bot has been deleted' do
       bot = create(:bot, :compiled, user: user)
-      match = Match.create!(
-        creator: user,
-        white_player: user,
-        black_player: bot,
-        black_compiled_program_snapshot: bot.compiled_program,
-        status: :completed,
-        result: :white_win,
-        allowed_to_move: 'B',
-        captured_pieces: [],
-        movement_notation: ['1. e4#'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
-      )
+      match = create(:match, :human_vs_bot, :completed, white_player: user, black_player: bot)
       bot.destroy!
 
       get match_path(match)
@@ -675,21 +547,14 @@ RSpec.describe 'Matches', type: :request do
         compiled_program_snapshot: surviving_bot.compiled_program,
         seed_order: 1
       )
-      match = Match.create!(
-        tournament:,
-        creator: user,
-        white_player: deleted_bot,
-        black_player: surviving_bot,
-        white_tournament_entry: deleted_entry,
-        black_tournament_entry: surviving_entry,
-        status: :completed,
-        result: :black_win,
-        allowed_to_move: 'W',
-        captured_pieces: [],
-        movement_notation: ['e4'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
-      )
+      match = create(:match, :tournament_game,
+                     tournament:,
+                     white_player: deleted_bot,
+                     black_player: surviving_bot,
+                     white_tournament_entry: deleted_entry,
+                     black_tournament_entry: surviving_entry,
+                     status: :completed,
+                     result: :black_win)
       deleted_bot.destroy!
 
       get match_path(match)
@@ -704,20 +569,12 @@ RSpec.describe 'Matches', type: :request do
 
     it 'wires the matches-show tour and auto-triggers it for the first bot match' do
       user_bot = create(:bot, :compiled, user: user)
-      match = Match.create!(
-        creator: user,
-        white_player: user_bot,
-        black_player: create(:bot, :compiled),
-        white_compiled_program_snapshot: { nodes: [] },
-        black_compiled_program_snapshot: { nodes: [] },
-        status: :completed,
-        result: :white_win,
-        allowed_to_move: 'B',
-        captured_pieces: [],
-        movement_notation: ['1. e4', 'e5'],
-        previous_layouts: [],
-        lay_out: Array.new(64, '')
-      )
+      match = create(:match, :completed,
+                     creator: user,
+                     white_player: user_bot,
+                     black_player: create(:bot, :compiled),
+                     white_compiled_program_snapshot: { nodes: [] },
+                     black_compiled_program_snapshot: { nodes: [] })
 
       get match_path(match)
 

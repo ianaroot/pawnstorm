@@ -21,4 +21,5 @@ module TournamentsHelper
   def constraint_condition_kind_labels
     CONSTRAINT_CONDITION_KIND_LABELS
   end
+
 end

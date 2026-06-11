@@ -8,11 +8,11 @@
   z-index: 9200;
   width: 320px;
   padding: 16px 18px 14px;
-  background: var(--bg-secondary, #252526);
-  color: var(--text-primary, #e5e5e5);
-  border: 1px solid var(--border-color, #3f3f46);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(var(--shadow-color-rgb), 0.5);
   font-family: inherit;
 }
 
@@ -24,7 +24,7 @@
   height: 26px;
   font-size: 20px;
   line-height: 1;
-  color: var(--text-secondary, #9ca3af);
+  color: var(--text-secondary);
   background: transparent;
   border: none;
   border-radius: 4px;
@@ -32,8 +32,8 @@
 }
 
 .tour-tooltip__close:hover {
-  color: var(--text-primary, #e5e5e5);
-  background: var(--bg-tertiary, #2d2d2d);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
 }
 
 .tour-tooltip__title {
@@ -41,7 +41,7 @@
   padding-right: 22px;
   font-size: 16px;
   font-weight: 600;
-  color: var(--accent-secondary, #c084fc);
+  color: var(--accent-secondary);
 }
 
 .tour-tooltip__body {
@@ -62,9 +62,9 @@
   padding: 1px 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
-  color: var(--text-primary, #e5e5e5);
-  background: var(--bg-tertiary, #2d2d2d);
-  border: 1px solid var(--border-color, #3f3f46);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
@@ -77,14 +77,14 @@
 
 .tour-tooltip__progress {
   font-size: 12px;
-  color: var(--text-secondary, #9ca3af);
+  color: var(--text-secondary);
 }
 
 .tour-tooltip__next {
   padding: 6px 14px;
   font-size: 13px;
   color: #1c1c1f;
-  background: var(--accent-secondary, #c084fc);
+  background: var(--accent-secondary);
   border: none;
   border-radius: 6px;
   cursor: pointer;

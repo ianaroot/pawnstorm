@@ -7,4 +7,20 @@ module ApplicationHelper
     'organizer' => { width: 140, height: 112 }
   }.freeze
 
+  PILL_TINTS = {
+    "open"       => "success",
+    "starting"   => "warning",
+    "running"    => "info",
+    "completed"  => "muted",
+    "aborted"    => "danger",
+    "draft"      => "violet",
+    "compiled"   => "success",
+    "stale"      => "warning",
+    "tournament" => "violet",
+    "casual"     => "muted"
+  }.freeze
+
+  def pill_tint(value)
+    PILL_TINTS.fetch(value.to_s, "muted")
+  end
 end

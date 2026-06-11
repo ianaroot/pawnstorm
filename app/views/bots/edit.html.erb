@@ -43,13 +43,13 @@
           <%= render 'bots/tips_popover' %>
         </div>
       </div>
-      <button type="button" class="btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
+      <button type="button" class="btn btn-ghost btn-delete-node" disabled title="Delete selected node (Delete/Backspace)">Delete</button>
     </div>
 
     <div class="toolbar-section">
       <div class="toolbar-section__heading">
         <h3>View</h3>
-        <button type="button" class="btn-toggle-preview-mode" aria-pressed="true"
+        <button type="button" class="btn btn-ghost btn-toggle-preview-mode" aria-pressed="true"
           title="Show condition previews as plain-language sentences or terse chunks (reopen a panel to apply)">Sentences: on</button>
       </div>
       <button type="button" id="zoom-out" class="btn-zoom">-</button>
@@ -72,20 +72,20 @@
         <%= link_to 'compile bot',
             compile_bot_path(@bot),
             data: { turbo_method: :post },
-            class: "btn-test#{' hidden' unless @bot.compiled_program_stale?}",
+            class: "btn btn-primary btn-test#{' hidden' unless @bot.compiled_program_stale?}",
             id: 'compile-and-exit-link' %>
         <span id="compile-status" class="compile-status hidden"></span>
         <%= button_to 'Clone Bot',
             clone_bot_path(@bot),
             method: :post,
-            class: 'btn-clone',
+            class: 'btn btn-secondary btn-clone',
             data: { turbo_confirm: "Clone \"#{@bot.name}\"? A compiled copy will be created." } %>
       </div>
       <div class="toolbar-eligibility"
            data-controller="bot-eligibility"
            data-bot-eligibility-bot-id-value="<%= @bot.id %>"
            data-bot-eligibility-stale-value="<%= @bot.compiled_program_stale? %>">
-        <button type="button" class="toolbar-eligibility__toggle" data-action="click->bot-eligibility#toggle">Check tournament eligibility</button>
+        <button type="button" class="btn btn-ghost toolbar-eligibility__toggle" data-action="click->bot-eligibility#toggle">Check tournament eligibility</button>
         <div class="toolbar-eligibility__panel" data-bot-eligibility-target="panel" hidden>
           <select data-bot-eligibility-target="select"
                   data-action="change->bot-eligibility#tournamentChanged">
@@ -149,7 +149,7 @@
           <div class="template-picker-modal__preview" data-template-picker-preview></div>
 
           <div class="template-picker-modal__actions">
-            <button type="button" class="template-picker-modal__insert" data-template-picker-insert>Insert Template</button>
+            <button type="button" class="btn btn-primary template-picker-modal__insert" data-template-picker-insert>Insert Template</button>
           </div>
         </section>
       </div>

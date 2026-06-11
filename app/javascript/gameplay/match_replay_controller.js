@@ -24,6 +24,8 @@ class MatchReplayController {
     this.notationElement = rootElement.querySelector('[data-match-replay-target="notation"]')
     this.resultElement = rootElement.querySelector('[data-match-replay-target="result"]')
     this.boardElement = rootElement.querySelector('#chess-board')
+    this.arenaEl = rootElement.querySelector('#arena')
+    this.boardAreaEl = rootElement.querySelector('.replay-board-area')
     this.speedButtons = rootElement.querySelectorAll('[data-match-replay-target="speed-button"]')
     this.playButton?.addEventListener('click', () => { this.clearControlHints(); this.togglePlayback(1) })
     this.reverseButton?.addEventListener('click', () => this.togglePlayback(-1))
@@ -71,6 +73,10 @@ class MatchReplayController {
     document.addEventListener('replay:request-pause', this.handleRequestPause)
     document.addEventListener('turbo:before-render', this.handleTurboBeforeRender, { once: true })
     this.applyOrientation()
+    if (typeof ResizeObserver !== 'undefined' && this.boardAreaEl) {
+      this.boardResizeObserver = new ResizeObserver(() => this.fitBoard())
+      this.boardResizeObserver.observe(this.boardAreaEl)
+    }
     this.renderCurrentFrame()
   }
 
@@ -81,6 +87,20 @@ class MatchReplayController {
   destroy() {
     document.removeEventListener('replay:request-pause', this.handleRequestPause)
     document.removeEventListener('turbo:before-render', this.handleTurboBeforeRender)
+    this.boardResizeObserver?.disconnect()
+  }
+
+  fitBoard() {
+    if (!this.boardAreaEl || !this.arenaEl) { return }
+    const availableWidth = this.boardAreaEl.clientWidth
+    const availableHeight = this.boardAreaEl.clientHeight
+    if (!availableWidth || !availableHeight) { return }
+    this.arenaEl.style.transform = 'none'
+    const naturalWidth = this.arenaEl.offsetWidth
+    const naturalHeight = this.arenaEl.offsetHeight
+    if (!naturalWidth || !naturalHeight) { return }
+    const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight, 1)
+    this.arenaEl.style.transform = `scale(${scale})`
   }
 
   clearControlHints() {
@@ -434,6 +454,7 @@ class MatchReplayController {
         userBotTeam: this.userBotTeam
       })
     }
+    this.fitBoard()
   }
 
   playReplaySound(notation) {
