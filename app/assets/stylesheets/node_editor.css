@@ -1014,7 +1014,8 @@
 }
 
 .form-part select,
-.form-part input,
+.form-part input[type="text"],
+.form-part input[type="number"],
 .form-part textarea {
   width: 100%;
   padding: 6px;
@@ -1139,7 +1140,8 @@
 }
 
 .condition-form-side select,
-.condition-form-side input,
+.condition-form-side input[type="text"],
+.condition-form-side input[type="number"],
 .condition-form-operator select {
   width: 100%;
   padding: 7px 8px;
