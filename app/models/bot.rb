@@ -33,9 +33,9 @@ class Bot < ApplicationRecord
 
   SORT_ORDERS = {
     'name_asc'              => { name: :asc },
-    'name_desc'            => { name: :desc },
-    'elo_asc'              => { rating: :asc },
-    'elo_desc'            => { rating: :desc },
+    'name_desc'             => { name: :desc },
+    'elo_asc'               => { rating: :asc },
+    'elo_desc'              => { rating: :desc },
     'recently_updated_asc'  => { updated_at: :asc },
     'recently_updated_desc' => { updated_at: :desc }
   }.freeze
