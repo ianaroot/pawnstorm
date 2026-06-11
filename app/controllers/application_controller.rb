@@ -47,7 +47,7 @@ class ApplicationController < ActionController::Base
         last_active_at: Time.current
       )
     rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => error
-      if guest_email_collision?(error) && retries < GUEST_EMAIL_MAX_RETRIES
+      if retryable_guest_collision?(error) && retries < GUEST_EMAIL_MAX_RETRIES
         retries += 1
         retry
       else
@@ -59,7 +59,7 @@ class ApplicationController < ActionController::Base
     guest_user
   end
 
-  def guest_email_collision?(error)
+  def retryable_guest_collision?(error)
     return true if error.is_a?(ActiveRecord::RecordNotUnique)
 
     error.record.errors.of_kind?(:email, :taken)
