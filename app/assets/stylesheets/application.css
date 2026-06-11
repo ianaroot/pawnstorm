@@ -541,14 +541,6 @@ label {
   color: var(--text-secondary);
 }
 
-.field {
-  margin-bottom: 1rem;
-}
-
-.actions {
-  margin-top: 1.5rem;
-}
-
 /* ============================================
    TABLES
    ============================================ */
