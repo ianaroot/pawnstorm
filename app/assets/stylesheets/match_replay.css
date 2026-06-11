@@ -738,7 +738,7 @@ input[type="submit"].btn-rematch {
   font-size: 0.875rem;
 }
 
-.tournament-registration__empty {
+.tournament-entries-empty {
   color: var(--text-muted);
   font-size: 0.875rem;
   margin: 0;
