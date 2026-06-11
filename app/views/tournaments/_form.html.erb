@@ -1,4 +1,6 @@
 <%= form_with url: url, scope: :tournament, method: method, local: true do |form| %>
+  <%= render "shared/error_messages", model: @tournament if @tournament %>
+
   <div class="tournament-setup-grid">
     <div class="tournament-setup-col">
 

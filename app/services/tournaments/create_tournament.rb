@@ -12,12 +12,16 @@ module Tournaments
     end
 
     def call
-      return fail_with("Games per pairing cannot exceed #{MAX_GAMES_PER_PAIR}.") if games_per_pair > MAX_GAMES_PER_PAIR
+      @tournament = Tournament.new(@attributes.merge(creator: @user, status: :draft))
 
-      @tournament = Tournament.create!(@attributes.merge(creator: @user, status: :draft))
-      true
-    rescue StandardError => e
-      fail_with(e.message)
+      if games_per_pair > MAX_GAMES_PER_PAIR
+        @tournament.errors.add(:base, "Games per pairing cannot exceed #{MAX_GAMES_PER_PAIR}.")
+        return fail_with(@tournament.errors.full_messages.to_sentence)
+      end
+
+      return true if @tournament.save
+
+      fail_with(@tournament.errors.full_messages.to_sentence)
     end
   end
 end
