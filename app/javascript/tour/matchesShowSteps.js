@@ -7,6 +7,7 @@ const LOCKED_SELECTORS = [
   '[data-match-replay-target="play-button"]',
   '[data-match-replay-target="reverse-button"]',
   '[data-match-replay-target="top-moves-toggle"]',
+  '[data-match-replay-target="flip-button"]',
   FORWARD_BUTTON,
   '.btn-rematch'
 ]
