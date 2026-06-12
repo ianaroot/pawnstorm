@@ -59,7 +59,7 @@ const STEPS = [
     beforeEnter: () => setLocked([FORWARD_BUTTON], false),
     advanceOn: {
       event: 'replay:frame-changed',
-      when: (d) => d.moveIndex >= 4 && d.allowedToMove === d.userBotTeam
+      when: (frame) => frame.moveIndex >= 1 && frame.allowedToMove === frame.userBotTeam
     }
   },
   {

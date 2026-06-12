@@ -119,7 +119,7 @@ const STEPS = [
     target: '.btn-add-node[data-type="condition"]',
     title: 'Add your own condition',
     body: `<p>Now build one from scratch. Click <strong>+ Condition</strong>.</p>`,
-    advanceOn: { event: 'editor:node-added', when: (d) => d.type === 'condition' }
+    advanceOn: { event: 'editor:node-added', when: (nodeInfo) => nodeInfo.type === 'condition' }
   },
   {
     target: (ctx) => {
@@ -130,7 +130,7 @@ const STEPS = [
     body: `<p><strong>Click your new condition</strong> to open the editor on the right.</p>`,
     beforeEnter: lockNodeDrag,
     onExit: unlockNodeDrag,
-    advanceOn: { event: 'editor:node-editing-started', when: (d) => d.type === 'condition' }
+    advanceOn: { event: 'editor:node-editing-started', when: (nodeInfo) => nodeInfo.type === 'condition' }
   },
   {
     target: '.condition-form-mode-picker',
@@ -303,7 +303,7 @@ const STEPS = [
     target: '#save-node',
     title: 'Save it',
     body: `<p>When the Current Condition reads the way you want, click <strong>Save</strong>.</p>`,
-    advanceOn: { event: 'editor:node-saved', when: (d) => d.type === 'condition' }
+    advanceOn: { event: 'editor:node-saved', when: (nodeInfo) => nodeInfo.type === 'condition' }
   },
   {
     target: '#canvas-workspace',
@@ -318,7 +318,7 @@ const STEPS = [
     target: '.btn-add-node[data-type="score"]',
     title: 'Add a score node',
     body: `<p>A condition by itself doesn't change anything. To reward (or punish) moves, add a <strong>+ Score</strong> node.</p>`,
-    advanceOn: { event: 'editor:node-added', when: (d) => d.type === 'score' }
+    advanceOn: { event: 'editor:node-added', when: (nodeInfo) => nodeInfo.type === 'score' }
   },
   {
     target: (ctx) => {
@@ -329,7 +329,7 @@ const STEPS = [
     body: `<p><strong>Click your new score node</strong> to open the editor.</p>`,
     beforeEnter: lockNodeDrag,
     onExit: unlockNodeDrag,
-    advanceOn: { event: 'editor:node-editing-started', when: (d) => d.type === 'score' }
+    advanceOn: { event: 'editor:node-editing-started', when: (nodeInfo) => nodeInfo.type === 'score' }
   },
   {
     target: '#node-form-panel',
@@ -347,7 +347,7 @@ const STEPS = [
       <br>
       <p>Save when you're done.</p>
     `,
-    advanceOn: { event: 'editor:node-saved', when: (d) => d.type === 'score' }
+    advanceOn: { event: 'editor:node-saved', when: (nodeInfo) => nodeInfo.type === 'score' }
   },
   {
     target: '#canvas-workspace',
@@ -366,7 +366,7 @@ const STEPS = [
       <p><strong>Shift-click</strong> two or more connected conditions.</p>
       <p>Press <kbd>P</kbd></p>
     `,
-    advanceOn: { event: 'editor:preview-shown', when: (d) => d.mode === 'selection' && d.hasChain }
+    advanceOn: { event: 'editor:preview-shown', when: (preview) => preview.mode === 'selection' && preview.hasChain }
   },
   {
     target: '.board-state-preview__chain',
