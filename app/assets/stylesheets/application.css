@@ -61,6 +61,8 @@
   --accent-gold-pale-rgb: 243, 226, 166;
   --accent-gold-pale: rgb(var(--accent-gold-pale-rgb));
   --accent-cyan: #06b6d4;
+  --accent-raspberry-rgb: 219, 39, 119;
+  --accent-raspberry: rgb(var(--accent-raspberry-rgb));
   --accent-gold-deep-rgb: 216, 193, 96;
   --accent-gold-deep: rgb(var(--accent-gold-deep-rgb));
   --accent-gold-bright-rgb: 253, 230, 138;
